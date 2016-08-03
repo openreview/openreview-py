@@ -1,0 +1,9 @@
+setup.py
+OpenReviewPy.egg-info/PKG-INFO
+OpenReviewPy.egg-info/SOURCES.txt
+OpenReviewPy.egg-info/dependency_links.txt
+OpenReviewPy.egg-info/not-zip-safe
+OpenReviewPy.egg-info/requires.txt
+OpenReviewPy.egg-info/top_level.txt
+openreview/__init__.py
+openreview/openreview.py
