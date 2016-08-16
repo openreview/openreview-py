@@ -110,11 +110,12 @@ class Client(object):
                     signatures = i['signatures'], 
                     reply = i['reply']
                     )
-                if hasattr(invitation,'web'):
+                if hasattr(i,'web'):
                     invitation.web = i['web']
-                if hasattr(invitation,'process'):
+                if hasattr(i,'process'):
                     invitation.process = i['process']
-                return invitation
+                else:
+                    return invitation
 
         except requests.exceptions.HTTPError as e:
             for error in response.json()['errors']:
@@ -157,19 +158,20 @@ class Client(object):
         if signatory!=None:
             params['signatory'] = signatory
 
+        print params
         response = requests.get(self.groups_url, params=params, headers=self.headers)
-        
+        print response
         try:
             if response.status_code != 200:
                 response.raise_for_status()
             else:
                 for g in response.json()['groups']:
                     group = Group(g['id'], 
-                                writers=g['writers'], 
-                                members=g['members'], 
-                                readers=g['readers'],
-                                signatories=g['signatories'],
-                                signatures=g['signatures'],
+                                writers=g['writers'] if hasattr(g,'writers') else None, 
+                                members=g['members'] if hasattr(g,'members') else None, 
+                                readers=g['readers'] if hasattr(g,'readers') else None,
+                                signatories=g['signatories'] if hasattr(g,'signatories') else None,
+                                signatures=g['signatures'] if hasattr(g,'signatures') else None
                                 )
                     if hasattr(g, 'web'):
                         group.web=g['web']
@@ -376,11 +378,12 @@ class Group(object):
 
 
 class Invitation(object):
-    def __init__(self, inviter, suffix, writers=None, invitees=None, readers=None, reply=None, web=None, process=None, signatures=None):
+    def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, reply=None, web=None, process=None, signatures=None):
         self.id = inviter+'/-/'+suffix
         self.readers=readers
         self.writers=writers
         self.invitees=invitees
+        self.noninvitees=noninvitees
         self.signatures=signatures
         self.reply={} if reply==None else reply
         if web != None:
@@ -396,6 +399,7 @@ class Invitation(object):
             'readers': self.readers,
             'writers': self.writers,
             'invitees': self.invitees,
+            'noninvitees': self.noninvitees,
             'signatures': self.signatures,
             'reply':self.reply
         }
@@ -415,9 +419,15 @@ class Invitation(object):
 
     def add_noninvitee(self, noninvitee):
         if type(noninvitee) is Group:
-            self.noninvitees.append(noninvitee.id)
+            if self.noninvitees!=None:
+                self.noninvitees.append(noninvitee.id)
+            else:
+                self.noninvitees=[noninvitee.id]
         if type(noninvitee) is str:
-            self.noninvitees.append(noninvitee)
+            if self.noninvitees!=None:
+                self.noninvitees.append(noninvitee)
+            else:
+                self.noninvitees=[noninvitee]
         return self
 
 class Note(object):
