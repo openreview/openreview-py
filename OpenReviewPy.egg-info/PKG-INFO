@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: OpenReviewPy
-Version: 0.3
+Version: 0.5.10
 Summary: OpenReview client library
 Home-page: https://github.com/iesl/OpenReviewPy
 Author: Michael Spector
