@@ -56,10 +56,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in token_response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in token_response.json()['error']:
-                    print error
+                    return error
 
 
 
@@ -98,10 +98,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def get_invitation(self, id):
         """Returns a single invitation by id if available"""
@@ -122,19 +122,19 @@ class Client(object):
                     signatures = i['signatures'], 
                     reply = i['reply']
                     )
-                if hasattr(i,'web'):
+                if 'web' in i:
                     invitation.web = i['web']
-                if ('process' in i):
+                if 'process' in i:
                     invitation.process = i['process']
                 return invitation
 
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def get_note(self, id):
         """Returns a single note by id if available"""
@@ -160,10 +160,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def get_groups(self, prefix=None, regex=None, member=None, host=None, signatory=None):
         """Returns a list of Group objects based on the filters provided."""
@@ -195,8 +195,8 @@ class Client(object):
                                 signatories=g['signatories'] if 'signatories' in g else None,
                                 signatures=g['signatures'] if 'signatures' in g else None
                                 )
-                    # if 'web' in g:
-                    #     new_group.web=g['web']
+                    if 'web' in g:
+                        new_group.web=g['web']
                     groups.append(new_group)
                 groups.sort(key=lambda x: x.id)
                 return groups
@@ -204,10 +204,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def get_invitations(self, id=None, invitee=None, parentNote=None, replyForum=None, signature=None, note=None):
         """Returns a list of Group objects based on the filters provided."""
@@ -241,9 +241,9 @@ class Client(object):
                     signatures = i['signatures'], 
                     reply = i['reply']
                     )
-                    if ('web' in invitation):
+                    if 'web' in i:
                         invitation.web = i['web']
-                    if ('process' in invitation):
+                    if 'process' in i:
                         invitation.process = i['process']
                     invitations.append(invitation)
                     invitations.sort(key=lambda x: x.id)
@@ -252,10 +252,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def get_notes(self, id=None, forum=None, invitation=None, parent=None, tauthor=None, signature=None, writer=None, includeTrash=None):
         """Returns a list of Note objects based on the filters provided."""
@@ -293,7 +293,7 @@ class Client(object):
                         readers=n['readers'],
                         signatures=n['signatures'],
                         writers=n['writers'],
-                        number=n['number']
+                        number=n['number'] if 'number' in n else None
                         )
 
                     notes.append(note)
@@ -303,10 +303,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def post_group(self, group):
         """posts the group. Upon success, returns the original Group object."""
@@ -319,10 +319,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
 
     def post_invitation(self, invitation):
@@ -336,10 +336,10 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def post_note(self, note):
         """posts the note. Upon success, returns the original Note object."""
@@ -352,28 +352,24 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    print error
+                    return error
             except KeyError:
                 for error in response.json()['error']:
-                    print error
+                    return error
 
     def send_mail(self, subject, recipients, message):
         r = requests.post(self.mail_url, json={'groups': recipients, 'subject': subject , 'message': message}, headers=self.headers)
         r.raise_for_status()
 
-
-
-
-
-
 class Group(object):
     
-    def __init__(self, id, writers=None, members=None, readers=None, signatories=None, signatures=None, web=None):
+    def __init__(self, id, writers=None, members=None, readers=None, nonreaders=None, signatories=None, signatures=None, web=None):
         # post attributes
         self.id=id
         self.writers=writers
         self.members=members
         self.readers=readers
+        self.nonreaders=nonreaders
         self.signatories=signatories
         self.signatures=signatures
         if web != None:
@@ -389,6 +385,7 @@ class Group(object):
             'writers': self.writers,
             'members': self.members,
             'readers': self.readers,
+            'nonreaders':self.nonreaders,
             'signatories': self.signatories
         }
         if self.web !=None:
@@ -420,8 +417,6 @@ class Group(object):
 
     def post(self, client):
         client.post_group(self)
-
-
 
 class Invitation(object):
     def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, reply=None, web=None, process=None, signatures=None):
