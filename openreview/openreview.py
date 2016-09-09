@@ -127,10 +127,12 @@ class Client(object):
                     invitees = i.get('invitees'), 
                     noninvitees = i.get('noninvitees'), 
                     signatures = i.get('signatures'), 
-                    reply = i.get('reply'),
-                    web = i.get('web'),
-                    process = i.get('process')
+                    reply = i.get('reply')
                     )
+                if 'web' in i:
+                    invitation.web = i['web']
+                if 'process' in i:
+                    invitation.process = i['process']
                 return invitation
 
         except requests.exceptions.HTTPError as e:
