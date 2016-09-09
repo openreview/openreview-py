@@ -54,8 +54,14 @@ class Client(object):
             else:
                 return str(token_response.json()['token'])
         except requests.exceptions.HTTPError as e:
-            for error in token_response.json()['errors']:
-                print error
+            try:
+                for error in token_response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in token_response.json()['error']:
+                    return error
+
+
 
     ## PUBLIC FUNCTIONS
 
@@ -92,8 +98,12 @@ class Client(object):
                 return group
 
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
     def get_invitation(self, id):
         """Returns a single invitation by id if available"""
@@ -104,6 +114,7 @@ class Client(object):
                 response.raise_for_status()
             else:
                 i = response.json()['invitations'][0]
+
                 invitation = Invitation(i['id'].split('/-/')[0],
                     i['id'].split('/-/')[1],
                     cdate = i.get('cdate'),
@@ -118,16 +129,19 @@ class Client(object):
                     signatures = i.get('signatures'), 
                     reply = i.get('reply')
                     )
-                if hasattr(i,'web'):
+                if 'web' in i:
                     invitation.web = i['web']
-                if hasattr(i,'process'):
+                if 'process' in i:
                     invitation.process = i['process']
-                else:
-                    return invitation
+                return invitation
 
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
     def get_note(self, id):
         """Returns a single note by id if available"""
@@ -155,15 +169,21 @@ class Client(object):
                 return note
 
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
-    def get_groups(self, prefix=None, member=None, host=None, signatory=None):
+    def get_groups(self, prefix=None, regex=None, member=None, host=None, signatory=None):
         """Returns a list of Group objects based on the filters provided."""
         groups=[]
         params = {}
         if prefix!=None:
             params['regex'] = prefix+'.*'
+        if regex!=None:
+            params['regex'] = regex
         if member!=None:
             params['member'] = member
         if host!=None:
@@ -171,9 +191,8 @@ class Client(object):
         if signatory!=None:
             params['signatory'] = signatory
 
-        print params
         response = requests.get(self.groups_url, params=params, headers=self.headers)
-        print response
+
         try:
             if response.status_code != 200:
                 response.raise_for_status()
@@ -187,17 +206,19 @@ class Client(object):
                                 readers=g.get('readers'),
                                 nonreaders=g.get('nonreaders'),
                                 signatories=g.get('signatories'),
-                                signatures=g.get('signatures')
-                                )
-                    if hasattr(g, 'web'):
-                        group.web=g['web']
+                                signatures=g.get('signatures'),
+                                web = g.get('web'))
                     groups.append(group)
                 groups.sort(key=lambda x: x.id)
                 return groups
                 
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
     def get_invitations(self, id=None, invitee=None, parentNote=None, replyForum=None, signature=None, note=None):
         """Returns a list of Group objects based on the filters provided."""
@@ -239,14 +260,17 @@ class Client(object):
                     web = i.get('web'),
                     process = i.get('process')
                     )
-
                     invitations.append(invitation)
                     invitations.sort(key=lambda x: x.id)
                 return invitations
                 
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
     def get_notes(self, id=None, forum=None, invitation=None, parent=None, tauthor=None, signature=None, writer=None, includeTrash=None):
         """Returns a list of Note objects based on the filters provided."""
@@ -296,8 +320,12 @@ class Client(object):
                 return notes
                 
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
     def post_group(self, group):
         """posts the group. Upon success, returns the original Group object."""
@@ -308,8 +336,12 @@ class Client(object):
             else:
                 return group
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
 
     def post_invitation(self, invitation):
@@ -321,8 +353,12 @@ class Client(object):
             else:
                 return invitation
         except requests.exceptions.HTTPError as e:
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
     def post_note(self, note):
         """posts the note. Upon success, returns the original Note object."""
@@ -333,18 +369,16 @@ class Client(object):
             else:
                 return note
         except requests.exceptions.HTTPError as e:
-            print response.json()
-            for error in response.json()['errors']:
-                print error
+            try:
+                for error in response.json()['errors']:
+                    return error
+            except KeyError:
+                for error in response.json()['error']:
+                    return error
 
     def send_mail(self, subject, recipients, message):
         r = requests.post(self.mail_url, json={'groups': recipients, 'subject': subject , 'message': message}, headers=self.headers)
         r.raise_for_status()
-
-
-
-
-
 
 class Group(object):
     
@@ -377,7 +411,7 @@ class Group(object):
             'nonreaders': self.nonreaders,
             'signatories': self.signatories
         }
-        if hasattr(self,'web'):
+        if self.web !=None:
             body['web']=self.web
         return body
 
@@ -406,8 +440,6 @@ class Group(object):
 
     def post(self, client):
         client.post_group(self)
-
-
 
 class Invitation(object):
     def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None):
@@ -487,6 +519,7 @@ class Note(object):
         self.nonreaders = nonreaders
         self.signatures = signatures
         self.writers = writers
+        self.number = number
 
     def to_json(self):
         body = {
@@ -502,6 +535,7 @@ class Note(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatures': self.signatures,
-            'writers': self.writers
+            'writers': self.writers,
+            'number':self.number
         }
         return body
