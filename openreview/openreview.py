@@ -79,14 +79,16 @@ class Client(object):
             else:
                 g = response.json()['groups'][0]
                 group = Group(g['id'],
-                    writers = g['writers'],
-                    members = g['members'], 
-                    readers = g['readers'], 
-                    signatories = g['signatories'], 
-                    signatures = g['signatures'], 
+                    cdate = g.get('cdate'),
+                    ddate = g.get('ddate'),
+                    writers = g.get('writers'),
+                    members = g.get('members'), 
+                    readers = g.get('readers'), 
+                    nonreaders = g.get('nonreaders'), 
+                    signatories = g.get('signatories'), 
+                    signatures = g.get('signatures'),
+                    web = g.get('web') 
                     )
-                if group.web != None:
-                    group.web = g['web']
                 return group
 
         except requests.exceptions.HTTPError as e:
@@ -104,11 +106,17 @@ class Client(object):
                 i = response.json()['invitations'][0]
                 invitation = Invitation(i['id'].split('/-/')[0],
                     i['id'].split('/-/')[1],
-                    readers = i['readers'], 
-                    writers = i['writers'],
-                    invitees = i['invitees'], 
-                    signatures = i['signatures'], 
-                    reply = i['reply']
+                    cdate = i.get('cdate'),
+                    rdate = i.get('rdate'),
+                    ddate = i.get('ddate'),
+                    duedate = i.get('duedate'),    
+                    readers = i.get('readers'), 
+                    nonreaders = i.get('nonreaders'), 
+                    writers = i.get('writers'),
+                    invitees = i.get('invitees'), 
+                    noninvitees = i.get('noninvitees'), 
+                    signatures = i.get('signatures'), 
+                    reply = i.get('reply')
                     )
                 if hasattr(i,'web'):
                     invitation.web = i['web']
@@ -130,14 +138,19 @@ class Client(object):
                 response.raise_for_status()
             else:
                 n = response.json()['notes'][0]
-                note = Note(content=n['content'],
-                    forum=n['forum'],
-                    invitation=n['invitation'],
-                    parent=n['parent'],
-                    pdfTransfer=n['pdfTransfer'],
-                    readers=n['readers'],
-                    signatures=n['signatures'],
-                    writers=n['writers']
+                note = Note(n['id'],
+                    n['number'],
+                    n.get('tcdate'),
+                    ddate=n.get('ddate'),
+                    content=n.get('content'),
+                    forum=n.get('forum'),
+                    invitation=n.get('invitation'),
+                    parent=n.get('parent'),
+                    pdfTransfer=n.get('pdfTransfer'),
+                    readers=n.get('readers'),
+                    nonreaders=n.get('nonreaders'),
+                    signatures=n.get('signatures'),
+                    writers=n.get('writers')
                     )
                 return note
 
@@ -167,11 +180,14 @@ class Client(object):
             else:
                 for g in response.json()['groups']:
                     group = Group(g['id'], 
-                                writers=g['writers'] if hasattr(g,'writers') else None, 
-                                members=g['members'] if hasattr(g,'members') else None, 
-                                readers=g['readers'] if hasattr(g,'readers') else None,
-                                signatories=g['signatories'] if hasattr(g,'signatories') else None,
-                                signatures=g['signatures'] if hasattr(g,'signatures') else None
+                                cdate = g.get('cdate'),
+                                ddate = g.get('ddate'),
+                                writers=g.get('writers'), 
+                                members=g.get('members'), 
+                                readers=g.get('readers'),
+                                nonreaders=g.get('nonreaders'),
+                                signatories=g.get('signatories'),
+                                signatures=g.get('signatures')
                                 )
                     if hasattr(g, 'web'):
                         group.web=g['web']
@@ -209,16 +225,21 @@ class Client(object):
                 for i in response.json()['invitations']:
                     invitation = Invitation(i['id'].split('/-/')[0],
                     i['id'].split('/-/')[1],
-                    readers = i['readers'], 
-                    writers = i['writers'],
-                    invitees = i['invitees'], 
-                    signatures = i['signatures'], 
-                    reply = i['reply']
+                    cdate = i.get('cdate'),
+                    rdate = i.get('rdate'),
+                    ddate = i.get('ddate'),
+                    duedate = i.get('duedate'),    
+                    readers = i.get('readers'), 
+                    nonreaders = i.get('nonreaders'), 
+                    writers = i.get('writers'),
+                    invitees = i.get('invitees'),
+                    noninvitees = i.get('noninvitees'), 
+                    signatures = i.get('signatures'), 
+                    reply = i.get('reply'),
+                    web = i.get('web'),
+                    process = i.get('process')
                     )
-                    if hasattr(invitation,'web'):
-                        invitation.web = i['web']
-                    if hasattr(invitation,'process'):
-                        invitation.process = i['process']
+
                     invitations.append(invitation)
                     invitations.sort(key=lambda x: x.id)
                 return invitations
@@ -255,14 +276,19 @@ class Client(object):
                 response.raise_for_status()
             else:
                 for n in response.json()['notes']:
-                    note = Note(content=n['content'],
-                        forum=n['forum'],
-                        invitation=n['invitation'],
-                        parent=n['parent'],
-                        pdfTransfer=n['pdfTransfer'],
-                        readers=n['readers'],
-                        signatures=n['signatures'],
-                        writers=n['writers']
+                    note = Note(n['id'],
+                        n['number'],
+                        n['tcdate'],
+                        ddate=n.get('ddate'),
+                        content=n.get('content'),
+                        forum=n.get('forum'),
+                        invitation=n.get('invitation'),
+                        parent=n.get('parent'),
+                        pdfTransfer=n.get('pdfTransfer'),
+                        readers=n.get('readers'),
+                        nonreaders=n.get('nonreaders'),
+                        signatures=n.get('signatures'),
+                        writers=n.get('writers')
                         )
 
                     notes.append(note)
@@ -322,12 +348,15 @@ class Client(object):
 
 class Group(object):
     
-    def __init__(self, id, writers=None, members=None, readers=None, signatories=None, signatures=None, web=None):
+    def __init__(self, id, cdate=None, ddate=None, writers=None, members=None, readers=None, nonreaders=None, signatories=None, signatures=None, web=None):
         # post attributes
         self.id=id
+        self.cdate=cdate
+        self.ddate=ddate
         self.writers=writers
         self.members=members
         self.readers=readers
+        self.nonreaders=nonreaders
         self.signatories=signatories
         self.signatures=signatures
         if web != None:
@@ -339,10 +368,13 @@ class Group(object):
     def to_json(self):
         body = {
             'id': self.id,
+            'cdate': self.cdate,
+            'ddate': self.ddate,
             'signatures': self.signatures,
             'writers': self.writers,
             'members': self.members,
             'readers': self.readers,
+            'nonreaders': self.nonreaders,
             'signatories': self.signatories
         }
         if hasattr(self,'web'):
@@ -378,9 +410,14 @@ class Group(object):
 
 
 class Invitation(object):
-    def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, reply=None, web=None, process=None, signatures=None):
+    def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None):
         self.id = inviter+'/-/'+suffix
+        self.cdate=cdate
+        self.rdate=rdate
+        self.ddate=ddate
+        self.duedate=duedate
         self.readers=readers
+        self.nonreaders=nonreaders
         self.writers=writers
         self.invitees=invitees
         self.noninvitees=noninvitees
@@ -396,7 +433,12 @@ class Invitation(object):
     def to_json(self):
         body = {
             'id': self.id,
+            'cdate': self.cdate,
+            'rdate': self.rdate,
+            'ddate': self.ddate,
+            'duedate': self.duedate,
             'readers': self.readers,
+            'nonreaders': self.nonreaders,
             'writers': self.writers,
             'invitees': self.invitees,
             'noninvitees': self.noninvitees,
@@ -431,24 +473,34 @@ class Invitation(object):
         return self
 
 class Note(object):
-    def __init__(self, content=None, forum=None, invitation=None, parent=None, pdfTransfer=None, readers=None, signatures=None, writers=None):
+    def __init__(self, id, number, tcdate, ddate=None, content=None, forum=None, invitation=None, parent=None, pdfTransfer=None, readers=None, nonreaders=None, signatures=None, writers=None):
+        self.id = id
+        self.number = number
+        self.tcdate=tcdate
+        self.ddate=ddate
         self.content = content
         self.forum = forum
         self.invitation = invitation
         self.parent = parent
         self.pdfTransfer = pdfTransfer
         self.readers = readers
+        self.nonreaders = nonreaders
         self.signatures = signatures
         self.writers = writers
 
     def to_json(self):
         body = {
+            'id': self.id,
+            'tcdate': self.tcdate,
+            'ddate': self.ddate,
+            'number': self.number,
             'content': self.content,
             'forum': self.forum,
             'invitation': self.invitation,
             'parent': self.parent,
             'pdfTransfer': self.pdfTransfer,
             'readers': self.readers,
+            'nonreaders': self.nonreaders,
             'signatures': self.signatures,
             'writers': self.writers
         }
