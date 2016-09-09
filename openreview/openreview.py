@@ -424,8 +424,8 @@ class Group(object):
     def add_member(self, member):
         if type(member) is Group:
             self.members.append(member.id)
-        if type(member) is str:
-            self.members.append(member)
+        else:
+            self.members.append(str(member))
         return self
 
     def remove_member(self, member):
@@ -434,9 +434,9 @@ class Group(object):
                 self.members.remove(member.id)
             except(ValueError):
                 pass
-        if type(member) is str:
+        else:
             try:
-                self.members.remove(member)
+                self.members.remove(str(member))
             except(ValueError):
                 pass
         return self
@@ -490,8 +490,8 @@ class Invitation(object):
     def add_invitee(self, invitee):
         if type(invitee) is Group:
             self.invitees.append(invitee.id)
-        if type(invitee) is str:
-            self.invitees.append(invitee)
+        else:
+            self.invitees.append(str(invitee))
         return self
 
     def add_noninvitee(self, noninvitee):
@@ -500,11 +500,11 @@ class Invitation(object):
                 self.noninvitees.append(noninvitee.id)
             else:
                 self.noninvitees=[noninvitee.id]
-        if type(noninvitee) is str:
+        else:
             if self.noninvitees!=None:
-                self.noninvitees.append(noninvitee)
+                self.noninvitees.append(str(noninvitee))
             else:
-                self.noninvitees=[noninvitee]
+                self.noninvitees=[str(noninvitee)]
         return self
 
 class Note(object):
