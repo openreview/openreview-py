@@ -92,9 +92,9 @@ class Client(object):
                     readers = g.get('readers'), 
                     nonreaders = g.get('nonreaders'), 
                     signatories = g.get('signatories'), 
-                    signatures = g.get('signatures'),
-                    web = g.get('web') 
-                    )
+                    signatures = g.get('signatures'))
+                if 'web' in g:
+                    group.web = g['web']
                 return group
 
         except requests.exceptions.HTTPError as e:
@@ -206,8 +206,9 @@ class Client(object):
                                 readers=g.get('readers'),
                                 nonreaders=g.get('nonreaders'),
                                 signatories=g.get('signatories'),
-                                signatures=g.get('signatures'),
-                                web = g.get('web'))
+                                signatures=g.get('signatures'))
+                    if 'web' in g:
+                        group.web = g['web']
                     groups.append(group)
                 groups.sort(key=lambda x: x.id)
                 return groups
@@ -256,10 +257,12 @@ class Client(object):
                     invitees = i.get('invitees'),
                     noninvitees = i.get('noninvitees'), 
                     signatures = i.get('signatures'), 
-                    reply = i.get('reply'),
-                    web = i.get('web'),
-                    process = i.get('process')
+                    reply = i.get('reply')
                     )
+                    if 'web' in i:
+                        invitation.web = i['web']
+                    if 'process' in i:
+                        invitation.process = i['process']
                     invitations.append(invitation)
                     invitations.sort(key=lambda x: x.id)
                 return invitations
