@@ -396,12 +396,11 @@ class Group(object):
         self.nonreaders=nonreaders
         self.signatories=signatories
         self.signatures=signatures
+        self.web=None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
-        else:
-            self.web=None
-    
+        
     def to_json(self):
         body = {
             'id': self.id,
@@ -412,7 +411,8 @@ class Group(object):
             'members': self.members,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
-            'signatories': self.signatories
+            'signatories': self.signatories,
+            'web': self.web
         }
         if self.web !=None:
             body['web']=self.web
@@ -458,6 +458,8 @@ class Invitation(object):
         self.noninvitees=noninvitees
         self.signatures=signatures
         self.reply={} if reply==None else reply
+        self.web = None
+        self.process = None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
@@ -478,7 +480,9 @@ class Invitation(object):
             'invitees': self.invitees,
             'noninvitees': self.noninvitees,
             'signatures': self.signatures,
-            'reply':self.reply
+            'reply':self.reply,
+            'process': self.process,
+            'web': self.web
         }
 
         if hasattr(self,'web'):
