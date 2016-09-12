@@ -198,6 +198,7 @@ class Client(object):
                 response.raise_for_status()
             else:
                 for g in response.json()['groups']:
+                    g = self.get_group(g['id']).to_json()
                     group = Group(g['id'], 
                                 cdate = g.get('cdate'),
                                 ddate = g.get('ddate'),
