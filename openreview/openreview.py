@@ -159,7 +159,7 @@ class Client(object):
                     content=n.get('content'),
                     forum=n.get('forum'),
                     invitation=n.get('invitation'),
-                    parent=n.get('parent'),
+                    replyto=n.get('replyto'),
                     pdfTransfer=n.get('pdfTransfer'),
                     readers=n.get('readers'),
                     nonreaders=n.get('nonreaders'),
@@ -222,7 +222,7 @@ class Client(object):
                 for error in response.json()['error']:
                     return error
 
-    def get_invitations(self, id=None, invitee=None, parentNote=None, replyForum=None, signature=None, note=None):
+    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None):
         """Returns a list of Group objects based on the filters provided."""
         invitations=[]
         params = {}
@@ -230,8 +230,8 @@ class Client(object):
             params['id'] = id
         if invitee!=None:
             params['invitee'] = invitee
-        if parentNote!=None:
-            params['parentNote'] = parentNote
+        if replytoNote!=None:
+            params['replytoNote'] = replytoNote
         if replyForum!=None:
             params['replyForum'] = replyForum
         if signature!=None:
@@ -276,7 +276,7 @@ class Client(object):
                 for error in response.json()['error']:
                     return error
 
-    def get_notes(self, id=None, forum=None, invitation=None, parent=None, tauthor=None, signature=None, writer=None, includeTrash=None):
+    def get_notes(self, id=None, forum=None, invitation=None, replyto=None, tauthor=None, signature=None, writer=None, includeTrash=None):
         """Returns a list of Note objects based on the filters provided."""
         notes=[]
         params = {}
@@ -286,8 +286,8 @@ class Client(object):
             params['forum'] = forum
         if invitation!=None:
             params['invitation'] = invitation
-        if parent!=None:
-            params['parent'] = parent
+        if replyto!=None:
+            params['replyto'] = replyto
         if tauthor!=None:
             params['tauthor'] = tauthor
         if signature!=None:
@@ -311,7 +311,7 @@ class Client(object):
                         content=n.get('content'),
                         forum=n.get('forum'),
                         invitation=n.get('invitation'),
-                        parent=n.get('parent'),
+                        replyto=n.get('replyto'),
                         pdfTransfer=n.get('pdfTransfer'),
                         readers=n.get('readers'),
                         nonreaders=n.get('nonreaders'),
@@ -513,7 +513,7 @@ class Invitation(object):
         return self
 
 class Note(object):
-    def __init__(self, id, number, tcdate, ddate=None, content=None, forum=None, invitation=None, parent=None, pdfTransfer=None, readers=None, nonreaders=None, signatures=None, writers=None):
+    def __init__(self, id, number, tcdate, ddate=None, content=None, forum=None, invitation=None, replyto=None, pdfTransfer=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
         self.number = number
         self.tcdate=tcdate
@@ -521,7 +521,7 @@ class Note(object):
         self.content = content
         self.forum = forum
         self.invitation = invitation
-        self.parent = parent
+        self.replyto = replyto
         self.pdfTransfer = pdfTransfer
         self.readers = readers
         self.nonreaders = nonreaders
@@ -538,7 +538,7 @@ class Note(object):
             'content': self.content,
             'forum': self.forum,
             'invitation': self.invitation,
-            'parent': self.parent,
+            'replyto': self.replyto,
             'pdfTransfer': self.pdfTransfer,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
