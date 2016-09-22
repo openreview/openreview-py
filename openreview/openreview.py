@@ -383,6 +383,7 @@ class Client(object):
     def send_mail(self, subject, recipients, message):
         r = requests.post(self.mail_url, json={'groups': recipients, 'subject': subject , 'message': message}, headers=self.headers)
         r.raise_for_status()
+        return r
 
 class Group(object):
     
