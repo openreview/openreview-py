@@ -8,6 +8,11 @@ import ConfigParser
 from Crypto.Hash import HMAC, SHA256
 
 
+class GroupNotFound(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class Client(object):
 
@@ -55,12 +60,10 @@ class Client(object):
                 return str(token_response.json()['token'])
         except requests.exceptions.HTTPError as e:
             try:
-                for error in token_response.json()['errors']:
-                    return error
+                for error in response.json()['errors']:
+                    raise Exception("Error while logging in: "+error['type'])
             except KeyError:
-                for error in token_response.json()['error']:
-                    return error
-
+                raise e
 
 
     ## PUBLIC FUNCTIONS
@@ -98,12 +101,16 @@ class Client(object):
                 return group
 
         except requests.exceptions.HTTPError as e:
-            try:
-                for error in response.json()['errors']:
-                    return error
-            except KeyError:
-                for error in response.json()['error']:
-                    return error
+            print response.json()
+            raise e
+            # try:
+            #     for error in response.json()['errors']:
+            #         if error['type'] == 'Not Found':
+            #             raise GroupNotFound(id)
+            #         else:
+            #             raise Exception("Error while retrieving group: "+error['type'])
+            # except KeyError:
+            #     raise e
 
     def get_invitation(self, id):
         """Returns a single invitation by id if available"""
@@ -138,10 +145,9 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    return error
+                    raise Exception("Error while retrieving invitation: "+error['type'])
             except KeyError:
-                for error in response.json()['error']:
-                    return error
+                raise e
 
     def get_note(self, id):
         """Returns a single note by id if available"""
@@ -171,10 +177,9 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    return error
+                    raise Exception("Error while retrieving note: "+error['type'])
             except KeyError:
-                for error in response.json()['error']:
-                    return error
+                raise e
 
     def get_groups(self, prefix=None, regex=None, member=None, host=None, signatory=None):
         """Returns a list of Group objects based on the filters provided."""
@@ -217,10 +222,9 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    return error
+                    raise Exception("Error while retrieving groups: "+error['type'])
             except KeyError:
-                for error in response.json()['error']:
-                    return error
+                raise e
 
     def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None):
         """Returns a list of Group objects based on the filters provided."""
@@ -271,10 +275,9 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    return error
+                    raise Exception("Error while retrieving invitations: "+error['type'])
             except KeyError:
-                for error in response.json()['error']:
-                    return error
+                raise e
 
     def get_notes(self, id=None, forum=None, invitation=None, replyto=None, tauthor=None, signature=None, writer=None, includeTrash=None):
         """Returns a list of Note objects based on the filters provided."""
@@ -326,26 +329,37 @@ class Client(object):
         except requests.exceptions.HTTPError as e:
             try:
                 for error in response.json()['errors']:
-                    return error
+                    raise Exception("Error while retrieving notes: "+error['type'])
             except KeyError:
-                for error in response.json()['error']:
-                    return error
+                raise e
 
-    def post_group(self, group):
-        """posts the group. Upon success, returns the original Group object."""
-        response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
+    def exists(self, groupid):
         try:
-            if response.status_code != 200:
-                response.raise_for_status()
-            else:
-                return group
-        except requests.exceptions.HTTPError as e:
+            self.get_group(groupid)
+        except GroupNotFound:
+            return False
+        return True   
+        
+
+    def post_group(self, group, overwrite=True):
+        """posts the group. Upon success, returns the original Group object."""
+
+        if overwrite or not exists(group.id):
+            response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             try:
-                for error in response.json()['errors']:
-                    return error
-            except KeyError:
-                for error in response.json()['error']:
-                    return error
+                if response.status_code != 200:
+                    response.raise_for_status()
+                else:
+                    return group
+
+            except requests.exceptions.HTTPError as e:
+                try:
+                    for error in response.json()['errors']:
+                        raise Exception("Error while posting group: "+error['type'])
+                except KeyError:
+                    raise e
+        else:
+            return group
 
 
     def post_invitation(self, invitation):
