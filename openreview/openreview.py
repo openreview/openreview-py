@@ -80,19 +80,7 @@ class Client(object):
 
         g = response.json()['groups'][0]
         
-        group = Group(g['id'],
-            cdate = g.get('cdate'),
-            ddate = g.get('ddate'),
-            writers = g.get('writers'),
-            members = g.get('members'), 
-            readers = g.get('readers'), 
-            nonreaders = g.get('nonreaders'), 
-            signatories = g.get('signatories'), 
-            signatures = g.get('signatures'))
-        if 'web' in g:
-            group.web = g['web']
-        
-        return group
+        return Group.from_json(g)
 
 
     def get_invitation(self, id):
@@ -102,25 +90,7 @@ class Client(object):
 
         i = response.json()['invitations'][0]
 
-        invitation = Invitation(i['id'].split('/-/')[0],
-            i['id'].split('/-/')[1],
-            cdate = i.get('cdate'),
-            rdate = i.get('rdate'),
-            ddate = i.get('ddate'),
-            duedate = i.get('duedate'),    
-            readers = i.get('readers'), 
-            nonreaders = i.get('nonreaders'), 
-            writers = i.get('writers'),
-            invitees = i.get('invitees'), 
-            noninvitees = i.get('noninvitees'), 
-            signatures = i.get('signatures'), 
-            reply = i.get('reply')
-            )
-        if 'web' in i:
-            invitation.web = i['web']
-        if 'process' in i:
-            invitation.process = i['process']
-        return invitation
+        return Invitation.from_json(i)
 
 
     def get_note(self, id):
@@ -129,21 +99,7 @@ class Client(object):
         response = self.__handle_response(response)
 
         n = response.json()['notes'][0]
-        note = Note(n['id'],
-            n['number'],
-            n.get('tcdate'),
-            ddate=n.get('ddate'),
-            content=n.get('content'),
-            forum=n.get('forum'),
-            invitation=n.get('invitation'),
-            replyto=n.get('replyto'),
-            pdfTransfer=n.get('pdfTransfer'),
-            readers=n.get('readers'),
-            nonreaders=n.get('nonreaders'),
-            signatures=n.get('signatures'),
-            writers=n.get('writers')
-            )
-        return note
+        return Note.from_json(n)
 
 
     def get_groups(self, prefix=None, regex=None, member=None, host=None, signatory=None):
@@ -166,18 +122,8 @@ class Client(object):
 
         for g in response.json()['groups']:
             g = self.get_group(g['id']).to_json()
-            group = Group(g['id'], 
-                        cdate = g.get('cdate'),
-                        ddate = g.get('ddate'),
-                        writers=g.get('writers'), 
-                        members=g.get('members'), 
-                        readers=g.get('readers'),
-                        nonreaders=g.get('nonreaders'),
-                        signatories=g.get('signatories'),
-                        signatures=g.get('signatures'))
-            if 'web' in g:
-                group.web = g['web']
-            groups.append(group)
+            groups.append(Group.from_json(g))
+
         groups.sort(key=lambda x: x.id)
 
         return groups
@@ -204,24 +150,7 @@ class Client(object):
         response = self.__handle_response(response)
 
         for i in response.json()['invitations']:
-            invitation = Invitation(i['id'].split('/-/')[0],
-            i['id'].split('/-/')[1],
-            cdate = i.get('cdate'),
-            rdate = i.get('rdate'),
-            ddate = i.get('ddate'),
-            duedate = i.get('duedate'),    
-            readers = i.get('readers'), 
-            nonreaders = i.get('nonreaders'), 
-            writers = i.get('writers'),
-            invitees = i.get('invitees'),
-            noninvitees = i.get('noninvitees'), 
-            signatures = i.get('signatures'), 
-            reply = i.get('reply')
-            )
-            if 'web' in i:
-                invitation.web = i['web']
-            if 'process' in i:
-                invitation.process = i['process']
+            invitation = Invitation.from_json(i)
             invitations.append(invitation)
             invitations.sort(key=lambda x: x.id)
         return invitations
@@ -252,21 +181,7 @@ class Client(object):
         response = self.__handle_response(response)
 
         for n in response.json()['notes']:
-            note = Note(n['id'],
-                n['number'],
-                n['tcdate'],
-                ddate=n.get('ddate'),
-                content=n.get('content'),
-                forum=n.get('forum'),
-                invitation=n.get('invitation'),
-                replyto=n.get('replyto'),
-                pdfTransfer=n.get('pdfTransfer'),
-                readers=n.get('readers'),
-                nonreaders=n.get('nonreaders'),
-                signatures=n.get('signatures'),
-                writers=n.get('writers')
-                )
-
+            note = Note.from_json(n)
             notes.append(note)
         notes.sort(key=lambda x: x.forum)
         return notes
@@ -344,6 +259,21 @@ class Group(object):
             body['web']=self.web
         return body
 
+    @classmethod
+    def from_json(Group,g):
+        group = Group(g['id'],
+            cdate = g.get('cdate'),
+            ddate = g.get('ddate'),
+            writers = g.get('writers'),
+            members = g.get('members'), 
+            readers = g.get('readers'), 
+            nonreaders = g.get('nonreaders'), 
+            signatories = g.get('signatories'), 
+            signatures = g.get('signatures'))
+        if 'web' in g:
+            group.web = g['web']
+        return group
+
     def __str__(self):
         return '{:12}'.format('id: ')+self.id+'\n{:12}'.format('members: ')+', '.join(self.members)
 
@@ -417,6 +347,28 @@ class Invitation(object):
             body['process']=self.process
         return body
 
+    @classmethod
+    def from_json(Invitation,i):
+        invitation = Invitation(i['id'].split('/-/')[0],
+            i['id'].split('/-/')[1],
+            cdate = i.get('cdate'),
+            rdate = i.get('rdate'),
+            ddate = i.get('ddate'),
+            duedate = i.get('duedate'),    
+            readers = i.get('readers'), 
+            nonreaders = i.get('nonreaders'), 
+            writers = i.get('writers'),
+            invitees = i.get('invitees'), 
+            noninvitees = i.get('noninvitees'), 
+            signatures = i.get('signatures'), 
+            reply = i.get('reply')
+            )
+        if 'web' in i:
+            invitation.web = i['web']
+        if 'process' in i:
+            invitation.process = i['process']
+        return invitation
+
     def add_invitee(self, invitee):
         if type(invitee) is Group:
             self.invitees.append(invitee.id)
@@ -472,3 +424,21 @@ class Note(object):
             'number':self.number
         }
         return body
+
+    @classmethod
+    def from_json(Note,n):
+        note = Note(n['id'],
+        n['number'],
+        n['tcdate'],
+        ddate=n.get('ddate'),
+        content=n.get('content'),
+        forum=n.get('forum'),
+        invitation=n.get('invitation'),
+        replyto=n.get('replyto'),
+        pdfTransfer=n.get('pdfTransfer'),
+        readers=n.get('readers'),
+        nonreaders=n.get('nonreaders'),
+        signatures=n.get('signatures'),
+        writers=n.get('writers')
+        )
+        return note
