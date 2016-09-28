@@ -10,12 +10,6 @@ from Crypto.Hash import HMAC, SHA256
 class OpenReviewException(Exception):
     pass
 
-class GroupNotFound(OpenReviewException):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-
 class Client(object):
 
     def __init__(self, baseurl=None, process_dir='../process/', webfield_dir='../webfield/',username=None,password=None):
@@ -280,7 +274,7 @@ class Client(object):
     def exists(self, groupid):
         try:
             self.get_group(groupid)
-        except GroupNotFound:
+        except OpenReviewException:
             return False
         return True   
         
