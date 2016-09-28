@@ -18,7 +18,7 @@ class Client(object):
             try:
                 self.baseurl = os.environ['OPENREVIEW_BASEURL']
             except KeyError:
-                self.baseurl = 'http://openreview.net'
+                self.baseurl = 'http://localhost:3000'
         else:
             self.baseurl = baseurl
 
