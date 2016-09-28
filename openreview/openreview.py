@@ -121,7 +121,6 @@ class Client(object):
         response = self.__handle_response(response)
 
         for g in response.json()['groups']:
-            g = self.get_group(g['id']).to_json()
             groups.append(Group.from_json(g))
 
         groups.sort(key=lambda x: x.id)
@@ -152,7 +151,7 @@ class Client(object):
         for i in response.json()['invitations']:
             invitation = Invitation.from_json(i)
             invitations.append(invitation)
-            invitations.sort(key=lambda x: x.id)
+        invitations.sort(key=lambda x: x.id)
         return invitations
 
 
@@ -183,7 +182,6 @@ class Client(object):
         for n in response.json()['notes']:
             note = Note.from_json(n)
             notes.append(note)
-        notes.sort(key=lambda x: x.forum)
         return notes
 
     def exists(self, groupid):
