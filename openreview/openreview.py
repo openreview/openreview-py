@@ -222,6 +222,29 @@ class Client(object):
 
         return response
 
+    def add_members(self, groupId, members):
+        def add_member(group,members):     
+            response = requests.put(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
+            response = self.__handle_response(response)
+            return self.get_group(response.json()['id'])
+
+        if type(members)==str:
+            return add_member(groupId,[members])
+        if type(members)==list:
+            return add_member(groupId,members)
+    
+    def remove_members(self, groupId, members):
+        def remove_member(group,members):     
+            response = requests.delete(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
+            response = self.__handle_response(response)
+            return self.get_group(response.json()['id'])
+
+        if type(members)==str:
+            return remove_member(groupId,[members])
+        if type(members)==list:
+            return remove_member(groupId,members)
+
+
 class Group(object):
     
     def __init__(self, id, cdate=None, ddate=None, writers=None, members=None, readers=None, nonreaders=None, signatories=None, signatures=None, web=None):
