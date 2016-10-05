@@ -195,7 +195,7 @@ class Client(object):
     def post_group(self, group, overwrite=True):
         """posts the group. Upon success, returns the original Group object."""
 
-        if overwrite or not exists(group.id):
+        if overwrite or not self.exists(group.id):
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
 
@@ -222,6 +222,27 @@ class Client(object):
 
         return response
 
+    def add_members_to_group(self, group, members):
+        def add_member(group,members):     
+            response = requests.put(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
+            response = self.__handle_response(response)
+            return self.get_group(response.json()['id'])
+
+        if type(members)==str:
+            return add_member(group.id,[members])
+        if type(members)==list:
+            return add_member(group.id,members)
+    
+    def remove_members_from_group(self, group, members):
+        def remove_member(group,members):     
+            response = requests.delete(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
+            response = self.__handle_response(response)
+            return self.get_group(response.json()['id'])
+
+        if type(members)==str:
+            return remove_member(group.id,[members])
+        if type(members)==list:
+            return remove_member(group.id,members)
 class Group(object):
     
     def __init__(self, id, cdate=None, ddate=None, writers=None, members=None, readers=None, nonreaders=None, signatories=None, signatures=None, web=None):
