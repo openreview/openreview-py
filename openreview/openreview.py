@@ -37,7 +37,6 @@ class Client(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            print e
             for k,v in response.json().iteritems():
                 raise OpenReviewException(str(v))
 
