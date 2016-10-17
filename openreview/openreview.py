@@ -452,7 +452,7 @@ class Note(object):
         note = Note(
         id = n['id'],
         number = n['number'],
-        cdate = n['cdate'],
+        cdate = n.get('cdate'),
         tcdate = n['tcdate'],
         ddate=n.get('ddate'),
         content=n.get('content'),
