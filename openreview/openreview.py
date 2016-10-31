@@ -450,10 +450,10 @@ class Note(object):
     @classmethod
     def from_json(Note,n):
         note = Note(
-        id = n['id'],
+        id = n.get('id'),
         number = n.get('number'),
         cdate = n.get('cdate'),
-        tcdate = n['tcdate'],
+        tcdate = n.get('tcdate'),
         ddate=n.get('ddate'),
         content=n.get('content'),
         forum=n.get('forum'),
