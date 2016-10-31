@@ -451,7 +451,7 @@ class Note(object):
     def from_json(Note,n):
         note = Note(
         id = n['id'],
-        number = n['number'],
+        number = n.get('number'),
         cdate = n.get('cdate'),
         tcdate = n['tcdate'],
         ddate=n.get('ddate'),
