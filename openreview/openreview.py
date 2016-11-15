@@ -155,7 +155,7 @@ class Client(object):
         return invitations
 
 
-    def get_notes(self, id=None, forum=None, invitation=None, replyto=None, tauthor=None, signature=None, writer=None, includeTrash=None):
+    def get_notes(self, id=None, forum=None, invitation=None, replyto=None, tauthor=None, signature=None, writer=None, includeTrash=None, number=None):
         """Returns a list of Note objects based on the filters provided."""
         notes=[]
         params = {}
@@ -175,6 +175,8 @@ class Client(object):
             params['writer']=writer
         if includeTrash==True:
             params['trash']=True
+        if number!=None:
+            params['number'] = number
 
         response = requests.get(self.notes_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
