@@ -5,6 +5,7 @@ import json
 import os
 import getpass
 import ConfigParser
+import re
 from Crypto.Hash import HMAC, SHA256
 
 class OpenReviewException(Exception):
@@ -28,6 +29,7 @@ class Client(object):
         self.invitations_url = self.baseurl+'/invitations'
         self.mail_url = self.baseurl+'/mail'
         self.notes_url = self.baseurl+'/notes'
+        self.profiles_url = self.baseurl+'/user/profile'
         self.token = self.__login_user(username,password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
 
@@ -41,21 +43,21 @@ class Client(object):
                 raise OpenReviewException(str(v))
 
     def __login_user(self,username=None, password=None):
-        
+
         if username==None:
             try:
                 username = os.environ["OPENREVIEW_USERNAME"]
             except KeyError:
                 username = raw_input("Please provide your OpenReview username (e.g. username@umass.edu): ")
-        
-        if password==None:    
-            try:    
+
+        if password==None:
+            try:
                 password = os.environ["OPENREVIEW_PASSWORD"]
-            except KeyError:   
+            except KeyError:
                 password = getpass.getpass("Please provide your OpenReview password: ")
 
         self.user = {'id':username,'password':password}
-        
+
         response = requests.post(self.login_url, json=self.user)
         response = self.__handle_response(response)
 
@@ -79,7 +81,7 @@ class Client(object):
         response = self.__handle_response(response)
 
         g = response.json()['groups'][0]
-        
+
         return Group.from_json(g)
 
 
@@ -101,6 +103,17 @@ class Client(object):
         n = response.json()['notes'][0]
         return Note.from_json(n)
 
+    def get_profile(self, email_or_id):
+        """Returns a single profile (a note) by id, if available"""
+        tildematch = re.compile('~.+')
+        emailmatch = re.compile('.+@.+')
+        if tildematch.match(email_or_id):
+            att = 'id'
+        elif emailmatch.match(email_or_id):
+            att = 'email'
+        response = requests.get(self.profiles_url, params={att:email_or_id}, headers=self.headers)
+        profile = response.json()['profile']
+        return Note.from_json(profile)
 
     def get_groups(self, prefix=None, regex=None, member=None, host=None, signatory=None):
         """Returns a list of Group objects based on the filters provided."""
@@ -126,7 +139,7 @@ class Client(object):
         groups.sort(key=lambda x: x.id)
 
         return groups
-        
+
 
     def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None):
         """Returns a list of Group objects based on the filters provided."""
@@ -191,8 +204,8 @@ class Client(object):
             self.get_group(groupid)
         except OpenReviewException:
             return False
-        return True   
-        
+        return True
+
 
     def post_group(self, group, overwrite=True):
         """posts the group. Upon success, returns the original Group object."""
@@ -215,7 +228,7 @@ class Client(object):
         """posts the note. Upon success, returns the original Note object."""
         response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
         response = self.__handle_response(response)
-        
+
         return note
 
     def send_mail(self, subject, recipients, message):
@@ -225,7 +238,7 @@ class Client(object):
         return response
 
     def add_members_to_group(self, group, members):
-        def add_member(group,members):     
+        def add_member(group,members):
             response = requests.put(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
             response = self.__handle_response(response)
             return self.get_group(response.json()['id'])
@@ -234,9 +247,9 @@ class Client(object):
             return add_member(group.id,[members])
         if type(members)==list:
             return add_member(group.id,members)
-    
+
     def remove_members_from_group(self, group, members):
-        def remove_member(group,members):     
+        def remove_member(group,members):
             response = requests.delete(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
             response = self.__handle_response(response)
             return self.get_group(response.json()['id'])
@@ -247,7 +260,7 @@ class Client(object):
             return remove_member(group.id,members)
 
 class Group(object):
-    
+
     def __init__(self, id, cdate=None, ddate=None, writers=None, members=None, readers=None, nonreaders=None, signatories=None, signatures=None, web=None):
         # post attributes
         self.id=id
@@ -263,7 +276,7 @@ class Group(object):
         if web != None:
             with open(web) as f:
                 self.web = f.read()
-        
+
     def to_json(self):
         body = {
             'id': self.id,
@@ -287,10 +300,10 @@ class Group(object):
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             writers = g.get('writers'),
-            members = g.get('members'), 
-            readers = g.get('readers'), 
-            nonreaders = g.get('nonreaders'), 
-            signatories = g.get('signatories'), 
+            members = g.get('members'),
+            readers = g.get('readers'),
+            nonreaders = g.get('nonreaders'),
+            signatories = g.get('signatories'),
             signatures = g.get('signatures'))
         if 'web' in g:
             group.web = g['web']
@@ -376,13 +389,13 @@ class Invitation(object):
             cdate = i.get('cdate'),
             rdate = i.get('rdate'),
             ddate = i.get('ddate'),
-            duedate = i.get('duedate'),    
-            readers = i.get('readers'), 
-            nonreaders = i.get('nonreaders'), 
+            duedate = i.get('duedate'),
+            readers = i.get('readers'),
+            nonreaders = i.get('nonreaders'),
             writers = i.get('writers'),
-            invitees = i.get('invitees'), 
-            noninvitees = i.get('noninvitees'), 
-            signatures = i.get('signatures'), 
+            invitees = i.get('invitees'),
+            noninvitees = i.get('noninvitees'),
+            signatures = i.get('signatures'),
             reply = i.get('reply')
             )
         if 'web' in i:
