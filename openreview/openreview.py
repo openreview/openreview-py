@@ -13,7 +13,7 @@ class OpenReviewException(Exception):
 
 class Client(object):
 
-    def __init__(self, baseurl=None, process_dir='../process/', webfield_dir='../webfield/',username=None,password=None):
+    def __init__(self, baseurl=None, process_dir='../process/', webfield_dir='../webfield/',username=None,password=None,secure_activation=True):
         """CONSTRUCTOR DOCSTRING"""
         if baseurl==None:
             try:
@@ -31,6 +31,7 @@ class Client(object):
         self.notes_url = self.baseurl+'/notes'
         self.profiles_url = self.baseurl+'/user/profile'
         self.token = self.__login_user(username,password)
+        self.secure_activation = secure_activation
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
 
     ## PRIVATE FUNCTIONS
@@ -74,6 +75,32 @@ class Client(object):
         """
         _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
         return _hash
+
+    def create_dummy(self,email=None,first=None,last=None,password=None):
+        self.register_user(email=email,first=first,last=last,password=password)
+        token = self.get_activatable(email=email)
+        user = self.activate_user(token=token)
+        return user
+
+    def register_user(self,email=None,first=None,last=None, middle='',password=None):
+        register_payload = {
+            'email': email,
+            'name': {   'first': first, 'last': last, 'middle': middle},
+            'password': password
+        }
+        response = requests.post(self.register_url, json=register_payload, headers=self.headers)
+        response = self.__handle_response(response)
+        return str(response.json())
+
+    def activate_user(self,token):
+        response = requests.put(self.baseurl+'/activate/'+token,headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_activatable(self,email=None):
+        response = requests.get(self.baseurl+'/activatable/'+email, params={}, headers=self.headers)
+        token = response.json()['activatable']['token'] if self.secure_activation else email
+        return token
 
     def get_group(self, id):
         """Returns a single Group by id if available"""
