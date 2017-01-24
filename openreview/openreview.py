@@ -75,9 +75,9 @@ class Client(object):
         _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
         return _hash
 
-    def create_dummy(self,email=None,first=None,last=None,password=None):
+    def create_dummy(self,email=None,first=None,last=None,password=None,secure_activation=True):
         self.register_user(email=email,first=first,last=last,password=password)
-        token = self.get_activatable(email=email)
+        token = self.get_activatable(email=email,secure_activation=secure_activation)
         user = self.activate_user(token=token)
         return user
 
