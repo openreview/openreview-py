@@ -75,6 +75,32 @@ class Client(object):
         _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
         return _hash
 
+    def create_dummy(self,email=None,first=None,last=None,password=None,secure_activation=True):
+        self.register_user(email=email,first=first,last=last,password=password)
+        token = self.get_activatable(email=email,secure_activation=secure_activation)
+        user = self.activate_user(token=token)
+        return user
+
+    def register_user(self,email=None,first=None,last=None, middle='',password=None):
+        register_payload = {
+            'email': email,
+            'name': {   'first': first, 'last': last, 'middle': middle},
+            'password': password
+        }
+        response = requests.post(self.register_url, json=register_payload, headers=self.headers)
+        response = self.__handle_response(response)
+        return str(response.json())
+
+    def activate_user(self,token):
+        response = requests.put(self.baseurl+'/activate/'+token,headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_activatable(self,email=None,secure_activation=True):
+        response = requests.get(self.baseurl+'/activatable/'+email, params={}, headers=self.headers)
+        token = response.json()['activatable']['token'] if secure_activation else email
+        return token
+
     def get_group(self, id):
         """Returns a single Group by id if available"""
         response = requests.get(self.groups_url, params={'id':id}, headers=self.headers)
