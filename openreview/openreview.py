@@ -13,7 +13,7 @@ class OpenReviewException(Exception):
 
 class Client(object):
 
-    def __init__(self, baseurl=None, process_dir='../process/', webfield_dir='../webfield/',username=None,password=None,secure_activation=True):
+    def __init__(self, baseurl=None, process_dir='../process/', webfield_dir='../webfield/',username=None,password=None):
         """CONSTRUCTOR DOCSTRING"""
         if baseurl==None:
             try:
@@ -31,7 +31,6 @@ class Client(object):
         self.notes_url = self.baseurl+'/notes'
         self.profiles_url = self.baseurl+'/user/profile'
         self.token = self.__login_user(username,password)
-        self.secure_activation = secure_activation
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
 
     ## PRIVATE FUNCTIONS
@@ -97,9 +96,9 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_activatable(self,email=None):
+    def get_activatable(self,email=None,secure_activation=True):
         response = requests.get(self.baseurl+'/activatable/'+email, params={}, headers=self.headers)
-        token = response.json()['activatable']['token'] if self.secure_activation else email
+        token = response.json()['activatable']['token'] if secure_activation else email
         return token
 
     def get_group(self, id):
