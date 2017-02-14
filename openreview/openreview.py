@@ -403,7 +403,7 @@ class Invitation(object):
             'taskCompletionCount': self.taskCompletionCount,
             'reply': self.reply,
             'process': self.process,
-            'web': self.web,
+            'web': self.web
         }
 
         if hasattr(self,'web'):
