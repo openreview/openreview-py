@@ -362,18 +362,20 @@ class Group(object):
         client.post_group(self)
 
 class Invitation(object):
-    def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None):
+    def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
         self.id = inviter+'/-/'+suffix
-        self.cdate=cdate
-        self.rdate=rdate
-        self.ddate=ddate
-        self.duedate=duedate
-        self.readers=readers
-        self.nonreaders=nonreaders
-        self.writers=writers
-        self.invitees=invitees
-        self.noninvitees=noninvitees
-        self.signatures=signatures
+        self.cdate = cdate
+        self.rdate = rdate
+        self.ddate = ddate
+        self.duedate = duedate
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.writers = writers
+        self.invitees = invitees
+        self.noninvitees = noninvitees
+        self.signatures = signatures
+        self.multiReply = multiReply
+        self.taskCompletionCount = taskCompletionCount
         self.reply={} if reply==None else reply
         self.web = None
         self.process = None
@@ -397,9 +399,11 @@ class Invitation(object):
             'invitees': self.invitees,
             'noninvitees': self.noninvitees,
             'signatures': self.signatures,
-            'reply':self.reply,
+            'multiReply': self.multiReply,
+            'taskCompletionCount': self.taskCompletionCount,
+            'reply': self.reply,
             'process': self.process,
-            'web': self.web
+            'web': self.web,
         }
 
         if hasattr(self,'web'):
@@ -422,6 +426,8 @@ class Invitation(object):
             invitees = i.get('invitees'),
             noninvitees = i.get('noninvitees'),
             signatures = i.get('signatures'),
+            multiReply = i.get('multiReply'),
+            taskCompletionCount = i.get('taskCompletionCount'),
             reply = i.get('reply')
             )
         if 'web' in i:
