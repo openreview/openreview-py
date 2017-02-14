@@ -255,7 +255,7 @@ class Client(object):
         response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
         response = self.__handle_response(response)
 
-        return note
+        return Note.from_json(response.json())
 
     def send_mail(self, subject, recipients, message):
         response = requests.post(self.mail_url, json={'groups': recipients, 'subject': subject , 'message': message}, headers=self.headers)
