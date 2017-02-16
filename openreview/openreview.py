@@ -13,7 +13,7 @@ class OpenReviewException(Exception):
 
 class Client(object):
 
-    def __init__(self, baseurl=None, process_dir='../process/', webfield_dir='../webfield/',username=None,password=None):
+    def __init__(self, baseurl = None, process_dir = '../process/', webfield_dir = '../webfield/', username = None, password = None):
         """CONSTRUCTOR DOCSTRING"""
         if baseurl==None:
             try:
@@ -23,20 +23,27 @@ class Client(object):
         else:
             self.baseurl = baseurl
 
-        self.groups_url = self.baseurl+'/groups'
-        self.login_url = self.baseurl+'/login'
-        self.register_url = self.baseurl+'/register'
-        self.invitations_url = self.baseurl+'/invitations'
-        self.mail_url = self.baseurl+'/mail'
-        self.notes_url = self.baseurl+'/notes'
-        self.profiles_url = self.baseurl+'/user/profile'
-        self.token = self.__login_user(username,password)
+        self.groups_url = self.baseurl + '/groups'
+        self.login_url = self.baseurl + '/login'
+        self.register_url = self.baseurl + '/register'
+        self.invitations_url = self.baseurl + '/invitations'
+        self.mail_url = self.baseurl + '/mail'
+        self.notes_url = self.baseurl + '/notes'
+        self.tags_url = self.baseurl + '/tags'
+        self.profiles_url = self.baseurl + '/user/profile'
+        self.token = self.__login_user(username, password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
 
     ## PRIVATE FUNCTIONS
     def __handle_response(self,response):
         try:
             response.raise_for_status()
+
+            if 'errors' in response.json():
+                raise OpenReviewException(response.json()['errors'])
+            if 'error' in response.json():
+                raise OpenReviewException(response.json()['error'])
+
             return response
         except requests.exceptions.HTTPError as e:
             for k,v in response.json().iteritems():
@@ -75,59 +82,64 @@ class Client(object):
         _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
         return _hash
 
-    def create_dummy(self,email=None,first=None,last=None,password=None,secure_activation=True):
-        self.register_user(email=email,first=first,last=last,password=password)
-        token = self.get_activatable(email=email,secure_activation=secure_activation)
-        user = self.activate_user(token=token)
+    def create_dummy(self, email = None, first = None, last = None, password = None, secure_activation = True):
+        self.register_user(email = email,first = first, last = last, password = password)
+
+        if secure_activation:
+            token = '%s' % raw_input('enter the activation token: ')
+        else:
+            token = self.get_activatable(token = email)
+
+        user = self.activate_user(token = token)
         return user
 
-    def register_user(self,email=None,first=None,last=None, middle='',password=None):
+    def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         register_payload = {
             'email': email,
             'name': {   'first': first, 'last': last, 'middle': middle},
             'password': password
         }
-        response = requests.post(self.register_url, json=register_payload, headers=self.headers)
+        response = requests.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
         return str(response.json())
 
-    def activate_user(self,token):
-        response = requests.put(self.baseurl+'/activate/'+token,headers=self.headers)
+    def activate_user(self, token):
+        response = requests.put(self.baseurl + '/activate/' + token, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
-    def get_activatable(self,email=None,secure_activation=True):
-        response = requests.get(self.baseurl+'/activatable/'+email, params={}, headers=self.headers)
-        token = response.json()['activatable']['token'] if secure_activation else email
+    def get_activatable(self, token = None):
+        response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
+        token = response.json()['activatable']['token']
         return token
 
     def get_group(self, id):
         """Returns a single Group by id if available"""
-        response = requests.get(self.groups_url, params={'id':id}, headers=self.headers)
+        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
-
         g = response.json()['groups'][0]
-
         return Group.from_json(g)
-
 
     def get_invitation(self, id):
         """Returns a single invitation by id if available"""
-        response = requests.get(self.invitations_url, params={'id':id}, headers=self.headers)
+        response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
-
         i = response.json()['invitations'][0]
-
         return Invitation.from_json(i)
-
 
     def get_note(self, id):
         """Returns a single note by id if available"""
-        response = requests.get(self.notes_url, params={'id':id}, headers=self.headers)
+        response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
-
         n = response.json()['notes'][0]
         return Note.from_json(n)
+
+    def get_tag(self, id):
+        """Returns a single tag by id if available"""
+        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = self.__handle_response(response)
+        t = response.json()['tags'][0]
+        return Tag.from_json(t)
 
     def get_profile(self, email_or_id):
         """Returns a single profile (a note) by id, if available"""
@@ -137,11 +149,11 @@ class Client(object):
             att = 'id'
         elif emailmatch.match(email_or_id):
             att = 'email'
-        response = requests.get(self.profiles_url, params={att:email_or_id}, headers=self.headers)
+        response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
         profile = response.json()['profile']
         return Note.from_json(profile)
 
-    def get_groups(self, prefix=None, regex=None, member=None, host=None, signatory=None):
+    def get_groups(self, prefix = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
         groups=[]
         params = {}
@@ -156,18 +168,16 @@ class Client(object):
         if signatory!=None:
             params['signatory'] = signatory
 
-        response = requests.get(self.groups_url, params=params, headers=self.headers)
+        response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
-
         for g in response.json()['groups']:
             groups.append(Group.from_json(g))
 
-        groups.sort(key=lambda x: x.id)
-
+        groups.sort(key = lambda x: x.id)
         return groups
 
 
-    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None):
+    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None):
         """Returns a list of Group objects based on the filters provided."""
         invitations=[]
         params = {}
@@ -194,36 +204,57 @@ class Client(object):
         return invitations
 
 
-    def get_notes(self, id=None, forum=None, invitation=None, replyto=None, tauthor=None, signature=None, writer=None, includeTrash=None, number=None):
+    def get_notes(self, id = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None):
         """Returns a list of Note objects based on the filters provided."""
         notes=[]
         params = {}
-        if id!=None:
+        if id != None:
             params['id'] = id
-        if forum!=None:
+        if forum != None:
             params['forum'] = forum
-        if invitation!=None:
+        if invitation != None:
             params['invitation'] = invitation
-        if replyto!=None:
+        if replyto != None:
             params['replyto'] = replyto
-        if tauthor!=None:
+        if tauthor != None:
             params['tauthor'] = tauthor
-        if signature!=None:
+        if signature != None:
             params['signature'] = signature
-        if writer!=None:
-            params['writer']=writer
-        if includeTrash==True:
+        if writer != None:
+            params['writer'] = writer
+        if includeTrash == True:
             params['trash']=True
-        if number!=None:
+        if number != None:
             params['number'] = number
 
-        response = requests.get(self.notes_url, params=params, headers=self.headers)
+        response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
         for n in response.json()['notes']:
             note = Note.from_json(n)
             notes.append(note)
         return notes
+
+    def get_tags(self, id = None, invitation = None, forum = None):
+        """Returns a list of Note objects based on the filters provided."""
+        tags = []
+        params = {}
+
+        if id != None:
+            params['id'] = id
+        if forum != None:
+            params['forum'] = forum
+        if invitation != None:
+            params['invitation'] = invitation
+
+        response = requests.get(self.tags_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        for t in response.json()['tags']:
+            tag = Tag.from_json(t)
+            tags.append(tag)
+        return tags
+
 
     def exists(self, groupid):
         try:
@@ -233,39 +264,46 @@ class Client(object):
         return True
 
 
-    def post_group(self, group, overwrite=True):
-        """posts the group. Upon success, returns the original Group object."""
+    def post_group(self, group, overwrite = True):
+        """posts the group. Upon success, returns the posted Group object."""
 
         if overwrite or not self.exists(group.id):
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
 
-        return group
+        return Group.from_json(response.json())
 
 
     def post_invitation(self, invitation):
-        """posts the invitation. Upon success, returns the original Invitation object."""
-        response = requests.post(self.invitations_url, json=invitation.to_json(), headers=self.headers)
+        """posts the invitation. Upon success, returns the posted Invitation object."""
+        response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
-        return invitation
+        return Invitation.from_json(response.json())
 
     def post_note(self, note):
-        """posts the note. Upon success, returns the original Note object."""
-        response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
+        """posts the note. Upon success, returns the posted Note object."""
+        response = requests.post(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
         return Note.from_json(response.json())
 
-    def send_mail(self, subject, recipients, message):
-        response = requests.post(self.mail_url, json={'groups': recipients, 'subject': subject , 'message': message}, headers=self.headers)
+    def post_tag(self, tag):
+        """posts the note. Upon success, returns the original Note object."""
+        response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
-        return response
+        return Tag.from_json(response.json())
+
+    def send_mail(self, subject, recipients, message):
+        response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
 
     def add_members_to_group(self, group, members):
         def add_member(group,members):
-            response = requests.put(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
+            response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
             return self.get_group(response.json()['id'])
 
@@ -276,7 +314,7 @@ class Client(object):
 
     def remove_members_from_group(self, group, members):
         def remove_member(group,members):
-            response = requests.delete(self.groups_url+'/members', json={'id':group,'members':members}, headers=self.headers)
+            response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
             return self.get_group(response.json()['id'])
 
@@ -286,8 +324,7 @@ class Client(object):
             return remove_member(group.id,members)
 
 class Group(object):
-
-    def __init__(self, id, cdate=None, ddate=None, writers=None, members=None, readers=None, nonreaders=None, signatories=None, signatures=None, web=None):
+    def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
         # post attributes
         self.id=id
         self.cdate=cdate
@@ -513,3 +550,49 @@ class Note(object):
         writers=n.get('writers')
         )
         return note
+
+class Tag(object):
+    def __init__(self, id=None, cdate=None, tcdate=None, ddate=None, tag=None, forum=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None):
+        self.id = id
+        self.cdate = cdate
+        self.tcdate = tcdate
+        self.ddate = ddate
+        self.tag = tag
+        self.forum = forum
+        self.invitation = invitation
+        self.replyto = replyto
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.signatures = signatures
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'cdate': self.cdate,
+            'tcdate': self.tcdate,
+            'ddate': self.ddate,
+            'tag': self.tag,
+            'forum': self.forum,
+            'invitation': self.invitation,
+            'replyto': self.replyto,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'signatures': self.signatures
+        }
+
+    @classmethod
+    def from_json(Tag, t):
+        tag = Tag(
+            id = t.get('id'),
+            cdate = t.get('cdate'),
+            tcdate = t.get('tcdate'),
+            ddate = t.get('ddate'),
+            tag = t.get('tag'),
+            forum = t.get('forum'),
+            invitation = t.get('invitation'),
+            replyto = t.get('replyto'),
+            readers = t.get('readers'),
+            nonreaders = t.get('nonreaders'),
+            signatures = t.get('signatures'),
+        )
+        return tag
