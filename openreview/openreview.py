@@ -323,6 +323,11 @@ class Client(object):
         if type(members)==list:
             return remove_member(group.id,members)
 
+    def search_notes(self, term, content = 'all', group = 'all'):
+        response = requests.get(self.notes_url + '/search', params = {'term': term, 'content': content, 'group': group}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()['notes']
+
 class Group(object):
     def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
         # post attributes
