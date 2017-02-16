@@ -155,7 +155,6 @@ class Client(object):
 
     def get_groups(self, prefix = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
-        groups=[]
         params = {}
         if prefix!=None:
             params['regex'] = prefix+'.*'
@@ -170,16 +169,13 @@ class Client(object):
 
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
-        for g in response.json()['groups']:
-            groups.append(Group.from_json(g))
-
+        groups = [Group.from_json(g) for g in response.json()['groups']]
         groups.sort(key = lambda x: x.id)
         return groups
 
 
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None):
         """Returns a list of Group objects based on the filters provided."""
-        invitations=[]
         params = {}
         if id!=None:
             params['id'] = id
@@ -197,16 +193,14 @@ class Client(object):
         response = requests.get(self.invitations_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
-        for i in response.json()['invitations']:
-            invitation = Invitation.from_json(i)
-            invitations.append(invitation)
-        invitations.sort(key=lambda x: x.id)
+        invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
+        invitations.sort(key = lambda x: x.id)
         return invitations
+
 
 
     def get_notes(self, id = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None):
         """Returns a list of Note objects based on the filters provided."""
-        notes=[]
         params = {}
         if id != None:
             params['id'] = id
@@ -230,14 +224,11 @@ class Client(object):
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        for n in response.json()['notes']:
-            note = Note.from_json(n)
-            notes.append(note)
-        return notes
+        return [Note.from_json(n) for n in response.json()['notes']]
+
 
     def get_tags(self, id = None, invitation = None, forum = None):
         """Returns a list of Note objects based on the filters provided."""
-        tags = []
         params = {}
 
         if id != None:
@@ -250,11 +241,7 @@ class Client(object):
         response = requests.get(self.tags_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        for t in response.json()['tags']:
-            tag = Tag.from_json(t)
-            tags.append(tag)
-        return tags
-
+        return [Tag.from_json(t) for t in response.json()['tags']]
 
     def exists(self, groupid):
         try:
@@ -326,7 +313,7 @@ class Client(object):
     def search_notes(self, term, content = 'all', group = 'all'):
         response = requests.get(self.notes_url + '/search', params = {'term': term, 'content': content, 'group': group}, headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()['notes']
+        return [Note.from_json(n) for n in response.json()['notes']]
 
 class Group(object):
     def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
