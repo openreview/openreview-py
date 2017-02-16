@@ -581,18 +581,18 @@ class Tag(object):
         }
 
     @classmethod
-    def from_json(Note,n):
-        note = Note(
-            id = n.get('id'),
-            cdate = n.get('cdate'),
-            tcdate = n.get('tcdate'),
-            ddate = n.get('ddate'),
-            tag = n.get('tag'),
-            forum = n.get('forum'),
-            invitation = n.get('invitation'),
-            replyto = n.get('replyto'),
-            readers = n.get('readers'),
-            nonreaders = n.get('nonreaders'),
-            signatures = n.get('signatures'),
+    def from_json(Tag, t):
+        tag = Tag(
+            id = t.get('id'),
+            cdate = t.get('cdate'),
+            tcdate = t.get('tcdate'),
+            ddate = t.get('ddate'),
+            tag = t.get('tag'),
+            forum = t.get('forum'),
+            invitation = t.get('invitation'),
+            replyto = t.get('replyto'),
+            readers = t.get('readers'),
+            nonreaders = t.get('nonreaders'),
+            signatures = t.get('signatures'),
         )
-        return note
+        return tag
