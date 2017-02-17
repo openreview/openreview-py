@@ -494,8 +494,9 @@ class Invitation(object):
         return self
 
 class Note(object):
-    def __init__(self, id=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None, writers=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
+        self.original = original
         self.number = number
         self.cdate = cdate
         self.tcdate=tcdate
@@ -514,6 +515,7 @@ class Note(object):
     def to_json(self):
         body = {
             'id': self.id,
+            'original': self.original,
             'cdate':self.cdate,
             'tcdate': self.tcdate,
             'ddate': self.ddate,
@@ -535,6 +537,7 @@ class Note(object):
     def from_json(Note,n):
         note = Note(
         id = n.get('id'),
+        original = n.get('original'),
         number = n.get('number'),
         cdate = n.get('cdate'),
         tcdate = n.get('tcdate'),
