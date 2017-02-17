@@ -228,7 +228,7 @@ class Client(object):
 
 
     def get_tags(self, id = None, invitation = None, forum = None):
-        """Returns a list of Note objects based on the filters provided."""
+        """Returns a list of Tag objects based on the filters provided."""
         params = {}
 
         if id != None:
@@ -272,7 +272,6 @@ class Client(object):
         """posts the note. Upon success, returns the posted Note object."""
         response = requests.post(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
-
         return Note.from_json(response.json())
 
     def post_tag(self, tag):
