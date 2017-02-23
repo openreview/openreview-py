@@ -174,7 +174,7 @@ class Client(object):
         return groups
 
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None):
+    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
         if id!=None:
@@ -189,6 +189,10 @@ class Client(object):
             params['signature'] = signature
         if note!=None:
             params['note']=note
+        if regex:
+            params['regex'] = regex
+        if tags:
+            params['tags'] = tags
 
         response = requests.get(self.invitations_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
