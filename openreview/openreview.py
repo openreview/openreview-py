@@ -110,6 +110,7 @@ class Client(object):
 
     def get_activatable(self, token = None):
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
+        response = __handle_response(response)
         token = response.json()['activatable']['token']
         return token
 

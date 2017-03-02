@@ -1,9 +1,9 @@
 from setuptools import setup
 
-setup(name='OpenReviewPy',
-      version='0.5.35',
+setup(name='openreview-py',
+      version='0.5.36',
       description='OpenReview client library',
-      url='https://github.com/iesl/OpenReviewPy',
+      url='https://github.com/iesl/openreview-py',
       author='Michael Spector',
       author_email='spector@cs.umass.edu',
       license='MIT',
