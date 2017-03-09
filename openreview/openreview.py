@@ -155,10 +155,9 @@ class Client(object):
         profile = response.json()['profile']
         return Note.from_json(profile)
 
-    def get_groups(self, id = None, prefix = None, regex = None, member = None, host = None, signatory = None):
+    def get_groups(self, prefix = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
-        if id != None: params['id'] = id
         if prefix != None: params['regex'] = prefix+'.*'
         if regex != None: params['regex'] = regex
         if member != None: params['member'] = member
