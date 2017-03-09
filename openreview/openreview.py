@@ -151,22 +151,19 @@ class Client(object):
         elif emailmatch.match(email_or_id):
             att = 'email'
         response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
+        response = self.__handle_response(response)
         profile = response.json()['profile']
         return Note.from_json(profile)
 
-    def get_groups(self, prefix = None, regex = None, member = None, host = None, signatory = None):
+    def get_groups(self, id = None, prefix = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
-        if prefix!=None:
-            params['regex'] = prefix+'.*'
-        if regex!=None:
-            params['regex'] = regex
-        if member!=None:
-            params['member'] = member
-        if host!=None:
-            params['host'] = host
-        if signatory!=None:
-            params['signatory'] = signatory
+        if id != None: params['id'] = id
+        if prefix != None: params['regex'] = prefix+'.*'
+        if regex != None: params['regex'] = regex
+        if member != None: params['member'] = member
+        if host != None: params['host'] = host
+        if signatory != None: params['signatory'] = signatory
 
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
