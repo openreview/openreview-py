@@ -486,7 +486,7 @@ class Invitation(object):
         return self
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None, writers=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, referent=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
         self.original = original
         self.number = number
@@ -495,6 +495,7 @@ class Note(object):
         self.ddate=ddate
         self.content = content
         self.forum = forum
+        self.referent = referent
         self.invitation = invitation
         self.replyto = replyto
         self.active = active or True
@@ -514,6 +515,7 @@ class Note(object):
             'number': self.number,
             'content': self.content,
             'forum': self.forum,
+            'referent': self.referent,
             'invitation': self.invitation,
             'replyto': self.replyto,
             'active': self.active,
@@ -536,6 +538,7 @@ class Note(object):
         ddate=n.get('ddate'),
         content=n.get('content'),
         forum=n.get('forum'),
+        referent=n.get('referent'),
         invitation=n.get('invitation'),
         replyto=n.get('replyto'),
         active=n.get('active'),
