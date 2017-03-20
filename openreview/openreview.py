@@ -150,6 +150,8 @@ class Client(object):
             att = 'id'
         elif emailmatch.match(email_or_id):
             att = 'email'
+        else:
+            raise OpenReviewException('Invalid ID or email address: %s' % email_or_id)
         response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
         response = self.__handle_response(response)
         profile = response.json()['profile']
