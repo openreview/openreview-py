@@ -23,6 +23,22 @@ class Client(object):
         else:
             self.baseurl = baseurl
 
+        if username==None:
+            try:
+                self.username = os.environ['OPENREVIEW_USERNAME']
+            except KeyError:
+                raise OpenReviewException('No username found. Please provide username or set environment variable OPENREVIEW_USERNAME.')
+        else:
+            self.username = username
+
+        if password==None:
+            try:
+                self.password = os.environ['OPENREVIEW_PASSWORD']
+            except KeyError:
+                raise OpenReviewException('No password found. Please provide password or set environment variable OPENREVIEW_PASSWORD.')
+        else:
+            self.password = password
+
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -31,11 +47,9 @@ class Client(object):
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
         self.profiles_url = self.baseurl + '/user/profile'
-        self.username = username
-        self.password = password
-        self.token = self.__login_user(username, password)
+        self.token = self.__login_user(self.username, self.password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
-        self.signature = self.get_profile(username).id if username != 'OpenReview.net' else '~Super_User1'
+        self.signature = self.get_profile(self.username).id
 
     ## PRIVATE FUNCTIONS
     def __handle_response(self,response):
@@ -151,10 +165,8 @@ class Client(object):
         emailmatch = re.compile('.+@.+')
         if tildematch.match(email_or_id):
             att = 'id'
-        elif emailmatch.match(email_or_id):
-            att = 'email'
         else:
-            raise OpenReviewException('Invalid ID or email address: %s' % email_or_id)
+            att = 'email'
         response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
         response = self.__handle_response(response)
         profile = response.json()['profile']
@@ -337,7 +349,7 @@ class Group(object):
         self.id=id
         self.cdate=cdate
         self.ddate=ddate
-        self.writers = [] if writers==None else writers
+        self.writers = [self.id] if writers==None else writers
         self.members = [] if members==None else members
         self.readers = ['everyone'] if readers==None else readers
         self.nonreaders = nonreaders
