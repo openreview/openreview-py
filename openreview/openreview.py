@@ -23,6 +23,22 @@ class Client(object):
         else:
             self.baseurl = baseurl
 
+        if username==None:
+            try:
+                self.username = os.environ['OPENREVIEW_USERNAME']
+            except KeyError:
+                raise OpenReviewException('No username found. Please provide username or set environment variable OPENREVIEW_USERNAME.')
+        else:
+            self.username = username
+
+        if password==None:
+            try:
+                self.password = os.environ['OPENREVIEW_PASSWORD']
+            except KeyError:
+                raise OpenReviewException('No password found. Please provide password or set environment variable OPENREVIEW_PASSWORD.')
+        else:
+            self.password = password
+
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -31,8 +47,9 @@ class Client(object):
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
         self.profiles_url = self.baseurl + '/user/profile'
-        self.token = self.__login_user(username, password)
+        self.token = self.__login_user(self.username, self.password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
+        self.signature = self.get_profile(self.username).id
 
     ## PRIVATE FUNCTIONS
     def __handle_response(self,response):
@@ -148,10 +165,8 @@ class Client(object):
         emailmatch = re.compile('.+@.+')
         if tildematch.match(email_or_id):
             att = 'id'
-        elif emailmatch.match(email_or_id):
-            att = 'email'
         else:
-            raise OpenReviewException('Invalid ID or email address: %s' % email_or_id)
+            att = 'email'
         response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
         response = self.__handle_response(response)
         profile = response.json()['profile']
@@ -255,9 +270,12 @@ class Client(object):
 
 
     def post_group(self, group, overwrite = True):
-        """posts the group. Upon success, returns the posted Group object."""
-
+        """
+        Posts the group. Upon success, returns the posted Group object.
+        If the group is unsigned, signs it using the client's default signature.
+        """
         if overwrite or not self.exists(group.id):
+            if not group.signatures: group.signatures = [self.signature]
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
 
@@ -265,14 +283,22 @@ class Client(object):
 
 
     def post_invitation(self, invitation):
-        """posts the invitation. Upon success, returns the posted Invitation object."""
+        """
+        Posts the invitation. Upon success, returns the posted Invitation object.
+        If the invitation is unsigned, signs it using the client's default signature.
+        """
+        if not invitation.signatures: invitation.signatures = [self.signature]
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
         return Invitation.from_json(response.json())
 
     def post_note(self, note):
-        """posts the note. Upon success, returns the posted Note object."""
+        """
+        Posts the note. Upon success, returns the posted Note object.
+        If the note is unsigned, signs it using the client's default signature
+        """
+        if not note.signatures: note.signatures = [self.signature]
         response = requests.post(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
         return Note.from_json(response.json())
@@ -323,12 +349,12 @@ class Group(object):
         self.id=id
         self.cdate=cdate
         self.ddate=ddate
-        self.writers=writers
-        self.members=members
-        self.readers=readers
-        self.nonreaders=nonreaders
-        self.signatories=signatories
-        self.signatures=signatures
+        self.writers = [self.id] if writers==None else writers
+        self.members = [] if members==None else members
+        self.readers = ['everyone'] if readers==None else readers
+        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.signatories = [self.id] if signatories==None else signatories
+        self.signatures = [] if signatures==None else signatures
         self.web=None
         if web != None:
             with open(web) as f:
@@ -393,29 +419,40 @@ class Group(object):
         client.post_group(self)
 
 class Invitation(object):
-    def __init__(self, inviter, suffix, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
-        self.id = inviter+'/-/'+suffix
+    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
+
+        default_reply = {
+            'forum': None,
+            'replyto': None,
+            'readers': {'values': ['everyone']},
+            'signatures': {'values-regex': '.*'},
+            'writers': {'values-regex': '.*'},
+            'content':{}
+        },
+
+        self.id = id
         self.cdate = cdate
         self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
-        self.readers = readers
-        self.nonreaders = nonreaders
-        self.writers = writers
-        self.invitees = invitees
-        self.noninvitees = noninvitees
-        self.signatures = signatures
+        self.readers = ['everyone'] if readers==None else readers
+        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.writers = ['everyone'] if readers==None else writers
+        self.invitees = ['everyone'] if invitees==None else invitees
+        self.noninvitees = [] if noninvitees==None else noninvitees
+        self.signatures = [] if signatures==None else signatures
         self.multiReply = multiReply
         self.taskCompletionCount = taskCompletionCount
-        self.reply={} if reply==None else reply
+        self.reply = default_reply if reply==None else reply
         self.web = None
-        self.process = None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
         if process != None:
             with open(process) as f:
                 self.process = f.read()
+        else:
+            self.process = 'function(){done(); return true;};'
 
     def to_json(self):
         body = {
@@ -445,8 +482,7 @@ class Invitation(object):
 
     @classmethod
     def from_json(Invitation,i):
-        invitation = Invitation(i['id'].split('/-/')[0],
-            i['id'].split('/-/')[1],
+        invitation = Invitation(i['id'],
             cdate = i.get('cdate'),
             rdate = i.get('rdate'),
             ddate = i.get('ddate'),
@@ -493,18 +529,18 @@ class Note(object):
         self.original = original
         self.number = number
         self.cdate = cdate
-        self.tcdate=tcdate
-        self.ddate=ddate
-        self.content = content
+        self.tcdate = tcdate
+        self.ddate = ddate
+        self.content = {} if content==None else content
         self.forum = forum
         self.referent = referent
         self.invitation = invitation
         self.replyto = replyto
         self.active = active or True
-        self.readers = readers
-        self.nonreaders = nonreaders
-        self.signatures = signatures
-        self.writers = writers
+        self.readers = ['everyone'] if readers==None else readers
+        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.signatures = [] if signatures==None else signatures
+        self.writers = [] if writers==None else writers
         self.number = number
 
     def to_json(self):
@@ -561,9 +597,9 @@ class Tag(object):
         self.forum = forum
         self.invitation = invitation
         self.replyto = replyto
-        self.readers = readers
-        self.nonreaders = nonreaders
-        self.signatures = signatures
+        self.readers = [] if readers==None else readers
+        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.signatures = [] if signatures==None else signatures
 
     def to_json(self):
         return {
