@@ -352,7 +352,7 @@ class Group(object):
         self.writers = [self.id] if writers==None else writers
         self.members = [] if members==None else members
         self.readers = ['everyone'] if readers==None else readers
-        self.nonreaders = nonreaders
+        self.nonreaders = [] if nonreaders==None else nonreaders
         self.signatories = [self.id] if signatories==None else signatories
         self.signatures = [] if signatures==None else signatures
         self.web=None
@@ -436,10 +436,10 @@ class Invitation(object):
         self.ddate = ddate
         self.duedate = duedate
         self.readers = ['everyone'] if readers==None else readers
-        self.nonreaders = nonreaders
+        self.nonreaders = [] if nonreaders==None else nonreaders
         self.writers = ['everyone'] if readers==None else writers
         self.invitees = ['everyone'] if invitees==None else invitees
-        self.noninvitees = noninvitees
+        self.noninvitees = [] if noninvitees==None else noninvitees
         self.signatures = [] if signatures==None else signatures
         self.multiReply = multiReply
         self.taskCompletionCount = taskCompletionCount
@@ -529,8 +529,8 @@ class Note(object):
         self.original = original
         self.number = number
         self.cdate = cdate
-        self.tcdate=tcdate
-        self.ddate=ddate
+        self.tcdate = tcdate
+        self.ddate = ddate
         self.content = {} if content==None else content
         self.forum = forum
         self.referent = referent
@@ -538,7 +538,7 @@ class Note(object):
         self.replyto = replyto
         self.active = active or True
         self.readers = ['everyone'] if readers==None else readers
-        self.nonreaders = nonreaders
+        self.nonreaders = [] if nonreaders==None else nonreaders
         self.signatures = [] if signatures==None else signatures
         self.writers = [] if writers==None else writers
         self.number = number
@@ -597,9 +597,9 @@ class Tag(object):
         self.forum = forum
         self.invitation = invitation
         self.replyto = replyto
-        self.readers = readers
-        self.nonreaders = nonreaders
-        self.signatures = signatures
+        self.readers = [] if readers==None else readers
+        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.signatures = [] if signatures==None else signatures
 
     def to_json(self):
         return {
