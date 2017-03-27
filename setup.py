@@ -1,11 +1,11 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='0.5.4.4',
+      version='0.5.4.5',
       description='OpenReview client library',
       url='https://github.com/iesl/openreview-py',
-      author='Michael Spector',
-      author_email='spector@cs.umass.edu',
+      author='Michael Spector, Melisa Bok',
+      author_email='spector@cs.umass.edu, bok@cs.umass.edu',
       license='MIT',
       packages=['openreview'],
       install_requires=[

@@ -448,11 +448,10 @@ class Invitation(object):
         if web != None:
             with open(web) as f:
                 self.web = f.read()
+        self.process = None
         if process != None:
             with open(process) as f:
                 self.process = f.read()
-        else:
-            self.process = 'function(){done(); return true;};'
 
     def to_json(self):
         body = {
