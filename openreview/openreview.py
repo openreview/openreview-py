@@ -1,12 +1,16 @@
 #!/usr/bin/python
 import requests
-
+import pprint
 import json
 import os
 import getpass
 import ConfigParser
 import re
 from Crypto.Hash import HMAC, SHA256
+import datetime
+
+def epoch_time():
+    return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
 
 class OpenReviewException(Exception):
     pass
@@ -353,18 +357,23 @@ class Group(object):
     def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
         # post attributes
         self.id=id
-        self.cdate=cdate
-        self.ddate=ddate
+        self.cdate = cdate if cdate != None else epoch_time()
+        self.ddate = ddate
         self.writers = [] if writers==None else writers
         self.members = [] if members==None else members
         self.readers = ['everyone'] if readers==None else readers
         self.nonreaders = [] if nonreaders==None else nonreaders
-        self.signatories = [self.id] if signatories==None else signatories
         self.signatures = [] if signatures==None else signatures
+        self.signatories = [self.id] if signatories==None else signatories
         self.web=None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
+
 
     def to_json(self):
         body = {
@@ -398,9 +407,6 @@ class Group(object):
             group.web = g['web']
         return group
 
-    def __str__(self):
-        return '{:12}'.format('id: ')+self.id+'\n{:12}'.format('members: ')+', '.join(self.members)
-
     def add_member(self, member):
         if type(member) is Group:
             self.members.append(member.id)
@@ -425,11 +431,11 @@ class Group(object):
         client.post_group(self)
 
 class Invitation(object):
-    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
+    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, replyto=None, forum=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
 
         default_reply = {
-            'forum': None,
-            'replyto': None,
+            'forum': forum,
+            'replyto': replyto,
             'readers': {'values': ['everyone']},
             'signatures': {'values-regex': '~.*'},
             'writers': {'values-regex': '~.*'},
@@ -437,7 +443,7 @@ class Invitation(object):
         }
 
         self.id = id
-        self.cdate = cdate
+        self.cdate = cdate if cdate != None else epoch_time()
         self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
@@ -458,6 +464,10 @@ class Invitation(object):
         if process != None:
             with open(process) as f:
                 self.process = f.read()
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
 
     def to_json(self):
         body = {
@@ -569,13 +579,12 @@ class Invitation(object):
 
         return Invitation
 
-
 class Note(object):
     def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, referent=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
         self.original = original
         self.number = number
-        self.cdate = cdate
+        self.cdate = cdate if cdate != None else epoch_time()
         self.tcdate = tcdate
         self.ddate = ddate
         self.content = {} if content==None else content
@@ -589,6 +598,10 @@ class Note(object):
         self.signatures = [] if signatures==None else signatures
         self.writers = [] if writers==None else writers
         self.number = number
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
 
     def to_json(self):
         body = {

@@ -8,8 +8,7 @@ setup(name='openreview-py',
       author_email='spector@cs.umass.edu, mbok@cs.umass.edu',
       license='MIT',
       packages=[
-          'openreview',
-          'webfield'
+          'openreview'
       ],
       install_requires=[
           'pycrypto',
