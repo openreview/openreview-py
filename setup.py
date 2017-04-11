@@ -7,7 +7,9 @@ setup(name='openreview-py',
       author='Michael Spector, Melisa Bok',
       author_email='spector@cs.umass.edu, mbok@cs.umass.edu',
       license='MIT',
-      packages=['openreview'],
+      packages=[
+          'openreview'
+      ],
       install_requires=[
           'pycrypto',
           'requests'
