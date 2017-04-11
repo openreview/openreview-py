@@ -515,67 +515,6 @@ class Invitation(object):
             invitation.process = i['process']
         return invitation
 
-    def add_reply_content(Invitation, fieldname='field', description=None, constraint=None, order=0, required=True):
-
-        predefined_content = {
-            'title': {
-                    'description': 'Title of paper.',
-                    'order': 1,
-                    'value-regex': '.{1,250}',
-                    'required':True
-            },
-            'authors': {
-                'description': 'Comma separated list of author names, as they appear in the paper.',
-                'order': 2,
-                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
-                'required':True
-            },
-            'authorids': {
-                'description': 'Comma separated list of author email addresses, in the same order as above.',
-                'order': 3,
-                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
-                'required':True
-            },
-            'TL;DR': {
-                'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
-                'order': 3,
-                'value-regex': '[^\\n]{0,250}',
-                'required':False
-            },
-            'abstract': {
-                'description': 'Abstract of paper.',
-                'order': 4,
-                'value-regex': '[\\S\\s]{1,5000}',
-                'required':True
-            },
-            'pdf': {
-                'description': 'Either upload a PDF file or provide a direct link to your PDF on ArXiv (link must begin with http(s) and end with .pdf)',
-                'order': 5,
-                'value-regex': 'upload|(http|https):\/\/.+\.pdf',
-                'required':True
-            },
-            'conflicts': {
-                'description': 'Comma separated list of email domains of people who would have a conflict of interest in reviewing this paper, (e.g., cs.umass.edu;google.com, etc.).',
-                'order': 100,
-                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
-                'required':True
-            }
-        }
-
-        if fieldname in predefined_content.keys():
-            Invitation.reply['content'][fieldname] = predefined_content[fieldname].copy()
-
-        if description:
-            Invitation.reply['content'][fieldname]['description'] = description
-
-        if order:
-            Invitation.reply['content'][fieldname]['order'] = order
-
-        if required != None:
-            Invitation.reply['content'][fieldname]['required'] = required
-
-        return Invitation
-
 class Note(object):
     def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, referent=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
