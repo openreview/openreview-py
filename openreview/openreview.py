@@ -24,7 +24,6 @@ class Client(object):
                 self.baseurl = os.environ['OPENREVIEW_BASEURL']
             except KeyError:
                 self.baseurl = raw_input('OPENREVIEW_BASEURL not found. Please provide a base URL: ')
-                #self.baseurl = 'http://localhost:3000'
         else:
             self.baseurl = baseurl
 
@@ -33,7 +32,6 @@ class Client(object):
                 self.username = os.environ['OPENREVIEW_USERNAME']
             except KeyError:
                 self.username = raw_input('OPENREVIEW_USERNAME not found. Please provide a username: ')
-                #raise OpenReviewException('No username found. Please provide username or set environment variable OPENREVIEW_USERNAME.')
         else:
             self.username = username
 
@@ -42,7 +40,6 @@ class Client(object):
                 self.password = os.environ['OPENREVIEW_PASSWORD']
             except KeyError:
                 self.password = raw_input('OPENREVIEW_PASSWORD not found. Please provide a password: ')
-                #raise OpenReviewException('No password found. Please provide password or set environment variable OPENREVIEW_PASSWORD.')
         else:
             self.password = password
 
