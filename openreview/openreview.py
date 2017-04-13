@@ -523,7 +523,7 @@ class Invitation(object):
         return self
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, referent=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None, writers=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
         self.original = original
         self.number = number
@@ -535,7 +535,6 @@ class Note(object):
         self.referent = referent
         self.invitation = invitation
         self.replyto = replyto
-        self.active = active or True
         self.readers = ['everyone'] if readers==None else readers
         self.nonreaders = [] if nonreaders==None else nonreaders
         self.signatures = [] if signatures==None else signatures
@@ -555,7 +554,6 @@ class Note(object):
             'referent': self.referent,
             'invitation': self.invitation,
             'replyto': self.replyto,
-            'active': self.active,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatures': self.signatures,
@@ -578,7 +576,6 @@ class Note(object):
         referent=n.get('referent'),
         invitation=n.get('invitation'),
         replyto=n.get('replyto'),
-        active=n.get('active'),
         readers=n.get('readers'),
         nonreaders=n.get('nonreaders'),
         signatures=n.get('signatures'),
@@ -587,7 +584,7 @@ class Note(object):
         return note
 
 class Tag(object):
-    def __init__(self, id=None, cdate=None, tcdate=None, ddate=None, tag=None, forum=None, invitation=None, replyto=None, active=None, readers=None, nonreaders=None, signatures=None):
+    def __init__(self, id=None, cdate=None, tcdate=None, ddate=None, tag=None, forum=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
