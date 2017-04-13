@@ -284,7 +284,7 @@ class Client(object):
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
 
-        return self.get_group(response.json()['id'])
+        return Group.from_json(response.json())
 
 
     def post_invitation(self, invitation):
@@ -297,7 +297,7 @@ class Client(object):
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
-        return self.get_invitation(response.json()['id'])
+        return Invitation.from_json(response.json())
 
     def post_note(self, note):
         """
@@ -308,14 +308,14 @@ class Client(object):
         response = requests.post(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
-        return self.get_note(response.json()['id'])
+        return Note.from_json(response.json())
 
     def post_tag(self, tag):
         """posts the tag. Upon success, returns the posted Tag object."""
         response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
-        return self.get_tag(response.json()['id'])
+        return Tag.from_json(response.json())
 
     def send_mail(self, subject, recipients, message):
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
@@ -327,7 +327,7 @@ class Client(object):
         def add_member(group,members):
             response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+            return self.get_group(response.json())
 
         if type(members)==str:
             return add_member(group.id,[members])
@@ -433,10 +433,10 @@ class Invitation(object):
         default_reply = {
             'forum': forum,
             'replyto': replyto,
-            'readers': {'values': ['everyone']},
-            'signatures': {'values-regex': '~.*'},
-            'writers': {'values-regex': '~.*'},
-            'content':{}
+            'readers': {},
+            'signatures': {},
+            'writers': {},
+            'content': {}
         }
 
         self.id = id
