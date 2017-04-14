@@ -1,12 +1,16 @@
 #!/usr/bin/python
 import requests
-
+import pprint
 import json
 import os
 import getpass
 import ConfigParser
 import re
 from Crypto.Hash import HMAC, SHA256
+import datetime
+
+def epoch_time():
+    return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
 
 class OpenReviewException(Exception):
     pass
@@ -19,7 +23,7 @@ class Client(object):
             try:
                 self.baseurl = os.environ['OPENREVIEW_BASEURL']
             except KeyError:
-                self.baseurl = 'http://localhost:3000'
+                self.baseurl = raw_input('OPENREVIEW_BASEURL not found. Please provide a base URL: ')
         else:
             self.baseurl = baseurl
 
@@ -27,7 +31,7 @@ class Client(object):
             try:
                 self.username = os.environ['OPENREVIEW_USERNAME']
             except KeyError:
-                raise OpenReviewException('No username found. Please provide username or set environment variable OPENREVIEW_USERNAME.')
+                self.username = raw_input('OPENREVIEW_USERNAME not found. Please provide a username: ')
         else:
             self.username = username
 
@@ -35,7 +39,7 @@ class Client(object):
             try:
                 self.password = os.environ['OPENREVIEW_PASSWORD']
             except KeyError:
-                raise OpenReviewException('No password found. Please provide password or set environment variable OPENREVIEW_PASSWORD.')
+                self.password = raw_input('OPENREVIEW_PASSWORD not found. Please provide a password: ')
         else:
             self.password = password
 
@@ -276,6 +280,7 @@ class Client(object):
         """
         if overwrite or not self.exists(group.id):
             if not group.signatures: group.signatures = [self.signature]
+            if not group.writers: group.writers = [self.signature]
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
 
@@ -288,6 +293,7 @@ class Client(object):
         If the invitation is unsigned, signs it using the client's default signature.
         """
         if not invitation.signatures: invitation.signatures = [self.signature]
+        if not invitation.writers: invitation.writers = [self.signature]
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
@@ -301,10 +307,11 @@ class Client(object):
         if not note.signatures: note.signatures = [self.signature]
         response = requests.post(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
+
         return Note.from_json(response.json())
 
     def post_tag(self, tag):
-        """posts the note. Upon success, returns the original Note object."""
+        """posts the tag. Upon success, returns the posted Tag object."""
         response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
@@ -320,7 +327,7 @@ class Client(object):
         def add_member(group,members):
             response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+            return self.get_group(response.json())
 
         member_type = type(members)
         if member_type ==str or member_type == unicode:
@@ -349,18 +356,23 @@ class Group(object):
     def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
         # post attributes
         self.id=id
-        self.cdate=cdate
-        self.ddate=ddate
-        self.writers = [self.id] if writers==None else writers
+        self.cdate = cdate if cdate != None else epoch_time()
+        self.ddate = ddate
+        self.writers = [] if writers==None else writers
         self.members = [] if members==None else members
         self.readers = ['everyone'] if readers==None else readers
         self.nonreaders = [] if nonreaders==None else nonreaders
-        self.signatories = [self.id] if signatories==None else signatories
         self.signatures = [] if signatures==None else signatures
+        self.signatories = [self.id] if signatories==None else signatories
         self.web=None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
+
 
     def to_json(self):
         body = {
@@ -394,9 +406,6 @@ class Group(object):
             group.web = g['web']
         return group
 
-    def __str__(self):
-        return '{:12}'.format('id: ')+self.id+'\n{:12}'.format('members: ')+', '.join(self.members)
-
     def add_member(self, member):
         if type(member) is Group:
             self.members.append(member.id)
@@ -421,26 +430,26 @@ class Group(object):
         client.post_group(self)
 
 class Invitation(object):
-    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
+    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, replyto=None, forum=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
 
         default_reply = {
-            'forum': None,
-            'replyto': None,
-            'readers': {'values': ['everyone']},
-            'signatures': {'values-regex': '.*'},
-            'writers': {'values-regex': '.*'},
-            'content':{}
-        },
+            'forum': forum,
+            'replyto': replyto,
+            'readers': {},
+            'signatures': {},
+            'writers': {},
+            'content': {}
+        }
 
         self.id = id
-        self.cdate = cdate
+        self.cdate = cdate if cdate != None else epoch_time()
         self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
         self.readers = ['everyone'] if readers==None else readers
         self.nonreaders = [] if nonreaders==None else nonreaders
-        self.writers = ['everyone'] if readers==None else writers
-        self.invitees = ['everyone'] if invitees==None else invitees
+        self.writers = [] if readers==None else writers
+        self.invitees = ['~'] if invitees==None else invitees
         self.noninvitees = [] if noninvitees==None else noninvitees
         self.signatures = [] if signatures==None else signatures
         self.multiReply = multiReply
@@ -454,6 +463,10 @@ class Invitation(object):
         if process != None:
             with open(process) as f:
                 self.process = f.read()
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
 
     def to_json(self):
         body = {
@@ -504,32 +517,12 @@ class Invitation(object):
             invitation.process = i['process']
         return invitation
 
-    def add_invitee(self, invitee):
-        if type(invitee) is Group:
-            self.invitees.append(invitee.id)
-        else:
-            self.invitees.append(str(invitee))
-        return self
-
-    def add_noninvitee(self, noninvitee):
-        if type(noninvitee) is Group:
-            if self.noninvitees!=None:
-                self.noninvitees.append(noninvitee.id)
-            else:
-                self.noninvitees=[noninvitee.id]
-        else:
-            if self.noninvitees!=None:
-                self.noninvitees.append(str(noninvitee))
-            else:
-                self.noninvitees=[str(noninvitee)]
-        return self
-
 class Note(object):
     def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
         self.original = original
         self.number = number
-        self.cdate = cdate
+        self.cdate = cdate if cdate != None else epoch_time()
         self.tcdate = tcdate
         self.ddate = ddate
         self.content = {} if content==None else content
@@ -542,6 +535,10 @@ class Note(object):
         self.signatures = [] if signatures==None else signatures
         self.writers = [] if writers==None else writers
         self.number = number
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
 
     def to_json(self):
         body = {
