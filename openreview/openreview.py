@@ -322,10 +322,12 @@ class Client(object):
             response = self.__handle_response(response)
             return self.get_group(response.json()['id'])
 
-        if type(members)==str:
+        member_type = type(members)
+        if member_type ==str or member_type == unicode:
             return add_member(group.id,[members])
-        if type(members)==list:
+        if member_type==list:
             return add_member(group.id,members)
+        raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list")
 
     def remove_members_from_group(self, group, members):
         def remove_member(group,members):
