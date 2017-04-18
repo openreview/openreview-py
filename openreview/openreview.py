@@ -342,9 +342,10 @@ class Client(object):
             response = self.__handle_response(response)
             return self.get_group(response.json()['id'])
 
-        if type(members) == str:
+        member_type = type(members)
+        if member_type == str or member_type == unicode:
             return remove_member(group.id, [members])
-        if type(members) == list:
+        if member_type == list:
             return remove_member(group.id, members)
 
     def search_notes(self, term, content = 'all', group = 'all'):
