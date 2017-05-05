@@ -427,15 +427,20 @@ class Group(object):
                 pass
         return self
 
+    def add_webfield(self, web):
+        with open(web) as f:
+            self.web = f.read()
+
     def post(self, client):
         client.post_group(self)
 
 class Invitation(object):
-    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, replyto=None, forum=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
+    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, replyto=None, forum=None, invitation=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
 
         default_reply = {
             'forum': forum,
             'replyto': replyto,
+            'invitation': invitation,
             'readers': {},
             'signatures': {},
             'writers': {},
@@ -519,7 +524,7 @@ class Invitation(object):
         return invitation
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None):
         self.id = id
         self.original = original
         self.number = number
@@ -528,6 +533,7 @@ class Note(object):
         self.ddate = ddate
         self.content = {} if content==None else content
         self.forum = forum
+        self.forumContent = forumContent
         self.referent = referent
         self.invitation = invitation
         self.replyto = replyto
@@ -551,6 +557,7 @@ class Note(object):
             'number': self.number,
             'content': self.content,
             'forum': self.forum,
+            'forumContent': self.forumContent,
             'referent': self.referent,
             'invitation': self.invitation,
             'replyto': self.replyto,
@@ -573,6 +580,7 @@ class Note(object):
         ddate=n.get('ddate'),
         content=n.get('content'),
         forum=n.get('forum'),
+        forumContent=n.get('forumContent'),
         referent=n.get('referent'),
         invitation=n.get('invitation'),
         replyto=n.get('replyto'),
