@@ -67,7 +67,6 @@ class Client(object):
 
             return response
         except requests.exceptions.HTTPError as e:
-            print 'response: ',response.json()
             for k,v in response.json().iteritems():
                 raise OpenReviewException(str(v))
 
