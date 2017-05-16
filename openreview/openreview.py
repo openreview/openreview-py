@@ -322,9 +322,7 @@ class Client(object):
         Deletes the note. Upon success, returns the deleted Note object.
         """
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
-        #response = self.__handle_response(response)
-        #n = response.json()['notes'][0]
-        print "response ", response
+        response = self.__handle_response(response)
         return None
 
 
