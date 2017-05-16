@@ -317,6 +317,17 @@ class Client(object):
 
         return Tag.from_json(response.json())
 
+    def delete_note(self, note):
+        """
+        Deletes the note. Upon success, returns the deleted Note object.
+        """
+        response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
+        #response = self.__handle_response(response)
+        #n = response.json()['notes'][0]
+        print "response ", response
+        return None
+
+
     def send_mail(self, subject, recipients, message):
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
         response = self.__handle_response(response)
@@ -348,8 +359,8 @@ class Client(object):
         if member_type == list:
             return remove_member(group.id, members)
 
-    def search_notes(self, term, content = 'all', group = 'all'):
-        response = requests.get(self.notes_url + '/search', params = {'term': term, 'content': content, 'group': group}, headers = self.headers)
+    def search_notes(self, term, content = 'all', group = 'all', source='all'):
+        response = requests.get(self.notes_url + '/search', params = {'term': term, 'content': content, 'group': group, 'source': source}, headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
