@@ -221,11 +221,13 @@ class Client(object):
 
 
 
-    def get_notes(self, id = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None):
+    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None):
         """Returns a list of Note objects based on the filters provided."""
         params = {}
         if id != None:
             params['id'] = id
+        if paperhash != None:
+            params['paperhash'] = paperhash
         if forum != None:
             params['forum'] = forum
         if invitation != None:
