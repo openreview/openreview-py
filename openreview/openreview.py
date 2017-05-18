@@ -221,7 +221,7 @@ class Client(object):
 
 
 
-    def get_notes(self, id = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None):
+    def get_notes(self, id = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None):
         """Returns a list of Note objects based on the filters provided."""
         params = {}
         if id != None:
@@ -242,6 +242,11 @@ class Client(object):
             params['trash']=True
         if number != None:
             params['number'] = number
+        if limit != None:
+            params['limit'] = limit
+        if offset != None:
+            params['offset'] = offset
+
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -357,8 +362,21 @@ class Client(object):
         if member_type == list:
             return remove_member(group.id, members)
 
-    def search_notes(self, term, content = 'all', group = 'all', source='all'):
-        response = requests.get(self.notes_url + '/search', params = {'term': term, 'content': content, 'group': group, 'source': source}, headers = self.headers)
+    def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
+
+        params = {
+            'term': term,
+            'content': content,
+            'group': group,
+            'source': source
+        }
+
+        if limit != None:
+            params['limit'] = limit
+        if offset != None:
+            params['offset'] = offset
+
+        response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
