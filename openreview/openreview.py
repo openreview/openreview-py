@@ -281,40 +281,23 @@ class Client(object):
 
 
     def post_group(self, group, overwrite = True):
-        """
-        Posts the group. Upon success, returns the posted Group object.
-        If the group is unsigned, signs it using the client's default signature.
-        """
+        """Posts the group. Upon success, returns the posted Group object."""
         if overwrite or not self.exists(group.id):
-            if not group.signatures: group.signatures = [self.signature]
-            if not group.writers: group.writers = [self.signature]
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
-
         return Group.from_json(response.json())
 
 
     def post_invitation(self, invitation):
-        """
-        Posts the invitation. Upon success, returns the posted Invitation object.
-        If the invitation is unsigned, signs it using the client's default signature.
-        """
-        if not invitation.signatures: invitation.signatures = [self.signature]
-        if not invitation.writers: invitation.writers = [self.signature]
+        """Posts the invitation. Upon success, returns the posted Invitation object."""
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
-
         return Invitation.from_json(response.json())
 
     def post_note(self, note):
-        """
-        Posts the note. Upon success, returns the posted Note object.
-        If the note is unsigned, signs it using the client's default signature
-        """
-        if not note.signatures: note.signatures = [self.signature]
+        """Posts the note. Upon success, returns the posted Note object."""
         response = requests.post(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
-
         return Note.from_json(response.json())
 
     def post_tag(self, tag):
