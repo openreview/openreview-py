@@ -67,8 +67,10 @@ class Client(object):
 
             return response
         except requests.exceptions.HTTPError as e:
-            for k,v in response.json().iteritems():
-                raise OpenReviewException(str(v))
+            if 'errors' in response.json():
+                raise OpenReviewException(response.json()['errors'])
+            else:
+                raise OpenReviewException(response.json())
 
     def __login_user(self,username=None, password=None):
 
