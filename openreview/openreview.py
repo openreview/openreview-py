@@ -51,6 +51,7 @@ class Client(object):
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
         self.profiles_url = self.baseurl + '/user/profile'
+        self.reference_url = self.baseurl + '/references'
         self.token = self.__login_user(self.username, self.password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
         self.signature = self.get_profile(self.username).id
@@ -133,7 +134,7 @@ class Client(object):
 
     def get_activatable(self, token = None):
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
-        response = __handle_response(response)
+        response = self.__handle_response(response)
         token = response.json()['activatable']['token']
         return token
 
@@ -256,6 +257,14 @@ class Client(object):
         response = self.__handle_response(response)
 
         return [Note.from_json(n) for n in response.json()['notes']]
+
+    def get_revisions(self, referent):
+        """Returns a list of revisions for a note."""
+
+        response = requests.get(self.reference_url, params = {"referent" : referent}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['references']
 
 
     def get_tags(self, id = None, invitation = None, forum = None):
