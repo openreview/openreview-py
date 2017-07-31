@@ -55,6 +55,7 @@ class Client(object):
         self.token = self.__login_user(self.username, self.password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
         self.signature = self.get_profile(self.username).id
+        self.dblp_url = self.baseurl + '/dblp'
 
     ## PRIVATE FUNCTIONS
     def __handle_response(self,response):
@@ -323,10 +324,17 @@ class Client(object):
         If the note is unsigned, signs it using the client's default signature
         """
         if not note.signatures: note.signatures = [self.signature]
-        response = requests.post(self.notes_url, json = note.to_json(), headers = self.headers)
+        response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
         response = self.__handle_response(response)
 
         return Note.from_json(response.json())
+
+    def post_dblp_record(self, rec):
+
+        response = requests.post(self.dblp_url, json=rec , headers=self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
 
     def post_tag(self, tag):
         """posts the tag. Upon success, returns the posted Tag object."""
