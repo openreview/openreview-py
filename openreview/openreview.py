@@ -4,10 +4,10 @@ import pprint
 import json
 import os
 import getpass
-import ConfigParser
 import re
 from Crypto.Hash import HMAC, SHA256
 import datetime
+import builtins
 
 def epoch_time():
     return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
@@ -23,7 +23,7 @@ class Client(object):
             try:
                 self.baseurl = os.environ['OPENREVIEW_BASEURL']
             except KeyError:
-                self.baseurl = raw_input('OPENREVIEW_BASEURL not found. Please provide a base URL: ')
+                self.baseurl = builtins.input('Environment variable OPENREVIEW_BASEURL not found. Please provide a base URL: ')
         else:
             self.baseurl = baseurl
 
@@ -31,7 +31,7 @@ class Client(object):
             try:
                 self.username = os.environ['OPENREVIEW_USERNAME']
             except KeyError:
-                self.username = raw_input('OPENREVIEW_USERNAME not found. Please provide a username: ')
+                self.username = builtins.input('Environment variable OPENREVIEW_USERNAME not found. Please provide a username: ')
         else:
             self.username = username
 
@@ -39,7 +39,7 @@ class Client(object):
             try:
                 self.password = os.environ['OPENREVIEW_PASSWORD']
             except KeyError:
-                self.password = raw_input('OPENREVIEW_PASSWORD not found. Please provide a password: ')
+                self.password = builtins.input('Environment variable OPENREVIEW_PASSWORD not found. Please provide a password: ')
         else:
             self.password = password
 
@@ -80,7 +80,7 @@ class Client(object):
             try:
                 username = os.environ["OPENREVIEW_USERNAME"]
             except KeyError:
-                username = raw_input("Please provide your OpenReview username (e.g. username@umass.edu): ")
+                username = builtins.input("Please provide your OpenReview username (e.g. username@umass.edu): ")
 
         if password==None:
             try:
@@ -111,7 +111,7 @@ class Client(object):
         self.register_user(email = email,first = first, last = last, password = password)
 
         if secure_activation:
-            token = '%s' % raw_input('enter the activation token: ')
+            token = '%s' % builtins.input('enter the activation token: ')
         else:
             token = self.get_activatable(token = email)
 
