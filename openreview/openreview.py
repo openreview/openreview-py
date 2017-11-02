@@ -184,7 +184,7 @@ class Client(object):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
         if prefix != None: params['regex'] = prefix+'.*'
-        if regex != None: params['regex'] = regex
+        if regex != None: params['id'] = regex
         if member != None: params['member'] = member
         if host != None: params['host'] = host
         if signatory != None: params['signatory'] = signatory
@@ -265,7 +265,7 @@ class Client(object):
         response = requests.get(self.reference_url, params = {"referent" : referent}, headers = self.headers)
         response = self.__handle_response(response)
 
-        return response.json()['references']
+        return [Note.from_json(n) for n in response.json()['references']]
 
 
     def get_tags(self, id = None, invitation = None, forum = None):
