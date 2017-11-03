@@ -259,7 +259,7 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_revisions(self, referent):
+    def get_references(self, referent):
         """Returns a list of revisions for a note."""
 
         response = requests.get(self.reference_url, params = {"referent" : referent}, headers = self.headers)
