@@ -183,7 +183,7 @@ class Client(object):
     def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
-        if id != None: params['id'] = id + '.*'
+        if id != None: params['id'] = id
         if regex != None: params['regex'] = regex
         if member != None: params['member'] = member
         if host != None: params['host'] = host
