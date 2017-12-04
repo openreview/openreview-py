@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='0.5.8',
+      version='0.6.1',
       description='OpenReview client library',
       url='https://github.com/iesl/openreview-py',
       author='Michael Spector, Melisa Bok',
@@ -12,6 +12,7 @@ setup(name='openreview-py',
       ],
       install_requires=[
           'pycrypto',
-          'requests'
+          'requests>=2.18.4',
+          'future'
       ],
       zip_safe=False)
