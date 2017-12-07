@@ -231,7 +231,7 @@ class Client(object):
 
 
 
-    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None):
+    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None, mintcdate = None):
         """Returns a list of Note objects based on the filters provided."""
         params = {}
         if id != None:
@@ -258,6 +258,8 @@ class Client(object):
             params['limit'] = limit
         if offset != None:
             params['offset'] = offset
+        if mintcdate != None:
+            params['mintcdate'] = mintcdate
 
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)

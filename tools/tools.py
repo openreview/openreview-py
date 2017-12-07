@@ -20,7 +20,7 @@ def create_profile(client, email, first, last, middle = None):
 
 	if not profile:
 		response = client.get_tildeusername(first, last, middle)
-		tilde_id = response['username']
+		tilde_id = response['username'].encode('utf-8')
 
 		if tilde_id.endswith(last + '1'):
 
