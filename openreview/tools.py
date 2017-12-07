@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from openreview import *
+import openreview
 
 super_user_id = 'OpenReview.net'
 
@@ -24,8 +24,8 @@ def create_profile(client, email, first, last, middle = None):
 
 		if tilde_id.endswith(last + '1'):
 
-			tilde_group = Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
-			email_group = Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
+			tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
+			email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
 			profile_content = {
 		        'emails': [email],
 		        'preferred_email': email,
@@ -45,8 +45,8 @@ def create_profile(client, email, first, last, middle = None):
 			return profile
 
 		else:
-			raise OpenReviewException('There is already a profile with this first, middle and last name')
+			raise openreview.OpenReviewException('There is already a profile with this first, middle and last name')
 	else:
-		raise OpenReviewException('There is already a profile with this email: ' + email)
+		raise openreview.OpenReviewException('There is already a profile with this email: ' + email)
 
 
