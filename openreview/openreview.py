@@ -52,10 +52,10 @@ class Client(object):
         self.tags_url = self.baseurl + '/tags'
         self.profiles_url = self.baseurl + '/user/profile'
         self.reference_url = self.baseurl + '/references'
+        self.tilde_url = self.baseurl + '/tildeusername'
         self.token = self.__login_user(self.username, self.password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
         self.signature = self.get_profile(self.username).id
-        self.dblp_url = self.baseurl + '/dblp'
 
     ## PRIVATE FUNCTIONS
     def __handle_response(self,response):
@@ -180,6 +180,12 @@ class Client(object):
         profile = response.json()['profile']
         return Note.from_json(profile)
 
+    def post_profile(self, id, content):
+        response = requests.put(self.profiles_url, json = { 'id': id, 'content': content }, headers = self.headers)
+        response = self.__handle_response(response)
+        profile = response.json()
+        return Note.from_json(profile)
+
     def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
@@ -225,7 +231,7 @@ class Client(object):
 
 
 
-    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None):
+    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None, mintcdate = None):
         """Returns a list of Note objects based on the filters provided."""
         params = {}
         if id != None:
@@ -252,6 +258,8 @@ class Client(object):
             params['limit'] = limit
         if offset != None:
             params['offset'] = offset
+        if mintcdate != None:
+            params['mintcdate'] = mintcdate
 
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)
@@ -329,13 +337,6 @@ class Client(object):
 
         return Note.from_json(response.json())
 
-    def post_dblp_record(self, rec):
-
-        response = requests.post(self.dblp_url, json=rec , headers=self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
     def post_tag(self, tag):
         """posts the tag. Upon success, returns the posted Tag object."""
         response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
@@ -400,6 +401,11 @@ class Client(object):
         response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
+
+    def get_tildeusername(self, first, last, middle = None):
+        response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
 class Group(object):
     def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
