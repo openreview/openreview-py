@@ -45,8 +45,8 @@ def create_profile(client, email, first, last, middle = None):
 			return profile
 
 		else:
-			raise openreview.OpenReviewException('There is already a profile with this first, middle and last name')
+			raise openreview.OpenReviewException('There is already a profile with this first: {0}, middle: {1}, last name: {2}'.format(first, middle, last))
 	else:
-		raise openreview.OpenReviewException('There is already a profile with this email: ' + email)
+		raise openreview.OpenReviewException('There is already a profile with this email: {0}'.format(email))
 
 
