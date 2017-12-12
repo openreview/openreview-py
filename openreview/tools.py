@@ -50,3 +50,29 @@ def create_profile(client, email, first, last, middle = None):
 		raise openreview.OpenReviewException('There is already a profile with this email: {0}'.format(email))
 
 
+def build_groups(conference_group_id):
+    '''
+
+    Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
+    (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
+
+    '''
+
+    path_components = conference_group_id.split('/')
+    paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
+
+    empty_params = {
+        'readers': ['everyone'],
+        'writers': [],
+        'signatures': [],
+        'signatories': [],
+        'members': []
+    }
+
+    groups = {p: openreview.Group(p, **empty_params) for p in paths}
+    groups[conference_group_id].writers = groups[conference_group_id].signatories = [conference_group_id]
+
+    admin_id = conference_group_id + '/Admin'
+    groups[admin_id] = openreview.Group(admin_id, readers=[admin_id], signatories=[admin_id])
+
+    return sorted(groups.values(), key=lambda x: len(x.id))

@@ -578,7 +578,7 @@ class Invitation(object):
         return invitation
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None, overwriting=None):
         self.id = id
         self.original = original
         self.number = number
@@ -596,6 +596,7 @@ class Note(object):
         self.signatures = [] if signatures==None else signatures
         self.writers = [] if writers==None else writers
         self.number = number
+        self.overwriting = overwriting
 
     def __str__(self):
         pp = pprint.PrettyPrinter()
@@ -605,7 +606,7 @@ class Note(object):
         body = {
             'id': self.id,
             'original': self.original,
-            'cdate':self.cdate,
+            'cdate': self.cdate,
             'tcdate': self.tcdate,
             'ddate': self.ddate,
             'number': self.number,
@@ -619,7 +620,8 @@ class Note(object):
             'nonreaders': self.nonreaders,
             'signatures': self.signatures,
             'writers': self.writers,
-            'number':self.number
+            'number': self.number,
+            'overwriting': self.overwriting
         }
         return body
 
@@ -641,7 +643,8 @@ class Note(object):
         readers=n.get('readers'),
         nonreaders=n.get('nonreaders'),
         signatures=n.get('signatures'),
-        writers=n.get('writers')
+        writers=n.get('writers'),
+        overwriting=n.get('overwriting')
         )
         return note
 
