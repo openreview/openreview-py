@@ -578,7 +578,7 @@ class Invitation(object):
         return invitation
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None, overwriting=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None, overwriting=None, tauthor=None):
         self.id = id
         self.original = original
         self.number = number
@@ -597,6 +597,8 @@ class Note(object):
         self.writers = [] if writers==None else writers
         self.number = number
         self.overwriting = overwriting
+        if tauthor:
+            self.tauthor = tauthor
 
     def __str__(self):
         pp = pprint.PrettyPrinter()
@@ -623,6 +625,8 @@ class Note(object):
             'number': self.number,
             'overwriting': self.overwriting
         }
+        if hasattr(self, 'tauthor'):
+            body['tauthor'] = self.tauthor
         return body
 
     @classmethod
@@ -644,7 +648,8 @@ class Note(object):
         nonreaders=n.get('nonreaders'),
         signatures=n.get('signatures'),
         writers=n.get('writers'),
-        overwriting=n.get('overwriting')
+        overwriting=n.get('overwriting'),
+        tauthor=n.get('tauthor')
         )
         return note
 
@@ -693,3 +698,5 @@ class Tag(object):
             signatures = t.get('signatures'),
         )
         return tag
+
+
