@@ -73,7 +73,4 @@ def build_groups(conference_group_id, default_params=None):
     groups = {p: openreview.Group(p, **default_params) for p in paths}
     groups[conference_group_id].writers = groups[conference_group_id].signatories = [conference_group_id]
 
-    admin_id = conference_group_id + '/Admin'
-    groups[admin_id] = openreview.Group(admin_id, readers=[admin_id], signatories=[admin_id])
-
     return sorted(groups.values(), key=lambda x: len(x.id))
