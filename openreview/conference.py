@@ -1,173 +1,178 @@
 import openreview
+import process
+import tools
 import builtins
 from collections import namedtuple
+import webfield
 
-'''
-conference = openreview.Conference('auai.org/UAI/2018')
-
-conference.add_group('Program_Chairs', members = ['~Yin_Cheng_Ng'])
-conference.add_group('Senior_Program_Committee', parent = 'Program_Chairs')
-conference.add_group('Program_Committee', parent = 'Senior_Program_Committee')
-
-conference.set_recruitment('SPC_Invitation', target_group = 'Senior_Program_Committee')
-conference.set_recruitment('PC_Invitation', target_group = 'Program_Committee')
-
-'''
-
-ConferenceGroup = namedtuple('Group', ['group', 'parent'])
-
-recruitment_process = """
-    function() {
-      var or3client = lib.or3client;
-      var hashKey = or3client.createHash(note.content.email, "2810398440804348173");
-      if(hashKey == note.content.key) {
-        if (note.content.response == 'Yes') {
-          console.log("Invitation replied Yes")
-          //if a user is in the declined group, remove them from that group and add them to the reviewers group
-          or3client.removeGroupMember('{0}/Declined', note.content.email, token) //MODIFIED_BY_YCN: SPC->PC
-          or3client.addGroupMember('{0}', note.content.email, token) //MODIFIED_BY_YCN: SPC->PC
-          .then(result => done())
-          .catch(error => done(error));
-        } else if (note.content.response == 'No'){
-          console.log("Invitation replied No")
-          //if a user is in the reviewers group, remove them from that group and add them to the reviewers-declined group
-          or3client.removeGroupMember('{0}', note.content.email, token) //MODIFIED_BY_YCN: SPC->PC
-          or3client.addGroupMember('{0}/Declined', note.content.email, token) //MODIFIED_BY_YCN: SPC->PC
-          .then(result => done())
-          .catch(error => done(error));
-        } else {
-          done('Invalid response', note.content.response);
-        }
-        return true;
-      } else {
-        done('Invalid key', note.content.key);
-        return false;
-      }
-    }
-    """
-
-recruitment_web = """
-// Constants
-var CONFERENCE_ID = '{0}';
-
-// Main is the entry point to the webfield code and runs everything
-function main() {
-  Webfield.ui.setup('#invitation-container', CONFERENCE_ID);  // required
-  render();
-}
-
-function render() {
-  var accepted = args.response === 'Yes';
-  var message = accepted ?
-    'Thank you for accepting the invitation!' :
-    'You have declined the invitation.';
-
-  var $response = $('#notes');
-  $response.empty().append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
-
-  if (accepted) {
-    // Display response text
-    $response.append([
-      '<div class="panel">',
-        '<div class="row">',
-          '<p>If you do not already have an OpenReview account, please sign up <a href="/signup">here</a>.</p>',
-          '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile?mode=edit">profile page</a> and has been confirmed.</p>',
-        '</div>',
-      '</div>'
-    ].join('\n'));
-  }
-}
-
-// Go!
-main();
-
-"""
-
-
-def get_recruitment_process(target_group):
-    return recruitment_process.format(target_group)
-
-print get_recruitment_process('test')
-
-def get_recruitment_webfield(conference_id):
-    return recruitment_web.format(conference_id)
 
 class Conference(object):
-    def __init__(self, id):
-        self.id = id
-        self.conference_groups = {}
-        self.invitations = {}
+    def __init__(self, conference_id, short_phrase):
+        self.conference_id = conference_id
+        self.submission = None
+        self.blind_submission = None
+        self.short_phrase = short_phrase
 
-    def add_group(self, group_id, parent = None, params = None):
-        full_id = self.id + '/' + group_id
-        default_params = {
-            'id': full_id,
-            'readers': [full_id],
-            'writers': [full_id],
-            'signatures': [self.id],
-            'signatories': [full_id],
-            'members': []
-        }
-        params = default_params if not params else params
+        self.groups = {g.id:g for g in tools.build_groups(conference_id)}
+        self.invitations = []
+        self.homepage = None
 
-        def append_parent_group(params, parent_id):
-            try:
-                parent_group = self.conference_groups[parent_id]
-            except KeyError:
-                raise(KeyError('Error: parent not found {0}'.format(parent_id)))
+    def add_submission(self, name, duedate, blind_name = None):
+        self.submission = SubmissionInvitation(
+            self.conference_id,
+            name,
+            duedate,
+            short_phrase = self.short_phrase,
+            blind_name = blind_name
+        )
 
-            params['readers'] += [parent_group.group.id]
-
-            if parent_group.parent:
-                append_parent_group(params, parent_group.parent)
-
-        if parent:
-            append_parent_group(params, parent)
-
-        conference_group = ConferenceGroup(group=openreview.Group(**params), parent=parent)
-        self.conference_groups[group_id] = conference_group
-
-    def setup_recruitment(self, invitation_id, target_group):
-        default_params = {
-            'id': self.id + '/-/' + invitation_id,
-            'readers': ['~'],
-            'writers': [self.id],
-            'signatures': [self.id],
-        }
-        default_params['reply'] = {
-            'content': {
-                'email': {
-                    'description': 'email address',
-                    'order': 1,
-                    'value-regex': '.*@.*'
+        if blind_name != None:
+            self.blind_submission = SubmissionInvitation(
+                self.conference_id,
+                blind_name,
+                duedate,
+                submission_content = {
+                    'title': None, 'keywords': None, 'TL;DR': None, 'abstract': None, 'pdf': None,
+                    'authors': {'values-regex': '.*'}, 'authorids': {'values-regex': '.*'}
                 },
-                'key': {
-                    'description': 'Email key hash',
-                    'order': 2,
-                    'value-regex': '.{0,100}'
+                reply_params = {
+                    'signatures': {'values': [self.conference_id]}, 'writers': {'values': [self.conference_id]}
                 },
-                'response': {
-                    'description': 'Invitation response',
-                    'order': 3,
-                    'value-radio': ['Yes', 'No']
-                }
+                invitation_params = {'invitees': [self.conference_id]}
+            )
+
+    def add_homepage(self, homepage):
+        self.homepage = homepage
+        if not self.homepage.user_constants['CONFERENCE']:
+            self.homepage.user_constants['CONFERENCE'] = self.conference_id
+        if not self.homepage.user_constants['ENTRY_INVITATION']:
+            self.homepage.user_constants['ENTRY_INVITATION'] = self.submission.id
+        if not self.homepage.user_constants['DISPLAY_INVITATION']:
+            self.homepage.user_constants['DISPLAY_INVITATION'] = self.submission.id if not self.blind_submission else self.blind_submission.id
+
+        self.groups[self.conference_id].web = self.homepage.render()
+
+class SubmissionInvitation(openreview.Invitation):
+    def __init__(self, conference_id, invitation_name, duedate,
+        short_phrase = None,
+        blind_name = None,
+        submission_content = {},
+        reply_params = {},
+        invitation_params = {},
+        params = {}):
+
+        self.conference_id = conference_id
+        self.invitation_name = invitation_name
+        self.submission_content = {
+            'title': {
+                'description': 'Title of paper.',
+                'order': 1,
+                'value-regex': '.{1,250}',
+                'required':True
             },
-            'readers': {
-                'values': ['~Super_User1']
+            'authors': {
+                'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
+                'order': 2,
+                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
+                'required':True
             },
-            'signatures': {
-                'values-regex': '\\(anonymous\\)'
+            'authorids': {
+                'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
+                'order': 3,
+                'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+                'required':True
             },
-            'writers': {
-                'values-regex': '\\(anonymous\\)'
+            'keywords': {
+                'description': 'Comma separated list of keywords.',
+                'order': 6,
+                'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
+            },
+            'TL;DR': {
+                'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                'order': 7,
+                'value-regex': '[^\\n]{0,250}',
+                'required':False
+            },
+            'abstract': {
+                'description': 'Abstract of paper.',
+                'order': 8,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'required':True
+            },
+            'pdf': {
+                'description': 'Upload a PDF file that ends with .pdf',
+                'order': 9,
+                'value-regex': 'upload',
+                'required':True
             }
         }
 
-        default_params['process'] = get_recruitment_process(target_group)
-        default_params['web'] = get_recruitment_web(self.id)
+        for k,v in submission_content.iteritems():
+            if v:
+                self.submission_content[k] = v
+            else:
+                self.submission_content.pop(k)
 
-        params = default_params if not params else params
+        self.reply_params = {
+            'forum': None,
+            'replyto': None,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+            },
+            'signatures': {
+                'description': 'Your authorized identity to be associated with the above content.',
+            },
+            'writers': {}
+        }
 
-        recruitment_invitation = openreview.Invitation(**params)
+        if blind_name != None:
+            self.reply_params['readers']['values-copied'] = [
+                conference_id, '{content.authorids}', '{signatures}']
+            self.reply_params['signatures']['values-regex'] = '~.*|' + conference_id
+            self.reply_params['writers']['values'] = [conference_id]
+        else:
+            self.reply_params['readers']['values'] = ['everyone']
+            self.reply_params['signatures']['values-regex'] = '~.*'
+            self.reply_params['writers']['values-regex'] = '~.*'
 
-        self.invitations[invitation_id] = recruitment_invitation
+        for k,v in reply_params.iteritems():
+            if v:
+                self.reply_params[k] = v
+            else:
+                self.reply_params.pop(k)
+
+        self.invitation_params = invitation_params if invitation_params else {
+            'readers': ['everyone'],
+            'writers': [conference_id],
+            'invitees': ['~'],
+            'signatures': [conference_id],
+            'duedate': duedate
+        }
+
+        for k,v in invitation_params.iteritems():
+            if v:
+                self.invitation_params[k] = v
+            else:
+                self.invitation_params.pop(k)
+
+        self.params = self.invitation_params
+        self.params['reply'] = self.reply_params
+        self.params['reply']['content'] = self.submission_content
+
+        for k,v in params.iteritems():
+            if v:
+                self.params[k] = v
+            else:
+                self.params.pop(k)
+
+        openreview.Invitation.__init__(
+            self,
+            '/'.join([self.conference_id, '-', self.invitation_name]),
+            **self.params)
+
+        if blind_name != None:
+            self.process = process.SubmissionProcess(
+                short_phrase = short_phrase,
+                conference_id = conference_id,
+                blind_name = blind_name).value
+

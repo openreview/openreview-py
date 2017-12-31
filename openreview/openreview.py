@@ -201,7 +201,6 @@ class Client(object):
         groups.sort(key = lambda x: x.id)
         return groups
 
-
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
@@ -228,8 +227,6 @@ class Client(object):
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         invitations.sort(key = lambda x: x.id)
         return invitations
-
-
 
     def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None, mintcdate = None):
         """Returns a list of Note objects based on the filters provided."""
@@ -286,7 +283,6 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['references']]
 
-
     def get_tags(self, id = None, invitation = None, forum = None):
         """Returns a list of Tag objects based on the filters provided."""
         params = {}
@@ -310,7 +306,6 @@ class Client(object):
             return False
         return True
 
-
     def post_group(self, group, overwrite = True):
         """
         Posts the group. Upon success, returns the posted Group object.
@@ -323,7 +318,6 @@ class Client(object):
             response = self.__handle_response(response)
 
         return Group.from_json(response.json())
-
 
     def post_invitation(self, invitation):
         """
@@ -355,6 +349,36 @@ class Client(object):
 
         return Tag.from_json(response.json())
 
+    def post_conference(self, conference, overwrite = False):
+        group_responses = {}
+
+        for group in sorted(conference.groups.values(), key=lambda x: len(x.id)):
+            if overwrite or not self.exists(group.id):
+                group_responses[group.id] = self.post_group(group)
+            else:
+                group_responses[group.id] = False
+
+        submission_responses = {}
+
+        #TODO: check existence first; write "exists()" function
+        submission_responses[conference.submission.id] = self.post_invitation(conference.submission)
+
+        if conference.blind_submission:
+            submission_responses[conference.blind_submission.id] = self.post_invitation(conference.blind_submission)
+
+        invitation_responses = {}
+        for i in conference.invitations:
+            # TODO: check existence first, write "exists()" function"
+            invitation_responses[i.id] = self.post_invitation(i)
+
+        return {
+            'groups':group_responses,
+            'submissions': submission_responses,
+            'invitations': invitation_responses
+            }
+
+
+
     def delete_note(self, note):
         """
         Deletes the note. Upon success, returns the deleted Note object.
@@ -362,7 +386,6 @@ class Client(object):
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
         return None
-
 
     def send_mail(self, subject, recipients, message):
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
