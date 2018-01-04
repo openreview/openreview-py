@@ -1,138 +1,178 @@
-'''
-class ProcessChainLink
+class ProcessFunction(object):
+  '''
+  Represents a process function for an invitation.
 
+  '''
+  def __init__(self, constants = {}):
 
-'''
+    self.js_blocks = []
+
+    self.default_constants = [
+      'var or3client = lib.or3client;',
+    ]
+
+    self.user_constants = {
+      'CONFERENCE': None,
+      'ENTRY_INVITATION': None,
+      'DISPLAY_INVITATION': None,
+      'SHORT_PHRASE': None
+    }
+
+    if constants:
+      for k, v in constants.iteritems():
+        self.user_constants[k] = v
+
+    self.function_head_block = [
+      'function () {'
+    ]
+    self.js_blocks.append(self.function_head_block)
+
+    self.constants_block = []
+    self.js_blocks.append(self.constants_block)
+
+    self.chainlinks = [] #list of chainlinks
+    self.process_chain_block = [] # list of instructions, built from the process chain
+    self.js_blocks.append(self.process_chain_block)
+    self.function_tail_block = [
+      '.then(result => done())',
+      '.catch(error => done(error));',
+      'return true;',
+      '};'
+    ]
+    self.js_blocks.append(self.function_tail_block)
+
+  def update_constants(self):
+    self.constants_block[:] = []
+
+    for c in self.default_constants:
+      self.constants_block.append(c)
+
+    for k, v in self.user_constants.iteritems():
+      if v:
+        self.constants_block.append('var {k} = \'{v}\';'.format(k=k, v=v))
+
+  def update_process_chain(self):
+    self.process_chain_block[:] = []
+
+    for c in self.chainlinks:
+      self.process_chain_block.append(c.render())
+
+  def render(self):
+    self.update_constants()
+    self.update_process_chain()
+    rendered_js = '\n'.join(['\n'.join(instruction_list) for instruction_list in self.js_blocks])
+    return rendered_js
+
+  def insert_chainlink(self, chainlink):
+    assert issubclass(type(chainlink), ProcessChainLink)
+    self.chainlinks.append(chainlink)
+    self.update_process_chain()
 
 class ProcessChainLink(object):
-  def __init__(self, js, head=False):
+  def __init__(self, js, input_var = 'result', return_line = None, head = False):
+    '''
+    js:   a list of javascript instructions
+    head: if True, this chainlink is first in the chain
+    '''
+
     self.head = head
     if not self.head:
-      self.value = '\n'.join([
-        '.then(result => {',
-        '  console.log(JSON.stringify(result));',
-        '  {}'.format(js),
+
+      self.chainlink_head = [
+        '.then({result} => {{ console.log(JSON.stringify({result}));'.format(result = input_var)
+      ]
+
+      self.chainlink_tail = [
+        'return {instructions};'.format(instructions = return_line),
         '})'
-        ])
+      ]
+      self.js_block = self.chainlink_head + js + self.chainlink_tail
     else:
-      self.value = js
+      if return_line[-1] == ';':
+        return_line = return_line[:-1]
+      self.js_block = js + [return_line]
+
+  def render(self):
+    return '\n'.join(self.js_block)
 
 class MailChainLink(ProcessChainLink):
-  def __init__(self, short_phrase, use_result = False, head = False):
-    ProcessChainLink.__init__(self, '\n'.join([
-      '',
-      '// start MailChainLink',
-      'var notificationNote = note;' if not use_result else 'var notificationNote = result;',
-      'var authorMail = {{',
+  def __init__(self, head = False):
+    note_var = 'note' if head else 'result'
+    ProcessChainLink.__init__(self, [
+      'var authorMail = {',
       '  groups: note.content.authorids,',
-      '  subject: \'Your submission to {short_phrase} has been received: \' + note.content.title,',
-      '  message: \'Your submission to {short_phrase} has been posted.\\n\\nTitle: \' + note.content.title + \'\\n\\nAbstract: \' + note.content.abstract + \'\\n\\nTo view your submission, click here: \' + baseUrl + \'/forum?id=\' + notificationNote.forum',
-      '}};',
-      'return or3client.or3request(or3client.mailUrl, authorMail, \'POST\', token)',
-      '// end MailChainLink',
-      ''
-      ]).format(short_phrase = short_phrase),
+      '  subject: \'Your submission to \'+ SHORT_PHRASE + \' has been received: \' + note.content.title,',
+      '  message: \'Your submission to \'+ SHORT_PHRASE + \' has been posted.\\n\\nTitle: \' + note.content.title + \'\\n\\nAbstract: \' + note.content.abstract + \'\\n\\nTo view your submission, click here: \' + baseUrl + \'/forum?id=\' + {note}.forum'.format(note = note_var),
+      '};'
+      ],
+      return_line = 'or3client.or3request(or3client.mailUrl, authorMail, \'POST\', token)',
       head = head)
 
 class RevisionChainLink(ProcessChainLink):
-  def __init__(self, conference_id, head = False):
-    ProcessChainLink.__init__(self, '\n'.join([
-      '',
-      '// start RevisionChainLink',
-      'var revisionInvitation = {{',
-      '  id: \'{conference_id}\' + \'/-/Paper\'+note.number+\'/Add/Revision\','
+  def __init__(self, head = False):
+    ProcessChainLink.__init__(self, [
+      'var revisionInvitation = {',
+      '  id: CONFERENCE + \'/-/Paper\' + note.number + \'/Add/Revision\',',
       '  readers: [\'everyone\'],',
-      '  writers: [\'{conference_id}\'],',
+      '  writers: [CONFERENCE],',
       '  invitees: note.content[\'authorids\'],',
-      '  signatures: [\'{conference_id}\'],',
+      '  signatures: [CONFERENCE],',
       '  duedate: invitation.duedate,',
-      '  reply: {{',
+      '  reply: {',
       '    referent: note.id,',
       '    forum: note.forum,',
       '    content: invitation.reply.content,',
       '    signatures: invitation.reply.signatures,',
       '    writers: invitation.reply.writers,',
       '    readers: invitation.reply.readers',
-      '  }}',
-      '}};',
-      'return or3client.or3request(or3client.inviteUrl, revisionInvitation, \'POST\', token)',
-      '// end RevisionChainLink',
-      ''
-      ]).format(conference_id = conference_id),
+      '  }',
+      '};'
+      ],
+      return_line = 'or3client.or3request(or3client.inviteUrl, revisionInvitation, \'POST\', token)',
       head = head)
 
 class BlindSubmissionChainLink(ProcessChainLink):
-  def __init__(self, conference_id, blind_name, head = False):
-    ProcessChainLink.__init__(self, '\n'.join([
-      '',
-      '// start BlindSubmissionChainLink',
-      'var blindSubmission = {{',
+  def __init__(self, blind_name, head = False):
+    ProcessChainLink.__init__(self, [
+      'var blindSubmission = {',
       '  original: note.id,',
-      '  invitation: \'{conference_id}/-/{blind_name}\',',
+      '  invitation: DISPLAY_INVITATION,',
       '  forum: null,',
       '  parent: null,',
-      '  signatures: [\'{conference_id}\'],',
-      '  writers: [\'{conference_id}\'],',
+      '  signatures: [CONFERENCE],',
+      '  writers: [CONFERENCE],',
       '  readers: [\'everyone\'],',
-      '  content: {{',
+      '  content: {',
       '    authors: [\'Anonymous\'],',
       '    authorids: [\'Anonymous\'],',
-      '  }}',
-      '}}',
-      'return or3client.or3request(or3client.notesUrl, blindSubmission, \'POST\', token)',
-      '// end BlindSubmissionChainLink',
-      ''
-      ]).format(blind_name = blind_name, conference_id = conference_id),
+      '  }',
+      '};'
+      ],
+      return_line = 'or3client.or3request(or3client.notesUrl, blindSubmission, \'POST\', token)',
       head = head)
 
-class ProcessFunction(object):
-  def __init__(self):
-    self.process_head = '\n'.join([
-      '',
-      '// start ProcessHead',
-      'function () {',
-      '  var or3client = lib.or3client;',
-      '// end ProcessHead',
-      ''
-      ])
-
-    self.process_chain = []
-    self.process_tail = '\n'.join([
-      '',
-      '// start ProcessTail',
-      '  .then(result => done())',
-      '  .catch(error => done(error));',
-      '  return true;',
-      '};',
-      '// start ProcessTail',
-      ''
-      ])
-
-    self.value = None
-
-  def update_value(self):
-    self.value = self.process_head + '\n'.join(self.process_chain) + self.process_tail
-
-  def insert_chainlink(self, chainlink):
-    assert issubclass(type(chainlink), ProcessChainLink)
-    self.process_chain.append(chainlink.value)
-    self.update_value()
-
 class SubmissionProcess(ProcessFunction):
-  def __init__(self, short_phrase, conference_id, blind_name = None):
+  def __init__(self, mask = None):
     ProcessFunction.__init__(self)
 
-    revision_chainlink = RevisionChainLink(conference_id, head = True)
+    self.mask = mask
+
+    revision_chainlink = RevisionChainLink(head = True)
     self.insert_chainlink(revision_chainlink)
 
-    if blind_name != None:
-      blind_submission_chainlink = BlindSubmissionChainLink(conference_id, blind_name)
+    if self.mask:
+      blind_submission_chainlink = BlindSubmissionChainLink(blind_name = self.mask)
       self.insert_chainlink(blind_submission_chainlink)
-      mail_chainlink = MailChainLink(short_phrase, use_result = True)
+      mail_chainlink = MailChainLink()
     else:
-      mail_chainlink = MailChainLink(short_phrase)
+      mail_chainlink = MailChainLink()
 
     self.insert_chainlink(mail_chainlink)
+
+
+
+
+
 
 
 # TODO: Add bibtex to the open submission process

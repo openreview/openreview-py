@@ -6,8 +6,7 @@ class Homepage(object):
 
   '''
   def __init__(self, constants = {}):
-
-    self.instruction_blocks = []
+    self.js_blocks = []
 
     self.subject_areas = set()
 
@@ -35,13 +34,11 @@ class Homepage(object):
     }
 
     if constants:
-      print "adding user defined constants"
       for k, v in constants.iteritems():
         self.user_constants[k] = v
 
     self.constants_block = []
-
-    self.instruction_blocks.append(self.constants_block)
+    self.js_blocks.append(self.constants_block)
 
     self.main_block = [
       '// Main is the entry point to the webfield code and runs everything',
@@ -54,7 +51,7 @@ class Homepage(object):
       '}'
       ]
 
-    self.instruction_blocks.append(self.main_block)
+    self.js_blocks.append(self.main_block)
 
     self.header_block = [
       '// RenderConferenceHeader renders the static info at the top of the page. Since that content',
@@ -73,7 +70,7 @@ class Homepage(object):
       '}'
       ]
 
-    self.instruction_blocks.append(self.header_block)
+    self.js_blocks.append(self.header_block)
 
     self.load_block = [
       '// Load makes all the API calls needed to get the data to render the page',
@@ -85,7 +82,7 @@ class Homepage(object):
       '}'
       ]
 
-    self.instruction_blocks.append(self.load_block)
+    self.js_blocks.append(self.load_block)
 
     self.render_block = [
       '// Render is called when all the data is finished being loaded from the server',
@@ -130,9 +127,9 @@ class Homepage(object):
       'main();'
       ]
 
-    self.instruction_blocks.append(self.render_block)
+    self.js_blocks.append(self.render_block)
 
-  def update_constants_block(self):
+  def update_constants(self):
     self.constants_block[:] = []
 
     for c in self.default_constants:
@@ -153,9 +150,9 @@ class Homepage(object):
     self.constants_block.append(subj_string)
 
   def render(self):
-    self.update_constants_block()
-    rendered_instructions = '\n'.join(['\n'.join(instruction_list) for instruction_list in self.instruction_blocks])
-    return rendered_instructions
+    self.update_constants()
+    rendered_js = '\n'.join(['\n'.join(instruction_list) for instruction_list in self.js_blocks])
+    return rendered_js
 
   def add_subject_areas(self, subject_areas):
     self.subject_areas.update(subject_areas)

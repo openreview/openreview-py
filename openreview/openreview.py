@@ -349,7 +349,7 @@ class Client(object):
 
         return Tag.from_json(response.json())
 
-    def post_conference(self, conference, overwrite = False):
+    def post_conference(self, conference, overwrite = True):
         group_responses = {}
 
         for group in sorted(conference.groups.values(), key=lambda x: len(x.id)):
@@ -360,11 +360,13 @@ class Client(object):
 
         submission_responses = {}
 
-        #TODO: check existence first; write "exists()" function
-        submission_responses[conference.submission.id] = self.post_invitation(conference.submission)
+        conference.entry_invitation.process = conference.entry_invitation.process.render()
 
-        if conference.blind_submission:
-            submission_responses[conference.blind_submission.id] = self.post_invitation(conference.blind_submission)
+        #TODO: check existence first; write "exists()" function
+        submission_responses[conference.entry_invitation.id] = self.post_invitation(conference.entry_invitation)
+
+        if conference.display_invitation.id != conference.entry_invitation.id:
+            submission_responses[conference.display_invitation.id] = self.post_invitation(conference.display_invitation)
 
         invitation_responses = {}
         for i in conference.invitations:
