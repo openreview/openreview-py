@@ -267,10 +267,21 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_references(self, referent):
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None):
         """Returns a list of revisions for a note."""
+        params = {}
+        if referent != None:
+            params['referent'] = referent
+        if invitation != None:
+            params['invitation'] = invitation
+        if mintcdate != None:
+            params['mintcdate'] = mintcdate
+        if limit != None:
+            params['limit'] = limit
+        if offset != None:
+            params['offset'] = offset
 
-        response = requests.get(self.reference_url, params = {"referent" : referent}, headers = self.headers)
+        response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
         return [Note.from_json(n) for n in response.json()['references']]
