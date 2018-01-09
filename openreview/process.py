@@ -1,114 +1,127 @@
-class ProcessFunction(object):
+from rendered_js import RenderedJS
+
+'''
+Contains code related to process functions.
+
+Process functions are pieces of javascript code that are executed
+when a note is posted to the process function's invitation.
+
+'''
+
+class ProcessFunction(RenderedJS):
   '''
-  Represents a process function for an invitation.
+  ProcessFunction:  base class representing a process function.
+
+  - arguments -
+  chainlinks
+  user_constants
+
+  - variables -
+  js_blocks
+  user_constants
+
 
   '''
-  def __init__(self, constants = {}):
 
-    self.js_blocks = []
+  def __init__(self, user_constants = {}, chainlinks = []):
+    super(ProcessFunction, self).__init__(user_constants = user_constants)
 
-    self.default_constants = [
+    # a list of ProcessChainLink objects
+    self.chainlinks = chainlinks
+
+    self.function_head_block = [
+      'function () {',
       'var or3client = lib.or3client;',
     ]
 
-    self.user_constants = {
-      'CONFERENCE': None,
-      'ENTRY_INVITATION': None,
-      'DISPLAY_INVITATION': None,
-      'SHORT_PHRASE': None
-    }
+    self.process_chain_block = []
 
-    if constants:
-      for k, v in constants.iteritems():
-        self.user_constants[k] = v
-
-    self.function_head_block = [
-      'function () {'
-    ]
-    self.js_blocks.append(self.function_head_block)
-
-    self.constants_block = []
-    self.js_blocks.append(self.constants_block)
-
-    self.chainlinks = [] #list of chainlinks
-    self.process_chain_block = [] # list of instructions, built from the process chain
-    self.js_blocks.append(self.process_chain_block)
     self.function_tail_block = [
       '.then(result => done())',
       '.catch(error => done(error));',
       'return true;',
       '};'
     ]
-    self.js_blocks.append(self.function_tail_block)
 
-  def update_constants(self):
-    self.constants_block[:] = []
 
-    for c in self.default_constants:
-      self.constants_block.append(c)
+    self.js_blocks = [
+      self.function_head_block,
+      self.constants_block,
+      self.process_chain_block,
+      self.function_tail_block
+    ]
 
-    for k, v in self.user_constants.iteritems():
-      if v:
-        self.constants_block.append('var {k} = \'{v}\';'.format(k=k, v=v))
+    self._update()
 
-  def update_process_chain(self):
+  def _update(self):
+    super(ProcessFunction, self)._update()
+
     self.process_chain_block[:] = []
 
     for c in self.chainlinks:
       self.process_chain_block.append(c.render())
 
-  def render(self):
-    self.update_constants()
-    self.update_process_chain()
-    rendered_js = '\n'.join(['\n'.join(instruction_list) for instruction_list in self.js_blocks])
-    return rendered_js
-
   def insert_chainlink(self, chainlink):
+    '''
+    Todo: docstring
+    '''
     assert issubclass(type(chainlink), ProcessChainLink)
     self.chainlinks.append(chainlink)
-    self.update_process_chain()
+    self._update()
 
 class ProcessChainLink(object):
-  def __init__(self, js, input_var = 'result', return_line = None, head = False):
+  def __init__(self, js, head = False, input_var = 'result'):
     '''
     js:   a list of javascript instructions
+    return_line:  a string representing the variable to return.
     head: if True, this chainlink is first in the chain
     '''
 
     self.head = head
-    if not self.head:
 
+    if self.head:
+      return_line = js[-1]
+
+      if 'return' in return_line:
+          return_idx = return_line.index('return')
+          return_line = return_line[(7 + return_idx):]
+
+
+      if ';' in return_line:
+          semicolon_idx = return_line.index(';')
+          return_line = return_line[:semicolon_idx]
+
+      self.js_block = js[:-1] + [return_line]
+
+    else:
       self.chainlink_head = [
-        '.then({result} => {{ console.log(JSON.stringify({result}));'.format(result = input_var)
+        '.then({input_var} => {{ console.log(JSON.stringify({input_var}));'.format(input_var = input_var)
       ]
 
       self.chainlink_tail = [
-        'return {instructions};'.format(instructions = return_line),
         '})'
       ]
       self.js_block = self.chainlink_head + js + self.chainlink_tail
-    else:
-      if return_line[-1] == ';':
-        return_line = return_line[:-1]
-      self.js_block = js + [return_line]
 
   def render(self):
     return '\n'.join(self.js_block)
 
-class MailChainLink(ProcessChainLink):
+class NoteReceivedNotification(ProcessChainLink):
   def __init__(self, head = False):
+
     note_var = 'note' if head else 'result'
+
     ProcessChainLink.__init__(self, [
       'var authorMail = {',
       '  groups: note.content.authorids,',
       '  subject: \'Your submission to \'+ SHORT_PHRASE + \' has been received: \' + note.content.title,',
       '  message: \'Your submission to \'+ SHORT_PHRASE + \' has been posted.\\n\\nTitle: \' + note.content.title + \'\\n\\nAbstract: \' + note.content.abstract + \'\\n\\nTo view your submission, click here: \' + baseUrl + \'/forum?id=\' + {note}.forum'.format(note = note_var),
-      '};'
+      '};',
+      'return or3client.or3request(or3client.mailUrl, authorMail, \'POST\', token);',
       ],
-      return_line = 'or3client.or3request(or3client.mailUrl, authorMail, \'POST\', token)',
       head = head)
 
-class RevisionChainLink(ProcessChainLink):
+class AllowRevision(ProcessChainLink):
   def __init__(self, head = False):
     ProcessChainLink.__init__(self, [
       'var revisionInvitation = {',
@@ -126,12 +139,12 @@ class RevisionChainLink(ProcessChainLink):
       '    writers: invitation.reply.writers,',
       '    readers: invitation.reply.readers',
       '  }',
-      '};'
+      '};',
+      'return or3client.or3request(or3client.inviteUrl, revisionInvitation, \'POST\', token);',
       ],
-      return_line = 'or3client.or3request(or3client.inviteUrl, revisionInvitation, \'POST\', token)',
       head = head)
 
-class BlindSubmissionChainLink(ProcessChainLink):
+class BlindSubmission(ProcessChainLink):
   def __init__(self, blind_name, head = False):
     ProcessChainLink.__init__(self, [
       'var blindSubmission = {',
@@ -146,9 +159,9 @@ class BlindSubmissionChainLink(ProcessChainLink):
       '    authors: [\'Anonymous\'],',
       '    authorids: [\'Anonymous\'],',
       '  }',
-      '};'
+      '};',
+      'return or3client.or3request(or3client.notesUrl, blindSubmission, \'POST\', token);',
       ],
-      return_line = 'or3client.or3request(or3client.notesUrl, blindSubmission, \'POST\', token)',
       head = head)
 
 class SubmissionProcess(ProcessFunction):
@@ -157,15 +170,14 @@ class SubmissionProcess(ProcessFunction):
 
     self.mask = mask
 
-    revision_chainlink = RevisionChainLink(head = True)
-    self.insert_chainlink(revision_chainlink)
+    self.insert_chainlink(AllowRevision(head = True))
 
     if self.mask:
-      blind_submission_chainlink = BlindSubmissionChainLink(blind_name = self.mask)
+      blind_submission_chainlink = BlindSubmission(blind_name = self.mask)
       self.insert_chainlink(blind_submission_chainlink)
-      mail_chainlink = MailChainLink()
+      mail_chainlink = NoteReceivedNotification()
     else:
-      mail_chainlink = MailChainLink()
+      mail_chainlink = NoteReceivedNotification()
 
     self.insert_chainlink(mail_chainlink)
 

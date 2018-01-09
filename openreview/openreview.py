@@ -373,9 +373,9 @@ class Client(object):
             # TODO: check existence first, write "exists()" function"
             invitation_responses[i.id] = self.post_invitation(i)
 
+        invitation_responses.update(submission_responses)
         return {
             'groups':group_responses,
-            'submissions': submission_responses,
             'invitations': invitation_responses
             }
 

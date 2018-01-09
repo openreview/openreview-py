@@ -87,15 +87,13 @@ class Conference(object):
             submission_params['reply']['writers']['values-regex'] = '~.*'
             self.display_invitation = self.entry_invitation
 
-
-
     def add_homepage(self, homepage):
         self.homepage = homepage
-        if not self.homepage.user_constants['CONFERENCE']:
+        if 'CONFERENCE' not in self.homepage.user_constants:
             self.homepage.user_constants['CONFERENCE'] = self.conference_id
-        if not self.homepage.user_constants['ENTRY_INVITATION']:
+        if 'ENTRY_INVITATION' not in self.homepage.user_constants:
             self.homepage.user_constants['ENTRY_INVITATION'] = self.entry_invitation.id
-        if not self.homepage.user_constants['DISPLAY_INVITATION']:
+        if 'DISPLAY_INVITATION' not in self.homepage.user_constants:
             self.homepage.user_constants['DISPLAY_INVITATION'] = self.display_invitation.id
 
         self.groups[self.conference_id].web = self.homepage.render()
