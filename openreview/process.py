@@ -43,7 +43,6 @@ class ProcessFunction(RenderedJS):
       '};'
     ]
 
-
     self.js_blocks = [
       self.function_head_block,
       self.constants_block,
@@ -55,9 +54,7 @@ class ProcessFunction(RenderedJS):
 
   def _update(self):
     super(ProcessFunction, self)._update()
-
     self.process_chain_block[:] = []
-
     for c in self.chainlinks:
       self.process_chain_block.append(c.render())
 
@@ -73,31 +70,24 @@ class ProcessChainLink(object):
   def __init__(self, js, head = False, input_var = 'result'):
     '''
     js:   a list of javascript instructions
-    return_line:  a string representing the variable to return.
     head: if True, this chainlink is first in the chain
     '''
-
     self.head = head
 
     if self.head:
       return_line = js[-1]
-
       if 'return' in return_line:
           return_idx = return_line.index('return')
           return_line = return_line[(7 + return_idx):]
-
-
       if ';' in return_line:
           semicolon_idx = return_line.index(';')
           return_line = return_line[:semicolon_idx]
-
       self.js_block = js[:-1] + [return_line]
 
     else:
       self.chainlink_head = [
         '.then({input_var} => {{ console.log(JSON.stringify({input_var}));'.format(input_var = input_var)
       ]
-
       self.chainlink_tail = [
         '})'
       ]
@@ -108,9 +98,7 @@ class ProcessChainLink(object):
 
 class NoteReceivedNotification(ProcessChainLink):
   def __init__(self, head = False):
-
     note_var = 'note' if head else 'result'
-
     ProcessChainLink.__init__(self, [
       'var authorMail = {',
       '  groups: note.content.authorids,',
