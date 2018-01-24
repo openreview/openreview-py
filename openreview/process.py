@@ -113,7 +113,7 @@ class AllowRevision(ProcessChainLink):
   def __init__(self, head = False):
     ProcessChainLink.__init__(self, [
       'var revisionInvitation = {',
-      '  id: CONFERENCE + \'/-/Paper\' + note.number + \'/Add/Revision\',',
+      '  id: CONFERENCE + \'/-/Paper\' + note.number + \'/Add_Revision\',',
       '  readers: [\'everyone\'],',
       '  writers: [CONFERENCE],',
       '  invitees: note.content[\'authorids\'],',

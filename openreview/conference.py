@@ -10,6 +10,7 @@ class Conference(object):
         self.conference_id = conference_id
         self.short_phrase = short_phrase
 
+        # consider renaming these variables to something else
         self.entry_invitation = None
         self.display_invitation = None
 
@@ -17,7 +18,14 @@ class Conference(object):
         self.invitations = {}
         self.homepage = None
 
+        # consider keeping the conference group separate from the "groups" variable.
+        # the reasoning is that, with the way I currently do it, I have to keep track
+        # of the states of several objects, instead of just the single conference
+        # group object.
+
     def add_submission(self, submission_name, duedate = 0, process = None, content = {}):
+        # set the default process function object inside this function
+
         submission_params = {
             'id': '/'.join([self.conference_id, '-', submission_name]),
             'readers': ['everyone'],
