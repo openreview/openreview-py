@@ -204,7 +204,8 @@ class BasicHomepage(Webfield):
       '});',
       ])
 
-class TabbedHomepage(Object):
+class TabbedHomepage(RenderedJS):
+
   def __init__(self, group_id, user_constants):
 
     super(TabbedHomepage, self).__init__(user_constants = user_constants)

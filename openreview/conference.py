@@ -182,3 +182,141 @@ class Conference(object):
 
         return submission_content
 
+class Submission(openreview.Invitation):
+    def __init__(self, name, conference_id, duedate,
+        process = None, inv_params = {}, reply_params = {}, content_params = {}):
+
+        self.name = name
+        self.conference_id = conference_id
+
+        default_inv_params = {
+            'id': '/'.join([self.conference_id, '-', self.name]),
+            'readers': ['everyone'],
+            'writers': [self.conference_id],
+            'invitees': ['~'],
+            'signatures': [self.conference_id],
+            'duedate': duedate,
+            'process': process
+        }
+
+        default_reply_params = {
+            'forum': None,
+            'replyto': None,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': ['everyone']
+            },
+            'signatures': {
+                'description': 'Your authorized identity to be associated with the above content.',
+                'values-regex': '~.*'
+            },
+            'writers': {
+                'values': [self.conference_id]
+            }
+        }
+
+        default_content_params = {
+            'title': {
+                'description': 'Title of paper.',
+                'order': 1,
+                'value-regex': '.{1,250}',
+                'required':True
+            },
+            'authors': {
+                'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
+                'order': 2,
+                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
+                'required':True
+            },
+            'authorids': {
+                'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
+                'order': 3,
+                'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+                'required':True
+            },
+            'keywords': {
+                'description': 'Comma separated list of keywords.',
+                'order': 6,
+                'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
+            },
+            'TL;DR': {
+                'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                'order': 7,
+                'value-regex': '[^\\n]{0,250}',
+                'required':False
+            },
+            'abstract': {
+                'description': 'Abstract of paper.',
+                'order': 8,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'required':True
+            },
+            'pdf': {
+                'description': 'Upload a PDF file that ends with .pdf',
+                'order': 9,
+                'value-regex': 'upload',
+                'required':True
+            }
+        }
+
+        self.content_params = {}
+        self.content_params.update(default_content_params)
+        self.content_params.update(content_params)
+
+        self.reply_params = {}
+        self.reply_params.update(default_inv_params)
+        self.reply_params.update(reply_params)
+        self.reply_params['content'] = self.content_params
+
+        self.inv_params = {}
+        self.inv_params.update(default_inv_params)
+        self.inv_params.update(inv_params)
+        self.inv_params['reply'] = self.reply_params
+
+        super(Submission, self).__init__(**self.inv_params)
+
+def create_submissions():
+    pass
+    # if process:
+    #     self.entry_process = process
+    #     self.entry_process.user_constants = {
+    #       'CONFERENCE': self.conference_id,
+    #       'ENTRY_INVITATION': self.entry_invitation.id,
+    #       'SHORT_PHRASE': self.short_phrase
+    #     }
+
+    #     self.entry_invitation.process = self.entry_process
+
+    # if process and process.mask:
+    #     self.entry_invitation.reply['readers']['values-copied'] = [
+    #         self.conference_id, '{content.authorids}', '{signatures}']
+    #     self.entry_invitation.reply['signatures']['values-regex'] = '~.*|' + self.conference_id
+    #     self.entry_invitation.reply['writers']['values'] = [self.conference_id]
+
+    #     blind_submission_params = {
+    #         'id': '/'.join([self.conference_id, '-', process.mask]),
+    #         'readers': ['everyone'],
+    #         'writers': [self.conference_id],
+    #         'invitees': [self.conference_id],
+    #         'signatures': [self.conference_id],
+    #         'reply': {
+    #             'forum': None,
+    #             'replyto': None,
+    #             'readers': {'values': ['everyone']},
+    #             'signatures': {'values': [self.conference_id]},
+    #             'writers': {'values': [self.conference_id]},
+    #             'content': {
+    #                 'authors': {'values-regex': '.*'},
+    #                 'authorids': {'values-regex': '.*'}
+    #             }
+    #         }
+    #     }
+
+    #     self.display_invitation = openreview.Invitation(**blind_submission_params)
+    #     self.entry_invitation.process.user_constants['DISPLAY_INVITATION'] = self.display_invitation.id
+
+    # else:
+    #     submission_params['reply']['readers']['values'] = ['everyone']
+    #     submission_params['reply']['signatures']['values-regex'] = '~.*'
+    #     submission_params['reply']['writers']['values-regex'] = '~.*'
+    #     self.display_invitation = self.entry_invitation
