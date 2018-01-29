@@ -203,3 +203,49 @@ class BasicHomepage(Webfield):
       '  }',
       '});',
       ])
+
+class TabbedHomepage(Object):
+  def __init__(self, group_id, user_constants):
+
+    super(TabbedHomepage, self).__init__(user_constants = user_constants)
+
+    self.group_id = group_id
+
+    self.js_blocks.append([
+      'var SUBJECT_AREAS_LIST = [];',
+      'var BUFFER = 1000 * 60 * 30;  // 30 minutes',
+      'var PAGE_SIZE = 50;',
+
+      'var paperDisplayOptions = {',
+      '  pdfLink: true,',
+      '  replyCount: true,',
+      '  showContents: true',
+      '};',
+
+      'var commentDisplayOptions = {',
+      '  pdfLink: false,',
+      '  replyCount: true,',
+      '  showContents: false,',
+      '  showParent: true',
+      '};',
+
+      'var initialPageLoad = true;'
+      ])
+
+    self.js_blocks.append([
+      '// Main is the entry point to the webfield code and runs everything',
+      'function main() {',
+      '  Webfield.ui.setup(\'#group-container\', CONFERENCE);  // required',
+      '  renderConferenceHeader();',
+
+      '  renderSubmissionButton();',
+
+      '  renderConferenceTabs();',
+
+      '  load().then(renderContent);',
+      '}'
+      ])
+
+    self.js_blocks.append([
+
+      ])
