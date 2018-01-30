@@ -1,212 +1,11 @@
-from collections import defaultdict
-from ..rendered_js import RenderedJS
-import functions
+'''
+Standard webfield templates.
 
-class Webfield(RenderedJS):
-  def __init__(self, user_constants = {}, loaded_vars = {}, subject_areas = []):
-    super(Webfield, self).__init__(user_constants = user_constants)
-
-    self.subject_areas = set(subject_areas)
-
-    self.webfield_head_block = [
-      'var paperDisplayOptions = {',
-      '  pdfLink: true,',
-      '  replyCount: true,',
-      '  showContents: true',
-      '};',
-      'var BUFFER = 1000 * 60 * 30;  // 30 minutes',
-      'var PAGE_SIZE = 50;'
-    ]
-
-    # a dict of javascript functions, keyed on function names
-    # main_functions get called in main()
-    self.main_functions = []
-    # helper functions are just defined
-    self.helper_functions = []
-    self.function_definitions_block = []
-
-    # load() makes the api calls to the server.
-    self.loaded_vars = loaded_vars
-    self.load_block = []
-
-    # render() is called when all the data is finished being loaded from the server
-    # It should also be called when the page needs to be refreshed, for example after a user
-    # submits a new paper.
-    self.render_commands = []
-    self.render_block = []
-
-    self.main_commands = []
-    self.main_head = [
-      '// Main is the entry point to the webfield code and runs everything',
-      'function main() {',
-      '  Webfield.ui.setup(\'#group-container\', CONFERENCE);  // required'
-    ]
-
-    self.main_tail = [
-      '  load().then(render)',
-      '  .then(function() {',
-      '    Webfield.setupAutoLoading(DISPLAY_INVITATION, PAGE_SIZE, paperDisplayOptions);',
-      '  });',
-      '}',
-      '// Go!',
-      'main();'
-    ]
-
-    self.js_blocks = [
-      self.webfield_head_block,
-      self.constants_block,
-      self.function_definitions_block,
-      self.load_block,
-      self.render_block,
-      self.main_head,
-      self.main_commands,
-      self.main_tail
-    ]
-
-    self._update()
-
-  def _update(self):
-    super(Webfield, self)._update()
-
-    sorted_subject_areas = ',\n'.join(['\'' + area + '\'' for area in sorted(list(self.subject_areas))])
-
-    subj_string = '\n'.join([
-      'var SUBJECT_AREAS = [',
-      sorted_subject_areas,
-      '];'
-    ])
-
-    self.constants_block.append(subj_string)
-
-    load_args = self._update_load_block()
-
-    self._update_render_block(load_args)
-
-    self._update_main_block()
-
-  def _update_load_block(self):
-    load_vars_block = ['  var {0} = {1};\n'.format(varname, js) for varname, js in self.loaded_vars.iteritems()]
-    load_args = sorted([varname for varname in self.loaded_vars.keys()])
-    self.load_block[:] = [
-      'function load(){'
-    ] + load_vars_block + [
-      'return $.when({load_args})'.format(load_args = ','.join(load_args)),
-      '}'
-    ]
-    return load_args
-
-  def _update_render_block(self, load_args):
-    self.render_block[:] = [
-      'function render({load_args}){{'.format(load_args = ','.join(load_args)),
-    ] + self.render_commands + [
-      '}'
-    ]
-
-  def _update_main_block(self):
-    self.function_definitions_block[:] = []
-    self.main_commands[:] = []
-
-    for webfield_function in self.helper_functions:
-      self.function_definitions_block.append(webfield_function.render())
-
-    for webfield_function in self.main_functions:
-      self.function_definitions_block.append(webfield_function.render())
-      self.main_commands.append('  {function}();'.format(function=webfield_function.name))
-
-
-  def add_subject_areas(self, subject_areas):
-    self.subject_areas.update(subject_areas)
-
-  def remove_subject_areas(self, subject_areas):
-    # TODO
-    pass
-
-  def add_function(self, webfield_function, helper = False):
-    assert issubclass(type(webfield_function), functions.WebfieldFunction)
-    if not helper:
-      self.main_functions.append(webfield_function)
-    else:
-      self.helper_functions.append(webfield_function)
-
-  def add_loaded_var(self, varname, js):
-    # TODO: add some more checks here, make sure that there aren't repeated variables
-    self.loaded_vars[varname] = js
-
-  def add_render_commands(self, render_commands):
-    if type(render_commands) == list:
-      self.render_commands += render_commands
-    if type(render_commands) == str:
-      self.render_commands.append(render_commands)
-
-class BasicHomepage(Webfield):
-  '''
-  Represents a basic homepage webfield for a conference/venue.
-
-  '''
-  def __init__(self, user_constants = {}, subject_areas = []):
-    super(BasicHomepage, self).__init__(user_constants = user_constants, subject_areas = subject_areas)
-
-    self.add_function(functions.RenderConferenceHeader())
-
-    ## alternatively, you could do:
-    '''
-    self.add_function(functions.WebfieldFunction('renderConferenceHeader', [
-      'Webfield.ui.venueHeader({',
-      '  title: TITLE,',
-      '  subtitle: SUBTITLE,',
-      '  location: LOCATION,',
-      '  date: DATE,',
-      '  website: WEBSITE,',
-      '  deadline: DEADLINE,',
-      '  instructions: INSTRUCTIONS',
-      '});',
-      'Webfield.ui.spinner(\'#notes\');'
-      ]))
-    '''
-
-    self.add_loaded_var('invitation',
-      'Webfield.api.getSubmissionInvitation(ENTRY_INVITATION, {deadlineBuffer: BUFFER})')
-
-    self.add_loaded_var('notes',
-      'Webfield.api.getSubmissions(DISPLAY_INVITATION, {pageSize: PAGE_SIZE})'
-      )
-
-    self.add_render_commands([
-      '// Display submission button and form (if invitation is readable)',
-      '$(\'#invitation\').empty();',
-      'if (invitation) {',
-      '  Webfield.ui.submissionButton(invitation, user, {',
-      '    onNoteCreated: function() {',
-      '      // Callback funtion to be run when a paper has successfully been submitted (required)',
-      '      load().then(render).then(function() {',
-      '        Webfield.setupAutoLoading(DISPLAY_INVITATION, PAGE_SIZE, paperDisplayOptions);',
-      '      });',
-      '    }',
-      '  });',
-      '}',
-      '// Display the list of all submitted papers',
-      '$(\'#notes\').empty();',
-      'Webfield.ui.submissionList(notes, {',
-      '  heading: \'Submitted Papers\',',
-      '  displayOptions: paperDisplayOptions,',
-      '  search: {',
-      '    enabled: true,',
-      '    subjectAreas: SUBJECT_AREAS,',
-      '    onResults: function(searchResults) {',
-      '      Webfield.ui.searchResults(searchResults, paperDisplayOptions);',
-      '      Webfield.disableAutoLoading();',
-      '    },',
-      '    onReset: function() {',
-      '      Webfield.ui.searchResults(notes, paperDisplayOptions);',
-      '      Webfield.setupAutoLoading(DISPLAY_INVITATION, PAGE_SIZE, paperDisplayOptions);',
-      '    }',
-      '  }',
-      '});',
-      ])
+'''
 
 class TabbedHomepage(object):
 
-  def __init__(self, js_constants, group_id):
+  def __init__(self, js_constants, group_id, subject_areas = None):
 
     self.js_constants = js_constants
 
@@ -238,6 +37,10 @@ class TabbedHomepage(object):
       'var CONFERENCE_REGEX = CONFERENCE.replace(\'.\', \'\\\\.\').replace(\'/\',\'\\\\/\')',
       'var WILDCARD_INVITATION = CONFERENCE + \'/-/.*\';'
       ]
+
+    if subject_areas:
+      subj = ['var SUBJECT_AREAS_LIST = ['] + ['"{}",\n'.format(s) for s in subject_areas] + ['];']
+      self.constants_block += subj
 
     self.instructions = self.constants_block + [
       '// Main is the entry point to the webfield code and runs everything',
@@ -537,6 +340,290 @@ class TabbedHomepage(object):
       '// Go!',
       'main();',
 
+    ]
+
+  def render(self):
+    return '\n'.join(self.instructions)
+
+
+class BidWebfield(object):
+  def __init__(self, js_constants, group_id, subject_areas = None):
+
+    self.js_constants = js_constants
+
+    self.constants_block = []
+
+    for k, v in self.js_constants.iteritems():
+      if v:
+        self.constants_block.append('var {k} = \'{v}\';'.format(k=k, v=v))
+
+    self.default_constants = [
+      "// Constants",
+      "var BLIND_INVITATION = CONFERENCE + '/-/Blind_Submission';",
+      "var ADD_BID = CONFERENCE + '/-/Add_Bid'",
+      "var SUBJECT_AREAS_LIST = [];",
+      "var PAGE_SIZE = 1000;",
+    ]
+
+    self.constants_block += self.default_constants
+
+    if subject_areas:
+      subj = ['var SUBJECT_AREAS_LIST = ['] + ['"{}",\n'.format(s) for s in subject_areas] + ['];']
+      self.constants_block += subj
+
+    self.instructions = self.constants_block + [
+      "// Main is the entry point to the webfield code and runs everything",
+      "function main() {",
+      "  Webfield.ui.setup('#invitation-container', CONFERENCE);  // required",
+      "",
+      "  Webfield.ui.header('ICLR 2018 Paper Bidding');  // ICLR specific",
+      "",
+      "  Webfield.ui.spinner('#notes');",
+      "",
+      "  OpenBanner.breadcrumbs([",
+      "    { link: '/', text: 'Venues' },",
+      "    { link: '/group?id=' + CONFERENCE, text: view.prettyId(CONFERENCE) }",
+      "  ]);",
+      "",
+      "  load().then(renderContent);",
+      "}",
+      "",
+      "function load() {",
+      "  var notesP = Webfield.api.getSubmissions(BLIND_INVITATION, {",
+      "    pageSize: PAGE_SIZE",
+      "  });",
+      "",
+      "  var tagInvitationsP = Webfield.get('/invitations', {id: ADD_BID}).then(function(result) {",
+      "    return _.filter(result.invitations, function(invitation) {",
+      "      return invitation.invitees.length;",
+      "    });",
+      "  });",
+      "",
+      "  return $.when(notesP, tagInvitationsP);",
+      "}",
+      "",
+      "function renderContent(allNotes, tagInvitations) {",
+      "  var activeTab = 0;",
+      "",
+      "  var validNotes = allNotes.filter(function(note) {",
+      "    return !note.content.hasOwnProperty('withdrawal');",
+      "  });",
+      "",
+      "  var paperDisplayOptions = {",
+      "    pdfLink: true,",
+      "    replyCount: true,",
+      "    showContents: true,",
+      "    showTags: true,",
+      "    tagInvitations: tagInvitations",
+      "  };",
+      "",
+      "  $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {",
+      "    activeTab = $(e.target).data('tabIndex');",
+      "  });",
+      "",
+      "  $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, tagObj) {",
+      "    var updatedNote = _.find(validNotes, ['id', tagObj.forum]);",
+      "    if (!updatedNote) {",
+      "      return;",
+      "    }",
+      "    var prevVal = _.has(updatedNote, 'tags[0].tag') ? updatedNote.tags[0].tag : 'No bid';",
+      "    updatedNote.tags[0] = tagObj;",
+      "",
+      "    var tagToElemId = {",
+      "      'I want to review': '#wantToReview',",
+      "      'I can review': '#canReview',",
+      "      'I can probably review but am not an expert': '#probablyReview',",
+      "      'I cannot review': '#canNotReview',",
+      "      'No bid': '#noBid'",
+      "    };",
+      "",
+      "    var $sourceContainer = $(tagToElemId[prevVal] + ' .submissions-list');",
+      "    var $note = $sourceContainer.find('li.note[data-id="' + tagObj.forum + '"]').detach();",
+      "    if (!$sourceContainer.children().length) {",
+      "      $sourceContainer.append('<li><p class=\"empty-message\">No papers to display at this time</p></li>');",
+      "    }",
+      "",
+      "    var $destContainer = $(tagToElemId[tagObj.tag] + ' .submissions-list');",
+      "    if ($destContainer.find('p.empty-message').length) {",
+      "      $destContainer.empty();",
+      "    }",
+      "    $destContainer.prepend($note);",
+      "",
+      "    updateCounts();",
+      "  });",
+      "",
+      "  function updateNotes(notes) {",
+      "    // Sort notes by bid",
+      "    var wantToReview = [];",
+      "    var canReview = [];",
+      "    var probablyReview = [];",
+      "    var canNotReview = [];",
+      "    var noBid = [];",
+      "    notes.forEach(function(n) {",
+      "      if (n.tags.length) {",
+      "        if (n.tags[0].tag === 'I want to review') {",
+      "          wantToReview.push(n);",
+      "        } else if (n.tags[0].tag === 'I can review') {",
+      "          canReview.push(n);",
+      "        } else if (n.tags[0].tag === 'I can probably review but am not an expert') {",
+      "          probablyReview.push(n);",
+      "        } else if (n.tags[0].tag === 'I cannot review') {",
+      "          canNotReview.push(n);",
+      "        } else {",
+      "          noBid.push(n);",
+      "        }",
+      "      } else {",
+      "        noBid.push(n);",
+      "      }",
+      "    });",
+      "",
+      "    var bidCount = wantToReview.length + canReview.length + probablyReview.length + canNotReview.length;",
+      "",
+      "    $('#header h3').remove();",
+      "    $('#header').append('<h3>You have completed ' + bidCount + ' bids</h3>');",
+      "",
+      "    var sections = [",
+      "      {",
+      "        heading: 'All Papers &nbsp;<span class=\"glyphicon glyphicon-search\"></span>',",
+      "        id: 'allPapers',",
+      "        content: null",
+      "      },",
+      "      {",
+      "        heading: 'No bid',",
+      "        headingCount: noBid.length,",
+      "        id: 'noBid',",
+      "        content: null",
+      "      },",
+      "      {",
+      "        heading: 'I want to review',",
+      "        headingCount: wantToReview.length,",
+      "        id: 'wantToReview',",
+      "        content: null",
+      "      },",
+      "      {",
+      "        heading: 'I can review',",
+      "        headingCount: canReview.length,",
+      "        id: 'canReview',",
+      "        content: null",
+      "      },",
+      "      {",
+      "        heading: 'I can probably review but am not an expert',",
+      "        headingCount: probablyReview.length,",
+      "        id: 'probablyReview',",
+      "        content: null",
+      "      },",
+      "      {",
+      "        heading: 'I cannot review',",
+      "        headingCount: canNotReview.length,",
+      "        id: 'canNotReview',",
+      "        content: null",
+      "      }",
+      "    ];",
+      "    sections[activeTab].active = true;",
+      "    $('#notes .tabs-container').remove();",
+      "    Webfield.ui.tabPanel(sections, {",
+      "      container: '#notes',",
+      "      hidden: true",
+      "    });",
+      "",
+      "    Webfield.ui.submissionList(wantToReview, {",
+      "      heading: null,",
+      "      container: '#wantToReview',",
+      "      search: { enabled: false },",
+      "      displayOptions: paperDisplayOptions,",
+      "      fadeIn: false",
+      "    });",
+      "",
+      "    Webfield.ui.submissionList(canReview, {",
+      "      heading: null,",
+      "      container: '#canReview',",
+      "      search: { enabled: false },",
+      "      displayOptions: paperDisplayOptions,",
+      "      fadeIn: false",
+      "    });",
+      "",
+      "    Webfield.ui.submissionList(probablyReview, {",
+      "      heading: null,",
+      "      container: '#probablyReview',",
+      "      search: { enabled: false },",
+      "      displayOptions: paperDisplayOptions,",
+      "      fadeIn: false",
+      "    });",
+      "",
+      "    Webfield.ui.submissionList(canNotReview, {",
+      "      heading: null,",
+      "      container: '#canNotReview',",
+      "      search: { enabled: false },",
+      "      displayOptions: paperDisplayOptions,",
+      "      fadeIn: false",
+      "    });",
+      "",
+      "    Webfield.ui.submissionList(noBid, {",
+      "      heading: null,",
+      "      container: '#noBid',",
+      "      search: { enabled: false },",
+      "      displayOptions: paperDisplayOptions,",
+      "      fadeIn: false",
+      "    });",
+      "",
+      "    var submissionListOptions = _.assign({}, paperDisplayOptions, {container: '#allPapers'});",
+      "    Webfield.ui.submissionList(notes, {",
+      "      heading: null,",
+      "      container: '#allPapers',",
+      "      search: {",
+      "        enabled: true,",
+      "        subjectAreas: SUBJECT_AREAS_LIST,",
+      "        onResults: function(searchResults) {",
+      "          var blindedSearchResults = searchResults.filter(function(note) {",
+      "            return note.invitation === BLIND_INVITATION;",
+      "          });",
+      "          Webfield.ui.searchResults(blindedSearchResults, submissionListOptions);",
+      "        },",
+      "        onReset: function() {",
+      "          Webfield.ui.searchResults(notes, submissionListOptions);",
+      "        }",
+      "      },",
+      "      displayOptions: submissionListOptions,",
+      "      fadeIn: false",
+      "    });",
+      "",
+      "    $('#notes .spinner-container').remove();",
+      "    $('#notes .tabs-container').show();",
+      "  }",
+      "",
+      "  function updateCounts() {",
+      "    var containers = [",
+      "      '#noBid',",
+      "      '#wantToReview',",
+      "      '#canReview',",
+      "      '#probablyReview',",
+      "      '#canNotReview'",
+      "    ];",
+      "    var totalCount = 0;",
+      "",
+      "    containers.forEach(function(containerId) {",
+      "      var numPapers = $(containerId).find('li.note').length;",
+      "      if (containerId !== '#noBid') {",
+      "        totalCount += numPapers;",
+      "      }",
+      "",
+      "      $tab = $('ul.nav-tabs li a[href="' + containerId + '"]');",
+      "      $tab.find('span.badge').remove();",
+      "      if (numPapers) {",
+      "        $tab.append('<span class=\"badge\">' + numPapers + '</span>');",
+      "      }",
+      "    });",
+      "",
+      "    $('#header h3').remove();",
+      "    $('#header').append('<h3>You have completed ' + totalCount + ' bids</h3>');",
+      "  }",
+      "",
+      "  updateNotes(validNotes);",
+      "}",
+      "",
+      "// Go!",
+      "main();",
+      "",
     ]
 
   def render(self):

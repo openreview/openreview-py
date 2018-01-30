@@ -1,5 +1,4 @@
 from openreview import *
 from tools import *
-from conference import *
+from invitations import *
 from process import *
-from rendered_js import *
