@@ -15,6 +15,13 @@ class MaskSubmissionProcess(object):
       if v:
         self.constants_block.append('var {k} = \'{v}\';'.format(k=k, v=v))
 
+    reply_reader_values = [v for k,v in mask.reply['readers'].iteritems() if 'value' in k]
+    assert len(reply_reader_values) == 1, 'Too many values in reply readers: ' + reply_reader_values
+
+    reply_reader_strings = ['\'{}\''.format(v) for v in reply_reader_values[0]]
+
+    reply_readers = '[' + ',\n'.join(reply_reader_strings) + ']'
+
     self.instructions = [
       'function () {',
       '  var or3client = lib.or3client;'] + self.constants_block + [
@@ -39,12 +46,12 @@ class MaskSubmissionProcess(object):
       '  .then(result => { console.log(JSON.stringify(result));',
       '    var blindSubmission = {',
       '      original: note.id,',
-      '      invitation: BLIND_INVITATION,',
+      '      invitation: \'{mask_id}\','.format(mask_id = mask.id),
       '      forum: null,',
       '      parent: null,',
       '      signatures: [CONFERENCE],',
       '      writers: [CONFERENCE],',
-      '      readers: [\'everyone\'],',
+      '      readers: {reply_readers},'.format(reply_readers = reply_readers),
       '      content: {',
       '        authors: [\'Anonymous\'],',
       '        authorids: [CONFERENCE + \'/Paper\' + note.number + \'/Authors\'],',
