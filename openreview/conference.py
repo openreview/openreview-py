@@ -184,7 +184,7 @@ class Conference(object):
 
 class Submission(openreview.Invitation):
     def __init__(self, name, conference_id, duedate,
-        process = None, inv_params = {}, reply_params = {}, content_params = {}):
+        process = None, inv_params = {}, reply_params = {}, content_params = {}, mask = {}):
 
         self.name = name
         self.conference_id = conference_id
@@ -263,8 +263,11 @@ class Submission(openreview.Invitation):
         self.content_params.update(default_content_params)
         self.content_params.update(content_params)
 
+        if mask:
+            self.content_params = mask
+
         self.reply_params = {}
-        self.reply_params.update(default_inv_params)
+        self.reply_params.update(default_reply_params)
         self.reply_params.update(reply_params)
         self.reply_params['content'] = self.content_params
 
@@ -275,48 +278,53 @@ class Submission(openreview.Invitation):
 
         super(Submission, self).__init__(**self.inv_params)
 
+    def add_process(self, process):
+        self.process = process.render()
+
+
+
 def create_submissions():
-    pass
-    # if process:
-    #     self.entry_process = process
-    #     self.entry_process.user_constants = {
-    #       'CONFERENCE': self.conference_id,
-    #       'ENTRY_INVITATION': self.entry_invitation.id,
-    #       'SHORT_PHRASE': self.short_phrase
-    #     }
 
-    #     self.entry_invitation.process = self.entry_process
+    if process:
+        self.entry_process = process
+        self.entry_process.user_constants = {
+          'CONFERENCE': self.conference_id,
+          'ENTRY_INVITATION': self.entry_invitation.id,
+          'SHORT_PHRASE': self.short_phrase
+        }
 
-    # if process and process.mask:
-    #     self.entry_invitation.reply['readers']['values-copied'] = [
-    #         self.conference_id, '{content.authorids}', '{signatures}']
-    #     self.entry_invitation.reply['signatures']['values-regex'] = '~.*|' + self.conference_id
-    #     self.entry_invitation.reply['writers']['values'] = [self.conference_id]
+        self.entry_invitation.process = self.entry_process
 
-    #     blind_submission_params = {
-    #         'id': '/'.join([self.conference_id, '-', process.mask]),
-    #         'readers': ['everyone'],
-    #         'writers': [self.conference_id],
-    #         'invitees': [self.conference_id],
-    #         'signatures': [self.conference_id],
-    #         'reply': {
-    #             'forum': None,
-    #             'replyto': None,
-    #             'readers': {'values': ['everyone']},
-    #             'signatures': {'values': [self.conference_id]},
-    #             'writers': {'values': [self.conference_id]},
-    #             'content': {
-    #                 'authors': {'values-regex': '.*'},
-    #                 'authorids': {'values-regex': '.*'}
-    #             }
-    #         }
-    #     }
+    if process and process.mask:
+        self.entry_invitation.reply['readers']['values-copied'] = [
+            self.conference_id, '{content.authorids}', '{signatures}']
+        self.entry_invitation.reply['signatures']['values-regex'] = '~.*|' + self.conference_id
+        self.entry_invitation.reply['writers']['values'] = [self.conference_id]
 
-    #     self.display_invitation = openreview.Invitation(**blind_submission_params)
-    #     self.entry_invitation.process.user_constants['DISPLAY_INVITATION'] = self.display_invitation.id
+        blind_submission_params = {
+            'id': '/'.join([self.conference_id, '-', process.mask]),
+            'readers': ['everyone'],
+            'writers': [self.conference_id],
+            'invitees': [self.conference_id],
+            'signatures': [self.conference_id],
+            'reply': {
+                'forum': None,
+                'replyto': None,
+                'readers': {'values': ['everyone']},
+                'signatures': {'values': [self.conference_id]},
+                'writers': {'values': [self.conference_id]},
+                'content': {
+                    'authors': {'values-regex': '.*'},
+                    'authorids': {'values-regex': '.*'}
+                }
+            }
+        }
 
-    # else:
-    #     submission_params['reply']['readers']['values'] = ['everyone']
-    #     submission_params['reply']['signatures']['values-regex'] = '~.*'
-    #     submission_params['reply']['writers']['values-regex'] = '~.*'
-    #     self.display_invitation = self.entry_invitation
+        self.display_invitation = openreview.Invitation(**blind_submission_params)
+        self.entry_invitation.process.user_constants['DISPLAY_INVITATION'] = self.display_invitation.id
+
+    else:
+        submission_params['reply']['readers']['values'] = ['everyone']
+        submission_params['reply']['signatures']['values-regex'] = '~.*'
+        submission_params['reply']['writers']['values-regex'] = '~.*'
+        self.display_invitation = self.entry_invitation
