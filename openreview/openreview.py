@@ -181,7 +181,21 @@ class Client(object):
         return Note.from_json(profile)
 
     def post_profile(self, id, content):
-        response = requests.put(self.profiles_url, json = { 'id': id, 'content': content }, headers = self.headers)
+        response = requests.put(
+            self.profiles_url,
+            json = { 'id': id, 'content': content },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        profile = response.json()
+        return Note.from_json(profile)
+
+    def update_profile(self, id, content):
+        response = requests.post(
+            self.profiles_url,
+            json = {'id': id, 'content': content},
+            headers = self.headers)
+
         response = self.__handle_response(response)
         profile = response.json()
         return Note.from_json(profile)
