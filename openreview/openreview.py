@@ -349,38 +349,6 @@ class Client(object):
 
         return Tag.from_json(response.json())
 
-    def post_conference(self, conference, overwrite = True):
-        group_responses = {}
-
-        for group in sorted(conference.groups.values(), key=lambda x: len(x.id)):
-            if overwrite or not self.exists(group.id):
-                group_responses[group.id] = self.post_group(group)
-            else:
-                group_responses[group.id] = False
-
-        submission_responses = {}
-
-        conference.entry_invitation.process = conference.entry_invitation.process.render()
-
-        #TODO: check existence first; write "exists()" function
-        submission_responses[conference.entry_invitation.id] = self.post_invitation(conference.entry_invitation)
-
-        if conference.display_invitation.id != conference.entry_invitation.id:
-            submission_responses[conference.display_invitation.id] = self.post_invitation(conference.display_invitation)
-
-        invitation_responses = {}
-        for i in conference.invitations:
-            # TODO: check existence first, write "exists()" function"
-            invitation_responses[i.id] = self.post_invitation(i)
-
-        invitation_responses.update(submission_responses)
-        return {
-            'groups':group_responses,
-            'invitations': invitation_responses
-            }
-
-
-
     def delete_note(self, note):
         """
         Deletes the note. Upon success, returns the deleted Note object.
