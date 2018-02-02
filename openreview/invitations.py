@@ -118,7 +118,7 @@ class AddBid(openreview.Invitation):
             'writers': [conference_id],
             'invitees': [conference_id + '/Reviewers'],
             'signatures': [conference_id],
-            'duedate': 0, # 17:00:00 EST on May 1, 2018
+            'duedate': duedate, # 17:00:00 EST on May 1, 2018
             'taskCompletionCount': 50,
             'multiReply': False,
         }
