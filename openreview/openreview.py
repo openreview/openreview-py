@@ -227,7 +227,6 @@ class Client(object):
         groups.sort(key = lambda x: x.id)
         return groups
 
-
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
@@ -254,8 +253,6 @@ class Client(object):
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         invitations.sort(key = lambda x: x.id)
         return invitations
-
-
 
     def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None, mintcdate = None):
         """Returns a list of Note objects based on the filters provided."""
@@ -312,7 +309,6 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['references']]
 
-
     def get_tags(self, id = None, invitation = None, forum = None):
         """Returns a list of Tag objects based on the filters provided."""
         params = {}
@@ -336,7 +332,6 @@ class Client(object):
             return False
         return True
 
-
     def post_group(self, group, overwrite = True):
         """
         Posts the group. Upon success, returns the posted Group object.
@@ -349,7 +344,6 @@ class Client(object):
             response = self.__handle_response(response)
 
         return Group.from_json(response.json())
-
 
     def post_invitation(self, invitation):
         """
@@ -388,7 +382,6 @@ class Client(object):
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
         return None
-
 
     def send_mail(self, subject, recipients, message):
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
