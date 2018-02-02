@@ -180,8 +180,34 @@ class Client(object):
         profile = response.json()['profile']
         return Note.from_json(profile)
 
+    def get_profiles(self, email_or_id_list):
+        """If the list is tilde_ids, returns an array of profiles
+           If the list is emails, returns an array of dictionaries with 'email' and 'profile'"""
+        tildematch = re.compile('~.+')
+        if len(email_or_id_list) > 0 and tildematch.match(email_or_id_list[0]):
+            att = 'ids'
+        else:
+            att = 'emails'
+        response = requests.post(self.baseurl + '/user/profiles', json={att: email_or_id_list})
+        response = self.__handle_response(response)
+        return response.json()['profiles']
+
     def post_profile(self, id, content):
-        response = requests.put(self.profiles_url, json = { 'id': id, 'content': content }, headers = self.headers)
+        response = requests.put(
+            self.profiles_url,
+            json = { 'id': id, 'content': content },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        profile = response.json()
+        return Note.from_json(profile)
+
+    def update_profile(self, id, content):
+        response = requests.post(
+            self.profiles_url,
+            json = {'id': id, 'content': content},
+            headers = self.headers)
+
         response = self.__handle_response(response)
         profile = response.json()
         return Note.from_json(profile)
