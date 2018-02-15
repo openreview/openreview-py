@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import openreview
+import re
 
 super_user_id = 'OpenReview.net'
 
@@ -74,3 +75,58 @@ def build_groups(conference_group_id, default_params=None):
     groups[conference_group_id].writers = groups[conference_group_id].signatories = [conference_group_id]
 
     return sorted(groups.values(), key=lambda x: len(x.id))
+
+def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True):
+
+    def capitalize_title(title):
+        capitalization_regex = re.compile('[A-Z]{2,}')
+        words = re.split('(\W)', title)
+        for idx, word in enumerate(words):
+            m = capitalization_regex.search(word)
+            if m:
+                new_word = '{' + word[m.start():m.end()] + '}'
+                words[idx] = words[idx].replace(word[m.start():m.end()], new_word)
+        return ''.join(words)
+
+
+    first_word = re.sub('[^a-zA-Z]', '', note.content['title'].split(' ')[0].lower())
+
+    forum = note.forum if not url_forum else url_forum
+
+    if anonymous:
+        first_author_last_name = 'anonymous'
+        authors = 'Anonymous'
+    else:
+        first_author_last_name = note.content['authors'][0].split(' ')[1].lower()
+        authors = ' and '.join(note.content['authors'])
+
+    bibtex_title = capitalize_title(note.content['title'])
+
+    rejected_bibtex = [
+        '@misc{',
+        first_author_last_name + year + first_word + ',',
+        'title={' + bibtex_title + '},',
+        'author={' + authors + '},',
+        'year={' + year + '},',
+        'url={https://openreview.net/forum?id=' + forum + '},',
+        '}'
+    ]
+
+    accepted_bibtex = [
+        '@inproceedings{',
+        first_author_last_name + '2018' + first_word + ',',
+        'title={' + bibtex_title + '},',
+        'author={' + authors + '},',
+        'booktitle={' + venue_fullname + '},',
+        'year={' + year + '},',
+        'url={https://openreview.net/forum?id=' + forum + '},',
+        '}'
+    ]
+
+    if accepted:
+        bibtex = accepted_bibtex
+    else:
+        bibtex = rejected_bibtex
+
+    return '\n'.join(bibtex)
+
