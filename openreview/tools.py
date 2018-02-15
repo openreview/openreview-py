@@ -76,7 +76,7 @@ def build_groups(conference_group_id, default_params=None):
 
     return sorted(groups.values(), key=lambda x: len(x.id))
 
-def get_bibtex(note, url_forum=None, accepted=False, anonymous=True):
+def get_bibtex(note, venue_fullname, url_forum=None, accepted=False, anonymous=True):
 
     def capitalize_title(title):
         capitalization_regex = re.compile('[A-Z]{2,}')
@@ -117,7 +117,7 @@ def get_bibtex(note, url_forum=None, accepted=False, anonymous=True):
         first_author_last_name + '2018' + first_word + ',',
         'title={' + bibtex_title + '},',
         'author={' + authors + '},',
-        'booktitle={International Conference on Learning Representations},',
+        'booktitle={' + venue_fullname + '},',
         'year={2018},',
         'url={https://openreview.net/forum?id=' + forum + '},',
         '}'
