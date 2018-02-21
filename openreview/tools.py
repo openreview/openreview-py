@@ -130,3 +130,67 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     return '\n'.join(bibtex)
 
+def subdomains(email):
+    '''
+    Given an email address, get the domains and subdomains.
+
+    e.g. johnsmith@iesl.cs.umass.edu --> [umass.edu, cs.umass.edu, iesl.cs.umass.edu]
+    '''
+
+    full_domain = email.split('@')[1]
+    domain_components = full_domain.split('.')
+    domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
+    valid_domains = [d for d in domains if '.' in d]
+    return valid_domains
+
+def profile_conflicts(profile):
+    domain_conflicts = set()
+    relation_conflicts = set()
+
+    profile_domains = []
+    for e in profile.content['emails']:
+        profile_domains += subdomains(e)
+
+    domain_conflicts.update(profile_domains)
+
+    institution_domains = [h['institution']['domain'] for h in profile.content['history']]
+    domain_conflicts.update(institution_domains)
+
+    if 'relations' in profile.content:
+        relation_conflicts.update([r['email'] for r in profile.content['relations']])
+
+    if 'gmail.com' in domain_conflicts:
+        domain_conflicts.remove('gmail.com')
+
+    return (domain_conflicts, relation_conflicts)
+
+def get_profile_conflicts(client, reviewer_to_add):
+    try:
+        profile = client.get_profile(reviewer_to_add)
+        user_domain_conflicts, user_relation_conflicts = profile_conflicts(profile)
+        user_relation_conflicts.update([reviewer_to_add])
+    except openreview.OpenReviewException as e:
+        user_domain_conflicts, user_relation_conflicts = (set(), set())
+
+    return user_domain_conflicts, user_relation_conflicts
+
+def get_paper_conflicts(client, paper):
+    authorids = paper.content['authorids']
+    domain_conflicts = set()
+    relation_conflicts = set()
+    for e in authorids:
+        author_domain_conflicts, author_relation_conflicts = get_profile_conflicts(client, e)
+
+        domain_conflicts.update(author_domain_conflicts)
+        relation_conflicts.update(author_relation_conflicts)
+
+        if '@' in e:
+            domain_conflicts.update(subdomains(e))
+
+    relation_conflicts = set([e for e in authorids if '@' in e])
+
+    # remove the domain "gmail.com"
+    if 'gmail.com' in domain_conflicts:
+        domain_conflicts.remove('gmail.com')
+
+    return (domain_conflicts, relation_conflicts)
