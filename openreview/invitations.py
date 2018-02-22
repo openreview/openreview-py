@@ -141,7 +141,7 @@ class AddBid(openreview.Invitation):
             'tag': {
                 'description': 'Bid description',
                 'order': 1,
-                'value-dropdown': ['I want to review',
+                'value-radio': ['I want to review',
                     'I can review',
                     'I can probably review but am not an expert',
                     'I cannot review',
