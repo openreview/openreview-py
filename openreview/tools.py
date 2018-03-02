@@ -1,6 +1,8 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 import openreview
 import re
+import requests
 
 super_user_id = 'OpenReview.net'
 
@@ -49,6 +51,99 @@ def create_profile(client, email, first, last, middle = None):
             raise openreview.OpenReviewException('There is already a profile with this first: {0}, middle: {1}, last name: {2}'.format(first, middle, last))
     else:
         raise openreview.OpenReviewException('There is already a profile with this email: {0}'.format(email))
+
+
+def get_or_create_profile(client, email, first, last, allow_duplicates=False, verbose=False):
+
+    profile_by_email_response = requests.get(client.baseurl+"/user/profile?email=%s" % email)
+
+    # check if email is already in use
+    if 'error' in profile_by_email_response.json() or 'errors' in profile_by_email_response.json(): #if the email address doesn't belong to any tilde group
+        # new user, check if this is first ~name for this name
+        tilderesponse = requests.get(client.baseurl+'/tildeusername?first=%s&last=%s' %(first,last) )
+
+        # if either first user or if duplicate and duplicates are allowed, create new profile
+        if '1' in tilderesponse.json()['username'] or allow_duplicates:
+
+            tilde = tilderesponse.json()['username']
+
+            tilde_group = openreview.Group.from_json({
+                "id": tilde,
+                "tauthor": "OpenReview.net",
+                "signatures": [
+                    "OpenReview.net"
+                ],
+                "signatories": [
+                    tilde
+                ],
+                "readers": [
+                    tilde
+                ],
+                "writers": [
+                    tilde
+                ],
+                "nonreaders": [],
+                "members": [
+                    email
+                ]
+            })
+
+            if verbose: print "Generating new tilde group %s" % tilde
+            client.post_group(tilde_group)
+
+            email_group = openreview.Group.from_json({
+                "id": email,
+                "tauthor": "OpenReview.net",
+                "signatures": [
+                    "OpenReview.net"
+                ],
+                "signatories": [
+                    email
+                ],
+                "readers": [
+                    email
+                ],
+                "writers": [
+                    email
+                ],
+                "nonreaders": [],
+                "members": [
+                    tilde
+                ]
+            })
+
+            client.post_group(email_group)
+
+
+            profile = openreview.Note.from_json({
+                'id': tilde,
+                'content': {
+                    'emails': [email],
+                    'preferred_email': email,
+                    'names': [
+                        {
+                            'first': first,
+                            'middle': '',
+                            'last': last,
+                            'username': tilde
+                        }
+                    ]
+                }
+            })
+            response = requests.put(client.baseurl+"/user/profile", json=profile.to_json(), headers=client.headers)
+
+            profile_by_email_response = requests.get(client.baseurl+"/user/profile?email=%s" % email)
+            assert tilde in profile_by_email_response.json()['profile']['id']
+
+            profilenote = client.get_note(tilde)
+            assert email in profilenote.content['emails']
+            return tilde, True
+        else:
+            if verbose: print "Duplicates not allowed: %s" % tilderesponse.json()['username']
+            return tilderesponse.json()['username'], False
+    else:
+        if verbose: print "tilde groups exist for email %s" % email
+        return profile_by_email_response.json()['profile']['id'], True
 
 
 def build_groups(conference_group_id, default_params=None):
@@ -194,3 +289,15 @@ def get_paper_conflicts(client, paper):
         domain_conflicts.remove('gmail.com')
 
     return (domain_conflicts, relation_conflicts)
+
+def get_paperhash(first_author, title):
+    title = title.strip()
+    strip_punctuation = '[^A-zÀ-ÿ\d\s]'.decode('utf-8')
+    title = re.sub(strip_punctuation, '', title)
+    first_author = re.sub(strip_punctuation, '', first_author)
+    first_author = first_author.split(' ').pop()
+    title = re.sub(strip_punctuation, '', title)
+    title = re.sub('\r|\n', '', title)
+    title = re.sub('\s+', '_', title)
+    first_author = re.sub(strip_punctuation, '', first_author)
+    return (first_author + '|' + title).lower()
