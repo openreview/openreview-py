@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import openreview
 import re
-import requests
 
 super_user_id = 'OpenReview.net'
 
