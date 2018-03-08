@@ -301,3 +301,32 @@ def get_paperhash(first_author, title):
     title = re.sub('\s+', '_', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     return (first_author + '|' + title).lower()
+
+def replace_members_with_ids(client, group):
+    ids = []
+    emails = []
+    for member in group.members:
+        if '~' not in member:
+            try:
+                profile = client.get_profile(member)
+                ids.append(profile.id)
+            except openreview.OpenReviewException as e:
+                if ['Profile not found'] in e:
+                    emails.append(member)
+                else:
+                    raise e
+        else:
+            ids.append(member)
+
+    group.members = ids + emails
+    client.post_group(group)
+
+def get_all_notes(client, invitation, limit=1000):
+    done = False
+    notes = []
+    while not done:
+        batch = client.get_notes(invitation=invitation, limit=limit)
+        notes += batch
+        if len(batch) < limit:
+            done = True
+    return notes
