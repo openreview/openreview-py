@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 import openreview
 import re
 
@@ -49,7 +50,6 @@ def create_profile(client, email, first, last, middle = None):
             raise openreview.OpenReviewException('There is already a profile with this first: {0}, middle: {1}, last name: {2}'.format(first, middle, last))
     else:
         raise openreview.OpenReviewException('There is already a profile with this email: {0}'.format(email))
-
 
 def build_groups(conference_group_id, default_params=None):
     '''
@@ -194,3 +194,46 @@ def get_paper_conflicts(client, paper):
         domain_conflicts.remove('gmail.com')
 
     return (domain_conflicts, relation_conflicts)
+
+def get_paperhash(first_author, title):
+    title = title.strip()
+    strip_punctuation = '[^A-zÀ-ÿ\d\s]'.decode('utf-8')
+    title = re.sub(strip_punctuation, '', title)
+    first_author = re.sub(strip_punctuation, '', first_author)
+    first_author = first_author.split(' ').pop()
+    title = re.sub(strip_punctuation, '', title)
+    title = re.sub('\r|\n', '', title)
+    title = re.sub('\s+', '_', title)
+    first_author = re.sub(strip_punctuation, '', first_author)
+    return (first_author + '|' + title).lower()
+
+def replace_members_with_ids(client, group):
+    ids = []
+    emails = []
+    for member in group.members:
+        if '~' not in member:
+            try:
+                profile = client.get_profile(member)
+                ids.append(profile.id)
+            except openreview.OpenReviewException as e:
+                if ['Profile not found'] in e:
+                    emails.append(member)
+                else:
+                    raise e
+        else:
+            ids.append(member)
+
+    group.members = ids + emails
+    client.post_group(group)
+
+def get_all_notes(client, invitation, limit=1000):
+    done = False
+    notes = []
+    offset = 0
+    while not done:
+        batch = client.get_notes(invitation=invitation, limit=limit, offset=offset)
+        notes += batch
+        offset += limit
+        if len(batch) < limit:
+            done = True
+    return notes
