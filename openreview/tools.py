@@ -338,27 +338,30 @@ def assign(client, paper_number, conference,
         individual groups AND the parent group.
 
     '''
-
     individual_groups = client.get_groups(id = '{}/Paper{}/{}.*'.format(conference, paper_number, individual_label))
     individual_groups = [g for g in individual_groups if g.id != parent_group.id]
     unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
 
-    def remove_assignment(user, parent_group):
+    def remove_assignment(user, parent_group, unassigned_individual_groups, individual_groups):
         '''
         Helper function that removes the given user from the parent group,
             and any assigned individual groups.
         Also updates the list of unassigned individual groups.
         '''
 
-        client.remove_members_from_group(parent_group, user)
+        if user in parent_group.members:
+            client.remove_members_from_group(parent_group, user)
+            print "{:40s} xxx {}".format(user, parent_group.id)
+
         assigned_individual_groups = [a for a in individual_groups if user in a.members]
         for individual_group in assigned_individual_groups:
-            print "removing {0} from {1}".format(user, individual_group.id)
+            print "{:40s} xxx {}".format(user, individual_group.id)
             client.remove_members_from_group(individual_group, user)
             unassigned_individual_groups.append(individual_group)
             unassigned_individual_groups = sorted(unassigned_individual_groups, key=lambda x: x.id)
 
-    def add_assignment(user, parent_group):
+        return unassigned_individual_groups
+    def add_assignment(user, parent_group, unassigned_individual_groups, individual_groups):
         '''
         Helper function that adds the given user from the parent group,
             and to the next empty individual group.
@@ -399,9 +402,10 @@ def assign(client, paper_number, conference,
         the first user with the second.
     '''
     if reviewer_to_remove:
-        remove_assignment(reviewer_to_remove, parent_group, individual_groups, unassigned_individual_groups)
+        unassigned_individual_groups = remove_assignment(
+            reviewer_to_remove, parent_group, unassigned_individual_groups, individual_groups)
 
     if reviewer_to_add:
-        add_assignment(reviewer_to_add, parent_group, individual_groups, unassigned_individual_groups)
+        add_assignment(reviewer_to_add, parent_group, unassigned_individual_groups, individual_groups)
 
 
