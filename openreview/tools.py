@@ -238,10 +238,22 @@ def get_all_notes(client, invitation, limit=1000):
             done = True
     return notes
 
-def next_individual_suffix(empty_individual_groups, individual_groups, individual_label):
-    if len(empty_individual_groups) > 0:
-        anonreviewer_group = empty_individual_groups[0]
-        empty_individual_groups.remove(anonreviewer_group)
+def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
+    '''
+    "individual groups" are groups with a single member; e.g. conference.org/Paper1/AnonReviewer1
+
+    @unassigned_individual_groups: a list of individual groups with no members
+    @individual_groups: the full list of individual groups, empty or not
+    @individual_label: the "label" of the group: e.g. "AnonReviewer"
+
+    Returns an individual group's suffix (e.g. AnonReviewer1)
+    The suffix will be the next available empty group,
+    or will be the suffix of the largest indexed group +1
+    '''
+
+    if len(unassigned_individual_groups) > 0:
+        anonreviewer_group = unassigned_individual_groups[0]
+        unassigned_individual_groups.remove(anonreviewer_group)
         anonreviewer_suffix = anonreviewer_group.id.split('/')[-1]
         return anonreviewer_suffix
     elif len(individual_groups) > 0:
@@ -257,32 +269,100 @@ def next_individual_suffix(empty_individual_groups, individual_groups, individua
         return '{}1'.format(individual_label)
 
 def assign(client, paper_number, conference,
-    reviewer_group_params = {},
-    anonreviewer_group_params = {},
+    parent_group_params = {},
+    individual_group_params = {},
     reviewer_to_add = None,
     reviewer_to_remove = None,
     check_conflicts_invitation = None,
     parent_label = 'Reviewers',
     individual_label = 'AnonReviewer'):
 
+    '''
+    "individual groups" are groups with a single member;
+        e.g. conference.org/Paper1/AnonReviewer1
+    "parent group" is the group that contains the individual groups;
+        e.g. conference.org/Paper1/Reviewers
+
+    @paper_number: the number of the paper to assign
+    @conference: the ID of the conference being assigned
+    @parent_group_params: optional parameter that overrides the default
+    @individual_group_params: optional parameter that overrides the default
+    @reviewer_to_add: may be an email address or a tilde ID;
+        adds the given user to the parent and individual groups defined by
+        the paper number, conference, and labels
+    @reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    @check_conflicts_invitation: if provided, checks for conflicts against
+        the paper that responds to the given invitation, and the given
+        paper number.
+
+    '''
+
+    def remove_assignment(user, parent_group):
+        '''
+        Helper function that removes the given user from the parent group,
+            and any assigned individual groups.
+        Also updates the list of unassigned individual groups.
+        '''
+
+        client.remove_members_from_group(parent_group, user)
+        assigned_individual_groups = [a for a in individual_groups if user in a.members]
+        for individual_group in assigned_individual_groups:
+            print "removing {0} from {1}".format(user, individual_group.id)
+            client.remove_members_from_group(individual_group, user)
+            unassigned_individual_groups.append(individual_group)
+            unassigned_individual_groups = sorted(unassigned_individual_groups, key=lambda x: x.id)
+
+    def add_assignment(user, parent_group):
+        '''
+        Helper function that adds the given user from the parent group,
+            and to the next empty individual group.
+
+        Prints the results to the console.
+
+        '''
+        assigned_individual_groups = [a for a in individual_groups if user in a.members]
+
+        if user not in parent_group.members:
+            client.add_members_to_group(parent_group, user)
+            print "{:40s} --> {}".format(user, parent_group.id)
+
+        if not assigned_individual_groups:
+            suffix = next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label)
+            anonreviewer_id = '{}/Paper{}/{}'.format(conference, paper_number, suffix)
+            paper_authors = '{}/Paper{}/Authors'.format(conference, paper_number)
+            individual_group = openreview.Group(
+                id = anonreviewer_id,
+                **individual_group_params)
+
+            individual_group.readers.append(anonreviewer_id)
+            individual_group.nonreaders.append(paper_authors)
+            individual_group.signatories.append(anonreviewer_id)
+            individual_group.members.append(user)
+
+            client.post_group(individual_group)
+            print "{:40s} --> {}".format(user, individual_group.id)
+        else:
+            for g in assigned_individual_groups:
+                print "{:40s} === {}".format(user, g.id)
+
+
+    # Set the default values for the parent and individual groups
     group_params_default = {
         'readers': [conference, '{}/Program_Chairs'.format(conference)],
         'writers': [conference],
         'signatures': [conference],
         'signatories': []
     }
-    reviewer_group_params_default = {k:v for k,v in group_params_default.iteritems()}
-    reviewer_group_params_default.update(reviewer_group_params)
-    reviewer_group_params = reviewer_group_params_default
+    parent_group_params_default = {k:v for k,v in group_params_default.iteritems()}
+    parent_group_params_default.update(parent_group_params)
+    parent_group_params = parent_group_params_default
 
-    anonreviewer_group_params_default = {k:v for k,v in group_params_default.iteritems()}
-    anonreviewer_group_params_default.update(anonreviewer_group_params)
-    anonreviewer_group_params = anonreviewer_group_params_default
+    individual_group_params_default = {k:v for k,v in group_params_default.iteritems()}
+    individual_group_params_default.update(individual_group_params)
+    individual_group_params = individual_group_params_default
 
-    # ensure that two groups are created or already exist:
-    # one "parent" group, containing all "reviewers" for the paper,
-    # and one "individual" group, containing just a single user
 
+    # get the parent group if it already exists, and create it if it doesn't.
     try:
         parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
     except openreview.OpenReviewException as e:
@@ -290,76 +370,41 @@ def assign(client, paper_number, conference,
             parent_group = client.post_group(openreview.Group(
                 id = '{}/Paper{}/{}'.format(conference, paper_number, parent_label),
                 nonreaders = ['{}/Paper{}/Authors'.format(conference, paper_number)],
-                **reviewer_group_params
+                **parent_group_params
             ))
         else:
             raise e
 
+    '''
+    get the existing individual groups, while making sure that the parent group isn't included.
+    This can happen if the parent group and the individual groups are named similarly.
+
+    For example, if:
+        parent_group_label = "Area_Chairs"
+        individual_group_label = "Area_Chairs"
+
+        Then the call for individual groups by wildcard will pick up all the
+        individual groups AND the parent group.
+
+    '''
+
     individual_groups = client.get_groups(id = '{}/Paper{}/{}.*'.format(conference, paper_number, individual_label))
     individual_groups = [g for g in individual_groups if g.id != parent_group.id]
+    unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
 
-    empty_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
 
+
+    '''
+    It's important to remove any users first, so that we can do direct replacement of
+        one user with another.
+
+    For example: passing in a reviewer to remove AND a reviewer to add should replace
+        the first user with the second.
+    '''
     if reviewer_to_remove:
-        client.remove_members_from_group(parent_group, reviewer_to_remove)
-        assigned_individual_groups = [a for a in individual_groups if reviewer_to_remove in a.members]
-        for individual_group in assigned_individual_groups:
-            print "removing {0} from {1}".format(reviewer_to_remove, individual_group.id)
-            client.remove_members_from_group(individual_group, reviewer_to_remove)
-            empty_individual_groups.append(individual_group)
-            empty_individual_groups = sorted(empty_individual_groups, key=lambda x: x.id)
+        remove_assignment(reviewer_to_remove, parent_group, individual_groups, unassigned_individual_groups)
 
     if reviewer_to_add:
-        user_continue = True
-        assigned_individual_groups = [a for a in individual_groups if reviewer_to_add in a.members]
+        add_assignment(reviewer_to_add, parent_group, individual_groups, unassigned_individual_groups)
 
-        if check_conflicts_invitation:
-            paper = client.get_notes(invitation=check_conflicts_invitation, number=paper_number)[0]
-
-            user_domain_conflicts, user_relation_conflicts = get_profile_conflicts(client, reviewer_to_add)
-            paper_domain_conflicts, paper_relation_conflicts = get_paper_conflicts(client, paper)
-
-            domain_conflicts = paper_domain_conflicts.intersection(user_domain_conflicts)
-            relation_conflicts = paper_relation_conflicts.intersection(user_relation_conflicts)
-
-            if domain_conflicts:
-                print "{:40s} XXX User has COI with the following domain: {}".format(reviewer_to_add, domain_conflicts)
-            if relation_conflicts:
-                print "{:40s} XXX User has COI with the following relation: {}".format(reviewer_to_add, relation_conflicts)
-
-            if domain_conflicts or relation_conflicts:
-                user_continue = raw_input('continue with assignment? y/[n]: ').lower() == 'y'
-
-        if not user_continue:
-            print "aborting assignment."
-            return False
-
-        if user_continue:
-            if reviewer_to_add not in parent_group.members:
-                client.add_members_to_group(parent_group, reviewer_to_add)
-                print "{:40s} --> {}".format(reviewer_to_add, parent_group.id)
-            else:
-                print "{:40s} === {}".format(reviewer_to_add, parent_group.id)
-
-            if not assigned_individual_groups:
-                suffix = next_individual_suffix(empty_individual_groups, individual_groups, individual_label)
-                anonreviewer_id = '{}/Paper{}/{}'.format(conference, paper_number, suffix)
-                paper_authors = '{}/Paper{}/Authors'.format(conference, paper_number)
-                individual_group = openreview.Group(
-                    id = anonreviewer_id,
-                    **anonreviewer_group_params)
-
-                individual_group.readers.append(anonreviewer_id)
-                individual_group.nonreaders.append(paper_authors)
-                individual_group.signatories.append(anonreviewer_id)
-                individual_group.members.append(reviewer_to_add)
-
-                print "{:40s} --> {}".format(reviewer_to_add, individual_group.id)
-
-                client.post_group(individual_group)
-            else:
-                for g in assigned_individual_groups:
-                    print "{:40s} === {}".format(reviewer_to_add, g.id)
-
-            return True
 
