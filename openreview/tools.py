@@ -297,6 +297,52 @@ def assign(client, paper_number, conference,
 
     '''
 
+    # Set the default values for the parent and individual groups
+    group_params_default = {
+        'readers': [conference, '{}/Program_Chairs'.format(conference)],
+        'writers': [conference],
+        'signatures': [conference],
+        'signatories': []
+    }
+    parent_group_params_default = {k:v for k,v in group_params_default.iteritems()}
+    parent_group_params_default.update(parent_group_params)
+    parent_group_params = parent_group_params_default
+
+    individual_group_params_default = {k:v for k,v in group_params_default.iteritems()}
+    individual_group_params_default.update(individual_group_params)
+    individual_group_params = individual_group_params_default
+
+
+    # get the parent group if it already exists, and create it if it doesn't.
+    try:
+        parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
+    except openreview.OpenReviewException as e:
+        if e[0][0]['type'] == 'Not Found':
+            parent_group = client.post_group(openreview.Group(
+                id = '{}/Paper{}/{}'.format(conference, paper_number, parent_label),
+                nonreaders = ['{}/Paper{}/Authors'.format(conference, paper_number)],
+                **parent_group_params
+            ))
+        else:
+            raise e
+
+    '''
+    get the existing individual groups, while making sure that the parent group isn't included.
+    This can happen if the parent group and the individual groups are named similarly.
+
+    For example, if:
+        parent_group_label = "Area_Chairs"
+        individual_group_label = "Area_Chairs"
+
+        Then the call for individual groups by wildcard will pick up all the
+        individual groups AND the parent group.
+
+    '''
+
+    individual_groups = client.get_groups(id = '{}/Paper{}/{}.*'.format(conference, paper_number, individual_label))
+    individual_groups = [g for g in individual_groups if g.id != parent_group.id]
+    unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
+
     def remove_assignment(user, parent_group):
         '''
         Helper function that removes the given user from the parent group,
@@ -344,55 +390,6 @@ def assign(client, paper_number, conference,
         else:
             for g in assigned_individual_groups:
                 print "{:40s} === {}".format(user, g.id)
-
-
-    # Set the default values for the parent and individual groups
-    group_params_default = {
-        'readers': [conference, '{}/Program_Chairs'.format(conference)],
-        'writers': [conference],
-        'signatures': [conference],
-        'signatories': []
-    }
-    parent_group_params_default = {k:v for k,v in group_params_default.iteritems()}
-    parent_group_params_default.update(parent_group_params)
-    parent_group_params = parent_group_params_default
-
-    individual_group_params_default = {k:v for k,v in group_params_default.iteritems()}
-    individual_group_params_default.update(individual_group_params)
-    individual_group_params = individual_group_params_default
-
-
-    # get the parent group if it already exists, and create it if it doesn't.
-    try:
-        parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
-    except openreview.OpenReviewException as e:
-        if e[0][0]['type'] == 'Not Found':
-            parent_group = client.post_group(openreview.Group(
-                id = '{}/Paper{}/{}'.format(conference, paper_number, parent_label),
-                nonreaders = ['{}/Paper{}/Authors'.format(conference, paper_number)],
-                **parent_group_params
-            ))
-        else:
-            raise e
-
-    '''
-    get the existing individual groups, while making sure that the parent group isn't included.
-    This can happen if the parent group and the individual groups are named similarly.
-
-    For example, if:
-        parent_group_label = "Area_Chairs"
-        individual_group_label = "Area_Chairs"
-
-        Then the call for individual groups by wildcard will pick up all the
-        individual groups AND the parent group.
-
-    '''
-
-    individual_groups = client.get_groups(id = '{}/Paper{}/{}.*'.format(conference, paper_number, individual_label))
-    individual_groups = [g for g in individual_groups if g.id != parent_group.id]
-    unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
-
-
 
     '''
     It's important to remove any users first, so that we can do direct replacement of
