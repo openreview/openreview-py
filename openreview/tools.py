@@ -263,7 +263,7 @@ def assign(client, paper_number, conference,
     reviewer_to_remove = None,
     check_conflicts_invitation = None,
     parent_label = 'Reviewers',
-    individual_label = None):
+    individual_label = 'AnonReviewer'):
 
     group_params_default = {
         'readers': [conference, '{}/Program_Chairs'.format(conference)],
