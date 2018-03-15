@@ -729,4 +729,7 @@ class Tag(object):
         )
         return tag
 
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
 
