@@ -297,55 +297,6 @@ def assign(client, paper_number, conference,
 
     '''
 
-    def remove_assignment(user, parent_group):
-        '''
-        Helper function that removes the given user from the parent group,
-            and any assigned individual groups.
-        Also updates the list of unassigned individual groups.
-        '''
-
-        client.remove_members_from_group(parent_group, user)
-        assigned_individual_groups = [a for a in individual_groups if user in a.members]
-        for individual_group in assigned_individual_groups:
-            print "removing {0} from {1}".format(user, individual_group.id)
-            client.remove_members_from_group(individual_group, user)
-            unassigned_individual_groups.append(individual_group)
-            unassigned_individual_groups = sorted(unassigned_individual_groups, key=lambda x: x.id)
-
-    def add_assignment(user, parent_group):
-        '''
-        Helper function that adds the given user from the parent group,
-            and to the next empty individual group.
-
-        Prints the results to the console.
-
-        '''
-        assigned_individual_groups = [a for a in individual_groups if user in a.members]
-
-        if user not in parent_group.members:
-            client.add_members_to_group(parent_group, user)
-            print "{:40s} --> {}".format(user, parent_group.id)
-
-        if not assigned_individual_groups:
-            suffix = next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label)
-            anonreviewer_id = '{}/Paper{}/{}'.format(conference, paper_number, suffix)
-            paper_authors = '{}/Paper{}/Authors'.format(conference, paper_number)
-            individual_group = openreview.Group(
-                id = anonreviewer_id,
-                **individual_group_params)
-
-            individual_group.readers.append(anonreviewer_id)
-            individual_group.nonreaders.append(paper_authors)
-            individual_group.signatories.append(anonreviewer_id)
-            individual_group.members.append(user)
-
-            client.post_group(individual_group)
-            print "{:40s} --> {}".format(user, individual_group.id)
-        else:
-            for g in assigned_individual_groups:
-                print "{:40s} === {}".format(user, g.id)
-
-
     # Set the default values for the parent and individual groups
     group_params_default = {
         'readers': [conference, '{}/Program_Chairs'.format(conference)],
@@ -387,12 +338,61 @@ def assign(client, paper_number, conference,
         individual groups AND the parent group.
 
     '''
-
     individual_groups = client.get_groups(id = '{}/Paper{}/{}.*'.format(conference, paper_number, individual_label))
     individual_groups = [g for g in individual_groups if g.id != parent_group.id]
     unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
 
+    def remove_assignment(user, parent_group, unassigned_individual_groups, individual_groups):
+        '''
+        Helper function that removes the given user from the parent group,
+            and any assigned individual groups.
+        Also updates the list of unassigned individual groups.
+        '''
 
+        if user in parent_group.members:
+            client.remove_members_from_group(parent_group, user)
+            print "{:40s} xxx {}".format(user, parent_group.id)
+
+        assigned_individual_groups = [a for a in individual_groups if user in a.members]
+        for individual_group in assigned_individual_groups:
+            print "{:40s} xxx {}".format(user, individual_group.id)
+            client.remove_members_from_group(individual_group, user)
+            unassigned_individual_groups.append(individual_group)
+            unassigned_individual_groups = sorted(unassigned_individual_groups, key=lambda x: x.id)
+
+        return unassigned_individual_groups
+    def add_assignment(user, parent_group, unassigned_individual_groups, individual_groups):
+        '''
+        Helper function that adds the given user from the parent group,
+            and to the next empty individual group.
+
+        Prints the results to the console.
+
+        '''
+        assigned_individual_groups = [a for a in individual_groups if user in a.members]
+
+        if user not in parent_group.members:
+            client.add_members_to_group(parent_group, user)
+            print "{:40s} --> {}".format(user, parent_group.id)
+
+        if not assigned_individual_groups:
+            suffix = next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label)
+            anonreviewer_id = '{}/Paper{}/{}'.format(conference, paper_number, suffix)
+            paper_authors = '{}/Paper{}/Authors'.format(conference, paper_number)
+            individual_group = openreview.Group(
+                id = anonreviewer_id,
+                **individual_group_params)
+
+            individual_group.readers.append(anonreviewer_id)
+            individual_group.nonreaders.append(paper_authors)
+            individual_group.signatories.append(anonreviewer_id)
+            individual_group.members.append(user)
+
+            client.post_group(individual_group)
+            print "{:40s} --> {}".format(user, individual_group.id)
+        else:
+            for g in assigned_individual_groups:
+                print "{:40s} === {}".format(user, g.id)
 
     '''
     It's important to remove any users first, so that we can do direct replacement of
@@ -402,9 +402,10 @@ def assign(client, paper_number, conference,
         the first user with the second.
     '''
     if reviewer_to_remove:
-        remove_assignment(reviewer_to_remove, parent_group, individual_groups, unassigned_individual_groups)
+        unassigned_individual_groups = remove_assignment(
+            reviewer_to_remove, parent_group, unassigned_individual_groups, individual_groups)
 
     if reviewer_to_add:
-        add_assignment(reviewer_to_add, parent_group, individual_groups, unassigned_individual_groups)
+        add_assignment(reviewer_to_add, parent_group, unassigned_individual_groups, individual_groups)
 
 
