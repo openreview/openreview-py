@@ -49,7 +49,7 @@ def create_profile(client, email, first, last, middle = None):
         else:
             raise openreview.OpenReviewException('There is already a profile with this first: {0}, middle: {1}, last name: {2}'.format(first, middle, last))
     else:
-        raise openreview.OpenReviewException('There is already a profile with this email: {0}'.format(email))
+        return profile
 
 def build_groups(conference_group_id, default_params=None):
     '''
