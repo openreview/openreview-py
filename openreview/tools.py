@@ -16,7 +16,7 @@ def get_profile(client, value):
             return e
     return profile
 
-def create_profile(client, email, first, last, middle = None):
+def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
 
     profile = get_profile(client, email)
 
@@ -24,7 +24,7 @@ def create_profile(client, email, first, last, middle = None):
         response = client.get_tildeusername(first, last, middle)
         tilde_id = response['username'].encode('utf-8')
 
-        if tilde_id.endswith(last + '1'):
+        if tilde_id.endswith(last + '1') or allow_duplicates:
 
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
