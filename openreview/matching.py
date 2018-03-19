@@ -15,13 +15,12 @@ def get_conflicts(author_profiles, user_profile):
         authors_domain_conflicts.update(author_domain_conflicts)
         authors_relation_conflicts.update(author_relation_conflicts)
 
+    user_domain_conflicts, user_relation_conflicts = get_profile_conflicts(user_profile)
 
-	user_domain_conflicts, user_relation_conflicts = get_profile_conflicts(user_profile)
+    conflicts.update(authors_domain_conflicts.intersection(user_domain_conflicts))
+    conflicts.update(authors_relation_conflicts.intersection(user_relation_conflicts))
 
-	conflicts.update(authors_domain_conflicts.intersection(user_domain_conflicts))
-	conflicts.update(authors_relation_conflicts.intersection(user_relation_conflicts))
-
-	return list(conflicts)
+    return list(conflicts)
 
 def get_profile_conflicts(profile):
     domain_conflicts = set()
@@ -29,14 +28,14 @@ def get_profile_conflicts(profile):
 
     profile_domains = []
     for e in profile.content['emails']:
-    	profile_domains += tools.subdomains(e)
+        profile_domains += tools.subdomains(e)
     domain_conflicts.update(profile_domains)
 
     institution_domains = []
     for h in profile.content.get('history', []):
-    	domain = h.get('institution', {}).get('domain', None)
-    	if domain:
-    		institution_domains += tools.subdomains(domain)
+        domain = h.get('institution', {}).get('domain', None)
+        if domain:
+            institution_domains += tools.subdomains(domain)
     domain_conflicts.update(institution_domains)
 
     domain_conflicts.update(institution_domains)
