@@ -29,15 +29,19 @@ def get_profile_conflicts(profile):
 
     profile_domains = []
     for e in profile.content['emails']:
-        profile_domains += tools.subdomains(e)
-
+    	profile_domains += tools.subdomains(e)
     domain_conflicts.update(profile_domains)
 
-    institution_domains = [h['institution']['domain'] for h in profile.content['history']]
+    institution_domains = []
+    for h in profile.content.get('history', []):
+    	domain = h.get('institution', {}).get('domain', None)
+    	if domain:
+    		institution_domains += tools.subdomains(domain)
     domain_conflicts.update(institution_domains)
 
-    if 'relations' in profile.content:
-        relation_conflicts.update([r['email'] for r in profile.content['relations']])
+    domain_conflicts.update(institution_domains)
+
+    relation_conflicts.update([r['email'] for r in profile.content.get('relations', [])])
 
     if 'gmail.com' in domain_conflicts:
         domain_conflicts.remove('gmail.com')
