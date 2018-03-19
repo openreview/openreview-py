@@ -130,14 +130,17 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     return '\n'.join(bibtex)
 
-def subdomains(email):
+def subdomains(domain):
     '''
     Given an email address, get the domains and subdomains.
 
     e.g. johnsmith@iesl.cs.umass.edu --> [umass.edu, cs.umass.edu, iesl.cs.umass.edu]
     '''
 
-    full_domain = email.split('@')[1]
+    if '@' in domain:
+        full_domain = domain.split('@')[1]
+    else:
+        full_domain = domain
     domain_components = full_domain.split('.')
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = [d for d in domains if '.' in d]
