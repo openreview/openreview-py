@@ -8,16 +8,24 @@ def get_conflicts(author_profiles, user_profile):
     authors_relation_conflicts = set()
     conflicts = set()
 
-    for p in author_profiles.values():
-        author_domain_conflicts, author_relation_conflicts = get_profile_conflicts(p)
+    author_emails = author_profiles.keys()
+    user_emails = user_profile.content['emails']
 
-        authors_domain_conflicts.update(author_domain_conflicts)
-        authors_relation_conflicts.update(author_relation_conflicts)
+    for author_email, profile in author_profiles.iteritems():
+        if profile:
+            current_domain_conflicts, current_relation_conflicts = get_profile_conflicts(profile)
+        else:
+            current_domain_conflicts = get_domains(author_email, subdomains = True)
+            current_relation_conflicts = [ author_email ]
+
+        authors_domain_conflicts.update(current_domain_conflicts)
+        authors_relation_conflicts.update(current_relation_conflicts)
 
     user_domain_conflicts, user_relation_conflicts = get_profile_conflicts(user_profile)
 
     conflicts.update(authors_domain_conflicts.intersection(user_domain_conflicts))
-    conflicts.update(authors_relation_conflicts.intersection(user_relation_conflicts))
+    conflicts.update(authors_relation_conflicts.intersection(set(user_emails)))
+    conflicts.update(user_relation_conflicts.intersection(set(author_emails)))
 
     return list(conflicts)
 
