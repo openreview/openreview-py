@@ -40,6 +40,7 @@ def get_profile_conflicts(profile):
     domain_conflicts.update(institution_domains)
 
     relation_conflicts.update([r['email'] for r in profile.content.get('relations', [])])
+    relation_conflicts.update(profile.content['emails'])
 
     if 'gmail.com' in domain_conflicts:
         domain_conflicts.remove('gmail.com')
