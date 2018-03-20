@@ -4,67 +4,67 @@ import openreview
 
 def get_conflicts(author_profiles, user_profile):
 
-    authors_domain_conflicts = set()
-    authors_email_conflicts = set()
-    authors_relation_conflicts = set()
+    author_domains = set()
+    author_emails = set()
+    author_relations = set()
 
     for author_email, profile in author_profiles.iteritems():
 
-        author_conflicts = get_author_conflicts(profile, author_email)
+        author_info = get_author_info(profile, author_email)
 
-        authors_domain_conflicts.update(author_conflicts['domains'])
-        authors_email_conflicts.update(author_conflicts['emails'])
-        authors_relation_conflicts.update(author_conflicts['relations'])
+        author_domains.update(author_info['domains'])
+        author_emails.update(author_info['emails'])
+        author_relations.update(author_info['relations'])
 
-    user_conflicts = get_profile_conflicts(user_profile)
+    user_info = get_profile_info(user_profile)
 
     conflicts = set()
-    conflicts.update(authors_domain_conflicts.intersection(user_conflicts['domains']))
-    conflicts.update(authors_relation_conflicts.intersection(user_conflicts['emails']))
-    conflicts.update(authors_email_conflicts.intersection(user_conflicts['relations']))
+    conflicts.update(author_domains.intersection(user_info['domains']))
+    conflicts.update(author_relations.intersection(user_info['emails']))
+    conflicts.update(author_emails.intersection(user_info['relations']))
+    conflicts.update(author_emails.intersection(user_info['emails']))
 
     return list(conflicts)
 
-def get_author_conflicts(profile, email):
+def get_author_info(profile, email):
     if profile:
-        return get_profile_conflicts(profile)
+        return get_profile_info(profile)
     else:
         return {
             'domains': get_domains(email, subdomains = True),
             'emails': [email],
-            'relations': [email] ## Should I keep adding profile emails?
+            'relations': []
         }
 
 
-def get_profile_conflicts(profile):
+def get_profile_info(profile):
 
-    domain_conflicts = set()
-    email_conflicts = set()
-    relation_conflicts = set()
+    domains = set()
+    emails = set()
+    relations = set()
 
     ## Emails section
     for e in profile.content['emails']:
-        domain_conflicts.update(get_domains(e, subdomains = True))
-        email_conflicts.add(e)
+        domains.update(get_domains(e, subdomains = True))
+        emails.add(e)
 
     ## Institution section
     for h in profile.content.get('history', []):
         domain = h.get('institution', {}).get('domain', '')
-        domain_conflicts.update(get_domains(domain, subdomains = True))
+        domains.update(get_domains(domain, subdomains = True))
 
 
     ## Relations section
-    relation_conflicts.update([r['email'] for r in profile.content.get('relations', [])])
-    relation_conflicts.update(profile.content['emails']) ## Should I keep adding profile emails?
+    relations.update([r['email'] for r in profile.content.get('relations', [])])
 
     ## Filter common domains
-    if 'gmail.com' in domain_conflicts:
-        domain_conflicts.remove('gmail.com')
+    if 'gmail.com' in domains:
+        domains.remove('gmail.com')
 
     return {
-        'domains': domain_conflicts,
-        'emails': email_conflicts,
-        'relations': relation_conflicts
+        'domains': domains,
+        'emails': emails,
+        'relations': relations
     }
 
 def get_domains(entity, subdomains = False):
