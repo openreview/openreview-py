@@ -185,11 +185,11 @@ class Client(object):
            If the list is emails, returns an array of dictionaries with 'email' and 'profile'"""
         tildematch = re.compile('~.+')
         if len(email_or_id_list) > 0 and tildematch.match(email_or_id_list[0]):
-            response = requests.post(self.baseurl + '/user/profiles', json={'ids': email_or_id_list})
+            response = requests.post(self.baseurl + '/user/profiles', json={'ids': email_or_id_list}, headers = self.headers)
             response = self.__handle_response(response)
             return [Note.from_json(p) for p in response.json()['profiles']]
         else:
-            response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_or_id_list})
+            response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_or_id_list}, headers = self.headers)
             response = self.__handle_response(response)
             return { p['email'] : Note.from_json(p['profile'])
                             for p in response.json()['profiles'] }
