@@ -93,7 +93,7 @@ def match(client, configuration_note, Solver):
     # unpack variables
     label = configuration_note.content['label']
     solver_config = configuration_note.content['configuration']
-    weights = solver_config['weights']
+    weights = dict(solver_config['weights'], **{'userConstraint': 1})
 
     paper_invitation_id = configuration_note.content['paper_invitation']
     metadata_invitation_id = configuration_note.content['metadata_invitation']
@@ -157,7 +157,7 @@ def get_weighted_scores(metadata_notes, weights, constraints, match_group):
 
         # apply user-defined constraints
         if m.forum in constraints:
-            constraint_by_user = { user: {'userConstraint': value} for user, value in constraints[forum].iteritems()}
+            constraint_by_user = { user: {'userConstraint': value} for user, value in constraints[m.forum].iteritems()}
             features_by_user.update(constraint_by_user)
 
         scores_by_user_by_forum[m.forum] = features_by_user
@@ -196,14 +196,17 @@ def create_assignment(forum, label, assignment_invitation):
         }
     }
 
-def create_or_update_config(client, label, params):
+def create_or_update_config(client, label, params, number=None):
     '''
     makes a network call to get any existing configuration notes that match the given label,
     and updates the note with the given params.
 
     Returns an openreview.Note object with the updated params.
     '''
-    config_by_label = {n.content['label']: n.to_json() for n in client.get_notes(invitation=params['invitation'])}
+    config_notes = tools.get_all_notes(client, params['invitation'])
+    if number:
+        config_notes = [c for c in config_notes if int(c.number) == int(number)]
+    config_by_label = {n.content['label']: n.to_json() for n in config_notes}
     configuration_note_params = config_by_label.get(label, {})
     user_constraints = configuration_note_params.get('content', {}).get('constraints', {})
     configuration_note_params.update(params)
@@ -252,7 +255,7 @@ def encode_score_matrix(scores_by_user_by_forum):
             if user_index:
                 coordinates = (user_index, paper_index)
                 if hard_constraint_value == -1:
-                    mean = np.mean(user_scores.values())
+                    mean = np.mean(user_scores.values()) if user_scores.values() else 0.0
                     if np.isnan(mean).any():
                         print forum, user, user_scores
 
