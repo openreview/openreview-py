@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import openreview
 import re
+import datetime
 
 super_user_id = 'OpenReview.net'
 
@@ -406,5 +407,8 @@ def assign(client, paper_number, conference,
 
     if reviewer_to_add:
         add_assignment(reviewer_to_add, parent_group, individual_groups, unassigned_individual_groups)
+
+def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
+    return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
 
 
