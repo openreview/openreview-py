@@ -165,3 +165,71 @@ class AddBid(openreview.Invitation):
         self.inv_params['reply'] = self.reply_params
 
         super(AddBid, self).__init__(**self.inv_params)
+
+class Comment(openreview.Invitation):
+    def __init__(self, name, conference_id, duedate = 0,
+        process = None, invitation = None, inv_params = {}, reply_params = {}, content_params = {}):
+
+        self.name = name
+        self.conference_id = conference_id
+
+        default_inv_params = {
+            'id': '/'.join([self.conference_id, '-', self.name]),
+            'readers': ['everyone'],
+            'writers': [self.conference_id],
+            'invitees': ['~'],
+            'signatures': [self.conference_id],
+            'duedate': duedate,
+            'process': process
+        }
+
+        default_reply_params = {
+            'forum': None,
+            'replyto': None,
+            'invitation': invitation,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': ['everyone']
+            },
+            'signatures': {
+                'description': 'Your authorized identity to be associated with the above content.',
+                'values-regex': '~.*'
+            },
+            'writers': {
+                'values': [self.conference_id]
+            }
+        }
+
+        default_content_params = {
+            'title': {
+                'order': 0,
+                'value-regex': '.{1,500}',
+                'description': 'Brief summary of your comment (up to 500 chars).',
+                'required': True
+            },
+            'comment': {
+                'order': 1,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Your comment or reply (up to 5000 chars).',
+                'required': True
+            }
+        }
+
+        self.content_params = {}
+        self.content_params.update(default_content_params)
+        self.content_params.update(content_params)
+
+        self.reply_params = {}
+        self.reply_params.update(default_reply_params)
+        self.reply_params.update(reply_params)
+        self.reply_params['content'] = self.content_params
+
+        self.inv_params = {}
+        self.inv_params.update(default_inv_params)
+        self.inv_params.update(inv_params)
+        self.inv_params['reply'] = self.reply_params
+
+        super(Comment, self).__init__(**self.inv_params)
+
+    def add_process(self, process):
+        self.process = process.render()
