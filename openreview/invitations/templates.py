@@ -5,6 +5,7 @@ Most classes extend
 '''
 
 import openreview
+import re
 
 class Submission(openreview.Invitation):
     def __init__(self, name, conference_id, duedate = 0,
@@ -104,8 +105,6 @@ class Submission(openreview.Invitation):
 
     def add_process(self, process):
         self.process = process.render()
-
-
 
 class AddBid(openreview.Invitation):
     def __init__(self, name, conference_id, duedate = 0,
@@ -233,3 +232,40 @@ class Comment(openreview.Invitation):
 
     def add_process(self, process):
         self.process = process.render()
+
+def fill_template(template_string, paper_params):
+    pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.iteritems()])
+    matches = re.findall(pattern, template_string)
+    for match in matches:
+        discovered_field = re.sub('<|>', '', match)
+        template_string = template_string.replace(match, str(paper_params[discovered_field]))
+
+    return template_string
+
+def generate_invitation(invitation_template, paper):
+    reply = dict(invitation_template['reply'])
+    params = {k: v for k, v in invitation_template.iteritems() if k != 'reply'}
+    paper_params = paper.to_json()
+
+    def fill_list_or_str(value, paper_params=paper_params):
+        if type(value) == list:
+            return [fill_template(v, paper_params) for v in value]
+        elif any([type(value) == t for t in [unicode, str]]):
+            return fill_template(value, paper_params)
+        elif any([type(value) == t for t in [int, float, type(None)]]):
+            return value
+        else:
+            raise ValueError('first argument must be list or string: ', value)
+
+    for field_map in [reply, params]:
+        for field in field_map:
+            if field == 'content' or field == 'process' or field == 'webfield':
+                pass
+            elif type(field_map[field]) == dict:
+                for subfield in field_map[field]:
+                    if subfield != 'description':
+                        field_map[field][subfield] = fill_list_or_str(field_map[field][subfield])
+            else:
+                field_map[field] = fill_list_or_str(field_map[field])
+
+    return openreview.Invitation(**dict(params, **{'reply': reply}))
