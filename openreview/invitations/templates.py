@@ -238,12 +238,13 @@ def fill_template(template_string, paper_params):
     matches = re.findall(pattern, template_string)
     for match in matches:
         discovered_field = re.sub('<|>', '', match)
+        print "replacing ", paper_params[discovered_field]
         template_string = template_string.replace(match, str(paper_params[discovered_field]))
-
+        print "updating ", template_string
     return template_string
 
 def generate_invitation(invitation_template, paper):
-    reply = dict(invitation_template['reply'])
+    reply = {k:v for k,v in invitation_template['reply'].iteritems()}
     params = {k: v for k, v in invitation_template.iteritems() if k != 'reply'}
     paper_params = paper.to_json()
 
