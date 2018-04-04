@@ -406,11 +406,21 @@ def assign(client, paper_number, conference,
         the first user with the second.
     '''
     if reviewer_to_remove:
+        profile = get_profile(client, reviewer_to_remove)
+        if profile:
+            user = profile.id
+        else:
+            user = reviewer_to_remove
         unassigned_individual_groups = remove_assignment(
-            reviewer_to_remove, parent_group, unassigned_individual_groups, individual_groups)
+            user, parent_group, unassigned_individual_groups, individual_groups)
 
     if reviewer_to_add:
-        add_assignment(reviewer_to_add, parent_group, unassigned_individual_groups, individual_groups)
+        profile = get_profile(client, reviewer_to_add)
+        if profile:
+            user = profile.id
+        else:
+            user = reviewer_to_add
+        add_assignment(user, parent_group, unassigned_individual_groups, individual_groups)
 
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
