@@ -257,6 +257,9 @@ class Client(object):
         return invitations
 
     def get_notes(self, **params):
+        '''
+        e.g. client.get_notes(forum='abcXYZ1', content={'paperId': 938})
+        '''
          if 'content' in params:
             content_params = params['content'].keys()
             for attr in content_params:
