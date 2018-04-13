@@ -260,7 +260,7 @@ class Client(object):
         '''
         e.g. client.get_notes(forum='abcXYZ1', content={'paperId': 938})
         '''
-         if 'content' in params:
+        if 'content' in params:
             content_params = params['content'].keys()
             for attr in content_params:
                 value = params['content'].pop(attr)
