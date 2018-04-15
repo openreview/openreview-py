@@ -1,3 +1,16 @@
+bid = {
+    'tag': {
+        'description': 'Bid description',
+        'order': 1,
+        'value-radio': ['I want to review',
+            'I can review',
+            'I can probably review but am not an expert',
+            'I cannot review',
+            'No bid'],
+        'required':True
+    }
+}
+
 comment = {
     'title': {
         'order': 0,
@@ -13,7 +26,7 @@ comment = {
     }
 }
 
-submission = {
+review = {
     'title': {
         'order': 1,
         'value-regex': '.{0,500}',
@@ -52,5 +65,49 @@ submission = {
             '1: The reviewer\'s evaluation is an educated guess'
         ],
         'required': True
+    }
+}
+
+submission = {
+    'title': {
+        'description': 'Title of paper.',
+        'order': 1,
+        'value-regex': '.{1,250}',
+        'required':True
+    },
+    'authors': {
+        'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
+        'order': 2,
+        'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
+        'required':True
+    },
+    'authorids': {
+        'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
+        'order': 3,
+        'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+        'required':True
+    },
+    'keywords': {
+        'description': 'Comma separated list of keywords.',
+        'order': 6,
+        'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
+    },
+    'TL;DR': {
+        'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+        'order': 7,
+        'value-regex': '[^\\n]{0,250}',
+        'required':False
+    },
+    'abstract': {
+        'description': 'Abstract of paper.',
+        'order': 8,
+        'value-regex': '[\\S\\s]{1,5000}',
+        'required':True
+    },
+    'pdf': {
+        'description': 'Upload a PDF file that ends with .pdf',
+        'order': 9,
+        'value-regex': 'upload',
+        'required':True
     }
 }
