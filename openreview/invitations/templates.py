@@ -7,7 +7,6 @@ Most classes extend
 import openreview
 import content
 import re
-import copy
 
 class Submission(openreview.Invitation):
     def __init__(self, name, conference_id, duedate = 0,
