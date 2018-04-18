@@ -163,40 +163,64 @@ class Comment(openreview.Invitation):
     def add_process(self, process):
         self.process = process.render()
 
-def fill_template(template_string, paper):
+def _fill_str(template_str, paper):
     paper_params = paper.to_json()
     pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.iteritems()])
-    matches = re.findall(pattern, template_string)
+    matches = re.findall(pattern, template_str)
     for match in matches:
         discovered_field = re.sub('<|>', '', match)
-        template_string = template_string.replace(match, str(paper_params[discovered_field]))
-        print "    new value: ", template_string
-    return template_string
+        template_str = template_str.replace(match, str(paper_params[discovered_field]))
+        print "    new value: ", template_str
+    return template_str
 
-def fill_list_or_str(value, paper):
-    if type(value) == list:
-        return [fill_template(v, paper) for v in value]
-    elif any([type(value) == t for t in [unicode, str]]):
-        return fill_template(value, paper)
-    elif any([type(value) == t for t in [int, float, type(None)]]):
-        return value
+def _fill_str_or_list(template_str_or_list, paper):
+    if type(template_str_or_list) == list:
+        return [_fill_str(v, paper) for v in template_str_or_list]
+    elif any([type(template_str_or_list) == t for t in [unicode, str]]):
+        return _fill_str(template_str_or_list, paper)
+    elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
+        return template_str_or_list
     else:
         raise ValueError('first argument must be list or string: ', value)
 
-def generate_invitation(invitation_template, paper):
-    params = copy.deepcopy(invitation_template)
-    reply = params.pop('reply')
+def _fill_template(template, paper, exclude=['process','web']):
+    new_template = {}
+    for field, value in template.iteritems():
+        if type(value) != dict:
+            new_template[field] = _fill_str_or_list(value, paper)
+        elif field not in exclude:
+            # recursion
+            new_template[field] = _fill_template(value, paper)
+        else:
+            new_template[field] = value
+    return new_template
 
-    for field_map in [reply, params]:
-        for field in field_map:
-            print "field: ", field
-            if field == 'content' or field == 'process' or field == 'webfield':
-                pass
-            elif type(field_map[field]) == dict:
-                for subfield in field_map[field]:
-                    if subfield != 'description':
-                        field_map[field][subfield] = fill_list_or_str(field_map[field][subfield], paper)
-            else:
-                field_map[field] = fill_list_or_str(field_map[field], paper)
+def from_template(invitation_template, paper):
+    new_params = _fill_template(invitation_template, paper)
 
-    return openreview.Invitation(**dict(params, **{'reply': reply}))
+    '''
+    web, process, duedate, cdate, rdate, ddate, multiReply, and taskCompletionCount
+    should not be updated (see below)
+    '''
+
+    return openreview.Invitation(
+        id = new_params['id'],
+        writers = new_params.get('writers'),
+        invitees = new_params.get('invitees'),
+        noninvitees = new_params.get('noninvitees'),
+        readers = new_params.get('readers'),
+        nonreaders = new_params.get('nonreaders'),
+        reply = new_params.get('reply', {}),
+        replyto = new_params.get('replyto'),
+        forum = new_params.get('forum'),
+        invitation = new_params.get('invitation'),
+        signatures = new_params.get('signatures'),
+        web = invitation_template.get('web'),
+        process = invitation_template.get('web'),
+        duedate = invitation_template.get('duedate'),
+        cdate = invitation_template.get('cdate'),
+        rdate = invitation_template.get('rdate'),
+        ddate = invitation_template.get('ddate'),
+        multiReply = invitation_template.get('multiReply'),
+        taskCompletionCount = invitation_template.get('taskCompletionCount')
+    )
