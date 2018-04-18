@@ -183,7 +183,7 @@ def _fill_str_or_list(template_str_or_list, paper):
     else:
         raise ValueError('first argument must be list or string: ', value)
 
-def _fill_template(template, paper, exclude=['process','web']):
+def _fill_template(template, paper, exclude=[]):
     new_template = {}
     for field, value in template.iteritems():
         if type(value) != dict:
@@ -196,12 +196,17 @@ def _fill_template(template, paper, exclude=['process','web']):
     return new_template
 
 def from_template(invitation_template, paper):
-    new_params = _fill_template(invitation_template, paper)
-
     '''
     web, process, duedate, cdate, rdate, ddate, multiReply, and taskCompletionCount
-    should not be updated (see below)
+    should not be updated.
     '''
+
+    exclusions = [
+        'web','process','duedate','cdate','rdate','ddate',
+        'multiReply','taskCompletionCount'
+    ]
+
+    new_params = _fill_template(invitation_template, paper, exclude = exclusions)
 
     return openreview.Invitation(
         id = new_params['id'],
@@ -215,12 +220,12 @@ def from_template(invitation_template, paper):
         forum = new_params.get('forum'),
         invitation = new_params.get('invitation'),
         signatures = new_params.get('signatures'),
-        web = invitation_template.get('web'),
-        process = invitation_template.get('web'),
-        duedate = invitation_template.get('duedate'),
-        cdate = invitation_template.get('cdate'),
-        rdate = invitation_template.get('rdate'),
-        ddate = invitation_template.get('ddate'),
-        multiReply = invitation_template.get('multiReply'),
-        taskCompletionCount = invitation_template.get('taskCompletionCount')
+        web = new_params.get('web'),
+        process = new_params.get('web'),
+        duedate = new_params.get('duedate'),
+        cdate = new_params.get('cdate'),
+        rdate = new_params.get('rdate'),
+        ddate = new_params.get('ddate'),
+        multiReply = new_params.get('multiReply'),
+        taskCompletionCount = new_params.get('taskCompletionCount')
     )
