@@ -7,6 +7,7 @@ Most classes extend
 import openreview
 import content
 import re
+import copy
 
 class Submission(openreview.Invitation):
     def __init__(self, name, conference_id, duedate = 0,
@@ -167,14 +168,13 @@ def fill_template(template_string, paper_params):
     matches = re.findall(pattern, template_string)
     for match in matches:
         discovered_field = re.sub('<|>', '', match)
-        print "replacing ", paper_params[discovered_field]
         template_string = template_string.replace(match, str(paper_params[discovered_field]))
-        print "updating ", template_string
+        print "    new value: ", template_string
     return template_string
 
 def generate_invitation(invitation_template, paper):
-    reply = {k:v for k,v in invitation_template['reply'].iteritems()}
-    params = {k: v for k, v in invitation_template.iteritems() if k != 'reply'}
+    params = copy.deepcopy(invitation_template)
+    reply = params.pop('reply')
     paper_params = paper.to_json()
 
     def fill_list_or_str(value, paper_params=paper_params):
@@ -189,6 +189,7 @@ def generate_invitation(invitation_template, paper):
 
     for field_map in [reply, params]:
         for field in field_map:
+            print "field: ", field
             if field == 'content' or field == 'process' or field == 'webfield':
                 pass
             elif type(field_map[field]) == dict:
