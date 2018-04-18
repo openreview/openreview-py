@@ -5,6 +5,8 @@ Most classes extend
 '''
 
 import openreview
+import content
+import re
 
 class Submission(openreview.Invitation):
     def __init__(self, name, conference_id, duedate = 0,
@@ -39,52 +41,8 @@ class Submission(openreview.Invitation):
             }
         }
 
-        default_content_params = {
-            'title': {
-                'description': 'Title of paper.',
-                'order': 1,
-                'value-regex': '.{1,250}',
-                'required':True
-            },
-            'authors': {
-                'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
-                'order': 2,
-                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
-                'required':True
-            },
-            'authorids': {
-                'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
-                'order': 3,
-                'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
-                'required':True
-            },
-            'keywords': {
-                'description': 'Comma separated list of keywords.',
-                'order': 6,
-                'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
-            },
-            'TL;DR': {
-                'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
-                'order': 7,
-                'value-regex': '[^\\n]{0,250}',
-                'required':False
-            },
-            'abstract': {
-                'description': 'Abstract of paper.',
-                'order': 8,
-                'value-regex': '[\\S\\s]{1,5000}',
-                'required':True
-            },
-            'pdf': {
-                'description': 'Upload a PDF file that ends with .pdf',
-                'order': 9,
-                'value-regex': 'upload',
-                'required':True
-            }
-        }
-
         self.content_params = {}
-        self.content_params.update(default_content_params)
+        self.content_params.update(content.submission)
         self.content_params.update(content_params)
 
         if mask:
@@ -104,8 +62,6 @@ class Submission(openreview.Invitation):
 
     def add_process(self, process):
         self.process = process.render()
-
-
 
 class AddBid(openreview.Invitation):
     def __init__(self, name, conference_id, duedate = 0,
@@ -137,21 +93,8 @@ class AddBid(openreview.Invitation):
             }
         }
 
-        default_content_params = {
-            'tag': {
-                'description': 'Bid description',
-                'order': 1,
-                'value-radio': ['I want to review',
-                    'I can review',
-                    'I can probably review but am not an expert',
-                    'I cannot review',
-                    'No bid'],
-                'required':True
-            }
-        }
-
         self.content_params = {}
-        self.content_params.update(default_content_params)
+        self.content_params.update(content.bid)
         self.content_params.update(content_params)
 
         self.reply_params = {}
@@ -200,23 +143,8 @@ class Comment(openreview.Invitation):
             }
         }
 
-        default_content_params = {
-            'title': {
-                'order': 0,
-                'value-regex': '.{1,500}',
-                'description': 'Brief summary of your comment (up to 500 chars).',
-                'required': True
-            },
-            'comment': {
-                'order': 1,
-                'value-regex': '[\\S\\s]{1,5000}',
-                'description': 'Your comment or reply (up to 5000 chars).',
-                'required': True
-            }
-        }
-
         self.content_params = {}
-        self.content_params.update(default_content_params)
+        self.content_params.update(content.comment)
         self.content_params.update(content_params)
 
         self.reply_params = {}
@@ -233,3 +161,59 @@ class Comment(openreview.Invitation):
 
     def add_process(self, process):
         self.process = process.render()
+
+def _fill_str(template_str, paper):
+    paper_params = paper.to_json()
+    pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.iteritems()])
+    matches = re.findall(pattern, template_str)
+    for match in matches:
+        discovered_field = re.sub('<|>', '', match)
+        template_str = template_str.replace(match, str(paper_params[discovered_field]))
+        print "    new value: ", template_str
+    return template_str
+
+def _fill_str_or_list(template_str_or_list, paper):
+    if type(template_str_or_list) == list:
+        return [_fill_str(v, paper) for v in template_str_or_list]
+    elif any([type(template_str_or_list) == t for t in [unicode, str]]):
+        return _fill_str(template_str_or_list, paper)
+    elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
+        return template_str_or_list
+    else:
+        raise ValueError('first argument must be list or string: ', value)
+
+def _fill_template(template, paper):
+    new_template = {}
+    for field, value in template.iteritems():
+        if type(value) != dict:
+            new_template[field] = _fill_str_or_list(value, paper)
+        else:
+            # recursion
+            new_template[field] = _fill_template(value, paper)
+
+    return new_template
+
+def from_template(invitation_template, paper):
+    new_params = _fill_template(invitation_template, paper)
+
+    return openreview.Invitation(
+        id = new_params['id'],
+        writers = new_params.get('writers'),
+        invitees = new_params.get('invitees'),
+        noninvitees = new_params.get('noninvitees'),
+        readers = new_params.get('readers'),
+        nonreaders = new_params.get('nonreaders'),
+        reply = new_params.get('reply', {}),
+        replyto = new_params.get('replyto'),
+        forum = new_params.get('forum'),
+        invitation = new_params.get('invitation'),
+        signatures = new_params.get('signatures'),
+        web = new_params.get('web'),
+        process = new_params.get('web'),
+        duedate = new_params.get('duedate'),
+        cdate = new_params.get('cdate'),
+        rdate = new_params.get('rdate'),
+        ddate = new_params.get('ddate'),
+        multiReply = new_params.get('multiReply'),
+        taskCompletionCount = new_params.get('taskCompletionCount')
+    )
