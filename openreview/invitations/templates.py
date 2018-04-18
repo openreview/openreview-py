@@ -182,30 +182,19 @@ def _fill_str_or_list(template_str_or_list, paper):
     else:
         raise ValueError('first argument must be list or string: ', value)
 
-def _fill_template(template, paper, exclude=[]):
+def _fill_template(template, paper):
     new_template = {}
     for field, value in template.iteritems():
         if type(value) != dict:
             new_template[field] = _fill_str_or_list(value, paper)
-        elif field not in exclude:
+        else:
             # recursion
             new_template[field] = _fill_template(value, paper)
-        else:
-            new_template[field] = value
+
     return new_template
 
 def from_template(invitation_template, paper):
-    '''
-    web, process, duedate, cdate, rdate, ddate, multiReply, and taskCompletionCount
-    should not be updated.
-    '''
-
-    exclusions = [
-        'web','process','duedate','cdate','rdate','ddate',
-        'multiReply','taskCompletionCount'
-    ]
-
-    new_params = _fill_template(invitation_template, paper, exclude = exclusions)
+    new_params = _fill_template(invitation_template, paper)
 
     return openreview.Invitation(
         id = new_params['id'],
