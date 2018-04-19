@@ -196,8 +196,6 @@ def fill_template(template, paper):
 def from_template(invitation_template, paper):
     new_params = fill_template(invitation_template, paper)
 
-    print new_params['process']
-
     return openreview.Invitation(
         id = new_params['id'],
         writers = new_params.get('writers'),
