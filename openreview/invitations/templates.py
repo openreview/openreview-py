@@ -182,19 +182,21 @@ def _fill_str_or_list(template_str_or_list, paper):
     else:
         raise ValueError('first argument must be list or string: ', value)
 
-def _fill_template(template, paper):
+def fill_template(template, paper):
     new_template = {}
     for field, value in template.iteritems():
         if type(value) != dict:
             new_template[field] = _fill_str_or_list(value, paper)
         else:
             # recursion
-            new_template[field] = _fill_template(value, paper)
+            new_template[field] = fill_template(value, paper)
 
     return new_template
 
 def from_template(invitation_template, paper):
-    new_params = _fill_template(invitation_template, paper)
+    new_params = fill_template(invitation_template, paper)
+
+    print new_params['process']
 
     return openreview.Invitation(
         id = new_params['id'],
@@ -209,7 +211,7 @@ def from_template(invitation_template, paper):
         invitation = new_params.get('invitation'),
         signatures = new_params.get('signatures'),
         web = new_params.get('web'),
-        process = new_params.get('web'),
+        process = new_params.get('process'),
         duedate = new_params.get('duedate'),
         cdate = new_params.get('cdate'),
         rdate = new_params.get('rdate'),
