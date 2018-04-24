@@ -380,7 +380,7 @@ def assign(client, paper_number, conference,
 
         if user not in parent_group.members:
             client.add_members_to_group(parent_group, user)
-            print "{:40s} --> {}".format(user, parent_group.id)
+            print "{:40s} --> {}".format(user.encode('utf-8'), parent_group.id)
 
         if not assigned_individual_groups:
             suffix = next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label)
@@ -396,10 +396,10 @@ def assign(client, paper_number, conference,
             individual_group.members.append(user)
 
             client.post_group(individual_group)
-            print "{:40s} --> {}".format(user, individual_group.id)
+            print "{:40s} --> {}".format(user.encode('utf-8'), individual_group.id)
         else:
             for g in assigned_individual_groups:
-                print "{:40s} === {}".format(user, g.id)
+                print "{:40s} === {}".format(user.encode('utf-8'), g.id)
 
     '''
     It's important to remove any users first, so that we can do direct replacement of
