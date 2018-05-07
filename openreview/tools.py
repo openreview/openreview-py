@@ -77,6 +77,18 @@ def build_groups(conference_group_id, default_params=None):
 
     return sorted(groups.values(), key=lambda x: len(x.id))
 
+def post_group_parents(client, group):
+    groups = build_groups(group.id)
+
+    posted_groups = []
+    for g in groups:
+        if g.id == group.id:
+            posted_groups.append(client.post_group(group))
+        else:
+            posted_groups.append(client.post_group(g))
+
+    return posted_groups
+
 def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True):
 
     def capitalize_title(title):
