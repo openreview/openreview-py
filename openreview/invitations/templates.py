@@ -9,14 +9,19 @@ import content
 import re
 
 class Submission(openreview.Invitation):
-    def __init__(self, name, conference_id, duedate = 0,
-        process = None, inv_params = {}, reply_params = {}, content_params = {}, mask = {}):
+    def __init__(self, name = None, conference_id = None, duedate = 0,
+        id = None, process = None, inv_params = {}, reply_params = {}, content_params = {}, mask = {}):
 
         self.name = name
         self.conference_id = conference_id
 
+        if id:
+            self.id = id
+        else:
+            self.id = '/'.join([self.conference_id, '-', self.name])
+
         default_inv_params = {
-            'id': '/'.join([self.conference_id, '-', self.name]),
+            'id': self.id,
             'readers': ['everyone'],
             'writers': [self.conference_id],
             'invitees': ['~'],
