@@ -77,7 +77,7 @@ def build_groups(conference_group_id, default_params=None):
 
     return sorted(groups.values(), key=lambda x: len(x.id))
 
-def post_group_parents(client, group):
+def post_group_parents(client, group, overwrite=False):
     groups = build_groups(group.id)
 
     posted_groups = []
@@ -85,7 +85,10 @@ def post_group_parents(client, group):
         if g.id == group.id:
             posted_groups.append(client.post_group(group))
         else:
-            posted_groups.append(client.post_group(g))
+            if client.exists(g.id) or overwrite:
+                posted_groups.append(client.post_group(g))
+            else:
+                posted_groups.append(g)
 
     return posted_groups
 
