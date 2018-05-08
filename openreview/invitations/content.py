@@ -111,3 +111,21 @@ submission = {
         'required':True
     }
 }
+
+recruitment = {
+    'email': {
+        'description': 'email address',
+        'order': 1,
+        'value-regex': '.*@.*'
+    },
+    'key': {
+        'description': 'Email key hash',
+        'order': 2,
+        'value-regex': '.{0,100}'
+    },
+    'response': {
+        'description': 'Invitation response',
+        'order': 3,
+        'value-radio': ['Yes', 'No']
+    }
+}
