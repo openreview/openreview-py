@@ -167,6 +167,54 @@ class Comment(openreview.Invitation):
     def add_process(self, process):
         self.process = process.render()
 
+class Recruitment(openreview.Invitation):
+    def __init__(self, id, conference_id, duedate = 0,
+        process = None, web = None, inv_params = {}, reply_params = {}, content_params = {}):
+
+        self.id = id
+        self.conference_id = conference_id
+
+        default_inv_params = {
+            'id': self.id,
+            'readers': ['everyone'],
+            'writers': [self.conference_id],
+            'invitees': ['~'],
+            'signatures': [self.conference_id],
+            'duedate': duedate,
+            'process': process,
+            'web': web
+        }
+
+        default_reply_params = {
+            'forum': None,
+            'replyto': None,
+            'readers': {
+                'values': ['~Super_User1']
+            },
+            'signatures': {
+                'values-regex': '\\(anonymous\\)'
+            },
+            'writers': {
+                'values-regex': '\\(anonymous\\)'
+            }
+        }
+
+        self.content_params = {}
+        self.content_params.update(content.recruitment)
+        self.content_params.update(content_params)
+
+        self.reply_params = {}
+        self.reply_params.update(default_reply_params)
+        self.reply_params.update(reply_params)
+        self.reply_params['content'] = self.content_params
+
+        self.inv_params = {}
+        self.inv_params.update(default_inv_params)
+        self.inv_params.update(inv_params)
+        self.inv_params['reply'] = self.reply_params
+
+        super(Recruitment, self).__init__(**self.inv_params)
+
 def _fill_str(template_str, paper):
     paper_params = paper.to_json()
     pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.iteritems()])
