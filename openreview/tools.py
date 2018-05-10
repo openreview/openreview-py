@@ -443,4 +443,53 @@ def assign(client, paper_number, conference,
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
 
+''' Create paper group, authors group, reviewers group, review non-readers group
+    for all notes returned by the submission_invite.'''
+def post_submission_groups(client, conference_id, submission_invite, chairs):
+    submissions = client.get_notes(invitation=submission_invite)
+    for paper in submissions:
+        paper_num = str(paper.number)
+        print("Adding groups for Paper" + paper_num)
+
+        ## Paper Group
+        paperGroup = conference_id + '/Paper' + paper_num
+        client.post_group(openreview.Group(
+            id=paperGroup,
+            signatures=[conference_id],
+            writers=[conference_id],
+            members=[],
+            readers=['everyone'],
+            signatories=[]))
+
+        ## Author group
+        authorGroup = paperGroup + '/Authors'
+        client.post_group(openreview.Group(
+            id=authorGroup,
+            signatures=[conference_id],
+            writers=[conference_id],
+            members=paper.content['authorids'],
+            readers=[conference_id, chairs, authorGroup],
+            signatories=[]))
+
+        ## Reviewer group - people that can see the review invitation
+        reviewerGroup = paperGroup + '/Reviewers'
+        client.post_group(openreview.Group(
+            id=reviewerGroup,
+            signatures=[conference_id],
+            writers=[conference_id],
+            members=[],
+            readers=[conference_id, chairs],
+            signatories=[]))
+
+        ## NonReviewers - people that aren't allowed to see the reviews.
+        # Used to prevent reviewers from seeing other reviews of that paper
+        # until their review is complete.
+        nonReviewerGroup = reviewerGroup + '/NonReaders'
+        client.post_group(openreview.Group(
+            id=nonReviewerGroup,
+            signatures=[conference_id],
+            writers=[conference_id],
+            members=[],
+            readers=[conference_id, chairs],
+            signatories=[]))
 

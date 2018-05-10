@@ -115,14 +115,19 @@ class AddBid(openreview.Invitation):
         super(AddBid, self).__init__(**self.inv_params)
 
 class Comment(openreview.Invitation):
-    def __init__(self, name, conference_id, duedate = 0,
+    def __init__(self, name = None, conference_id = None, id = None, duedate = 0,
         process = None, invitation = None, inv_params = {}, reply_params = {}, content_params = {}):
 
         self.name = name
         self.conference_id = conference_id
 
+        if id:
+            self.id = id
+        else:
+            self.id = '/'.join([self.conference_id, '-', self.name])
+
         default_inv_params = {
-            'id': '/'.join([self.conference_id, '-', self.name]),
+            'id': self.id,
             'readers': ['everyone'],
             'writers': [self.conference_id],
             'invitees': ['~'],
