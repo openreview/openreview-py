@@ -9,16 +9,16 @@ import content
 import re
 
 class Submission(openreview.Invitation):
-    def __init__(self, name = None, conference_id = None, duedate = 0,
-        id = None, process = None, inv_params = {}, reply_params = {}, content_params = {}, mask = {}):
+    def __init__(self, conference_id = None, id = None,
+        duedate = None, process = None, inv_params = {},
+        reply_params = {}, content_params = {}, mask = {}):
 
-        self.name = name
         self.conference_id = conference_id
 
         if id:
             self.id = id
         else:
-            self.id = '/'.join([self.conference_id, '-', self.name])
+            self.id = '/'.join([self.conference_id, '-', 'Submission'])
 
         default_inv_params = {
             'id': self.id,
@@ -69,12 +69,19 @@ class Submission(openreview.Invitation):
         self.process = process.render()
 
 class AddBid(openreview.Invitation):
-    def __init__(self, name, conference_id, duedate = 0,
-        completion_count = 50, inv_params = {}, reply_params = {},
-        content_params = {}, mask = {}):
+    def __init__(self, conference_id, id = None,
+        duedate = None, completion_count = 50, inv_params = {},
+        reply_params = {}, content_params = {}, mask = {}):
+
+        self.conference_id = conference_id
+
+        if id:
+            self.id = id
+        else:
+            self.id = '/'.join([self.conference_id, '-', 'Add_Bid'])
 
         default_inv_params = {
-            'id': conference_id + '/-/Add_Bid',
+            'id': self.id,
             'readers': [conference_id, conference_id + '/Reviewers'],
             'writers': [conference_id],
             'invitees': [conference_id + '/Reviewers'],
@@ -115,16 +122,16 @@ class AddBid(openreview.Invitation):
         super(AddBid, self).__init__(**self.inv_params)
 
 class Comment(openreview.Invitation):
-    def __init__(self, name = None, conference_id = None, id = None, duedate = 0,
-        process = None, invitation = None, inv_params = {}, reply_params = {}, content_params = {}):
+    def __init__(self, conference_id, id = None,
+        duedate = 0, process = None, invitation = None,
+        inv_params = {}, reply_params = {}, content_params = {}):
 
-        self.name = name
         self.conference_id = conference_id
 
         if id:
             self.id = id
         else:
-            self.id = '/'.join([self.conference_id, '-', self.name])
+            self.id = '/'.join([self.conference_id, '-', 'Comment'])
 
         default_inv_params = {
             'id': self.id,
@@ -172,11 +179,16 @@ class Comment(openreview.Invitation):
     def add_process(self, process):
         self.process = process.render()
 
-class Recruitment(openreview.Invitation):
-    def __init__(self, id, conference_id, duedate = 0,
-        process = None, web = None, inv_params = {}, reply_params = {}, content_params = {}):
+class RecruitReviewers(openreview.Invitation):
+    def __init__(self, conference_id, id = None,
+        duedate = 0, process = None, web = None,
+        inv_params = {}, reply_params = {}, content_params = {}):
 
-        self.id = id
+        if id:
+            self.id = id
+        else:
+            self.id = '/'.join([self.conference_id, '-', 'Recruit_Reviewers'])
+
         self.conference_id = conference_id
 
         default_inv_params = {
@@ -218,7 +230,7 @@ class Recruitment(openreview.Invitation):
         self.inv_params.update(inv_params)
         self.inv_params['reply'] = self.reply_params
 
-        super(Recruitment, self).__init__(**self.inv_params)
+        super(RecruitReviewers, self).__init__(**self.inv_params)
 
 def _fill_str(template_str, paper):
     paper_params = paper.to_json()
