@@ -71,7 +71,7 @@ class Submission(openreview.Invitation):
 class AddBid(openreview.Invitation):
     def __init__(self, conference_id, id = None,
         duedate = None, completion_count = 50, inv_params = {},
-        reply_params = {}, content_params = {}, mask = {}):
+        reply_params = {}, content_params = {}):
 
         self.conference_id = conference_id
 
