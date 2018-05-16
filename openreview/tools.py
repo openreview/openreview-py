@@ -103,7 +103,7 @@ def update_group(client, group, overwrite_members=False):
             existing_members = None
 
     new_group = openreview.Group.from_json(group.to_json())
-    if existing_members:
+    if existing_members and not overwrite_members:
         new_group.members = existing_members
 
     return client.post_group(new_group)
