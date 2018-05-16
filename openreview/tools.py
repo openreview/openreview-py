@@ -92,6 +92,22 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
+def update_group(client, group, overwrite_members=False):
+    try:
+        existing_group = client.get_group(group.id)
+        existing_members = existing_group.members
+    except openreview.OpenReviewException as e:
+        if not e.args[0][0]['type'] == 'Not Found':
+            raise e
+        else:
+            existing_members = None
+
+    new_group = openreview.Group.from_json(group.to_json())
+    if existing_members and not overwrite_members:
+        new_group.members = existing_members
+
+    return client.post_group(new_group)
+
 def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True):
 
     def capitalize_title(title):
