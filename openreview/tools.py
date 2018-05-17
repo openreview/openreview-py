@@ -443,50 +443,6 @@ def assign(client, paper_number, conference,
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
 
-def recruit_reviewer(client, email, first,
-    hash_seed,
-    recruit_reviewers_id,
-    recruit_message,
-    recruit_message_subj,
-    reviewers_invited_id,
-    verbose=True):
-    '''
-    Recruit a reviewer.
-
-    The hashkey is important for uniquely identifying the user, without
-    requiring them to already have an openreview account. The second argument
-    to the client.get_hash() function is just a big random number that the
-    invitation's "process function" also knows about.
-    '''
-
-    hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
-
-    # build the URL to send in the message
-    url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
-        baseurl = client.baseurl,
-        recruitment_inv = recruit_reviewers_id,
-        email = email,
-        hashkey = hashkey
-    )
-
-    # format the message defined above
-    personalized_message = recruit_message.format(
-        name = first,
-        accept_url = url + "Yes",
-        decline_url = url + "No"
-    )
-
-    # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [email], personalized_message)
-
-    if 'groups' in response and response['groups']:
-        reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, response['groups'])
-
-    if verbose:
-        print "Sent to the following: ", response
-        print personalized_message
-
 ''' Create paper group, authors group, reviewers group, review non-readers group
     for all notes returned by the submission_invite.'''
 def post_submission_groups(client, conference_id, submission_invite, chairs):
