@@ -336,7 +336,7 @@ def assign(client, paper_number, conference,
     try:
         parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
     except openreview.OpenReviewException as e:
-        if e[0][0]['type'] == 'Not Found':
+        if 'Group Not Found' in e[0][0]:
             parent_group = client.post_group(openreview.Group(
                 id = '{}/Paper{}/{}'.format(conference, paper_number, parent_label),
                 nonreaders = ['{}/Paper{}/Authors'.format(conference, paper_number)],
