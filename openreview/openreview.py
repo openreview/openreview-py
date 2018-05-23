@@ -52,6 +52,7 @@ class Client(object):
         self.tags_url = self.baseurl + '/tags'
         self.profiles_url = self.baseurl + '/user/profile'
         self.reference_url = self.baseurl + '/references'
+        self.tilde_url = self.baseurl + '/tildeusername'
         self.token = self.__login_user(self.username, self.password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
         self.signature = self.get_profile(self.username).id
@@ -179,6 +180,40 @@ class Client(object):
         profile = response.json()['profile']
         return Note.from_json(profile)
 
+    def get_profiles(self, email_or_id_list):
+        """If the list is tilde_ids, returns an array of profiles
+           If the list is emails, returns an array of dictionaries with 'email' and 'profile'"""
+        tildematch = re.compile('~.+')
+        if len(email_or_id_list) > 0 and tildematch.match(email_or_id_list[0]):
+            response = requests.post(self.baseurl + '/user/profiles', json={'ids': email_or_id_list}, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Note.from_json(p) for p in response.json()['profiles']]
+        else:
+            response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_or_id_list}, headers = self.headers)
+            response = self.__handle_response(response)
+            return { p['email'] : Note.from_json(p['profile'])
+                            for p in response.json()['profiles'] }
+
+    def post_profile(self, id, content):
+        response = requests.put(
+            self.profiles_url,
+            json = { 'id': id, 'content': content },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        profile = response.json()
+        return Note.from_json(profile)
+
+    def update_profile(self, id, content):
+        response = requests.post(
+            self.profiles_url,
+            json = {'id': id, 'content': content},
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        profile = response.json()
+        return Note.from_json(profile)
+
     def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
         params = {}
@@ -193,7 +228,6 @@ class Client(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         groups.sort(key = lambda x: x.id)
         return groups
-
 
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None):
         """Returns a list of Group objects based on the filters provided."""
@@ -222,9 +256,7 @@ class Client(object):
         invitations.sort(key = lambda x: x.id)
         return invitations
 
-
-
-    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None):
+    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None, mintcdate = None):
         """Returns a list of Note objects based on the filters provided."""
         params = {}
         if id != None:
@@ -251,6 +283,8 @@ class Client(object):
             params['limit'] = limit
         if offset != None:
             params['offset'] = offset
+        if mintcdate != None:
+            params['mintcdate'] = mintcdate
 
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)
@@ -258,14 +292,24 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_references(self, referent):
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None):
         """Returns a list of revisions for a note."""
+        params = {}
+        if referent != None:
+            params['referent'] = referent
+        if invitation != None:
+            params['invitation'] = invitation
+        if mintcdate != None:
+            params['mintcdate'] = mintcdate
+        if limit != None:
+            params['limit'] = limit
+        if offset != None:
+            params['offset'] = offset
 
-        response = requests.get(self.reference_url, params = {"referent" : referent}, headers = self.headers)
+        response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
         return [Note.from_json(n) for n in response.json()['references']]
-
 
     def get_tags(self, id = None, invitation = None, forum = None):
         """Returns a list of Tag objects based on the filters provided."""
@@ -290,7 +334,6 @@ class Client(object):
             return False
         return True
 
-
     def post_group(self, group, overwrite = True):
         """
         Posts the group. Upon success, returns the posted Group object.
@@ -303,7 +346,6 @@ class Client(object):
             response = self.__handle_response(response)
 
         return Group.from_json(response.json())
-
 
     def post_invitation(self, invitation):
         """
@@ -342,7 +384,6 @@ class Client(object):
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
         return None
-
 
     def send_mail(self, subject, recipients, message):
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
@@ -392,6 +433,11 @@ class Client(object):
         response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
+
+    def get_tildeusername(self, first, last, middle = None):
+        response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
 class Group(object):
     def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
@@ -591,7 +637,7 @@ class Invitation(object):
         return invitation
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None, overwriting=None, tauthor=None):
         self.id = id
         self.original = original
         self.number = number
@@ -609,6 +655,9 @@ class Note(object):
         self.signatures = [] if signatures==None else signatures
         self.writers = [] if writers==None else writers
         self.number = number
+        self.overwriting = overwriting
+        if tauthor:
+            self.tauthor = tauthor
 
     def __str__(self):
         pp = pprint.PrettyPrinter()
@@ -618,7 +667,7 @@ class Note(object):
         body = {
             'id': self.id,
             'original': self.original,
-            'cdate':self.cdate,
+            'cdate': self.cdate,
             'tcdate': self.tcdate,
             'ddate': self.ddate,
             'number': self.number,
@@ -632,8 +681,11 @@ class Note(object):
             'nonreaders': self.nonreaders,
             'signatures': self.signatures,
             'writers': self.writers,
-            'number':self.number
+            'number': self.number,
+            'overwriting': self.overwriting
         }
+        if hasattr(self, 'tauthor'):
+            body['tauthor'] = self.tauthor
         return body
 
     @classmethod
@@ -654,7 +706,9 @@ class Note(object):
         readers=n.get('readers'),
         nonreaders=n.get('nonreaders'),
         signatures=n.get('signatures'),
-        writers=n.get('writers')
+        writers=n.get('writers'),
+        overwriting=n.get('overwriting'),
+        tauthor=n.get('tauthor')
         )
         return note
 
@@ -703,3 +757,8 @@ class Tag(object):
             signatures = t.get('signatures'),
         )
         return tag
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(self.to_json())
+
