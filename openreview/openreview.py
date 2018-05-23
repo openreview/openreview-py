@@ -521,7 +521,27 @@ class Group(object):
         client.post_group(self)
 
 class Invitation(object):
-    def __init__(self, id, writers=None, invitees=None, noninvitees=None, readers=None, nonreaders=None, reply=None, replyto=None, forum=None, invitation=None, web=None, process=None, signatures=None, duedate=None, cdate=None, rdate=None, ddate=None, multiReply=None, taskCompletionCount=None):
+    def __init__(self,
+        id,
+        writers = None,
+        invitees = None,
+        noninvitees = None,
+        readers = None,
+        nonreaders = None,
+        reply = None,
+        replyto = None,
+        forum = None,
+        invitation = None,
+        web = None,
+        process = None,
+        signatures = None,
+        duedate = None,
+        cdate = None,
+        rdate = None,
+        ddate = None,
+        multiReply = None,
+        taskCompletionCount = None,
+        transform = None):
 
         default_reply = {
             'forum': forum,
@@ -555,6 +575,10 @@ class Invitation(object):
         if process != None:
             with open(process) as f:
                 self.process = f.read()
+        self.transform = None
+        if transform != None:
+            with open(transform) as f:
+                self.transform = f.read()
 
     def __str__(self):
         pp = pprint.PrettyPrinter()
@@ -577,7 +601,8 @@ class Invitation(object):
             'taskCompletionCount': self.taskCompletionCount,
             'reply': self.reply,
             'process': self.process,
-            'web': self.web
+            'web': self.web,
+            'transform': self.transform
         }
 
         if hasattr(self,'web'):
@@ -607,6 +632,8 @@ class Invitation(object):
             invitation.web = i['web']
         if 'process' in i:
             invitation.process = i['process']
+        if 'transform' in i:
+            invitation.transform = i['transform']
         return invitation
 
 class Note(object):
