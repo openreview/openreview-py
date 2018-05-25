@@ -295,7 +295,7 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
         return '{}1'.format(individual_label)
 
 
-def get_or_create_reviewer_group(client, paper_number, conference, group_params, label):
+def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
 
     '''
     This is only intended to be used as a local helper function
@@ -306,7 +306,7 @@ def get_or_create_reviewer_group(client, paper_number, conference, group_params,
 
     # get the parent group if it already exists, and create it if it doesn't.
     try:
-        group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, label))
+        parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
     except openreview.OpenReviewException as e:
         if 'Group Not Found' in e[0][0]:
             # Set the default values for the parent and individual groups
@@ -318,17 +318,14 @@ def get_or_create_reviewer_group(client, paper_number, conference, group_params,
             }
             group_params_default.update(group_params)
             group_params = group_params_default
-            group = client.post_group(openreview.Group(
-                id = '{}/Paper{}/{}'.format(conference, paper_number, label),
+            parent_group = client.post_group(openreview.Group(
+                id = '{}/Paper{}/{}'.format(conference, paper_number, parent_label),
                 nonreaders = ['{}/Paper{}/Authors'.format(conference, paper_number)],
                 **group_params
             ))
         else:
             raise e
 
-    return group
-
-def get_individual_groups(client, paper_number, conference, parent_group, individual_label):
     '''
     get the existing individual groups, while making sure that the parent group isn't included.
     This can happen if the parent group and the individual groups are named similarly.
@@ -339,12 +336,12 @@ def get_individual_groups(client, paper_number, conference, parent_group, indivi
 
         Then the call for individual groups by wildcard will pick up all the
         individual groups AND the parent group.
-
     '''
+
     individual_groups = client.get_groups(id = '{}/Paper{}/{}.*'.format(conference, paper_number, individual_label))
     individual_groups = [g for g in individual_groups if g.id != parent_group.id]
     unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
-    return [individual_groups, unassigned_individual_groups]
+    return [parent_group, individual_groups, unassigned_individual_groups]
 
 
 
@@ -369,11 +366,10 @@ def add_assignment(client, paper_number, conference, reviewer,
     @individual_group_params: optional parameter that overrides the default
      '''
 
-    parent_group = get_or_create_reviewer_group(client, paper_number, conference, parent_group_params, parent_label)
-
-    result = get_individual_groups(client, paper_number, conference, parent_group, individual_label)
-    individual_groups = result[0]
-    unassigned_individual_groups = result[1]
+    result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
+    parent_group = result[0]
+    individual_groups = result[1]
+    unassigned_individual_groups = result[2]
 
 
     '''
@@ -440,9 +436,10 @@ def remove_assignment(client, paper_number, conference, reviewer,
     @individual_group_params: optional parameter that overrides the default
     '''
 
-    parent_group = get_or_create_reviewer_group(client, paper_number, conference, parent_group_params, parent_label)
-    result = get_individual_groups(client, paper_number, conference, parent_group, individual_label)
-    individual_groups = result[0]
+    result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
+    parent_group = result[0]
+    individual_groups = result[1]
+
     user = get_profile_id(client, reviewer)
 
     '''
