@@ -309,6 +309,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
         parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
     except openreview.OpenReviewException as e:
         if 'Group Not Found' in e[0][0]:
+
             # Set the default values for the parent and individual groups
             group_params_default = {
                 'readers': [conference, '{}/Program_Chairs'.format(conference)],
@@ -318,6 +319,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
             }
             group_params_default.update(group_params)
             group_params = group_params_default
+
             parent_group = client.post_group(openreview.Group(
                 id = '{}/Paper{}/{}'.format(conference, paper_number, parent_label),
                 nonreaders = ['{}/Paper{}/Authors'.format(conference, paper_number)],
