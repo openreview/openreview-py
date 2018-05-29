@@ -17,14 +17,6 @@ def get_profile(client, value):
             return e
     return profile
 
-def get_profile_id(client, value):
-    profile = get_profile(client, value)
-    if profile:
-        user = profile.id
-    else:
-        user = value
-    return user
-
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
 
     profile = get_profile(client, email)
@@ -379,7 +371,8 @@ def add_assignment(client, paper_number, conference, reviewer,
 
     Prints the results to the console.
     '''
-    user = get_profile_id(client, reviewer)
+    profile = get_profile(client, reviewer)
+    user = profile.id if profile else reviewer
 
     if user not in parent_group.members:
         client.add_members_to_group(parent_group, user)
@@ -442,7 +435,8 @@ def remove_assignment(client, paper_number, conference, reviewer,
     parent_group = result[0]
     individual_groups = result[1]
 
-    user = get_profile_id(client, reviewer)
+    profile = get_profile(client, reviewer)
+    user = profile.id if profile else reviewer
 
     '''
     Removes the given user from the parent group,
