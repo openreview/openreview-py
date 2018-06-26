@@ -312,7 +312,7 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['references']]
 
-    def get_tags(self, id = None, invitation = None, forum = None):
+    def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
         """Returns a list of Tag objects based on the filters provided."""
         params = {}
 
@@ -322,6 +322,10 @@ class Client(object):
             params['forum'] = forum
         if invitation != None:
             params['invitation'] = invitation
+        if limit != None:
+            params['limit'] = limit
+        if offset != None:
+            params['offset'] = offset
 
         response = requests.get(self.tags_url, params = params, headers = self.headers)
         response = self.__handle_response(response)

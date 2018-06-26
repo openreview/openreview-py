@@ -245,17 +245,23 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     client.post_group(group)
 
-def get_all_notes(client, invitation, limit=1000):
+def _get_all(get_function, invitation, limit):
     done = False
-    notes = []
+    objects = []
     offset = 0
     while not done:
-        batch = client.get_notes(invitation=invitation, limit=limit, offset=offset)
-        notes += batch
+        batch = get_function(invitation=invitation, limit=limit, offset=offset)
+        objects += batch
         offset += limit
         if len(batch) < limit:
             done = True
-    return notes
+    return objects
+
+def get_all_tags(client, invitation, limit=1000):
+    return _get_all(client.get_tags, invitation, limit)
+
+def get_all_notes(client, invitation, limit=1000):
+    return _get_all(client.get_notes, invitation, limit)
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
