@@ -256,7 +256,7 @@ class Client(object):
         invitations.sort(key = lambda x: x.id)
         return invitations
 
-    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None, mintcdate = None):
+    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, includeTrash = None, number = None, limit = None, offset = None, mintcdate = None, details = None, **kwargs):
         """Returns a list of Note objects based on the filters provided."""
         params = {}
         if id != None:
@@ -285,7 +285,11 @@ class Client(object):
             params['offset'] = offset
         if mintcdate != None:
             params['mintcdate'] = mintcdate
+        if details != None:
+            params['details'] = details
 
+        for kw, arg in kwargs.iteritems():
+            params[kw] = arg
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
