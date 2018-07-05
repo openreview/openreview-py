@@ -178,7 +178,7 @@ class Client(object):
         response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
         response = self.__handle_response(response)
         profile = response.json()['profile']
-        return Note.from_json(profile)
+        return Profile.from_json(profile)
 
     def get_profiles(self, email_or_id_list):
         """If the list is tilde_ids, returns an array of profiles
@@ -187,32 +187,30 @@ class Client(object):
         if len(email_or_id_list) > 0 and tildematch.match(email_or_id_list[0]):
             response = requests.post(self.baseurl + '/user/profiles', json={'ids': email_or_id_list}, headers = self.headers)
             response = self.__handle_response(response)
-            return [Note.from_json(p) for p in response.json()['profiles']]
+            return [Profile.from_json(p) for p in response.json()['profiles']]
         else:
             response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_or_id_list}, headers = self.headers)
             response = self.__handle_response(response)
-            return { p['email'] : Note.from_json(p['profile'])
+            return { p['email'] : Profile.from_json(p['profile'])
                             for p in response.json()['profiles'] }
 
-    def post_profile(self, id, content):
+    def post_profile(self, profile):
         response = requests.put(
             self.profiles_url,
-            json = { 'id': id, 'content': content },
+            json = { 'id': profile.id, 'content': profile.content },
             headers = self.headers)
 
         response = self.__handle_response(response)
-        profile = response.json()
-        return Note.from_json(profile)
+        return Profile.from_json(response.json())
 
-    def update_profile(self, id, content):
+    def update_profile(self, profile):
         response = requests.post(
             self.profiles_url,
-            json = {'id': id, 'content': content},
+            json = profile.to_json(),
             headers = self.headers)
 
         response = self.__handle_response(response)
-        profile = response.json()
-        return Note.from_json(profile)
+        return Profile.from_json(response.json())
 
     def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None):
         """Returns a list of Group objects based on the filters provided."""
@@ -461,9 +459,9 @@ class Group(object):
             with open(web) as f:
                 self.web = f.read()
 
-    def __str__(self):
+    def __repr__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
 
 
     def to_json(self):
@@ -585,9 +583,9 @@ class Invitation(object):
             with open(transform) as f:
                 self.transform = f.read()
 
-    def __str__(self):
+    def __repr__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
 
     def to_json(self):
         body = {
@@ -642,7 +640,7 @@ class Invitation(object):
         return invitation
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None, overwriting=None, tauthor=None):
+    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, metaContent=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None, overwriting=None, tauthor=None):
         self.id = id
         self.original = original
         self.number = number
@@ -650,6 +648,7 @@ class Note(object):
         self.tcdate = tcdate
         self.ddate = ddate
         self.content = {} if content==None else content
+        self.metaContent = metaContent
         self.forum = forum
         self.forumContent = forumContent
         self.referent = referent
@@ -664,9 +663,9 @@ class Note(object):
         if tauthor:
             self.tauthor = tauthor
 
-    def __str__(self):
+    def __repr__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
 
     def to_json(self):
         body = {
@@ -677,6 +676,7 @@ class Note(object):
             'ddate': self.ddate,
             'number': self.number,
             'content': self.content,
+            'metaContent': self.metaContent,
             'forum': self.forum,
             'forumContent': self.forumContent,
             'referent': self.referent,
@@ -703,6 +703,7 @@ class Note(object):
         tcdate = n.get('tcdate'),
         ddate=n.get('ddate'),
         content=n.get('content'),
+        metaContent=n.get('metaContent'),
         forum=n.get('forum'),
         forumContent=n.get('forumContent'),
         referent=n.get('referent'),
@@ -763,7 +764,73 @@ class Tag(object):
         )
         return tag
 
-    def __str__(self):
+    def __repr__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
+
+
+class Profile(object):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
+        self.id = id
+        self.number = number
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.referent = referent
+        self.invitation = invitation
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.signatures = signatures
+        self.writers = writers
+        self.content = content
+        self.metaContent = metaContent
+        self.active = active
+        self.password = password
+        if tauthor:
+            self.tauthor = tauthor
+
+    def __repr__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+    def to_json(self):
+        body = {
+            'id': self.id,
+            'number': self.number,
+            'tcdate': self.tcdate,
+            'tmdate': self.tmdate,
+            'referent': self.referent,
+            'invitation': self.invitation,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'signatures': self.signatures,
+            'writers': self.writers,
+            'content': self.content,
+            'metaContent': self.metaContent,
+            'active': self.active,
+            'password': self.password
+        }
+        if hasattr(self, 'tauthor'):
+            body['tauthor'] = self.tauthor
+        return body
+
+    @classmethod
+    def from_json(Profile,n):
+        profile = Profile(
+        id = n.get('id'),
+        active = n.get('active'),
+        password = n.get('password'),
+        number = n.get('number'),
+        tcdate = n.get('tcdate'),
+        tmdate=n.get('tmdate'),
+        referent=n.get('referent'),
+        invitation=n.get('invitation'),
+        readers=n.get('readers'),
+        nonreaders=n.get('nonreaders'),
+        signatures=n.get('signatures'),
+        writers=n.get('writers'),
+        content=n.get('content'),
+        metaContent=n.get('metaContent'),
+        tauthor=n.get('tauthor')
+        )
+        return profile
 
