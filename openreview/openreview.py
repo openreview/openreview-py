@@ -460,6 +460,10 @@ class Group(object):
                 self.web = f.read()
 
     def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Group(' + content + ')'
+
+    def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
@@ -584,6 +588,10 @@ class Invitation(object):
                 self.transform = f.read()
 
     def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Invitation(' + content + ')'
+
+    def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
@@ -664,6 +672,10 @@ class Note(object):
             self.tauthor = tauthor
 
     def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Note(' + content + ')'
+
+    def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
@@ -765,6 +777,10 @@ class Tag(object):
         return tag
 
     def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Tag(' + content + ')'
+
+    def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
@@ -789,6 +805,10 @@ class Profile(object):
             self.tauthor = tauthor
 
     def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Profile(' + content + ')'
+
+    def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
