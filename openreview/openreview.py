@@ -5,9 +5,13 @@ import json
 import os
 import getpass
 import re
-from Crypto.Hash import HMAC, SHA256
+#from Crypto.Hash import HMAC, SHA256
 import datetime
-import builtins
+try:
+    import builtins
+except ImportError:
+    pass
+
 
 def epoch_time():
     return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
@@ -97,15 +101,15 @@ class Client(object):
 
     ## PUBLIC FUNCTIONS
 
-    def get_hash(self, data, secret):
-        """Gets the hash of a piece of data given a secret value
+    # def get_hash(self, data, secret):
+    #     """Gets the hash of a piece of data given a secret value
 
-        Keyword arguments:
-        data -- the data to be encrypted
-        secret -- the secret value used to encrypt the data
-        """
-        _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
-        return _hash
+    #     Keyword arguments:
+    #     data -- the data to be encrypted
+    #     secret -- the secret value used to encrypt the data
+    #     """
+    #     _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
+    #     return _hash
 
     def create_dummy(self, email = None, first = None, last = None, password = None, secure_activation = True):
         self.register_user(email = email,first = first, last = last, password = password)

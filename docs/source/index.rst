@@ -13,10 +13,15 @@ OpenReview aims to promote openness in scientific communication, particularly th
 
 This document is a guide to the python API supported by OpenReview.
 
+
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
+   About OpenReview
+   autodoc
+   help
 
 
 Indices and tables
