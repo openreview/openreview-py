@@ -18,3 +18,17 @@ Code Documentation
 
 .. autoclass:: Tag
    :members:
+
+.. automodule:: matching
+   :members:
+
+.. automodule:: process
+   :members:
+
+.. automodule:: tools
+   :members:
+
+.. automodule:: webfield
+
+.. autoclass:: Webfield
+   :members:

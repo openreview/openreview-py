@@ -54,10 +54,8 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 
 def build_groups(conference_group_id, default_params=None):
     '''
-
-    Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
-    (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
-
+    |  Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
+    |  (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
     '''
 
     path_components = conference_group_id.split('/')
@@ -148,9 +146,9 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
 def subdomains(domain):
     '''
-    Given an email address, get the domains and subdomains.
+    |  Given an email address, get the domains and subdomains.
 
-    e.g. johnsmith@iesl.cs.umass.edu --> [umass.edu, cs.umass.edu, iesl.cs.umass.edu]
+    |  e.g. johnsmith@iesl.cs.umass.edu --> [umass.edu, cs.umass.edu, iesl.cs.umass.edu]
     '''
 
     if '@' in domain:
@@ -265,15 +263,15 @@ def get_all_notes(client, invitation, limit=1000):
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
-    "individual groups" are groups with a single member; e.g. conference.org/Paper1/AnonReviewer1
+    |  "individual groups" are groups with a single member; e.g. conference.org/Paper1/AnonReviewer1
 
-    @unassigned_individual_groups: a list of individual groups with no members
-    @individual_groups: the full list of individual groups, empty or not
-    @individual_label: the "label" of the group: e.g. "AnonReviewer"
+    |  @unassigned_individual_groups: a list of individual groups with no members
+    |  @individual_groups: the full list of individual groups, empty or not
+    |  @individual_label: the "label" of the group: e.g. "AnonReviewer"
 
-    Returns an individual group's suffix (e.g. AnonReviewer1)
-    The suffix will be the next available empty group,
-    or will be the suffix of the largest indexed group +1
+    |  Returns an individual group's suffix (e.g. AnonReviewer1)
+    |  The suffix will be the next available empty group,
+    |  or will be the suffix of the largest indexed group +1
     '''
 
     if len(unassigned_individual_groups) > 0:
@@ -296,10 +294,10 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
 def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
 
     '''
-    This is only intended to be used as a local helper function
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @group_params: optional parameter that overrides the default
+    |  This is only intended to be used as a local helper function
+    |  @paper_number: the number of the paper to assign
+    |  @conference: the ID of the conference being assigned
+    |  @group_params: optional parameter that overrides the default
     '''
 
     # get the parent group if it already exists, and create it if it doesn't.
@@ -350,31 +348,28 @@ def add_assignment(client, paper_number, conference, reviewer,
                     individual_group_params = {},
                     parent_label = 'Reviewers',
                     individual_label = 'AnonReviewer'):
-
+    
     '''
-    "individual groups" are groups with a single member;
-        e.g. conference.org/Paper1/AnonReviewer1
-    "parent group" is the group that contains the individual groups;
-        e.g. conference.org/Paper1/Reviewers
+    |  "individual groups" are groups with a single member;
+    |      e.g. conference.org/Paper1/AnonReviewer1
+    |  "parent group" is the group that contains the individual groups;
+    |      e.g. conference.org/Paper1/Reviewers
 
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @reviewer: may be an email address or a tilde ID;
-        adds the given user to the parent and individual groups defined by
-        the paper number, conference, and labels
-    @parent_group_params: optional parameter that overrides the default
-    @individual_group_params: optional parameter that overrides the default
-     '''
-
+    |  @paper_number: the number of the paper to assign
+    |  @conference: the ID of the conference being assigned
+    |  @reviewer: may be an email address or a tilde ID;
+    |  adds the given user to the parent and individual groups defined by
+    |  the paper number, conference, and labels
+    |  @parent_group_params: optional parameter that overrides the default
+    |  @individual_group_params: optional parameter that overrides the default
+    '''
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
     parent_group = result[0]
     individual_groups = result[1]
     unassigned_individual_groups = result[2]
 
-
     '''
     Adds the given user to the parent group, and to the next empty individual group.
-
     Prints the results to the console.
     '''
     profile = get_profile(client, reviewer)
@@ -425,16 +420,16 @@ def remove_assignment(client, paper_number, conference, reviewer,
     individual_label = 'AnonReviewer'):
 
     '''
-    "individual groups" are groups with a single member;
-        e.g. conference.org/Paper1/AnonReviewer1
-    "parent group" is the group that contains the individual groups;
-        e.g. conference.org/Paper1/Reviewers
+    |  "individual groups" are groups with a single member;
+    |      e.g. conference.org/Paper1/AnonReviewer1
+    |  "parent group" is the group that contains the individual groups;
+    |      e.g. conference.org/Paper1/Reviewers
 
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @reviewer: same as @reviewer_to_add, but removes the user
-    @parent_group_params: optional parameter that overrides the default
-    @individual_group_params: optional parameter that overrides the default
+    |  @paper_number: the number of the paper to assign
+    |  @conference: the ID of the conference being assigned
+    |  @reviewer: same as @reviewer_to_add, but removes the user
+    |  @parent_group_params: optional parameter that overrides the default
+    |  @individual_group_params: optional parameter that overrides the default
     '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
@@ -471,25 +466,23 @@ def assign(client, paper_number, conference,
     individual_label = 'AnonReviewer'):
 
     '''
-    "individual groups" are groups with a single member;
-        e.g. conference.org/Paper1/AnonReviewer1
-    "parent group" is the group that contains the individual groups;
-        e.g. conference.org/Paper1/Reviewers
+    |  "individual groups" are groups with a single member;
+    |      e.g. conference.org/Paper1/AnonReviewer1
+    |  "parent group" is the group that contains the individual groups;
+    |      e.g. conference.org/Paper1/Reviewers
 
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @parent_group_params: optional parameter that overrides the default
-    @individual_group_params: optional parameter that overrides the default
-    @reviewer_to_add: may be an email address or a tilde ID;
-        adds the given user to the parent and individual groups defined by
-        the paper number, conference, and labels
-    @reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    |  @paper_number: the number of the paper to assign
+    |  @conference: the ID of the conference being assigned
+    |  @parent_group_params: optional parameter that overrides the default
+    |  @individual_group_params: optional parameter that overrides the default
+    |  @reviewer_to_add: may be an email address or a tilde ID;
+    |  adds the given user to the parent and individual groups defined by
+    |  the paper number, conference, and labels
+    |  @reviewer_to_remove: same as @reviewer_to_add, but removes the user
 
-    It's important to remove any users first, so that we can do direct replacement of
-        one user with another.
+    |  It's important to remove any users first, so that we can do direct replacement of one user with another.
 
-    For example: passing in a reviewer to remove AND a reviewer to add should replace
-        the first user with the second.
+    |  For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
     '''
     if reviewer_to_remove:
         remove_assignment(client, paper_number, conference, reviewer_to_remove,
@@ -513,12 +506,12 @@ def recruit_reviewer(client, email, first,
     reviewers_invited_id,
     verbose=True):
     '''
-    Recruit a reviewer.
+    |  Recruit a reviewer.
 
-    The hashkey is important for uniquely identifying the user, without
-    requiring them to already have an openreview account. The second argument
-    to the client.get_hash() function is just a big random number that the
-    invitation's "process function" also knows about.
+    |  The hashkey is important for uniquely identifying the user, without
+    |  requiring them to already have an openreview account. The second argument
+    |  to the client.get_hash() function is just a big random number that the
+    |  invitation's "process function" also knows about.
     '''
 
     hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
