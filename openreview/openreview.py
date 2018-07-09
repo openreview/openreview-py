@@ -377,15 +377,15 @@ class Client(object):
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
-    def exists(self, groupid):
-        '''
-        |  Returns True if the group exists and False otherwise.
-        '''
-        try:
-            self.get_group(groupid)
-        except OpenReviewException:
-            return False
-        return True
+    # def exists(self, groupid):
+    #     '''
+    #     |  Returns True if the group exists and False otherwise.
+    #     '''
+    #     try:
+    #         self.get_group(groupid)
+    #     except OpenReviewException:
+    #         return False
+    #     return True
 
     def post_group(self, group, overwrite = True):
         """
@@ -508,11 +508,7 @@ class Client(object):
         |  Returns next possible tilde user name corresponding to the specified first, middle and last name
         |  First and last names are required, while middle name is optional
         '''
-        if first == '' :
-            first = builtins.input('First name not provided. Please provide a first name: ')
-        if last == '' :
-            last = builtins.input('Last name not provided. Please provide a last name: ')
-
+        
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
@@ -555,8 +551,8 @@ class Group(object):
             'signatories': self.signatories,
             'web': self.web
         }
-        if self.web !=None:
-            body['web']=self.web
+        # if self.web !=None:
+        #     body['web']=self.web
         return body
 
     @classmethod

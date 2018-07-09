@@ -14,6 +14,10 @@ setup(name='openreview-py',
       install_requires=[
           'pycrypto',
           'requests>=2.18.4',
-          'future'
+          'future',
+          'sphinx_rtd_theme'
       ],
+      extras_require={
+          'develop': ["sphinx", "sphinx_rtd_theme"]
+      },
       zip_safe=False)
