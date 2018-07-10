@@ -5,7 +5,6 @@ import json
 import os
 import getpass
 import re
-from Crypto.Hash import HMAC, SHA256
 import datetime
 import builtins
 
@@ -97,28 +96,10 @@ class Client(object):
 
     ## PUBLIC FUNCTIONS
 
-    def get_hash(self, data, secret):
-        """Gets the hash of a piece of data given a secret value
-
-        Keyword arguments:
-        data -- the data to be encrypted
-        secret -- the secret value used to encrypt the data
-        """
-        _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
-        return _hash
-
-    def create_dummy(self, email = None, first = None, last = None, password = None, secure_activation = True):
-        self.register_user(email = email,first = first, last = last, password = password)
-
-        if secure_activation:
-            token = '%s' % builtins.input('enter the activation token: ')
-        else:
-            token = self.get_activatable(token = email)
-
-        user = self.activate_user(token = token)
-        return user
-
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
+        '''
+        |  Registers a new user
+        '''
         register_payload = {
             'email': email,
             'name': {   'first': first, 'last': last, 'middle': middle},
@@ -129,46 +110,63 @@ class Client(object):
         return str(response.json())
 
     def activate_user(self, token):
+        '''
+        |  Activates a newly registered user
+        |  @token -- activation token
+        '''
         response = requests.put(self.baseurl + '/activate/' + token, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
     def get_activatable(self, token = None):
+        '''
+        |  Returns the activation token for a registered user
+        '''
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
         token = response.json()['activatable']['token']
         return token
 
     def get_group(self, id):
-        """Returns a single Group by id if available"""
+        """
+        |  Returns a single Group by id if available
+        """
         response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         return Group.from_json(g)
 
     def get_invitation(self, id):
-        """Returns a single invitation by id if available"""
+        """
+        |  Returns a single invitation by id if available
+        """
         response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
         i = response.json()['invitations'][0]
         return Invitation.from_json(i)
 
     def get_note(self, id):
-        """Returns a single note by id if available"""
+        """
+        |  Returns a single note by id if available
+        """
         response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['notes'][0]
         return Note.from_json(n)
 
     def get_tag(self, id):
-        """Returns a single tag by id if available"""
+        """
+        |  Returns a single tag by id if available
+        """
         response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
         t = response.json()['tags'][0]
         return Tag.from_json(t)
 
     def get_profile(self, email_or_id):
-        """Returns a single profile (a note) by id, if available"""
+        """
+        |  Returns a single profile (a note) by id, if available
+        """
         tildematch = re.compile('~.+')
         emailmatch = re.compile('.+@.+')
         if tildematch.match(email_or_id):
@@ -181,8 +179,10 @@ class Client(object):
         return Note.from_json(profile)
 
     def get_profiles(self, email_or_id_list):
-        """If the list is tilde_ids, returns an array of profiles
-           If the list is emails, returns an array of dictionaries with 'email' and 'profile'"""
+        """
+        |  If the list is tilde_ids, returns an array of profiles
+        |  If the list is emails, returns an array of dictionaries with 'email' and 'profile'
+        """
         tildematch = re.compile('~.+')
         if len(email_or_id_list) > 0 and tildematch.match(email_or_id_list[0]):
             response = requests.post(self.baseurl + '/user/profiles', json={'ids': email_or_id_list}, headers = self.headers)
@@ -195,6 +195,9 @@ class Client(object):
                             for p in response.json()['profiles'] }
 
     def post_profile(self, id, content):
+        '''
+        |  Posts the profile
+        '''
         response = requests.put(
             self.profiles_url,
             json = { 'id': id, 'content': content },
@@ -205,6 +208,9 @@ class Client(object):
         return Note.from_json(profile)
 
     def update_profile(self, id, content):
+        '''
+        |  Updates the profile 
+        '''
         response = requests.post(
             self.profiles_url,
             json = {'id': id, 'content': content},
@@ -215,7 +221,9 @@ class Client(object):
         return Note.from_json(profile)
 
     def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None):
-        """Returns a list of Group objects based on the filters provided."""
+        """
+        |  Returns a list of Group objects based on the filters provided.
+        """
         params = {}
         if id != None: params['id'] = id
         if regex != None: params['regex'] = regex
@@ -230,7 +238,9 @@ class Client(object):
         return groups
 
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None):
-        """Returns a list of Group objects based on the filters provided."""
+        """
+        |  Returns a list of Group objects based on the filters provided.
+        """
         params = {}
         if id!=None:
             params['id'] = id
@@ -257,7 +267,9 @@ class Client(object):
         return invitations
 
     def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, limit = None, offset = None, mintcdate = None, details = None):
-        """Returns a list of Note objects based on the filters provided."""
+        """
+        |  Returns a list of Note objects based on the filters provided.
+        """
         params = {}
         if id != None:
             params['id'] = id
@@ -294,7 +306,9 @@ class Client(object):
         return [Note.from_json(n) for n in response.json()['notes']]
 
     def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None):
-        """Returns a list of revisions for a note."""
+        """
+        |  Returns a list of revisions for a note.
+        """
         params = {}
         if referent != None:
             params['referent'] = referent
@@ -313,7 +327,9 @@ class Client(object):
         return [Note.from_json(n) for n in response.json()['references']]
 
     def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
-        """Returns a list of Tag objects based on the filters provided."""
+        """
+        |  Returns a list of Tag objects based on the filters provided.
+        """
         params = {}
 
         if id != None:
@@ -332,17 +348,10 @@ class Client(object):
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
-    def exists(self, groupid):
-        try:
-            self.get_group(groupid)
-        except OpenReviewException:
-            return False
-        return True
-
     def post_group(self, group, overwrite = True):
         """
-        Posts the group. Upon success, returns the posted Group object.
-        If the group is unsigned, signs it using the client's default signature.
+        |  Posts the group. Upon success, returns the posted Group object.
+        |  If the group is unsigned, signs it using the client's default signature.
         """
         if overwrite or not self.exists(group.id):
             if not group.signatures: group.signatures = [self.signature]
@@ -354,8 +363,8 @@ class Client(object):
 
     def post_invitation(self, invitation):
         """
-        Posts the invitation. Upon success, returns the posted Invitation object.
-        If the invitation is unsigned, signs it using the client's default signature.
+        |  Posts the invitation. Upon success, returns the posted Invitation object.
+        |  If the invitation is unsigned, signs it using the client's default signature.
         """
         if not invitation.signatures: invitation.signatures = [self.signature]
         if not invitation.writers: invitation.writers = [self.signature]
@@ -366,8 +375,8 @@ class Client(object):
 
     def post_note(self, note):
         """
-        Posts the note. Upon success, returns the posted Note object.
-        If the note is unsigned, signs it using the client's default signature
+        |  Posts the note. Upon success, returns the posted Note object.
+        |  If the note is unsigned, signs it using the client's default signature
         """
         if not note.signatures: note.signatures = [self.signature]
         response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
@@ -376,7 +385,9 @@ class Client(object):
         return Note.from_json(response.json())
 
     def post_tag(self, tag):
-        """posts the tag. Upon success, returns the posted Tag object."""
+        """
+        |  Posts the tag. Upon success, returns the posted Tag object.
+        """
         response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
@@ -384,19 +395,27 @@ class Client(object):
 
     def delete_note(self, note):
         """
-        Deletes the note. Upon success, returns the deleted Note object.
+        |  Deletes the note and returns the deleted Note object with
+        |  status = 'ok' in case of a successful deletion and an OpenReview exception otherwise.
         """
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
-        return None
+        return response.json()
 
     def send_mail(self, subject, recipients, message):
+        '''
+        |  Sends emails to a list of recipients
+        '''
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
 
     def add_members_to_group(self, group, members):
+        '''
+        |  Adds members to a group
+        |  Members should be in a string, unicode or a list format
+        '''
         def add_member(group,members):
             response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
@@ -410,6 +429,10 @@ class Client(object):
         raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list")
 
     def remove_members_from_group(self, group, members):
+        '''
+        |  Removes members from a group
+        |  Members should be in a string, unicode or a list format
+        '''
         def remove_member(group,members):
             response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
@@ -422,7 +445,9 @@ class Client(object):
             return remove_member(group.id, members)
 
     def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
-
+        '''
+        |  Searches notes based on term, content, group and source as the criteria
+        '''
         params = {
             'term': term,
             'content': content,
@@ -440,6 +465,11 @@ class Client(object):
         return [Note.from_json(n) for n in response.json()['notes']]
 
     def get_tildeusername(self, first, last, middle = None):
+        '''
+        |  Returns next possible tilde user name corresponding to the specified first, middle and last name
+        |  First and last names are required, while middle name is optional
+        '''
+        
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
@@ -467,6 +497,9 @@ class Group(object):
 
 
     def to_json(self):
+        '''
+        |  Returns serialized json string for a given object
+        '''
         body = {
             'id': self.id,
             'cdate': self.cdate,
@@ -479,12 +512,17 @@ class Group(object):
             'signatories': self.signatories,
             'web': self.web
         }
-        if self.web !=None:
-            body['web']=self.web
+        # if self.web !=None:
+        #     body['web']=self.web
         return body
 
     @classmethod
     def from_json(Group,g):
+        '''
+        |  Returns a deserialized object from a json string
+
+        |  @g: The json string consisting of a serialized object of type "Group"
+        '''
         group = Group(g['id'],
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
@@ -499,6 +537,9 @@ class Group(object):
         return group
 
     def add_member(self, member):
+        '''
+        |  Adds a member to the group
+        '''
         if type(member) is Group:
             self.members.append(member.id)
         else:
@@ -506,6 +547,9 @@ class Group(object):
         return self
 
     def remove_member(self, member):
+        '''
+        |  Removes a member from the group
+        '''
         if type(member) is Group:
             try:
                 self.members.remove(member.id)
@@ -519,10 +563,16 @@ class Group(object):
         return self
 
     def add_webfield(self, web):
+        '''
+        |  Adds a webfield to the group
+        '''
         with open(web) as f:
             self.web = f.read()
 
     def post(self, client):
+        '''
+        |  Posts a group
+        '''
         client.post_group(self)
 
 class Invitation(object):
@@ -590,6 +640,9 @@ class Invitation(object):
         return pp.pformat(self.to_json())
 
     def to_json(self):
+        '''
+        |  Returns serialized json string for a given object
+        '''
         body = {
             'id': self.id,
             'cdate': self.cdate,
@@ -618,6 +671,11 @@ class Invitation(object):
 
     @classmethod
     def from_json(Invitation,i):
+        '''
+        |  Returns a deserialized object from a json string
+
+        |  @i: The json string consisting of a serialized object of type "Invitation"
+        '''
         invitation = Invitation(i['id'],
             cdate = i.get('cdate'),
             rdate = i.get('rdate'),
@@ -669,6 +727,9 @@ class Note(object):
         return pp.pformat(self.to_json())
 
     def to_json(self):
+        '''
+        |  Returns serialized json string for a given object
+        '''
         body = {
             'id': self.id,
             'original': self.original,
@@ -695,6 +756,11 @@ class Note(object):
 
     @classmethod
     def from_json(Note,n):
+        '''
+        |  Returns a deserialized object from a json string
+
+        |  @n: The json string consisting of a serialized object of type "Note"
+        '''
         note = Note(
         id = n.get('id'),
         original = n.get('original'),
@@ -732,6 +798,9 @@ class Tag(object):
         self.signatures = [] if signatures==None else signatures
 
     def to_json(self):
+        '''
+        |  Returns serialized json string for a given object
+        '''
         return {
             'id': self.id,
             'cdate': self.cdate,
@@ -748,6 +817,11 @@ class Tag(object):
 
     @classmethod
     def from_json(Tag, t):
+        '''
+        |  Returns a deserialized object from a json string
+
+        |  @t: The json string consisting of a serialized object of type "Tag"
+        '''
         tag = Tag(
             id = t.get('id'),
             cdate = t.get('cdate'),
