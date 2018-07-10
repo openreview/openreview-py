@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
 import re
 import datetime
@@ -15,7 +15,7 @@ def get_profile(client, value):
         profile = client.get_profile(value)
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
-        if e[0][0] != 'Profile not found':
+        if e.args[0][0] != 'Profile not found':
             print("OpenReviewException: {0}".format(e))
             return e
     return profile
@@ -36,7 +36,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 
     if not profile:
         response = client.get_tildeusername(first, last, middle)
-        tilde_id = response['username'].encode('utf-8')
+        tilde_id = response['username']
 
         if tilde_id.endswith(last + '1') or allow_duplicates:
 
@@ -315,7 +315,7 @@ def get_paperhash(first_author, title):
     '''
 
     title = title.strip()
-    strip_punctuation = '[^A-zÀ-ÿ\d\s]'.decode('utf-8')
+    strip_punctuation = '[^A-zÀ-ÿ\d\s]'
     title = re.sub(strip_punctuation, '', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     first_author = first_author.split(' ').pop()
@@ -351,39 +351,142 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     client.post_group(group)
 
-def iterget(get_function, **kwargs):
-    '''
-    Iterator over a given get function from the client.
-    '''
-    done = False
-    offset = 0
-    params = {
-        'limit': 1000 if 'limit' not in kwargs else kwargs['limit']
-    }
+class iterget:
+    def __init__(self, get_function, **params):
+        self.offset = 0
 
-    while not done:
-        params['offset'] = offset
+        self.last_batch = False
+        self.batch_finished = False
+        self.obj_index = 0
 
-        params.update(kwargs)
-        batch = get_function(**params)
-        offset += params['limit']
-        for obj in batch:
-            yield obj
+        self.params = params
+        self.params.update({
+            'offset': self.offset,
+            'limit': 1000
+        })
 
-        if len(batch) < params['limit']:
-            done = True
+        self.get_function = get_function
+        self.current_batch = self.get_function(**self.params)
 
-def get_all_tags(client, invitation, limit=1000):
-    '''
-    Given an invitation, returns all Tags that respond to it, ignoring API limit.
-    '''
-    return list(iterget(client.get_tags, invitation=invitation, limit=limit))
+    def update_batch(self):
+        self.offset += self.params['limit']
+        self.params['offset'] = self.offset
+        next_batch = self.get_function(**self.params)
+        if next_batch:
+            self.current_batch = next_batch
+        else:
+            self.current_batch = []
 
-def get_all_notes(client, invitation, limit=1000):
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.current_batch) == 0:
+            raise StopIteration
+        else:
+            next_obj = self.current_batch[self.obj_index]
+            if (self.obj_index + 1) == len(self.current_batch):
+                self.update_batch()
+                self.obj_index = 0
+            else:
+                self.obj_index += 1
+            return next_obj
+
+    next = __next__
+
+def iterget_tags(client, id = None, invitation = None, forum = None):
     '''
-    Given an invitation, returns all Notes that respond to it, ignoring API limit.
+    Returns an iterator over Tags, filtered by the provided parameters, ignoring API limit.
+
+    Example: iterget_tags(client, invitation='MyConference.org/-/Bid_Tags')
+
+    :arg id: a Tag ID. If provided, returns Tags whose ID matches the given ID.
+    :arg forum: a Note ID. If provided, returns Tags whose forum matches the given ID.
+    :arg invitation: an Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+
     '''
-    return list(iterget(client.get_notes, invitation=invitation, limit=limit))
+    params = {}
+
+    if id != None:
+        params['id'] = id
+    if forum != None:
+        params['forum'] = forum
+    if invitation != None:
+        params['invitation'] = invitation
+
+    return iterget(client.get_tags, **params)
+
+def iterget_notes(client, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, mintcdate = None, details = None):
+    '''
+    Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+    :arg paperhash: a "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
+        (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
+        identify the Note)
+    :arg forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
+    :arg invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+    :arg replyto: a Note ID. If provided, returns Notes whose replyto field matches the given ID.
+    :arg tauthor: a Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID,
+        or is a transitive member of the Group represented by the given ID.
+    :arg signature: a Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+    :arg writer: a Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+    :arg trash: a Boolean. If True, includes Notes that have been deleted (i.e. the ddate field is less than the
+        current date)
+    :arg number: an integer. If present, includes Notes whose number field equals the given integer.
+    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
+        whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    :arg details: TODO: What is a valid value for this field?
+    '''
+    params = {}
+    if id != None:
+        params['id'] = id
+    if paperhash != None:
+        params['paperhash'] = paperhash
+    if forum != None:
+        params['forum'] = forum
+    if invitation != None:
+        params['invitation'] = invitation
+    if replyto != None:
+        params['replyto'] = replyto
+    if tauthor != None:
+        params['tauthor'] = tauthor
+    if signature != None:
+        params['signature'] = signature
+    if writer != None:
+        params['writer'] = writer
+    if trash == True:
+        params['trash']=True
+    if number != None:
+        params['number'] = number
+    if mintcdate != None:
+        params['mintcdate'] = mintcdate
+    if details != None:
+        params['details'] = details
+
+    return iterget(client.get_notes, **params)
+
+def iterget_references(client, referent = None, invitation = None, mintcdate = None):
+    '''
+    Returns an iterator over references, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg referent: a Note ID. If provided, returns references whose "referent" value is this Note ID.
+    :arg invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
+    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
+        whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    '''
+
+    params = {}
+    if referent != None:
+        params['referent'] = referent
+    if invitation != None:
+        params['invitation'] = invitation
+    if mintcdate != None:
+        params['mintcdate'] = mintcdate
+
+    return iterget(client.get_references, **params)
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
@@ -430,8 +533,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
     try:
         parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
     except openreview.OpenReviewException as e:
-        if 'Group Not Found' in e[0][0]:
-
+        if 'Group Not Found' in e.args[0][0]:
             # Set the default values for the parent and individual groups
             group_params_default = {
                 'readers': [conference, '{}/Program_Chairs'.format(conference)],
@@ -504,7 +606,7 @@ def add_assignment(client, paper_number, conference, reviewer,
 
     if user not in parent_group.members:
         client.add_members_to_group(parent_group, user)
-        print("{:40s} --> {}".format(user.encode('utf-8'), parent_group.id))
+        print("{:40s} --> {}".format(user, parent_group.id))
 
     assigned_individual_groups = [a for a in individual_groups if user in a.members]
     if not assigned_individual_groups:
@@ -532,12 +634,12 @@ def add_assignment(client, paper_number, conference, reviewer,
         individual_group.signatories.append(anonreviewer_id)
         individual_group.members.append(user)
 
-        print("{:40s} --> {}".format(user.encode('utf-8'), individual_group.id))
+        print("{:40s} --> {}".format(user, individual_group.id))
         return client.post_group(individual_group)
     else:
         # user already assigned to individual group(s)
         for g in assigned_individual_groups:
-            print("{:40s} === {}".format(user.encode('utf-8'), g.id))
+            print("{:40s} === {}".format(user, g.id))
         return assigned_individual_groups[0]
 
 
@@ -654,8 +756,11 @@ def recruit_reviewer(client, email, first,
     :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed.
     '''
 
-
-    hashkey = HMAC.new(hash_seed, msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
+    # the HMAC.new() function only accepts bytestrings, not unicode.
+    # In Python 3, all strings are treated as unicode by default, so we must call encode on
+    # these unicode strings to convert them to bytestrings. This behavior is the same in
+    # Python 2, because we imported unicode_literals from __future__.
+    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
