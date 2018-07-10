@@ -17,6 +17,8 @@ Contents
 
    About OpenReview
    autodoc
+   how_to_setup
+   samples
    help
 
 
