@@ -5,13 +5,8 @@ import json
 import os
 import getpass
 import re
-#from Crypto.Hash import HMAC, SHA256
 import datetime
-try:
-    import builtins
-except ImportError:
-    pass
-
+import builtins
 
 def epoch_time():
     return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
@@ -100,30 +95,6 @@ class Client(object):
         return str(response.json()['token'])
 
     ## PUBLIC FUNCTIONS
-
-    # def get_hash(self, data, secret):
-    #     """Gets the hash of a piece of data given a secret value
-
-    #     Keyword arguments:
-    #     data -- the data to be encrypted
-    #     secret -- the secret value used to encrypt the data
-    #     """
-    #     _hash = HMAC.new(secret, msg=data, digestmod=SHA256).hexdigest()
-    #     return _hash
-
-    # def create_dummy(self, email = None, first = None, last = None, password = None, secure_activation = True):
-    #     '''
-    #     Creates and returns a dummy user
-    #     '''
-    #     self.register_user(email = email,first = first, last = last, password = password)
-
-    #     if secure_activation:
-    #         token = '%s' % builtins.input('enter the activation token: ')
-    #     else:
-    #         token = self.get_activatable(token = email)
-
-    #     user = self.activate_user(token = token)
-    #     return user
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         '''
@@ -376,16 +347,6 @@ class Client(object):
         response = self.__handle_response(response)
 
         return [Tag.from_json(t) for t in response.json()['tags']]
-
-    # def exists(self, groupid):
-    #     '''
-    #     |  Returns True if the group exists and False otherwise.
-    #     '''
-    #     try:
-    #         self.get_group(groupid)
-    #     except OpenReviewException:
-    #         return False
-    #     return True
 
     def post_group(self, group, overwrite = True):
         """
