@@ -1,9 +1,30 @@
 API Documentation
 ====================
 
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
 
-   client_fns
-   tools_fns
+Client
+-------
+
+.. automodule:: openreview
+
+.. autoclass:: Client
+   :members:
+
+.. autoclass:: Group
+   :members:
+
+.. autoclass:: Invitation
+   :members:
+
+.. autoclass:: Note
+   :members:
+
+.. autoclass:: Tag
+   :members:
+
+
+Tools
+-------
+
+.. automodule:: tools
+   :members:
