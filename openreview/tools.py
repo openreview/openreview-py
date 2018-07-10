@@ -613,13 +613,13 @@ def recruit_reviewer(client, email, first,
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
 
-    hash_seed: a random number for seeding the hash.
-    recruit_message: a formattable string containing the following string variables:
+    :arg hash_seed: a random number for seeding the hash.
+    :arg recruit_message: a formattable string containing the following string variables:
     name
     accept_url
     decline_url
-    recruit_message_subj: subject line for the recruitment email
-    reviewers_invited_id: group ID for the "Reviewers Invited" group, often used
+    :arg recruit_message_subj: subject line for the recruitment email
+    :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used
     to keep track of which reviewers have already been emailed.
     '''
 
