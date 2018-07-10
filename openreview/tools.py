@@ -91,6 +91,7 @@ def build_groups(conference_group_id, default_params=None):
 
     return sorted(groups.values(), key=lambda x: len(x.id))
 
+@deprecated
 def post_group_parents(client, group, overwrite_parents=False):
     '''
     Helper function for posting groups created by build_groups function.
