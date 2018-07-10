@@ -1,4 +1,4 @@
-About OpenReview
+Read more about OpenReview
 =================
 
 

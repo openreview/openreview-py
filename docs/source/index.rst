@@ -1,10 +1,5 @@
-.. OpenReview Python API documentation master file, created by
-   sphinx-quickstart on Thu Jul  5 12:16:02 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to OpenReview Python API's documentation!
-=================================================
+OpenReview API Documentation
+========================================
 
 About OpenReview
 -----------------
@@ -14,10 +9,11 @@ OpenReview aims to promote openness in scientific communication, particularly th
 This document is a guide to the python API supported by OpenReview.
 
 
+Contents
+----------
 
 .. toctree::
    :maxdepth: 3
-   :caption: Contents:
 
    About OpenReview
    autodoc
@@ -25,7 +21,7 @@ This document is a guide to the python API supported by OpenReview.
 
 
 Indices and tables
-==================
+--------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

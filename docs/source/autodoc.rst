@@ -1,34 +1,9 @@
-Code Documentation
+API Documentation
 ====================
 
-.. automodule:: openreview
-   :members:
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
 
-.. autoclass:: Client
-   :members:
-
-.. autoclass:: Group
-   :members:
-
-.. autoclass:: Invitation
-   :members:
-
-.. autoclass:: Note
-   :members:
-
-.. autoclass:: Tag
-   :members:
-
-.. automodule:: matching
-   :members:
-
-.. automodule:: process
-   :members:
-
-.. automodule:: tools
-   :members:
-
-.. automodule:: webfield
-
-.. autoclass:: Webfield
-   :members:
+   client_fns
+   tools_fns
