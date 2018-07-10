@@ -14,7 +14,7 @@ def get_profile(client, value):
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if e[0][0] != 'Profile not found':
-            print "OpenReviewException: {0}".format(e)
+            print("OpenReviewException: {0}".format(e))
             return e
     return profile
 
