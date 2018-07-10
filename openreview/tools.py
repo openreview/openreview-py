@@ -7,6 +7,17 @@ import datetime
 
 super_user_id = 'OpenReview.net'
 
+def get_profile(client, value):
+    profile = None
+    try:
+        profile = client.get_profile(value)
+    except openreview.OpenReviewException as e:
+        # throw an error if it is something other than "not found"
+        if e[0][0] != 'Profile not found':
+            print "OpenReviewException: {0}".format(e)
+            return e
+    return profile
+
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
 
     '''
