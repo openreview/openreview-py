@@ -15,8 +15,8 @@ Contents
 .. toctree::
    :maxdepth: 3
 
-   About OpenReview
-   autodoc
+   about
+   api
    how_to_setup
    samples
    help

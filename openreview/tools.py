@@ -65,10 +65,12 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 
 def build_groups(conference_group_id, default_params=None):
     '''
-    |  Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
-    |  (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
-    |  >>> [group.id for group in build_groups('ICML.cc/2019/Conference')]
-    |  [u'ICML.cc', u'ICML.cc/2019', u'ICML.cc/2019/Conference']
+    Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
+    
+    (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
+    
+    >>> [group.id for group in build_groups('ICML.cc/2019/Conference')]
+    [u'ICML.cc', u'ICML.cc/2019', u'ICML.cc/2019/Conference']
     '''
 
     path_components = conference_group_id.split('/')
@@ -175,9 +177,10 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
 def subdomains(domain):
     '''
-    |  Given an email address, returns a list with the domains and subdomains.
-    |  >>> subdomains('johnsmith@iesl.cs.umass.edu')
-    |  [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
+    Given an email address, returns a list with the domains and subdomains.
+    
+    >>> subdomains('johnsmith@iesl.cs.umass.edu')
+    [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     '''
 
     if '@' in domain:
