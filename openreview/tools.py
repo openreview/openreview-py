@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import print_function
 import openreview
 import re
 import datetime
@@ -23,7 +23,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 
     if not profile:
         response = client.get_tildeusername(first, last, middle)
-        tilde_id = response['username']
+        tilde_id = response['username'].encode('utf-8')
 
         if tilde_id.endswith(last + '1') or allow_duplicates:
 
@@ -278,7 +278,7 @@ def get_paperhash(first_author, title):
     '''
 
     title = title.strip()
-    strip_punctuation = '[^A-zÀ-ÿ\d\s]'
+    strip_punctuation = '[^A-zÀ-ÿ\d\s]'.decode('utf-8')
     title = re.sub(strip_punctuation, '', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     first_author = first_author.split(' ').pop()
@@ -464,7 +464,7 @@ def add_assignment(client, paper_number, conference, reviewer,
 
     if user not in parent_group.members:
         client.add_members_to_group(parent_group, user)
-        print("{:40s} --> {}".format(user, parent_group.id))
+        print("{:40s} --> {}".format(user.encode('utf-8'), parent_group.id))
 
     assigned_individual_groups = [a for a in individual_groups if user in a.members]
     if not assigned_individual_groups:
@@ -492,12 +492,12 @@ def add_assignment(client, paper_number, conference, reviewer,
         individual_group.signatories.append(anonreviewer_id)
         individual_group.members.append(user)
 
-        print("{:40s} --> {}".format(user, individual_group.id))
+        print("{:40s} --> {}".format(user.encode('utf-8'), individual_group.id))
         return client.post_group(individual_group)
     else:
         # user already assigned to individual group(s)
         for g in assigned_individual_groups:
-            print("{:40s} === {}".format(user, g.id))
+            print("{:40s} === {}".format(user.encode('utf-8'), g.id))
         return assigned_individual_groups[0]
 
 
@@ -627,7 +627,7 @@ def recruit_reviewer(client, email, first,
     invitation's "process function" also knows about.
     '''
 
-    hashkey = client.get_hash(email, hash_seed)
+    hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
