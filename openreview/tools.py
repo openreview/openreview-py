@@ -203,7 +203,7 @@ def profile_conflicts(profile):
     relation_conflicts is a set of group IDs (email addresses or profiles) that
     may have a conflict of interest with the given profile.
 
-    TODO: Update this function after the migration to non-Note Profile objects.
+    .. todo:: Update this function after the migration to non-Note Profile objects.
     '''
     domain_conflicts = set()
     relation_conflicts = set()
@@ -254,7 +254,7 @@ def get_paper_conflicts(client, paper):
 
     Automatically ignores domain conflicts with "gmail.com".
 
-    TODO: Update this function after the migration to non-Note Profile objects.
+    .. todo:: Update this function after the migration to non-Note Profile objects.
 
     '''
     authorids = paper.content['authorids']
@@ -565,7 +565,8 @@ def assign(client, paper_number, conference,
 
     '''
     |  Either assigns or unassigns a reviewer to a paper.
-    |  TODO: Is this function really necessary?
+    
+    .. todo:: Is this function really necessary?
 
     |  "individual groups" are groups with a single member;
     |      e.g. conference.org/Paper1/AnonReviewer1
