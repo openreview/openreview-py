@@ -354,14 +354,16 @@ def get_all_notes(client, invitation, limit=1000):
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
-    |  "individual groups" are groups with a single member; e.g. conference.org/Paper1/AnonReviewer1
-    |  unassigned_individual_groups: a list of individual groups with no members
-    |  individual_groups: the full list of individual groups, empty or not
-    |  individual_label: the "label" of the group: e.g. "AnonReviewer"
+    |  "individual groups" are groups with a single member; 
+    |  e.g. conference.org/Paper1/AnonReviewer1
 
-    |  Returns an individual group's suffix (e.g. AnonReviewer1)
-    |  The suffix will be the next available empty group,
-    |  or will be the suffix of the largest indexed group +1
+    :arg unassigned_individual_groups: a list of individual groups with no members
+    :arg individual_groups: the full list of individual groups, empty or not
+    :arg individual_label: the "label" of the group: e.g. "AnonReviewer"
+
+    :return: an individual group's suffix (e.g. AnonReviewer1)\n
+        The suffix will be the next available empty group,\n
+        or will be the suffix of the largest indexed group +1
     '''
 
     if len(unassigned_individual_groups) > 0:
@@ -384,10 +386,11 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
 def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
 
     '''
-    |  This is only intended to be used as a local helper function
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @group_params: optional parameter that overrides the default
+    This is only intended to be used as a local helper function
+    
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg group_params: optional parameter that overrides the default
     '''
 
     # get the parent group if it already exists, and create it if it doesn't.
@@ -441,18 +444,18 @@ def add_assignment(client, paper_number, conference, reviewer,
     
     '''
     |  Assigns a reviewer to a paper.
+    |  Also adds the given user to the parent and individual groups defined by the paper number, conference, and labels
+
     |  "individual groups" are groups with a single member;
     |      e.g. conference.org/Paper1/AnonReviewer1
     |  "parent group" is the group that contains the individual groups;
     |      e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @reviewer: may be an email address or a tilde ID;
-    |  adds the given user to the parent and individual groups defined by
-    |  the paper number, conference, and labels
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg reviewer: may be an email address or a tilde ID;
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
     '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
@@ -513,16 +516,18 @@ def remove_assignment(client, paper_number, conference, reviewer,
 
     '''
     |  Un-assigns a reviewer from a paper.
+    |  Removes the given user from the parent group, and any assigned individual groups.
+
     |  "individual groups" are groups with a single member;
     |      e.g. conference.org/Paper1/AnonReviewer1
     |  "parent group" is the group that contains the individual groups;
     |      e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @reviewer: same as @reviewer_to_add, but removes the user
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg reviewer: same as @reviewer_to_add, but removes the user
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
     '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
@@ -567,17 +572,14 @@ def assign(client, paper_number, conference,
     |  "parent group" is the group that contains the individual groups;
     |      e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
-    |  @reviewer_to_add: may be an email address or a tilde ID;
-    |  adds the given user to the parent and individual groups defined by
-    |  the paper number, conference, and labels
-    |  @reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
+    :arg reviewer_to_add: may be an email address or a tilde ID;
+    :arg reviewer_to_remove: same as @reviewer_to_add, but removes the user
 
     |  It's important to remove any users first, so that we can do direct replacement of one user with another.
-
     |  For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
     '''
     if reviewer_to_remove:
