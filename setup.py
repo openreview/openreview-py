@@ -15,7 +15,8 @@ setup(name='openreview-py',
           'pycrypto',
           'requests>=2.18.4',
           'future',
-          'nbsphinx'
+          'nbsphinx',
+          'jupyter_client'
       ],
       extras_require={
           'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
