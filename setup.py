@@ -17,6 +17,6 @@ setup(name='openreview-py',
           'future'
       ],
       extras_require={
-          'develop': ["sphinx", "sphinx_rtd_theme", "nbsphinx"]
+          'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
       },
       zip_safe=False)
