@@ -209,7 +209,7 @@ class Client(object):
 
     def update_profile(self, id, content):
         '''
-        |  Updates the profile 
+        |  Updates the profile
         '''
         response = requests.post(
             self.profiles_url,
@@ -220,7 +220,7 @@ class Client(object):
         profile = response.json()
         return Note.from_json(profile)
 
-    def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None):
+    def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None, limit = None, offset = None):
         """
         |  Returns a list of Group objects based on the filters provided.
         """
@@ -230,6 +230,8 @@ class Client(object):
         if member != None: params['member'] = member
         if host != None: params['host'] = host
         if signatory != None: params['signatory'] = signatory
+        if limit: params['limit'] = limit
+        if offset: params['offset'] = offset
 
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -237,7 +239,7 @@ class Client(object):
         groups.sort(key = lambda x: x.id)
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None):
+    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None):
         """
         |  Returns a list of Group objects based on the filters provided.
         """
@@ -258,6 +260,8 @@ class Client(object):
             params['regex'] = regex
         if tags:
             params['tags'] = tags
+        if limit: params['limit'] = limit
+        if offset: params['offset'] = offset
 
         response = requests.get(self.invitations_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
@@ -469,7 +473,7 @@ class Client(object):
         |  Returns next possible tilde user name corresponding to the specified first, middle and last name
         |  First and last names are required, while middle name is optional
         '''
-        
+
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
