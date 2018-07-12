@@ -703,3 +703,9 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
             readers=[conference_id, chairs],
             signatories=[]))
 
+def get_all_venues(client):
+        '''
+        Returns a list of all the venues
+        :arg client: Object of :class:`~openreview.Client` class
+        '''
+        return client.get_group("host").to_json()['members']
