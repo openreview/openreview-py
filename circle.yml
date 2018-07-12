@@ -1,0 +1,39 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/openreview-py-starter
+    docker:
+      - image: circleci/python:2.7
+    steps:
+      - checkout
+      - run: pip install ~/openreview-py-starter
+  # test:
+  #   docker:
+  #     - image: circleci/node:4.8.2-jessie
+  #     - image: mongo:3.4.4-jessie
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Test
+  #         command: npm test
+  #     - run:
+  #         name: Generate code coverage
+  #         command: './node_modules/.bin/nyc report --reporter=text-lcov'
+  #     - store_artifacts:
+  #         path: test-results.xml
+  #         prefix: tests
+  #     - store_artifacts:
+  #         path: coverage
+  #         prefix: coverage
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      # - test:
+      #     requires:
+      #       - build
+      #     filters:
+      #       branches:
+      #         only: master
