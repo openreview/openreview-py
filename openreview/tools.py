@@ -708,8 +708,8 @@ def get_submission_invitations(client, status='all'):
     '''
     Returns a list of invitations ids according to the status.
 
-    :@arg client: Object of :class:`~openreview.Client` class
-    :@arg status: Status filter for invitations. Default value is "all". \nThis is a string with following possible value:\n\"all\"\n\"open\"\n\"closed\"
+    :arg client: Object of :class:`~openreview.Client` class
+    :arg status: Status filter for invitations. Default value is "all". \nThis is a string with following possible value:\n\"all\"\n\"open\"\n\"closed\"
 
     '''
     
