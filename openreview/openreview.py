@@ -230,8 +230,8 @@ class Client(object):
         if member != None: params['member'] = member
         if host != None: params['host'] = host
         if signatory != None: params['signatory'] = signatory
-        if limit: params['limit'] = limit
-        if offset: params['offset'] = offset
+        params['limit'] = limit
+        params['offset'] = offset
 
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -260,8 +260,8 @@ class Client(object):
             params['regex'] = regex
         if tags:
             params['tags'] = tags
-        if limit: params['limit'] = limit
-        if offset: params['offset'] = offset
+        params['limit'] = limit
+        params['offset'] = offset
 
         response = requests.get(self.invitations_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
