@@ -707,9 +707,8 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
 def get_submission_invitations(client, status='all'):
     '''
     Returns a list of invitations ids according to the status.
-
     :arg client: Object of :class:`~openreview.Client` class
-    :arg status: Status filter for invitations. Default value is "all". \nThis is a string with following possible value:\n\"all\"\n\"open\"\n\"closed\"
+    :arg status: Status filter for invitations. Default value is "all". This is a string with following possible value: \"all\", \"open\" and \"closed\".
 
     '''
     
