@@ -4,6 +4,7 @@ from __future__ import print_function
 import openreview
 import re
 import datetime
+import time
 
 super_user_id = 'OpenReview.net'
 
@@ -703,3 +704,40 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
             readers=[conference_id, chairs],
             signatories=[]))
 
+def get_submission_invitations(client, status='all'):
+    '''
+    Returns a list of invitations ids according to the status.
+
+    :@arg client: Object of :class:`~openreview.Client` class
+    :@arg status: Status filter for invitations. Default value is "all". \nThis is a string with following possible value:\n\"all\"\n\"open\"\n\"closed\"
+
+    '''
+    
+    try:
+        # Get a list of all group with invitations satisfying the regex
+        groups = client.get_invitations(regex='.*/-/.*submission')
+        
+        # For each group in the list, append the group ids to a list
+        invitation_ids = []
+        
+        for g in groups :
+            
+            #Calculate the epoch for current timestamp
+            now = int(time.time()*1000)
+
+            # Assume the invitation is closed unless proven open
+            due = 0
+
+            if g.to_json()['duedate'] != None and now < g.to_json()['duedate']:
+                due = 1
+            
+            if status == "open" and due == 1:
+                invitation_ids.append(g.to_json()['id'])
+            elif status == "closed" and due == 0:
+                invitation_ids.append(g.to_json()['id'])
+            elif status == "all":
+                invitation_ids.append(g.to_json()['id'])
+        
+        return invitation_ids
+    except OpenReviewException:
+        return None
