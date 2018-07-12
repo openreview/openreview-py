@@ -8,16 +8,19 @@ import re
 import datetime
 import builtins
 
-def epoch_time():
-    return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()*1000)
-
 class OpenReviewException(Exception):
     pass
 
 class Client(object):
 
-    def __init__(self, baseurl = None, process_dir = '../process/', webfield_dir = '../webfield/', username = None, password = None):
-        """CONSTRUCTOR DOCSTRING"""
+    def __init__(self, baseurl = None, username = None, password = None):
+        """
+        :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name).
+
+        :arg username: openreview username.
+
+        :arg password: openreview password.
+        """
         if baseurl==None:
             try:
                 self.baseurl = os.environ['OPENREVIEW_BASEURL']
@@ -236,7 +239,6 @@ class Client(object):
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
-        groups.sort(key = lambda x: x.id)
         return groups
 
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None):
@@ -267,7 +269,6 @@ class Client(object):
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
-        invitations.sort(key = lambda x: x.id)
         return invitations
 
     def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, limit = None, offset = None, mintcdate = None, details = None):
@@ -479,17 +480,17 @@ class Client(object):
         return response.json()
 
 class Group(object):
-    def __init__(self, id, cdate = None, ddate = None, writers = None, members = None, readers = None, nonreaders = None, signatories = None, signatures = None, web = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None):
         # post attributes
         self.id=id
-        self.cdate = cdate if cdate != None else epoch_time()
+        self.cdate = cdate
         self.ddate = ddate
-        self.writers = [] if writers==None else writers
+        self.writers = writers
         self.members = [] if members==None else members
-        self.readers = ['everyone'] if readers==None else readers
+        self.readers = readers
         self.nonreaders = [] if nonreaders==None else nonreaders
-        self.signatures = [] if signatures==None else signatures
-        self.signatories = [self.id] if signatories==None else signatories
+        self.signatures = signatures
+        self.signatories = signatories
         self.web=None
         if web != None:
             with open(web) as f:
@@ -582,50 +583,41 @@ class Group(object):
 class Invitation(object):
     def __init__(self,
         id,
-        writers = None,
-        invitees = None,
+        readers,
+        writers,
+        invitees,
+        signatures,
+        reply,
         noninvitees = None,
-        readers = None,
         nonreaders = None,
-        reply = None,
-        replyto = None,
-        forum = None,
-        invitation = None,
         web = None,
         process = None,
-        signatures = None,
         duedate = None,
         cdate = None,
         rdate = None,
         ddate = None,
+        tcdate = None,
+        tmdate = None,
         multiReply = None,
         taskCompletionCount = None,
         transform = None):
 
-        default_reply = {
-            'forum': forum,
-            'replyto': replyto,
-            'invitation': invitation,
-            'readers': {},
-            'signatures': {},
-            'writers': {},
-            'content': {}
-        }
-
         self.id = id
-        self.cdate = cdate if cdate != None else epoch_time()
+        self.cdate = cdate
         self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
-        self.readers = ['everyone'] if readers==None else readers
+        self.readers = readers
         self.nonreaders = [] if nonreaders==None else nonreaders
-        self.writers = [] if readers==None else writers
-        self.invitees = ['~'] if invitees==None else invitees
+        self.writers = writers
+        self.invitees = invitees
         self.noninvitees = [] if noninvitees==None else noninvitees
-        self.signatures = [] if signatures==None else signatures
+        self.signatures = signatures
         self.multiReply = multiReply
         self.taskCompletionCount = taskCompletionCount
-        self.reply = default_reply if reply==None else reply
+        self.reply = reply
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.web = None
         if web != None:
             with open(web) as f:
@@ -652,6 +644,8 @@ class Invitation(object):
             'cdate': self.cdate,
             'rdate': self.rdate,
             'ddate': self.ddate,
+            'tcdate': self.tcdate,
+            'tmdate': self.tmdate,
             'duedate': self.duedate,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
@@ -684,6 +678,8 @@ class Invitation(object):
             cdate = i.get('cdate'),
             rdate = i.get('rdate'),
             ddate = i.get('ddate'),
+            tcdate = i.get('tcdate'),
+            tmdate = i.get('tmdate'),
             duedate = i.get('duedate'),
             readers = i.get('readers'),
             nonreaders = i.get('nonreaders'),
@@ -704,23 +700,44 @@ class Invitation(object):
         return invitation
 
 class Note(object):
-    def __init__(self, id=None, original=None, number=None, cdate=None, tcdate=None, ddate=None, content=None, forum=None, forumContent=None, referent=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None, writers=None, overwriting=None, tauthor=None):
+    def __init__(self,
+        invitation,
+        readers,
+        writers,
+        signatures,
+        content,
+        id=None,
+        original=None,
+        number=None,
+        cdate=None,
+        tcdate=None,
+        tmdate=None,
+        ddate=None,
+        forum=None,
+        forumContent=None,
+        referent=None,
+        replyto=None,
+        nonreaders=None,
+        overwriting=None,
+        tauthor=None):
+
         self.id = id
         self.original = original
         self.number = number
-        self.cdate = cdate if cdate != None else epoch_time()
+        self.cdate = cdate
         self.tcdate = tcdate
+        self.tmdate = tmdate
         self.ddate = ddate
-        self.content = {} if content==None else content
+        self.content = content
         self.forum = forum
         self.forumContent = forumContent
         self.referent = referent
         self.invitation = invitation
         self.replyto = replyto
-        self.readers = ['everyone'] if readers==None else readers
+        self.readers = readers
         self.nonreaders = [] if nonreaders==None else nonreaders
-        self.signatures = [] if signatures==None else signatures
-        self.writers = [] if writers==None else writers
+        self.signatures = signatures
+        self.writers = writers
         self.number = number
         self.overwriting = overwriting
         if tauthor:
@@ -739,6 +756,7 @@ class Note(object):
             'original': self.original,
             'cdate': self.cdate,
             'tcdate': self.tcdate,
+            'tmdate': self.tmdate,
             'ddate': self.ddate,
             'number': self.number,
             'content': self.content,
@@ -771,6 +789,7 @@ class Note(object):
         number = n.get('number'),
         cdate = n.get('cdate'),
         tcdate = n.get('tcdate'),
+        tmdate =n.get('tmdate'),
         ddate=n.get('ddate'),
         content=n.get('content'),
         forum=n.get('forum'),
@@ -788,7 +807,7 @@ class Note(object):
         return note
 
 class Tag(object):
-    def __init__(self, id=None, cdate=None, tcdate=None, ddate=None, tag=None, forum=None, invitation=None, replyto=None, readers=None, nonreaders=None, signatures=None):
+    def __init__(self, tag, invitation, readers, signatures, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
@@ -797,9 +816,9 @@ class Tag(object):
         self.forum = forum
         self.invitation = invitation
         self.replyto = replyto
-        self.readers = [] if readers==None else readers
+        self.readers = readers
         self.nonreaders = [] if nonreaders==None else nonreaders
-        self.signatures = [] if signatures==None else signatures
+        self.signatures = signatures
 
     def to_json(self):
         '''
