@@ -513,17 +513,17 @@ def remove_assignment(client, paper_number, conference, reviewer,
     individual_label = 'AnonReviewer'):
 
     '''
-    |  Un-assigns a reviewer from a paper.
-    |  "individual groups" are groups with a single member;
-    |      e.g. conference.org/Paper1/AnonReviewer1
-    |  "parent group" is the group that contains the individual groups;
-    |      e.g. conference.org/Paper1/Reviewers
+    Un-assigns a reviewer from a paper.
+    "individual groups" are groups with a single member;
+    e.g. conference.org/Paper1/AnonReviewer1
+    "parent group" is the group that contains the individual groups;
+    e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @reviewer: same as @reviewer_to_add, but removes the user
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg reviewer: same as @reviewer_to_add, but removes the user
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
     '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
@@ -560,26 +560,24 @@ def assign(client, paper_number, conference,
     individual_label = 'AnonReviewer'):
 
     '''
-    |  Either assigns or unassigns a reviewer to a paper.
-    |  TODO: Is this function really necessary?
+    Either assigns or unassigns a reviewer to a paper.
+    TODO: Is this function really necessary?
 
-    |  "individual groups" are groups with a single member;
-    |      e.g. conference.org/Paper1/AnonReviewer1
-    |  "parent group" is the group that contains the individual groups;
-    |      e.g. conference.org/Paper1/Reviewers
+    "individual groups" are groups with a single member;
+    e.g. conference.org/Paper1/AnonReviewer1
+    "parent group" is the group that contains the individual groups;
+    e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
-    |  @reviewer_to_add: may be an email address or a tilde ID;
-    |  adds the given user to the parent and individual groups defined by
-    |  the paper number, conference, and labels
-    |  @reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
+    :arg reviewer_to_add: may be an email address or a tilde ID; adds the given user to the parent and individual groups defined by the paper number, conference, and labels
+    :arg reviewer_to_remove: same as @reviewer_to_add, but removes the user
 
-    |  It's important to remove any users first, so that we can do direct replacement of one user with another.
-
-    |  For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
+    It's important to remove any users first, so that we can do direct replacement of one user with another.
+    
+    For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
     '''
     if reviewer_to_remove:
         remove_assignment(client, paper_number, conference, reviewer_to_remove,
@@ -615,13 +613,9 @@ def recruit_reviewer(client, email, first,
     reject the recruitment invitation.
 
     :arg hash_seed: a random number for seeding the hash.
-    :arg recruit_message: a formattable string containing the following string variables:
-    name
-    accept_url
-    decline_url
+    :arg recruit_message: a formattable string containing the following string variables: (name, accept_url, decline_url)
     :arg recruit_message_subj: subject line for the recruitment email
-    :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used
-    to keep track of which reviewers have already been emailed.
+    :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed.
     '''
 
     hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
@@ -707,9 +701,9 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
 def get_submission_invitations(client, status='all'):
     '''
     Returns a list of invitations ids according to the status.
+    
     :arg client: Object of :class:`~openreview.Client` class
-    :arg status: Status filter for invitations. Default value is "all". This is a string with following possible value: \"all\", \"open\" and \"closed\".
-
+    :arg status: Status filter for invitations. Default value is "all". This is a string with following possible value: all, open and closed.
     '''
     
     try:
