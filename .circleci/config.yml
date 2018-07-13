@@ -15,8 +15,7 @@ jobs:
             mkdir test-reports
             pytest --junitxml=test-reports/junit.xml
       - store_test_results:
-        path: test-reports
-
+          path: test-reports
       - store_artifacts:
-        path: test-reports
+          path: test-reports
 
