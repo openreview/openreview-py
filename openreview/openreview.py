@@ -55,7 +55,7 @@ class Client(object):
         self.profiles_url = self.baseurl + '/user/profile'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
-        self.token = self.__login_user(self.username, self.password)
+        self.token = self.login_user(self.username, self.password)
         self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
         self.signature = self.get_profile(self.username).id
 
@@ -76,7 +76,9 @@ class Client(object):
             else:
                 raise OpenReviewException(response.json())
 
-    def __login_user(self,username=None, password=None):
+    ## PUBLIC FUNCTIONS
+
+    def login_user(self,username=None, password=None):
 
         if username==None:
             try:
@@ -96,8 +98,6 @@ class Client(object):
         response = self.__handle_response(response)
 
         return str(response.json()['token'])
-
-    ## PUBLIC FUNCTIONS
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         '''
