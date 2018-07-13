@@ -707,13 +707,13 @@ def get_submission_invitations(client, status='all'):
     '''
     
     try:
-        # Get a list of all group with invitations satisfying the regex
-        groups = client.get_invitations(regex='.*/-/.*submission')
+        # Get a list of all invitations satisfying the regex
+        invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*')
         
         # For each group in the list, append the group ids to a list
         invitation_ids = []
         
-        for g in groups :
+        for inv in invitations :
             
             #Calculate the epoch for current timestamp
             now = int(time.time()*1000)
@@ -721,15 +721,15 @@ def get_submission_invitations(client, status='all'):
             # Assume the invitation is closed unless proven open
             due = 0
 
-            if g.to_json()['duedate'] != None and now < g.to_json()['duedate']:
+            if inv.duedate != None and now < inv.duedate:
                 due = 1
             
             if status == "open" and due == 1:
-                invitation_ids.append(g.to_json()['id'])
+                invitation_ids.append(inv.id)
             elif status == "closed" and due == 0:
-                invitation_ids.append(g.to_json()['id'])
+                invitation_ids.append(inv.id)
             elif status == "all" or status == "" :
-                invitation_ids.append(g.to_json()['id'])
+                invitation_ids.append(inv.id)
         
         return invitation_ids
     except OpenReviewException:
