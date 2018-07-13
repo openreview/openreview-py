@@ -36,4 +36,4 @@ workflows:
             - build
           filters:
             branches:
-              only: feature/cicleci-build
+              only: master
