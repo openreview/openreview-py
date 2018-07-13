@@ -728,7 +728,7 @@ def get_submission_invitations(client, status='all'):
                 invitation_ids.append(g.to_json()['id'])
             elif status == "closed" and due == 0:
                 invitation_ids.append(g.to_json()['id'])
-            elif status == "all":
+            elif status == "all" or status == "" :
                 invitation_ids.append(g.to_json()['id'])
         
         return invitation_ids
