@@ -7,7 +7,7 @@ jobs:
     steps:
       - checkout
       - run: sudo pip install ~/openreview-py-repo
-      - run: pip install -U pytest
+      - run: sudo pip install -U pytest
       - run: pytest
   # test:
   #   docker:
