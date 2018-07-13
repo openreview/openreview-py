@@ -1,12 +1,14 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/openreview-py-starter
+    working_directory: ~/openreview-py-repo
     docker:
       - image: circleci/python:2.7
     steps:
       - checkout
-      - run: sudo pip install ~/openreview-py-starter
+      - run: sudo pip install ~/openreview-py-repo
+      - run: pip install -U pytest
+      - run: pytest
   # test:
   #   docker:
   #     - image: circleci/node:4.8.2-jessie
