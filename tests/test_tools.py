@@ -9,7 +9,6 @@ class TestTools():
 
     def test_get_all_venues(self):
         venues = get_all_venues(self.client)
-        assert 'Could not retrieve venues' not in venues, 'Venues could not be retrieved'
         assert venues, "Venues could not be retrieved"
 
 
