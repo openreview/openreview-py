@@ -708,4 +708,7 @@ def get_all_venues(client):
         Returns a list of all the venues
         :arg client: Object of :class:`~openreview.Client` class
         '''
-        return client.get_group("host").to_json()['members']
+        try:
+            return client.get_group("host").members
+        except openreview.OpenReviewException as e:
+            return "Could not retrieve venues. Exceptions observed: \"" + e[0][0] + "\""
