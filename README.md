@@ -1,3 +1,9 @@
+OpenReview Python library
+=========================
+
+
+[![CircleCI](https://circleci.com/gh/iesl/openreview-py/tree/master.svg?style=shield&circle-token=199e927e40aeea6c0f16214a2fe065c3b9768dec)](https://circleci.com/gh/iesl/openreview-py/tree/master)
+
 Classes:
 
 Client(username=None, password=None, baseurl=None)
@@ -29,7 +35,7 @@ get_invitation(self, id):
 get_note(self, id):
 
 get_groups(self, prefix=None, regex=None, member=None, host=None, signatory=None):
-        
+
 get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None):
 
 get_notes(self, id=None, forum=None, invitation=None, replyto=None, tauthor=None, signature=None, writer=None, includeTrash=None, number=None):
@@ -43,7 +49,7 @@ post_note(self, note):
 send_mail(self, subject, recipients, message):
 
 add_members_to_group(self, group, members):
-    
+
 remove_members_from_group(self, group, members):
 ```
 
