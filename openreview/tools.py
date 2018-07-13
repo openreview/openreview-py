@@ -734,3 +734,10 @@ def get_submission_invitations(client, status='all'):
         return invitation_ids
     except OpenReviewException:
         return None
+
+def get_all_venues(client):
+        '''
+        Returns a list of all the venues
+        :arg client: Object of :class:`~openreview.Client` class
+        '''
+        return client.get_group("host").members

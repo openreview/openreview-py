@@ -1,6 +1,6 @@
 from openreview import *
 
-class TestClient():
+class TestTools():
 
     def setup_method(self, method):
         # Password should be saved in the environment variable OPENREVIEW_PASSWORD
@@ -19,3 +19,6 @@ class TestClient():
         invitations = get_submission_invitations(self.client,"somerandomsubmission")
         assert invitations==[], 'invitations expected as [], but retrieved something else'
 
+    def test_get_all_venues(self):
+        venues = get_all_venues(self.client)
+        assert venues, "Venues could not be retrieved"
