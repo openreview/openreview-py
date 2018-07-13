@@ -3,6 +3,7 @@ import openreview
 class TestClient():
 
     def setup_method(self, method):
+        # Password should be saved in the environment variable OPENREVIEW_PASSWORD
         self.client = openreview.Client(baseurl = 'https://dev.openreview.net', username = "OpenReview.net")
         assert self.client is not None, "Client is none"
 
