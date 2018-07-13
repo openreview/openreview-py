@@ -23,7 +23,7 @@ jobs:
       - image: circleci/python:2.7
     steps:
       - checkout
-      - run: pip install twine
+      - run: sudo pip install twine
       - run: python setup.py bdist_wheel
       - run: twine upload dist/*
 workflows:
