@@ -2,7 +2,7 @@ OpenReview Python library
 =========================
 
 
-[![CircleCI](https://circleci.com/gh/iesl/openreview-py/tree/master.svg?style=shield&circle-token=199e927e40aeea6c0f16214a2fe065c3b9768dec)](https://circleci.com/gh/iesl/openreview-py/tree/master)
+[![CircleCI](https://circleci.com/gh/iesl/openreview-py.svg?style=svg)](https://circleci.com/gh/iesl/openreview-py)
 
 Classes:
 
