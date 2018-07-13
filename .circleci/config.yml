@@ -17,4 +17,21 @@ jobs:
           path: test-reports
       - store_artifacts:
           path: test-reports
-
+  deploy:
+    working_directory: ~/openreview-py-repo
+    steps:
+      - checkout
+      - run: pip install twine
+      - run: python setup.py bdist_wheel
+      - run: twine upload dist/*
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: feature/cicleci-build
