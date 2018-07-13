@@ -8,23 +8,15 @@ jobs:
       - checkout
       - run: sudo pip install ~/openreview-py-repo
       - run: sudo pip install -U pytest
-      - run: pytest
-  # test:
-  #   docker:
-  #     - image: circleci/node:4.8.2-jessie
-  #     - image: mongo:3.4.4-jessie
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Test
-  #         command: npm test
-  #     - run:
-  #         name: Generate code coverage
-  #         command: './node_modules/.bin/nyc report --reporter=text-lcov'
-  #     - store_artifacts:
-  #         path: test-results.xml
-  #         prefix: tests
-  #     - store_artifacts:
-  #         path: coverage
-  #         prefix: coverage
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            mkdir test-reports
+            pytest --junitxml=test-reports/junit.xml
+      - store_test_results:
+        path: test-reports
+
+      - store_artifacts:
+        path: test-reports
 
