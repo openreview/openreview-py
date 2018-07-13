@@ -19,6 +19,8 @@ jobs:
           path: test-reports
   deploy:
     working_directory: ~/openreview-py-repo
+    docker:
+      - image: circleci/python:2.7
     steps:
       - checkout
       - run: pip install twine
