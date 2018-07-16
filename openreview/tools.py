@@ -700,7 +700,7 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
 
 def get_submission_invitations(client, open_only=False):
     '''
-    Returns a list of invitations ids visible to the client caccording to the parameter "open_only".
+    Returns a list of invitation ids visible to the client according to the value of parameter "open_only".
     
     :arg client: Object of :class:`~openreview.Client` class
     :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
@@ -710,24 +710,15 @@ def get_submission_invitations(client, open_only=False):
     [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
     '''
     
-    try:
-        #Calculate the epoch for current timestamp
-        now = int(time.time()*1000)
-        
-        if open_only == True:    
-            invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=now)
-        else:
-            invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*')
-        
-        # For each group in the list, append the invitation id to a list
-        invitation_ids = []
-        
-        for inv in invitations :
-            invitation_ids.append(inv.id)
-        
-        return invitation_ids
-    except openreview.OpenReviewException as e:
-        return None
+    #Calculate the epoch for current timestamp
+    now = int(time.time()*1000)
+    duedate = now if open_only==True else None
+    invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=duedate)
+    
+    # For each group in the list, append the invitation id to a list
+    invitation_ids = [inv.id for inv in invitations]
+    
+    return invitation_ids
 
 def get_all_venues(client):
         '''
