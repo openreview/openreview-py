@@ -10,14 +10,6 @@ class TestTools():
     def test_get_submission_invitations(self):
         invitations = get_submission_invitations(self.client)
         assert invitations, 'invitations is None'
-        invitations = get_submission_invitations(self.client,"all")
-        assert invitations, 'invitations is None'
-        invitations = get_submission_invitations(self.client,"open")
-        assert invitations, 'invitations is None'
-        invitations = get_submission_invitations(self.client,"closed")
-        assert invitations, 'invitations is None'
-        invitations = get_submission_invitations(self.client,"somerandomsubmission")
-        assert invitations==[], 'invitations expected as [], but retrieved something else'
 
     def test_get_all_venues(self):
         venues = get_all_venues(self.client)
