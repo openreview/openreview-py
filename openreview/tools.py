@@ -698,41 +698,35 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
             readers=[conference_id, chairs],
             signatories=[]))
 
-def get_submission_invitations(client, status='all'):
+def get_submission_invitations(client, open_only=False):
     '''
-    Returns a list of invitations ids according to the status.
+    Returns a list of invitations ids visible to the client caccording to the parameter "open_only".
     
     :arg client: Object of :class:`~openreview.Client` class
-    :arg status: Status filter for invitations. Default value is "all". This is a string with following possible value: all, open and closed.
+    :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
+    
+    Example Usage:
+    >>> get_submission_invitations(c,True)
+    [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
     '''
     
     try:
-        # Get a list of all invitations satisfying the regex
-        invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*')
+        #Calculate the epoch for current timestamp
+        now = int(time.time()*1000)
         
-        # For each group in the list, append the group ids to a list
+        if open_only == True:    
+            invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=now)
+        else:
+            invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*')
+        
+        # For each group in the list, append the invitation id to a list
         invitation_ids = []
         
         for inv in invitations :
-            
-            #Calculate the epoch for current timestamp
-            now = int(time.time()*1000)
-
-            # Assume the invitation is closed unless proven open
-            due = 0
-
-            if inv.duedate != None and now < inv.duedate:
-                due = 1
-            
-            if status == "open" and due == 1:
-                invitation_ids.append(inv.id)
-            elif status == "closed" and due == 0:
-                invitation_ids.append(inv.id)
-            elif status == "all" or status == "" :
-                invitation_ids.append(inv.id)
+            invitation_ids.append(inv.id)
         
         return invitation_ids
-    except OpenReviewException:
+    except openreview.OpenReviewException as e:
         return None
 
 def get_all_venues(client):

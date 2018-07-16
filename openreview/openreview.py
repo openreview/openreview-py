@@ -241,7 +241,7 @@ class Client(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None):
+    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None):
         """
         |  Returns a list of Group objects based on the filters provided.
         """
@@ -262,6 +262,8 @@ class Client(object):
             params['regex'] = regex
         if tags:
             params['tags'] = tags
+        if minduedate:
+            params['minduedate'] = minduedate
         params['limit'] = limit
         params['offset'] = offset
 
