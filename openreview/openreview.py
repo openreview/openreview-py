@@ -60,8 +60,8 @@ class Client(object):
         
         if(self.username!=None and self.password!=None):
             self.token = self.login_user(self.username, self.password)
-            self.signature = self.get_profile(self.username).id
             self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
+            self.signature = self.get_profile(self.username).id
         else:
             self.headers = {'User-Agent': 'test-create-script'}
         
