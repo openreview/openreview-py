@@ -4,6 +4,7 @@ from __future__ import print_function
 import openreview
 import re
 import datetime
+import time
 
 super_user_id = 'OpenReview.net'
 
@@ -512,17 +513,17 @@ def remove_assignment(client, paper_number, conference, reviewer,
     individual_label = 'AnonReviewer'):
 
     '''
-    |  Un-assigns a reviewer from a paper.
-    |  "individual groups" are groups with a single member;
-    |      e.g. conference.org/Paper1/AnonReviewer1
-    |  "parent group" is the group that contains the individual groups;
-    |      e.g. conference.org/Paper1/Reviewers
+    Un-assigns a reviewer from a paper.
+    "individual groups" are groups with a single member;
+    e.g. conference.org/Paper1/AnonReviewer1
+    "parent group" is the group that contains the individual groups;
+    e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @reviewer: same as @reviewer_to_add, but removes the user
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg reviewer: same as @reviewer_to_add, but removes the user
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
     '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
@@ -559,26 +560,24 @@ def assign(client, paper_number, conference,
     individual_label = 'AnonReviewer'):
 
     '''
-    |  Either assigns or unassigns a reviewer to a paper.
-    |  TODO: Is this function really necessary?
+    Either assigns or unassigns a reviewer to a paper.
+    TODO: Is this function really necessary?
 
-    |  "individual groups" are groups with a single member;
-    |      e.g. conference.org/Paper1/AnonReviewer1
-    |  "parent group" is the group that contains the individual groups;
-    |      e.g. conference.org/Paper1/Reviewers
+    "individual groups" are groups with a single member;
+    e.g. conference.org/Paper1/AnonReviewer1
+    "parent group" is the group that contains the individual groups;
+    e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
-    |  @reviewer_to_add: may be an email address or a tilde ID;
-    |  adds the given user to the parent and individual groups defined by
-    |  the paper number, conference, and labels
-    |  @reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
+    :arg reviewer_to_add: may be an email address or a tilde ID; adds the given user to the parent and individual groups defined by the paper number, conference, and labels
+    :arg reviewer_to_remove: same as @reviewer_to_add, but removes the user
 
-    |  It's important to remove any users first, so that we can do direct replacement of one user with another.
-
-    |  For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
+    It's important to remove any users first, so that we can do direct replacement of one user with another.
+    
+    For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
     '''
     if reviewer_to_remove:
         remove_assignment(client, paper_number, conference, reviewer_to_remove,
@@ -614,13 +613,9 @@ def recruit_reviewer(client, email, first,
     reject the recruitment invitation.
 
     :arg hash_seed: a random number for seeding the hash.
-    :arg recruit_message: a formattable string containing the following string variables:
-    name
-    accept_url
-    decline_url
+    :arg recruit_message: a formattable string containing the following string variables: (name, accept_url, decline_url)
     :arg recruit_message_subj: subject line for the recruitment email
-    :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used
-    to keep track of which reviewers have already been emailed.
+    :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed.
     '''
 
     hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
@@ -703,3 +698,31 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
             readers=[conference_id, chairs],
             signatories=[]))
 
+def get_submission_invitations(client, open_only=False):
+    '''
+    Returns a list of invitation ids visible to the client according to the value of parameter "open_only".
+    
+    :arg client: Object of :class:`~openreview.Client` class
+    :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
+    
+    Example Usage:
+    >>> get_submission_invitations(c,True)
+    [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
+    '''
+    
+    #Calculate the epoch for current timestamp
+    now = int(time.time()*1000)
+    duedate = now if open_only==True else None
+    invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=duedate)
+    
+    # For each group in the list, append the invitation id to a list
+    invitation_ids = [inv.id for inv in invitations]
+    
+    return invitation_ids
+
+def get_all_venues(client):
+        '''
+        Returns a list of all the venues
+        :arg client: Object of :class:`~openreview.Client` class
+        '''
+        return client.get_group("host").members
