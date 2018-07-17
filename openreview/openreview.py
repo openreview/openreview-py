@@ -15,11 +15,11 @@ class Client(object):
 
     def __init__(self, baseurl = None, username = None, password = None):
         """
-        :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name).
+        :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name). Mandatory argument.
 
-        :arg username: openreview username.
+        :arg username: openreview username. Optional argument.
 
-        :arg password: openreview password.
+        :arg password: openreview password. Optional argument.
         """
         if baseurl==None:
             try:
@@ -33,7 +33,6 @@ class Client(object):
             try:
                 self.username = os.environ['OPENREVIEW_USERNAME']
             except KeyError:
-                #self.username = builtins.input('Environment variable OPENREVIEW_USERNAME not found. Please provide a username: ')
                 self.username = username
         else:
             self.username = username
@@ -42,7 +41,6 @@ class Client(object):
             try:
                 self.password = os.environ['OPENREVIEW_PASSWORD']
             except KeyError:
-                #self.password = builtins.input('Environment variable OPENREVIEW_PASSWORD not found. Please provide a password: ')
                 self.password = password
         else:
             self.password = password
@@ -88,23 +86,22 @@ class Client(object):
     ## PUBLIC FUNCTIONS
 
     def login_user(self,username=None, password=None):
-
+        '''
+        Logs in a registered user and returns authentication token
+        '''
         if username==None:
             try:
-                username = os.environ["OPENREVIEW_USERNAME"]
+                self.username = os.environ["OPENREVIEW_USERNAME"]
             except KeyError:
-                # username = builtins.input("Please provide your OpenReview username (e.g. username@umass.edu): ")
-                pass
+                self.username = username
 
         if password==None:
             try:
-                password = os.environ["OPENREVIEW_PASSWORD"]
+                self.password = os.environ["OPENREVIEW_PASSWORD"]
             except KeyError:
-                # password = getpass.getpass("Please provide your OpenReview password: ")
-                pass
+                self.password = password
 
-        self.user = {'id':username,'password':password}
-
+        self.user = {'id':self.username,'password':self.password}
         header = {'User-Agent': 'test-create-script'}
         response = requests.post(self.login_url, headers=header, json=self.user)
         response = self.__handle_response(response)
