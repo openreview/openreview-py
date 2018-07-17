@@ -31,7 +31,7 @@ class TestClient():
         except openreview.OpenReviewException as e:
             assert "Username/email is missing" in e.message, "guest log in did not produce correct error"
 
-        response = self.client.login_user(username = "OpenReview.net")
+        response = self.guest.login_user(username = "OpenReview.net")
         assert response, "valid token not found"
 
     def test_guest_user(self):

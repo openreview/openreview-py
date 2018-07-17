@@ -56,12 +56,11 @@ class Client(object):
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         
+        self.headers = {'User-Agent': 'test-create-script'}
         if(self.username!=None and self.password!=None):
-            self.token = self.login_user(self.username, self.password)
-            self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
+            self.login_user(self.username, self.password)
+            self.headers['Authorization'] ='Bearer ' + self.token
             self.signature = self.get_profile(self.username).id
-        else:
-            self.headers = {'User-Agent': 'test-create-script'}
         
 
     ## PRIVATE FUNCTIONS
@@ -91,22 +90,23 @@ class Client(object):
         '''
         if username==None:
             try:
-                self.username = os.environ["OPENREVIEW_USERNAME"]
+                username = os.environ["OPENREVIEW_USERNAME"]
             except KeyError:
-                self.username = username
+                pass
 
         if password==None:
             try:
-                self.password = os.environ["OPENREVIEW_PASSWORD"]
+                password = os.environ["OPENREVIEW_PASSWORD"]
             except KeyError:
-                self.password = password
+                pass
 
-        self.user = {'id':self.username,'password':self.password}
+        user = {'id':username,'password':password}
         header = {'User-Agent': 'test-create-script'}
-        response = requests.post(self.login_url, headers=header, json=self.user)
+        response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
+        self.token = str(response.json()['token'])
 
-        return str(response.json()['token'])
+        return response
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         '''
