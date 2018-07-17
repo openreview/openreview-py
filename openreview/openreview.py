@@ -33,7 +33,8 @@ class Client(object):
             try:
                 self.username = os.environ['OPENREVIEW_USERNAME']
             except KeyError:
-                self.username = builtins.input('Environment variable OPENREVIEW_USERNAME not found. Please provide a username: ')
+                #self.username = builtins.input('Environment variable OPENREVIEW_USERNAME not found. Please provide a username: ')
+                self.username = username
         else:
             self.username = username
 
@@ -41,7 +42,8 @@ class Client(object):
             try:
                 self.password = os.environ['OPENREVIEW_PASSWORD']
             except KeyError:
-                self.password = builtins.input('Environment variable OPENREVIEW_PASSWORD not found. Please provide a password: ')
+                #self.password = builtins.input('Environment variable OPENREVIEW_PASSWORD not found. Please provide a password: ')
+                self.password = password
         else:
             self.password = password
 
@@ -55,11 +57,17 @@ class Client(object):
         self.profiles_url = self.baseurl + '/user/profile'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
-        self.token = self.login_user(self.username, self.password)
-        self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
-        self.signature = self.get_profile(self.username).id
+        
+        if(self.username!=None and self.password!=None):
+            self.token = self.login_user(self.username, self.password)
+            self.signature = self.get_profile(self.username).id
+            self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
+        else:
+            self.headers = {'User-Agent': 'test-create-script'}
+        
 
     ## PRIVATE FUNCTIONS
+
     def __handle_response(self,response):
         try:
             response.raise_for_status()
@@ -76,6 +84,7 @@ class Client(object):
             else:
                 raise OpenReviewException(response.json())
 
+
     ## PUBLIC FUNCTIONS
 
     def login_user(self,username=None, password=None):
@@ -84,17 +93,20 @@ class Client(object):
             try:
                 username = os.environ["OPENREVIEW_USERNAME"]
             except KeyError:
-                username = builtins.input("Please provide your OpenReview username (e.g. username@umass.edu): ")
+                # username = builtins.input("Please provide your OpenReview username (e.g. username@umass.edu): ")
+                pass
 
         if password==None:
             try:
                 password = os.environ["OPENREVIEW_PASSWORD"]
             except KeyError:
-                password = getpass.getpass("Please provide your OpenReview password: ")
+                # password = getpass.getpass("Please provide your OpenReview password: ")
+                pass
 
         self.user = {'id':username,'password':password}
 
-        response = requests.post(self.login_url, json=self.user)
+        header = {'User-Agent': 'test-create-script'}
+        response = requests.post(self.login_url, headers=header, json=self.user)
         response = self.__handle_response(response)
 
         return str(response.json()['token'])
