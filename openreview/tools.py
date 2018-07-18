@@ -710,6 +710,7 @@ def get_submission_invitations(client, open_only=False):
     :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
     
     Example Usage:
+    
     >>> get_submission_invitations(c,True)
     [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
     '''
