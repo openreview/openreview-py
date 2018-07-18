@@ -15,11 +15,11 @@ class Client(object):
 
     def __init__(self, baseurl = None, username = None, password = None):
         """
-        :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name).
+        :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name). Mandatory argument.
 
-        :arg username: openreview username.
+        :arg username: openreview username. Optional argument.
 
-        :arg password: openreview password.
+        :arg password: openreview password. Optional argument.
         """
         if baseurl==None:
             try:
@@ -33,7 +33,7 @@ class Client(object):
             try:
                 self.username = os.environ['OPENREVIEW_USERNAME']
             except KeyError:
-                self.username = builtins.input('Environment variable OPENREVIEW_USERNAME not found. Please provide a username: ')
+                self.username = username
         else:
             self.username = username
 
@@ -41,7 +41,7 @@ class Client(object):
             try:
                 self.password = os.environ['OPENREVIEW_PASSWORD']
             except KeyError:
-                self.password = builtins.input('Environment variable OPENREVIEW_PASSWORD not found. Please provide a password: ')
+                self.password = password
         else:
             self.password = password
 
@@ -55,11 +55,16 @@ class Client(object):
         self.profiles_url = self.baseurl + '/user/profile'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
-        self.token = self.__login_user(self.username, self.password)
-        self.headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'test-create-script'}
-        self.signature = self.get_profile(self.username).id
+        
+        self.headers = {'User-Agent': 'test-create-script'}
+        if(self.username!=None and self.password!=None):
+            self.login_user(self.username, self.password)
+            self.headers['Authorization'] ='Bearer ' + self.token
+            self.signature = self.get_profile(self.username).id
+        
 
     ## PRIVATE FUNCTIONS
+
     def __handle_response(self,response):
         try:
             response.raise_for_status()
@@ -76,28 +81,32 @@ class Client(object):
             else:
                 raise OpenReviewException(response.json())
 
-    def __login_user(self,username=None, password=None):
 
+    ## PUBLIC FUNCTIONS
+
+    def login_user(self,username=None, password=None):
+        '''
+        Logs in a registered user and returns authentication token
+        '''
         if username==None:
             try:
                 username = os.environ["OPENREVIEW_USERNAME"]
             except KeyError:
-                username = builtins.input("Please provide your OpenReview username (e.g. username@umass.edu): ")
+                pass
 
         if password==None:
             try:
                 password = os.environ["OPENREVIEW_PASSWORD"]
             except KeyError:
-                password = getpass.getpass("Please provide your OpenReview password: ")
+                pass
 
-        self.user = {'id':username,'password':password}
-
-        response = requests.post(self.login_url, json=self.user)
+        user = {'id':username,'password':password}
+        header = {'User-Agent': 'test-create-script'}
+        response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
+        self.token = str(response.json()['token'])
 
-        return str(response.json()['token'])
-
-    ## PUBLIC FUNCTIONS
+        return response
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         '''
