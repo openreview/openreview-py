@@ -12,13 +12,4 @@ Install the ``openreview-py`` package with `pip
 Setup
 -------
 
-Details on setup coming soon.
-
-Workshop
----------
-
-.. toctree::
-   :maxdepth: 2
-
-   workshop
-   icml
+Once installation is done, this python package can be used to make api calls to perform several operations (as listed in API documentation)

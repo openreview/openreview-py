@@ -1,4 +1,7 @@
-Workshop Template
-===================
+Creating a conference
+========================
 
-This page is a work in progress. Keep watching for updates.
+.. toctree::
+   :maxdepth: 3
+
+   icml
