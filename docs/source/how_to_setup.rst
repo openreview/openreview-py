@@ -21,3 +21,4 @@ Workshop
    :maxdepth: 2
 
    workshop
+   icml
