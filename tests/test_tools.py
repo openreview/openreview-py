@@ -1,4 +1,4 @@
-from openreview import *
+import openreview
 
 class TestTools():
 
@@ -9,9 +9,9 @@ class TestTools():
         assert self.client is not None, "Client is none"
 
     def test_get_submission_invitations(self):
-        invitations = get_submission_invitations(self.client)
+        invitations = openreview.get_submission_invitations(self.client)
         assert invitations, "Invitations could not be retrieved"
 
     def test_get_all_venues(self):
-        venues = get_all_venues(self.client)
+        venues = openreview.get_all_venues(self.client)
         assert venues, "Venues could not be retrieved"
