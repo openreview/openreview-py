@@ -4,7 +4,7 @@ Creating a conference
 Demo Workshop
 ---------------
 
-This is a demo script. This script captures creation of a new conference on OpenReview system.
+Here we explain some of the steps for creation of a new conference on OpenReview system.
 
 Some of the tasks described below (such as creation of a conference sub-group, creation of a submission, etc) can only be done using an administrator profile.
 
@@ -70,7 +70,8 @@ Output ::
 		 'web': None,
 		 'writers': [u'ICML.cc']}
 
-::
+
+
 	>>> client.post_group(openreview.Group(id = 'ICML.cc/2019/Conference', 
                                          readers = ['everyone'], 
                                          writers = ['ICML.cc/2019'], 
@@ -362,9 +363,10 @@ Creating an invitation to comment enables users to comment on a submission and r
                                                             }
                                                     }))
 
-Output ::
-    >>> {'cdate': 1531340152826,
-	 'ddate': None,
+::
+
+	{'cdate': 1531340152826,
+	'ddate': None,
 	 'duedate': None,
 	 'id': u'ICML.cc/2019/Conference/-/Comment',
 	 'invitees': [u'everyone'],
