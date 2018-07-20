@@ -16,14 +16,10 @@ Following are the steps and brief explanations.
 Login
 ---------
 
-Login can be done through the API like this::
+Login can be done through the API ::
 
     >>> import openreview
-	>>> client = openreview.Client(baseurl='https://openreview.net',username=<your username>,password=<your password>)
-
-Also, some of the Openreview services can be accesses by a guest (without loggin in). This can be done through API like this::
-
-    >>> guest_client = openreview.Client(baseurl='https://openreview.net')
+    >>> client = openreview.Client(baseurl='https://openreview.net',username=<your username>,password=<your password>)
 
 
 Creating a conference
@@ -41,6 +37,7 @@ To create the conference you represent, Openreview team will create a group ::
                                          members = [<Admin username>],
                                          web = <path to file containing the js code for the webfield>))
 
+
     {'cdate': 1531339441440,
 	 'ddate': None,
 	 'id': u'ICML.cc/2019/Conference',
@@ -52,12 +49,20 @@ To create the conference you represent, Openreview team will create a group ::
 	 'web': u'\n// ------------------------------------\n// Basic venue homepage template\n//\n// This webfield displays the conference header (#header), the submit button (#invitation),\n// and a list of all submitted papers (#notes).\n// ------------------------------------\n\n// Constants\nvar CONFERENCE = "ICML.cc/2019/Conference";\nvar INVITATION = CONFERENCE + \'/-/Submission\';\nvar SUBJECT_AREAS = [\n  // Add conference specific subject areas here\n];\nvar BUFFER = 1000 * 60 * 30;  // 30 minutes\nvar PAGE_SIZE = 50;\n\nvar paperDisplayOptions = {\n  pdfLink: true,\n  replyCount: true,\n  showContents: true\n};\n\n// Main is the entry point to the webfield code and runs everything\nfunction main() {\n  Webfield.ui.setup(\'#group-container\', CONFERENCE);  // required\n\n  renderConferenceHeader();\n\n  load().then(render).then(function() {\n    Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n  });\n}\n\n// RenderConferenceHeader renders the static info at the top of the page. Since that content\n// never changes, put it in its own function\nfunction renderConferenceHeader() {\n  Webfield.ui.venueHeader({\n    title: "ICML ",\n    subtitle: "Recent Advances in Ubiquitous Computing",\n    location: "University of Rostock, Germany",\n    date: "2017, August 04",\n    website: "https://studip.uni-rostock.de/seminar_main.php?auswahl=c9b2fd0a6f525ce968d41d737de3ccb5",\n    instructions: null,  // Add any custom instructions here. Accepts HTML\n    deadline: "Submission Deadline: 2017, June 15th at 11:59 pm (CEST) "\n  });\n\n  Webfield.ui.spinner(\'#notes\');\n}\n\n// Load makes all the API calls needed to get the data to render the page\n// It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/\nfunction load() {\n  var invitationP = Webfield.api.getSubmissionInvitation(INVITATION, {deadlineBuffer: BUFFER});\n  var notesP = Webfield.api.getSubmissions(INVITATION, {pageSize: PAGE_SIZE});\n\n  return $.when(invitationP, notesP);\n}\n\n// Render is called when all the data is finished being loaded from the server\n// It should also be called when the page needs to be refreshed, for example after a user\n// submits a new paper.\nfunction render(invitation, notes) {\n  // Display submission button and form\n  $(\'#invitation\').empty();\n  Webfield.ui.submissionButton(invitation, user, {\n    onNoteCreated: function() {\n      // Callback funtion to be run when a paper has successfully been submitted (required)\n      load().then(render).then(function() {\n        Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n      });\n    }\n  });\n\n  // Display the list of all submitted papers\n  $(\'#notes\').empty();\n  Webfield.ui.submissionList(notes, {\n    heading: \'Submitted Papers\',\n    displayOptions: paperDisplayOptions,\n    search: {\n      enabled: true,\n      subjectAreas: SUBJECT_AREAS,\n      onResults: function(searchResults) {\n        Webfield.ui.searchResults(searchResults, paperDisplayOptions);\n        Webfield.disableAutoLoading();\n      },\n      onReset: function() {\n        Webfield.ui.searchResults(notes, paperDisplayOptions);\n        Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n      }\n    }\n  });\n}\n\n// Go!\nmain();\n\n',
 	 'writers': ['ICML.cc/2019']}
 
-Please note that this conference group does not show up under the header "Open for Submissions" on Openreview homepage until an invitation for submission is created.
+Please note that this conference group does not show up under the header "Open for Submissions" on Openreview homepage unless an invitation for submission with a future due date is created (as shown in the screenshot below).
 
 .. figure:: ../_static/screenshots/group_created.png
     :align: center
 
-Note that the web field for the conference is either JS code or the absolute path of a JS file containing this code. 
+Although, the conference 'ICML.cc/2019/Conference' that we just created is not accessible from "Open for Submissions", it can still be found on the Openreview homepage under the header "All Venues".
+
+Note that the conference's URL is essentially the openreview url with the name of the conference group, i.e. "https://openreview.net/group?id=ICML.cc/2019/Conference".
+
+.. figure:: ../_static/screenshots/conf_homepage_past_duedate.png
+    :align: center
+
+
+Note that the web field for the conference is either JS code or the absolute path of a JS file containing the code. 
 
 Sample JS file
 -----------------
@@ -217,8 +222,8 @@ If you have administrator privileges in OpenReview, you will be able to create I
                                                             'required':True
                                                         }
                                                     }
-
                                             }))
+
 
     {'cdate': 1531339106644,
 	 'ddate': None,
@@ -264,19 +269,20 @@ If you have administrator privileges in OpenReview, you will be able to create I
 	 'web': None,
 	 'writers': [u'ICML.cc/2019/Conference']}
 
+
 Once an invitation for submission with a future due date is created, this conference is listed on the Openreview home page under the header "Open for Submissions".
 
-Openreview home page after invitation for submission for ICML.cc/2019/Conference was created:
+Openreview home page after invitation for submission with a future due date was created:
 
-.. figure:: ../_static/screenshots/submission_invited.png
+.. figure:: ../_static/screenshots/openreview_homepage_future_duedate.png
     :align: center
-
 
 Conference home page:
 
-.. figure:: ../_static/screenshots/conf_homepage.png
+.. figure:: ../_static/screenshots/conf_homepage_future_duedate.png
     :align: center
 
+Notice the 
 
 Create Invitation to Comment
 --------------------------------
@@ -314,6 +320,7 @@ Creating an invitation to comment enables users to comment on a submission and r
                                                             }
                                                     }))
 
+
     {'cdate': 1531340152826,
 	 'ddate': None,
 	 'duedate': None,
@@ -343,17 +350,33 @@ Creating an invitation to comment enables users to comment on a submission and r
 
 
 
-Adding a Submission Note
----------------------------
+Making a Submission 
+----------------------
 
-A submission note (e.g. a research paper) can be added using the Conference homepage.
+Once a submission invitation with a future due date is created, users with appropriate access can make a submission (e.g. submission of a research paper) using the Conference homepage.
 
 .. figure:: ../_static/screenshots/add_submission_note_UI.png
     :align: center
 
-This feature is also available through the API.
+.. figure:: ../_static/screenshots/conf_homepage_paper_posted.png
+    :align: center
+
+And, once a submission is made, a forum is created for that. This is what a forum looks like:
+
+.. figure:: ../_static/screenshots/forum_homepage.png
+    :align: center
 
 
+Commenting on a Submission
+-----------------------------
+
+Users with appropriate access can comment on a submission and reply to other's comments (depending on the configuration settings of the conference).
+
+.. figure:: ../_static/screenshots/comment_compose.png
+    :align: center
+
+.. figure:: ../_static/screenshots/comment_posted.png
+    :align: center
 
 
 
