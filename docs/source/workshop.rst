@@ -37,7 +37,8 @@ To create the conference you represent, Openreview team will create a group ::
                                          members = [<Admin username>],
                                          web = <path to file containing the js code for the webfield>))
 
-::
+
+Output::
     {'cdate': 1531339441440,
 	 'ddate': None,
 	 'id': u'ICML.cc/2019/Conference',
@@ -224,7 +225,7 @@ If you have administrator privileges in OpenReview, you will be able to create I
                                                     }
                                             }))
 
-::
+Output ::
     {'cdate': 1531339106644,
 	 'ddate': None,
 	 'duedate': 1562875092000,
@@ -320,7 +321,7 @@ Creating an invitation to comment enables users to comment on a submission and r
                                                             }
                                                     }))
 
-::
+Output ::
     {'cdate': 1531340152826,
 	 'ddate': None,
 	 'duedate': None,
