@@ -36,10 +36,10 @@ To create the conference you represent, Openreview team will create a group ::
                                          signatures = ['OpenReview.net']))
 
 
- ::
+::
 
-    {'cdate': 1532031329209,
-    'ddate': None,
+	{'cdate': 1532031329209,
+	'ddate': None,
 	'id': u'ICML.cc',
 	'members': [],
 	'nonreaders': [],
@@ -59,8 +59,8 @@ For instance, to create an ICML.cc conference for 2019 following steps should be
                                          signatories = ['ICML.cc/2019'], 
                                          signatures = ['OpenReview.net']))
 
- ::
-	
+::
+
 	{'cdate': 1532031902863,
 	'ddate': None,
 	'id': u'ICML.cc/2019',
@@ -83,7 +83,7 @@ Next step would be to create another subgroup 'ICML.cc/2019/Conference'::
                                          members = [<Tilde id of members>],
                                          web = <Absolute path to JS file>))
 
- ::
+::
 
 	{'cdate': 1531339441440,
 	'ddate': None,
@@ -271,7 +271,7 @@ If you have administrator privileges in OpenReview, you will be able to create I
                                                     }
                                             }))
 
- ::
+::
 
 	{'cdate': 1531339106644,
 	'ddate': None,
