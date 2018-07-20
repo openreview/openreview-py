@@ -61,6 +61,7 @@ Note that the web field for the conference is either JS code or the absolute pat
 
 Sample JS file
 -----------------
+::
 
 	// ------------------------------------
 	// Basic venue homepage template
