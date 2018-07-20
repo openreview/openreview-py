@@ -330,7 +330,6 @@ Conference home page:
 .. figure:: ../_static/screenshots/conf_homepage_future_duedate.png
     :align: center
 
-Notice the 
 
 Create Invitation to Comment
 --------------------------------
