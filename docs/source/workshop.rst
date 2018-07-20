@@ -36,17 +36,18 @@ To create the conference you represent, Openreview team will create a group ::
                                          signatures = ['OpenReview.net']))
 
 
-Output ::
-    >>> {'cdate': 1532031329209,
-	 'ddate': None,
-	 'id': u'ICML.cc',
-	 'members': [],
-	 'nonreaders': [],
-	 'readers': [u'everyone'],
-	 'signatories': [u'ICML.cc'],
-	 'signatures': [u'OpenReview.net'],
-	 'web': None,
-	 'writers': [u'OpenReview.net']}
+ ::
+
+    {'cdate': 1532031329209,
+    'ddate': None,
+	'id': u'ICML.cc',
+	'members': [],
+	'nonreaders': [],
+	'readers': [u'everyone'],
+	'signatories': [u'ICML.cc'],
+	'signatures': [u'OpenReview.net'],
+	'web': None,
+	'writers': [u'OpenReview.net']}
 
 
 Once you (the conference admin) receive information from the Openreview team that your conference root has been setup, you can begin to create subgroups under the root.
@@ -58,17 +59,18 @@ For instance, to create an ICML.cc conference for 2019 following steps should be
                                          signatories = ['ICML.cc/2019'], 
                                          signatures = ['OpenReview.net']))
 
-Output ::
-	>>> {'cdate': 1532031902863,
-		 'ddate': None,
-		 'id': u'ICML.cc/2019',
-		 'members': [],
-		 'nonreaders': [],
-		 'readers': [u'everyone'],
-		 'signatories': [u'ICML.cc/2019'],
-		 'signatures': [u'ICML.cc'],
-		 'web': None,
-		 'writers': [u'ICML.cc']}
+ ::
+	
+	{'cdate': 1532031902863,
+	'ddate': None,
+	'id': u'ICML.cc/2019',
+	'members': [],
+	'nonreaders': [],
+	'readers': [u'everyone'],
+	'signatories': [u'ICML.cc/2019'],
+	'signatures': [u'ICML.cc'],
+	'web': None,
+	'writers': [u'ICML.cc']}
 
 
 Next step would be to create another subgroup 'ICML.cc/2019/Conference'::
@@ -81,18 +83,18 @@ Next step would be to create another subgroup 'ICML.cc/2019/Conference'::
                                          members = [<Tilde id of members>],
                                          web = <Absolute path to JS file>))
 
-Output ::
+ ::
 
 	{'cdate': 1531339441440,
-	 'ddate': None,
-	 'id': u'ICML.cc/2019/Conference',
-	 'members': [],
-	 'nonreaders': [],
-	 'readers': [u'everyone'],
-	 'signatories': [u'ICML.cc/2019/Conference'],
-	 'signatures': [u'ICML.cc/2019'],
-	 'web': u'\n// ------------------------------------\n// Basic venue homepage template\n//\n// This webfield displays the conference header (#header), the submit button (#invitation),\n// and a list of all submitted papers (#notes).\n// ------------------------------------\n\n// Constants\nvar CONFERENCE = "ICML.cc/2019/Conference";\nvar INVITATION = CONFERENCE + \'/-/Submission\';\nvar SUBJECT_AREAS = [\n  // Add conference specific subject areas here\n];\nvar BUFFER = 1000 * 60 * 30;  // 30 minutes\nvar PAGE_SIZE = 50;\n\nvar paperDisplayOptions = {\n  pdfLink: true,\n  replyCount: true,\n  showContents: true\n};\n\n// Main is the entry point to the webfield code and runs everything\nfunction main() {\n  Webfield.ui.setup(\'#group-container\', CONFERENCE);  // required\n\n  renderConferenceHeader();\n\n  load().then(render).then(function() {\n    Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n  });\n}\n\n// RenderConferenceHeader renders the static info at the top of the page. Since that content\n// never changes, put it in its own function\nfunction renderConferenceHeader() {\n  Webfield.ui.venueHeader({\n    title: "ICML ",\n    subtitle: "Recent Advances in Ubiquitous Computing",\n    location: "University of Rostock, Germany",\n    date: "2017, August 04",\n    website: "https://studip.uni-rostock.de/seminar_main.php?auswahl=c9b2fd0a6f525ce968d41d737de3ccb5",\n    instructions: null,  // Add any custom instructions here. Accepts HTML\n    deadline: "Submission Deadline: 2017, June 15th at 11:59 pm (CEST) "\n  });\n\n  Webfield.ui.spinner(\'#notes\');\n}\n\n// Load makes all the API calls needed to get the data to render the page\n// It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/\nfunction load() {\n  var invitationP = Webfield.api.getSubmissionInvitation(INVITATION, {deadlineBuffer: BUFFER});\n  var notesP = Webfield.api.getSubmissions(INVITATION, {pageSize: PAGE_SIZE});\n\n  return $.when(invitationP, notesP);\n}\n\n// Render is called when all the data is finished being loaded from the server\n// It should also be called when the page needs to be refreshed, for example after a user\n// submits a new paper.\nfunction render(invitation, notes) {\n  // Display submission button and form\n  $(\'#invitation\').empty();\n  Webfield.ui.submissionButton(invitation, user, {\n    onNoteCreated: function() {\n      // Callback funtion to be run when a paper has successfully been submitted (required)\n      load().then(render).then(function() {\n        Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n      });\n    }\n  });\n\n  // Display the list of all submitted papers\n  $(\'#notes\').empty();\n  Webfield.ui.submissionList(notes, {\n    heading: \'Submitted Papers\',\n    displayOptions: paperDisplayOptions,\n    search: {\n      enabled: true,\n      subjectAreas: SUBJECT_AREAS,\n      onResults: function(searchResults) {\n        Webfield.ui.searchResults(searchResults, paperDisplayOptions);\n        Webfield.disableAutoLoading();\n      },\n      onReset: function() {\n        Webfield.ui.searchResults(notes, paperDisplayOptions);\n        Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n      }\n    }\n  });\n}\n\n// Go!\nmain();\n\n',
-	 'writers': [u'ICML.cc/2019']}
+	'ddate': None,
+	'id': u'ICML.cc/2019/Conference',
+	'members': [],
+	'nonreaders': [],
+	'readers': [u'everyone'],
+	'signatories': [u'ICML.cc/2019/Conference'],
+	'signatures': [u'ICML.cc/2019'],
+	'web': u'\n// ------------------------------------\n// Basic venue homepage template\n//\n// This webfield displays the conference header (#header), the submit button (#invitation),\n// and a list of all submitted papers (#notes).\n// ------------------------------------\n\n// Constants\nvar CONFERENCE = "ICML.cc/2019/Conference";\nvar INVITATION = CONFERENCE + \'/-/Submission\';\nvar SUBJECT_AREAS = [\n  // Add conference specific subject areas here\n];\nvar BUFFER = 1000 * 60 * 30;  // 30 minutes\nvar PAGE_SIZE = 50;\n\nvar paperDisplayOptions = {\n  pdfLink: true,\n  replyCount: true,\n  showContents: true\n};\n\n// Main is the entry point to the webfield code and runs everything\nfunction main() {\n  Webfield.ui.setup(\'#group-container\', CONFERENCE);  // required\n\n  renderConferenceHeader();\n\n  load().then(render).then(function() {\n    Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n  });\n}\n\n// RenderConferenceHeader renders the static info at the top of the page. Since that content\n// never changes, put it in its own function\nfunction renderConferenceHeader() {\n  Webfield.ui.venueHeader({\n    title: "ICML ",\n    subtitle: "Recent Advances in Ubiquitous Computing",\n    location: "University of Rostock, Germany",\n    date: "2017, August 04",\n    website: "https://studip.uni-rostock.de/seminar_main.php?auswahl=c9b2fd0a6f525ce968d41d737de3ccb5",\n    instructions: null,  // Add any custom instructions here. Accepts HTML\n    deadline: "Submission Deadline: 2017, June 15th at 11:59 pm (CEST) "\n  });\n\n  Webfield.ui.spinner(\'#notes\');\n}\n\n// Load makes all the API calls needed to get the data to render the page\n// It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/\nfunction load() {\n  var invitationP = Webfield.api.getSubmissionInvitation(INVITATION, {deadlineBuffer: BUFFER});\n  var notesP = Webfield.api.getSubmissions(INVITATION, {pageSize: PAGE_SIZE});\n\n  return $.when(invitationP, notesP);\n}\n\n// Render is called when all the data is finished being loaded from the server\n// It should also be called when the page needs to be refreshed, for example after a user\n// submits a new paper.\nfunction render(invitation, notes) {\n  // Display submission button and form\n  $(\'#invitation\').empty();\n  Webfield.ui.submissionButton(invitation, user, {\n    onNoteCreated: function() {\n      // Callback funtion to be run when a paper has successfully been submitted (required)\n      load().then(render).then(function() {\n        Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n      });\n    }\n  });\n\n  // Display the list of all submitted papers\n  $(\'#notes\').empty();\n  Webfield.ui.submissionList(notes, {\n    heading: \'Submitted Papers\',\n    displayOptions: paperDisplayOptions,\n    search: {\n      enabled: true,\n      subjectAreas: SUBJECT_AREAS,\n      onResults: function(searchResults) {\n        Webfield.ui.searchResults(searchResults, paperDisplayOptions);\n        Webfield.disableAutoLoading();\n      },\n      onReset: function() {\n        Webfield.ui.searchResults(notes, paperDisplayOptions);\n        Webfield.setupAutoLoading(INVITATION, PAGE_SIZE, paperDisplayOptions);\n      }\n    }\n  });\n}\n\n// Go!\nmain();\n\n',
+	'writers': [u'ICML.cc/2019']}
 
 
 Please note that this conference group does not show up under the header "Open for Submissions" on Openreview homepage unless an invitation for submission with a future due date is created (as shown in the screenshot below).
@@ -269,19 +271,20 @@ If you have administrator privileges in OpenReview, you will be able to create I
                                                     }
                                             }))
 
-Output ::
-    >>> {'cdate': 1531339106644,
-	 'ddate': None,
-	 'duedate': 1562875092000,
-	 'id': u'ICML.cc/2019/Conference/-/Submission',
-	 'invitees': [u'everyone'],
-	 'multiReply': None,
-	 'noninvitees': [],
-	 'nonreaders': [],
-	 'process': None,
-	 'rdate': None,
-	 'readers': [u'everyone'],
-	 'reply': {u'content': {u'abstract': {u'description': u'Abstract of paper.',
+ ::
+
+	{'cdate': 1531339106644,
+	'ddate': None,
+	'duedate': 1562875092000,
+	'id': u'ICML.cc/2019/Conference/-/Submission',
+	'invitees': [u'everyone'],
+	'multiReply': None,
+	'noninvitees': [],
+	'nonreaders': [],
+	'process': None,
+	'rdate': None,
+	'readers': [u'everyone'],
+	'reply': {u'content': {u'abstract': {u'description': u'Abstract of paper.',
 	                                      u'order': 4,
 	                                      u'required': True,
 	                                      u'value-regex': u'[\\S\\s]{1,5000}'},
@@ -308,11 +311,11 @@ Output ::
 	           u'signatures': {u'description': u'Your authorized identity to be associated with the above content.',
 	                           u'values-regex': u'~.*'},
 	           u'writers': {u'values-regex': u'~.*'}},
-	 'signatures': [u'ICML.cc/2019/Conference'],
-	 'taskCompletionCount': None,
-	 'transform': None,
-	 'web': None,
-	 'writers': [u'ICML.cc/2019/Conference']}
+	'signatures': [u'ICML.cc/2019/Conference'],
+	'taskCompletionCount': None,
+	'transform': None,
+	'web': None,
+	'writers': [u'ICML.cc/2019/Conference']}
 
 
 Once an invitation for submission with a future due date is created, this conference is listed on the Openreview home page under the header "Open for Submissions".
@@ -369,16 +372,16 @@ Creating an invitation to comment enables users to comment on a submission and r
 
 	{'cdate': 1531340152826,
 	'ddate': None,
-	 'duedate': None,
-	 'id': u'ICML.cc/2019/Conference/-/Comment',
-	 'invitees': [u'everyone'],
-	 'multiReply': None,
-	 'noninvitees': [],
-	 'nonreaders': [],
-	 'process': None,
-	 'rdate': None,
-	 'readers': [u'everyone'],
-	 'reply': {u'content': {u'comment': {u'description': u'Comment',
+	'duedate': None,
+	'id': u'ICML.cc/2019/Conference/-/Comment',
+	'invitees': [u'everyone'],
+	'multiReply': None,
+	'noninvitees': [],
+	'nonreaders': [],
+	'process': None,
+	'rdate': None,
+	'readers': [u'everyone'],
+	'reply': {u'content': {u'comment': {u'description': u'Comment',
 	                                     u'order': 2,
 	                                     u'value-regex': u'.{0,1000}'},
 	                        u'title': {u'description': u'Comment title',
@@ -388,11 +391,11 @@ Creating an invitation to comment enables users to comment on a submission and r
 	           u'readers': {u'values': [u'everyone']},
 	           u'signatures': {u'values-regex': u'\\(anonymous\\)|~.*'},
 	           u'writers': {u'values-regex': u'\\(anonymous\\)|~.*'}},
-	 'signatures': [u'ICML.cc/2019/Conference'],
-	 'taskCompletionCount': None,
-	 'transform': None,
-	 'web': None,
-	 'writers': [u'ICML.cc/2019/Conference']}
+	'signatures': [u'ICML.cc/2019/Conference'],
+	'taskCompletionCount': None,
+	'transform': None,
+	'web': None,
+	'writers': [u'ICML.cc/2019/Conference']}
 
 
 
