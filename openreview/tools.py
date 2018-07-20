@@ -204,7 +204,7 @@ def profile_conflicts(profile):
     relation_conflicts is a set of group IDs (email addresses or profiles) that
     may have a conflict of interest with the given profile.
 
-    TODO: Update this function after the migration to non-Note Profile objects.
+    .. todo:: Update this function after the migration to non-Note Profile objects.
     '''
     domain_conflicts = set()
     relation_conflicts = set()
@@ -255,7 +255,7 @@ def get_paper_conflicts(client, paper):
 
     Automatically ignores domain conflicts with "gmail.com".
 
-    TODO: Update this function after the migration to non-Note Profile objects.
+    .. todo:: Update this function after the migration to non-Note Profile objects.
 
     '''
     authorids = paper.content['authorids']
@@ -355,14 +355,16 @@ def get_all_notes(client, invitation, limit=1000):
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
-    |  "individual groups" are groups with a single member; e.g. conference.org/Paper1/AnonReviewer1
-    |  unassigned_individual_groups: a list of individual groups with no members
-    |  individual_groups: the full list of individual groups, empty or not
-    |  individual_label: the "label" of the group: e.g. "AnonReviewer"
+    |  "individual groups" are groups with a single member; 
+    |  e.g. conference.org/Paper1/AnonReviewer1
 
-    |  Returns an individual group's suffix (e.g. AnonReviewer1)
-    |  The suffix will be the next available empty group,
-    |  or will be the suffix of the largest indexed group +1
+    :arg unassigned_individual_groups: a list of individual groups with no members
+    :arg individual_groups: the full list of individual groups, empty or not
+    :arg individual_label: the "label" of the group: e.g. "AnonReviewer"
+
+    :return: an individual group's suffix (e.g. AnonReviewer1)\n
+        The suffix will be the next available empty group,\n
+        or will be the suffix of the largest indexed group +1
     '''
 
     if len(unassigned_individual_groups) > 0:
@@ -385,10 +387,11 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
 def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
 
     '''
-    |  This is only intended to be used as a local helper function
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @group_params: optional parameter that overrides the default
+    This is only intended to be used as a local helper function
+    
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg group_params: optional parameter that overrides the default
     '''
 
     # get the parent group if it already exists, and create it if it doesn't.
@@ -442,18 +445,17 @@ def add_assignment(client, paper_number, conference, reviewer,
     
     '''
     |  Assigns a reviewer to a paper.
+    |  Also adds the given user to the parent and individual groups defined by the paper number, conference, and labels
     |  "individual groups" are groups with a single member;
     |      e.g. conference.org/Paper1/AnonReviewer1
     |  "parent group" is the group that contains the individual groups;
     |      e.g. conference.org/Paper1/Reviewers
 
-    |  @paper_number: the number of the paper to assign
-    |  @conference: the ID of the conference being assigned
-    |  @reviewer: may be an email address or a tilde ID;
-    |  adds the given user to the parent and individual groups defined by
-    |  the paper number, conference, and labels
-    |  @parent_group_params: optional parameter that overrides the default
-    |  @individual_group_params: optional parameter that overrides the default
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg reviewer: may be an email address or a tilde ID;
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
     '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
@@ -513,11 +515,13 @@ def remove_assignment(client, paper_number, conference, reviewer,
     individual_label = 'AnonReviewer'):
 
     '''
-    Un-assigns a reviewer from a paper.
-    "individual groups" are groups with a single member;
-    e.g. conference.org/Paper1/AnonReviewer1
-    "parent group" is the group that contains the individual groups;
-    e.g. conference.org/Paper1/Reviewers
+    |  Un-assigns a reviewer from a paper.
+    |  Removes the given user from the parent group, and any assigned individual groups.
+
+    |  "individual groups" are groups with a single member;
+    |      e.g. conference.org/Paper1/AnonReviewer1
+    |  "parent group" is the group that contains the individual groups;
+    |      e.g. conference.org/Paper1/Reviewers
 
     :arg paper_number: the number of the paper to assign
     :arg conference: the ID of the conference being assigned
@@ -706,6 +710,7 @@ def get_submission_invitations(client, open_only=False):
     :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
     
     Example Usage:
+    
     >>> get_submission_invitations(c,True)
     [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
     '''
@@ -721,8 +726,9 @@ def get_submission_invitations(client, open_only=False):
     return invitation_ids
 
 def get_all_venues(client):
-        '''
-        Returns a list of all the venues
-        :arg client: Object of :class:`~openreview.Client` class
-        '''
-        return client.get_group("host").members
+    '''
+    Returns a list of all the venues
+
+    :arg client: Object of :class:`~openreview.Client` class
+    '''
+    return client.get_group("host").members

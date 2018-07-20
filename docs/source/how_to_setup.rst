@@ -12,12 +12,12 @@ Install the ``openreview-py`` package with `pip
 Setup
 -------
 
-Details on setup coming soon.
+Once installation is done, this python package can be used to make api calls to perform several operations (as listed in API documentation)
 
-Workshop
----------
+To access Openreview API resources, an object of the Client class is needed.::
 
-.. toctree::
-   :maxdepth: 2
+	>>> client = openreview.Client(baseurl='https://openreview.net',username=<your username>,password=<your password>)
 
-   workshop
+While a logged in user gets all the Openreview services, some of the services can be accessed by a guest (without logging in).::
+
+    >>> guest_client = openreview.Client(baseurl='https://openreview.net')

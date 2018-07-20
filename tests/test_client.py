@@ -1,4 +1,4 @@
-from openreview import *
+import openreview 
 
 class TestClient():
 
@@ -35,7 +35,7 @@ class TestClient():
         assert response, "valid token not found"
 
     def test_guest_user(self):
-        invitations = get_submission_invitations(self.guest)
+        invitations = openreview.get_submission_invitations(self.guest)
         assert invitations, "Invitations could not be retrieved for guest user"
-        venues = get_all_venues(self.guest)
+        venues = openreview.get_all_venues(self.guest)
         assert venues, "Venues could not be retrieved for guest user"
