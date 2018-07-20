@@ -322,7 +322,7 @@ Creating an invitation to comment enables users to comment on a submission and r
                                                     }))
 
 Output ::
-    {'cdate': 1531340152826,
+    >>> {'cdate': 1531340152826,
 	 'ddate': None,
 	 'duedate': None,
 	 'id': u'ICML.cc/2019/Conference/-/Comment',
