@@ -1,4 +1,4 @@
-Getting all the venues
+Getting all Venues
 ==========================
 
 ::

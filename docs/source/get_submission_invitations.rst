@@ -1,7 +1,7 @@
-Getting all the submission invitations
+Getting Submissions
 ========================================
 
-All the Invitation Ids can be retrieved like this::
+All the Invitation Ids for Submissions can be retrieved like this::
 
     >>> from __future__ import print_function
     >>> import openreview

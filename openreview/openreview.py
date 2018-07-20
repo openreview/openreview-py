@@ -412,8 +412,7 @@ class Client(object):
 
     def delete_note(self, note):
         """
-        |  Deletes the note and returns the deleted Note object with
-        |  status = 'ok' in case of a successful deletion and an OpenReview exception otherwise.
+        Deletes the note and returns a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise.
         """
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
