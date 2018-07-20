@@ -29,7 +29,7 @@ You need admin privileges for creating subgroups within a group representing you
 
 To create the conference you represent, Openreview team will create a group ::
 
-    >>> print client.post_group(openreview.Group(id = 'ICML.cc/2019/Conference',
+    >>> client.post_group(openreview.Group(id = 'ICML.cc/2019/Conference',
                                          readers = ['everyone'],
                                          writers = ['ICML.cc/2019'],
                                          signatories = ['ICML.cc/2019/Conference'],
@@ -37,7 +37,7 @@ To create the conference you represent, Openreview team will create a group ::
                                          members = [<Admin username>],
                                          web = <path to file containing the js code for the webfield>))
 
-
+::
     {'cdate': 1531339441440,
 	 'ddate': None,
 	 'id': u'ICML.cc/2019/Conference',
@@ -170,7 +170,7 @@ Creating Submission Invitations
 
 If you have administrator privileges in OpenReview, you will be able to create Invitations for Submissions for your conference using this API ::
 
-    >>> print client.post_invitation(openreview.Invitation(id = 'ICML.cc/2019/Conference/-/Submission',
+    >>> client.post_invitation(openreview.Invitation(id = 'ICML.cc/2019/Conference/-/Submission',
                                             readers = ['everyone'],
                                             writers = ['ICML.cc/2019/Conference'],
                                             signatures = ['ICML.cc/2019/Conference'],
@@ -224,7 +224,7 @@ If you have administrator privileges in OpenReview, you will be able to create I
                                                     }
                                             }))
 
-
+::
     {'cdate': 1531339106644,
 	 'ddate': None,
 	 'duedate': 1562875092000,
@@ -290,7 +290,7 @@ Create Invitation to Comment
 Once an invitation for submission is created in your conference, you should be able to create an invitation to comment using the API.
 Creating an invitation to comment enables users to comment on a submission and reply to other's comments.::
 
-    >>> print client.post_invitation(openreview.Invitation(id = 'ICML.cc/2019/Conference/-/Comment',
+    >>> client.post_invitation(openreview.Invitation(id = 'ICML.cc/2019/Conference/-/Comment',
                                                    readers = ['everyone'],
                                                    writers = ['ICML.cc/2019/Conference'],
                                                    signatures = ['ICML.cc/2019/Conference'],
@@ -320,7 +320,7 @@ Creating an invitation to comment enables users to comment on a submission and r
                                                             }
                                                     }))
 
-
+::
     {'cdate': 1531340152826,
 	 'ddate': None,
 	 'duedate': None,
