@@ -54,7 +54,7 @@ To create the conference you represent, Openreview team will create a group ::
 
 Please note that this conference group does not show up under the header "Open for Submissions" on Openreview homepage until an invitation for submission is created.
 
-.. figure:: _static/screenshots/group_created.png
+.. figure:: ../_static/screenshots/group_created.png
     :align: center
 
 Note that the web field for the conference is either JS code or the absolute path of a JS file containing this code. 
@@ -267,13 +267,13 @@ Once an invitation for submission with a future due date is created, this confer
 
 Openreview home page after invitation for submission for ICML.cc/2019/Conference was created:
 
-.. figure:: _static/screenshots/submission_invited.png
+.. figure:: ../_static/screenshots/submission_invited.png
     :align: center
 
 
 Conference home page:
 
-.. figure:: _static/screenshots/conf_homepage.png
+.. figure:: ../_static/screenshots/conf_homepage.png
     :align: center
 
 
@@ -347,7 +347,7 @@ Adding a Submission Note
 
 A submission note (e.g. a research paper) can be added using the Conference homepage.
 
-.. figure:: _static/screenshots/add_submission_note_UI.png
+.. figure:: ../_static/screenshots/add_submission_note_UI.png
     :align: center
 
 This feature is also available through the API.
