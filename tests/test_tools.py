@@ -33,3 +33,7 @@ class TestTools():
             counter += 1
 
         assert counter == data_size
+
+        notes_iterator = openreview.tools.iterget(self.client.get_notes)
+        notes_list = list(notes_iterator)
+        assert notes_list is not None, "Notes iterator failed"
