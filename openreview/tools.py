@@ -324,6 +324,28 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     client.post_group(group)
 
+def iterget(get_function, **kwargs):
+    '''
+    Iterator over a given get function from the client.
+    '''
+    done = False
+    offset = 0
+    params = {
+        'limit': 1000 if 'limit' not in kwargs else kwargs['limit']
+    }
+
+    while not done:
+        params['offset'] = offset
+
+        params.update(kwargs)
+        batch = get_function(**params)
+        offset += params['limit']
+        for obj in batch:
+            yield obj
+
+        if len(batch) < params['limit']:
+            done = True
+
 def _get_all(get_function, invitation, limit):
     '''
     Internal helper function for retrieving all objects of a certain type without
@@ -345,13 +367,13 @@ def get_all_tags(client, invitation, limit=1000):
     '''
     Given an invitation, returns all Tags that respond to it, ignoring API limit.
     '''
-    return _get_all(client.get_tags, invitation, limit)
+    return [t for t in iterget(client.get_tags, invitation=invitation, limit=limit)]
 
 def get_all_notes(client, invitation, limit=1000):
     '''
     Given an invitation, returns all Notes that respond to it, ignoring API limit.
     '''
-    return _get_all(client.get_notes, invitation, limit)
+    return [n for n in iterget(client.get_notes, invitation=invitation, limit=limit)]
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
