@@ -350,13 +350,13 @@ def get_all_tags(client, invitation, limit=1000):
     '''
     Given an invitation, returns all Tags that respond to it, ignoring API limit.
     '''
-    return [t for t in iterget(client.get_tags, invitation=invitation, limit=limit)]
+    return list(iterget(client.get_tags, invitation=invitation, limit=limit))
 
 def get_all_notes(client, invitation, limit=1000):
     '''
     Given an invitation, returns all Notes that respond to it, ignoring API limit.
     '''
-    return [n for n in iterget(client.get_notes, invitation=invitation, limit=limit)]
+    return list(iterget(client.get_notes, invitation=invitation, limit=limit))
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
