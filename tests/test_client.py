@@ -1,4 +1,4 @@
-import openreview 
+import openreview
 
 class TestClient():
 
@@ -9,7 +9,7 @@ class TestClient():
         assert self.client is not None, "Client is none"
         self.guest = openreview.Client(baseurl = self.baseurl)
         assert self.guest is not None, "Guest is none"
-        
+
     def test_get_notes(self):
         notes = self.client.get_notes()
         assert notes, 'notes is None'
@@ -39,3 +39,15 @@ class TestClient():
         assert invitations, "Invitations could not be retrieved for guest user"
         venues = openreview.get_all_venues(self.guest)
         assert venues, "Venues could not be retrieved for guest user"
+
+    def test_get_notes_with_details(self):
+        notes = self.client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
+        assert notes, 'notes is None'
+        assert len(notes) > 0, 'notes is empty'
+        assert notes[0].details, 'notes does not have details'
+        assert isinstance(notes[0].details, dict), 'notes does not have details'
+        assert isinstance(notes[0].details['tags'], list), 'note does not have tags'
+        assert isinstance(notes[0].details['replyCount'], int), 'note does not have replyCount'
+        assert isinstance(notes[0].details['revisions'], bool), 'note does not have revisions'
+        assert isinstance(notes[0].details['overwriting'], list), 'note does not have overwriting'
+        assert isinstance(notes[0].details['writable'], bool), 'note does not have writable'
