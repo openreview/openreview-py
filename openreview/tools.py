@@ -5,6 +5,7 @@ import openreview
 import re
 import datetime
 import time
+from Crypto.Hash import HMAC, SHA256
 
 super_user_id = 'OpenReview.net'
 
@@ -627,7 +628,8 @@ def recruit_reviewer(client, email, first,
     :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed.
     '''
 
-    hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
+
+    hashkey = HMAC.new(hash_seed, msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
