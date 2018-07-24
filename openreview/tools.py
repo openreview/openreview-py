@@ -5,6 +5,7 @@ import openreview
 import re
 import datetime
 import time
+from Crypto.Hash import HMAC
 
 super_user_id = 'OpenReview.net'
 
@@ -67,9 +68,9 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 def build_groups(conference_group_id, default_params=None):
     '''
     Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
-    
+
     (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
-    
+
     >>> [group.id for group in build_groups('ICML.cc/2019/Conference')]
     [u'ICML.cc', u'ICML.cc/2019', u'ICML.cc/2019/Conference']
     '''
@@ -179,7 +180,7 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 def subdomains(domain):
     '''
     Given an email address, returns a list with the domains and subdomains.
-    
+
     >>> subdomains('johnsmith@iesl.cs.umass.edu')
     [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     '''
@@ -355,7 +356,7 @@ def get_all_notes(client, invitation, limit=1000):
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
-    |  "individual groups" are groups with a single member; 
+    |  "individual groups" are groups with a single member;
     |  e.g. conference.org/Paper1/AnonReviewer1
 
     :arg unassigned_individual_groups: a list of individual groups with no members
@@ -388,7 +389,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
 
     '''
     This is only intended to be used as a local helper function
-    
+
     :arg paper_number: the number of the paper to assign
     :arg conference: the ID of the conference being assigned
     :arg group_params: optional parameter that overrides the default
@@ -442,7 +443,7 @@ def add_assignment(client, paper_number, conference, reviewer,
                     individual_group_params = {},
                     parent_label = 'Reviewers',
                     individual_label = 'AnonReviewer'):
-    
+
     '''
     |  Assigns a reviewer to a paper.
     |  Also adds the given user to the parent and individual groups defined by the paper number, conference, and labels
@@ -580,7 +581,7 @@ def assign(client, paper_number, conference,
     :arg reviewer_to_remove: same as @reviewer_to_add, but removes the user
 
     It's important to remove any users first, so that we can do direct replacement of one user with another.
-    
+
     For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
     '''
     if reviewer_to_remove:
@@ -622,7 +623,8 @@ def recruit_reviewer(client, email, first,
     :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed.
     '''
 
-    hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
+
+    hashkey = HMAC.new(hash_seed, msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
@@ -705,24 +707,24 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
 def get_submission_invitations(client, open_only=False):
     '''
     Returns a list of invitation ids visible to the client according to the value of parameter "open_only".
-    
+
     :arg client: Object of :class:`~openreview.Client` class
     :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
-    
+
     Example Usage:
-    
+
     >>> get_submission_invitations(c,True)
     [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
     '''
-    
+
     #Calculate the epoch for current timestamp
     now = int(time.time()*1000)
     duedate = now if open_only==True else None
     invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=duedate)
-    
+
     # For each group in the list, append the invitation id to a list
     invitation_ids = [inv.id for inv in invitations]
-    
+
     return invitation_ids
 
 def get_all_venues(client):
