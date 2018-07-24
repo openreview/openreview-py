@@ -5,7 +5,7 @@ import openreview
 import re
 import datetime
 import time
-from Crypto.Hash import HMAC
+from Crypto.Hash import HMAC, SHA256
 
 super_user_id = 'OpenReview.net'
 
