@@ -55,6 +55,7 @@ class Client(object):
         self.profiles_url = self.baseurl + '/user/profile'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
+        self.pdf_url = self.baseurl + '/pdf'
         
         self.headers = {'User-Agent': 'test-create-script'}
         if(self.username!=None and self.password!=None):
@@ -206,6 +207,21 @@ class Client(object):
             response = self.__handle_response(response)
             return { p['email'] : Note.from_json(p['profile'])
                             for p in response.json()['profiles'] }
+
+    def get_pdf(self, id):
+        '''
+        Returns the binary content of a pdf using the provided note id
+        If the pdf is not found then this returns an error message with "status":404
+        '''
+        params = {}
+        params['id'] = id
+
+        headers = self.headers.copy()
+        headers['content-type'] = 'application/pdf'
+
+        response = requests.get(self.pdf_url, params = params, headers = headers)
+
+        return response.content
 
     def post_profile(self, id, content):
         '''
