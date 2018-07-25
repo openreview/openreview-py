@@ -212,6 +212,12 @@ class Client(object):
         '''
         Returns the binary content of a pdf using the provided note id
         If the pdf is not found then this returns an error message with "status":404
+
+        Example Usage:
+
+        >>> f = get_pdf(id='Place Note-ID here')
+        >>> with open('output.pdf','wb') as op: op.write(f)
+        
         '''
         params = {}
         params['id'] = id
@@ -222,6 +228,23 @@ class Client(object):
         response = requests.get(self.pdf_url, params = params, headers = headers)
 
         return response.content
+
+    def put_pdf(self, fname):
+        '''
+        Uploads a pdf to the openreview server and returns a relative url for the uploaded pdf
+
+        :args fname: path to the pdf
+        '''
+        params = {}
+        params['id'] = id
+
+        headers = self.headers.copy()
+        headers['content-type'] = 'application/pdf'
+
+        with open(fname) as f:
+            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+
+        return response.content.strip("{}").split(':')[1].strip('\"')
 
     def post_profile(self, id, content):
         '''
