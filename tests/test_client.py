@@ -39,3 +39,28 @@ class TestClient():
         assert invitations, "Invitations could not be retrieved for guest user"
         venues = openreview.get_all_venues(self.guest)
         assert venues, "Venues could not be retrieved for guest user"
+
+    def test_get_pdf(self):
+        # Testing a valid PDF id
+        pdf_content = self.client.get_pdf(id='HJBhFJTF-')
+        assert pdf_content, "get_pdf did not return anything"
+
+        # Testing an invalid PDF id
+        pdf_content = self.client.get_pdf(id='RandomID')
+        assert "Not Found" in pdf_content, "requested pdf was not found"
+
+    def test_put_pdf(self):
+        # Calling put_pdf without a valid file name
+        try:
+            response = self.client.put_pdf(fname='')
+        except IOError as e:
+            assert "No such file or directory" in e, "Incorrect error when no file name is given"
+
+        # Creating an empty PDF and then uploading it
+        f = open("empty_test.pdf",'wb')
+        f.close()
+        response = self.client.put_pdf('empty_test.pdf')
+        import os
+        if os.path.exists("empty_test.pdf"):
+            os.remove("empty_test.pdf")
+        assert "/pdf/" in response, "PDF not uploaded properly"

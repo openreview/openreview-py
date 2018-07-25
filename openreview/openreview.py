@@ -233,7 +233,7 @@ class Client(object):
         '''
         Uploads a pdf to the openreview server and returns a relative url for the uploaded pdf
 
-        :args fname: path to the pdf
+        :arg fname: path to the pdf
         '''
         params = {}
         params['id'] = id
