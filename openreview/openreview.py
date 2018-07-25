@@ -62,7 +62,7 @@ class Client(object):
             self.login_user(self.username, self.password)
             self.headers['Authorization'] ='Bearer ' + self.token
             self.signature = self.get_profile(self.username).id
-        
+
 
     ## PRIVATE FUNCTIONS
 
@@ -764,11 +764,10 @@ class Note(object):
         tmdate=None,
         ddate=None,
         forum=None,
-        forumContent=None,
         referent=None,
         replyto=None,
         nonreaders=None,
-        overwriting=None,
+        details = None,
         tauthor=None):
 
         self.id = id
@@ -780,7 +779,6 @@ class Note(object):
         self.ddate = ddate
         self.content = content
         self.forum = forum
-        self.forumContent = forumContent
         self.referent = referent
         self.invitation = invitation
         self.replyto = replyto
@@ -789,7 +787,7 @@ class Note(object):
         self.signatures = signatures
         self.writers = writers
         self.number = number
-        self.overwriting = overwriting
+        self.details = details
         if tauthor:
             self.tauthor = tauthor
 
@@ -811,7 +809,6 @@ class Note(object):
             'number': self.number,
             'content': self.content,
             'forum': self.forum,
-            'forumContent': self.forumContent,
             'referent': self.referent,
             'invitation': self.invitation,
             'replyto': self.replyto,
@@ -820,7 +817,7 @@ class Note(object):
             'signatures': self.signatures,
             'writers': self.writers,
             'number': self.number,
-            'overwriting': self.overwriting
+            'details': self.details
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
@@ -843,7 +840,6 @@ class Note(object):
         ddate=n.get('ddate'),
         content=n.get('content'),
         forum=n.get('forum'),
-        forumContent=n.get('forumContent'),
         referent=n.get('referent'),
         invitation=n.get('invitation'),
         replyto=n.get('replyto'),
@@ -851,7 +847,7 @@ class Note(object):
         nonreaders=n.get('nonreaders'),
         signatures=n.get('signatures'),
         writers=n.get('writers'),
-        overwriting=n.get('overwriting'),
+        details=n.get('details'),
         tauthor=n.get('tauthor')
         )
         return note
