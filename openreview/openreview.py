@@ -244,7 +244,8 @@ class Client(object):
         with open(fname) as f:
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
-        return response.content.strip("{}").split(':')[1].strip('\"')
+        response_dict = json.loads(response.content)
+        return response_dict['url']
 
     def post_profile(self, id, content):
         '''
