@@ -58,8 +58,10 @@ class TestClient():
         assert pdf_content, "get_pdf did not return anything"
 
         # Testing an invalid PDF id
-        pdf_content = self.client.get_pdf(id='RandomID')
-        assert "Not Found" in pdf_content, "requested pdf was not found"
+        try:
+            pdf_content = self.client.get_pdf(id='AnInvalidID')
+        except openreview.OpenReviewException as e:
+            assert 'Not Found' in e.message[0]['type'], "Incorrect error observed with invalid Note ID"
 
     def test_put_pdf(self):
         # Calling put_pdf without a valid file name
