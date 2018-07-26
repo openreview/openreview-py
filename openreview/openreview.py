@@ -70,10 +70,11 @@ class Client(object):
         try:
             response.raise_for_status()
 
-            if 'errors' in response.json():
-                raise OpenReviewException(response.json()['errors'])
-            if 'error' in response.json():
-                raise OpenReviewException(response.json()['error'])
+            if("application/json" in response.headers['content-type']):
+                if 'errors' in response.json():
+                    raise OpenReviewException(response.json()['errors'])
+                if 'error' in response.json():
+                    raise OpenReviewException(response.json()['error'])
 
             return response
         except requests.exceptions.HTTPError as e:
@@ -81,7 +82,6 @@ class Client(object):
                 raise OpenReviewException(response.json()['errors'])
             else:
                 raise OpenReviewException(response.json())
-
 
     ## PUBLIC FUNCTIONS
 
@@ -226,7 +226,7 @@ class Client(object):
         headers['content-type'] = 'application/pdf'
 
         response = requests.get(self.pdf_url, params = params, headers = headers)
-
+        response = self.__handle_response(response)
         return response.content
 
     def put_pdf(self, fname):
@@ -244,6 +244,7 @@ class Client(object):
         with open(fname) as f:
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
+        response = self.__handle_response(response)
         response_dict = json.loads(response.content)
         return response_dict['url']
 
