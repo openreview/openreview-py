@@ -55,7 +55,8 @@ class Client(object):
         self.profiles_url = self.baseurl + '/user/profile'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
-
+        self.pdf_url = self.baseurl + '/pdf'
+        
         self.headers = {'User-Agent': 'test-create-script'}
         if(self.username!=None and self.password!=None):
             self.login_user(self.username, self.password)
@@ -69,10 +70,11 @@ class Client(object):
         try:
             response.raise_for_status()
 
-            if 'errors' in response.json():
-                raise OpenReviewException(response.json()['errors'])
-            if 'error' in response.json():
-                raise OpenReviewException(response.json()['error'])
+            if("application/json" in response.headers['content-type']):
+                if 'errors' in response.json():
+                    raise OpenReviewException(response.json()['errors'])
+                if 'error' in response.json():
+                    raise OpenReviewException(response.json()['error'])
 
             return response
         except requests.exceptions.HTTPError as e:
@@ -80,7 +82,6 @@ class Client(object):
                 raise OpenReviewException(response.json()['errors'])
             else:
                 raise OpenReviewException(response.json())
-
 
     ## PUBLIC FUNCTIONS
 
@@ -206,6 +207,46 @@ class Client(object):
             response = self.__handle_response(response)
             return { p['email'] : Note.from_json(p['profile'])
                             for p in response.json()['profiles'] }
+
+    def get_pdf(self, id):
+        '''
+        Returns the binary content of a pdf using the provided note id
+        If the pdf is not found then this returns an error message with "status":404
+
+        Example Usage:
+
+        >>> f = get_pdf(id='Place Note-ID here')
+        >>> with open('output.pdf','wb') as op: op.write(f)
+        
+        '''
+        params = {}
+        params['id'] = id
+
+        headers = self.headers.copy()
+        headers['content-type'] = 'application/pdf'
+
+        response = requests.get(self.pdf_url, params = params, headers = headers)
+        response = self.__handle_response(response)
+        return response.content
+
+    def put_pdf(self, fname):
+        '''
+        Uploads a pdf to the openreview server and returns a relative url for the uploaded pdf
+
+        :arg fname: path to the pdf
+        '''
+        params = {}
+        params['id'] = id
+
+        headers = self.headers.copy()
+        headers['content-type'] = 'application/pdf'
+
+        with open(fname) as f:
+            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+
+        response = self.__handle_response(response)
+        response_dict = json.loads(response.content)
+        return response_dict['url']
 
     def post_profile(self, id, content):
         '''
