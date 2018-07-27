@@ -325,20 +325,18 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     client.post_group(group)
 
-def iterget(get_function, **kwargs):
+def iterget(get_function, batch_size=1000, **params):
     '''
     Iterator over a given get function from the client.
     '''
     done = False
     offset = 0
-    params = {
-        'limit': 1000 if 'limit' not in kwargs else kwargs['limit']
-    }
 
     while not done:
-        params['offset'] = offset
-
-        params.update(kwargs)
+        params.update({
+            'offset': offset,
+            'limit': batch_size
+        })
         batch = get_function(**params)
         offset += params['limit']
         for obj in batch:
@@ -347,23 +345,23 @@ def iterget(get_function, **kwargs):
         if len(batch) < params['limit']:
             done = True
 
-def get_all_tags(client, invitation, limit=1000):
+def get_all_tags(client, invitation, batch_size=1000):
     '''
     Given an invitation, returns all Tags that respond to it, ignoring API limit.
     '''
-    return list(iterget(client.get_tags, invitation=invitation, limit=limit))
+    return list(iterget(client.get_tags, invitation=invitation, batch_size=batch_size))
 
-def get_all_notes(client, invitation, limit=1000):
+def get_all_notes(client, invitation, batch_size=1000):
     '''
     Given an invitation, returns all Notes that respond to it, ignoring API limit.
     '''
-    return list(iterget(client.get_notes, invitation=invitation, limit=limit))
+    return list(iterget(client.get_notes, invitation=invitation, batch_size=batch_size))
 
-def get_all_references(client, invitation, limit=1000):
+def get_all_references(client, invitation, batch_size=1000):
     '''
     Given an invitation, returns all Notes that respond to it, ignoring API limit.
     '''
-    return list(iterget(client.get_references, invitation=invitation, limit=limit))
+    return list(iterget(client.get_references, invitation=invitation, batch_size=batch_size))
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
