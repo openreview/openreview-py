@@ -1,5 +1,9 @@
 import openreview
 import random
+import types
+import sys
+
+
 
 class TestTools():
 
@@ -41,14 +45,18 @@ class TestTools():
     def test_get_all_notes(self):
         batch_size = 1000
         all_notes = openreview.tools.get_all_notes(self.client, None, batch_size=batch_size)
-        assert len(all_notes) > batch_size
+        assert type(all_notes) == types.GeneratorType
+        assert type(all_notes.next()) == openreview.Note
+
 
     def test_get_all_refs(self):
         batch_size = 1000
         all_refs = openreview.tools.get_all_references(self.client, None, batch_size=batch_size)
-        assert len(all_refs) > batch_size
+        assert type(all_refs) == types.GeneratorType
+        assert type(all_refs.next()) == openreview.Note
 
     def test_get_all_tags(self):
         batch_size = 1000
         all_tags = openreview.tools.get_all_tags(self.client, None, batch_size=batch_size)
-        assert len(all_tags) > batch_size
+        assert type(all_tags) == types.GeneratorType
+        assert type(all_tags.next()) == openreview.Tag
