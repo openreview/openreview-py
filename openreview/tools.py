@@ -359,6 +359,12 @@ def get_all_notes(client, invitation, limit=1000):
     '''
     return list(iterget(client.get_notes, invitation=invitation, limit=limit))
 
+def get_all_references(client, invitation, limit=1000):
+    '''
+    Given an invitation, returns all Notes that respond to it, ignoring API limit.
+    '''
+    return list(iterget(client.get_references, invitation=invitation, limit=limit))
+
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
     |  "individual groups" are groups with a single member;
