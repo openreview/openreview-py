@@ -37,3 +37,13 @@ class TestTools():
         notes_iterator = openreview.tools.iterget(self.client.get_notes)
         notes_list = list(notes_iterator)
         assert notes_list is not None, "Notes iterator failed"
+
+    def test_get_all(self):
+        all_notes = openreview.tools.get_all_notes(client, None, limit=1)
+        assert len(all_notes) > 1
+
+        all_refs = openreview.tools.get_all_references(client, None, limit=1)
+        assert len(all_refs) > 1
+
+        all_tags = openreview.tools.get_all_tags(client, None, limit=1)
+        assert len(all_tags) > 1
