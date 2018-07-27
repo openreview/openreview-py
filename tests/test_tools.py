@@ -38,14 +38,17 @@ class TestTools():
         notes_list = list(notes_iterator)
         assert notes_list is not None, "Notes iterator failed"
 
-    def test_get_all(self):
-        queue_limit = 10
-
+    def test_get_all_notes(self):
+        queue_limit = 1000
         all_notes = openreview.tools.get_all_notes(self.client, None, limit=queue_limit)
         assert len(all_notes) > queue_limit
 
+    def test_get_all_refs(self):
+        queue_limit = 1000
         all_refs = openreview.tools.get_all_references(self.client, None, limit=queue_limit)
         assert len(all_refs) > queue_limit
 
+    def test_get_all_tags(self):
+        queue_limit = 1000
         all_tags = openreview.tools.get_all_tags(self.client, None, limit=queue_limit)
         assert len(all_tags) > queue_limit
