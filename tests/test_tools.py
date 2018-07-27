@@ -37,3 +37,8 @@ class TestTools():
         notes_iterator = openreview.tools.iterget(self.client.get_notes)
         notes_list = list(notes_iterator)
         assert notes_list is not None, "Notes iterator failed"
+
+    def test_get_preferred_name(self):
+        preferred_name = openreview.tools.get_preferred_name(self.client, 'OpenReview.net')
+        assert preferred_name, "preferred name not found"
+        assert preferred_name == 'Super User'
