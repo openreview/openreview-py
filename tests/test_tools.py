@@ -42,21 +42,21 @@ class TestTools():
         notes_list = list(notes_iterator)
         assert notes_list is not None, "Notes iterator failed"
 
-    def test_get_all_notes(self):
+    def test_iterget_notes(self):
         batch_size = 1000
-        all_notes = openreview.tools.get_all_notes(self.client, None, batch_size=batch_size)
-        assert type(all_notes) == types.GeneratorType
-        assert type(all_notes.next()) == openreview.Note
+        notes_iterator = openreview.tools.iterget_notes(self.client, None, batch_size=batch_size)
+        assert type(notes_iterator) == types.GeneratorType
+        assert type(notes_iterator.next()) == openreview.Note
 
 
     def test_get_all_refs(self):
         batch_size = 1000
-        all_refs = openreview.tools.get_all_references(self.client, None, batch_size=batch_size)
-        assert type(all_refs) == types.GeneratorType
-        assert type(all_refs.next()) == openreview.Note
+        refs_iterator = openreview.tools.iterget_references(self.client, None, batch_size=batch_size)
+        assert type(refs_iterator) == types.GeneratorType
+        assert type(refs_iterator.next()) == openreview.Note
 
     def test_get_all_tags(self):
         batch_size = 1000
-        all_tags = openreview.tools.get_all_tags(self.client, None, batch_size=batch_size)
-        assert type(all_tags) == types.GeneratorType
-        assert type(all_tags.next()) == openreview.Tag
+        tag_iterator = openreview.tools.iterget_tags(self.client, None, batch_size=batch_size)
+        assert type(tag_iterator) == types.GeneratorType
+        assert type(tag_iterator.next()) == openreview.Tag
