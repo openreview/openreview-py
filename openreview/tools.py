@@ -81,7 +81,15 @@ def get_preferred_name(client, group_id):
     else:
         primary_preferred_name = names[0]
 
-    return u'{first} {last}'.format(first=primary_preferred_name['first'], last=primary_preferred_name['last'])
+    name_parts = []
+    if primary_preferred_name.get('first'):
+        name_parts.append(primary_preferred_name['first'])
+    if primary_preferred_name.get('middle'):
+        name_parts.append(primary_preferred_name['middle'])
+    if primary_preferred_name.get('last'):
+        name_parts.append(primary_preferred_name['last'])
+
+    return ' '.join(name_parts)
 
 def build_groups(conference_group_id, default_params=None):
     '''
