@@ -345,21 +345,21 @@ def iterget(get_function, batch_size=1000, **params):
         if len(batch) < params['limit']:
             done = True
 
-def get_all_tags(client, invitation, batch_size=1000):
+def iterget_tags(client, invitation, batch_size=1000):
     '''
-    Given an invitation, returns all Tags that respond to it, ignoring API limit.
+    Given an invitation, returns an iterator over all Tags that respond to it, ignoring API limit.
     '''
     return iterget(client.get_tags, invitation=invitation, batch_size=batch_size)
 
-def get_all_notes(client, invitation, batch_size=1000):
+def iterget_notes(client, invitation, batch_size=1000):
     '''
-    Given an invitation, returns all Notes that respond to it, ignoring API limit.
+    Given an invitation, returns an iterator over all Notes that respond to it, ignoring API limit.
     '''
     return iterget(client.get_notes, invitation=invitation, batch_size=batch_size)
 
-def get_all_references(client, invitation, batch_size=1000):
+def iterget_references(client, invitation, batch_size=1000):
     '''
-    Given an invitation, returns all references that respond to it, ignoring API limit.
+    Given an invitation, returns an iterator over all references that respond to it, ignoring API limit.
     '''
     return iterget(client.get_references, invitation=invitation, batch_size=batch_size)
 
