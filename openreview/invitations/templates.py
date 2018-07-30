@@ -267,23 +267,23 @@ def from_template(invitation_template, paper):
     new_params = fill_template(invitation_template, paper)
 
     return openreview.Invitation(
-        id = new_params['id'],
-        writers = new_params.get('writers'),
-        invitees = new_params.get('invitees'),
+        new_params['id'],
+        new_params.get('readers'),
+        new_params.get('writers'),
+        new_params.get('invitees'),
+        new_params.get('signatures'),
+        new_params.get('reply', {}),
         noninvitees = new_params.get('noninvitees'),
-        readers = new_params.get('readers'),
         nonreaders = new_params.get('nonreaders'),
-        reply = new_params.get('reply', {}),
-        replyto = new_params.get('replyto'),
-        forum = new_params.get('forum'),
-        invitation = new_params.get('invitation'),
-        signatures = new_params.get('signatures'),
         web = new_params.get('web'),
         process = new_params.get('process'),
         duedate = new_params.get('duedate'),
         cdate = new_params.get('cdate'),
         rdate = new_params.get('rdate'),
         ddate = new_params.get('ddate'),
+        tcdate = new_params.get('tcdate'),
+        tmdate = new_params.get('tmdate'),
         multiReply = new_params.get('multiReply'),
-        taskCompletionCount = new_params.get('taskCompletionCount')
+        taskCompletionCount = new_params.get('taskCompletionCount'),
+        transform = new_params.get('transform')
     )
