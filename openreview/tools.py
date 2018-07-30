@@ -1,8 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import openreview
 import re
 import datetime
+import time
+from Crypto.Hash import HMAC, SHA256
 
 super_user_id = 'OpenReview.net'
 
@@ -13,11 +16,21 @@ def get_profile(client, value):
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if e[0][0] != 'Profile not found':
-            print "OpenReviewException: {0}".format(e)
+            print("OpenReviewException: {0}".format(e))
             return e
     return profile
 
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
+
+    '''
+    Given email, first name, last name, and middle name (optional), creates and returns
+    a user profile.
+
+    If a profile with the same name exists, and allow_duplicates is False, an exception is raised.
+
+    If a profile with the same name exists and allow_duplicates is True, a profile is created with
+    the next largest number (e.g. if ~Michael_Spector1 exists, ~Michael_Spector2 will be created)
+    '''
 
     profile = get_profile(client, email)
 
@@ -54,10 +67,12 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 
 def build_groups(conference_group_id, default_params=None):
     '''
-
     Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
+
     (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
 
+    >>> [group.id for group in build_groups('ICML.cc/2019/Conference')]
+    [u'ICML.cc', u'ICML.cc/2019', u'ICML.cc/2019/Conference']
     '''
 
     path_components = conference_group_id.split('/')
@@ -78,6 +93,11 @@ def build_groups(conference_group_id, default_params=None):
     return sorted(groups.values(), key=lambda x: len(x.id))
 
 def post_group_parents(client, group, overwrite_parents=False):
+    '''
+    Helper function for posting groups created by build_groups function.
+
+    Recommended that this function be deprecated.
+    '''
     groups = build_groups(group.id)
 
     posted_groups = []
@@ -93,6 +113,17 @@ def post_group_parents(client, group, overwrite_parents=False):
     return posted_groups
 
 def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True):
+    '''
+    Generates a bibtex field for a given Note.
+
+    The "accepted" argument is used to indicate whether or not the paper was ultimately accepted.
+    (OpenReview generates bibtex fields for rejected papers)
+
+    The "anonymous" argument is used to indicate whether or not the paper's authors should be
+    revealed.
+
+    Warning: this function is a work-in-progress.
+    '''
 
     def capitalize_title(title):
         capitalization_regex = re.compile('[A-Z]{2,}')
@@ -148,9 +179,10 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
 def subdomains(domain):
     '''
-    Given an email address, get the domains and subdomains.
+    Given an email address, returns a list with the domains and subdomains.
 
-    e.g. johnsmith@iesl.cs.umass.edu --> [umass.edu, cs.umass.edu, iesl.cs.umass.edu]
+    >>> subdomains('johnsmith@iesl.cs.umass.edu')
+    [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     '''
 
     if '@' in domain:
@@ -163,6 +195,18 @@ def subdomains(domain):
     return valid_domains
 
 def profile_conflicts(profile):
+    '''
+    Given a profile, returns a tuple containing two sets: domain_conflicts and
+    relation_conflicts.
+
+    domain_conflicts is a set of domains/subdomains that may have a conflict of
+    interest with the given profile.
+
+    relation_conflicts is a set of group IDs (email addresses or profiles) that
+    may have a conflict of interest with the given profile.
+
+    .. todo:: Update this function after the migration to non-Note Profile objects.
+    '''
     domain_conflicts = set()
     relation_conflicts = set()
 
@@ -184,6 +228,12 @@ def profile_conflicts(profile):
     return (domain_conflicts, relation_conflicts)
 
 def get_profile_conflicts(client, reviewer_to_add):
+    '''
+    Helper function for profile_conflicts function. Given a reviewer ID or email
+    address, requests the server for that reviewer's profile, and checks it for
+    conflicts using profile_conflicts.
+
+    '''
     try:
         profile = client.get_profile(reviewer_to_add)
         user_domain_conflicts, user_relation_conflicts = profile_conflicts(profile)
@@ -194,6 +244,21 @@ def get_profile_conflicts(client, reviewer_to_add):
     return user_domain_conflicts, user_relation_conflicts
 
 def get_paper_conflicts(client, paper):
+    '''
+    Given a Note object representing a submitted paper, returns a tuple containing
+    two sets: domain_conflicts and relation_conflicts.
+
+    domain_conflicts is a set of domains/subdomains that may have a conflict of
+    interest with the given paper.
+
+    relation_conflicts is a set of group IDs (email addresses or profiles) that
+    may have a conflict of interest with the given paper.
+
+    Automatically ignores domain conflicts with "gmail.com".
+
+    .. todo:: Update this function after the migration to non-Note Profile objects.
+
+    '''
     authorids = paper.content['authorids']
     domain_conflicts = set()
     relation_conflicts = set()
@@ -215,6 +280,14 @@ def get_paper_conflicts(client, paper):
     return (domain_conflicts, relation_conflicts)
 
 def get_paperhash(first_author, title):
+    '''
+    Returns the paperhash of a paper, given the title and first author.
+
+    >>> get_paperhash('David Soergel', 'Open Scholarship and Peer Review: a Time for Experimentation')
+    u'soergel|open_scholarship_and_peer_review_a_time_for_experimentation'
+
+    '''
+
     title = title.strip()
     strip_punctuation = '[^A-zÀ-ÿ\d\s]'.decode('utf-8')
     title = re.sub(strip_punctuation, '', title)
@@ -227,6 +300,13 @@ def get_paperhash(first_author, title):
     return (first_author + '|' + title).lower()
 
 def replace_members_with_ids(client, group):
+    '''
+    Given a Group object, iterates through the Group's members and, for any member
+    represented by an email address, attempts to find a profile associated with
+    that email address. If a profile is found, replaces the email with the profile ID.
+
+    Returns None.
+    '''
     ids = []
     emails = []
     for member in group.members:
@@ -245,35 +325,52 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     client.post_group(group)
 
-def _get_all(get_function, invitation, limit):
+def iterget(get_function, **kwargs):
+    '''
+    Iterator over a given get function from the client.
+    '''
     done = False
-    objects = []
     offset = 0
+    params = {
+        'limit': 1000 if 'limit' not in kwargs else kwargs['limit']
+    }
+
     while not done:
-        batch = get_function(invitation=invitation, limit=limit, offset=offset)
-        objects += batch
-        offset += limit
-        if len(batch) < limit:
+        params['offset'] = offset
+
+        params.update(kwargs)
+        batch = get_function(**params)
+        offset += params['limit']
+        for obj in batch:
+            yield obj
+
+        if len(batch) < params['limit']:
             done = True
-    return objects
 
 def get_all_tags(client, invitation, limit=1000):
-    return _get_all(client.get_tags, invitation, limit)
+    '''
+    Given an invitation, returns all Tags that respond to it, ignoring API limit.
+    '''
+    return list(iterget(client.get_tags, invitation=invitation, limit=limit))
 
 def get_all_notes(client, invitation, limit=1000):
-    return _get_all(client.get_notes, invitation, limit)
+    '''
+    Given an invitation, returns all Notes that respond to it, ignoring API limit.
+    '''
+    return list(iterget(client.get_notes, invitation=invitation, limit=limit))
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
-    "individual groups" are groups with a single member; e.g. conference.org/Paper1/AnonReviewer1
+    |  "individual groups" are groups with a single member;
+    |  e.g. conference.org/Paper1/AnonReviewer1
 
-    @unassigned_individual_groups: a list of individual groups with no members
-    @individual_groups: the full list of individual groups, empty or not
-    @individual_label: the "label" of the group: e.g. "AnonReviewer"
+    :arg unassigned_individual_groups: a list of individual groups with no members
+    :arg individual_groups: the full list of individual groups, empty or not
+    :arg individual_label: the "label" of the group: e.g. "AnonReviewer"
 
-    Returns an individual group's suffix (e.g. AnonReviewer1)
-    The suffix will be the next available empty group,
-    or will be the suffix of the largest indexed group +1
+    :return: an individual group's suffix (e.g. AnonReviewer1)\n
+        The suffix will be the next available empty group,\n
+        or will be the suffix of the largest indexed group +1
     '''
 
     if len(unassigned_individual_groups) > 0:
@@ -297,9 +394,10 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
 
     '''
     This is only intended to be used as a local helper function
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @group_params: optional parameter that overrides the default
+
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg group_params: optional parameter that overrides the default
     '''
 
     # get the parent group if it already exists, and create it if it doesn't.
@@ -352,29 +450,27 @@ def add_assignment(client, paper_number, conference, reviewer,
                     individual_label = 'AnonReviewer'):
 
     '''
-    "individual groups" are groups with a single member;
-        e.g. conference.org/Paper1/AnonReviewer1
-    "parent group" is the group that contains the individual groups;
-        e.g. conference.org/Paper1/Reviewers
+    |  Assigns a reviewer to a paper.
+    |  Also adds the given user to the parent and individual groups defined by the paper number, conference, and labels
+    |  "individual groups" are groups with a single member;
+    |      e.g. conference.org/Paper1/AnonReviewer1
+    |  "parent group" is the group that contains the individual groups;
+    |      e.g. conference.org/Paper1/Reviewers
 
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @reviewer: may be an email address or a tilde ID;
-        adds the given user to the parent and individual groups defined by
-        the paper number, conference, and labels
-    @parent_group_params: optional parameter that overrides the default
-    @individual_group_params: optional parameter that overrides the default
-     '''
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg reviewer: may be an email address or a tilde ID;
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
+    '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
     parent_group = result[0]
     individual_groups = result[1]
     unassigned_individual_groups = result[2]
 
-
     '''
     Adds the given user to the parent group, and to the next empty individual group.
-
     Prints the results to the console.
     '''
     profile = get_profile(client, reviewer)
@@ -382,7 +478,7 @@ def add_assignment(client, paper_number, conference, reviewer,
 
     if user not in parent_group.members:
         client.add_members_to_group(parent_group, user)
-        print "{:40s} --> {}".format(user.encode('utf-8'), parent_group.id)
+        print("{:40s} --> {}".format(user.encode('utf-8'), parent_group.id))
 
     assigned_individual_groups = [a for a in individual_groups if user in a.members]
     if not assigned_individual_groups:
@@ -410,12 +506,12 @@ def add_assignment(client, paper_number, conference, reviewer,
         individual_group.signatories.append(anonreviewer_id)
         individual_group.members.append(user)
 
-        print "{:40s} --> {}".format(user.encode('utf-8'), individual_group.id)
+        print("{:40s} --> {}".format(user.encode('utf-8'), individual_group.id))
         return client.post_group(individual_group)
     else:
         # user already assigned to individual group(s)
         for g in assigned_individual_groups:
-            print "{:40s} === {}".format(user.encode('utf-8'), g.id)
+            print("{:40s} === {}".format(user.encode('utf-8'), g.id))
         return assigned_individual_groups[0]
 
 
@@ -425,16 +521,19 @@ def remove_assignment(client, paper_number, conference, reviewer,
     individual_label = 'AnonReviewer'):
 
     '''
-    "individual groups" are groups with a single member;
-        e.g. conference.org/Paper1/AnonReviewer1
-    "parent group" is the group that contains the individual groups;
-        e.g. conference.org/Paper1/Reviewers
+    |  Un-assigns a reviewer from a paper.
+    |  Removes the given user from the parent group, and any assigned individual groups.
 
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @reviewer: same as @reviewer_to_add, but removes the user
-    @parent_group_params: optional parameter that overrides the default
-    @individual_group_params: optional parameter that overrides the default
+    |  "individual groups" are groups with a single member;
+    |      e.g. conference.org/Paper1/AnonReviewer1
+    |  "parent group" is the group that contains the individual groups;
+    |      e.g. conference.org/Paper1/Reviewers
+
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg reviewer: same as @reviewer_to_add, but removes the user
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
     '''
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
@@ -454,11 +553,11 @@ def remove_assignment(client, paper_number, conference, reviewer,
     for user_entity in user_groups:
         if user_entity in parent_group.members:
             client.remove_members_from_group(parent_group, user_entity)
-            print "{:40s} xxx {}".format(user_entity, parent_group.id)
+            print("{:40s} xxx {}".format(user_entity, parent_group.id))
 
         assigned_individual_groups = [a for a in individual_groups if user_entity in a.members]
         for individual_group in assigned_individual_groups:
-            print "{:40s} xxx {}".format(user_entity, individual_group.id)
+            print("{:40s} xxx {}".format(user_entity, individual_group.id))
             client.remove_members_from_group(individual_group, user_entity)
 
 
@@ -471,25 +570,24 @@ def assign(client, paper_number, conference,
     individual_label = 'AnonReviewer'):
 
     '''
+    Either assigns or unassigns a reviewer to a paper.
+    TODO: Is this function really necessary?
+
     "individual groups" are groups with a single member;
-        e.g. conference.org/Paper1/AnonReviewer1
+    e.g. conference.org/Paper1/AnonReviewer1
     "parent group" is the group that contains the individual groups;
-        e.g. conference.org/Paper1/Reviewers
+    e.g. conference.org/Paper1/Reviewers
 
-    @paper_number: the number of the paper to assign
-    @conference: the ID of the conference being assigned
-    @parent_group_params: optional parameter that overrides the default
-    @individual_group_params: optional parameter that overrides the default
-    @reviewer_to_add: may be an email address or a tilde ID;
-        adds the given user to the parent and individual groups defined by
-        the paper number, conference, and labels
-    @reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    :arg paper_number: the number of the paper to assign
+    :arg conference: the ID of the conference being assigned
+    :arg parent_group_params: optional parameter that overrides the default
+    :arg individual_group_params: optional parameter that overrides the default
+    :arg reviewer_to_add: may be an email address or a tilde ID; adds the given user to the parent and individual groups defined by the paper number, conference, and labels
+    :arg reviewer_to_remove: same as @reviewer_to_add, but removes the user
 
-    It's important to remove any users first, so that we can do direct replacement of
-        one user with another.
+    It's important to remove any users first, so that we can do direct replacement of one user with another.
 
-    For example: passing in a reviewer to remove AND a reviewer to add should replace
-        the first user with the second.
+    For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
     '''
     if reviewer_to_remove:
         remove_assignment(client, paper_number, conference, reviewer_to_remove,
@@ -503,6 +601,14 @@ def assign(client, paper_number, conference,
 
 
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
+    '''
+    Given year, month, day, and (optionally) hour, minute, second in GMT time zone:
+    returns the number of milliseconds between this day and Epoch Time (Jan 1, 1970).
+
+    >>> timestamp_GMT(1990, 12, 20, hour=12, minute=30, second=24)
+    661696224000
+
+    '''
     return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
 
 def recruit_reviewer(client, email, first,
@@ -513,15 +619,17 @@ def recruit_reviewer(client, email, first,
     reviewers_invited_id,
     verbose=True):
     '''
-    Recruit a reviewer.
+    Recruit a reviewer. Sends an email to the reviewer with a link to accept or
+    reject the recruitment invitation.
 
-    The hashkey is important for uniquely identifying the user, without
-    requiring them to already have an openreview account. The second argument
-    to the client.get_hash() function is just a big random number that the
-    invitation's "process function" also knows about.
+    :arg hash_seed: a random number for seeding the hash.
+    :arg recruit_message: a formattable string containing the following string variables: (name, accept_url, decline_url)
+    :arg recruit_message_subj: subject line for the recruitment email
+    :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed.
     '''
 
-    hashkey = client.get_hash(email.encode('utf-8'), hash_seed)
+
+    hashkey = HMAC.new(hash_seed, msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
@@ -546,12 +654,14 @@ def recruit_reviewer(client, email, first,
         client.add_members_to_group(reviewers_invited, response['groups'])
 
     if verbose:
-        print "Sent to the following: ", response
-        print personalized_message
+        print("Sent to the following: ", response)
+        print(personalized_message)
 
-''' Create paper group, authors group, reviewers group, review non-readers group
-    for all notes returned by the submission_invite.'''
 def post_submission_groups(client, conference_id, submission_invite, chairs):
+    '''
+    Create paper group, authors group, reviewers group, review non-readers group
+    for all notes returned by the submission_invite.
+    '''
     submissions = client.get_notes(invitation=submission_invite)
     for paper in submissions:
         paper_num = str(paper.number)
@@ -599,3 +709,33 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
             readers=[conference_id, chairs],
             signatories=[]))
 
+def get_submission_invitations(client, open_only=False):
+    '''
+    Returns a list of invitation ids visible to the client according to the value of parameter "open_only".
+
+    :arg client: Object of :class:`~openreview.Client` class
+    :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
+
+    Example Usage:
+
+    >>> get_submission_invitations(c,True)
+    [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
+    '''
+
+    #Calculate the epoch for current timestamp
+    now = int(time.time()*1000)
+    duedate = now if open_only==True else None
+    invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=duedate)
+
+    # For each group in the list, append the invitation id to a list
+    invitation_ids = [inv.id for inv in invitations]
+
+    return invitation_ids
+
+def get_all_venues(client):
+    '''
+    Returns a list of all the venues
+
+    :arg client: Object of :class:`~openreview.Client` class
+    '''
+    return client.get_group("host").members
