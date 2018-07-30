@@ -353,13 +353,13 @@ def iterget(get_function, **params):
 
 def iterget_tags(client, id = None, invitation = None, forum = None):
     '''
-    Given an invitation, returns an iterator over all Tags that respond to it, ignoring API limit.
+    Returns an iterator over Tags, filtered by the provided parameters, ignoring API limit.
 
     Example: iterget_tags(client, invitation='MyConference.org/-/Bid_Tags')
 
     :arg id: a Tag ID. If provided, returns Tags whose ID matches the given ID.
-    :arg forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
-    :arg invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+    :arg forum: a Note ID. If provided, returns Tags whose forum matches the given ID.
+    :arg invitation: an Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
 
     '''
     params = {}
@@ -375,7 +375,7 @@ def iterget_tags(client, id = None, invitation = None, forum = None):
 
 def iterget_notes(client, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, mintcdate = None, details = None):
     '''
-    Given an invitation, returns an iterator over all Notes that respond to it, ignoring API limit.
+    Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
 
     :arg client: an openreview.Client object.
     :arg id: a Note ID. If provided, returns Notes whose ID matches the given ID.
@@ -392,7 +392,7 @@ def iterget_notes(client, id = None, paperhash = None, forum = None, invitation 
     :arg trash: a Boolean. If True, includes Notes that have been deleted (i.e. the ddate field is less than the
         current date)
     :arg number: an integer. If present, includes Notes whose number field equals the given integer.
-    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
+    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
         whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
     :arg details: TODO: What is a valid value for this field?
     '''
@@ -426,7 +426,7 @@ def iterget_notes(client, id = None, paperhash = None, forum = None, invitation 
 
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
     '''
-    Given an invitation, returns an iterator over all references that respond to it, ignoring API limit.
+    Returns an iterator over references, filtered by the provided parameters, ignoring API limit.
 
     :arg client: an openreview.Client object.
     :arg referent: a Note ID. If provided, returns references whose "referent" value is this Note ID.
