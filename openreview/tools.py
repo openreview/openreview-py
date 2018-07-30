@@ -325,12 +325,13 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     client.post_group(group)
 
-def iterget(get_function, batch_size=1000, **params):
+def iterget(get_function, **params):
     '''
     Iterator over a given get function from the client.
     '''
     done = False
     offset = 0
+    batch_size = 1000
 
     while not done:
         params.update({
@@ -345,23 +346,23 @@ def iterget(get_function, batch_size=1000, **params):
         if len(batch) < params['limit']:
             done = True
 
-def iterget_tags(client, invitation, batch_size=1000):
+def iterget_tags(client, **params):
     '''
     Given an invitation, returns an iterator over all Tags that respond to it, ignoring API limit.
     '''
-    return iterget(client.get_tags, invitation=invitation, batch_size=batch_size)
+    return iterget(client.get_tags, **params)
 
-def iterget_notes(client, invitation, batch_size=1000):
+def iterget_notes(client, **params):
     '''
     Given an invitation, returns an iterator over all Notes that respond to it, ignoring API limit.
     '''
-    return iterget(client.get_notes, invitation=invitation, batch_size=batch_size)
+    return iterget(client.get_notes, **params)
 
-def iterget_references(client, invitation, batch_size=1000):
+def iterget_references(client, **params):
     '''
     Given an invitation, returns an iterator over all references that respond to it, ignoring API limit.
     '''
-    return iterget(client.get_references, invitation=invitation, batch_size=batch_size)
+    return iterget(client.get_references, **params)
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''

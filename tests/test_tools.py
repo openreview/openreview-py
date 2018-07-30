@@ -43,20 +43,17 @@ class TestTools():
         assert notes_list is not None, "Notes iterator failed"
 
     def test_iterget_notes(self):
-        batch_size = 1000
-        notes_iterator = openreview.tools.iterget_notes(self.client, None, batch_size=batch_size)
+        notes_iterator = openreview.tools.iterget_notes(self.client)
         assert type(notes_iterator) == types.GeneratorType
         assert type(notes_iterator.next()) == openreview.Note
 
 
     def test_get_all_refs(self):
-        batch_size = 1000
-        refs_iterator = openreview.tools.iterget_references(self.client, None, batch_size=batch_size)
+        refs_iterator = openreview.tools.iterget_references(self.client)
         assert type(refs_iterator) == types.GeneratorType
         assert type(refs_iterator.next()) == openreview.Note
 
     def test_get_all_tags(self):
-        batch_size = 1000
-        tag_iterator = openreview.tools.iterget_tags(self.client, None, batch_size=batch_size)
+        tag_iterator = openreview.tools.iterget_tags(self.client)
         assert type(tag_iterator) == types.GeneratorType
         assert type(tag_iterator.next()) == openreview.Tag
