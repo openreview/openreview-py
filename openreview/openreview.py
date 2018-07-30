@@ -786,7 +786,6 @@ class Note(object):
         self.tmdate = tmdate
         self.ddate = ddate
         self.content = content
-        self.metaContent = metaContent
         self.forum = forum
         self.referent = referent
         self.invitation = invitation
@@ -821,7 +820,6 @@ class Note(object):
             'ddate': self.ddate,
             'number': self.number,
             'content': self.content,
-            'metaContent': self.metaContent,
             'forum': self.forum,
             'referent': self.referent,
             'invitation': self.invitation,
@@ -853,7 +851,6 @@ class Note(object):
         tmdate =n.get('tmdate'),
         ddate=n.get('ddate'),
         content=n.get('content'),
-        metaContent=n.get('metaContent'),
         forum=n.get('forum'),
         referent=n.get('referent'),
         invitation=n.get('invitation'),
