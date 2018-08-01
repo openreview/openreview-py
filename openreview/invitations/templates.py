@@ -267,12 +267,12 @@ def from_template(invitation_template, paper):
     new_params = fill_template(invitation_template, paper)
 
     return openreview.Invitation(
-        new_params['id'],
-        new_params.get('readers'),
-        new_params.get('writers'),
-        new_params.get('invitees'),
-        new_params.get('signatures'),
-        new_params.get('reply', {}),
+        id = new_params['id'],
+        readers = new_params.get('readers'),
+        writers = new_params.get('writers'),
+        invitees = new_params.get('invitees'),
+        signatures = new_params.get('signatures'),
+        reply = new_params.get('reply', {}),
         noninvitees = new_params.get('noninvitees'),
         nonreaders = new_params.get('nonreaders'),
         web = new_params.get('web'),
