@@ -65,6 +65,32 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     else:
         return profile
 
+def get_preferred_name(client, group_id):
+    '''
+    Returns a string representing the user's preferred name, if available,
+    or the first listed name if not available.
+
+    Accepts emails or tilde ids.
+    '''
+
+    profile = client.get_profile(group_id)
+    names = profile.content['names']
+    preferred_names = [n for n in names if n.get('preferred', False)]
+    if preferred_names:
+        primary_preferred_name = preferred_names[0]
+    else:
+        primary_preferred_name = names[0]
+
+    name_parts = []
+    if primary_preferred_name.get('first'):
+        name_parts.append(primary_preferred_name['first'])
+    if primary_preferred_name.get('middle'):
+        name_parts.append(primary_preferred_name['middle'])
+    if primary_preferred_name.get('last'):
+        name_parts.append(primary_preferred_name['last'])
+
+    return ' '.join(name_parts)
+
 def build_groups(conference_group_id, default_params=None):
     '''
     Given a group ID, returns a list of empty groups that correspond to the given group's subpaths

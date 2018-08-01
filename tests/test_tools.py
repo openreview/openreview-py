@@ -47,7 +47,6 @@ class TestTools():
         assert type(notes_iterator) == types.GeneratorType
         assert type(notes_iterator.next()) == openreview.Note
 
-
     def test_get_all_refs(self):
         refs_iterator = openreview.tools.iterget_references(self.client)
         assert type(refs_iterator) == types.GeneratorType
@@ -57,3 +56,8 @@ class TestTools():
         tag_iterator = openreview.tools.iterget_tags(self.client)
         assert type(tag_iterator) == types.GeneratorType
         assert type(tag_iterator.next()) == openreview.Tag
+
+    def test_get_preferred_name(self):
+        preferred_name = openreview.tools.get_preferred_name(self.client, 'OpenReview.net')
+        assert preferred_name, "preferred name not found"
+        assert preferred_name == 'Super User'
