@@ -2,11 +2,13 @@ bid = {
     'tag': {
         'description': 'Bid description',
         'order': 1,
-        'value-radio': ['I want to review',
-            'I can review',
-            'I can probably review but am not an expert',
-            'I cannot review',
-            'No bid'],
+        'value-radio': [
+            'Very High',
+            'High',
+            'Neutral',
+            'Low',
+            'Very Low',
+        ],
         'required':True
     }
 }
@@ -24,6 +26,26 @@ comment = {
         'description': 'Your comment or reply (max 5000 characters).',
         'required': True
     }
+}
+review_rating = {
+    'title': {
+        'order': 1,
+        'value': 'Review Rating',
+        'required': True
+    },
+    'novelty': {
+        'order': 2,
+        'value-dropdown': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+        'description': 'Indicate your agreement with the following: This paper is highly novel.',
+        'required': True
+    },
+    'soundness': {
+        'order': 2,
+        'value-dropdown': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+        'description': 'Indicate your agreement with the following: This paper is technically sound.',
+        'required': True
+    }
+
 }
 
 review = {
