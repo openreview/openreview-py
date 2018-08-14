@@ -1,4 +1,5 @@
 import openreview
+import pytest
 
 class TestClient():
 
@@ -78,3 +79,36 @@ class TestClient():
         if os.path.exists("empty_test.pdf"):
             os.remove("empty_test.pdf")
         assert "/pdf/" in response, "PDF not uploaded properly"
+
+    def test_get_profile(self):
+        profile = self.client.get_profile('mbok@cs.umass.edu')
+        assert profile, "Could not get the profile by email"
+        assert isinstance(profile, openreview.Profile)
+        assert profile.id == '~Melisa_TestBok1'
+
+        profile = self.client.get_profile('~Melisa_TestBok1')
+        assert profile, "Could not get the profile by id"
+        assert isinstance(profile, openreview.Profile)
+        assert 'mbok@cs.umass.edu' in profile.content['emails']
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Profile not found.*'):
+            profile = self.client.get_profile('mbok@sss.edu')
+
+    def test_get_profiles(self):
+        profiles = self.client.get_profiles(['mbok@cs.umass.edu'])
+        assert profiles, "Could not get the profile by email"
+        assert isinstance(profiles, dict)
+        assert isinstance(profiles['mbok@cs.umass.edu'], openreview.Profile)
+        assert profiles['mbok@cs.umass.edu'].id == '~Melisa_TestBok1'
+
+        profiles = self.client.get_profiles(['~Melisa_TestBok1', '~Andrew_McCallum1'])
+        assert profiles, "Could not get the profile by id"
+        assert isinstance(profiles, list)
+        print profiles
+        assert len(profiles) == 2
+        assert '~Melisa_TestBok1' in profiles[1].id
+        assert '~Andrew_McCallum1' in profiles[0].id
+
+        profiles = self.client.get_profiles([])
+        assert len(profiles) == 0
+
