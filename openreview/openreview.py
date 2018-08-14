@@ -56,7 +56,7 @@ class Client(object):
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
-        
+
         self.headers = {'User-Agent': 'test-create-script'}
         if(self.username!=None and self.password!=None):
             self.login_user(self.username, self.password)
@@ -190,7 +190,7 @@ class Client(object):
         response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
         response = self.__handle_response(response)
         profile = response.json()['profile']
-        return Note.from_json(profile)
+        return Profile.from_json(profile)
 
     def get_profiles(self, email_or_id_list):
         """
@@ -201,11 +201,11 @@ class Client(object):
         if len(email_or_id_list) > 0 and tildematch.match(email_or_id_list[0]):
             response = requests.post(self.baseurl + '/user/profiles', json={'ids': email_or_id_list}, headers = self.headers)
             response = self.__handle_response(response)
-            return [Note.from_json(p) for p in response.json()['profiles']]
+            return [Profile.from_json(p) for p in response.json()['profiles']]
         else:
             response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_or_id_list}, headers = self.headers)
             response = self.__handle_response(response)
-            return { p['email'] : Note.from_json(p['profile'])
+            return { p['email'] : Profile.from_json(p['profile'])
                             for p in response.json()['profiles'] }
 
     def get_pdf(self, id):
@@ -217,7 +217,7 @@ class Client(object):
 
         >>> f = get_pdf(id='Place Note-ID here')
         >>> with open('output.pdf','wb') as op: op.write(f)
-        
+
         '''
         params = {}
         params['id'] = id
@@ -248,31 +248,29 @@ class Client(object):
         response_dict = json.loads(response.content)
         return response_dict['url']
 
-    def post_profile(self, id, content):
+    def post_profile(self, profile):
         '''
         Posts the profile
         '''
         response = requests.put(
             self.profiles_url,
-            json = { 'id': id, 'content': content },
+            json = { 'id': profile.id, 'content': profile.content },
             headers = self.headers)
 
         response = self.__handle_response(response)
-        profile = response.json()
-        return Note.from_json(profile)
+        return Profile.from_json(response.json())
 
-    def update_profile(self, id, content):
+    def update_profile(self, profile):
         '''
         Updates the profile
         '''
         response = requests.post(
             self.profiles_url,
-            json = {'id': id, 'content': content},
+            json = profile.to_json(),
             headers = self.headers)
 
         response = self.__handle_response(response)
-        profile = response.json()
-        return Note.from_json(profile)
+        return Profile.from_json(response.json())
 
     def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None, limit = None, offset = None):
         """
@@ -548,9 +546,13 @@ class Group(object):
             with open(web) as f:
                 self.web = f.read()
 
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Group(' + content + ')'
+
     def __str__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
 
 
     def to_json(self):
@@ -683,9 +685,13 @@ class Invitation(object):
             with open(transform) as f:
                 self.transform = f.read()
 
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Invitation(' + content + ')'
+
     def __str__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
 
     def to_json(self):
         '''
@@ -793,9 +799,13 @@ class Note(object):
         if tauthor:
             self.tauthor = tauthor
 
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Note(' + content + ')'
+
     def __str__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
 
     def to_json(self):
         '''
@@ -908,7 +918,81 @@ class Tag(object):
         )
         return tag
 
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Tag(' + content + ')'
+
     def __str__(self):
         pp = pprint.PrettyPrinter()
-        return pp.pformat(self.to_json())
+        return pp.pformat(vars(self))
+
+
+class Profile(object):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
+        self.id = id
+        self.number = number
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.referent = referent
+        self.invitation = invitation
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.signatures = signatures
+        self.writers = writers
+        self.content = content
+        self.metaContent = metaContent
+        self.active = active
+        self.password = password
+        if tauthor:
+            self.tauthor = tauthor
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        return 'Profile(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+    def to_json(self):
+        body = {
+            'id': self.id,
+            'number': self.number,
+            'tcdate': self.tcdate,
+            'tmdate': self.tmdate,
+            'referent': self.referent,
+            'invitation': self.invitation,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'signatures': self.signatures,
+            'writers': self.writers,
+            'content': self.content,
+            'metaContent': self.metaContent,
+            'active': self.active,
+            'password': self.password
+        }
+        if hasattr(self, 'tauthor'):
+            body['tauthor'] = self.tauthor
+        return body
+
+    @classmethod
+    def from_json(Profile,n):
+        profile = Profile(
+        id = n.get('id'),
+        active = n.get('active'),
+        password = n.get('password'),
+        number = n.get('number'),
+        tcdate = n.get('tcdate'),
+        tmdate=n.get('tmdate'),
+        referent=n.get('referent'),
+        invitation=n.get('invitation'),
+        readers=n.get('readers'),
+        nonreaders=n.get('nonreaders'),
+        signatures=n.get('signatures'),
+        writers=n.get('writers'),
+        content=n.get('content'),
+        metaContent=n.get('metaContent'),
+        tauthor=n.get('tauthor')
+        )
+        return profile
 
