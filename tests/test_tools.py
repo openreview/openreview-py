@@ -1,5 +1,9 @@
 import openreview
 import random
+import types
+import sys
+
+
 
 class TestTools():
 
@@ -37,6 +41,21 @@ class TestTools():
         notes_iterator = openreview.tools.iterget(self.client.get_notes)
         notes_list = list(notes_iterator)
         assert notes_list is not None, "Notes iterator failed"
+
+    def test_iterget_notes(self):
+        notes_iterator = openreview.tools.iterget_notes(self.client)
+        assert type(notes_iterator) == types.GeneratorType
+        assert type(notes_iterator.next()) == openreview.Note
+
+    def test_get_all_refs(self):
+        refs_iterator = openreview.tools.iterget_references(self.client)
+        assert type(refs_iterator) == types.GeneratorType
+        assert type(refs_iterator.next()) == openreview.Note
+
+    def test_get_all_tags(self):
+        tag_iterator = openreview.tools.iterget_tags(self.client)
+        assert type(tag_iterator) == types.GeneratorType
+        assert type(tag_iterator.next()) == openreview.Tag
 
     def test_get_preferred_name(self):
         preferred_name = openreview.tools.get_preferred_name(self.client, 'OpenReview.net')

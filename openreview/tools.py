@@ -351,20 +351,24 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     client.post_group(group)
 
-def iterget(get_function, **kwargs):
+def iterget(get_function, **params):
     '''
     Iterator over a given get function from the client.
+
+    Example: iterget(client.get_notes, invitation='MyConference.org/-/Submissions')
+
+    :arg get_function: an openreview.Client's "get" function that will consume keyword arguments in the "params" argument.
+    :arg **params: keyword arguments that will be passed into the function "get_function".
     '''
     done = False
     offset = 0
-    params = {
-        'limit': 1000 if 'limit' not in kwargs else kwargs['limit']
-    }
+    batch_size = 1000
 
     while not done:
-        params['offset'] = offset
-
-        params.update(kwargs)
+        params.update({
+            'offset': offset,
+            'limit': batch_size
+        })
         batch = get_function(**params)
         offset += params['limit']
         for obj in batch:
@@ -373,17 +377,99 @@ def iterget(get_function, **kwargs):
         if len(batch) < params['limit']:
             done = True
 
-def get_all_tags(client, invitation, limit=1000):
+def iterget_tags(client, id = None, invitation = None, forum = None):
     '''
-    Given an invitation, returns all Tags that respond to it, ignoring API limit.
-    '''
-    return list(iterget(client.get_tags, invitation=invitation, limit=limit))
+    Returns an iterator over Tags, filtered by the provided parameters, ignoring API limit.
 
-def get_all_notes(client, invitation, limit=1000):
+    Example: iterget_tags(client, invitation='MyConference.org/-/Bid_Tags')
+
+    :arg id: a Tag ID. If provided, returns Tags whose ID matches the given ID.
+    :arg forum: a Note ID. If provided, returns Tags whose forum matches the given ID.
+    :arg invitation: an Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+
     '''
-    Given an invitation, returns all Notes that respond to it, ignoring API limit.
+    params = {}
+
+    if id != None:
+        params['id'] = id
+    if forum != None:
+        params['forum'] = forum
+    if invitation != None:
+        params['invitation'] = invitation
+
+    return iterget(client.get_tags, **params)
+
+def iterget_notes(client, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, mintcdate = None, details = None):
     '''
-    return list(iterget(client.get_notes, invitation=invitation, limit=limit))
+    Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+    :arg paperhash: a "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
+        (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
+        identify the Note)
+    :arg forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
+    :arg invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+    :arg replyto: a Note ID. If provided, returns Notes whose replyto field matches the given ID.
+    :arg tauthor: a Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID,
+        or is a transitive member of the Group represented by the given ID.
+    :arg signature: a Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+    :arg writer: a Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+    :arg trash: a Boolean. If True, includes Notes that have been deleted (i.e. the ddate field is less than the
+        current date)
+    :arg number: an integer. If present, includes Notes whose number field equals the given integer.
+    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
+        whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    :arg details: TODO: What is a valid value for this field?
+    '''
+    params = {}
+    if id != None:
+        params['id'] = id
+    if paperhash != None:
+        params['paperhash'] = paperhash
+    if forum != None:
+        params['forum'] = forum
+    if invitation != None:
+        params['invitation'] = invitation
+    if replyto != None:
+        params['replyto'] = replyto
+    if tauthor != None:
+        params['tauthor'] = tauthor
+    if signature != None:
+        params['signature'] = signature
+    if writer != None:
+        params['writer'] = writer
+    if trash == True:
+        params['trash']=True
+    if number != None:
+        params['number'] = number
+    if mintcdate != None:
+        params['mintcdate'] = mintcdate
+    if details != None:
+        params['details'] = details
+
+    return iterget(client.get_notes, **params)
+
+def iterget_references(client, referent = None, invitation = None, mintcdate = None):
+    '''
+    Returns an iterator over references, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg referent: a Note ID. If provided, returns references whose "referent" value is this Note ID.
+    :arg invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
+    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
+        whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    '''
+
+    params = {}
+    if referent != None:
+        params['referent'] = referent
+    if invitation != None:
+        params['invitation'] = invitation
+    if mintcdate != None:
+        params['mintcdate'] = mintcdate
+
+    return iterget(client.get_references, **params)
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
