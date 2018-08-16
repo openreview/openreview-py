@@ -212,7 +212,7 @@ class RecruitReviewers(openreview.Invitation):
                 'values-regex': '\\(anonymous\\)'
             },
             'writers': {
-                'values-regex': '\\(anonymous\\)'
+                'values': []
             }
         }
 
