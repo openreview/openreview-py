@@ -41,7 +41,7 @@ jobs:
     steps:
       - checkout
       - run: sudo pip install twine
-      - run: python setup.py bdist_wheel
+      - run: python setup.py bdist_wheel --universal
       - run: twine upload dist/* --skip-existing
 workflows:
   version: 2
