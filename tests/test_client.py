@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+import os
 import openreview
 import pytest
 
@@ -30,15 +32,15 @@ class TestClient():
         try:
             response = self.guest.login_user()
         except openreview.OpenReviewException as e:
-            assert "Username/email is missing" in e.message, "guest log in did not produce correct error"
+            assert ["Username/email is missing"] in e.args, "guest log in did not produce correct error"
 
         response = self.guest.login_user(username = "OpenReview.net")
         assert response, "valid token not found"
 
     def test_guest_user(self):
-        invitations = openreview.get_submission_invitations(self.guest)
+        invitations = openreview.tools.get_submission_invitations(self.guest)
         assert invitations, "Invitations could not be retrieved for guest user"
-        venues = openreview.get_all_venues(self.guest)
+        venues = openreview.tools.get_all_venues(self.guest)
         assert venues, "Venues could not be retrieved for guest user"
 
     def test_get_notes_with_details(self):
@@ -62,20 +64,20 @@ class TestClient():
         try:
             pdf_content = self.client.get_pdf(id='AnInvalidID')
         except openreview.OpenReviewException as e:
-            assert 'Not Found' in e.message[0]['type'], "Incorrect error observed with invalid Note ID"
+            assert 'Not Found' in e.args[0][0]['type'], "Incorrect error observed with invalid Note ID"
 
     def test_put_pdf(self):
         # Calling put_pdf without a valid file name
         try:
             response = self.client.put_pdf(fname='')
         except IOError as e:
-            assert "No such file or directory" in e, "Incorrect error when no file name is given"
+            assert "No such file or directory" in e.args, "Incorrect error when no file name is given"
 
         # Creating an empty PDF and then uploading it
         f = open("empty_test.pdf",'wb')
         f.close()
         response = self.client.put_pdf('empty_test.pdf')
-        import os
+
         if os.path.exists("empty_test.pdf"):
             os.remove("empty_test.pdf")
         assert "/pdf/" in response, "PDF not uploaded properly"
@@ -104,7 +106,7 @@ class TestClient():
         profiles = self.client.get_profiles(['~Melisa_TestBok1', '~Andrew_McCallum1'])
         assert profiles, "Could not get the profile by id"
         assert isinstance(profiles, list)
-        print profiles
+        print(profiles)
         assert len(profiles) == 2
         assert '~Melisa_TestBok1' in profiles[1].id
         assert '~Andrew_McCallum1' in profiles[0].id

@@ -17,6 +17,23 @@ jobs:
           path: test-reports
       - store_artifacts:
           path: test-reports
+  build-py3:
+    working_directory: ~/openreview-py-repo
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: sudo pip install ~/openreview-py-repo
+      - run: sudo pip install -U pytest
+      - run:
+          name: run tests
+          command: |
+            mkdir test-reports
+            pytest --junitxml=test-reports/junit.xml
+      - store_test_results:
+          path: test-reports
+      - store_artifacts:
+          path: test-reports
   deploy:
     working_directory: ~/openreview-py-repo
     docker:
@@ -24,13 +41,14 @@ jobs:
     steps:
       - checkout
       - run: sudo pip install twine
-      - run: python setup.py bdist_wheel
+      - run: python setup.py bdist_wheel --universal
       - run: twine upload dist/* --skip-existing
 workflows:
   version: 2
   build-deploy:
     jobs:
       - build
+      - build-py3
       - deploy:
           requires:
             - build

@@ -3,9 +3,15 @@ Invitation templates and tools.
 
 Most classes extend
 '''
+from __future__ import absolute_import, division, print_function, unicode_literals
+import sys
+if sys.version_info[0] < 3:
+    string_types = [str, unicode]
+else:
+    string_types = [str]
 
-import openreview
-import content
+from .. import openreview
+from . import content
 import re
 
 class Submission(openreview.Invitation):
@@ -234,18 +240,18 @@ class RecruitReviewers(openreview.Invitation):
 
 def _fill_str(template_str, paper):
     paper_params = paper.to_json()
-    pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.iteritems()])
+    pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.items()])
     matches = re.findall(pattern, template_str)
     for match in matches:
         discovered_field = re.sub('<|>', '', match)
         template_str = template_str.replace(match, str(paper_params[discovered_field]))
-        print "    new value: ", template_str
+        print("    new value: ", template_str)
     return template_str
 
 def _fill_str_or_list(template_str_or_list, paper):
     if type(template_str_or_list) == list:
         return [_fill_str(v, paper) for v in template_str_or_list]
-    elif any([type(template_str_or_list) == t for t in [unicode, str]]):
+    elif any([type(template_str_or_list) == t for t in string_types]):
         return _fill_str(template_str_or_list, paper)
     elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
         return template_str_or_list
@@ -254,7 +260,7 @@ def _fill_str_or_list(template_str_or_list, paper):
 
 def fill_template(template, paper):
     new_template = {}
-    for field, value in template.iteritems():
+    for field, value in template.items():
         if type(value) != dict:
             new_template[field] = _fill_str_or_list(value, paper)
         else:

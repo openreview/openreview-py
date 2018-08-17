@@ -1,4 +1,11 @@
 #!/usr/bin/python
+from __future__ import absolute_import, division, print_function, unicode_literals
+import sys
+if sys.version_info[0] < 3:
+    string_types = [str, unicode]
+else:
+    string_types = [str]
+
 import requests
 import pprint
 import json
@@ -7,6 +14,8 @@ import getpass
 import re
 import datetime
 import builtins
+
+
 
 class OpenReviewException(Exception):
     pass
@@ -325,6 +334,24 @@ class Client(object):
     def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, limit = None, offset = None, mintcdate = None, details = None):
         """
         Returns a list of Note objects based on the filters provided.
+
+        :arg id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+        :arg paperhash: a "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
+            (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
+            identify the Note)
+        :arg forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+        :arg replyto: a Note ID. If provided, returns Notes whose replyto field matches the given ID.
+        :arg tauthor: a Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID,
+            or is a transitive member of the Group represented by the given ID.
+        :arg signature: a Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+        :arg writer: a Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+        :arg trash: a Boolean. If True, includes Notes that have been deleted (i.e. the ddate field is less than the
+            current date)
+        :arg number: an integer. If present, includes Notes whose number field equals the given integer.
+        :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
+            whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+        :arg details: TODO: What is a valid value for this field?
         """
         params = {}
         if id != None:
@@ -364,6 +391,11 @@ class Client(object):
     def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None):
         """
         Returns a list of revisions for a note.
+
+        :arg referent: a Note ID. If provided, returns references whose "referent" value is this Note ID.
+        :arg invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
+        :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
+            whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         """
         params = {}
         if referent != None:
@@ -385,6 +417,11 @@ class Client(object):
     def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
         """
         Returns a list of Tag objects based on the filters provided.
+
+        :arg id: a Tag ID. If provided, returns Tags whose ID matches the given ID.
+        :arg forum: a Note ID. If provided, returns Tags whose forum matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+
         """
         params = {}
 
@@ -477,11 +514,11 @@ class Client(object):
             return self.get_group(response.json()['id'])
 
         member_type = type(members)
-        if member_type == str or member_type == unicode:
+        if member_type in string_types:
             return add_member(group.id, [members])
         if member_type == list:
             return add_member(group.id, members)
-        raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list")
+        raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list, but got " + repr(member_type) + " instead")
 
     def remove_members_from_group(self, group, members):
         '''
@@ -494,7 +531,7 @@ class Client(object):
             return self.get_group(response.json()['id'])
 
         member_type = type(members)
-        if member_type == str or member_type == unicode:
+        if member_type in string_types:
             return remove_member(group.id, [members])
         if member_type == list:
             return remove_member(group.id, members)
@@ -547,7 +584,7 @@ class Group(object):
                 self.web = f.read()
 
     def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
         return 'Group(' + content + ')'
 
     def __str__(self):
@@ -686,7 +723,7 @@ class Invitation(object):
                 self.transform = f.read()
 
     def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
         return 'Invitation(' + content + ')'
 
     def __str__(self):
@@ -800,7 +837,7 @@ class Note(object):
             self.tauthor = tauthor
 
     def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
         return 'Note(' + content + ')'
 
     def __str__(self):
@@ -919,7 +956,7 @@ class Tag(object):
         return tag
 
     def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
         return 'Tag(' + content + ')'
 
     def __str__(self):
@@ -947,7 +984,7 @@ class Profile(object):
             self.tauthor = tauthor
 
     def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).iteritems()])
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
         return 'Profile(' + content + ')'
 
     def __str__(self):
