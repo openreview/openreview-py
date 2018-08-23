@@ -22,6 +22,9 @@ Client
 .. autoclass:: Tag
    :members:
 
+.. autoclass:: Profile
+   :members:
+
 
 Tools
 -------
