@@ -301,7 +301,7 @@ class Client(object):
 
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None):
         """
-        Returns a list of Group objects based on the filters provided.
+        Returns a list of Invitation objects based on the filters provided.
         """
         params = {}
         if id!=None:
