@@ -114,3 +114,21 @@ class TestClient():
         profiles = self.client.get_profiles([])
         assert len(profiles) == 0
 
+    def test_get_invitations(self):
+        invitations = self.client.get_invitations(invitee = '~', pastdue = False)
+        assert invitations
+        assert len(invitations) > 0
+
+        invitations = self.client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
+        assert invitations
+        assert len(invitations) > 0
+        assert invitations[0].details
+
+        invitations = self.client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
+        assert len(invitations) == 0
+
+        invitations = self.client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
+        assert len(invitations) == 0
+
+
+

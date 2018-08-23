@@ -299,9 +299,9 @@ class Client(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None):
+    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None):
         """
-        Returns a list of Group objects based on the filters provided.
+        Returns a list of Invitation objects based on the filters provided.
         """
         params = {}
         if id!=None:
@@ -322,6 +322,10 @@ class Client(object):
             params['tags'] = tags
         if minduedate:
             params['minduedate'] = minduedate
+        params['replyto'] = replyto
+        params['duedate'] = duedate
+        params['pastdue'] = pastdue
+        params['details'] = details
         params['limit'] = limit
         params['offset'] = offset
 
@@ -684,6 +688,7 @@ class Invitation(object):
         web = None,
         process = None,
         duedate = None,
+        expdate = None,
         cdate = None,
         rdate = None,
         ddate = None,
@@ -691,13 +696,15 @@ class Invitation(object):
         tmdate = None,
         multiReply = None,
         taskCompletionCount = None,
-        transform = None):
+        transform = None,
+        details = None):
 
         self.id = id
         self.cdate = cdate
         self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
+        self.expdate = expdate
         self.readers = readers
         self.nonreaders = [] if nonreaders==None else nonreaders
         self.writers = writers
@@ -709,6 +716,7 @@ class Invitation(object):
         self.reply = reply
         self.tcdate = tcdate
         self.tmdate = tmdate
+        self.details = details
         self.web = None
         if web != None:
             with open(web) as f:
@@ -742,6 +750,7 @@ class Invitation(object):
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
             'duedate': self.duedate,
+            'expdate': self.expdate,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'writers': self.writers,
@@ -753,7 +762,8 @@ class Invitation(object):
             'reply': self.reply,
             'process': self.process,
             'web': self.web,
-            'transform': self.transform
+            'transform': self.transform,
+            'details': self.details
         }
 
         if hasattr(self,'web'):
@@ -784,7 +794,8 @@ class Invitation(object):
             signatures = i.get('signatures'),
             multiReply = i.get('multiReply'),
             taskCompletionCount = i.get('taskCompletionCount'),
-            reply = i.get('reply')
+            reply = i.get('reply'),
+            details = i.get('details')
             )
         if 'web' in i:
             invitation.web = i['web']
