@@ -35,10 +35,20 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     profile = get_profile(client, email)
 
     if not profile:
-        response = client.get_tildeusername(first, last, None)
-        tilde_id = response['username']
 
-        if tilde_id.endswith(last + '1') or allow_duplicates:
+        try:
+            client.get_profile("~{first}_{last}1".format(first=first, last=last))
+            profile_exists = True
+        except openreview.OpenReviewException as e:
+            if any('Profile not found' in arg for arg in e.args):
+                profile_exists = False
+            else:
+                raise(e)
+
+        id_response = client.get_tildeusername(first, last, middle)
+        tilde_id = id_response['username']
+
+        if (not profile_exists) or allow_duplicates:
 
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
@@ -63,7 +73,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
         else:
             raise openreview.OpenReviewException('There is already a profile with this first and last name: \"{first} {last}\"'.format(first=first, last=last))
     else:
-        return profile
+        raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
 def get_preferred_name(client, group_id):
     '''
