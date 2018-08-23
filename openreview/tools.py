@@ -35,7 +35,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     profile = get_profile(client, email)
 
     if not profile:
-        response = client.get_tildeusername(first, last, middle)
+        response = client.get_tildeusername(first, last, None)
         tilde_id = response['username']
 
         if tilde_id.endswith(last + '1') or allow_duplicates:
