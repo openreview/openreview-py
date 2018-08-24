@@ -36,19 +36,20 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 
     if not profile:
 
-        try:
-            client.get_profile("~{first}_{last}1".format(first=first, last=last))
-            profile_exists = True
-        except openreview.OpenReviewException as e:
-            if any('Profile not found' in arg for arg in e.args):
-                profile_exists = False
-            else:
-                raise(e)
+        # validate only first and last names.
+        # this is so that we catch more potential collisions.
+        # let the caller decide what to do with false positives.
+        validation_response = client.get_tildeusername(first, last, None)
 
-        id_response = client.get_tildeusername(first, last, middle)
-        tilde_id = id_response['username']
+        # the username in validation_response will end with 1 if no other profiles with this first and last name exist.
+        if validation_response['username'].endswith('1'):
+            profile_exists = False
+        else:
+            profile_exists = True
 
         if (not profile_exists) or allow_duplicates:
+            id_response = client.get_tildeusername(first, last, middle)
+            tilde_id = id_response['username']
 
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
