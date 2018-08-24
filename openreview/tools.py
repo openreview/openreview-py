@@ -47,9 +47,9 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
         else:
             profile_exists = True
 
+        id_response = client.get_tildeusername(first, last, middle)
+        tilde_id = id_response['username']
         if (not profile_exists) or allow_duplicates:
-            id_response = client.get_tildeusername(first, last, middle)
-            tilde_id = id_response['username']
 
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
@@ -72,7 +72,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
             return profile
 
         else:
-            raise openreview.OpenReviewException('There is already a profile with this first and last name: \"{first} {last}\"'.format(first=first, last=last))
+            raise openreview.OpenReviewException('Failed to create new profile {tilde_id}. There is already a profile with this first and last name: \"{first} {last}\"'.format(first=first, last=last, tilde_id=tilde_id))
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
