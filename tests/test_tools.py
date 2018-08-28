@@ -58,6 +58,7 @@ class TestTools():
         assert type(tag_iterator.next()) == openreview.Tag
 
     def test_get_preferred_name(self):
-        preferred_name = openreview.tools.get_preferred_name(self.client, 'OpenReview.net')
+        superuser_profile = self.client.get_profile('OpenReview.net')
+        preferred_name = openreview.tools.get_preferred_name(superuser_profile)
         assert preferred_name, "preferred name not found"
         assert preferred_name == 'Super User'
