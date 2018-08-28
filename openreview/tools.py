@@ -65,7 +65,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     else:
         return profile
 
-def get_preferred_name(client, group_id):
+def get_preferred_name(profile):
     '''
     Returns a string representing the user's preferred name, if available,
     or the first listed name if not available.
@@ -73,7 +73,6 @@ def get_preferred_name(client, group_id):
     Accepts emails or tilde ids.
     '''
 
-    profile = client.get_profile(group_id)
     names = profile.content['names']
     preferred_names = [n for n in names if n.get('preferred', False)]
     if preferred_names:
