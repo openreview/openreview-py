@@ -70,7 +70,7 @@ def get_preferred_name(profile):
     Returns a string representing the user's preferred name, if available,
     or the first listed name if not available.
 
-    Accepts emails or tilde ids.
+    Accepts openreview.Profile object
     '''
 
     names = profile.content['names']
