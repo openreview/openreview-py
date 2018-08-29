@@ -976,12 +976,13 @@ class Tag(object):
 
 
 class Profile(object):
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
         self.id = id
         self.number = number
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.referent = referent
+        self.packaging = packaging
         self.invitation = invitation
         self.readers = readers
         self.nonreaders = nonreaders
@@ -1009,6 +1010,7 @@ class Profile(object):
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
             'referent': self.referent,
+            'packaging': self.packaging,
             'invitation': self.invitation,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
@@ -1033,6 +1035,7 @@ class Profile(object):
         tcdate = n.get('tcdate'),
         tmdate=n.get('tmdate'),
         referent=n.get('referent'),
+        packaging=n.get('packaging'),
         invitation=n.get('invitation'),
         readers=n.get('readers'),
         nonreaders=n.get('nonreaders'),
