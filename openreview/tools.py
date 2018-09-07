@@ -63,8 +63,8 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
         else:
             profile_exists = True
 
+        tilde_id = username_response_full['username']
         if (not profile_exists) or allow_duplicates:
-            tilde_id = username_response_full['username']
 
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
