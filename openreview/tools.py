@@ -36,20 +36,35 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
 
     if not profile:
 
-        # validate only first and last names.
-        # this is so that we catch more potential collisions.
+        # validate the name with just first and last names,
+        # and also with first, middle, and last.
+        # this is so that we catch more potential collisions;
         # let the caller decide what to do with false positives.
-        validation_response = client.get_tildeusername(first, last, None)
 
-        # the username in validation_response will end with 1 if no other profiles with this first and last name exist.
-        if validation_response['username'].endswith('1'):
+        username_response_FL_only = client.get_tildeusername(
+            first,
+            last,
+            None
+        )
+
+        username_response_full = client.get_tildeusername(
+            first,
+            last,
+            middle
+        )
+
+        # the username in each response will end with 1
+        # if profiles don't exist for those names
+        username_FL_unclaimed = username_response_FL_only['username'].endswith('1')
+        username_full_unclaimed = username_response_full['username'].endswith('1')
+
+        if all([username_FL_unclaimed, username_full_unclaimed]):
             profile_exists = False
         else:
             profile_exists = True
 
-        id_response = client.get_tildeusername(first, last, middle)
-        tilde_id = id_response['username']
         if (not profile_exists) or allow_duplicates:
+            tilde_id = username_response_full['username']
 
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
@@ -72,7 +87,9 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
             return profile
 
         else:
-            raise openreview.OpenReviewException('Failed to create new profile {tilde_id}. There is already a profile with this first and last name: \"{first} {last}\"'.format(first=first, last=last, tilde_id=tilde_id))
+            raise openreview.OpenReviewException(
+                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{first} {middle} {last}\"'.format(
+                    first=first, middle=middle, last=last, tilde_id=tilde_id))
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
