@@ -897,3 +897,35 @@ def get_all_venues(client):
     :arg client: Object of :class:`~openreview.Client` class
     '''
     return client.get_group("host").members
+
+def _fill_str(template_str, paper):
+    paper_params = paper.to_json()
+    pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.items()])
+    matches = re.findall(pattern, template_str)
+    for match in matches:
+        discovered_field = re.sub('<|>', '', match)
+        template_str = template_str.replace(match, str(paper_params[discovered_field]))
+        print("    new value: ", template_str)
+    return template_str
+
+def _fill_str_or_list(template_str_or_list, paper):
+    if type(template_str_or_list) == list:
+        return [_fill_str(v, paper) for v in template_str_or_list]
+    elif any([type(template_str_or_list) == t for t in string_types]):
+        return _fill_str(template_str_or_list, paper)
+    elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
+        return template_str_or_list
+    else:
+        raise ValueError('first argument must be list or string: ', value)
+
+def fill_template(template, paper):
+    new_template = {}
+    for field, value in template.items():
+        if type(value) != dict:
+            new_template[field] = _fill_str_or_list(value, paper)
+        else:
+            # recursion
+            new_template[field] = fill_template(value, paper)
+
+    return new_template
+
