@@ -899,6 +899,10 @@ def get_all_venues(client):
     return client.get_group("host").members
 
 def _fill_str(template_str, paper):
+    '''
+    Fills a "template string" with the corresponding values from an openreview.Note object.
+
+    '''
     paper_params = paper.to_json()
     pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.items()])
     matches = re.findall(pattern, template_str)
@@ -909,6 +913,10 @@ def _fill_str(template_str, paper):
     return template_str
 
 def _fill_str_or_list(template_str_or_list, paper):
+    '''
+    Fills a "template string", or a list of template strings, with the corresponding values
+    from an openreview.Note object.
+    '''
     if type(template_str_or_list) == list:
         return [_fill_str(v, paper) for v in template_str_or_list]
     elif any([type(template_str_or_list) == t for t in string_types]):
@@ -919,6 +927,22 @@ def _fill_str_or_list(template_str_or_list, paper):
         raise ValueError('first argument must be list or string: ', value)
 
 def fill_template(template, paper):
+    '''
+    Fills an openreview "template" with the corresponding values from an openreview.Note object.
+    Templates are dicts that match the schema of any OpenReview object class .
+
+    Example:
+    group_template = {
+        'id': 'Conf.org/2019/Paper<number>',
+        'members': ['Conf.org/2019/Paper<number>/Reviewers']
+    }
+
+    :arg template: a dict that matches the schema of an OpenReview :class:`~openreview.Group`
+    or :class:`~openreview.Invitation` with any number of wildcards in the form of "<attr>",
+    where "attr" is an attribute in
+    the :class:`~openreview.Note` class.
+    :arg paper: an instance of :class:`~openreview.Note` class, to fill the template values.
+    '''
     new_template = {}
     for field, value in template.items():
         if type(value) != dict:
