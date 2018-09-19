@@ -914,7 +914,6 @@ def _fill_str(template_str, paper):
     for match in matches:
         discovered_field = re.sub('<|>', '', match)
         template_str = template_str.replace(match, str(paper_params[discovered_field]))
-        print("    new value: ", template_str)
     return template_str
 
 def _fill_str_or_list(template_str_or_list, paper):
