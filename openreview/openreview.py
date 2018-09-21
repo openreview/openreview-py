@@ -201,21 +201,48 @@ class Client(object):
         profile = response.json()['profile']
         return Profile.from_json(profile)
 
-    def get_profiles(self, email_or_id_list):
+    def get_profiles(self, email_or_id_list, limit=1000):
         """
         |  If the list is tilde_ids, returns an array of profiles
         |  If the list is emails, returns an array of dictionaries with 'email' and 'profile'
         """
-        tildematch = re.compile('~.+')
-        if len(email_or_id_list) > 0 and tildematch.match(email_or_id_list[0]):
-            response = requests.post(self.baseurl + '/user/profiles', json={'ids': email_or_id_list}, headers = self.headers)
+
+        pure_tilde_ids = all(['~' in i for i in email_or_id_list])
+        pure_emails = all(['@' in i for i in email_or_id_list])
+
+        def get_ids_response(id_list):
+            response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
-        else:
-            response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_or_id_list}, headers = self.headers)
+
+        def get_emails_response(email_list):
+            response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
             response = self.__handle_response(response)
             return { p['email'] : Profile.from_json(p['profile'])
-                            for p in response.json()['profiles'] }
+                for p in response.json()['profiles'] }
+
+        if pure_tilde_ids:
+            get_response = get_ids_response
+            update_result = lambda result, response: result.extend(response)
+            result = []
+        elif pure_emails:
+            get_response = get_emails_response
+            update_result = lambda result, response: result.update(response)
+            result = {}
+        else:
+            raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
+
+        done = False
+        offset = 0
+        while not done:
+            current_batch = email_or_id_list[offset:offset+limit]
+            offset += limit
+            response = get_response(current_batch)
+            update_result(result, response)
+            if len(current_batch) < limit:
+                done = True
+
+        return result
 
     def get_pdf(self, id):
         '''
