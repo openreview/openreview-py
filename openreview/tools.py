@@ -915,12 +915,9 @@ def _fill_str(template_str, paper):
     for match in matches:
         discovered_field = re.sub('<|>', '', match)
         template_str = template_str.replace(match, str(paper_params[discovered_field]))
-        try:
-            evaluated_string = ast.literal_eval(template_str)
-            if type(evaluated_string) == list:
-                return evaluated_string
-        except ValueError as e:
-            pass
+        if re.match('\[.*\]', template_str):
+            template_str = ast.literal_eval(template_str)
+            assert type(template_str) == list, 'something went wrong while templating a list'
     return template_str
 
 def _fill_str_or_list(template_str_or_list, paper):
