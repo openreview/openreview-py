@@ -10,6 +10,7 @@ import openreview
 import re
 import datetime
 import time
+import ast
 from Crypto.Hash import HMAC, SHA256
 
 super_user_id = 'OpenReview.net'
@@ -914,6 +915,9 @@ def _fill_str(template_str, paper):
     for match in matches:
         discovered_field = re.sub('<|>', '', match)
         template_str = template_str.replace(match, str(paper_params[discovered_field]))
+        if re.match('\[.*\]', template_str):
+            template_str = ast.literal_eval(template_str)
+            assert type(template_str) == list, 'something went wrong while templating a list'
     return template_str
 
 def _fill_str_or_list(template_str_or_list, paper):
