@@ -37,8 +37,8 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     if not profile:
         response = client.get_tildeusername(first, last, middle)
         tilde_id = response['username']
-        if tilde_id.endswith('1') or allow_duplicates:
-
+        num = re.search(r'\d+$', tilde_id)
+        if (num is not None and num.group()=='1') or allow_duplicates:
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
             profile_content = {
@@ -76,13 +76,13 @@ def create_profile_ref(client, existing_profile, new_profile_content, source_id,
         if debug:
             # test if fails to get original
             db_profile = client.get_profile(id)
-    except Exception as e:
-        print "Exception {}".format(e)
-        print id
+    except openreview.OpenReviewException as e:
+        print("OpenReviewException {}".format(e))
+        print(id)
     if debug:
         super_group = client.get_group('OpenReview.net')
         if len(super_group.members) > 1:
-            print super_group.members
+            print(super_group.members)
             raise openreview.OpenReviewException
     return profile
 
