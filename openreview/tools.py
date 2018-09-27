@@ -1,6 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+import sys
+if sys.version_info[0] < 3:
+    string_types = [str, unicode]
+else:
+    string_types = [str]
 import openreview
 import re
 import datetime
@@ -35,10 +40,37 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     profile = get_profile(client, email)
 
     if not profile:
-        response = client.get_tildeusername(first, last, middle)
-        tilde_id = response['username']
-        num = re.search(r'\d+$', tilde_id)
-        if (num is not None and num.group()=='1') or allow_duplicates:
+
+        # validate the name with just first and last names,
+        # and also with first, middle, and last.
+        # this is so that we catch more potential collisions;
+        # let the caller decide what to do with false positives.
+
+        username_response_FL_only = client.get_tildeusername(
+            first,
+            last,
+            None
+        )
+
+        username_response_full = client.get_tildeusername(
+            first,
+            last,
+            middle
+        )
+
+        # the username in each response will end with 1
+        # if profiles don't exist for those names
+        username_FL_unclaimed = username_response_FL_only['username'].endswith('1')
+        username_full_unclaimed = username_response_full['username'].endswith('1')
+
+        if all([username_FL_unclaimed, username_full_unclaimed]):
+            profile_exists = False
+        else:
+            profile_exists = True
+
+        tilde_id = username_response_full['username']
+        if (not profile_exists) or allow_duplicates:
+
             tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
             profile_content = {
@@ -60,10 +92,13 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
             return profile
 
         else:
-            raise openreview.OpenReviewException('There is already a profile with this first: {0}, middle: {1}, last name: {2}'.format(first, middle, last))
+            raise openreview.OpenReviewException(
+                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{first} {middle} {last}\"'.format(
+                    first=first, middle=middle, last=last, tilde_id=tilde_id))
     else:
-        return profile
+        raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
+        
 def create_profile_ref(client, existing_profile, new_profile_content, source_id, debug=False):
     # creates new profile with only the new content
     profile = openreview.Profile(referent=existing_profile.id,
@@ -86,15 +121,15 @@ def create_profile_ref(client, existing_profile, new_profile_content, source_id,
             raise openreview.OpenReviewException
     return profile
 
-def get_preferred_name(client, group_id):
+  
+def get_preferred_name(profile):
     '''
     Returns a string representing the user's preferred name, if available,
     or the first listed name if not available.
 
-    Accepts emails or tilde ids.
+    Accepts openreview.Profile object
     '''
 
-    profile = client.get_profile(group_id)
     names = profile.content['names']
     preferred_names = [n for n in names if n.get('preferred', False)]
     if preferred_names:
@@ -362,7 +397,7 @@ def replace_members_with_ids(client, group):
                 profile = client.get_profile(member.lower())
                 ids.append(profile.id)
             except openreview.OpenReviewException as e:
-                if ['Profile not found'] in e:
+                if 'Profile not found' in e.args[0][0]:
                     emails.append(member)
                 else:
                     raise e
@@ -891,3 +926,58 @@ def get_all_venues(client):
     :arg client: Object of :class:`~openreview.Client` class
     '''
     return client.get_group("host").members
+
+def _fill_str(template_str, paper):
+    '''
+    Fills a "template string" with the corresponding values from an openreview.Note object.
+
+    '''
+    paper_params = paper.to_json()
+    pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.items()])
+    matches = re.findall(pattern, template_str)
+    for match in matches:
+        discovered_field = re.sub('<|>', '', match)
+        template_str = template_str.replace(match, str(paper_params[discovered_field]))
+    return template_str
+
+def _fill_str_or_list(template_str_or_list, paper):
+    '''
+    Fills a "template string", or a list of template strings, with the corresponding values
+    from an openreview.Note object.
+    '''
+    if type(template_str_or_list) == list:
+        return [_fill_str(v, paper) for v in template_str_or_list]
+    elif any([type(template_str_or_list) == t for t in string_types]):
+        return _fill_str(template_str_or_list, paper)
+    elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
+        return template_str_or_list
+    else:
+        raise ValueError('first argument must be list or string: ', value)
+
+def fill_template(template, paper):
+    '''
+    Fills an openreview "template" with the corresponding values from an openreview.Note object.
+    Templates are dicts that match the schema of any OpenReview object class .
+
+    Example:
+    group_template = {
+        'id': 'Conf.org/2019/Paper<number>',
+        'members': ['Conf.org/2019/Paper<number>/Reviewers']
+    }
+
+    :arg template: a dict that matches the schema of an OpenReview :class:`~openreview.Group`
+    or :class:`~openreview.Invitation` with any number of wildcards in the form of "<attr>",
+    where "attr" is an attribute in
+    the :class:`~openreview.Note` class.
+    :arg paper: an instance of :class:`~openreview.Note` class, to fill the template values.
+    '''
+    new_template = {}
+    for field, value in template.items():
+        if type(value) != dict:
+            new_template[field] = _fill_str_or_list(value, paper)
+        else:
+            # recursion
+            new_template[field] = fill_template(value, paper)
+
+    return new_template
+

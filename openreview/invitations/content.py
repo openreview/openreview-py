@@ -8,6 +8,7 @@ bid = {
             'Neutral',
             'Low',
             'Very Low',
+            'No Bid'
         ],
         'required':True
     }
