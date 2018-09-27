@@ -98,6 +98,30 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
+        
+def create_profile_ref(client, existing_profile, new_profile_content, source_id, debug=False):
+    # creates new profile with only the new content
+    profile = openreview.Profile(referent=existing_profile.id,
+                                 invitation=existing_profile.invitation,
+                                 signatures=[source_id],
+                                 writers=[source_id],
+                                 content=new_profile_content)
+    try:
+        profile = client.update_profile(profile)
+        if debug:
+            # test if fails to get original
+            db_profile = client.get_profile(id)
+    except openreview.OpenReviewException as e:
+        print("OpenReviewException {}".format(e))
+        print(id)
+    if debug:
+        super_group = client.get_group('OpenReview.net')
+        if len(super_group.members) > 1:
+            print(super_group.members)
+            raise openreview.OpenReviewException
+    return profile
+
+  
 def get_preferred_name(profile):
     '''
     Returns a string representing the user's preferred name, if available,
