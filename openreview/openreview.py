@@ -813,6 +813,7 @@ class Invitation(object):
             tcdate = i.get('tcdate'),
             tmdate = i.get('tmdate'),
             duedate = i.get('duedate'),
+            expdate = i.get('expdate'),
             readers = i.get('readers'),
             nonreaders = i.get('nonreaders'),
             writers = i.get('writers'),
