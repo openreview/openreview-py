@@ -447,6 +447,11 @@ Consider the following example to get all the "Public Comments" made on submissi
 
 	>>>iclr19_public_comments = client.get_notes(invitation="ICLR.cc/2019/Conference/-/Paper.*/Public_Comment")
 
+This code returns public comments made during the conference "ICLR.cc/2019/Conference" with invitation such as "ICLR.cc/2019/Conference/-/Paper1234/Public_Comment".
+
+Please note that the invitation regex used in above example represents the convention that OpenReview follows while creating invitations for ICLR Conferences. So, the invitations do not necessarily have to follow this regex for all conferences or workshops.
+
+
 Extracting comments made on a forum
 ----------------------------------------
 
