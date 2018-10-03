@@ -201,7 +201,15 @@ class Client(object):
         profile = response.json()['profile']
         return Profile.from_json(profile)
 
-    def get_profiles(self, email_or_id_list, limit=1000):
+    def get_profiles_by_name(self, first, last):
+        '''
+        Returns a single profile by first and last name
+        '''
+        response = requests.get(self.profiles_url, params = {'first': first, 'last': last}, headers = self.headers)
+        response = self.__handle_response(response)
+        return [Profile.from_json(p) for p in response.json()['profiles']]
+
+    def get_profiles(self, email_or_id_list):
         """
         |  If the list is tilde_ids, returns an array of profiles
         |  If the list is emails, returns an array of dictionaries with 'email' and 'profile'
@@ -234,6 +242,7 @@ class Client(object):
 
         done = False
         offset = 0
+        limit = 500
         while not done:
             current_batch = email_or_id_list[offset:offset+limit]
             offset += limit
