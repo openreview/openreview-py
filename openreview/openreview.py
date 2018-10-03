@@ -131,13 +131,13 @@ class Client(object):
         response = self.__handle_response(response)
         return str(response.json())
 
-    def activate_user(self, token):
+    def activate_user(self, token, content):
         '''
         Activates a newly registered user
 
         :arg token: activation token
         '''
-        response = requests.put(self.baseurl + '/activate/' + token, headers = self.headers)
+        response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
