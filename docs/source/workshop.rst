@@ -148,8 +148,7 @@ Sample JS file
 	  });
 	}
 
-	// RenderConferenceHeader renders the static info at the top of the page. Since that content
-	// never changes, put it in its own function
+	// RenderConferenceHeader renders the static info at the top of the page. 
 	function renderConferenceHeader() {
 	  Webfield.ui.venueHeader({
 	    title: "ICML ",
@@ -426,5 +425,23 @@ Users with appropriate access can comment on a submission and reply to other's c
 .. figure:: ../_static/screenshots/comment_posted.png
     :align: center
 
+
+Extracting all notes given an invitation
+-------------------------------------------
+
+Users can access all notes by using an invitation id. 
+Important note: only the notes readable by the account the user logged in with can be accessed.
+Consider the following example which gets all the papers submitted to ICLR 2018::
+
+	>>>iclr18_submissions = client.get_notes(invitation="ICLR.cc/2018/Conference/-/Submission")
+
+Extracting comments made on a forum
+--------------------------------------
+
+Comments, just like submissions, are saved as notes. So they are also accessible using get_notes().
+Note that the invitation argument in get_notes() accepts regex.
+Consider the following example to get all the "Public Comments" made on submissions in ICLR 2019 conference.::
+
+	>>>iclr19_public_comments = client.get_notes(invitation="ICLR.cc/2019/Conference/-/Paper.*/Public_Comment")
 
 
