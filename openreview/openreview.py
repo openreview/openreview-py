@@ -136,6 +136,20 @@ class Client(object):
         Activates a newly registered user
 
         :arg token: activation token
+        :arg content: content of the profile to activate
+
+        Example Usage:
+        >>> res = client.activate_user('new@user.com', { 
+            'names': [
+                    {
+                        'first': 'New',
+                        'last': 'User',
+                        'username': '~New_User1'
+                    }
+                ],
+            'emails': ['new@user.com'],
+            'preferredEmail': 'new@user.com'
+            })       
         '''
         response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
