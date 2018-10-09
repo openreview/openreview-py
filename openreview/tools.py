@@ -75,7 +75,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
             email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
             profile_content = {
                 'emails': [email],
-                'preferred_email': email,
+                'preferredEmail': email,
                 'names': [
                     {
                         'first': first,
