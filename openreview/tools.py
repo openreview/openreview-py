@@ -520,6 +520,60 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
+def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None):
+    '''
+    Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
+    :arg invitee: a string. Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
+    :arg regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
+    '''
+
+    params = {}
+    if id != None:
+        params['id'] = id
+    if invitee != None:
+        params['invitee'] = invitee
+    if regex != None:
+        params['regex'] = regex
+    if tags != None:
+        params['tags'] = regextags
+    if minduedate != None:
+        params['minduedate'] = minduedate
+    if duedate != None:
+        params['duedate'] = duedate
+    if pastdue != None:
+        params['pastdue'] = pastdue
+    if details != None:
+        params['details'] = details
+    
+    return iterget(client.get_invitations, **params)
+
+def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
+    '''
+    Returns an iterator over groups, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg id: a Note ID. If provided, returns groups whose "id" value is this Group ID.
+    :arg regex: a regular expression string to match Group IDs. If provided, returns groups whose "id" value matches the given regex.
+    :arg member: a string. Essentially, members field contains Group Ids that are members of this Group object. If provided, returns groups whose "members" field contains the given string.
+    '''
+
+    params = {}
+    if id != None:
+        params['id'] = id
+    if regex != None:
+        params['regex'] = regex
+    if member != None:
+        params['member'] = member
+    if host != None:
+        params['host'] = host
+    if signatory != None:
+        params['signatory'] = signatory
+    
+    return iterget(client.get_groups, **params)
+
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
     |  "individual groups" are groups with a single member;
