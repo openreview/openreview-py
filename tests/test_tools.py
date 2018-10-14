@@ -57,6 +57,14 @@ class TestTools():
         tag_iterator = openreview.tools.iterget_tags(self.client)
         assert type(tag_iterator.next()) == openreview.Tag
 
+    def test_get_all_invitations(self):
+        invitations_iterator = openreview.tools.iterget_invitations(self.client)
+        assert type(invitations_iterator.next()) == openreview.Invitation
+
+    def test_get_all_groups(self):
+        group_iterator = openreview.tools.iterget_groups(self.client)
+        assert type(group_iterator.next()) == openreview.Group
+
     def test_get_preferred_name(self):
         superuser_profile = self.client.get_profile('OpenReview.net')
         preferred_name = openreview.tools.get_preferred_name(superuser_profile)
