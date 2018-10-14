@@ -538,7 +538,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     if regex != None:
         params['regex'] = regex
     if tags != None:
-        params['tags'] = regextags
+        params['tags'] = tags
     if minduedate != None:
         params['minduedate'] = minduedate
     if duedate != None:
@@ -547,6 +547,16 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['pastdue'] = pastdue
     if details != None:
         params['details'] = details
+    if replytoNote != None:
+        params['replytoNote'] = replytoNote
+    if replyForum != None:
+        params['replyForum'] = replyForum
+    if signature != None:
+        params['signature'] = signature
+    if note != None:
+        params['note'] = note
+    if replyto != None:
+        params['replyto'] = replyto
     
     return iterget(client.get_invitations, **params)
 
