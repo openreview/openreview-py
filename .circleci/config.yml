@@ -7,16 +7,16 @@ jobs:
     steps:
       - checkout
       - run: sudo pip install ~/openreview-py-repo
-      - run: sudo pip install -U pytest
-      - run:
-          name: run tests
-          command: |
-            mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml
-      - store_test_results:
-          path: test-reports
-      - store_artifacts:
-          path: test-reports
+      # - run: sudo pip install -U pytest
+      # - run:
+      #     name: run tests
+      #     command: |
+      #       mkdir test-reports
+      #       pytest --junitxml=test-reports/junit.xml
+      # - store_test_results:
+      #     path: test-reports
+      # - store_artifacts:
+      #     path: test-reports
   build-py3:
     working_directory: ~/openreview-py-repo
     docker:
@@ -24,6 +24,25 @@ jobs:
     steps:
       - checkout
       - run: sudo pip install ~/openreview-py-repo
+      # - run: sudo pip install -U pytest
+      # - run:
+      #     name: run tests
+      #     command: |
+      #       mkdir test-reports
+      #       pytest --junitxml=test-reports/junit.xml
+      # - store_test_results:
+      #     path: test-reports
+      # - store_artifacts:
+      #     path: test-reports
+  test:
+    working_directory: ~/openreview-py-repo
+    docker:
+      - image: circleci/node:8.9.1
+      - image: circleci/redis:3
+      - image: circleci/mongo:3.6
+      - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
+    steps:
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git
       - run: sudo pip install -U pytest
       - run:
           name: run tests
@@ -49,9 +68,12 @@ workflows:
     jobs:
       - build
       - build-py3
-      - deploy:
+      - test:
           requires:
             - build
+      - deploy:
+          requires:
+            - test
           filters:
             branches:
               only: master
