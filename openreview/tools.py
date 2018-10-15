@@ -698,10 +698,13 @@ def add_assignment(client, paper_number, conference, reviewer,
     '''
     profile = get_profile(client, reviewer)
     user = profile.id if profile else reviewer
+    affected_groups = []
 
     if user not in parent_group.members:
         client.add_members_to_group(parent_group, user)
-        print("{:40s} --> {}".format(user, parent_group.id))
+        affected_groups.append(parent_group.id)
+    else:
+        print("{:40s} Already present in Group {}".format(user, parent_group.id))
 
     assigned_individual_groups = [a for a in individual_groups if user in a.members]
     if not assigned_individual_groups:
@@ -743,13 +746,14 @@ def add_assignment(client, paper_number, conference, reviewer,
             signatories = signatories,
             signatures = signatures)
 
-        print("{:40s} --> {}".format(user, individual_group.id))
-        return client.post_group(individual_group)
+        client.post_group(individual_group)
+        affected_groups.append(individual_group.id)
     else:
         # user already assigned to individual group(s)
         for g in assigned_individual_groups:
-            print("{:40s} === {}".format(user, g.id))
-        return assigned_individual_groups[0]
+            print("{:40s} Already present in Group {}".format(user, g.id))
+    
+    return (user,affected_groups)
 
 
 def remove_assignment(client, paper_number, conference, reviewer,
@@ -785,17 +789,23 @@ def remove_assignment(client, paper_number, conference, reviewer,
         and any assigned individual groups.
     '''
 
+    #TODO: Need to refactor this function's code
+
     user_groups = [g.id for g in client.get_groups(member=user)]
+    user_groups.append(user)
+
+    affected_groups = []
 
     for user_entity in user_groups:
         if user_entity in parent_group.members:
             client.remove_members_from_group(parent_group, user_entity)
-            print("{:40s} xxx {}".format(user_entity, parent_group.id))
+            affected_groups.append(parent_group.id)
 
         assigned_individual_groups = [a for a in individual_groups if user_entity in a.members]
         for individual_group in assigned_individual_groups:
-            print("{:40s} xxx {}".format(user_entity, individual_group.id))
+            affected_groups.append(individual_group.id)
             client.remove_members_from_group(individual_group, user_entity)
+    return (user,affected_groups)
 
 
 def assign(client, paper_number, conference,
@@ -826,16 +836,21 @@ def assign(client, paper_number, conference,
 
     For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
     '''
+    changed_groups = []
+    user = ""
+
     if reviewer_to_remove:
-        remove_assignment(client, paper_number, conference, reviewer_to_remove,
+        user, changed_groups = remove_assignment(client, paper_number, conference, reviewer_to_remove,
                           parent_group_params, parent_label, individual_label)
+
     if reviewer_to_add:
-        add_assignment(client, paper_number, conference, reviewer_to_add,
+        user, changed_groups = add_assignment(client, paper_number, conference, reviewer_to_add,
                         parent_group_params,
                         individual_group_params,
                         parent_label,
                         individual_label)
 
+    return (user, changed_groups)
 
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     '''
