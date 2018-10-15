@@ -520,6 +520,70 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
+def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None):
+    '''
+    Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
+    :arg invitee: a string. Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
+    :arg regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
+    '''
+
+    params = {}
+    if id != None:
+        params['id'] = id
+    if invitee != None:
+        params['invitee'] = invitee
+    if regex != None:
+        params['regex'] = regex
+    if tags != None:
+        params['tags'] = tags
+    if minduedate != None:
+        params['minduedate'] = minduedate
+    if duedate != None:
+        params['duedate'] = duedate
+    if pastdue != None:
+        params['pastdue'] = pastdue
+    if details != None:
+        params['details'] = details
+    if replytoNote != None:
+        params['replytoNote'] = replytoNote
+    if replyForum != None:
+        params['replyForum'] = replyForum
+    if signature != None:
+        params['signature'] = signature
+    if note != None:
+        params['note'] = note
+    if replyto != None:
+        params['replyto'] = replyto
+    
+    return iterget(client.get_invitations, **params)
+
+def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
+    '''
+    Returns an iterator over groups, filtered by the provided parameters, ignoring API limit.
+
+    :arg client: an openreview.Client object.
+    :arg id: a Note ID. If provided, returns groups whose "id" value is this Group ID.
+    :arg regex: a regular expression string to match Group IDs. If provided, returns groups whose "id" value matches the given regex.
+    :arg member: a string. Essentially, members field contains Group Ids that are members of this Group object. If provided, returns groups whose "members" field contains the given string.
+    '''
+
+    params = {}
+    if id != None:
+        params['id'] = id
+    if regex != None:
+        params['regex'] = regex
+    if member != None:
+        params['member'] = member
+    if host != None:
+        params['host'] = host
+    if signatory != None:
+        params['signatory'] = signatory
+    
+    return iterget(client.get_groups, **params)
+
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''
     |  "individual groups" are groups with a single member;
@@ -623,7 +687,6 @@ def add_assignment(client, paper_number, conference, reviewer,
     :arg parent_group_params: optional parameter that overrides the default
     :arg individual_group_params: optional parameter that overrides the default
     '''
-
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
     parent_group = result[0]
     individual_groups = result[1]
@@ -648,23 +711,37 @@ def add_assignment(client, paper_number, conference, reviewer,
         paper_authors = '{}/Paper{}/Authors'.format(conference, paper_number)
 
         # Set the default values for the individual groups
-        individual_group_params_default = {
-            'readers': [conference, '{}/Program_Chairs'.format(conference)],
-            'writers': [conference],
-            'signatures': [conference],
-            'signatories': []
-        }
-        individual_group_params_default.update(individual_group_params)
-        individual_group_params = individual_group_params_default
+        default_readers = [conference, '{}/Program_Chairs'.format(conference)]
+        default_writers = [conference]
+        default_signatures = [conference]
+        default_nonreaders = []
+        default_members = []
+        default_signatories = []
+        
+        readers = individual_group_params.get('readers', default_readers)[:]
+        readers.append(anonreviewer_id)
+
+        nonreaders = individual_group_params.get('nonreaders', default_nonreaders)[:]
+        nonreaders.append(paper_authors)
+
+        writers = individual_group_params.get('writers', default_writers)[:]
+
+        members = individual_group_params.get('members', default_members)[:]
+        members.append(user)
+
+        signatories = individual_group_params.get('signatories', default_signatories)[:]
+        signatories.append(anonreviewer_id)
+
+        signatures = individual_group_params.get('signatures', default_signatures)[:]
 
         individual_group = openreview.Group(
             id = anonreviewer_id,
-            **individual_group_params)
-
-        individual_group.readers.append(anonreviewer_id)
-        individual_group.nonreaders.append(paper_authors)
-        individual_group.signatories.append(anonreviewer_id)
-        individual_group.members.append(user)
+            readers = readers,
+            nonreaders = nonreaders,
+            writers = writers,
+            members = members,
+            signatories = signatories,
+            signatures = signatures)
 
         print("{:40s} --> {}".format(user, individual_group.id))
         return client.post_group(individual_group)

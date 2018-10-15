@@ -294,7 +294,7 @@ class Client(object):
         headers = self.headers.copy()
         headers['content-type'] = 'application/pdf'
 
-        with open(fname) as f:
+        with open(fname, 'rb') as f:
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
         response = self.__handle_response(response)
