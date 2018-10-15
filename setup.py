@@ -9,6 +9,7 @@ setup(name='openreview-py',
       license='MIT',
       packages=[
           'openreview',
+          'openreview/conference',
           'openreview/invitations'
       ],
       install_requires=[
