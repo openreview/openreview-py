@@ -698,13 +698,13 @@ def add_assignment(client, paper_number, conference, reviewer,
     '''
     profile = get_profile(client, reviewer)
     user = profile.id if profile else reviewer
-    affected_groups = []
+    affected_groups = set()
 
     if user not in parent_group.members:
         client.add_members_to_group(parent_group, user)
-        affected_groups.append(parent_group.id)
+        affected_groups.add(parent_group.id)
     else:
-        print("{:40s} Already present in Group {}".format(user, parent_group.id))
+        affected_groups.add(parent_group.id)
 
     assigned_individual_groups = [a for a in individual_groups if user in a.members]
     if not assigned_individual_groups:
@@ -747,13 +747,13 @@ def add_assignment(client, paper_number, conference, reviewer,
             signatures = signatures)
 
         client.post_group(individual_group)
-        affected_groups.append(individual_group.id)
+        affected_groups.add(individual_group.id)
     else:
         # user already assigned to individual group(s)
         for g in assigned_individual_groups:
-            print("{:40s} Already present in Group {}".format(user, g.id))
+            affected_groups.add(g.id)
     
-    return (user,affected_groups)
+    return (user,list(affected_groups))
 
 
 def remove_assignment(client, paper_number, conference, reviewer,
@@ -794,18 +794,18 @@ def remove_assignment(client, paper_number, conference, reviewer,
     user_groups = [g.id for g in client.get_groups(member=user)]
     user_groups.append(user)
 
-    affected_groups = []
+    affected_groups = set()
 
     for user_entity in user_groups:
         if user_entity in parent_group.members:
             client.remove_members_from_group(parent_group, user_entity)
-            affected_groups.append(parent_group.id)
+        affected_groups.add(parent_group.id)
 
         assigned_individual_groups = [a for a in individual_groups if user_entity in a.members]
         for individual_group in assigned_individual_groups:
-            affected_groups.append(individual_group.id)
+            affected_groups.add(individual_group.id)
             client.remove_members_from_group(individual_group, user_entity)
-    return (user,affected_groups)
+    return (user,list(affected_groups))
 
 
 def assign(client, paper_number, conference,
@@ -817,6 +817,8 @@ def assign(client, paper_number, conference,
     individual_label = 'AnonReviewer'):
 
     '''
+    DEPRECATED as of openreveiew-py revision 0.9.5
+
     Either assigns or unassigns a reviewer to a paper.
     TODO: Is this function really necessary?
 
