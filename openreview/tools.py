@@ -699,12 +699,8 @@ def add_assignment(client, paper_number, conference, reviewer,
     profile = get_profile(client, reviewer)
     user = profile.id if profile else reviewer
     affected_groups = set()
-
-    if user not in parent_group.members:
-        client.add_members_to_group(parent_group, user)
-        affected_groups.add(parent_group.id)
-    else:
-        affected_groups.add(parent_group.id)
+    client.add_members_to_group(parent_group, user)
+    affected_groups.add(parent_group.id)
 
     assigned_individual_groups = [a for a in individual_groups if user in a.members]
     if not assigned_individual_groups:
