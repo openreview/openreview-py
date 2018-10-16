@@ -22,7 +22,13 @@ jobs:
             cd ~/openreview
             npm install
             node scripts/mongo_database.js
-            node app &
+            node app
+          background: true
+      - run:
+          shell: /bin/sh
+          command: |
+            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
+            :
       - run:
           name: run tests
           command: |
