@@ -6,11 +6,10 @@ import pytest
 class TestClient():
 
     def setup_method(self, method):
-        self.baseurl = 'https://dev.openreview.net'
         # Password should be saved in the environment variable OPENREVIEW_PASSWORD
-        self.client = openreview.Client(baseurl = self.baseurl, username = "OpenReview.net")
+        self.client = openreview.Client(username = "OpenReview.net", password = '1234')
         assert self.client is not None, "Client is none"
-        self.guest = openreview.Client(baseurl = self.baseurl)
+        self.guest = openreview.Client()
         assert self.guest is not None, "Guest is none"
 
     def test_get_notes(self):
