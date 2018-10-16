@@ -47,21 +47,6 @@ jobs:
       #     path: test-reports
       # - store_artifacts:
       #     path: test-reports
-  test:
-    working_directory: ~/openreview-py-repo
-    docker:
-
-    steps:
-      - run: sudo pip install -U pytest
-      - run:
-          name: run tests
-          command: |
-            mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml
-      - store_test_results:
-          path: test-reports
-      - store_artifacts:
-          path: test-reports
   deploy:
     working_directory: ~/openreview-py-repo
     docker:
