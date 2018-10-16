@@ -15,10 +15,13 @@ jobs:
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
-      - run: cd ~/openreview
-      - run: npm install
-      - run: node scripts/mongo_database.js
-      - run: node app
+      - run:
+          name: run app
+          command: |
+            cd ~/openreview
+            npm install
+            node scripts/mongo_database.js
+            node app
       - run: sudo pip install -U pytest
       - run:
           name: run tests
