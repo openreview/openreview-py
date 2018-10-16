@@ -21,7 +21,7 @@ jobs:
             cd ~/openreview
             npm install
             node scripts/mongo_database.js
-            node app
+            node app &
       - run: sudo pip install -U pytest
       - run:
           name: run tests
