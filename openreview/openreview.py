@@ -13,7 +13,6 @@ import os
 import getpass
 import re
 import datetime
-import builtins
 
 
 
@@ -30,27 +29,18 @@ class Client(object):
 
         :arg password: openreview password. Optional argument.
         """
-        if baseurl==None:
-            try:
-                self.baseurl = os.environ['OPENREVIEW_BASEURL']
-            except KeyError:
-                self.baseurl = builtins.input('Environment variable OPENREVIEW_BASEURL not found. Please provide a base URL: ')
+        if not baseurl:
+            self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
         else:
             self.baseurl = baseurl
 
-        if username==None:
-            try:
-                self.username = os.environ['OPENREVIEW_USERNAME']
-            except KeyError:
-                self.username = username
+        if not username:
+            self.username = os.environ.get('OPENREVIEW_USERNAME')
         else:
             self.username = username
 
-        if password==None:
-            try:
-                self.password = os.environ['OPENREVIEW_PASSWORD']
-            except KeyError:
-                self.password = password
+        if not password:
+            self.password = os.environ.get('OPENREVIEW_PASSWORD')
         else:
             self.password = password
 
@@ -139,7 +129,7 @@ class Client(object):
         :arg content: content of the profile to activate
 
         Example Usage:
-        >>> res = client.activate_user('new@user.com', { 
+        >>> res = client.activate_user('new@user.com', {
             'names': [
                     {
                         'first': 'New',
@@ -149,7 +139,7 @@ class Client(object):
                 ],
             'emails': ['new@user.com'],
             'preferredEmail': 'new@user.com'
-            })       
+            })
         '''
         response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
