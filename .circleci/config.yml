@@ -11,6 +11,7 @@ jobs:
     steps:
       - checkout
       - run: sudo apt-get install python-dev
+      - run: sudo apt-get install python-setuptools
       - run: sudo easy_install pip
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
