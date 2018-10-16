@@ -10,6 +10,7 @@ jobs:
       - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     steps:
       - checkout
+      - run: sudo apt-get install python-pip
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
