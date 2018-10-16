@@ -22,11 +22,11 @@ jobs:
             npm install
             node scripts/mongo_database.js
             node app &
-      - run: sudo pip install -U pytest
       - run:
           name: run tests
           command: |
             cd ~/openreview-py-repo
+            sudo pip install -U pytest
             mkdir test-reports
             pytest --junitxml=test-reports/junit.xml
       - store_test_results:
@@ -64,7 +64,7 @@ workflows:
   build-deploy:
     jobs:
       - build
-      - build-py3
+      #- build-py3
       - deploy:
           requires:
             - build
