@@ -29,20 +29,17 @@ class Client(object):
 
         :arg password: openreview password. Optional argument.
         """
-        if not baseurl:
+        self.baseurl = baseurl
+        if not self.baseurl:
             self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
-        else:
-            self.baseurl = baseurl
 
+        self.username = username
         if not username:
             self.username = os.environ.get('OPENREVIEW_USERNAME')
-        else:
-            self.username = username
 
+        self.password = password
         if not password:
             self.password = os.environ.get('OPENREVIEW_PASSWORD')
-        else:
-            self.password = password
 
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
@@ -88,25 +85,14 @@ class Client(object):
         '''
         Logs in a registered user and returns authentication token
         '''
-        if username==None:
-            try:
-                username = os.environ["OPENREVIEW_USERNAME"]
-            except KeyError:
-                pass
-
-        if password==None:
-            try:
-                password = os.environ["OPENREVIEW_PASSWORD"]
-            except KeyError:
-                pass
-
-        user = {'id':username,'password':password}
-        header = {'User-Agent': 'test-create-script'}
+        user = { 'id': username, 'password': password }
+        print(user)
+        header = { 'User-Agent': 'test-create-script' }
         response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
-        self.token = str(response.json()['token'])
-
-        return response
+        json_response = response.json()
+        self.token = str(json_response['token'])
+        return json_response
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         '''

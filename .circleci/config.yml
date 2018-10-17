@@ -21,7 +21,7 @@ jobs:
           command: |
             cd ~/openreview
             npm install
-            node scripts/mongo_database.js
+            node scripts/setup.js
       - run:
           name: run app
           command: |
