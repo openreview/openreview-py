@@ -14,19 +14,19 @@ jobs:
       - run: sudo apt-get install python-setuptools
       - run: sudo easy_install pip
       - run: sudo pip install ~/openreview-py-repo
-      - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
+      - run: git clone -b feature/circle-ci-config https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
           name: install app
           command: |
             cd ~/openreview
             npm install
-            node scripts/setup.js
+            NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
           command: |
             cd ~/openreview
-            node app
+            NODE_ENV=circleci node app
           background: true
       - run:
           shell: /bin/sh

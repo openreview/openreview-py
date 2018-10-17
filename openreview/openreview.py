@@ -56,11 +56,15 @@ class Client(object):
         self.headers = {'User-Agent': 'test-create-script'}
         if(self.username!=None and self.password!=None):
             self.login_user(self.username, self.password)
-            self.headers['Authorization'] ='Bearer ' + self.token
             self.signature = self.get_profile(self.username).id
 
 
     ## PRIVATE FUNCTIONS
+
+    def __handle_token(self, response):
+        self.token = str(response['token'])
+        self.headers['Authorization'] ='Bearer ' + self.token
+        return response
 
     def __handle_response(self,response):
         try:
@@ -86,12 +90,11 @@ class Client(object):
         Logs in a registered user and returns authentication token
         '''
         user = { 'id': username, 'password': password }
-        print(user)
         header = { 'User-Agent': 'test-create-script' }
         response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.token = str(json_response['token'])
+        self.__handle_token(json_response)
         return json_response
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
@@ -129,7 +132,10 @@ class Client(object):
         '''
         response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()
+        json_response = response.json()
+        self.__handle_token(json_response)
+
+        return json_response
 
     def get_activatable(self, token = None):
         '''
@@ -137,8 +143,8 @@ class Client(object):
         '''
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
-        token = response.json()['activatable']['token']
-        return token
+        self.__handle_token(response.json()['activatable'])
+        return self.token
 
     def get_group(self, id):
         """
