@@ -12,7 +12,7 @@ setup(name='openreview-py',
           'openreview/invitations'
       ],
       install_requires=[
-          'pycrypto',
+          'pycryptodome',
           'requests>=2.18.4',
           'future',
           'nbsphinx',
