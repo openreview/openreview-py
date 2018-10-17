@@ -94,21 +94,21 @@ class TestClient():
     # #     except openreview.OpenReviewException as e:
     # #         assert 'Not Found' in e.args[0][0]['type'], "Incorrect error observed with invalid Note ID"
 
-    def test_put_pdf(self, client):
-        # Calling put_pdf without a valid file name
-        try:
-            response = client.put_pdf(fname='')
-        except IOError as e:
-            assert "No such file or directory" in e.args, "Incorrect error when no file name is given"
+    # def test_put_pdf(self, client):
+    #     # Calling put_pdf without a valid file name
+    #     try:
+    #         response = client.put_pdf(fname='')
+    #     except IOError as e:
+    #         assert "No such file or directory" in e.args, "Incorrect error when no file name is given"
 
-        # Creating an empty PDF and then uploading it
-        f = open("empty_test.pdf",'wb')
-        f.close()
-        response = client.put_pdf('empty_test.pdf')
+    #     # Creating an empty PDF and then uploading it
+    #     f = open("empty_test.pdf",'wb')
+    #     f.close()
+    #     response = client.put_pdf('empty_test.pdf')
 
-        if os.path.exists("empty_test.pdf"):
-            os.remove("empty_test.pdf")
-        assert "/pdf/" in response, "PDF not uploaded properly"
+    #     if os.path.exists("empty_test.pdf"):
+    #         os.remove("empty_test.pdf")
+    #     assert "/pdf/" in response, "PDF not uploaded properly"
 
     def test_get_profile(self, client):
         profile = client.get_profile('openreview.net')
