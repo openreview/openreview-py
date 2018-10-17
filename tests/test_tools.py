@@ -9,7 +9,7 @@ class TestTools():
 
     def setup_method(self, method):
         # Password should be saved in the environment variable OPENREVIEW_PASSWORD
-        self.client = openreview.Client(username = "OpenReview.net", password = '1234')
+        self.client = openreview.Client(username = "openreview.net", password = '1234')
         assert self.client is not None, "Client is none"
 
     def test_get_submission_invitations(self):
