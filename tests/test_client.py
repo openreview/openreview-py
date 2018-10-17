@@ -64,11 +64,12 @@ class TestClient():
         assert response
         print(response)
 
-    # def test_guest_user(self):
-    #     invitations = openreview.tools.get_submission_invitations(self.guest)
-    #     assert invitations, "Invitations could not be retrieved for guest user"
-    #     venues = openreview.tools.get_all_venues(self.guest)
-    #     assert venues, "Venues could not be retrieved for guest user"
+    def test_guest_user(self):
+        guest = openreview.Client()
+        invitations = openreview.tools.get_submission_invitations(guest)
+        assert len(invitations) == 0, "Invitations could not be retrieved for guest user"
+        venues = openreview.tools.get_all_venues(guest)
+        assert len(venues) == 0, "Venues could not be retrieved for guest user"
 
     # def test_get_notes_with_details(self):
     #     notes = self.client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
@@ -93,35 +94,35 @@ class TestClient():
     # #     except openreview.OpenReviewException as e:
     # #         assert 'Not Found' in e.args[0][0]['type'], "Incorrect error observed with invalid Note ID"
 
-    # def test_put_pdf(self):
-    #     # Calling put_pdf without a valid file name
-    #     try:
-    #         response = self.client.put_pdf(fname='')
-    #     except IOError as e:
-    #         assert "No such file or directory" in e.args, "Incorrect error when no file name is given"
+    def test_put_pdf(self, client):
+        # Calling put_pdf without a valid file name
+        try:
+            response = client.put_pdf(fname='')
+        except IOError as e:
+            assert "No such file or directory" in e.args, "Incorrect error when no file name is given"
 
-    #     # Creating an empty PDF and then uploading it
-    #     f = open("empty_test.pdf",'wb')
-    #     f.close()
-    #     response = self.client.put_pdf('empty_test.pdf')
+        # Creating an empty PDF and then uploading it
+        f = open("empty_test.pdf",'wb')
+        f.close()
+        response = client.put_pdf('empty_test.pdf')
 
-    #     if os.path.exists("empty_test.pdf"):
-    #         os.remove("empty_test.pdf")
-    #     assert "/pdf/" in response, "PDF not uploaded properly"
+        if os.path.exists("empty_test.pdf"):
+            os.remove("empty_test.pdf")
+        assert "/pdf/" in response, "PDF not uploaded properly"
 
-    # def test_get_profile(self):
-    #     profile = self.client.get_profile('mbok@cs.umass.edu')
-    #     assert profile, "Could not get the profile by email"
-    #     assert isinstance(profile, openreview.Profile)
-    #     assert profile.id == '~Melisa_TestBok1'
+    def test_get_profile(self, client):
+        profile = client.get_profile('openreview.net')
+        assert profile, "Could not get the profile by email"
+        assert isinstance(profile, openreview.Profile)
+        assert profile.id == '~Super_User1'
 
-    #     profile = self.client.get_profile('~Melisa_TestBok1')
-    #     assert profile, "Could not get the profile by id"
-    #     assert isinstance(profile, openreview.Profile)
-    #     assert 'mbok@cs.umass.edu' in profile.content['emails']
+        profile = client.get_profile('~Super_User1')
+        assert profile, "Could not get the profile by id"
+        assert isinstance(profile, openreview.Profile)
+        assert 'o****t' in profile.content['emails']
 
-    #     with pytest.raises(openreview.OpenReviewException, match=r'.*Profile not found.*'):
-    #         profile = self.client.get_profile('mbok@sss.edu')
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Profile not found.*'):
+            profile = client.get_profile('mbok@sss.edu')
 
     # def test_get_profiles(self):
     #     profiles = self.client.get_profiles(['mbok@cs.umass.edu'])
