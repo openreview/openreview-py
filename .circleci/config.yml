@@ -47,7 +47,11 @@ jobs:
   build-py3:
     working_directory: ~/openreview-py-repo
     docker:
+      - image: circleci/node:8.9.1
       - image: circleci/python:3.6
+      - image: circleci/redis:3
+      - image: circleci/mongo:3.6
+      - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     steps:
       - checkout
       - run: sudo apt-get install python-dev
