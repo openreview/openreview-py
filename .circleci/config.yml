@@ -17,11 +17,15 @@ jobs:
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
-          name: run app
+          name: install app
           command: |
             cd ~/openreview
             npm install
             node scripts/mongo_database.js
+      - run:
+          name: run app
+          command: |
+            cd ~/openreview
             node app
           background: true
       - run:
