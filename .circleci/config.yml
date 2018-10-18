@@ -14,7 +14,7 @@ jobs:
       - run: sudo apt-get install python-setuptools
       - run: sudo easy_install pip
       - run: sudo pip install ~/openreview-py-repo
-      - run: git clone -b feature/circle-ci-config https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
           name: install app
@@ -58,7 +58,7 @@ jobs:
       - run: sudo apt-get install python-setuptools
       - run: sudo easy_install pip
       - run: sudo pip install ~/openreview-py-repo
-      - run: git clone -b feature/circle-ci-config https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
+      - run: git clone -b https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
           name: install app
