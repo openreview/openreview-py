@@ -5,14 +5,13 @@ import pytest
 class TestConference():
 
 
-    def setup_method(self, method):
-        self.baseurl = 'http://localhost:3000'
-        self.client = openreview.Client(baseurl = self.baseurl, username = "OpenReview.net", password = "d0ntf33dth3tr0lls")
-        assert self.client is not None, "Client is none"
+    # def setup_method(self, method):
+    #     self.client = openreview.Client(username = "openreview.net", password = "1234")
+    #     assert self.client is not None, "Client is none"
 
-    def test_create_conference(self):
+    def test_create_conference(self, client):
 
-        builder = openreview.conference.ConferenceBuilder(self.client)
+        builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
