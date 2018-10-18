@@ -32,7 +32,7 @@ class TestClient():
         try:
             response = self.guest.login_user()
         except openreview.OpenReviewException as e:
-            assert ["Username/email is missing"] in e.args, "guest log in did not produce correct error"
+            assert ["Email is missing"] in e.args, "guest log in did not produce correct error"
 
         response = self.guest.login_user(username = "OpenReview.net")
         assert response, "valid token not found"
@@ -55,16 +55,16 @@ class TestClient():
         assert isinstance(notes[0].details['overwriting'], list), 'note does not have overwriting'
         assert isinstance(notes[0].details['writable'], bool), 'note does not have writable'
 
-    def test_get_pdf(self):
-        # Testing a valid PDF id
-        pdf_content = self.client.get_pdf(id='HJBhFJTF-')
-        assert pdf_content, "get_pdf did not return anything"
+    # def test_get_pdf(self):
+    #     # Testing a valid PDF id
+    #     pdf_content = self.client.get_pdf(id='HJBhFJTF-')
+    #     assert pdf_content, "get_pdf did not return anything"
 
-        # Testing an invalid PDF id
-        try:
-            pdf_content = self.client.get_pdf(id='AnInvalidID')
-        except openreview.OpenReviewException as e:
-            assert 'Not Found' in e.args[0][0]['type'], "Incorrect error observed with invalid Note ID"
+    #     # Testing an invalid PDF id
+    #     try:
+    #         pdf_content = self.client.get_pdf(id='AnInvalidID')
+    #     except openreview.OpenReviewException as e:
+    #         assert 'Not Found' in e.args[0][0]['type'], "Incorrect error observed with invalid Note ID"
 
     def test_put_pdf(self):
         # Calling put_pdf without a valid file name

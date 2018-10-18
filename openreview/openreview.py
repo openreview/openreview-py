@@ -22,13 +22,15 @@ class OpenReviewException(Exception):
 
 class Client(object):
 
-    def __init__(self, baseurl = None, username = None, password = None):
+    def __init__(self, baseurl = None, username = None, password = None, token= None):
         """
         :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name). Mandatory argument.
 
         :arg username: openreview username. Optional argument.
 
         :arg password: openreview password. Optional argument.
+
+        :arg token:  session token.  Optional argument.
         """
         if baseurl==None:
             try:
@@ -54,6 +56,7 @@ class Client(object):
         else:
             self.password = password
 
+        self.token = token
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -129,15 +132,29 @@ class Client(object):
         }
         response = requests.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
-        return str(response.json())
+        return response.json()
 
-    def activate_user(self, token):
+    def activate_user(self, token, content):
         '''
         Activates a newly registered user
 
         :arg token: activation token
+        :arg content: content of the profile to activate
+
+        Example Usage:
+        >>> res = client.activate_user('new@user.com', { 
+            'names': [
+                    {
+                        'first': 'New',
+                        'last': 'User',
+                        'username': '~New_User1'
+                    }
+                ],
+            'emails': ['new@user.com'],
+            'preferredEmail': 'new@user.com'
+            })       
         '''
-        response = requests.put(self.baseurl + '/activate/' + token, headers = self.headers)
+        response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -286,7 +303,7 @@ class Client(object):
         headers = self.headers.copy()
         headers['content-type'] = 'application/pdf'
 
-        with open(fname) as f:
+        with open(fname, 'rb') as f:
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
         response = self.__handle_response(response)
@@ -822,6 +839,7 @@ class Invitation(object):
             tcdate = i.get('tcdate'),
             tmdate = i.get('tmdate'),
             duedate = i.get('duedate'),
+            expdate = i.get('expdate'),
             readers = i.get('readers'),
             nonreaders = i.get('nonreaders'),
             writers = i.get('writers'),
