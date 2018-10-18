@@ -20,30 +20,6 @@ class TestTools():
         venues = openreview.tools.get_all_venues(self.client)
         assert len(venues) == 0, "Venues could not be retrieved"
 
-    # def test_iterget(self):
-    #     data_size = 10000
-    #     queue = [random.random() for _ in range(data_size)]
-
-    #     def mock_get(limit=10, offset=0):
-    #         try:
-    #             return queue[offset:offset+limit]
-    #         except IndexError as e:
-    #             return []
-
-    #     assert data_size == len(list(openreview.tools.iterget(mock_get)))
-
-    #     new_iterator = openreview.tools.iterget(mock_get)
-
-    #     counter = 0
-    #     for random_real in new_iterator:
-    #         counter += 1
-
-    #     assert counter == data_size
-
-    #     notes_iterator = openreview.tools.iterget(self.client.get_notes)
-    #     notes_list = list(notes_iterator)
-    #     assert notes_list is not None, "Notes iterator failed"
-
     def test_iterget_notes(self):
         notes_iterator = openreview.tools.iterget_notes(self.client)
         assert notes_iterator
