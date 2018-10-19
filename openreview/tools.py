@@ -557,7 +557,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['note'] = note
     if replyto != None:
         params['replyto'] = replyto
-    
+
     return iterget(client.get_invitations, **params)
 
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
@@ -581,7 +581,7 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
         params['host'] = host
     if signatory != None:
         params['signatory'] = signatory
-    
+
     return iterget(client.get_groups, **params)
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
@@ -716,7 +716,7 @@ def add_assignment(client, paper_number, conference, reviewer,
         default_nonreaders = []
         default_members = []
         default_signatories = []
-        
+
         readers = individual_group_params.get('readers', default_readers)[:]
         readers.append(anonreviewer_id)
 
@@ -748,7 +748,7 @@ def add_assignment(client, paper_number, conference, reviewer,
         # user already assigned to individual group(s)
         for g in assigned_individual_groups:
             affected_groups.add(g.id)
-    
+
     return (user,list(affected_groups))
 
 
