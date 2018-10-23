@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='0.9.4',
+      version='0.9.5',
       description='OpenReview client library',
       url='https://github.com/iesl/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
@@ -13,7 +13,7 @@ setup(name='openreview-py',
           'openreview/invitations'
       ],
       install_requires=[
-          'pycrypto',
+          'pycryptodome',
           'requests>=2.18.4',
           'future',
           'nbsphinx',

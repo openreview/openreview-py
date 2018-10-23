@@ -21,13 +21,15 @@ class OpenReviewException(Exception):
 
 class Client(object):
 
-    def __init__(self, baseurl = None, username = None, password = None):
+    def __init__(self, baseurl = None, username = None, password = None, token= None):
         """
         :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name). Mandatory argument.
 
         :arg username: openreview username. Optional argument.
 
         :arg password: openreview password. Optional argument.
+
+        :arg token:  session token.  Optional argument.
         """
         self.baseurl = baseurl
         if not self.baseurl:
@@ -41,6 +43,7 @@ class Client(object):
         if not password:
             self.password = os.environ.get('OPENREVIEW_PASSWORD')
 
+        self.token = token
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
