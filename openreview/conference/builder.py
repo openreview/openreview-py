@@ -2,11 +2,14 @@ from __future__ import absolute_import
 
 from .. import openreview
 from .. import tools
+from . import webfield
 
 class Conference(object):
 
     def __init__(self):
         self.groups = []
+        self.name = None
+        self.header = {}
 
     def set_id(self, id):
         self.id = id
@@ -14,11 +17,34 @@ class Conference(object):
     def get_id(self):
         return self.id
 
+    def set_conference_name(self, name):
+        self.name = name
+
+    def get_conference_name(self):
+        return self.name
+
     def set_conference_groups(self, groups):
         self.groups = groups
 
     def get_conference_groups(self):
         return self.groups
+
+    def set_homepage_header(self, header):
+        self.header = header
+
+    def get_homepage_options(self):
+        options = {}
+        if self.name:
+            options['subtitle'] = self.name
+        if self.header:
+            options['title'] = self.header.get('title')
+            options['subtitle'] = self.header.get('subtitle')
+            options['location'] = self.header.get('location')
+            options['date'] = self.header.get('date')
+            options['website'] = self.header.get('website')
+            options['instructions'] = self.header.get('instructions')
+            options['deadline'] = self.header.get('deadline')
+        return options
 
 
 class ConferenceBuilder(object):
@@ -26,43 +52,12 @@ class ConferenceBuilder(object):
     def __init__(self, client):
         self.client = client
         self.conference = Conference()
-
-    def __prepare_web(self, group_id):
-
-        children_groups = self.client.get_groups(regex = group_id + '/[^/]+/?$')
-        print('children groups', children_groups)
-
-        landing_page = '''<html>
-        <head>
-        </head>
-        <body>
-            <div id='main'>
-            <div id='header'></div>
-
-            <div id='iclr', class='panel'>
-            <h3 id='iclrInfo', style="float:center">Automated Knowledge Base Construction</h3>
-        '''
-        for children in children_groups:
-            landing_page += "<div class='row'><a href='javascript:pushGroup(\"" + children.id + "\")'>" + children.id + "</a>"
-
-        landing_page += '''
-                </div>
-                <script type="text/javascript">
-                $(function() {
-
-                });
-                </script>
-            </body>
-            </html>
-        '''
-
-        return landing_page
+        self.webfieldBuilder = webfield.WebfieldBuilder(client)
 
 
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
         paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
-        print(paths)
         groups = []
 
         for p in paths:
@@ -83,9 +78,10 @@ class ConferenceBuilder(object):
             groups.append(group)
 
         #update web pages
-        for g in groups:
-            g.web = self.__prepare_web(g.id)
-            g = self.client.post_group(g)
+        for g in groups[:-1]:
+            self.webfieldBuilder.set_landing_page(g)
+
+        self.webfieldBuilder.set_home_page(groups[-1], self.conference.get_homepage_options())
 
         return groups
 
@@ -93,6 +89,11 @@ class ConferenceBuilder(object):
     def set_conference_id(self, id):
         self.conference.set_id(id)
 
+    def set_conference_name(self, name):
+        self.conference.set_conference_name(name)
+
+    def set_homepage_header(self, header):
+        self.conference.set_homepage_header(header)
 
     def get_result(self):
 
