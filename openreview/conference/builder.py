@@ -27,6 +27,38 @@ class ConferenceBuilder(object):
         self.client = client
         self.conference = Conference()
 
+    def __prepare_web(self, group_id):
+
+        children_groups = self.client.get_groups(regex = group_id + '/[^/]+/?$')
+        print('children groups', children_groups)
+
+        landing_page = '''<html>
+        <head>
+        </head>
+        <body>
+            <div id='main'>
+            <div id='header'></div>
+
+            <div id='iclr', class='panel'>
+            <h3 id='iclrInfo', style="float:center">Automated Knowledge Base Construction</h3>
+        '''
+        for children in children_groups:
+            landing_page += "<div class='row'><a href='javascript:pushGroup(\"" + children.id + "\")'>" + children.id + "</a>"
+
+        landing_page += '''
+                </div>
+                <script type="text/javascript">
+                $(function() {
+
+                });
+                </script>
+            </body>
+            </html>
+        '''
+
+        return landing_page
+
+
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
         paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
@@ -49,6 +81,11 @@ class ConferenceBuilder(object):
                 )
 
             groups.append(group)
+
+        #update web pages
+        for g in groups:
+            g.web = self.__prepare_web(g.id)
+            g = self.client.post_group(g)
 
         return groups
 

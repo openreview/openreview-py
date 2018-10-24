@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
 import pytest
+import requests
 
 class TestConference():
 
@@ -41,3 +42,12 @@ class TestConference():
         assert client.get_group(id = 'AKBC.ws')
         assert client.get_group(id = 'AKBC.ws/2019')
         assert client.get_group(id = 'AKBC.ws/2019/Conference')
+
+        resp = requests.get('http://localhost:3000/group?id=AKBC.ws')
+        assert resp.status_code == 200
+
+        resp = requests.get('http://localhost:3000/group?id=AKBC.ws/2019')
+        assert resp.status_code == 200
+
+        resp = requests.get('http://localhost:3000/group?id=AKBC.ws/2019/Conference')
+        assert resp.status_code == 200
