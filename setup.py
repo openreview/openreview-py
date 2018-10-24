@@ -10,6 +10,7 @@ setup(name='openreview-py',
       packages=[
           'openreview',
           'openreview/conference',
+          'openreview/conference/templates',
           'openreview/invitations'
       ],
       install_requires=[
