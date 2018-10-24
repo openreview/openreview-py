@@ -48,7 +48,6 @@ jobs:
     working_directory: ~/openreview-py-repo
     docker:
       - image: circleci/node:8.9.1
-      - image: circleci/python:3.6
       - image: circleci/redis:3
       - image: circleci/mongo:3.6
       - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
@@ -56,8 +55,9 @@ jobs:
       - checkout
       - run: sudo apt-get install python-dev
       - run: sudo apt-get install python-setuptools
-      - run: sudo easy_install pip
-      - run: sudo pip install ~/openreview-py-repo
+      - run: sudo apt-get install python3
+      - run: sudo easy_install pip3
+      - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
@@ -81,7 +81,7 @@ jobs:
           name: run tests
           command: |
             cd ~/openreview-py-repo
-            sudo pip install -U pytest
+            pip3 install -U pytest
             mkdir test-reports
             pytest --junitxml=test-reports/junit.xml
       - store_test_results:
