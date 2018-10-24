@@ -56,7 +56,9 @@ jobs:
       - run: sudo apt-get install python-dev
       - run: sudo apt-get install python-setuptools
       - run: sudo apt-get install python3
-      - run: sudo easy_install pip3
+      - run: sudo apt-get install libzmq3 libzmq3-dev python3-zmq
+      - run: curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+      - run: sudo python3 get-pip.py
       - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
@@ -81,7 +83,7 @@ jobs:
           name: run tests
           command: |
             cd ~/openreview-py-repo
-            pip3 install -U pytest
+            sudo pip3 install -U pytest
             mkdir test-reports
             pytest --junitxml=test-reports/junit.xml
       - store_test_results:
