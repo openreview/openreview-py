@@ -713,6 +713,7 @@ class Invitation(object):
         nonreaders = None,
         web = None,
         process = None,
+        process_string = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -755,6 +756,8 @@ class Invitation(object):
         if transform != None:
             with open(transform) as f:
                 self.transform = f.read()
+        if process_string:
+            self.process = process
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])

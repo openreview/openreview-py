@@ -871,7 +871,15 @@ def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     661696224000
 
     '''
-    return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
+    return datetime_millis(datetime.datetime(year, month, day, hour, minute, second))
+
+def datetime_millis(dt):
+    '''
+    Convets a datetim to milliseconds.
+
+    '''
+    epoch = datetime.datetime.utcfromtimestamp(0)
+    return int((dt - epoch).total_seconds() * 1000)
 
 def recruit_reviewer(client, email, first,
     hash_seed,

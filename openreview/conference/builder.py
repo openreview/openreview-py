@@ -3,13 +3,16 @@ from __future__ import absolute_import
 from .. import openreview
 from .. import tools
 from . import webfield
+from . import invitation
 
 class Conference(object):
 
-    def __init__(self):
+    def __init__(self, client):
+        self.client = client
         self.groups = []
         self.name = None
         self.header = {}
+        self.invitationBuilder = invitation.InvitationBuilder(client)
 
     def set_id(self, id):
         self.id = id
@@ -46,12 +49,19 @@ class Conference(object):
             options['deadline'] = self.header.get('deadline')
         return options
 
+    def open_submissions(self, mode = 'blind', due_date = None, subject_areas = []):
+        options = {
+            'due_date': due_date
+        }
+        return self.invitationBuilder.set_submission_invitation(self.id, options)
+
+
 
 class ConferenceBuilder(object):
 
     def __init__(self, client):
         self.client = client
-        self.conference = Conference()
+        self.conference = Conference(client)
         self.webfieldBuilder = webfield.WebfieldBuilder(client)
 
 

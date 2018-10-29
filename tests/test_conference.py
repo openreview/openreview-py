@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import openreview
 import pytest
 import requests
+import datetime
 
 class TestConference():
 
@@ -165,3 +166,20 @@ class TestConference():
         assert '"website": "http://www.akbc.ws/2019/"' in groups[2].web
         assert 'Important Information' in groups[2].web
         assert '"deadline": "Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018"' in groups[2].web
+
+
+    def test_enable_submissions(self, client):
+
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        conference = builder.get_result()
+        invitation = conference.open_submissions(mode = 'blind', due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = [])
+        assert invitation
+        assert invitation.duedate == 1570298400000
+
+        posted_invitation = client.get_invitation(id = 'AKBC.ws/2019/Conference/-/Submission')
+        assert posted_invitation
+        assert posted_invitation.duedate == 1570298400000
