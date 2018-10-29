@@ -21,36 +21,29 @@ class WebfieldBuilder(object):
         return merged_options
 
 
-    def set_landing_page(self, group):
+    def set_landing_page(self, group, options = {}):
+
+        default_header = {
+            'title': group.id,
+            'description': ''
+        }
 
         children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
 
-        landing_page = '''<html>
-        <head>
-        </head>
-        <body>
-            <div id='main'>
-            <div id='header'></div>
+        links = []
 
-            <div id='iclr', class='panel'>
-            <h3 id='iclrInfo', style="float:center">''' + group.id + '''</h3>
-        '''
         for children in children_groups:
-            landing_page += "<div class='row'><a href='javascript:pushGroup(\"" + children.id + "\")'>" + children.id + "</a>"
+            links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
 
-        landing_page += '''
-                </div>
-                <script type="text/javascript">
-                $(function() {
+        header = self.__build_options(default_header, options)
 
-                });
-                </script>
-            </body>
-            </html>
-        '''
-
-        group.web = landing_page
-        return self.client.post_group(group)
+        with open(os.path.join(os.path.dirname(__file__), 'templates/landing.js')) as f:
+            content = f.read()
+            content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
+            group.web = content
+            return self.client.post_group(group)
 
 
     def set_home_page(self, group, options = {}):
