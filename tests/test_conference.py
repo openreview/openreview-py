@@ -183,3 +183,20 @@ class TestConference():
         posted_invitation = client.get_invitation(id = 'AKBC.ws/2019/Conference/-/Submission')
         assert posted_invitation
         assert posted_invitation.duedate == 1570298400000
+
+        #Test the submission paper
+
+
+    def test_recruit_reviewers(self, client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        conference = builder.get_result()
+
+        result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
+        assert result
+        assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
+        assert 'mbok@mail.com' in result.members
+        assert 'mohit@mail.com' in result.members

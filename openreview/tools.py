@@ -924,7 +924,7 @@ def recruit_reviewer(client, email, first,
 
     if 'groups' in response and response['groups']:
         reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, response['groups'])
+        client.add_members_to_group(reviewers_invited, [email])
 
     if verbose:
         print("Sent to the following: ", response)
