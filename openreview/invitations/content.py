@@ -175,16 +175,19 @@ recruitment = {
     'email': {
         'description': 'email address',
         'order': 1,
-        'value-regex': '.*@.*'
+        'value-regex': '.*@.*',
+        'required':True
     },
     'key': {
         'description': 'Email key hash',
         'order': 2,
-        'value-regex': '.{0,100}'
+        'value-regex': '.{0,100}',
+        'required':True
     },
     'response': {
         'description': 'Invitation response',
         'order': 3,
-        'value-radio': ['Yes', 'No']
+        'value-radio': ['Yes', 'No'],
+        'required':True
     }
 }

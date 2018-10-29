@@ -418,7 +418,7 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None):
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
         """
         Returns a list of revisions for a note.
 
@@ -426,6 +426,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
         :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+        :arg original: a boolean. If True then get_references will additionally return the references to the original note.
         """
         params = {}
         if referent != None:
@@ -438,6 +439,8 @@ class Client(object):
             params['limit'] = limit
         if offset != None:
             params['offset'] = offset
+        if original == True:
+            params['original'] = "true"
 
         response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
