@@ -38,7 +38,7 @@ class TestConference():
         assert groups[2].signatures == ['~Super_User1']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
         assert groups[2].members == []
-        assert "'title': 'AKBC.ws/2019/Conference'" in groups[2].web
+        assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
 
         assert client.get_group(id = 'AKBC.ws')
         assert client.get_group(id = 'AKBC.ws/2019')
@@ -87,8 +87,8 @@ class TestConference():
         assert groups[2].signatures == ['~Super_User1']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
         assert groups[2].members == []
-        assert "'title': 'AKBC.ws/2019/Conference'" in groups[2].web
-        assert "'subtitle': 'Automated Knowledge Base Construction'" in groups[2].web
+        assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
+        assert '"subtitle": "Automated Knowledge Base Construction"' in groups[2].web
 
         assert client.get_group(id = 'AKBC.ws')
         assert client.get_group(id = 'AKBC.ws/2019')
@@ -158,10 +158,10 @@ class TestConference():
         assert groups[2].signatures == ['~Super_User1']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
         assert groups[2].members == []
-        assert "'title': 'AKBC 2019'" in groups[2].web
-        assert "'subtitle': 'Automated Knowledge Base Construction'" in groups[2].web
-        assert "'location': 'Amherst, Massachusetts, United States'" in groups[2].web
-        assert "'date': 'May 20 - May 21, 2019'" in groups[2].web
-        assert "'website': 'http://www.akbc.ws/2019/'" in groups[2].web
-        assert "Important Information" in groups[2].web
-        assert "'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'" in groups[2].web
+        assert '"title": "AKBC 2019"' in groups[2].web
+        assert '"subtitle": "Automated Knowledge Base Construction"' in groups[2].web
+        assert '"location": "Amherst, Massachusetts, United States"' in groups[2].web
+        assert '"date": "May 20 - May 21, 2019"' in groups[2].web
+        assert '"website": "http://www.akbc.ws/2019/"' in groups[2].web
+        assert 'Important Information' in groups[2].web
+        assert '"deadline": "Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018"' in groups[2].web

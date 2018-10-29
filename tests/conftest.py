@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture(scope='session')
 def client():
-    client = openreview.Client()
+    client = openreview.Client(baseurl = 'http://localhost:3000')
     assert client is not None, "Client is none"
     res = client.register_user(email = 'openreview.net', first = 'Super', last = 'User', password = '1234')
     assert res, "Res i none"

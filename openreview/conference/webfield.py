@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import json
 
 
 
@@ -12,11 +13,11 @@ class WebfieldBuilder(object):
     def __build_options(self, default, options):
 
         merged_options = {}
-        for k, v in default.items():
+        for k in default:
             if k in options:
                 merged_options[k] = options[k]
             else:
-                merged_options[k] = v
+                merged_options[k] = default[k]
         return merged_options
 
 
@@ -69,7 +70,7 @@ class WebfieldBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'templates/homepage.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = 'venue.org/Conference';", "var CONFERENCE_ID = '" + group.id + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + str(header) + ";")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             group.web = content
             return self.client.post_group(group)
 
