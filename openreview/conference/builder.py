@@ -11,6 +11,7 @@ class Conference(object):
         self.client = client
         self.groups = []
         self.name = None
+        self.type = False
         self.header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
@@ -39,6 +40,12 @@ class Conference(object):
 
     def get_conference_name(self):
         return self.name
+
+    def set_type(self, is_double_blind):
+        self.type = is_double_blind
+
+    def get_type(self):
+        return self.type
 
     def set_conference_groups(self, groups):
         self.groups = groups
@@ -143,7 +150,7 @@ class ConferenceBuilder(object):
     def __init__(self, client):
         self.client = client
         self.conference = Conference(client)
-        self.webfieldBuilder = webfield.WebfieldBuilder(client)
+        self.webfield_builder = webfield.WebfieldBuilder(client)
 
 
     def __build_groups(self, conference_id):
@@ -155,7 +162,6 @@ class ConferenceBuilder(object):
             group = tools.get_group(self.client, id = p)
 
             if group is None:
-                print('post group')
                 group = self.client.post_group(openreview.Group(
                     id = p,
                     readers = ['everyone'],
@@ -167,12 +173,6 @@ class ConferenceBuilder(object):
                 )
 
             groups.append(group)
-
-        #update web pages
-        for g in groups[:-1]:
-            self.webfieldBuilder.set_landing_page(g)
-
-        self.webfieldBuilder.set_home_page(groups[-1], self.conference.get_homepage_options())
 
         return groups
 
@@ -186,9 +186,17 @@ class ConferenceBuilder(object):
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
 
+    def set_conference_type(self, is_double_blind):
+        self.conference.set_type(is_double_blind)
+
     def get_result(self):
 
         id = self.conference.get_id()
         groups = self.__build_groups(id)
+        for g in groups[:-1]:
+            self.webfield_builder.set_landing_page(g)
+
+        self.webfield_builder.set_home_page(groups[-1], self.conference.get_type() , self.conference.get_homepage_options())
+
         self.conference.set_conference_groups(groups)
         return self.conference
