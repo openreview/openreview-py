@@ -200,3 +200,39 @@ class TestConference():
         assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
         assert 'mbok@mail.com' in result.members
         assert 'mohit@mail.com' in result.members
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 0
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Invited')
+        assert group
+        assert len(group.members) == 2
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 0
+
+        result = conference.recruit_reviewers(['michael@mail.com'])
+        assert result
+        assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
+        assert 'mbok@mail.com' in result.members
+        assert 'mohit@mail.com' in result.members
+        assert 'michael@mail.com' in result.members
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 0
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Invited')
+        assert group
+        assert len(group.members) == 3
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 0
+
+        invitation = client.get_invitation('AKBC.ws/2019/Conference/-/Recruit_Reviewers')
+        assert invitation
+        assert invitation.process
+        assert invitation.web

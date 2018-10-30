@@ -15,6 +15,19 @@ class Conference(object):
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
 
+
+    def __create_group(self, group_id, group_owner_id):
+
+        group = tools.get_group(self.client, id = group_id)
+        if group is None:
+            group = self.client.post_group(openreview.Group(id = group_id,
+                readers = [self.id, group_owner_id],
+                writers = [self.id],
+                signatures = [self.id],
+                signatories = [self.id],
+                members = []))
+        return group
+
     def set_id(self, id):
         self.id = id
 
@@ -56,7 +69,7 @@ class Conference(object):
         }
         return self.invitation_builder.set_submission_invitation(self.id, options)
 
-    def recruit_reviewers(self, emails):
+    def recruit_reviewers(self, emails, title = None, message = None):
 
         pcs_id = self.id + '/Program_Chairs'
         reviewers_id = self.id + '/Reviewers'
@@ -64,27 +77,9 @@ class Conference(object):
         reviewers_invited_id = reviewers_id + '/Invited'
         hash_seed = '1234'
 
-        self.client.post_group(openreview.Group(id = reviewers_id,
-            readers = [self.id, pcs_id],
-            writers = [self.id],
-            signatures = [self.id],
-            signatories = [self.id],
-            members = []))
-
-        self.client.post_group(openreview.Group(id = reviewers_declined_id,
-            readers = [self.id, pcs_id],
-            writers = [self.id],
-            signatures = [self.id],
-            signatories = [self.id],
-            members = []))
-
-        self.client.post_group(openreview.Group(id = reviewers_invited_id,
-            readers = [self.id, pcs_id],
-            writers = [self.id],
-            signatures = [self.id],
-            signatories = [self.id],
-            members = []))
-
+        self.__create_group(reviewers_id, pcs_id)
+        self.__create_group(reviewers_declined_id, pcs_id)
+        self.__create_group(reviewers_invited_id, pcs_id)
 
         options = {
             'reviewers_id': reviewers_id,
@@ -124,6 +119,12 @@ class Conference(object):
 
         '''
         recruit_message_subj = self.id + ': Invitation to Review'
+
+        if title:
+            recruit_message_subj = title
+
+        if message:
+            recruit_message = message
 
         for email in emails:
             tools.recruit_reviewer(self.client, email, 'artist',

@@ -751,7 +751,6 @@ class Invitation(object):
         if web != None:
             with open(web) as f:
                 self.web = f.read()
-        self.process = None
         if process != None:
             with open(process) as f:
                 self.process = f.read()
@@ -760,7 +759,7 @@ class Invitation(object):
             with open(transform) as f:
                 self.transform = f.read()
         if process_string:
-            self.process = process
+            self.process = process_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
