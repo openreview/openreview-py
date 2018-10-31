@@ -8,6 +8,7 @@ jobs:
       - image: circleci/redis:3
       - image: circleci/mongo:3.6
       - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
+      - image: circleci/node-jessie-browsers
     steps:
       - checkout
       - run: sudo apt-get install python-dev
