@@ -3,10 +3,10 @@ jobs:
   build:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/node:8.9.1-stretch
-      - image: circleci/python:2.7-stretch
-      - image: circleci/redis:3-stretch
-      - image: circleci/mongo:3.6-stretch
+      - image: circleci/node:8.9.1
+      - image: circleci/python:2.7
+      - image: circleci/redis:3
+      - image: circleci/mongo:3.6
       - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     steps:
       - checkout
@@ -37,7 +37,7 @@ jobs:
           name: install firefox driver
           command: |
             sudo apt-get update
-            sudo apt-get install firefox
+            sudo apt-get install Iceweasel
             mkdir ~/openreview-py-repo/tests/drivers
             cd ~/openreview-py-repo/tests/drivers
             wget https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz
