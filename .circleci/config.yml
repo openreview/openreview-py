@@ -46,8 +46,8 @@ jobs:
           command: |
             cd ~/openreview-py-repo
             sudo pip install -U pytest
-            pip install selenium
-            pip install pytest-selenium
+            sudo pip install selenium
+            sudo pip install pytest-selenium
             mkdir test-reports
             pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
       - store_test_results:
