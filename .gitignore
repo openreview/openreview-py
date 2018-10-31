@@ -7,3 +7,5 @@ openreview_py.egg-info/
 .pytest_cache/
 build/
 pytest_report.xml
+*.log
+drivers/

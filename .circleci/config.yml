@@ -34,12 +34,21 @@ jobs:
             wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
             :
       - run:
+          name: install firefox driver
+          command: |
+            cd ~/openreview-py-repo/tests/drivers
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz
+            tar -xvzf geckodriver*
+            chmod +x geckodriver
+      - run:
           name: run tests
           command: |
             cd ~/openreview-py-repo
             sudo pip install -U pytest
+            pip install selenium
+            pip install pytest-selenium
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
       - store_test_results:
           path: test-reports
       - store_artifacts:

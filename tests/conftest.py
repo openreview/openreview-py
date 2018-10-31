@@ -23,3 +23,10 @@ def client():
     assert group
     assert group.members == ['~Super_User1']
     yield client
+
+
+@pytest.fixture
+def firefox_options(firefox_options):
+    #firefox_options.binary = '/Users/mbok/iesl/OpenReviewPy/tests/drivers/geckodriver'
+    firefox_options.add_argument('--headless')
+    return firefox_options
