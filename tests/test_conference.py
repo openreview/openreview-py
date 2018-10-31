@@ -132,6 +132,7 @@ class TestConference():
                 </ul></p>',
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
+        builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -166,6 +167,8 @@ class TestConference():
         assert '"website": "http://www.akbc.ws/2019/"' in groups[2].web
         assert 'Important Information' in groups[2].web
         assert '"deadline": "Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018"' in groups[2].web
+        assert 'BLIND_SUBMISSION_ID' in groups[2].web
+
 
 
     def test_enable_submissions(self, client):
@@ -236,3 +239,62 @@ class TestConference():
         assert invitation
         assert invitation.process
         assert invitation.web
+
+    def test_create_single_blind_conference(self, client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_conference_name('2018 NIPS MLITS Workshop')
+        builder.set_homepage_header({
+        'title': '2018 NIPS MLITS Workshop',
+        'subtitle': 'Machine Learning for Intelligent Transportation Systems',
+        'deadline': 'October 12, 2018, 11:59 pm UTC',
+        'date': 'December 3-8, 2018',
+        'website': 'https://sites.google.com/site/nips2018mlits/home',
+        'location': 'Montreal, Canada',
+        'instructions': ''
+        })
+        builder.set_conference_type(openreview.builder.SingleBlindConferenceType)
+
+        conference = builder.get_result()
+        assert conference, 'conference is None'
+
+        groups = conference.get_conference_groups()
+        assert groups
+        assert groups[0].id == 'NIPS.cc'
+        assert groups[0].readers == ['everyone']
+        assert groups[0].nonreaders == []
+        assert groups[0].writers == ['NIPS.cc']
+        assert groups[0].signatures == ['~Super_User1']
+        assert groups[0].signatories == ['NIPS.cc']
+        assert groups[0].members == []
+        assert groups[1].id == 'NIPS.cc/2018'
+        assert groups[1].readers == ['everyone']
+        assert groups[1].nonreaders == []
+        assert groups[1].writers == ['NIPS.cc/2018']
+        assert groups[1].signatures == ['~Super_User1']
+        assert groups[1].signatories == ['NIPS.cc/2018']
+        assert groups[1].members == []
+        assert groups[2].id == 'NIPS.cc/2018/Workshop'
+        assert groups[2].readers == ['everyone']
+        assert groups[2].nonreaders == []
+        assert groups[2].writers == ['NIPS.cc/2018/Workshop']
+        assert groups[2].signatures == ['~Super_User1']
+        assert groups[2].signatories == ['NIPS.cc/2018/Workshop']
+        assert groups[2].members == []
+        assert groups[3].id == 'NIPS.cc/2018/Workshop/MLITS'
+        assert groups[3].readers == ['everyone']
+        assert groups[3].nonreaders == []
+        assert groups[3].writers == ['NIPS.cc/2018/Workshop/MLITS']
+        assert groups[3].signatures == ['~Super_User1']
+        assert groups[3].signatories == ['NIPS.cc/2018/Workshop/MLITS']
+        assert groups[3].members == []
+        assert '"title": "2018 NIPS MLITS Workshop"' in groups[3].web
+        assert '"subtitle": "Machine Learning for Intelligent Transportation Systems"' in groups[3].web
+        assert '"location": "Montreal, Canada"' in groups[3].web
+        assert '"date": "December 3-8, 2018"' in groups[3].web
+        assert '"website": "https://sites.google.com/site/nips2018mlits/home"' in groups[3].web
+        assert '"deadline": "October 12, 2018, 11:59 pm UTC"' in groups[3].web
+        assert 'BLIND_SUBMISSION_ID' not in groups[3].web

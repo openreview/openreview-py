@@ -5,13 +5,31 @@ from .. import tools
 from . import webfield
 from . import invitation
 
+class ConferenceType(object):
+
+    @classmethod
+    def homepage_webfield_template(cls):
+        return "noBlindConferenceWebfield.js"
+
+class SingleBlindConferenceType(ConferenceType):
+
+    @classmethod
+    def homepage_webfield_template(cls):
+        return "noBlindConferenceWebfield.js"
+
+class DoubleBlindConferenceType(ConferenceType):
+
+    @classmethod
+    def homepage_webfield_template(cls):
+        return "homepage.js"
+
 class Conference(object):
 
     def __init__(self, client):
         self.client = client
         self.groups = []
         self.name = None
-        self.type = False
+        self.type = ConferenceType
         self.header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
@@ -41,8 +59,8 @@ class Conference(object):
     def get_conference_name(self):
         return self.name
 
-    def set_type(self, is_double_blind):
-        self.type = is_double_blind
+    def set_type(self, type):
+        self.type = type
 
     def get_type(self):
         return self.type
@@ -186,8 +204,8 @@ class ConferenceBuilder(object):
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
 
-    def set_conference_type(self, is_double_blind):
-        self.conference.set_type(is_double_blind)
+    def set_conference_type(self, type):
+        self.conference.set_type(type)
 
     def get_result(self):
 
@@ -196,7 +214,7 @@ class ConferenceBuilder(object):
         for g in groups[:-1]:
             self.webfield_builder.set_landing_page(g)
 
-        self.webfield_builder.set_home_page(groups[-1], self.conference.get_type() , self.conference.get_homepage_options())
+        self.webfield_builder.set_home_page(groups[-1], self.conference.get_type().homepage_webfield_template() , self.conference.get_homepage_options())
 
         self.conference.set_conference_groups(groups)
         return self.conference

@@ -20,13 +20,6 @@ class WebfieldBuilder(object):
                 merged_options[k] = default[k]
         return merged_options
 
-    def __get_template_name(self, is_double_blind):
-        if (is_double_blind):
-            return 'homepage.js'
-        else:
-            return 'noBlindConferenceWebfield.js'
-
-
     def set_landing_page(self, group, options = {}):
 
         default_header = {
@@ -52,7 +45,7 @@ class WebfieldBuilder(object):
             return self.client.post_group(group)
 
 
-    def set_home_page(self, group, is_double_blind, options = {}):
+    def set_home_page(self, group, template_name, options = {}):
 
         default_header = {
             'title': group.id,
@@ -66,7 +59,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/' + self.__get_template_name(is_double_blind))) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/' + template_name)) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = 'venue.org/Conference';", "var CONFERENCE_ID = '" + group.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
