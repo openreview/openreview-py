@@ -20,6 +20,8 @@ jobs:
           command: |
             cd ~/openreview
             npm install
+            sudo npm install -g grunt-cli
+            grunt regen
             NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
@@ -75,6 +77,8 @@ jobs:
           command: |
             cd ~/openreview
             npm install
+            sudo npm install -g grunt-cli
+            grunt regen
             NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
