@@ -61,6 +61,9 @@ class Client(object):
             self.login_user(self.username, self.password)
             self.signature = self.get_profile(self.username).id
 
+        if self.token:
+            self.headers['Authorization'] ='Bearer ' + self.token
+
 
     ## PRIVATE FUNCTIONS
 
