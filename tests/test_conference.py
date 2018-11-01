@@ -3,6 +3,10 @@ import openreview
 import pytest
 import requests
 import datetime
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 class TestConference():
 
@@ -300,6 +304,13 @@ class TestConference():
         assert 'BLIND_SUBMISSION_ID' not in groups[3].web
 
         selenium.get("http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS")
+        timeout = 5
+        try:
+            element_present = EC.presence_of_element_located((By.ID, 'header'))
+            WebDriverWait(selenium, timeout).until(element_present)
+        except TimeoutException:
+            print("Timed out waiting for page to load")
+
         assert "NIPS 2018 Workshop MLITS | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
