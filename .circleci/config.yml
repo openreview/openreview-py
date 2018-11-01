@@ -91,6 +91,7 @@ jobs:
       - run:
           name: install firefox driver
           command: |
+            sudo apt-get update
             sudo apt-get install firefox-esr
             mkdir ~/openreview-py-repo/tests/drivers
             cd ~/openreview-py-repo/tests/drivers
