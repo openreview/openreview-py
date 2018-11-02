@@ -116,7 +116,7 @@ class TestClient():
         assert 'Andrew McCallum' in profiles[0].get_names()
         assert 'Melisa Bok' in profiles[1].get_names()
 
-        profiles = self.client.get_profiles([])
+        profiles = client.get_profiles([])
         assert len(profiles) == 0
 
     def test_get_invitations(self, client):
