@@ -111,6 +111,9 @@ class TestClient():
         assert '~Melisa_TestBok1' in profiles[1].id
         assert '~Andrew_McCallum1' in profiles[0].id
 
+        assert 'Andrew McCallum' in profiles[0].get_names()
+        assert 'Melisa TestBok' in profiles[1].get_names()
+
         profiles = self.client.get_profiles([])
         assert len(profiles) == 0
 

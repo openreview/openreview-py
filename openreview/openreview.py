@@ -142,7 +142,7 @@ class Client(object):
         :arg content: content of the profile to activate
 
         Example Usage:
-        >>> res = client.activate_user('new@user.com', { 
+        >>> res = client.activate_user('new@user.com', {
             'names': [
                     {
                         'first': 'New',
@@ -152,7 +152,7 @@ class Client(object):
                 ],
             'emails': ['new@user.com'],
             'preferredEmail': 'new@user.com'
-            })       
+            })
         '''
         response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
@@ -1078,6 +1078,23 @@ class Profile(object):
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
         return body
+
+    def get_names(self):
+
+        names = []
+
+        for n in self.content['names']:
+            name_parts = []
+            if n.get('first'):
+                name_parts.append(n['first'])
+            if n.get('middle'):
+                name_parts.append(n['middle'])
+            if n.get('last'):
+                name_parts.append(n['last'])
+
+            names.append(' '.join(name_parts))
+
+        return names
 
     @classmethod
     def from_json(Profile,n):
