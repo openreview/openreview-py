@@ -56,7 +56,10 @@ class Client(object):
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
 
-        self.headers = {'User-Agent': 'test-create-script'}
+        self.headers = {
+            'User-Agent': 'test-create-script',
+            'Authorization': self.token
+        }
         if(self.username!=None and self.password!=None):
             self.login_user(self.username, self.password)
             self.signature = self.get_profile(self.username).id
