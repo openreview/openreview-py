@@ -55,3 +55,14 @@ remove_members_from_group(self, group, members):
 
 [Link](http://openreview-py.readthedocs.io/en/latest/) to full Documentation
 
+
+Run tests
+----------
+
+To run the tests of the library you need to have the OpenReview backend running in your localhost.
+
+Checkout the code and run
+
+```bash
+NODE_ENV=test node scripts/clean_start_app.js
+```

@@ -13,7 +13,6 @@ import os
 import getpass
 import re
 import datetime
-import builtins
 
 
 
@@ -32,29 +31,17 @@ class Client(object):
 
         :arg token:  session token.  Optional argument.
         """
-        if baseurl==None:
-            try:
-                self.baseurl = os.environ['OPENREVIEW_BASEURL']
-            except KeyError:
-                self.baseurl = builtins.input('Environment variable OPENREVIEW_BASEURL not found. Please provide a base URL: ')
-        else:
-            self.baseurl = baseurl
+        self.baseurl = baseurl
+        if not self.baseurl:
+            self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
 
-        if username==None:
-            try:
-                self.username = os.environ['OPENREVIEW_USERNAME']
-            except KeyError:
-                self.username = username
-        else:
-            self.username = username
+        self.username = username
+        if not username:
+            self.username = os.environ.get('OPENREVIEW_USERNAME')
 
-        if password==None:
-            try:
-                self.password = os.environ['OPENREVIEW_PASSWORD']
-            except KeyError:
-                self.password = password
-        else:
-            self.password = password
+        self.password = password
+        if not password:
+            self.password = os.environ.get('OPENREVIEW_PASSWORD')
 
         self.token = token
         self.groups_url = self.baseurl + '/groups'
@@ -72,11 +59,15 @@ class Client(object):
         self.headers = {'User-Agent': 'test-create-script'}
         if(self.username!=None and self.password!=None):
             self.login_user(self.username, self.password)
-            self.headers['Authorization'] ='Bearer ' + self.token
             self.signature = self.get_profile(self.username).id
 
 
     ## PRIVATE FUNCTIONS
+
+    def __handle_token(self, response):
+        self.token = str(response['token'])
+        self.headers['Authorization'] ='Bearer ' + self.token
+        return response
 
     def __handle_response(self,response):
         try:
@@ -101,25 +92,13 @@ class Client(object):
         '''
         Logs in a registered user and returns authentication token
         '''
-        if username==None:
-            try:
-                username = os.environ["OPENREVIEW_USERNAME"]
-            except KeyError:
-                pass
-
-        if password==None:
-            try:
-                password = os.environ["OPENREVIEW_PASSWORD"]
-            except KeyError:
-                pass
-
-        user = {'id':username,'password':password}
-        header = {'User-Agent': 'test-create-script'}
+        user = { 'id': username, 'password': password }
+        header = { 'User-Agent': 'test-create-script' }
         response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
-        self.token = str(response.json()['token'])
-
-        return response
+        json_response = response.json()
+        self.__handle_token(json_response)
+        return json_response
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         '''
@@ -156,7 +135,10 @@ class Client(object):
         '''
         response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()
+        json_response = response.json()
+        self.__handle_token(json_response)
+
+        return json_response
 
     def get_activatable(self, token = None):
         '''
@@ -164,8 +146,8 @@ class Client(object):
         '''
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
-        token = response.json()['activatable']['token']
-        return token
+        self.__handle_token(response.json()['activatable'])
+        return self.token
 
     def get_group(self, id):
         """
@@ -445,7 +427,7 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None):
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
         """
         Returns a list of revisions for a note.
 
@@ -453,6 +435,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
         :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+        :arg original: a boolean. If True then get_references will additionally return the references to the original note.
         """
         params = {}
         if referent != None:
@@ -465,6 +448,8 @@ class Client(object):
             params['limit'] = limit
         if offset != None:
             params['offset'] = offset
+        if original == True:
+            params['original'] = "true"
 
         response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
