@@ -22,6 +22,7 @@ jobs:
             npm install
             sudo npm install -g grunt-cli
             grunt regen
+            mkdir pdfs
             NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
@@ -79,6 +80,7 @@ jobs:
             npm install
             sudo npm install -g grunt-cli
             grunt regen
+            mkdir pdfs
             NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app

@@ -11,6 +11,10 @@ class ConferenceType(object):
     def homepage_webfield_template(cls):
         return "noBlindConferenceWebfield.js"
 
+    @classmethod
+    def submission_reply(cls):
+        return None
+
 class SingleBlindConferenceType(ConferenceType):
 
     @classmethod
@@ -22,6 +26,72 @@ class DoubleBlindConferenceType(ConferenceType):
     @classmethod
     def homepage_webfield_template(cls):
         return "homepage.js"
+
+    @classmethod
+    def submission_reply(cls, id):
+        return {
+            'forum': None,
+            'replyto': None,
+            'readers': {
+                'values-copied': [
+                    '{content.authorids}',
+                    '{signatures}'
+                ]
+            },
+            'writers': {
+                'values-copied': [
+                    id,
+                    '{content.authorids}',
+                    '{signatures}'
+                ]
+            },
+            'signatures': {
+                'values-regex': '~.*'
+            },
+            'content': {
+                'title': {
+                    'description': 'Title of paper.',
+                    'order': 1,
+                    'value-regex': '.{1,250}',
+                    'required':True
+                },
+                'authors': {
+                    'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
+                    'order': 2,
+                    'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
+                    'required':True
+                },
+                'authorids': {
+                    'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
+                    'order': 3,
+                    'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+                    'required':True
+                },
+                'keywords': {
+                    'description': 'Comma separated list of keywords.',
+                    'order': 6,
+                    'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
+                },
+                'TL;DR': {
+                    'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                    'order': 7,
+                    'value-regex': '[^\\n]{0,250}',
+                    'required':False
+                },
+                'abstract': {
+                    'description': 'Abstract of paper.',
+                    'order': 8,
+                    'value-regex': '[\\S\\s]{1,5000}',
+                    'required':True
+                },
+                'pdf': {
+                    'description': 'Upload a PDF file that ends with .pdf',
+                    'order': 9,
+                    'value-regex': 'upload',
+                    'required':True
+                }
+            }
+        }
 
 class Conference(object):
 
@@ -88,9 +158,11 @@ class Conference(object):
             options['deadline'] = self.header.get('deadline')
         return options
 
-    def open_submissions(self, mode = 'blind', due_date = None, subject_areas = []):
+    def open_submissions(self, due_date = None, subject_areas = None):
         options = {
-            'due_date': due_date
+            'due_date': due_date,
+            'subject_areas': subject_areas,
+            'reply': self.type.submission_reply(self.id)
         }
         return self.invitation_builder.set_submission_invitation(self.id, options)
 

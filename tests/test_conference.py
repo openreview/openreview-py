@@ -3,6 +3,7 @@ import openreview
 import pytest
 import requests
 import datetime
+import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -175,15 +176,38 @@ class TestConference():
 
 
 
-    def test_enable_submissions(self, client):
+    def test_enable_submissions(self, client, selenium):
 
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
+        builder.set_conference_name('Automated Knowledge Base Construction')
+        builder.set_homepage_header({
+            'title': 'AKBC 2019',
+            'subtitle': 'Automated Knowledge Base Construction',
+            'location': 'Amherst, Massachusetts, United States',
+            'date': 'May 20 - May 21, 2019',
+            'website': 'http://www.akbc.ws/2019/',
+            'instructions': '<p><strong>Important Information</strong>\
+                <ul>\
+                <li>Note to Authors, Reviewers and Area Chairs: Please update your OpenReview profile to have all your recent emails.</li>\
+                <li>AKBC 2019 Conference submissions are now open.</li>\
+                <li>For more details refer to the <a href="http://www.akbc.ws/2019/cfp/">AKBC 2019 - Call for Papers</a>.</li>\
+                </ul></p> \
+                <p><strong>Questions or Concerns</strong></p>\
+                <p><ul>\
+                <li>Please contact the AKBC 2019 Program Chairs at \
+                <a href="mailto:info@akbc.ws">info@akbc.ws</a> with any questions or concerns about conference administration or policy.</li>\
+                <li>Please contact the OpenReview support team at \
+                <a href="mailto:info@openreview.net">info@openreview.net</a> with any questions or concerns about the OpenReview platform.</li>\
+                </ul></p>',
+            'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
+        })
         conference = builder.get_result()
-        invitation = conference.open_submissions(mode = 'blind', due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = [])
+        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = [])
         assert invitation
         assert invitation.duedate == 1570298400000
 
@@ -191,8 +215,85 @@ class TestConference():
         assert posted_invitation
         assert posted_invitation.duedate == 1570298400000
 
-        #Test the submission paper
+        selenium.get("http://localhost:3000/group?id=AKBC.ws/2019/Conference")
+        timeout = 5
+        try:
+            element_present = EC.presence_of_element_located((By.ID, 'header'))
+            WebDriverWait(selenium, timeout).until(element_present)
+        except TimeoutException:
+            print("Timed out waiting for page to load")
 
+        assert "AKBC 2019 Conference | OpenReview" in selenium.title
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert "AKBC 2019" == header.find_element_by_tag_name("h1").text
+        assert "Automated Knowledge Base Construction" == header.find_element_by_tag_name("h3").text
+        assert "Amherst, Massachusetts, United States" == header.find_element_by_xpath(".//span[@class='venue-location']").text
+        assert "May 20 - May 21, 2019" == header.find_element_by_xpath(".//span[@class='venue-date']").text
+        assert "http://www.akbc.ws/2019/" == header.find_element_by_xpath(".//span[@class='venue-website']/a").text
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
+        assert 'AKBC 2019 Conference Submission' == invitation_panel.find_element_by_class_name('btn').text
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 0
+        assert tabs.find_element_by_id('recent-activity')
+        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
+
+    def test_post_submissions(self, client, test_client, selenium):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
+        conference = builder.get_result()
+        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = [])
+        assert invitation
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['~Test_User1', 'Melisa Bok', 'Andrew Mc'],
+            writers = ['~Test_User1', 'Melisa Bok', 'Andrew Mc'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'mbok@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc']
+            }
+        )
+        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        test_client.post_note(note)
+
+        selenium.get("http://localhost:3000")
+        selenium.add_cookie({'name': 'openreview_sid', 'value': test_client.token.replace('Bearer ', '')})
+        selenium.get("http://localhost:3000/group?id=AKBC.ws/2019/Conference")
+        timeout = 5
+        try:
+            element_present = EC.presence_of_element_located((By.ID, 'header'))
+            WebDriverWait(selenium, timeout).until(element_present)
+        except TimeoutException:
+            print("Timed out waiting for page to load")
+
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
+        assert 'AKBC 2019 Conference Submission' == invitation_panel.find_element_by_class_name('btn').text
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Author Console' == console.find_element_by_tag_name('a').text
+        assert tabs.find_element_by_id('recent-activity')
+        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 
     def test_recruit_reviewers(self, client):
 
