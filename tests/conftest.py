@@ -1,5 +1,9 @@
 import openreview
 import pytest
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 @pytest.fixture(scope='session')
 def client():
@@ -52,3 +56,18 @@ def test_client():
 def firefox_options(firefox_options):
     firefox_options.add_argument('--headless')
     return firefox_options
+
+@pytest.fixture
+def request_page():
+    def request(selenium, url, token = None):
+        if token:
+            selenium.get('http://localhost:3000')
+            selenium.add_cookie({'name': 'openreview_sid', 'value': token.replace('Bearer ', '')})
+        selenium.get(url)
+        timeout = 5
+        try:
+            element_present = EC.presence_of_element_located((By.ID, 'header'))
+            WebDriverWait(selenium, timeout).until(element_present)
+        except TimeoutException:
+            print("Timed out waiting for page to load")
+    return request

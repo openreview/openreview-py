@@ -176,7 +176,7 @@ class TestConference():
 
 
 
-    def test_enable_submissions(self, client, selenium):
+    def test_enable_submissions(self, client, selenium, request_page):
 
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -215,13 +215,7 @@ class TestConference():
         assert posted_invitation
         assert posted_invitation.duedate == 1570298400000
 
-        selenium.get("http://localhost:3000/group?id=AKBC.ws/2019/Conference")
-        timeout = 5
-        try:
-            element_present = EC.presence_of_element_located((By.ID, 'header'))
-            WebDriverWait(selenium, timeout).until(element_present)
-        except TimeoutException:
-            print("Timed out waiting for page to load")
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
 
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
@@ -244,7 +238,7 @@ class TestConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
 
-    def test_post_submissions(self, client, test_client, selenium):
+    def test_post_submissions(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -270,15 +264,7 @@ class TestConference():
         note.content['pdf'] = url
         test_client.post_note(note)
 
-        selenium.get("http://localhost:3000")
-        selenium.add_cookie({'name': 'openreview_sid', 'value': test_client.token.replace('Bearer ', '')})
-        selenium.get("http://localhost:3000/group?id=AKBC.ws/2019/Conference")
-        timeout = 5
-        try:
-            element_present = EC.presence_of_element_located((By.ID, 'header'))
-            WebDriverWait(selenium, timeout).until(element_present)
-        except TimeoutException:
-            print("Timed out waiting for page to load")
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", test_client.token)
 
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
