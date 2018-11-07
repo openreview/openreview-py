@@ -283,8 +283,7 @@ class Client(object):
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
         response = self.__handle_response(response)
-        response_dict = json.loads(response.content)
-        return response_dict['url']
+        return response.json()['url']
 
     def post_profile(self, profile):
         '''
