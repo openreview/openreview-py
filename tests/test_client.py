@@ -93,6 +93,25 @@ class TestClient():
         profiles = client.get_profiles([])
         assert len(profiles) == 0
 
+    def test_confirm_registration(self):
+
+        guest = openreview.Client()
+        res = guest.activate_user('mbok@mail.com', {
+            'names': [
+                    {
+                        'first': 'Melisa',
+                        'last': 'Bok',
+                        'username': '~Melisa_Bok1'
+                    }
+                ],
+            'emails': ['mbok@mail.com'],
+            'preferredEmail': 'mbok@mail.com'
+            })
+        assert res, "Res i none"
+        group = guest.get_group(id = 'mbok@mail.com')
+        assert group
+        assert group.members == ['~Melisa_Bok1']
+
     def test_get_invitations(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
         assert len(invitations) == 0
