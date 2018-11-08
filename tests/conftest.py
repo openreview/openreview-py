@@ -63,8 +63,10 @@ def request_page():
         if token:
             selenium.get('http://localhost:3000')
             selenium.add_cookie({'name': 'openreview_sid', 'value': token.replace('Bearer ', '')})
+        else:
+            selenium.delete_all_cookies()
         selenium.get(url)
-        timeout = 5
+        timeout = 2
         try:
             element_present = EC.presence_of_element_located((By.ID, 'header'))
             WebDriverWait(selenium, timeout).until(element_present)

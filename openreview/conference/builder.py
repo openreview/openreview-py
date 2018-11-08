@@ -159,6 +159,17 @@ class Conference(object):
         return options
 
     def open_submissions(self, due_date = None, subject_areas = None):
+
+        ## Author console
+        authors_group = openreview.Group(id = self.id + '/Authors',
+            readers = ['everyone'],
+            signatories = [self.id],
+            signatures = [self.id],
+            writers = [self.id]
+        )
+        self.webfield_builder.set_author_page(self.id, authors_group, { 'title': 'Author console'})
+
+        ## Submission invitation
         options = {
             'due_date': due_date,
             'subject_areas': subject_areas,

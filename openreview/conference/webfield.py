@@ -87,3 +87,23 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
+
+    def set_author_page(self, conference_id, group, options = {}):
+
+        default_header = {
+            'title': group.id,
+            'instructions': '',
+            'schedule': 'TBD'
+        }
+
+        header = self.__build_options(default_header, options)
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/authorWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
+            content = content.replace("var HEADER_TEXT = '';", "var HEADER_TEXT = '" + header.get('title') + "';")
+            content = content.replace("var INSTRUCTIONS = '';", "var INSTRUCTIONS = '" + header.get('instructions') + "';")
+            content = content.replace("var SCHEDULE_HTML = '';", "var SCHEDULE_HTML = '" + header.get('schedule') + "';")
+            group.web = content
+            return self.client.post_group(group)
+

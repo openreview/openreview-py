@@ -264,8 +264,8 @@ class TestConference():
         note.content['pdf'] = url
         test_client.post_note(note)
 
+        # Author user
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", test_client.token)
-
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -280,6 +280,31 @@ class TestConference():
         assert 'Author Console' == console.find_element_by_tag_name('a').text
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
+
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", test_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('author-schedule')
+        assert tabs.find_element_by_id('author-tasks')
+        assert tabs.find_element_by_id('your-submissions')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
+        assert len(papers.find_elements_by_class_name('note')) == 1
+
+        # Guest user
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
+        assert 'AKBC 2019 Conference Submission' == invitation_panel.find_element_by_class_name('btn').text
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 0
+        assert tabs.find_element_by_id('recent-activity')
+        assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
+
 
     def test_recruit_reviewers(self, client):
 
