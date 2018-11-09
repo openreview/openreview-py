@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='0.9.7',
+      version='0.9.8',
       description='OpenReview client library',
       url='https://github.com/iesl/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
@@ -16,7 +16,8 @@ setup(name='openreview-py',
           'requests>=2.18.4',
           'future',
           'nbsphinx',
-          'jupyter_client'
+          'jupyter_client',
+          'tqdm'
       ],
       extras_require={
           'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
