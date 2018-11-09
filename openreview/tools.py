@@ -588,8 +588,9 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
 
 def parallel_exec(values, func, processes = None):
     pool = Pool(processes = processes)
-    pool.map(func, tqdm(values))
+    results = pool.map(func, tqdm(values))
     pool.close()
+    return results
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''

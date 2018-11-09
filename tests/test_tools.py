@@ -48,9 +48,8 @@ class TestTools():
 
     def test_parallel_exec(self):
 
-        values = []
         def do_work(value):
-            values.append(self.client.get_note(value.id))
+            return self.client.get_note(value.id)
 
-        openreview.tools.parallel_exec(self.client.get_notes(limit=10), do_work)
-        assert len(values) == 10
+        results = openreview.tools.parallel_exec(self.client.get_notes(limit=10), do_work)
+        assert len(results) == 10
