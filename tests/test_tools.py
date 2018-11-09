@@ -3,7 +3,8 @@ import random
 import types
 import sys
 
-
+def do_work(value):
+    return value.id
 
 class TestTools():
 
@@ -47,9 +48,6 @@ class TestTools():
         assert preferred_name == 'Super User'
 
     def test_parallel_exec(self):
-
-        def do_work(value):
-            return self.client.get_group(value.id)
 
         values = self.client.get_groups(limit=10)
         results = openreview.tools.parallel_exec(values, do_work)

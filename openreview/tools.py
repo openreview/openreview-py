@@ -586,6 +586,14 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
 
     return iterget(client.get_groups, **params)
 
+    '''
+    Returns a list of results given for each func value execution. It shows a progress bar to know the progress of the task.
+
+    :arg values: a list of values.
+    :arg func: a function to execute for each value of the list.
+    :arg processes: number of procecces to use in the multiprocessing tool, default value is the number of CPUs available.
+    '''
+
 def parallel_exec(values, func, processes = None):
     pool = Pool(processes = processes)
     results = pool.map(func, tqdm(values))
