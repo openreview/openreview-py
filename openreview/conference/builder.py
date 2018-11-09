@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import time
 from .. import openreview
 from .. import tools
 from . import webfield
@@ -171,11 +172,34 @@ class Conference(object):
 
         ## Submission invitation
         options = {
+            'name': 'Submission',
             'due_date': due_date,
             'subject_areas': subject_areas,
             'reply': self.type.submission_reply(self.id)
         }
         return self.invitation_builder.set_submission_invitation(self.id, options)
+
+    def close_submissions(self, freeze_submissions = True):
+
+        # Get invitation
+        invitation = self.client.get_invitation(id = self.id + '/-/Submission')
+        if invitation.reply['writers'] != self.id:
+            invitation.reply['writers'] = self.id
+
+        now = round(time.time() * 1000)
+        if invitation.duedate > now:
+            invitation.duedate = now
+        self.client.post_invitation(invitation)
+
+        # if freeze submissions then remove writers
+        # use a process pool to run this
+        notes_iterator = tools.iterget_notes(self.client, invitation = invitation.id)
+        for note in notes_iterator:
+            if note.writers != [self.id]:
+                note.writers = [self.id]
+                self.client.post_note(note)
+
+        return invitation
 
     def recruit_reviewers(self, emails, title = None, message = None):
 

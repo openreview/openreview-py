@@ -385,3 +385,28 @@ class TestDoubleBlindConference():
         assert invitation.web
 
 
+    def test_edit_submission(self, client, test_client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
+        conference = builder.get_result()
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        submission = notes[0]
+        submission.content['title'] = 'New paper title'
+        test_client.post_note(submission)
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        assert 'New paper title' == notes[0].content['title']
+        assert '~Test_User1' in notes[0].writers
+        assert 'mbok@mail.com' in notes[0].writers
+        assert 'andrew@mail.com' in notes[0].writers
+
+        conference.close_submissions()
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        submission = notes[0]
+        assert ['AKBC.ws/2019/Conference'] == submission.writers
+
