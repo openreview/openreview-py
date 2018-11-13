@@ -201,10 +201,10 @@ class Conference(object):
 
         return invitation
 
-    def recruit_reviewers(self, emails, title = None, message = None):
+    def recruit_reviewers(self, emails, title = None, message = None, reviewers_name = 'Reviewers'):
 
         pcs_id = self.id + '/Program_Chairs'
-        reviewers_id = self.id + '/Reviewers'
+        reviewers_id = self.id + '/' + reviewers_name
         reviewers_declined_id = reviewers_id + '/Declined'
         reviewers_invited_id = reviewers_id + '/Invited'
         hash_seed = '1234'

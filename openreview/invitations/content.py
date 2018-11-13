@@ -172,21 +172,27 @@ submission = {
 }
 
 recruitment = {
+    'title': {
+        'description': '',
+        'order': 1,
+        'value': 'Recruit response',
+        'required':True
+    },
     'email': {
         'description': 'email address',
-        'order': 1,
+        'order': 2,
         'value-regex': '.*@.*',
         'required':True
     },
     'key': {
         'description': 'Email key hash',
-        'order': 2,
+        'order': 3,
         'value-regex': '.{0,100}',
         'required':True
     },
     'response': {
         'description': 'Invitation response',
-        'order': 3,
+        'order': 4,
         'value-radio': ['Yes', 'No'],
         'required':True
     }
