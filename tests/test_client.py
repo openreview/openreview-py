@@ -44,7 +44,7 @@ class TestClient():
         assert groups[6].id == 'active_venues'
         assert groups[7].id == 'host'
 
-    def test_get_invitations(self, client):
+    def test_get_profile_invitations(self, client):
         invitations = client.get_invitations()
         assert len(invitations) == 1, 'invitations is not empty'
         assert invitations[0].id == '~/-/profiles'
@@ -129,5 +129,21 @@ class TestClient():
         invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
         assert len(invitations) == 0
 
+    def test_create_invitation_no_invitees(self, client):
+
+        group = client.post_group(openreview.Group(id = 'test.org',
+        readers = ['everyone'],
+        writers = ['everyone'],
+        signatures = ['~Super_User1'],
+        signatories = ['~Super_User1']))
+        assert group
+
+        invitation = client.post_invitation(openreview.Invitation(id = 'test.org/-/Submission',
+        readers = ['everyone'],
+        writers = ['everyone'],
+        reply = {},
+        signatures = ['~Super_User1']))
+        assert invitation
+        assert len(invitation.invitees) == 0
 
 
