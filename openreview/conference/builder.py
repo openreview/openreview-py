@@ -211,7 +211,7 @@ class Conference(object):
 
         self.__create_group(reviewers_id, pcs_id)
         self.__create_group(reviewers_declined_id, pcs_id)
-        self.__create_group(reviewers_invited_id, pcs_id)
+        reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
         options = {
             'reviewers_id': reviewers_id,
@@ -231,7 +231,6 @@ class Conference(object):
         The success of the conference depends on the quality of the reviewing process and ultimately on the quality and dedication of the reviewers. We hope you will accept our invitation.
 
         To ACCEPT the invitation, please click on the following link:
-
 
         {accept_url}
 
@@ -259,13 +258,14 @@ class Conference(object):
             recruit_message = message
 
         for email in emails:
-            tools.recruit_reviewer(self.client, email, 'artist',
-                hash_seed,
-                invitation.id,
-                recruit_message,
-                recruit_message_subj,
-                reviewers_invited_id,
-                verbose = False)
+            if email not in reviewers_invited_group.members:
+                tools.recruit_reviewer(self.client, email, 'artist',
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 

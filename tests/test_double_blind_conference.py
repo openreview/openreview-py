@@ -4,6 +4,7 @@ import pytest
 import requests
 import datetime
 import os
+import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -333,7 +334,7 @@ class TestDoubleBlindConference():
         assert len(papers.find_elements_by_class_name('note')) == 1
 
 
-    def test_recruit_reviewers(self, client):
+    def test_recruit_reviewers(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -383,6 +384,52 @@ class TestDoubleBlindConference():
         assert invitation
         assert invitation.process
         assert invitation.web
+
+        response = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        assert response
+        assert len(response['messages']) == 1
+
+        text = response['messages'][0]['content']['text']
+
+        # Accept invitation
+        accept_url = re.search('http://.*response=Yes', text).group(0)
+        request_page(selenium, accept_url)
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 0
+
+        # Reject invitation
+        reject_url = re.search('http://.*response=No', text).group(0)
+        request_page(selenium, reject_url)
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 0
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
+        # Recruit more reviewers
+        result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
+        assert result
+        assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
+        assert 'mbok@mail.com' in result.members
+        assert 'mohit@mail.com' in result.members
+        assert 'michael@mail.com' in result.members
+        assert 'other@mail.com' in result.members
+
+        # Don't send the invitation twice
+        response = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        assert response
+        assert len(response['messages']) == 1
 
 
     def test_edit_submission(self, client, test_client):

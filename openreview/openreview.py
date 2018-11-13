@@ -55,6 +55,7 @@ class Client(object):
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
+        self.messages_url = self.baseurl + '/messages'
 
         self.headers = {
             'User-Agent': 'test-create-script',
@@ -598,6 +599,12 @@ class Client(object):
         '''
 
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_messages(self, to = None, subject = None):
+
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
