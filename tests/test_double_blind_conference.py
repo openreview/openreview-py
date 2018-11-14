@@ -478,7 +478,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 1
 
-    def test_edit_submission(self, client, test_client):
+    def test_close_submission(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -498,8 +498,18 @@ class TestDoubleBlindConference():
         assert 'mbok@mail.com' in notes[0].writers
         assert 'andrew@mail.com' in notes[0].writers
 
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        assert len(selenium.find_elements_by_class_name('edit_button')) == 1
+        assert len(selenium.find_elements_by_class_name('trash_button')) == 1
+
         conference.close_submissions()
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         submission = notes[0]
         assert ['AKBC.ws/2019/Conference'] == submission.writers
+
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        assert len(selenium.find_elements_by_class_name('edit_button')) == 0
+        assert len(selenium.find_elements_by_class_name('trash_button')) == 0
 
