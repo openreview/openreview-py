@@ -208,9 +208,40 @@ class TestDoubleBlindConference():
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
         conference = builder.get_result()
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = [])
+        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = ['Machine Learning',
+            'Natural Language Processing',
+            'Information Extraction',
+            'Question Answering',
+            'Reasoning',
+            'Databases',
+            'Information Integration',
+            'Knowledge Representation',
+            'Semantic Web',
+            'Search',
+            'Applications: Science',
+            'Applications: Biomedicine',
+            'Applications: Other',
+            'Relational AI',
+            'Fairness',
+            'Human computation',
+            'Crowd-sourcing',
+            'Other'], additional_fields = [{
+                'name': 'archival status',
+                'definition': {
+                    'description': 'Authors can change the archival/non-archival status up until the decision deadline',
+                    'value-radio': [
+                        'Archival',
+                        'Non-Archival'
+                    ],
+                    'required': True
+                }
+            }])
         assert invitation
         assert invitation.duedate == 1570298400000
+        assert 'subject areas' in invitation.reply['content']
+        assert 'Question Answering' in invitation.reply['content']['subject areas']['values-dropdown']
+        assert 'archival status' in invitation.reply['content']
+        assert 10 == invitation.reply['content']['archival status']['order']
 
         posted_invitation = client.get_invitation(id = 'AKBC.ws/2019/Conference/-/Submission')
         assert posted_invitation

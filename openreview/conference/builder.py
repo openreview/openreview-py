@@ -13,8 +13,8 @@ class ConferenceType(object):
         return "noBlindConferenceWebfield.js"
 
     @classmethod
-    def submission_reply(cls):
-        return None
+    def submission_reply(cls, id, subject_areas, additional_fields):
+        return {}
 
 class SingleBlindConferenceType(ConferenceType):
 
@@ -29,12 +29,72 @@ class DoubleBlindConferenceType(ConferenceType):
         return "homepage.js"
 
     @classmethod
-    def submission_reply(cls, id):
+    def submission_reply(cls, id, subject_areas, additional_fields):
+
+        content = {
+            'title': {
+                'description': 'Title of paper.',
+                'order': 1,
+                'value-regex': '.{1,250}',
+                'required':True
+            },
+            'authors': {
+                'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
+                'order': 2,
+                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
+                'required':True
+            },
+            'authorids': {
+                'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
+                'order': 3,
+                'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+                'required':True
+            },
+            'keywords': {
+                'description': 'Comma separated list of keywords.',
+                'order': 6,
+                'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
+            },
+            'TL;DR': {
+                'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                'order': 7,
+                'value-regex': '[^\\n]{0,250}',
+                'required':False
+            },
+            'abstract': {
+                'description': 'Abstract of paper.',
+                'order': 8,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'required':True
+            },
+            'pdf': {
+                'description': 'Upload a PDF file that ends with .pdf',
+                'order': 9,
+                'value-regex': 'upload',
+                'required':True
+            }
+        }
+
+        if subject_areas:
+            content['subject areas'] = {
+                'order' : 5,
+                'description' : "Select or type subject area",
+                'values-dropdown': subject_areas,
+                'required': True
+            }
+
+        order = 10
+        for field in additional_fields:
+            field['definition']['order'] = order
+            content[field['name']] = field['definition']
+            order = order + 1
+
         return {
             'forum': None,
             'replyto': None,
             'readers': {
                 'values-copied': [
+                    id,
                     '{content.authorids}',
                     '{signatures}'
                 ]
@@ -49,49 +109,7 @@ class DoubleBlindConferenceType(ConferenceType):
             'signatures': {
                 'values-regex': '~.*'
             },
-            'content': {
-                'title': {
-                    'description': 'Title of paper.',
-                    'order': 1,
-                    'value-regex': '.{1,250}',
-                    'required':True
-                },
-                'authors': {
-                    'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
-                    'order': 2,
-                    'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
-                    'required':True
-                },
-                'authorids': {
-                    'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
-                    'order': 3,
-                    'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
-                    'required':True
-                },
-                'keywords': {
-                    'description': 'Comma separated list of keywords.',
-                    'order': 6,
-                    'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
-                },
-                'TL;DR': {
-                    'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
-                    'order': 7,
-                    'value-regex': '[^\\n]{0,250}',
-                    'required':False
-                },
-                'abstract': {
-                    'description': 'Abstract of paper.',
-                    'order': 8,
-                    'value-regex': '[\\S\\s]{1,5000}',
-                    'required':True
-                },
-                'pdf': {
-                    'description': 'Upload a PDF file that ends with .pdf',
-                    'order': 9,
-                    'value-regex': 'upload',
-                    'required':True
-                }
-            }
+            'content': content
         }
 
 class Conference(object):
@@ -160,7 +178,7 @@ class Conference(object):
             options['deadline'] = self.header.get('deadline')
         return options
 
-    def open_submissions(self, due_date = None, subject_areas = None):
+    def open_submissions(self, due_date = None, subject_areas = [], additional_fields = []):
 
         ## Author console
         authors_group = openreview.Group(id = self.id + '/Authors',
@@ -175,8 +193,7 @@ class Conference(object):
         options = {
             'name': 'Submission',
             'due_date': due_date,
-            'subject_areas': subject_areas,
-            'reply': self.type.submission_reply(self.id)
+            'reply': self.type.submission_reply(self.id, subject_areas, additional_fields)
         }
         return self.invitation_builder.set_submission_invitation(self.id, options)
 
