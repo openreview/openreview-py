@@ -544,16 +544,19 @@ class Client(object):
         |  Adds members to a group
         |  Members should be in a string, unicode or a list format
         '''
-        def add_member(group,members):
-            response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
-            response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+        def add_member(group, members):
+            if members:
+                response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = self.__handle_response(response)
+                return Group.from_json(response.json())
+            else:
+                return group
 
         member_type = type(members)
         if member_type in string_types:
-            return add_member(group.id, [members])
+            return add_member(group, [members])
         if member_type == list:
-            return add_member(group.id, members)
+            return add_member(group, members)
         raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list, but got " + repr(member_type) + " instead")
 
     def remove_members_from_group(self, group, members):
@@ -564,7 +567,7 @@ class Client(object):
         def remove_member(group,members):
             response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+            return Group.from_json(response.json())
 
         member_type = type(members)
         if member_type in string_types:

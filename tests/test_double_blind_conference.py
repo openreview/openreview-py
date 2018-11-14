@@ -431,6 +431,52 @@ class TestDoubleBlindConference():
         assert response
         assert len(response['messages']) == 1
 
+    def test_set_program_chairs(self, client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
+        conference = builder.get_result()
+
+        result = conference.set_program_chairs(['pc@mail.com', 'pc2@mail.com'])
+        assert result
+        assert result.members
+        assert ['pc@mail.com', 'pc2@mail.com'] == result.members
+
+        #Sign up as Program Chair
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert pc_client is not None, "Client is none"
+        res = pc_client.register_user(email = 'pc@mail.com', first = 'Pc', last = 'Chair', password = '1234')
+        assert res, "Res i none"
+        res = pc_client.activate_user('pc@mail.com', {
+            'names': [
+                    {
+                        'first': 'Pc',
+                        'last': 'Chair',
+                        'username': '~Pc_Chair1'
+                    }
+                ],
+            'emails': ['pc@mail.com'],
+            'preferredEmail': 'pc@mail.com'
+            })
+        assert res, "Res i none"
+        group = pc_client.get_group(id = 'pc@mail.com')
+        assert group
+        assert group.members == ['~Pc_Chair1']
+
+        group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 0
+
+        group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Invited')
+        assert group
+        assert len(group.members) == 4
+
+        group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 1
 
     def test_edit_submission(self, client, test_client):
 

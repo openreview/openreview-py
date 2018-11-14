@@ -106,17 +106,18 @@ class Conference(object):
         self.webfield_builder = webfield.WebfieldBuilder(client)
 
 
-    def __create_group(self, group_id, group_owner_id):
+    def __create_group(self, group_id, group_owner_id, members = []):
 
         group = tools.get_group(self.client, id = group_id)
         if group is None:
-            group = self.client.post_group(openreview.Group(id = group_id,
+            return self.client.post_group(openreview.Group(id = group_id,
                 readers = [self.id, group_owner_id],
                 writers = [self.id],
                 signatures = [self.id],
                 signatories = [self.id],
-                members = []))
-        return group
+                members = members))
+        else:
+            return self.client.add_members_to_group(group, members)
 
     def set_id(self, id):
         self.id = id
@@ -200,6 +201,10 @@ class Conference(object):
                 self.client.post_note(note)
 
         return invitation
+
+    def set_program_chairs(self, emails):
+        pcs_id = self.id + '/Program_Chairs'
+        return self.__create_group(pcs_id, self.id, emails)
 
     def recruit_reviewers(self, emails, title = None, message = None, reviewers_name = 'Reviewers'):
 
