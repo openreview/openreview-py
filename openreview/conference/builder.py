@@ -76,18 +76,17 @@ class DoubleBlindConferenceType(ConferenceType):
         }
 
         if subject_areas:
-            content['subject areas'] = {
+            content['subject_areas'] = {
                 'order' : 5,
                 'description' : "Select or type subject area",
                 'values-dropdown': subject_areas,
                 'required': True
             }
 
-        order = 10
-        for field in additional_fields:
-            field['definition']['order'] = order
-            content[field['name']] = field['definition']
-            order = order + 1
+        for order, key in enumerate(additional_fields, start=10):
+            value = additional_fields[key]
+            value['order'] = order
+            content[key] = value
 
         return {
             'forum': None,

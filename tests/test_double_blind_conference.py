@@ -265,9 +265,8 @@ class TestDoubleBlindConference():
             'Fairness',
             'Human computation',
             'Crowd-sourcing',
-            'Other'], additional_fields = [{
-                'name': 'archival status',
-                'definition': {
+            'Other'], additional_fields = {
+                'archival_status': {
                     'description': 'Authors can change the archival/non-archival status up until the decision deadline',
                     'value-radio': [
                         'Archival',
@@ -275,12 +274,12 @@ class TestDoubleBlindConference():
                     ],
                     'required': True
                 }
-            }])
+            })
         assert invitation
-        assert 'subject areas' in invitation.reply['content']
-        assert 'Question Answering' in invitation.reply['content']['subject areas']['values-dropdown']
-        assert 'archival status' in invitation.reply['content']
-        assert 10 == invitation.reply['content']['archival status']['order']
+        assert 'subject_areas' in invitation.reply['content']
+        assert 'Question Answering' in invitation.reply['content']['subject_areas']['values-dropdown']
+        assert 'archival_status' in invitation.reply['content']
+        assert 10 == invitation.reply['content']['archival_status']['order']
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['~Test_User1', 'mbok@mail.com', 'andrew@mail.com'],
@@ -291,8 +290,8 @@ class TestDoubleBlindConference():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'mbok@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'archival status': 'Archival',
-                'subject areas': [
+                'archival_status': 'Archival',
+                'subject_areas': [
                     'Databases',
                     'Information Integration',
                     'Knowledge Representation',
