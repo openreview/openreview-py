@@ -47,7 +47,7 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             content = f.read()
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_id + "';")
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + options.get('short_name', conference_id) + "';")
             invitation = openreview.Invitation(id = conference_id + '/-/' + options.get('name', 'Submission'),
                 duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.now())),
                 readers = ['everyone'],

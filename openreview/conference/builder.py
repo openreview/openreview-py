@@ -117,7 +117,8 @@ class Conference(object):
     def __init__(self, client):
         self.client = client
         self.groups = []
-        self.name = None
+        self.name = ''
+        self.short_name = ''
         self.type = ConferenceType
         self.header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
@@ -143,11 +144,17 @@ class Conference(object):
     def get_id(self):
         return self.id
 
-    def set_conference_name(self, name):
+    def set_name(self, name):
         self.name = name
 
-    def get_conference_name(self):
+    def get_name(self):
         return self.name
+
+    def set_short_name(self, name):
+        self.short_name = name
+
+    def get_short_name(self):
+        return self.short_name
 
     def set_type(self, type):
         self.type = type
@@ -192,6 +199,7 @@ class Conference(object):
         ## Submission invitation
         options = {
             'name': 'Submission',
+            'short_name': self.short_name,
             'due_date': due_date,
             'reply': self.type.submission_reply(self.id, subject_areas, additional_fields)
         }
@@ -244,7 +252,7 @@ class Conference(object):
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
         recruit_message = '''Dear {name},
 
-        You have been nominated by the program chair committeee of ''' + self.id + ''' to serve as a reviewer.  As a respected researcher in the area, we hope you will accept and help us make the conference a success.
+        You have been nominated by the program chair committeee of ''' + self.short_name + ''' to serve as a reviewer.  As a respected researcher in the area, we hope you will accept and help us make the conference a success.
 
         Reviewers are also welcome to submit papers, so please also consider submitting to the conference!
 
@@ -328,7 +336,10 @@ class ConferenceBuilder(object):
         self.conference.set_id(id)
 
     def set_conference_name(self, name):
-        self.conference.set_conference_name(name)
+        self.conference.set_name(name)
+
+    def set_conference__short_name(self, name):
+        self.conference.set_short_name(name)
 
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)

@@ -246,6 +246,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
+        builder.set_conference__short_name('AKBC 2019')
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = ['Machine Learning',
             'Natural Language Processing',
@@ -379,6 +380,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
+        builder.set_conference__short_name('AKBC 2019')
         conference = builder.get_result()
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
@@ -428,6 +430,7 @@ class TestDoubleBlindConference():
         assert len(response['messages']) == 1
 
         text = response['messages'][0]['content']['text']
+        assert 'You have been nominated by the program chair committeee of AKBC 2019' in text
 
         # Accept invitation
         accept_url = re.search('http://.*response=Yes', text).group(0)
