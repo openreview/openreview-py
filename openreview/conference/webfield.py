@@ -36,7 +36,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/landing.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
             content = f.read()
             content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")

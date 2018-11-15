@@ -10,7 +10,7 @@ class ConferenceType(object):
 
     @classmethod
     def homepage_webfield_template(cls):
-        return "noBlindConferenceWebfield.js"
+        return "singleBlindConferenceWebfield.js"
 
     @classmethod
     def submission_reply(cls, id, subject_areas, additional_fields):
@@ -20,13 +20,13 @@ class SingleBlindConferenceType(ConferenceType):
 
     @classmethod
     def homepage_webfield_template(cls):
-        return "noBlindConferenceWebfield.js"
+        return "singleBlindConferenceWebfield.js"
 
 class DoubleBlindConferenceType(ConferenceType):
 
     @classmethod
     def homepage_webfield_template(cls):
-        return "homepage.js"
+        return "doubleBlindConferenceWebfield.js"
 
     @classmethod
     def submission_reply(cls, id, subject_areas, additional_fields):
