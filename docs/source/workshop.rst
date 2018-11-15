@@ -29,10 +29,10 @@ You need admin privileges for creating subgroups within a group representing you
 
 To create the conference you represent, Openreview team will create a group ::
 
-    >>> client.post_group(openreview.Group(id = 'ICML.cc', 
-                                         readers = ['everyone'], 
-                                         writers = ['OpenReview.net'], 
-                                         signatories = ['ICML.cc'], 
+    >>> client.post_group(openreview.Group(id = 'ICML.cc',
+                                         readers = ['everyone'],
+                                         writers = ['OpenReview.net'],
+                                         signatories = ['ICML.cc'],
                                          signatures = ['OpenReview.net']))
 
 
@@ -53,10 +53,10 @@ To create the conference you represent, Openreview team will create a group ::
 Once you (the conference admin) receive information from the Openreview team that your conference root has been setup, you can begin to create subgroups under the root.
 For instance, to create an ICML.cc conference for 2019 following steps should be done by the conference admin::
 
-	>>> client.post_group(openreview.Group(id = 'ICML.cc/2019', 
-                                         readers = ['everyone'], 
-                                         writers = ['OpenReview.net'], 
-                                         signatories = ['ICML.cc/2019'], 
+	>>> client.post_group(openreview.Group(id = 'ICML.cc/2019',
+                                         readers = ['everyone'],
+                                         writers = ['OpenReview.net'],
+                                         signatories = ['ICML.cc/2019'],
                                          signatures = ['OpenReview.net']))
 
 ::
@@ -75,10 +75,10 @@ For instance, to create an ICML.cc conference for 2019 following steps should be
 
 Next step would be to create another subgroup 'ICML.cc/2019/Conference'::
 
-	>>> client.post_group(openreview.Group(id = 'ICML.cc/2019/Conference', 
-                                         readers = ['everyone'], 
-                                         writers = ['ICML.cc/2019'], 
-                                         signatories = ['ICML.cc/2019/Conference'], 
+	>>> client.post_group(openreview.Group(id = 'ICML.cc/2019/Conference',
+                                         readers = ['everyone'],
+                                         writers = ['ICML.cc/2019'],
+                                         signatories = ['ICML.cc/2019/Conference'],
                                          signatures = ['ICML.cc/2019'],
                                          members = [<Tilde id of members>],
                                          web = <Absolute path to JS file>))
@@ -109,7 +109,7 @@ Note that the conference's URL is essentially the openreview url with the name o
 .. figure:: ../_static/screenshots/conf_homepage_past_duedate.png
     :align: center
 
-Note that the web field for the conference is either JS code or the absolute path of a JS file containing the code. 
+Note that the web field for the conference is either JS code or the absolute path of a JS file containing the code.
 
 Sample JS file
 -----------------
@@ -148,7 +148,7 @@ Sample JS file
 	  });
 	}
 
-	// RenderConferenceHeader renders the static info at the top of the page. 
+	// RenderConferenceHeader renders the static info at the top of the page.
 	function renderConferenceHeader() {
 	  Webfield.ui.venueHeader({
 	    title: "ICML ",
@@ -397,7 +397,7 @@ Creating an invitation to comment enables users to comment on a submission and r
 
 
 
-Making a Submission 
+Making a Submission
 ----------------------
 
 Once a submission invitation with a future due date is created, users with appropriate access can make a submission (e.g. submission of a research paper) using the Conference homepage.
@@ -426,10 +426,10 @@ Users with appropriate access can comment on a submission and reply to other's c
     :align: center
 
 
-Extracting all notes given an invitation
+Retrieving all notes given an invitation
 -------------------------------------------
 
-Users can access all notes by using an invitation id. 
+Users can access all notes by using an invitation id.
 Important note: only the notes readable by the account the user logged in with can be accessed.
 Consider the following example which gets all the papers submitted to ICLR 2018::
 
@@ -438,7 +438,7 @@ Consider the following example which gets all the papers submitted to ICLR 2018:
 Please note, get_notes() will return only the first 1000 notes. If you expect the number of notes returned to be more, you will require tools.iterget_notes() which returns an iterator and lets you access all the notes.
 
 
-Extracting all Public Comments for a conference
+Retrieving all Public Comments for a conference
 --------------------------------------------------
 
 Comments, just like submissions, are saved as notes. So they are also accessible using get_notes().
@@ -451,15 +451,40 @@ This code returns public comments made during the conference "ICLR.cc/2019/Confe
 
 Please note that the invitation regex used in above example represents the convention that OpenReview follows while creating invitations for ICLR Conferences. So, the invitations do not necessarily have to follow this regex for all conferences or workshops.
 
+Retrieving all Official Reviews for a conference
+-------------------------------------------------
 
-Extracting comments made on a forum
+Like comments and submissions, reviews are also usually represented as Notes. Conferences often distinguish reviews written by official conference reviewers with the invitation suffix "Official_Review".
+
+For example, the reviews in ICLR 2019 all have invitations with the following pattern::
+
+	ICLR.cc/2019/Conference/-/Paper.*/Official_Review
+
+To retrieve the Official Reviews for a given ICLR 2019 paper, do the following::
+
+	>>> paper123_reviews = client.get_notes(invitation='ICLR.cc/2019/Conference/-/Paper123/Official_Review')
+
+The specific structure of the review's ``content`` field is determined by the conference, but a typical review's content will include fields like ``title``, ``review``, ``rating``, and ``confidence``::
+
+	>>> review0 = paper123_reviews[0]
+	>>> print(review0.content['rating'])
+	'8: Top 50% of accepted papers, clear accept'
+
+Conferences as large as ICLR 2019 will often have a number of reviews that exceeds the default API limit. To retrieve all Official Reviews for all ICLR 2019 papers, create an iterator over reviews by doing the following::
+
+	>>> review_iterator = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Paper.*/Official_Review')
+	>>> for review in review_iterator:
+	>>>     #do something
+
+
+Retrieving comments made on a forum
 ----------------------------------------
 
 All comments made on a particular forum/submission can be extracted like this::
 
 	>>>iclr19_forum_comments = client.get_notes(forum="<forum-id>")
 
-Also, the public comments on a particular forum can be extracted like this:: 
+Also, the public comments on a particular forum can be extracted like this::
 
 	>>>iclr19_forum_public_comments = client.get_notes(forum="<forum-id>", invitation="ICLR.cc/2019/Conference/-/Paper.*/Public_Comment")
 
