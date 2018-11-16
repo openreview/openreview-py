@@ -352,6 +352,11 @@ class ConferenceBuilder(object):
         groups = self.__build_groups(id)
         for g in groups[:-1]:
             self.webfield_builder.set_landing_page(g)
+        host = self.client.get_group(id = 'host')
+        root_id = groups[0].id
+        if root_id == root_id.lower():
+            root_id = groups[1].id
+        self.client.add_members_to_group(host, root_id)
 
         self.webfield_builder.set_home_page(groups[-1], self.conference.get_type().homepage_webfield_template() , self.conference.get_homepage_options())
 
