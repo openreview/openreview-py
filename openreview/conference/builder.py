@@ -337,7 +337,7 @@ class ConferenceBuilder(object):
     def set_conference_name(self, name):
         self.conference.set_name(name)
 
-    def set_conference__short_name(self, name):
+    def set_conference_short_name(self, name):
         self.conference.set_short_name(name)
 
     def set_homepage_header(self, header):

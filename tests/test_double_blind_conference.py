@@ -246,7 +246,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
-        builder.set_conference__short_name('AKBC 2019')
+        builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = ['Machine Learning',
             'Natural Language Processing',
@@ -379,7 +379,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
-        builder.set_conference__short_name('AKBC 2019')
+        builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
