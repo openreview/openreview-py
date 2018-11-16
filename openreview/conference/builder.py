@@ -122,14 +122,15 @@ class Conference(object):
         self.header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
-
+        self.reviewers_name = 'Reviewers'
+        self.program_chairs_name = 'Program_Chairs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
 
         group = tools.get_group(self.client, id = group_id)
         if group is None:
             return self.client.post_group(openreview.Group(id = group_id,
-                readers = [self.id, group_owner_id],
+                readers = [self.id, group_owner_id, group_id],
                 writers = [self.id],
                 signatures = [self.id],
                 signatories = [self.id],
@@ -154,6 +155,18 @@ class Conference(object):
 
     def get_short_name(self):
         return self.short_name
+
+    def set_reviewers_name(self, name):
+        self.reviewers_name = name
+
+    def set_program_chairs_name(self, name):
+        self.program_chairs_name = name
+
+    def get_program_chairs_id(self):
+        return self.id + '/' + self.program_chairs_name
+
+    def get_reviewers_id(self):
+        return self.id + '/' + self.reviewers_name
 
     def set_type(self, type):
         self.type = type
@@ -227,12 +240,19 @@ class Conference(object):
         return invitation
 
     def set_program_chairs(self, emails):
-        pcs_id = self.id + '/Program_Chairs'
+        pcs_id = self.get_program_chairs_id()
         return self.__create_group(pcs_id, self.id, emails)
+
+    def set_reviewers(self, emails):
+        reviewers_id = self.get_reviewers_id()
+        group = self.__create_group(reviewers_id, self.id, emails)
+
+        return self.webfield_builder.set_reviewer_page(self.id, group)
+
 
     def recruit_reviewers(self, emails, title = None, message = None, reviewers_name = 'Reviewers'):
 
-        pcs_id = self.id + '/Program_Chairs'
+        pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
         reviewers_declined_id = reviewers_id + '/Declined'
         reviewers_invited_id = reviewers_id + '/Invited'
@@ -340,6 +360,9 @@ class ConferenceBuilder(object):
     def set_conference_short_name(self, name):
         self.conference.set_short_name(name)
 
+    def set_conference_reviewers_name(self, name):
+        self.conference.set_reviewers_name(name)
+
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
 
@@ -358,7 +381,9 @@ class ConferenceBuilder(object):
             root_id = groups[1].id
         self.client.add_members_to_group(host, root_id)
 
-        self.webfield_builder.set_home_page(groups[-1], self.conference.get_type().homepage_webfield_template() , self.conference.get_homepage_options())
+        options = self.conference.get_homepage_options()
+        options['reviewers_name'] = self.conference.reviewers_name
+        self.webfield_builder.set_home_page(groups[-1], self.conference.get_type().homepage_webfield_template() , options)
 
         self.conference.set_conference_groups(groups)
         return self.conference

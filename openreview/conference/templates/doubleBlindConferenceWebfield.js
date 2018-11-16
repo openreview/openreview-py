@@ -13,12 +13,13 @@ var BLIND_SUBMISSION_ID = CONFERENCE_ID + '/-/Blind_Submission';
 var RECRUIT_REVIEWERS = CONFERENCE_ID + '/-/Recruit_Reviewers';
 var RECRUIT_AREA_CHAIRS = CONFERENCE_ID + '/-/Recruit_Area_Chairs';
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var REVIEWERS_NAME = '';
 
 var ANON_SIGNATORY_REGEX = /^AKBC\.ws\/2019\/Conference\/Paper(\d+)\/(AnonReviewer\d+|Area_Chair\d+)/;
 var AUTHORS_SIGNATORY_REGEX = /^AKBC\.ws\/2019\/Conference\/Paper(\d+)\/Authors/;
 
 var AREA_CHAIRS_ID = CONFERENCE_ID + '/Area_Chairs';
-var REVIEWERS_ID = CONFERENCE_ID + '/Reviewers';
+var REVIEWERS_ID = CONFERENCE_ID + '/' + REVIEWERS_NAME;
 var PROGRAM_CHAIRS_ID = CONFERENCE_ID + '/Program_Chairs';
 var AUTHORS_ID = CONFERENCE_ID + '/Authors';
 
@@ -162,7 +163,7 @@ function renderContent(userGroups, activityNotes, authorNotes) {
     if (_.includes(userGroups, REVIEWERS_ID)) {
       $('#your-consoles .submissions-list').append([
         '<li class="note invitation-link">',
-          '<a href="/group?id=' + REVIEWERS_ID + '" >Reviewer Console</a>',
+          '<a href="/group?id=' + REVIEWERS_ID + '" >' + REVIEWERS_NAME.replace('_', ' ') + ' Console</a>',
         '</li>'
       ].join(''));
     }
