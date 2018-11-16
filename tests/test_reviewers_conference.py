@@ -64,3 +64,9 @@ class TestReviewersConference():
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 0
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
+
+        # Reviewer console
+        request_page(selenium, "http://localhost:3000/group?id=learningtheory.org/COLT/2019/Conference/Program_Committee", test_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('areachair-schedule')

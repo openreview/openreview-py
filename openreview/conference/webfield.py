@@ -111,16 +111,22 @@ class WebfieldBuilder(object):
     def set_reviewer_page(self, conference_id, group, options = {}):
 
         reviewers_name = group.id.split('/')[-1].replace('_', ' ')
+
         default_header = {
             'title': reviewers_name + ' Console',
-            'instructions': '',
-            'schedule': 'TBD',
+            'instructions': '<p class="dark">This page provides information and status \
+            updates for the ' + group.id + '. It will be regularly updated as the conference \
+            progresses, so please check back frequently for news and other updates.</p>',
+            'schedule': '<h4>Coming Soon</h4>\
+            <p>\
+                <em><strong>Please check back later for updates.</strong></em>\
+            </p>',
             'reviewers_name': reviewers_name
         }
 
         header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/authorWebfield.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + reviewers_name + "';")
