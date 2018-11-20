@@ -471,6 +471,15 @@ class TestDoubleBlindConference():
         assert response
         assert len(response['messages']) == 1
 
+        # Remind reviewers
+        result = conference.recruit_reviewers(remind = True)
+        response = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
+        assert response
+        assert len(response['messages']) == 3
+        assert 'mohit@mail.com' == response['messages'][0]['content']['to']
+        assert 'michael@mail.com' == response['messages'][1]['content']['to']
+        assert 'other@mail.com' == response['messages'][2]['content']['to']
+
     def test_set_program_chairs(self, client):
 
         builder = openreview.conference.ConferenceBuilder(client)

@@ -250,7 +250,7 @@ class Conference(object):
         return self.webfield_builder.set_reviewer_page(self.id, group)
 
 
-    def recruit_reviewers(self, emails, title = None, message = None, reviewers_name = 'Reviewers'):
+    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -258,8 +258,8 @@ class Conference(object):
         reviewers_invited_id = reviewers_id + '/Invited'
         hash_seed = '1234'
 
-        self.__create_group(reviewers_id, pcs_id)
-        self.__create_group(reviewers_declined_id, pcs_id)
+        reviewers_group = self.__create_group(reviewers_id, pcs_id)
+        reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
         options = {
@@ -306,15 +306,27 @@ class Conference(object):
         if message:
             recruit_message = message
 
-        for email in emails:
-            if email not in reviewers_invited_group.members:
-                tools.recruit_reviewer(self.client, email, 'artist',
-                    hash_seed,
-                    invitation.id,
-                    recruit_message,
-                    recruit_message_subj,
-                    reviewers_invited_id,
-                    verbose = False)
+        if remind:
+            for invited in reviewers_invited_group.members:
+                if invited not in reviewers_declined_group.members and invited not in reviewers_group.members:
+                    tools.recruit_reviewer(self.client, invited, 'artist',
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        'Reminder: ' + recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
+
+        else:
+            for email in emails:
+                if email not in reviewers_invited_group.members:
+                    tools.recruit_reviewer(self.client, email, 'artist',
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
