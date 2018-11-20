@@ -472,13 +472,26 @@ class TestDoubleBlindConference():
         assert len(response['messages']) == 1
 
         # Remind reviewers
-        result = conference.recruit_reviewers(remind = True)
+        invited = result = conference.recruit_reviewers(emails = ['another@mail.com'], remind = True)
+        assert invited
+        assert len(invited.members) == 5
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 0
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
         response = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
         assert response
         assert len(response['messages']) == 3
-        assert 'mohit@mail.com' == response['messages'][0]['content']['to']
-        assert 'michael@mail.com' == response['messages'][1]['content']['to']
-        assert 'other@mail.com' == response['messages'][2]['content']['to']
+        tos = [ m['content']['to'] for m in response['messages']]
+        assert 'michael@mail.com' in tos
+        assert 'mohit@mail.com' in tos
+        assert 'other@mail.com' in tos
 
     def test_set_program_chairs(self, client):
 
@@ -521,7 +534,7 @@ class TestDoubleBlindConference():
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Invited')
         assert group
-        assert len(group.members) == 4
+        assert len(group.members) == 5
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group

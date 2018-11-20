@@ -307,26 +307,25 @@ class Conference(object):
             recruit_message = message
 
         if remind:
-            for invited in reviewers_invited_group.members:
-                if invited not in reviewers_declined_group.members and invited not in reviewers_group.members:
-                    tools.recruit_reviewer(self.client, invited, 'artist',
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        'Reminder: ' + recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
+            remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_group.members))
+            for reviewer in remind_reviewers:
+                tools.recruit_reviewer(self.client, reviewer, 'artist',
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    'Reminder: ' + recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
 
-        else:
-            for email in emails:
-                if email not in reviewers_invited_group.members:
-                    tools.recruit_reviewer(self.client, email, 'artist',
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
+        invite_emails = list(set(emails) - set(reviewers_invited_group.members))
+        for email in invite_emails:
+            tools.recruit_reviewer(self.client, email, 'artist',
+                hash_seed,
+                invitation.id,
+                recruit_message,
+                recruit_message_subj,
+                reviewers_invited_id,
+                verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
