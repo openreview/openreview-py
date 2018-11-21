@@ -15,6 +15,7 @@ var SCHEDULE_HTML = '';
 var paperDisplayOptions = {
   pdfLink: true,
   replyCount: true,
+  showActionButtons: true,
   showContents: true
 };
 
@@ -49,7 +50,8 @@ function load() {
   } else {
     authorNotesP = Webfield.get('/notes', {
       'content.authorids': user.profile.id,
-      invitation: SUBMISSION_ID
+      invitation: SUBMISSION_ID,
+      details: 'replyCount,writable'
     }).then(function(result) {
       return result.notes;
     });
@@ -126,16 +128,19 @@ function renderContent(authorNotes, invitations, tagInvitations) {
 
   // Your Private Versions and Your Anonymous Versions tabs
   if (authorNotes.length) {
-    Webfield.ui.searchResults(
-      authorNotes,
-      _.assign({}, paperDisplayOptions, {container: '#your-submissions'})
-    );
+    Webfield.ui.submissionList(authorNotes, {
+      heading: null,
+      container: '#your-submissions',
+      search: { enabled: false },
+      displayOptions: paperDisplayOptions
+    });
+
     $('.tabs-container a[href="#your-submissions"]').parent().show();
   } else {
     $('.tabs-container a[href="#your-submissions"]').parent().hide();
   }
 
-  // Toggle various UI elements
+  // Remove spinner and show content
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();
 }
