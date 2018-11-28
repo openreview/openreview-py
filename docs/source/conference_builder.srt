@@ -63,7 +63,7 @@ This call will setup an invitation to submit papers following the conference typ
 Close Submissions
 -----------------
 
-The submission will be closed when the current date passes the due date specified in open submissions call. In this case it will force the close of the submissions and it will disable the edition of the papers by the authors. They can not edit the submission anymore
+The submission will be closed when the current date passes the due date specified in open submissions call. In this case it will force the close of the submissions and it will disable the adition and edition of the papers by the authors. They can not edit the submission anymore
 
     >>> invitation = conference.close_submissions()
 

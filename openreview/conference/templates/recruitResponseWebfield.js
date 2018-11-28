@@ -5,20 +5,16 @@ var HEADER = {};
 // Main is the entry point to the webfield code and runs everything
 function main() {
   Webfield.ui.setup('#invitation-container', CONFERENCE_ID);  // required
-  renderConferenceHeader();
+
+  Webfield.ui.venueHeader(HEADER);
+
+  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+
   render();
 }
 
-// RenderConferenceHeader renders the static info at the top of the page. Since that content
-// never changes, put it in its own function
-function renderConferenceHeader() {
-  Webfield.ui.venueHeader(HEADER);
-
-  Webfield.ui.spinner('#notes', { inline: true });
-}
 
 function render() {
-
   var $response = $('#notes');
   $response.empty();
 

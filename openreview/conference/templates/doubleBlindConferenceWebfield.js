@@ -45,7 +45,6 @@ var commentDisplayOptions = {
   showContents: false,
   showParent: true
 };
-var initialPageLoad = true;
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -68,14 +67,14 @@ function load() {
   var authorNotesP;
   var userGroupsP;
 
-  if (!user || _.startsWith(user.id, 'guest_')) {
+  if (!user) {
     activityNotesP = $.Deferred().resolve([]);
     userGroupsP = $.Deferred().resolve([]);
     authorNotesP = $.Deferred().resolve([]);
   } else {
     activityNotesP = Webfield.api.getSubmissions(WILDCARD_INVITATION, {
       pageSize: PAGE_SIZE,
-      details: 'forumContent'
+      details: 'forumContent,writable'
     });
 
     userGroupsP = Webfield.get('/groups', { member: user.id, web: true }).then(function(result) {
@@ -84,6 +83,7 @@ function load() {
         function(id) { return _.startsWith(id, CONFERENCE_ID); }
       );
     });
+
     authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
       pageSize: PAGE_SIZE,
       'content.authorids': user.profile.id,
@@ -91,14 +91,13 @@ function load() {
     });
   }
 
-  return $.when(
-    userGroupsP, activityNotesP, authorNotesP
-  );
+  return $.when(userGroupsP, activityNotesP, authorNotesP);
 }
 
 // Render functions
 function renderConferenceHeader() {
   Webfield.ui.venueHeader(HEADER);
+
   Webfield.ui.spinner('#notes', { inline: true });
 }
 
@@ -108,7 +107,8 @@ function renderSubmissionButton() {
       Webfield.ui.submissionButton(invitation, user, {
         onNoteCreated: function() {
           // Callback funtion to be run when a paper has successfully been submitted (required)
-          promptMessage('Your submission is complete. Check your inbox for a confirmation email. A list of all submissions will be available after the deadline');
+          promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
+            'A list of all submissions will be available after the deadline');
 
           load().then(renderContent).then(function() {
             $('.tabs-container a[href="#your-consoles"]').click();
@@ -163,7 +163,9 @@ function renderContent(userGroups, activityNotes, authorNotes) {
     if (_.includes(userGroups, REVIEWERS_ID)) {
       $('#your-consoles .submissions-list').append([
         '<li class="note invitation-link">',
-          '<a href="/group?id=' + REVIEWERS_ID + '" >' + REVIEWERS_NAME.replace('_', ' ') + ' Console</a>',
+          '<a href="/group?id=' + REVIEWERS_ID + '" >',
+          REVIEWERS_NAME.replace('_', ' ') + ' Console',
+          '</a>',
         '</li>'
       ].join(''));
     }
@@ -185,7 +187,8 @@ function renderContent(userGroups, activityNotes, authorNotes) {
   if (activityNotes.length) {
     var displayOptions = {
       container: '#recent-activity',
-      user: user && user.profile
+      user: user && user.profile,
+      showActionButtons: true
     };
 
     $(displayOptions.container).empty();
@@ -199,8 +202,6 @@ function renderContent(userGroups, activityNotes, authorNotes) {
 
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();
-
-  Webfield.ui.done();
 }
 
 // Go!
