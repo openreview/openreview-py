@@ -231,11 +231,12 @@ class Conference(object):
 
         # if freeze submissions then remove writers
         # use a process pool to run this
-        notes_iterator = tools.iterget_notes(self.client, invitation = invitation.id)
-        for note in notes_iterator:
-            if note.writers != [self.id]:
-                note.writers = [self.id]
-                self.client.post_note(note)
+        if freeze_submissions:
+            notes_iterator = tools.iterget_notes(self.client, invitation = invitation.id)
+            for note in notes_iterator:
+                if note.writers != [self.id]:
+                    note.writers = [self.id]
+                    self.client.post_note(note)
 
         return invitation
 
