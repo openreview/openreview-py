@@ -760,6 +760,7 @@ class Invitation(object):
         self.tmdate = tmdate
         self.details = details
         self.web = None
+        self.process = None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
