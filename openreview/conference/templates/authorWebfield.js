@@ -7,7 +7,7 @@
 
 // Constants
 var CONFERENCE_ID = '';
-var SUBMISSION_ID = CONFERENCE_ID + '/-/Submission';
+var SUBMISSION_ID = '';
 var HEADER_TEXT = '';
 var INSTRUCTIONS = '';
 var SCHEDULE_HTML = '';

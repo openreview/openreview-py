@@ -8,6 +8,7 @@
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
+var BLIND_SUBMISSION_ID = '';
 var REVIEWERS_NAME = '';
 var AREA_CHAIRS_ID = '';
 var REVIEWERS_ID = '';
@@ -53,6 +54,11 @@ function load() {
   var authorNotesP;
   var userGroupsP;
 
+  var notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+    pageSize: PAGE_SIZE,
+    details: 'replyCount'
+  });
+
   if (!user || _.startsWith(user.id, 'guest_')) {
     activityNotesP = $.Deferred().resolve([]);
     userGroupsP = $.Deferred().resolve([]);
@@ -77,7 +83,7 @@ function load() {
     });
   }
 
-  return $.when(userGroupsP, activityNotesP, authorNotesP);
+  return $.when(notesP, userGroupsP, activityNotesP, authorNotesP);
 }
 
 // Render functions
@@ -111,6 +117,10 @@ function renderConferenceTabs() {
       id: 'your-consoles',
     },
     {
+      heading: 'All Submissions',
+      id: 'all-submissions',
+    },
+    {
       heading: 'Recent Activity',
       id: 'recent-activity',
     }
@@ -122,7 +132,7 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(userGroups, activityNotes, authorNotes) {
+function renderContent(notes, userGroups, activityNotes, authorNotes) {
 
   // Your Consoles tab
   if (userGroups.length || authorNotes.length) {
@@ -167,6 +177,47 @@ function renderContent(userGroups, activityNotes, authorNotes) {
     $('.tabs-container a[href="#your-consoles"]').parent().show();
   } else {
     $('.tabs-container a[href="#your-consoles"]').parent().hide();
+  }
+
+
+  // All Submitted Papers tab
+  var submissionListOptions = _.assign({}, paperDisplayOptions, {
+    showTags: false,
+    container: '#all-submissions'
+  });
+
+  $(submissionListOptions.container).empty();
+
+  if (notes.length){
+    Webfield.ui.submissionList(notes, {
+      heading: null,
+      container: '#all-submissions',
+      search: {
+        enabled: true,
+        localSearch: false,
+        onResults: function(searchResults) {
+          var blindedSearchResults = searchResults.filter(function(note) {
+            return note.invitation === BLIND_SUBMISSION_ID;
+          });
+          Webfield.ui.searchResults(blindedSearchResults, submissionListOptions);
+          Webfield.disableAutoLoading();
+        },
+        onReset: function() {
+          Webfield.ui.searchResults(notes, submissionListOptions);
+          if (notes.length === PAGE_SIZE) {
+            Webfield.setupAutoLoading(BLIND_SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
+          }
+        }
+      },
+      displayOptions: submissionListOptions,
+      fadeIn: false
+    });
+
+    if (notes.length === PAGE_SIZE) {
+      Webfield.setupAutoLoading(BLIND_SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
+    }
+  } else {
+    $('.tabs-container a[href="#all-submissions"]').parent().hide();
   }
 
   // Activity Tab
