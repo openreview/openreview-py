@@ -61,9 +61,15 @@ class WebfieldBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/tabsConferenceWebfield.js')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = 'venue.org/Conference';", "var CONFERENCE_ID = '" + group.id + "';")
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + group.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + options.get('reviewers_name') + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + options.get('submission_id') + "';")
+            content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + options.get('area_chairs_id') + "';")
+            content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + options.get('reviewers_id') + "';")
+            content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + options.get('program_chairs_id') + "';")
+            content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id') + "';")
+
             group.web = content
             return self.client.post_group(group)
 

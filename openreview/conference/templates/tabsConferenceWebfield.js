@@ -6,31 +6,17 @@
 // ------------------------------------
 
 // Constants
-var CONFERENCE_ID = 'venue.org/Conference';
-var SUBMISSION_ID = CONFERENCE_ID + '/-/Submission';
-var ADD_BID_ID = CONFERENCE_ID + '/-/Add_Bid';
-var BLIND_SUBMISSION_ID = CONFERENCE_ID + '/-/Blind_Submission';
-var RECRUIT_REVIEWERS = CONFERENCE_ID + '/-/Recruit_Reviewers';
-var RECRUIT_AREA_CHAIRS = CONFERENCE_ID + '/-/Recruit_Area_Chairs';
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var CONFERENCE_ID = '';
+var SUBMISSION_ID = '';
 var REVIEWERS_NAME = '';
-
-var ANON_SIGNATORY_REGEX = /^AKBC\.ws\/2019\/Conference\/Paper(\d+)\/(AnonReviewer\d+|Area_Chair\d+)/;
-var AUTHORS_SIGNATORY_REGEX = /^AKBC\.ws\/2019\/Conference\/Paper(\d+)\/Authors/;
-
-var AREA_CHAIRS_ID = CONFERENCE_ID + '/Area_Chairs';
-var REVIEWERS_ID = CONFERENCE_ID + '/' + REVIEWERS_NAME;
-var PROGRAM_CHAIRS_ID = CONFERENCE_ID + '/Program_Chairs';
-var AUTHORS_ID = CONFERENCE_ID + '/Authors';
+var AREA_CHAIRS_ID = '';
+var REVIEWERS_ID = '';
+var PROGRAM_CHAIRS_ID = '';
+var AUTHORS_ID = '';
 
 var HEADER = {};
 
-var COMMENT_EXCLUSION = [
-  SUBMISSION_ID,
-  RECRUIT_REVIEWERS,
-  RECRUIT_AREA_CHAIRS
-];
-
+var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var BUFFER = 1000 * 60 * 30;  // 30 minutes
 var PAGE_SIZE = 50;
 

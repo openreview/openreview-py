@@ -43,8 +43,6 @@ class SubmissionInvitation(openreview.Invitation):
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_id + "';")
-            print('name', name)
-            print('process', file_content)
             super(SubmissionInvitation, self).__init__(id = conference_id + '/-/' + name,
                 duedate = tools.datetime_millis(due_date),
                 readers = ['everyone'],

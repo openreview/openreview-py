@@ -16,7 +16,9 @@ class Conference(object):
         self.header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
+        self.authors_name = 'Authors'
         self.reviewers_name = 'Reviewers'
+        self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
 
@@ -65,6 +67,12 @@ class Conference(object):
 
     def get_reviewers_id(self):
         return self.id + '/' + self.reviewers_name
+
+    def get_authors_id(self):
+        return self.id + '/' + self.authors_name
+
+    def get_area_chairs_id(self):
+        return self.id + '/' + self.area_chairs_name
 
     def get_submission_id(self):
         return self.id + '/-/' + self.submission_name
@@ -296,6 +304,11 @@ class ConferenceBuilder(object):
 
         options = self.conference.get_homepage_options()
         options['reviewers_name'] = self.conference.reviewers_name
+        options['reviewers_id'] = self.conference.get_reviewers_id()
+        options['authors_id'] = self.conference.get_authors_id()
+        options['program_chairs_id'] = self.conference.get_program_chairs_id()
+        options['area_chairs_id'] = self.conference.get_area_chairs_id()
+        options['submission_id'] = self.conference.get_submission_id()
         self.webfield_builder.set_home_page(groups[-1], options)
 
         self.conference.set_conference_groups(groups)
