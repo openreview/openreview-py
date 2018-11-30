@@ -1,8 +1,8 @@
 function(){
     var or3client = lib.or3client;
 
-    var CONFERENCE_ID = 'ICLR.cc/2019/Conference';
-    var SHORT_PHRASE = "ICLR 2019";
+    var CONFERENCE_ID = '';
+    var SHORT_PHRASE = '';
 
     var forumNoteP = or3client.or3request(or3client.notesUrl + '?id=' + note.forum, {}, 'GET', token);
     var replytoNoteP = note.replyto ? or3client.or3request(or3client.notesUrl + '?id=' + note.replyto, {}, 'GET', token) : null;
