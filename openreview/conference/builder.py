@@ -30,7 +30,7 @@ class Conference(object):
                 readers = [self.id, group_owner_id, group_id],
                 writers = [self.id],
                 signatures = [self.id],
-                signatories = [self.id],
+                signatories = [group_id],
                 members = members))
         else:
             return self.client.add_members_to_group(group, members)
@@ -145,8 +145,13 @@ class Conference(object):
 
         return invitation
 
-    # def open_comments(public = True, official = True):
-    #     ## Create comment invitations per paper
+    def open_comments(self, name, public, anonymous):
+        ## Create comment invitations per paper
+        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+        if public:
+            self.invitation_builder.set_public_comment_invitation(self.id, notes_iterator, name, anonymous)
+        else:
+            self.invitation_builder.set_private_comment_invitation(self.id, notes_iterator, name, anonymous)
 
     # def close_comments():
     #     ## disable comments removing the invitees? or setting an expiration date
@@ -161,6 +166,12 @@ class Conference(object):
 
         return self.webfield_builder.set_reviewer_page(self.id, group)
 
+    def set_authors(self):
+        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+
+        for n in notes_iterator:
+            group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
+            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, n.content.get('authorids'))
 
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False):
 

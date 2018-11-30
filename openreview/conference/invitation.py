@@ -68,6 +68,113 @@ class SubmissionInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
+class PublicCommentInvitation(openreview.Invitation):
+
+    def __init__(self, conference_id, name, number, paper_id, anonymous = False):
+
+        content = invitations.comment
+        prefix = conference_id + '/Paper' + str(number) + '/'
+        signatures_regex = '~.*'
+
+        if anonymous:
+            signatures_regex = '~.*|\\(anonymous\\)'
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_id + "';")
+            super(PublicCommentInvitation, self).__init__(id = conference_id + '/-/Paper' + str(number) + '/' + name,
+                readers = ['everyone'],
+                writers = [conference_id],
+                signatures = [conference_id],
+                invitees = ['~'],
+                noninvitees = [
+                    prefix + "Authors",
+                    prefix + "Reviewers",
+                    prefix + "Area_Chairs",
+                    prefix + "Program_Chairs"
+                ],
+                reply = {
+                    'forum': paper_id,
+                    'replyto': None,
+                    'readers': {
+                        "description": "Select all user groups that should be able to read this comment.",
+                        "value-dropdown-hierarchy": [
+                            "everyone",
+                            prefix + "Authors",
+                            prefix + "Reviewers",
+                            prefix + "Area_Chairs",
+                            prefix + "Program_Chairs"
+                        ]
+                    },
+                    'writers': {
+                        'values-copied': [
+                            conference_id,
+                            '{signatures}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': signatures_regex,
+                        'description': 'How your identity will be displayed.'
+                    },
+                    'content': content
+                },
+                process_string = file_content
+            )
+
+class OfficialCommentInvitation(openreview.Invitation):
+
+    def __init__(self, conference_id, name, number, paper_id, anonymous = False):
+
+        content = invitations.comment
+        prefix = conference_id + '/Paper' + str(number) + '/'
+        signatures_regex = '~.*'
+
+        if anonymous:
+            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}Authors|{prefix}Area_Chair[0-9]+|{prefix}Program_Chairs'.format(prefix=prefix)
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_id + "';")
+            super(OfficialCommentInvitation, self).__init__(id =conference_id + '/-/Paper' + str(number) + '/' + name,
+                readers = ['everyone'],
+                writers = [conference_id],
+                signatures = [conference_id],
+                invitees = [
+                    prefix + "Authors",
+                    prefix + "Reviewers",
+                    prefix + "Area_Chairs",
+                    prefix + "Program_Chairs"
+                ],
+                reply = {
+                    'forum': paper_id,
+                    'replyto': None,
+                    'readers': {
+                        "description": "Select all user groups that should be able to read this comment.",
+                        "value-dropdown-hierarchy": [
+                            "everyone",
+                            prefix + "Authors",
+                            prefix + "Reviewers",
+                            prefix + "Area_Chairs",
+                            prefix + "Program_Chairs"
+                        ]
+                    },
+                    'writers': {
+                        'values-copied': [
+                            conference_id,
+                            '{signatures}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': signatures_regex,
+                        'description': 'How your identity will be displayed.'
+                    },
+                    'content': content
+                },
+                process_string = file_content
+            )
+
 
 class InvitationBuilder(object):
 
@@ -103,6 +210,16 @@ class InvitationBuilder(object):
             additional_fields = built_options.get('additional_fields'))
 
         return self.client.post_invitation(invitation)
+
+    def set_public_comment_invitation(self, conference_id, notes, name, anonymous):
+
+        for note in notes:
+            self.client.post_invitation(PublicCommentInvitation(conference_id, name, note.number, note.id, anonymous))
+
+    def set_private_comment_invitation(self, conference_id, notes, name, anonymous):
+
+        for note in notes:
+            self.client.post_invitation(OfficialCommentInvitation(conference_id, name, note.number, note.id, anonymous))
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 
