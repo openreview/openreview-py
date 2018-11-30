@@ -21,7 +21,6 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
-        self.submission_public = False
 
     def __create_group(self, group_id, group_owner_id, members = []):
 
@@ -63,9 +62,6 @@ class Conference(object):
     def set_submission_name(self, name):
         self.submission_name = name
 
-    def is_submission_public(self, public):
-        self.submission_public = public
-
     def get_program_chairs_id(self):
         return self.id + '/' + self.program_chairs_name
 
@@ -104,9 +100,9 @@ class Conference(object):
             options['deadline'] = self.header.get('deadline')
         return options
 
-    def open_submissions(self, due_date = None, subject_areas = [], additional_fields = {}):
+    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}):
 
-        if not self.submission_public:
+        if not public:
             ## Author console
             authors_group = openreview.Group(id = self.id + '/Authors',
                 readers = ['everyone'],
@@ -118,7 +114,7 @@ class Conference(object):
 
         ## Submission invitation
         options = {
-            'public': self.submission_public,
+            'public': public,
             'name': self.submission_name,
             'due_date': due_date,
             'subject_areas': subject_areas,
