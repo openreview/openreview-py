@@ -45,7 +45,7 @@ class WebfieldBuilder(object):
             return self.client.post_group(group)
 
 
-    def set_home_page(self, group, template_name, options = {}):
+    def set_home_page(self, group, options = {}):
 
         default_header = {
             'title': group.id,
@@ -59,7 +59,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/' + template_name)) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/tabsConferenceWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = 'venue.org/Conference';", "var CONFERENCE_ID = '" + group.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")

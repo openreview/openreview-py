@@ -6,111 +6,6 @@ from .. import tools
 from . import webfield
 from . import invitation
 
-class ConferenceType(object):
-
-    @classmethod
-    def homepage_webfield_template(cls):
-        return "singleBlindConferenceWebfield.js"
-
-    @classmethod
-    def submission_reply(cls, id, subject_areas, additional_fields):
-        return {}
-
-class SingleBlindConferenceType(ConferenceType):
-
-    @classmethod
-    def homepage_webfield_template(cls):
-        return "singleBlindConferenceWebfield.js"
-
-class DoubleBlindConferenceType(ConferenceType):
-
-    @classmethod
-    def homepage_webfield_template(cls):
-        return "doubleBlindConferenceWebfield.js"
-
-    @classmethod
-    def submission_reply(cls, id, subject_areas, additional_fields):
-
-        content = {
-            'title': {
-                'description': 'Title of paper.',
-                'order': 1,
-                'value-regex': '.{1,250}',
-                'required':True
-            },
-            'authors': {
-                'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
-                'order': 2,
-                'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
-                'required':True
-            },
-            'authorids': {
-                'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
-                'order': 3,
-                'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
-                'required':True
-            },
-            'keywords': {
-                'description': 'Comma separated list of keywords.',
-                'order': 6,
-                'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
-            },
-            'TL;DR': {
-                'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
-                'order': 7,
-                'value-regex': '[^\\n]{0,250}',
-                'required':False
-            },
-            'abstract': {
-                'description': 'Abstract of paper.',
-                'order': 8,
-                'value-regex': '[\\S\\s]{1,5000}',
-                'required':True
-            },
-            'pdf': {
-                'description': 'Upload a PDF file that ends with .pdf',
-                'order': 9,
-                'value-regex': 'upload',
-                'required':True
-            }
-        }
-
-        if subject_areas:
-            content['subject_areas'] = {
-                'order' : 5,
-                'description' : "Select or type subject area",
-                'values-dropdown': subject_areas,
-                'required': True
-            }
-
-        for order, key in enumerate(additional_fields, start=10):
-            value = additional_fields[key]
-            value['order'] = order
-            content[key] = value
-
-        return {
-            'forum': None,
-            'replyto': None,
-            'readers': {
-                'values-copied': [
-                    id,
-                    '{content.authorids}',
-                    '{signatures}'
-                ]
-            },
-            'writers': {
-                'values-copied': [
-                    id,
-                    '{content.authorids}',
-                    '{signatures}'
-                ]
-            },
-            'signatures': {
-                'values-regex': '~.*'
-            },
-            'content': content
-        }
-
 class Conference(object):
 
     def __init__(self, client):
@@ -118,12 +13,12 @@ class Conference(object):
         self.groups = []
         self.name = ''
         self.short_name = ''
-        self.type = ConferenceType
         self.header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.reviewers_name = 'Reviewers'
         self.program_chairs_name = 'Program_Chairs'
+        self.submission_name = 'Submission'
 
     def __create_group(self, group_id, group_owner_id, members = []):
 
@@ -162,17 +57,17 @@ class Conference(object):
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
 
+    def set_submission_name(self, name):
+        self.submission_name = name
+
     def get_program_chairs_id(self):
         return self.id + '/' + self.program_chairs_name
 
     def get_reviewers_id(self):
         return self.id + '/' + self.reviewers_name
 
-    def set_type(self, type):
-        self.type = type
-
-    def get_type(self):
-        return self.type
+    def get_submission_id(self):
+        return self.id + '/-/' + self.submission_name
 
     def set_conference_groups(self, groups):
         self.groups = groups
@@ -197,7 +92,7 @@ class Conference(object):
             options['deadline'] = self.header.get('deadline')
         return options
 
-    def open_submissions(self, due_date = None, subject_areas = [], additional_fields = []):
+    def open_submissions(self, due_date = None, subject_areas = [], additional_fields = {}):
 
         ## Author console
         authors_group = openreview.Group(id = self.id + '/Authors',
@@ -210,17 +105,17 @@ class Conference(object):
 
         ## Submission invitation
         options = {
-            'name': 'Submission',
-            'short_name': self.short_name,
+            'name': self.submission_name,
             'due_date': due_date,
-            'reply': self.type.submission_reply(self.id, subject_areas, additional_fields)
+            'subject_areas': subject_areas,
+            'additional_fields': additional_fields
         }
-        return self.invitation_builder.set_submission_invitation(self.id, options)
+        return self.invitation_builder.set_submission_invitation(self.id, due_date, options)
 
     def close_submissions(self, freeze_submissions = True):
 
         # Get invitation
-        invitation = self.client.get_invitation(id = self.id + '/-/Submission')
+        invitation = self.client.get_invitation(id = self.get_submission_id())
         if invitation.reply['writers'] != self.id:
             invitation.reply['writers'] = self.id
 
@@ -239,6 +134,12 @@ class Conference(object):
                     self.client.post_note(note)
 
         return invitation
+
+    # def open_comments(public = True, official = True):
+    #     ## Create comment invitations per paper
+
+    # def close_comments():
+    #     ## disable comments removing the invitees? or setting an expiration date
 
     def set_program_chairs(self, emails):
         pcs_id = self.get_program_chairs_id()
@@ -375,11 +276,11 @@ class ConferenceBuilder(object):
     def set_conference_reviewers_name(self, name):
         self.conference.set_reviewers_name(name)
 
+    def set_conference_submission_name(self, name):
+        self.conference.set_submission_name(name)
+
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
-
-    def set_conference_type(self, type):
-        self.conference.set_type(type)
 
     def get_result(self):
 
@@ -395,7 +296,7 @@ class ConferenceBuilder(object):
 
         options = self.conference.get_homepage_options()
         options['reviewers_name'] = self.conference.reviewers_name
-        self.webfield_builder.set_home_page(groups[-1], self.conference.get_type().homepage_webfield_template() , options)
+        self.webfield_builder.set_home_page(groups[-1], options)
 
         self.conference.set_conference_groups(groups)
         return self.conference

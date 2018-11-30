@@ -28,7 +28,6 @@ class TestReviewersConference():
         'website': 'http://learningtheory.org/colt2019/',
         'location': 'Phoenix, Arizona, United States'
         })
-        builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
         builder.set_conference_reviewers_name('Program_Committee')
         conference = builder.get_result()
         assert conference

@@ -23,7 +23,6 @@ class TestSingleBlindConference():
         'location': 'Montreal, Canada',
         'instructions': ''
         })
-        builder.set_conference_type(openreview.builder.SingleBlindConferenceType)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -64,7 +63,6 @@ class TestSingleBlindConference():
         assert '"date": "December 3-8, 2018"' in groups[3].web
         assert '"website": "https://sites.google.com/site/nips2018mlits/home"' in groups[3].web
         assert '"deadline": "October 12, 2018, 11:59 pm UTC"' in groups[3].web
-        assert 'BLIND_SUBMISSION_ID' not in groups[3].web
 
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS")
 
@@ -81,4 +79,3 @@ class TestSingleBlindConference():
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
-        assert 'No papers to display at this time' == notes_panel.find_element_by_class_name('empty-message').text

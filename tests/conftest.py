@@ -68,7 +68,7 @@ def request_page():
         selenium.get(url)
         timeout = 10
         try:
-            element_present = EC.presence_of_element_located((By.ID, 'header'))
+            element_present = EC.presence_of_element_located((By.ID, 'container'))
             WebDriverWait(selenium, timeout).until(element_present)
         except TimeoutException:
             print("Timed out waiting for page to load")

@@ -16,7 +16,6 @@ Set conference properties
 Set the properties that we need to start the conference
 
     >>> builder.set_conference_id('AKBC.ws/2019/Conference')
-    >>> builder.set_conference_type(openreview.conference.DoubleBlindConferenceType)
     >>> builder.set_conference_name('Automated Knowledge Base Construction')
     >>> builder.set_homepage_header({
     >>>     'title': 'AKBC 2019',
