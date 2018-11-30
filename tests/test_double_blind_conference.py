@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 
 class TestDoubleBlindConference():
 
@@ -110,7 +111,7 @@ class TestDoubleBlindConference():
         resp = requests.get('http://localhost:3000/group?id=AKBC.ws/2019/Conference')
         assert resp.status_code == 200
 
-    def test_create_conference_with_headers(self, client):
+    def test_create_conference_with_headers(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -174,7 +175,24 @@ class TestDoubleBlindConference():
         assert '"deadline": "Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018"' in groups[2].web
         assert 'BLIND_SUBMISSION_ID' in groups[2].web
 
-
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
+        assert "AKBC 2019 Conference | OpenReview" in selenium.title
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert "AKBC 2019" == header.find_element_by_tag_name("h1").text
+        assert "Automated Knowledge Base Construction" == header.find_element_by_tag_name("h3").text
+        assert "Amherst, Massachusetts, United States" == header.find_element_by_xpath(".//span[@class='venue-location']").text
+        assert "May 20 - May 21, 2019" == header.find_element_by_xpath(".//span[@class='venue-date']").text
+        assert "http://www.akbc.ws/2019/" == header.find_element_by_xpath(".//span[@class='venue-website']/a").text
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        with pytest.raises(NoSuchElementException):
+            notes_panel.find_element_by_class_name('spinner-container')
 
     def test_enable_submissions(self, client, selenium, request_page):
 

@@ -67,7 +67,7 @@ function load() {
   var authorNotesP;
   var userGroupsP;
 
-  if (!user) {
+  if (!user || _.startsWith(user.id, 'guest_')) {
     activityNotesP = $.Deferred().resolve([]);
     userGroupsP = $.Deferred().resolve([]);
     authorNotesP = $.Deferred().resolve([]);
