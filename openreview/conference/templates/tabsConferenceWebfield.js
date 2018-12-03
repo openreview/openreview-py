@@ -10,6 +10,7 @@ var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var REVIEWERS_NAME = '';
+var AREA_CHAIRS_NAME = '';
 var AREA_CHAIRS_ID = '';
 var REVIEWERS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
@@ -18,7 +19,7 @@ var AUTHORS_ID = '';
 var HEADER = {};
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
-var BUFFER = 1000 * 60 * 30;  // 30 minutes
+var BUFFER = 1000 * 60;  // 1 minutes
 var PAGE_SIZE = 50;
 
 var paperDisplayOptions = {
@@ -151,7 +152,9 @@ function renderContent(notes, userGroups, activityNotes, authorNotes) {
     if (_.includes(userGroups, AREA_CHAIRS_ID)) {
       $('#your-consoles .submissions-list').append([
         '<li class="note invitation-link">',
-          '<a href="/group?id=' + AREA_CHAIRS_ID + '">Area Chair Console</a>',
+          '<a href="/group?id=' + AREA_CHAIRS_ID + '" >',
+          AREA_CHAIRS_NAME.replace('_', ' ') + ' Console',
+          '</a>',
         '</li>'
       ].join(''));
     }

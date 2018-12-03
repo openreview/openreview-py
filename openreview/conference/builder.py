@@ -56,6 +56,9 @@ class Conference(object):
     def set_reviewers_name(self, name):
         self.reviewers_name = name
 
+    def set_area_chairs_name(self, name):
+        self.area_chairs_name = name
+
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
 
@@ -159,6 +162,10 @@ class Conference(object):
     def set_program_chairs(self, emails):
         pcs_id = self.get_program_chairs_id()
         return self.__create_group(pcs_id, self.id, emails)
+
+    def set_area_chairs(self, emails):
+        acs_id = self.get_area_chairs_id()
+        return self.__create_group(acs_id, self.id, emails)
 
     def set_reviewers(self, emails):
         reviewers_id = self.get_reviewers_id()
@@ -297,6 +304,9 @@ class ConferenceBuilder(object):
     def set_conference_reviewers_name(self, name):
         self.conference.set_reviewers_name(name)
 
+    def set_conference_area_chairs_name(self, name):
+        self.conference.set_area_chairs_name(name)
+
     def set_conference_submission_name(self, name):
         self.conference.set_submission_name(name)
 
@@ -317,6 +327,7 @@ class ConferenceBuilder(object):
 
         options = self.conference.get_homepage_options()
         options['reviewers_name'] = self.conference.reviewers_name
+        options['area_chairs_name'] = self.conference.area_chairs_name
         options['reviewers_id'] = self.conference.get_reviewers_id()
         options['authors_id'] = self.conference.get_authors_id()
         options['program_chairs_id'] = self.conference.get_program_chairs_id()

@@ -51,9 +51,9 @@ function(){
       };
 
       author_mail = {
-        "groups": forumNote.content.authorids,
-        "subject": "[' + SHORT_PHRASE + '] Your submission to " + SHORT_PHRASE + " has received a comment. Paper Title: \"" + forumNote.content.title + '\"',
-        "message": "Your submission to " + SHORT_PHRASE + " has received a comment.\n\nComment title: " + note.content.title + "\n\nComment: " + note.content.comment + "\n\nTo view the comment, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
+        'groups': forumNote.content.authorids,
+        'subject': '[' + SHORT_PHRASE + '] Your submission to ' + SHORT_PHRASE + ' has received a comment. Paper Title: \"' + forumNote.content.title + '\"',
+        'message': 'Your submission to ' + SHORT_PHRASE + ' has received a comment.\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
       };
 
       var promises = [];

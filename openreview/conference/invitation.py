@@ -92,19 +92,19 @@ class PublicCommentInvitation(openreview.Invitation):
                     prefix + "Authors",
                     prefix + "Reviewers",
                     prefix + "Area_Chairs",
-                    prefix + "Program_Chairs"
+                    conference_id + '/' + "Program_Chairs"
                 ],
                 reply = {
                     'forum': paper_id,
                     'replyto': None,
                     'readers': {
                         "description": "Select all user groups that should be able to read this comment.",
-                        "value-dropdown-hierarchy": [
+                        "values-dropdown": [
                             "everyone",
                             prefix + "Authors",
                             prefix + "Reviewers",
                             prefix + "Area_Chairs",
-                            prefix + "Program_Chairs"
+                            conference_id + '/' + "Program_Chairs"
                         ]
                     },
                     'writers': {
@@ -131,7 +131,7 @@ class OfficialCommentInvitation(openreview.Invitation):
         signatures_regex = '~.*'
 
         if anonymous:
-            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}Authors|{prefix}Area_Chair[0-9]+|{prefix}Program_Chairs'.format(prefix=prefix)
+            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}Authors|{prefix}Area_Chair[0-9]+|{conference_id}/Program_Chairs'.format(prefix=prefix, conference_id=conference_id)
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
             file_content = f.read()
@@ -145,19 +145,19 @@ class OfficialCommentInvitation(openreview.Invitation):
                     prefix + "Authors",
                     prefix + "Reviewers",
                     prefix + "Area_Chairs",
-                    prefix + "Program_Chairs"
+                    conference_id + '/' + "Program_Chairs"
                 ],
                 reply = {
                     'forum': paper_id,
                     'replyto': None,
                     'readers': {
                         "description": "Select all user groups that should be able to read this comment.",
-                        "value-dropdown-hierarchy": [
-                            "everyone",
+                        "values-dropdown": [
+                            #"everyone",
                             prefix + "Authors",
                             prefix + "Reviewers",
                             prefix + "Area_Chairs",
-                            prefix + "Program_Chairs"
+                            conference_id + '/' + "Program_Chairs"
                         ]
                     },
                     'writers': {
