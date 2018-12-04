@@ -105,15 +105,14 @@ class Conference(object):
 
     def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}):
 
-        if not public:
-            ## Author console
-            authors_group = openreview.Group(id = self.id + '/Authors',
-                readers = ['everyone'],
-                signatories = [self.id],
-                signatures = [self.id],
-                writers = [self.id]
-            )
-            self.webfield_builder.set_author_page(self.id, authors_group, { 'title': 'Author console', 'submission_id': self.get_submission_id()})
+        ## Author console
+        authors_group = openreview.Group(id = self.id + '/Authors',
+            readers = ['everyone'],
+            signatories = [self.id],
+            signatures = [self.id],
+            writers = [self.id]
+        )
+        self.webfield_builder.set_author_page(self.id, authors_group, { 'title': 'Author console', 'submission_id': self.get_submission_id()})
 
         ## Submission invitation
         options = {

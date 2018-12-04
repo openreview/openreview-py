@@ -63,7 +63,9 @@ function load() {
       replyto: true,
       details:'replytoNote,repliedNotes'
     }).then(function(result) {
-      return result.invitations;
+      return _.filter(result.invitations, function(i) {
+        return i.id.startsWith(CONFERENCE_ID);
+      });
     });
 
     tagInvitationsP = Webfield.get('/invitations', {
