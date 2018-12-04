@@ -495,8 +495,6 @@ class Client(object):
         |  Posts the invitation. Upon success, returns the posted Invitation object.
         |  If the invitation is unsigned, signs it using the client's default signature.
         """
-        if not invitation.signatures: invitation.signatures = [self.signature]
-        if not invitation.writers: invitation.writers = [self.signature]
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
@@ -710,11 +708,12 @@ class Group(object):
 class Invitation(object):
     def __init__(self,
         id,
-        readers,
-        writers,
-        invitees,
-        signatures,
-        reply,
+        readers = None,
+        writers = None,
+        invitees = None,
+        signatures = None,
+        reply = None,
+        super = None,
         noninvitees = None,
         nonreaders = None,
         web = None,
@@ -732,16 +731,17 @@ class Invitation(object):
         details = None):
 
         self.id = id
+        self.super = super
         self.cdate = cdate
         self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
         self.expdate = expdate
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = nonreaders
         self.writers = writers
         self.invitees = invitees
-        self.noninvitees = [] if noninvitees==None else noninvitees
+        self.noninvitees = noninvitees
         self.signatures = signatures
         self.multiReply = multiReply
         self.taskCompletionCount = taskCompletionCount
@@ -776,6 +776,7 @@ class Invitation(object):
         '''
         body = {
             'id': self.id,
+            'super': self.super,
             'cdate': self.cdate,
             'rdate': self.rdate,
             'ddate': self.ddate,
@@ -812,6 +813,7 @@ class Invitation(object):
         :arg i: The json string consisting of a serialized object of type "Invitation"
         '''
         invitation = Invitation(i['id'],
+            super = i.get('super'),
             cdate = i.get('cdate'),
             rdate = i.get('rdate'),
             ddate = i.get('ddate'),
