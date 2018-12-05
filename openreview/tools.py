@@ -386,7 +386,7 @@ def replace_members_with_ids(client, group):
                 ids.append(profile.id)
             except openreview.OpenReviewException as e:
                 if 'Profile not found' in e.args[0][0]:
-                    emails.append(member)
+                    emails.append(member.lower())
                 else:
                     raise e
         else:
