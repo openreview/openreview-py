@@ -178,10 +178,10 @@ recruitment = {
         'value': 'Recruit response',
         'required':True
     },
-    'email': {
+    'user': {
         'description': 'email address',
         'order': 2,
-        'value-regex': '.*@.*',
+        'value-regex': '.*',
         'required':True
     },
     'key': {

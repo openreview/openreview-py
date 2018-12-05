@@ -881,7 +881,7 @@ def datetime_millis(dt):
     epoch = datetime.datetime.utcfromtimestamp(0)
     return int((dt - epoch).total_seconds() * 1000)
 
-def recruit_reviewer(client, email, first,
+def recruit_reviewer(client, user, first,
     hash_seed,
     recruit_reviewers_id,
     recruit_message,
@@ -902,13 +902,13 @@ def recruit_reviewer(client, email, first,
     # In Python 3, all strings are treated as unicode by default, so we must call encode on
     # these unicode strings to convert them to bytestrings. This behavior is the same in
     # Python 2, because we imported unicode_literals from __future__.
-    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
+    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
 
     # build the URL to send in the message
-    url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
+    url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
         baseurl = client.baseurl,
         recruitment_inv = recruit_reviewers_id,
-        email = email,
+        user = user,
         hashkey = hashkey
     )
 
@@ -920,11 +920,11 @@ def recruit_reviewer(client, email, first,
     )
 
     # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [email], personalized_message)
+    response = client.send_mail(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
         reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, [email])
+        client.add_members_to_group(reviewers_invited, [user])
 
     if verbose:
         print("Sent to the following: ", response)
