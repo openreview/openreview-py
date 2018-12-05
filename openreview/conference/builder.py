@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 
 import time
+import re
 from .. import openreview
 from .. import tools
 from . import webfield
 from . import invitation
+
 
 class Conference(object):
 
@@ -179,20 +181,23 @@ class Conference(object):
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, n.content.get('authorids'))
 
-    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False):
+    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
         reviewers_declined_id = reviewers_id + '/Declined'
         reviewers_invited_id = reviewers_id + '/Invited'
+        reviewers_accepted_id = reviewers_id
+        if reviewer_accepted_name:
+            reviewers_accepted_id = reviewers_id + '/' + reviewer_accepted_name
         hash_seed = '1234'
 
-        reviewers_group = self.__create_group(reviewers_id, pcs_id)
+        reviewers_accepted_group = self.__create_group(reviewers_accepted_id, pcs_id)
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
         options = {
-            'reviewers_id': reviewers_id,
+            'reviewers_accepted_id': reviewers_accepted_id,
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed
         }
@@ -236,9 +241,10 @@ class Conference(object):
             recruit_message = message
 
         if remind:
-            remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_group.members))
+            remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
             for reviewer in remind_reviewers:
-                tools.recruit_reviewer(self.client, reviewer, 'artist',
+                name =  re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'artist'
+                tools.recruit_reviewer(self.client, reviewer, name,
                     hash_seed,
                     invitation.id,
                     recruit_message,
@@ -248,7 +254,8 @@ class Conference(object):
 
         invite_emails = list(set(emails) - set(reviewers_invited_group.members))
         for email in invite_emails:
-            tools.recruit_reviewer(self.client, email, 'artist',
+            name =  re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'artist'
+            tools.recruit_reviewer(self.client, email, name,
                 hash_seed,
                 invitation.id,
                 recruit_message,
