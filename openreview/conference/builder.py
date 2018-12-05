@@ -243,7 +243,7 @@ class Conference(object):
         if remind:
             remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
             for reviewer in remind_reviewers:
-                name =  re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'artist'
+                name =  re.sub('[0-9]+', '', reviewer.replace('~', '').replace('_', ' ')) if reviewer.startswith('~') else 'artist'
                 tools.recruit_reviewer(self.client, reviewer, name,
                     hash_seed,
                     invitation.id,
