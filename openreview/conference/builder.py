@@ -118,8 +118,9 @@ class Conference(object):
 
         ## Submission invitation
         options = {
+            'conference_short_name': self.short_name,
             'public': public,
-            'name': self.submission_name,
+            'submission_name': self.submission_name,
             'due_date': due_date,
             'subject_areas': subject_areas,
             'additional_fields': additional_fields

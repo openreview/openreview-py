@@ -10,7 +10,7 @@ from .. import tools
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference_id, due_date, name, public = False, subject_areas = None, additional_fields = None):
+    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, additional_fields = None):
 
         content = invitations.submission
 
@@ -42,7 +42,7 @@ class SubmissionInvitation(openreview.Invitation):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_short_name + "';")
             super(SubmissionInvitation, self).__init__(id = conference_id + '/-/' + name,
                 duedate = tools.datetime_millis(due_date),
                 readers = ['everyone'],
@@ -203,8 +203,9 @@ class InvitationBuilder(object):
         built_options = self.__build_options(default_options, options)
 
         invitation = SubmissionInvitation(conference_id = conference_id,
+            conference_short_name = built_options.get('conference_short_name'),
             due_date = due_date,
-            name = built_options.get('name'),
+            name = built_options.get('submission_name'),
             public = built_options.get('public'),
             subject_areas = built_options.get('subject_areas'),
             additional_fields = built_options.get('additional_fields'))
