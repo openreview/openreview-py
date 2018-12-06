@@ -197,6 +197,7 @@ class Conference(object):
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
         options = {
+            'reviewers_name': reviewers_name,
             'reviewers_accepted_id': reviewers_accepted_id,
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed
