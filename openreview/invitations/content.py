@@ -135,7 +135,7 @@ submission = {
         'required':True
     },
     'authors': {
-        'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
+        'description': 'Comma separated list of author names.',
         'order': 2,
         'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
         'required':True
