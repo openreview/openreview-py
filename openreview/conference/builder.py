@@ -321,6 +321,9 @@ class ConferenceBuilder(object):
     def set_conference_area_chairs_name(self, name):
         self.conference.set_area_chairs_name(name)
 
+    def set_conference_program_chairs_name(self, name):
+        self.conference.set_program_chairs_name(name)
+
     def set_conference_submission_name(self, name):
         self.conference.set_submission_name(name)
 
