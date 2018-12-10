@@ -23,6 +23,7 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
+        self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
 
@@ -90,6 +91,9 @@ class Conference(object):
 
     def set_homepage_header(self, header):
         self.header = header
+
+    def set_homepage_layout(self, layout):
+        self.layout = layout
 
     def get_homepage_options(self):
         options = {}
@@ -323,6 +327,9 @@ class ConferenceBuilder(object):
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
 
+    def set_homepage_layout(self, layout):
+        self.conference.set_homepage_layout(layout)
+
     def get_result(self):
 
         id = self.conference.get_id()
@@ -343,7 +350,7 @@ class ConferenceBuilder(object):
         options['program_chairs_id'] = self.conference.get_program_chairs_id()
         options['area_chairs_id'] = self.conference.get_area_chairs_id()
         options['submission_id'] = self.conference.get_submission_id()
-        self.webfield_builder.set_home_page(groups[-1], options)
+        self.webfield_builder.set_home_page(group = groups[-1], layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)
         return self.conference
