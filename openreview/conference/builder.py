@@ -31,7 +31,7 @@ class Conference(object):
         if group is None:
             return self.client.post_group(openreview.Group(id = group_id,
                 readers = [self.id, group_owner_id, group_id],
-                writers = [self.id],
+                writers = [self.id, group_owner_id],
                 signatures = [self.id],
                 signatories = [group_id],
                 members = members))
@@ -173,11 +173,11 @@ class Conference(object):
 
     def set_area_chairs(self, emails):
         acs_id = self.get_area_chairs_id()
-        return self.__create_group(acs_id, self.id, emails)
+        return self.__create_group(acs_id, self.get_program_chairs_id(), emails)
 
     def set_reviewers(self, emails):
         reviewers_id = self.get_reviewers_id()
-        group = self.__create_group(reviewers_id, self.id, emails)
+        group = self.__create_group(reviewers_id, self.get_program_chairs_id(), emails)
 
         return self.webfield_builder.set_reviewer_page(self.id, group)
 
