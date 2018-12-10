@@ -9,6 +9,7 @@ setup(name='openreview-py',
       license='MIT',
       packages=[
           'openreview',
+          'openreview/conference',
           'openreview/invitations'
       ],
       install_requires=[
@@ -22,4 +23,5 @@ setup(name='openreview-py',
       extras_require={
           'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
       },
-      zip_safe=False)
+      zip_safe=False,
+      include_package_data=True)

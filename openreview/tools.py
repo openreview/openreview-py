@@ -27,6 +27,18 @@ def get_profile(client, value):
             return e
     return profile
 
+def get_group(client, id):
+    group = None
+    try:
+        group = client.get_group(id = id)
+    except openreview.OpenReviewException as e:
+        # throw an error if it is something other than "not found"
+        error = e.args[0][0]
+        if not error.startswith('Group Not Found'):
+            print("OpenReviewException: {0}".format(error))
+            return e
+    return group
+
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
 
     '''
@@ -376,7 +388,7 @@ def replace_members_with_ids(client, group):
                 ids.append(profile.id)
             except openreview.OpenReviewException as e:
                 if 'Profile not found' in e.args[0][0]:
-                    emails.append(member)
+                    emails.append(member.lower())
                 else:
                     raise e
         else:
@@ -875,9 +887,17 @@ def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     661696224000
 
     '''
-    return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
+    return datetime_millis(datetime.datetime(year, month, day, hour, minute, second))
 
-def recruit_reviewer(client, email, first,
+def datetime_millis(dt):
+    '''
+    Convets a datetim to milliseconds.
+
+    '''
+    epoch = datetime.datetime.utcfromtimestamp(0)
+    return int((dt - epoch).total_seconds() * 1000)
+
+def recruit_reviewer(client, user, first,
     hash_seed,
     recruit_reviewers_id,
     recruit_message,
@@ -898,13 +918,13 @@ def recruit_reviewer(client, email, first,
     # In Python 3, all strings are treated as unicode by default, so we must call encode on
     # these unicode strings to convert them to bytestrings. This behavior is the same in
     # Python 2, because we imported unicode_literals from __future__.
-    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
+    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
 
     # build the URL to send in the message
-    url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
+    url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
         baseurl = client.baseurl,
         recruitment_inv = recruit_reviewers_id,
-        email = email,
+        user = user,
         hashkey = hashkey
     )
 
@@ -916,11 +936,11 @@ def recruit_reviewer(client, email, first,
     )
 
     # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [email], personalized_message)
+    response = client.send_mail(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
         reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, response['groups'])
+        client.add_members_to_group(reviewers_invited, [user])
 
     if verbose:
         print("Sent to the following: ", response)
@@ -1063,3 +1083,65 @@ def fill_template(template, paper):
 
     return new_template
 
+
+def get_conflicts(author_profiles, user_profile):
+    author_domains = set()
+    author_emails = set()
+    author_relations = set()
+
+    for author_email, profile in author_profiles.items():
+        author_info = get_author_info(profile, author_email)
+
+        author_domains.update(author_info['domains'])
+        author_emails.update(author_info['emails'])
+        author_relations.update(author_info['relations'])
+
+    user_info = get_profile_info(user_profile)
+
+    conflicts = set()
+    conflicts.update(author_domains.intersection(user_info['domains']))
+    conflicts.update(author_relations.intersection(user_info['emails']))
+    conflicts.update(author_emails.intersection(user_info['relations']))
+    conflicts.update(author_emails.intersection(user_info['emails']))
+
+    return list(conflicts)
+
+
+def get_author_info(profile, email):
+    if profile:
+        return get_profile_info(profile)
+    else:
+        return {
+            'domains': openreview.tools.subdomains(email),
+            'emails': [email],
+            'relations': []
+        }
+
+
+def get_profile_info(profile):
+    domains = set()
+    emails = set()
+    relations = set()
+
+    ## Emails section
+    for email in profile.content['emails']:
+        domains.update(openreview.tools.subdomains(email))
+        emails.add(email)
+
+    ## Institution section
+    for h in profile.content.get('history', []):
+        domain = h.get('institution', {}).get('domain', '')
+        domains.update(openreview.tools.subdomains(domain))
+
+    ## Relations section
+    relations.update([r['email'] for r in profile.content.get('relations', [])])
+
+    ## Filter common domains
+    if 'gmail.com' in domains:
+        domains.remove('gmail.com')
+
+    return {
+        'domains': domains,
+        'emails': emails,
+        'relations': relations
+    }

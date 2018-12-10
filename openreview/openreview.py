@@ -55,6 +55,7 @@ class Client(object):
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
+        self.messages_url = self.baseurl + '/messages'
 
         self.headers = {
             'User-Agent': 'test-create-script',
@@ -283,8 +284,7 @@ class Client(object):
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
         response = self.__handle_response(response)
-        response_dict = json.loads(response.content)
-        return response_dict['url']
+        return response.json()['url']
 
     def post_profile(self, profile):
         '''
@@ -495,8 +495,6 @@ class Client(object):
         |  Posts the invitation. Upon success, returns the posted Invitation object.
         |  If the invitation is unsigned, signs it using the client's default signature.
         """
-        if not invitation.signatures: invitation.signatures = [self.signature]
-        if not invitation.writers: invitation.writers = [self.signature]
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
@@ -544,16 +542,19 @@ class Client(object):
         |  Adds members to a group
         |  Members should be in a string, unicode or a list format
         '''
-        def add_member(group,members):
-            response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
-            response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+        def add_member(group, members):
+            if members:
+                response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = self.__handle_response(response)
+                return Group.from_json(response.json())
+            else:
+                return group
 
         member_type = type(members)
         if member_type in string_types:
-            return add_member(group.id, [members])
+            return add_member(group, [members])
         if member_type == list:
-            return add_member(group.id, members)
+            return add_member(group, members)
         raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list, but got " + repr(member_type) + " instead")
 
     def remove_members_from_group(self, group, members):
@@ -564,7 +565,7 @@ class Client(object):
         def remove_member(group,members):
             response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+            return Group.from_json(response.json())
 
         member_type = type(members)
         if member_type in string_types:
@@ -599,6 +600,12 @@ class Client(object):
         '''
 
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_messages(self, to = None, subject = None):
+
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -710,15 +717,17 @@ class Group(object):
 class Invitation(object):
     def __init__(self,
         id,
-        readers,
-        writers,
-        invitees,
-        signatures,
-        reply,
+        readers = None,
+        writers = None,
+        invitees = None,
+        signatures = None,
+        reply = None,
+        super = None,
         noninvitees = None,
         nonreaders = None,
         web = None,
         process = None,
+        process_string = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -732,16 +741,17 @@ class Invitation(object):
         details = None):
 
         self.id = id
+        self.super = super
         self.cdate = cdate
         self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
         self.expdate = expdate
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = nonreaders
         self.writers = writers
         self.invitees = invitees
-        self.noninvitees = [] if noninvitees==None else noninvitees
+        self.noninvitees = noninvitees
         self.signatures = signatures
         self.multiReply = multiReply
         self.taskCompletionCount = taskCompletionCount
@@ -750,10 +760,10 @@ class Invitation(object):
         self.tmdate = tmdate
         self.details = details
         self.web = None
+        self.process = None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
-        self.process = None
         if process != None:
             with open(process) as f:
                 self.process = f.read()
@@ -761,6 +771,8 @@ class Invitation(object):
         if transform != None:
             with open(transform) as f:
                 self.transform = f.read()
+        if process_string:
+            self.process = process_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -776,6 +788,7 @@ class Invitation(object):
         '''
         body = {
             'id': self.id,
+            'super': self.super,
             'cdate': self.cdate,
             'rdate': self.rdate,
             'ddate': self.ddate,
@@ -812,6 +825,7 @@ class Invitation(object):
         :arg i: The json string consisting of a serialized object of type "Invitation"
         '''
         invitation = Invitation(i['id'],
+            super = i.get('super'),
             cdate = i.get('cdate'),
             rdate = i.get('rdate'),
             ddate = i.get('ddate'),
