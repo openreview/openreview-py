@@ -135,13 +135,13 @@ submission = {
         'required':True
     },
     'authors': {
-        'description': 'Comma separated list of author names. Please provide real names; identities will be anonymized.',
+        'description': 'Comma separated list of author names.',
         'order': 2,
         'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
         'required':True
     },
     'authorids': {
-        'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile. Please provide real emails; identities will be anonymized.',
+        'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile.',
         'order': 3,
         'values-regex': "([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
         'required':True
@@ -172,21 +172,27 @@ submission = {
 }
 
 recruitment = {
-    'email': {
-        'description': 'email address',
+    'title': {
+        'description': '',
         'order': 1,
-        'value-regex': '.*@.*',
+        'value': 'Recruit response',
+        'required':True
+    },
+    'user': {
+        'description': 'email address',
+        'order': 2,
+        'value-regex': '.*',
         'required':True
     },
     'key': {
         'description': 'Email key hash',
-        'order': 2,
+        'order': 3,
         'value-regex': '.{0,100}',
         'required':True
     },
     'response': {
         'description': 'Invitation response',
-        'order': 3,
+        'order': 4,
         'value-radio': ['Yes', 'No'],
         'required':True
     }

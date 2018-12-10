@@ -25,6 +25,18 @@ def get_profile(client, value):
             return e
     return profile
 
+def get_group(client, id):
+    group = None
+    try:
+        group = client.get_group(id = id)
+    except openreview.OpenReviewException as e:
+        # throw an error if it is something other than "not found"
+        error = e.args[0][0]
+        if not error.startswith('Group Not Found'):
+            print("OpenReviewException: {0}".format(error))
+            return e
+    return group
+
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
 
     '''
@@ -374,7 +386,7 @@ def replace_members_with_ids(client, group):
                 ids.append(profile.id)
             except openreview.OpenReviewException as e:
                 if 'Profile not found' in e.args[0][0]:
-                    emails.append(member)
+                    emails.append(member.lower())
                 else:
                     raise e
         else:
@@ -557,7 +569,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['note'] = note
     if replyto != None:
         params['replyto'] = replyto
-    
+
     return iterget(client.get_invitations, **params)
 
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
@@ -581,7 +593,7 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
         params['host'] = host
     if signatory != None:
         params['signatory'] = signatory
-    
+
     return iterget(client.get_groups, **params)
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
@@ -716,7 +728,7 @@ def add_assignment(client, paper_number, conference, reviewer,
         default_nonreaders = []
         default_members = []
         default_signatories = []
-        
+
         readers = individual_group_params.get('readers', default_readers)[:]
         readers.append(anonreviewer_id)
 
@@ -748,7 +760,7 @@ def add_assignment(client, paper_number, conference, reviewer,
         # user already assigned to individual group(s)
         for g in assigned_individual_groups:
             affected_groups.add(g.id)
-    
+
     return (user,list(affected_groups))
 
 
@@ -859,9 +871,17 @@ def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
     661696224000
 
     '''
-    return int((datetime.datetime(year, month, day, hour, minute, second) - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
+    return datetime_millis(datetime.datetime(year, month, day, hour, minute, second))
 
-def recruit_reviewer(client, email, first,
+def datetime_millis(dt):
+    '''
+    Convets a datetim to milliseconds.
+
+    '''
+    epoch = datetime.datetime.utcfromtimestamp(0)
+    return int((dt - epoch).total_seconds() * 1000)
+
+def recruit_reviewer(client, user, first,
     hash_seed,
     recruit_reviewers_id,
     recruit_message,
@@ -882,13 +902,13 @@ def recruit_reviewer(client, email, first,
     # In Python 3, all strings are treated as unicode by default, so we must call encode on
     # these unicode strings to convert them to bytestrings. This behavior is the same in
     # Python 2, because we imported unicode_literals from __future__.
-    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=email.encode('utf-8'), digestmod=SHA256).hexdigest()
+    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
 
     # build the URL to send in the message
-    url = '{baseurl}/invitation?id={recruitment_inv}&email={email}&key={hashkey}&response='.format(
+    url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
         baseurl = client.baseurl,
         recruitment_inv = recruit_reviewers_id,
-        email = email,
+        user = user,
         hashkey = hashkey
     )
 
@@ -900,11 +920,11 @@ def recruit_reviewer(client, email, first,
     )
 
     # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [email], personalized_message)
+    response = client.send_mail(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
         reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, response['groups'])
+        client.add_members_to_group(reviewers_invited, [user])
 
     if verbose:
         print("Sent to the following: ", response)
