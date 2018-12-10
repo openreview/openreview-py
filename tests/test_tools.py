@@ -42,8 +42,8 @@ class TestTools():
         assert preferred_name, "preferred name not found"
         assert preferred_name == 'Super User'
 
-    def test_parallel_exec(self):
+    def test_parallel_exec(self, client):
 
-        values = self.client.get_groups(limit=10)
+        values = client.get_groups(limit=10)
         results = openreview.tools.parallel_exec(values, do_work)
         assert len(results) == len(values)
