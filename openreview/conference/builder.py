@@ -105,7 +105,7 @@ class Conference(object):
             options['deadline'] = self.header.get('deadline')
         return options
 
-    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}):
+    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, include_keywords = True, include_TLDR = True):
 
         ## Author console
         authors_group = openreview.Group(id = self.id + '/Authors',
@@ -123,7 +123,9 @@ class Conference(object):
             'submission_name': self.submission_name,
             'due_date': due_date,
             'subject_areas': subject_areas,
-            'additional_fields': additional_fields
+            'additional_fields': additional_fields,
+            'include_keywords': include_keywords,
+            'include_TLDR': include_TLDR
         }
         return self.invitation_builder.set_submission_invitation(self.id, due_date, options)
 

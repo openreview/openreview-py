@@ -10,7 +10,7 @@ from .. import tools
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, additional_fields = None):
+    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, include_keywords = True, include_TLDR = True, additional_fields = None):
 
         content = invitations.submission
 
@@ -26,6 +26,12 @@ class SubmissionInvitation(openreview.Invitation):
             value = additional_fields[key]
             value['order'] = order
             content[key] = value
+
+        if not include_keywords:
+            del content['keywords']
+
+        if not include_TLDR:
+            del content['TL;DR']
 
         readers = {
             'values-copied': [
@@ -208,7 +214,9 @@ class InvitationBuilder(object):
             name = built_options.get('submission_name'),
             public = built_options.get('public'),
             subject_areas = built_options.get('subject_areas'),
-            additional_fields = built_options.get('additional_fields'))
+            additional_fields = built_options.get('additional_fields'),
+            include_keywords = built_options.get('include_keywords'),
+            include_TLDR = built_options.get('include_TLDR'))
 
         return self.client.post_invitation(invitation)
 
