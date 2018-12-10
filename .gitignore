@@ -1,5 +1,11 @@
 .ipynb
-.pyc
+*.pyc
 .DS_Store
-./dist
+dist/
 __pycache__
+openreview_py.egg-info/
+.pytest_cache/
+build/
+pytest_report.xml
+*.log
+drivers/

@@ -20,6 +20,7 @@ Contents
    how_to_setup
    samples
    help
+   conference_builder
 
 
 Indices and tables

@@ -3,29 +3,6 @@ import os
 import openreview
 import pytest
 
-@pytest.fixture(scope='class')
-def client():
-    client = openreview.Client()
-    assert client is not None, "Client is none"
-    res = client.register_user(email = 'openreview.net', first = 'Super', last = 'User', password = '1234')
-    assert res, "Res i none"
-    res = client.activate_user('openreview.net', {
-        'names': [
-                {
-                    'first': 'Super',
-                    'last': 'User',
-                    'username': '~Super_User1'
-                }
-            ],
-        'emails': ['openreview.net'],
-        'preferredEmail': 'openreview.net'
-        })
-    assert res, "Res i none"
-    group = client.get_group(id = 'openreview.net')
-    assert group
-    assert group.members == ['~Super_User1']
-    yield client
-
 class TestClient():
 
     def test_get_notes(self, client):
@@ -115,6 +92,25 @@ class TestClient():
 
         profiles = client.get_profiles([])
         assert len(profiles) == 0
+
+    def test_confirm_registration(self):
+
+        guest = openreview.Client()
+        res = guest.activate_user('mbok@mail.com', {
+            'names': [
+                    {
+                        'first': 'Melisa',
+                        'last': 'Bok',
+                        'username': '~Melisa_Bok1'
+                    }
+                ],
+            'emails': ['mbok@mail.com'],
+            'preferredEmail': 'mbok@mail.com'
+            })
+        assert res, "Res i none"
+        group = guest.get_group(id = 'mbok@mail.com')
+        assert group
+        assert group.members == ['~Melisa_Bok1']
 
     def test_get_invitations(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)

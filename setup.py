@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='0.9.7',
+      version='0.9.8',
       description='OpenReview client library',
       url='https://github.com/iesl/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
@@ -9,6 +9,7 @@ setup(name='openreview-py',
       license='MIT',
       packages=[
           'openreview',
+          'openreview/conference',
           'openreview/invitations'
       ],
       install_requires=[
@@ -21,4 +22,5 @@ setup(name='openreview-py',
       extras_require={
           'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
       },
-      zip_safe=False)
+      zip_safe=False,
+      include_package_data=True)

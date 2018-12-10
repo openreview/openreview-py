@@ -55,6 +55,7 @@ class Client(object):
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
+        self.messages_url = self.baseurl + '/messages'
 
         self.headers = {
             'User-Agent': 'test-create-script',
@@ -283,8 +284,7 @@ class Client(object):
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
         response = self.__handle_response(response)
-        response_dict = json.loads(response.content)
-        return response_dict['url']
+        return response.json()['url']
 
     def post_profile(self, profile):
         '''
@@ -542,16 +542,19 @@ class Client(object):
         |  Adds members to a group
         |  Members should be in a string, unicode or a list format
         '''
-        def add_member(group,members):
-            response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
-            response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+        def add_member(group, members):
+            if members:
+                response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = self.__handle_response(response)
+                return Group.from_json(response.json())
+            else:
+                return group
 
         member_type = type(members)
         if member_type in string_types:
-            return add_member(group.id, [members])
+            return add_member(group, [members])
         if member_type == list:
-            return add_member(group.id, members)
+            return add_member(group, members)
         raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list, but got " + repr(member_type) + " instead")
 
     def remove_members_from_group(self, group, members):
@@ -562,7 +565,7 @@ class Client(object):
         def remove_member(group,members):
             response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
-            return self.get_group(response.json()['id'])
+            return Group.from_json(response.json())
 
         member_type = type(members)
         if member_type in string_types:
@@ -597,6 +600,12 @@ class Client(object):
         '''
 
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def get_messages(self, to = None, subject = None):
+
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -718,6 +727,7 @@ class Invitation(object):
         nonreaders = None,
         web = None,
         process = None,
+        process_string = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -750,10 +760,10 @@ class Invitation(object):
         self.tmdate = tmdate
         self.details = details
         self.web = None
+        self.process = None
         if web != None:
             with open(web) as f:
                 self.web = f.read()
-        self.process = None
         if process != None:
             with open(process) as f:
                 self.process = f.read()
@@ -761,6 +771,8 @@ class Invitation(object):
         if transform != None:
             with open(transform) as f:
                 self.transform = f.read()
+        if process_string:
+            self.process = process_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])

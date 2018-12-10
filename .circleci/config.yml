@@ -3,16 +3,15 @@ jobs:
   build:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/node:8.9.1
-      - image: circleci/python:2.7
-      - image: circleci/redis:3
-      - image: circleci/mongo:3.6
+      - image: circleci/node:8.9.1-stretch
+      - image: circleci/python:2.7-stretch
+      - image: circleci/redis:3-stretch
+      - image: circleci/mongo:3.6-stretch
       - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     steps:
       - checkout
-      - run: sudo apt-get install python-dev
-      - run: sudo apt-get install python-setuptools
-      - run: sudo easy_install pip
+      - run: sudo apt-get update
+      - run: sudo apt-get install python-pip
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
@@ -21,6 +20,9 @@ jobs:
           command: |
             cd ~/openreview
             npm install
+            sudo npm install -g grunt-cli
+            grunt regen
+            mkdir pdfs
             NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
@@ -34,12 +36,24 @@ jobs:
             wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
             :
       - run:
+          name: install firefox driver
+          command: |
+            sudo apt-get update
+            sudo apt-get install firefox-esr
+            mkdir ~/openreview-py-repo/tests/drivers
+            cd ~/openreview-py-repo/tests/drivers
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz
+            tar -xvzf geckodriver*
+            chmod +x geckodriver
+      - run:
           name: run tests
           command: |
             cd ~/openreview-py-repo
             sudo pip install -U pytest
+            sudo pip install selenium
+            sudo pip install pytest-selenium
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
       - store_test_results:
           path: test-reports
       - store_artifacts:
@@ -47,17 +61,16 @@ jobs:
   build-py3:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/node:8.9.1
-      - image: circleci/python:3.6
-      - image: circleci/redis:3
-      - image: circleci/mongo:3.6
+      - image: circleci/node:8.9.1-stretch
+      - image: circleci/redis:3-stretch
+      - image: circleci/mongo:3.6-stretch
       - image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     steps:
       - checkout
-      - run: sudo apt-get install python-dev
-      - run: sudo apt-get install python-setuptools
-      - run: sudo easy_install pip
-      - run: sudo pip install ~/openreview-py-repo
+      - run: sudo apt-get install python3
+      - run: curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+      - run: sudo python3 get-pip.py
+      - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
@@ -65,6 +78,9 @@ jobs:
           command: |
             cd ~/openreview
             npm install
+            sudo npm install -g grunt-cli
+            grunt regen
+            mkdir pdfs
             NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
@@ -78,12 +94,24 @@ jobs:
             wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
             :
       - run:
+          name: install firefox driver
+          command: |
+            sudo apt-get update
+            sudo apt-get install firefox-esr
+            mkdir ~/openreview-py-repo/tests/drivers
+            cd ~/openreview-py-repo/tests/drivers
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz
+            tar -xvzf geckodriver*
+            chmod +x geckodriver
+      - run:
           name: run tests
           command: |
             cd ~/openreview-py-repo
-            sudo pip install -U pytest
+            sudo pip3 install -U pytest
+            sudo pip3 install selenium
+            sudo pip3 install pytest-selenium
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
       - store_test_results:
           path: test-reports
       - store_artifacts:
