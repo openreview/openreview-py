@@ -131,7 +131,7 @@ class TestClient():
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
-        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_conference_id('Test.ws/2019/Conference')
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -165,6 +165,5 @@ class TestClient():
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
-        client.delete_note(note)
 
 
