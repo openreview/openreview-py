@@ -683,7 +683,8 @@ def add_assignment(client, paper_number, conference, reviewer,
                     parent_group_params = {},
                     individual_group_params = {},
                     parent_label = 'Reviewers',
-                    individual_label = 'AnonReviewer'):
+                    individual_label = 'AnonReviewer',
+                    use_profile = True):
 
     '''
     |  Assigns a reviewer to a paper.
@@ -708,8 +709,12 @@ def add_assignment(client, paper_number, conference, reviewer,
     Adds the given user to the parent group, and to the next empty individual group.
     Prints the results to the console.
     '''
-    profile = get_profile(client, reviewer)
-    user = profile.id if profile else reviewer
+    if use_profile:
+        profile = get_profile(client, reviewer)
+        user = profile.id if profile else reviewer
+    else:
+        user = reviewer
+
     affected_groups = set()
     client.add_members_to_group(parent_group, user)
     affected_groups.add(parent_group.id)
@@ -822,7 +827,8 @@ def assign(client, paper_number, conference,
     reviewer_to_add = None,
     reviewer_to_remove = None,
     parent_label = 'Reviewers',
-    individual_label = 'AnonReviewer'):
+    individual_label = 'AnonReviewer',
+    use_profile = True):
 
     '''
     DEPRECATED as of openreveiew-py revision 0.9.5
@@ -858,7 +864,8 @@ def assign(client, paper_number, conference,
                         parent_group_params,
                         individual_group_params,
                         parent_label,
-                        individual_label)
+                        individual_label,
+                        use_profile = use_profile)
 
     return (user, changed_groups)
 
