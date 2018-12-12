@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import datetime
 import openreview
 import pytest
 
@@ -124,6 +125,45 @@ class TestClient():
 
         invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
         assert len(invitations) == 0
+
+    def test_get_notes_by_content(self, client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('Test.ws/2019/Conference')
+
+        conference = builder.get_result()
+        assert conference, 'conference is None'
+
+        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['mbok@mail.com', 'andrew@mail.com'],
+            writers = ['mbok@mail.com', 'andrew@mail.com'],
+            signatures = ['~Super_User1'],
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'mbok@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'pdf': '/pdf/22234qweoiuweroi.pdf'
+            }
+        )
+        note = client.post_note(note)
+        assert note
+
+        notes = client.get_notes(content = { 'title': 'Paper title'})
+        assert len(notes) == 1
+
+        notes = client.get_notes(content = { 'title': 'Paper title3333'})
+        assert len(notes) == 0
+
+        notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title'}))
+        assert len(notes) == 1
+
+        notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
+        assert len(notes) == 0
 
 
 
