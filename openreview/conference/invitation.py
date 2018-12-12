@@ -10,7 +10,7 @@ from .. import tools
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, include_keywords = True, include_TLDR = True, additional_fields = None):
+    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, include_keywords = True, include_TLDR = True, additional_fields = None, additional_readers = []):
 
         content = invitations.submission
 
@@ -38,7 +38,7 @@ class SubmissionInvitation(openreview.Invitation):
                 conference_id,
                 '{content.authorids}',
                 '{signatures}'
-            ]
+            ] + additional_readers
         }
 
         if public:
@@ -215,6 +215,7 @@ class InvitationBuilder(object):
             public = built_options.get('public'),
             subject_areas = built_options.get('subject_areas'),
             additional_fields = built_options.get('additional_fields'),
+            additional_readers = built_options.get('additional_readers'),
             include_keywords = built_options.get('include_keywords'),
             include_TLDR = built_options.get('include_TLDR'))
 

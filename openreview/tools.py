@@ -827,7 +827,8 @@ def assign(client, paper_number, conference,
     reviewer_to_add = None,
     reviewer_to_remove = None,
     parent_label = 'Reviewers',
-    individual_label = 'AnonReviewer'):
+    individual_label = 'AnonReviewer',
+    use_profile = True):
 
     '''
     DEPRECATED as of openreveiew-py revision 0.9.5
@@ -863,7 +864,8 @@ def assign(client, paper_number, conference,
                         parent_group_params,
                         individual_group_params,
                         parent_label,
-                        individual_label)
+                        individual_label,
+                        use_profile = use_profile)
 
     return (user, changed_groups)
 
