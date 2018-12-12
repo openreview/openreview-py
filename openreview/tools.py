@@ -460,7 +460,20 @@ def iterget_tags(client, id = None, invitation = None, forum = None):
 
     return iterget(client.get_tags, **params)
 
-def iterget_notes(client, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, mintcdate = None, details = None):
+def iterget_notes(client,
+        id = None,
+        paperhash = None,
+        forum = None,
+        invitation = None,
+        replyto = None,
+        tauthor = None,
+        signature = None,
+        writer = None,
+        trash = None,
+        number = None,
+        mintcdate = None,
+        content = None,
+        details = None):
     '''
     Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
 
@@ -481,6 +494,7 @@ def iterget_notes(client, id = None, paperhash = None, forum = None, invitation 
     :arg number: an integer. If present, includes Notes whose number field equals the given integer.
     :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
         whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    :arg content: a dictionary. If present, includes Notes whose each key is present in the content field and it is equals the given value.
     :arg details: TODO: What is a valid value for this field?
     '''
     params = {}
@@ -506,6 +520,8 @@ def iterget_notes(client, id = None, paperhash = None, forum = None, invitation 
         params['number'] = number
     if mintcdate != None:
         params['mintcdate'] = mintcdate
+    if content != None:
+        params['content'] = content
     if details != None:
         params['details'] = details
 
@@ -683,7 +699,8 @@ def add_assignment(client, paper_number, conference, reviewer,
                     parent_group_params = {},
                     individual_group_params = {},
                     parent_label = 'Reviewers',
-                    individual_label = 'AnonReviewer'):
+                    individual_label = 'AnonReviewer',
+                    use_profile = True):
 
     '''
     |  Assigns a reviewer to a paper.
@@ -708,8 +725,12 @@ def add_assignment(client, paper_number, conference, reviewer,
     Adds the given user to the parent group, and to the next empty individual group.
     Prints the results to the console.
     '''
-    profile = get_profile(client, reviewer)
-    user = profile.id if profile else reviewer
+    if use_profile:
+        profile = get_profile(client, reviewer)
+        user = profile.id if profile else reviewer
+    else:
+        user = reviewer
+
     affected_groups = set()
     client.add_members_to_group(parent_group, user)
     affected_groups.add(parent_group.id)
@@ -822,7 +843,8 @@ def assign(client, paper_number, conference,
     reviewer_to_add = None,
     reviewer_to_remove = None,
     parent_label = 'Reviewers',
-    individual_label = 'AnonReviewer'):
+    individual_label = 'AnonReviewer',
+    use_profile = True):
 
     '''
     DEPRECATED as of openreveiew-py revision 0.9.5
@@ -858,7 +880,8 @@ def assign(client, paper_number, conference,
                         parent_group_params,
                         individual_group_params,
                         parent_label,
-                        individual_label)
+                        individual_label,
+                        use_profile = use_profile)
 
     return (user, changed_groups)
 
