@@ -460,7 +460,20 @@ def iterget_tags(client, id = None, invitation = None, forum = None):
 
     return iterget(client.get_tags, **params)
 
-def iterget_notes(client, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, mintcdate = None, details = None):
+def iterget_notes(client,
+        id = None,
+        paperhash = None,
+        forum = None,
+        invitation = None,
+        replyto = None,
+        tauthor = None,
+        signature = None,
+        writer = None,
+        trash = None,
+        number = None,
+        mintcdate = None,
+        content = None,
+        details = None):
     '''
     Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
 
@@ -481,6 +494,7 @@ def iterget_notes(client, id = None, paperhash = None, forum = None, invitation 
     :arg number: an integer. If present, includes Notes whose number field equals the given integer.
     :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
         whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    :arg content: a dictionary. If present, includes Notes whose each key is present in the content field and it is equals the given value.
     :arg details: TODO: What is a valid value for this field?
     '''
     params = {}
@@ -506,6 +520,8 @@ def iterget_notes(client, id = None, paperhash = None, forum = None, invitation 
         params['number'] = number
     if mintcdate != None:
         params['mintcdate'] = mintcdate
+    if content != None:
+        params['content'] = content
     if details != None:
         params['details'] = details
 

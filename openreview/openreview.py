@@ -364,7 +364,21 @@ class Client(object):
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         return invitations
 
-    def get_notes(self, id = None, paperhash = None, forum = None, invitation = None, replyto = None, tauthor = None, signature = None, writer = None, trash = None, number = None, limit = None, offset = None, mintcdate = None, details = None):
+    def get_notes(self, id = None,
+            paperhash = None,
+            forum = None,
+            invitation = None,
+            replyto = None,
+            tauthor = None,
+            signature = None,
+            writer = None,
+            trash = None,
+            number = None,
+            content = None,
+            limit = None,
+            offset = None,
+            mintcdate = None,
+            details = None):
         """
         Returns a list of Note objects based on the filters provided.
 
@@ -382,6 +396,7 @@ class Client(object):
         :arg trash: a Boolean. If True, includes Notes that have been deleted (i.e. the ddate field is less than the
             current date)
         :arg number: an integer. If present, includes Notes whose number field equals the given integer.
+        :arg content: a dictionary. If present, includes Notes whose each key is present in the content field and it is equals the given value.
         :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :arg details: TODO: What is a valid value for this field?
@@ -407,6 +422,9 @@ class Client(object):
             params['trash']=True
         if number != None:
             params['number'] = number
+        if content != None:
+            for k in content:
+                params['content.' + k] = content[k]
         if limit != None:
             params['limit'] = limit
         if offset != None:
