@@ -150,7 +150,8 @@ class TestClient():
                 'pdf': '/pdf/22234qweoiuweroi.pdf'
             }
         )
-        client.post_note(note)
+        note = client.post_note(note)
+        assert note
 
         notes = client.get_notes(content = { 'title': 'Paper title'})
         assert len(notes) == 1
@@ -163,5 +164,7 @@ class TestClient():
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
+
+        client.delete_note(note)
 
 
