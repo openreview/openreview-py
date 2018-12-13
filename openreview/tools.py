@@ -11,6 +11,8 @@ import re
 import datetime
 import time
 from Crypto.Hash import HMAC, SHA256
+from multiprocessing import Pool
+from tqdm import tqdm
 
 super_user_id = 'OpenReview.net'
 
@@ -611,6 +613,20 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
         params['signatory'] = signatory
 
     return iterget(client.get_groups, **params)
+
+    '''
+    Returns a list of results given for each func value execution. It shows a progress bar to know the progress of the task.
+
+    :arg values: a list of values.
+    :arg func: a function to execute for each value of the list.
+    :arg processes: number of procecces to use in the multiprocessing tool, default value is the number of CPUs available.
+    '''
+
+def parallel_exec(values, func, processes = None):
+    pool = Pool(processes = processes)
+    results = pool.map(func, tqdm(values))
+    pool.close()
+    return results
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     '''

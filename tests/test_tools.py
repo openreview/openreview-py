@@ -3,7 +3,8 @@ import random
 import types
 import sys
 
-
+def do_work(value):
+    return value.id
 
 class TestTools():
 
@@ -40,3 +41,9 @@ class TestTools():
         preferred_name = openreview.tools.get_preferred_name(superuser_profile)
         assert preferred_name, "preferred name not found"
         assert preferred_name == 'Super User'
+
+    def test_parallel_exec(self, client):
+
+        values = client.get_groups(limit=10)
+        results = openreview.tools.parallel_exec(values, do_work)
+        assert len(results) == len(values)
