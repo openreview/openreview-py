@@ -145,8 +145,8 @@ class TestClient():
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
-                'authorids': ['test@mail.com', 'mbok@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'authorids': ['mbok@mail.com', 'andrew@mail.com'],
+                'authors': ['Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/22234qweoiuweroi.pdf'
             }
         )

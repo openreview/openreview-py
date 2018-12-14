@@ -36,12 +36,12 @@ class TestCommentNotification():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'author@mail.com', 'andrew@mail.com'],
+            writers = ['~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
-                'authorids': ['test@mail.com', 'author@mail.com', 'andrew@mail.com'],
+                'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/sdfskdls.pdf'
             }
@@ -94,7 +94,7 @@ class TestCommentNotification():
         assert response['messages'][1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'andrew@mail.com')
+        response = client.get_messages(to = 'author2@mail.com')
         assert response
         assert len(response['messages']) == 2
         assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
@@ -144,7 +144,7 @@ class TestCommentNotification():
         assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert response['messages'][3]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'andrew@mail.com')
+        response = client.get_messages(to = 'author2@mail.com')
         assert response
         assert len(response['messages']) == 3
         assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
@@ -196,7 +196,7 @@ class TestCommentNotification():
         assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert response['messages'][3]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'andrew@mail.com')
+        response = client.get_messages(to = 'author2@mail.com')
         assert response
         assert len(response['messages']) == 3
         assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
