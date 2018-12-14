@@ -138,22 +138,29 @@ class Conference(object):
 
         # Get invitation
         invitation = self.client.get_invitation(id = self.get_submission_id())
-        if invitation.reply['writers'] != self.id:
-            invitation.reply['writers'] = self.id
 
+        # Set duedate in the past
         now = round(time.time() * 1000)
         if invitation.duedate > now:
             invitation.duedate = now
-        self.client.post_invitation(invitation)
+        invitation = self.client.post_invitation(invitation)
 
-        # if freeze submissions then remove writers
+        # If freeze submissions then remove writers
         # use a process pool to run this
         if freeze_submissions:
+            if invitation.reply['writers'] != self.id:
+                invitation.reply['writers'] = self.id
+                invitation = self.client.post_invitation(invitation)
+
             notes_iterator = tools.iterget_notes(self.client, invitation = invitation.id)
             for note in notes_iterator:
                 if note.writers != [self.id]:
                     note.writers = [self.id]
                     self.client.post_note(note)
+
+        # Add venue to active venues
+        active_venues_group = self.client.get_group(id = 'active_venues')
+        self.client.add_members_to_group(active_venues_group, [self.get_id()])
 
         return invitation
 
