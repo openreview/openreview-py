@@ -36,12 +36,12 @@ class TestCommentNotification():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'mbok@mail.com', 'andrew@mail.com'],
+            writers = ['~Test_User1', 'author@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
-                'authorids': ['test@mail.com', 'mbok@mail.com', 'andrew@mail.com'],
+                'authorids': ['test@mail.com', 'author@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/sdfskdls.pdf'
             }
@@ -81,7 +81,7 @@ class TestCommentNotification():
         assert comment_note
         assert comment_note.forum == note.id
 
-        response = client.get_messages(to = 'mbok@mail.com')
+        response = client.get_messages(to = 'author@mail.com')
         assert response
         assert len(response['messages']) == 2
         assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
@@ -129,7 +129,7 @@ class TestCommentNotification():
 
         reply_comment_note = client.post_note(reply_comment_note)
 
-        response = client.get_messages(to = 'mbok@mail.com')
+        response = client.get_messages(to = 'author@mail.com')
         assert response
         assert len(response['messages']) == 3
         assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
@@ -181,7 +181,7 @@ class TestCommentNotification():
 
         reply2_comment_note = client.post_note(reply2_comment_note)
 
-        response = client.get_messages(to = 'mbok@mail.com')
+        response = client.get_messages(to = 'author@mail.com')
         assert response
         assert len(response['messages']) == 3
         assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
