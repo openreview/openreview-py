@@ -395,7 +395,7 @@ def replace_members_with_ids(client, group):
             ids.append(member)
 
     group.members = ids + emails
-    client.post_group(group)
+    return client.post_group(group)
 
 class iterget:
     def __init__(self, get_function, **params):
