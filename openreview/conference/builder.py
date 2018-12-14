@@ -163,7 +163,7 @@ class Conference(object):
         if public:
             self.invitation_builder.set_public_comment_invitation(self.id, notes_iterator, name, anonymous)
         else:
-            self.invitation_builder.set_private_comment_invitation(self.id, notes_iterator, name, anonymous)
+            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, anonymous)
 
     # def close_comments():
     #     ## disable comments removing the invitees? or setting an expiration date
