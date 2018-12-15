@@ -1,31 +1,6 @@
 import openreview
 import argparse
-
-def replace_members_with_ids(client, group):
-    '''
-    Given a Group object, iterates through the Group's members and, for any member
-    represented by an email address, attempts to find a profile associated with
-    that email address. If a profile is found, replaces the email with the profile ID.
-
-    Returns None.
-    '''
-    ids = []
-    emails = []
-    for member in group.members:
-        if '~' not in member:
-            try:
-                profile = client.get_profile(member.lower())
-                ids.append(profile.id)
-            except openreview.OpenReviewException as e:
-                if 'Profile not found' in e.args[0][0]:
-                    emails.append(member.lower())
-                else:
-                    raise e
-        else:
-            ids.append(member)
-
-    group.members = ids + emails
-    return client.post_group(group)
+from .tools import replace_members_with_ids
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
