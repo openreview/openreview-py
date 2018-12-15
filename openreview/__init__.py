@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
 from .openreview import *
-from . import tools
+from .tools import *
 from . import invitations
 from .conference import *
