@@ -21,3 +21,13 @@ To access Openreview API resources, an object of the Client class is needed.::
 While a logged in user gets all the Openreview services, some of the services can be accessed by a guest (without logging in).::
 
     >>> guest_client = openreview.Client(baseurl='https://openreview.net')
+
+Run various requests in parallel
+---------------------------------
+
+Use a multiprocessing pool to run a set of requests in parallel
+
+    >>> notes = list(tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Blind_Submission'))
+    >>> openreview.tools.parallel_exec(notes, do_work)
+
+The function do_work has to be defined as pickled function, more info: https://docs.python.org/3/library/pickle.html#what-can-be-pickled-and-unpickled
