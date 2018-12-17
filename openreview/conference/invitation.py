@@ -130,28 +130,34 @@ class PublicCommentInvitation(openreview.Invitation):
 
 class OfficialCommentInvitation(openreview.Invitation):
 
-    def __init__(self, conference_id, name, number, paper_id, anonymous = False):
+    def __init__(self, conference, name, number, paper_id, anonymous = False):
 
         content = invitations.comment
-        prefix = conference_id + '/Paper' + str(number) + '/'
+        prefix = conference.id + '/Paper' + str(number) + '/'
         signatures_regex = '~.*'
 
         if anonymous:
-            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}Authors|{prefix}Area_Chair[0-9]+|{conference_id}/Program_Chairs'.format(prefix=prefix, conference_id=conference_id)
+            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix,
+            conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name)
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
             file_content = f.read()
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_id + "';")
-            super(OfficialCommentInvitation, self).__init__(id =conference_id + '/-/Paper' + str(number) + '/' + name,
+
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+            file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
+            super(OfficialCommentInvitation, self).__init__(id = conference.id + '/-/Paper' + str(number) + '/' + name,
                 readers = ['everyone'],
-                writers = [conference_id],
-                signatures = [conference_id],
+                writers = [conference.id],
+                signatures = [conference.id],
                 invitees = [
-                    prefix + "Authors",
-                    prefix + "Reviewers",
-                    prefix + "Area_Chairs",
-                    conference_id + '/' + "Program_Chairs"
+                    prefix + conference.authors_name,
+                    prefix + conference.reviewers_name,
+                    prefix + conference.area_chairs_name,
+                    conference.id + '/' + conference.program_chairs_name
                 ],
                 reply = {
                     'forum': paper_id,
@@ -159,16 +165,15 @@ class OfficialCommentInvitation(openreview.Invitation):
                     'readers': {
                         "description": "Select all user groups that should be able to read this comment.",
                         "values-dropdown": [
-                            #"everyone",
-                            prefix + "Authors",
-                            prefix + "Reviewers",
-                            prefix + "Area_Chairs",
-                            conference_id + '/' + "Program_Chairs"
+                            prefix + conference.authors_name,
+                            prefix + conference.reviewers_name,
+                            prefix + conference.area_chairs_name,
+                            conference.id + '/' + conference.program_chairs_name
                         ]
                     },
                     'writers': {
                         'values-copied': [
-                            conference_id,
+                            conference.id,
                             '{signatures}'
                         ]
                     },
@@ -226,10 +231,10 @@ class InvitationBuilder(object):
         for note in notes:
             self.client.post_invitation(PublicCommentInvitation(conference_id, name, note.number, note.id, anonymous))
 
-    def set_private_comment_invitation(self, conference_id, notes, name, anonymous):
+    def set_private_comment_invitation(self, conference, notes, name, anonymous):
 
         for note in notes:
-            self.client.post_invitation(OfficialCommentInvitation(conference_id, name, note.number, note.id, anonymous))
+            self.client.post_invitation(OfficialCommentInvitation(conference, name, note.number, note.id, anonymous))
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 
