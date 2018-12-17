@@ -84,7 +84,7 @@ class AddBid(openreview.Invitation):
         if id:
             self.id = id
         else:
-            self.id = '/'.join([self.conference_id, '-', 'Add_Bid'])
+            self.id = '/'.join([self.conference_id, '-', 'Bid'])
 
         default_inv_params = {
             'id': self.id,
