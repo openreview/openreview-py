@@ -1077,7 +1077,7 @@ def _fill_str_or_list(template_str_or_list, paper):
     elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
         return template_str_or_list
     else:
-        raise ValueError('first argument must be list or string: ', value)
+        raise ValueError('first argument must be list or string: ', template_str_or_list)
 
 def fill_template(template, paper):
     '''
