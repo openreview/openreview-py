@@ -216,7 +216,7 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        first_author_last_name = note.content['authors'][0].split(' ')[1].lower()
+        first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
         authors = ' and '.join(note.content['authors'])
 
     bibtex_title = capitalize_title(note.content['title'])
