@@ -216,7 +216,7 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        first_author_last_name = note.content['authors'][0].split(' ')[1].lower()
+        first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
         authors = ' and '.join(note.content['authors'])
 
     bibtex_title = capitalize_title(note.content['title'])
@@ -1077,7 +1077,7 @@ def _fill_str_or_list(template_str_or_list, paper):
     elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
         return template_str_or_list
     else:
-        raise ValueError('first argument must be list or string: ', value)
+        raise ValueError('first argument must be list or string: ', template_str_or_list)
 
 def fill_template(template, paper):
     '''
