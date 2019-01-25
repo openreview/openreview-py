@@ -73,6 +73,9 @@ class TestClient():
         with pytest.raises(openreview.OpenReviewException, match=r'.*Profile not found.*'):
             profile = client.get_profile('mbok@sss.edu')
 
+        assert openreview.tools.get_profile(client, '~Super_User1')
+        assert not openreview.tools.get_profile(client, 'mbok@sss.edu')
+
     def test_get_profiles(self, client):
         guest = openreview.Client()
         guest.register_user(email = 'mbok@mail.com', first = 'Melisa', last = 'Bok', password = '1234')
@@ -93,6 +96,17 @@ class TestClient():
 
         profiles = client.get_profiles([])
         assert len(profiles) == 0
+
+        profiles = client.get_profiles()
+        assert len(profiles) == 1
+        assert profiles[0].id == '~Super_User1'
+
+        assert '~Melisa_Bok1' == client.get_profiles(id = '~Melisa_Bok1')[0].id
+        assert '~Melisa_Bok1' == client.get_profiles(email = 'mbok@mail.com')[0].id
+        assert '~Melisa_Bok1' == client.get_profiles(first = 'Melisa')[0].id
+        assert len(client.get_profiles(id = '~Melisa_Bok2')) == 0
+        assert len(client.get_profiles(email = 'mail@mail.com')) == 0
+        assert len(client.get_profiles(first = 'Anna')) == 0
 
     def test_confirm_registration(self):
 
