@@ -186,6 +186,55 @@ class OfficialCommentInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
+class ReviewInvitation(openreview.Invitation):
+
+    def __init__(self, conference, name, number, paper_id, public):
+        content = invitations.review
+        prefix = conference.id + '/Paper' + str(number) + '/'
+        readers = ['everyone']
+
+        if not public:
+            readers = [
+                prefix + conference.authors_name,
+                prefix + conference.reviewers_name,
+                prefix + conference.area_chairs_name,
+                conference.id + '/' + conference.program_chairs_name
+            ]
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+            file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
+            super(ReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(number) + '/' + name,
+                readers = ['everyone'],
+                writers = [conference.id],
+                signatures = [conference.id],
+                invitees = [prefix + conference.reviewers_name],
+                reply = {
+                    'forum': paper_id,
+                    'replyto': None,
+                    'readers': {
+                        "description": "Select all user groups that should be able to read this comment.",
+                        "values": readers
+                    },
+                    'writers': {
+                        'values-regex': prefix + 'Anon' + conference.reviewers_name[:-1] + '[0-9]+',
+                        'description': 'How your identity will be displayed.'
+                    },
+                    'signatures': {
+                        'values-regex': prefix + 'Anon' + conference.reviewers_name[:-1] + '[0-9]+',
+                        'description': 'How your identity will be displayed.'
+                    },
+                    'content': content
+                },
+                process_string = file_content
+            )
+
 
 class InvitationBuilder(object):
 
@@ -235,6 +284,11 @@ class InvitationBuilder(object):
 
         for note in notes:
             self.client.post_invitation(OfficialCommentInvitation(conference, name, note.number, note.id, anonymous))
+
+    def set_review_invitation(self, conference, notes, name, public):
+
+        for note in notes:
+            self.client.post_invitation(ReviewInvitation(conference, name, note.number, note.id, public))
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 

@@ -623,4 +623,25 @@ class TestDoubleBlindConference():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
+    def test_open_reviews(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        submission = notes[0]
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        conference = builder.get_result()
+        conference.set_authors()
+
+        conference.set_assignment('test@mail.com', submission.number)
+        conference.open_reviews('Official_Review', public = True)
+
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
+
 
