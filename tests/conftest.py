@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def client():
     client = openreview.Client(baseurl = 'http://localhost:3000')
     assert client is not None, "Client is none"
@@ -28,7 +28,7 @@ def client():
     assert group.members == ['~Super_User1']
     yield client
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def test_client():
     test_client = openreview.Client(baseurl = 'http://localhost:3000')
     assert test_client is not None, "Client is none"
@@ -50,6 +50,29 @@ def test_client():
     assert group
     assert group.members == ['~Test_User1']
     yield test_client
+
+@pytest.fixture(scope="session")
+def peter_client():
+    peter_client = openreview.Client(baseurl = 'http://localhost:3000')
+    assert peter_client is not None, "Client is none"
+    res = peter_client.register_user(email = 'peter@mail.com', first = 'Peter', last = 'Test', password = '1234')
+    assert res, "Res i none"
+    res = peter_client.activate_user('peter@mail.com', {
+        'names': [
+                {
+                    'first': 'Peter',
+                    'last': 'Test',
+                    'username': '~Peter_Test1'
+                }
+            ],
+        'emails': ['peter@mail.com'],
+        'preferredEmail': 'peter@mail.com'
+        })
+    assert res, "Res i none"
+    group = peter_client.get_group(id = 'peter@mail.com')
+    assert group
+    assert group.members == ['~Peter_Test1']
+    yield peter_client
 
 
 @pytest.fixture
