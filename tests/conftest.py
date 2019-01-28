@@ -66,7 +66,7 @@ def request_page():
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
-        timeout = 10
+        timeout = 2
         try:
             element_present = EC.presence_of_element_located((By.ID, 'container'))
             WebDriverWait(selenium, timeout).until(element_present)

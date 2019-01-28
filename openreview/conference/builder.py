@@ -172,8 +172,14 @@ class Conference(object):
         else:
             self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, anonymous)
 
-    # def close_comments():
-    #     ## disable comments removing the invitees? or setting an expiration date
+    def close_comments(self, name):
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+
+        for i in invitations:
+            i.expdate = round(time.time() * 1000)
+            self.client.post_invitation(i)
+
+        return len(invitations)
 
     def set_program_chairs(self, emails):
         pcs_id = self.get_program_chairs_id()
