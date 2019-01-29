@@ -213,3 +213,120 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
         assert len(papers.find_elements_by_class_name('note')) == 1
+
+    def test_close_submission(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        conference = builder.get_result()
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        submission = notes[0]
+        submission.content['title'] = 'New paper title'
+        test_client.post_note(submission)
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        assert 'New paper title' == notes[0].content['title']
+        assert '~Test_User1' in notes[0].writers
+        assert 'peter@mail.com' in notes[0].writers
+        assert 'andrew@mail.com' in notes[0].writers
+
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        assert len(selenium.find_elements_by_class_name('edit_button')) == 1
+        assert len(selenium.find_elements_by_class_name('trash_button')) == 1
+
+        conference.close_submissions()
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        submission = notes[0]
+        assert ['NIPS.cc/2018/Workshop/MLITS'] == submission.writers
+
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        assert len(selenium.find_elements_by_class_name('edit_button')) == 0
+        assert len(selenium.find_elements_by_class_name('trash_button')) == 0
+
+    def test_open_comments(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        conference = builder.get_result()
+
+        conference.open_comments('Public_Comment', public = True, anonymous = True)
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        submission = notes[0]
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Public Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+
+    def test_close_comments(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        conference = builder.get_result()
+
+        conference.close_comments('Public_Comment')
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        submission = notes[0]
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+
+    def test_open_reviews(self, client, test_client, selenium, request_page):
+
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert reviewer_client is not None, "Client is none"
+        res = reviewer_client.register_user(email = 'reviewer@mail.com', first = 'Reviewer', last = 'Test', password = '1234')
+        assert res, "Res i none"
+        res = reviewer_client.activate_user('reviewer@mail.com', {
+            'names': [
+                    {
+                        'first': 'Reviewer',
+                        'last': 'Test',
+                        'username': '~Reviewer_Test1'
+                    }
+                ],
+            'emails': ['reviewer@mail.com'],
+            'preferredEmail': 'reviewer@mail.com'
+            })
+        assert res, "Res i none"
+        group = reviewer_client.get_group(id = 'reviewer@mail.com')
+        assert group
+        assert group.members == ['~Reviewer_Test1']
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        submission = notes[0]
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        conference = builder.get_result()
+        conference.set_authors()
+
+        conference.set_assignment('reviewer@mail.com', submission.number)
+        conference.open_reviews('Official_Review', public = True)
+
+        # Reviewer
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
+
+        # Author
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 0
