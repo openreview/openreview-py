@@ -288,6 +288,7 @@ class ConferenceBuilder(object):
         self.client = client
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
+        self.override_homepage = False
 
 
     def __build_groups(self, conference_id):
@@ -341,6 +342,9 @@ class ConferenceBuilder(object):
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)
 
+    def set_override_homepage(self, override):
+        self.override_homepage = override
+
     def get_result(self):
 
         id = self.conference.get_id()
@@ -353,15 +357,17 @@ class ConferenceBuilder(object):
             root_id = groups[1].id
         self.client.add_members_to_group(host, root_id)
 
-        options = self.conference.get_homepage_options()
-        options['reviewers_name'] = self.conference.reviewers_name
-        options['area_chairs_name'] = self.conference.area_chairs_name
-        options['reviewers_id'] = self.conference.get_reviewers_id()
-        options['authors_id'] = self.conference.get_authors_id()
-        options['program_chairs_id'] = self.conference.get_program_chairs_id()
-        options['area_chairs_id'] = self.conference.get_area_chairs_id()
-        options['submission_id'] = self.conference.get_submission_id()
-        self.webfield_builder.set_home_page(group = groups[-1], layout = self.conference.layout, options = options)
+        home_group = groups[-1]
+        if not home_group.web or self.override_homepage:
+            options = self.conference.get_homepage_options()
+            options['reviewers_name'] = self.conference.reviewers_name
+            options['area_chairs_name'] = self.conference.area_chairs_name
+            options['reviewers_id'] = self.conference.get_reviewers_id()
+            options['authors_id'] = self.conference.get_authors_id()
+            options['program_chairs_id'] = self.conference.get_program_chairs_id()
+            options['area_chairs_id'] = self.conference.get_area_chairs_id()
+            options['submission_id'] = self.conference.get_submission_id()
+            self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)
         return self.conference
