@@ -123,6 +123,17 @@ class TestSingleBlindConference():
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
 
+        assert invitation
+        assert invitation.id == 'NIPS.cc/2018/Workshop/MLITS/-/Submission'
+        assert invitation.reply['content']
+        content = invitation.reply['content']
+        assert content.get('title')
+        assert content.get('abstract')
+        assert content.get('authorids')
+        assert content.get('authors')
+        assert not content.get('subject_areas')
+        assert not content.get('archival_status')
+
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
             writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],

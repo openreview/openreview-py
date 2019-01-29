@@ -12,7 +12,7 @@ class SubmissionInvitation(openreview.Invitation):
 
     def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, include_keywords = True, include_TLDR = True, additional_fields = None, additional_readers = []):
 
-        content = invitations.submission
+        content = invitations.submission.copy()
 
         if subject_areas:
             content['subject_areas'] = {
@@ -78,7 +78,8 @@ class PublicCommentInvitation(openreview.Invitation):
 
     def __init__(self, conference_id, name, number, paper_id, anonymous = False):
 
-        content = invitations.comment
+        content = invitations.comment.copy()
+
         prefix = conference_id + '/Paper' + str(number) + '/'
         signatures_regex = '~.*'
 
@@ -132,7 +133,8 @@ class OfficialCommentInvitation(openreview.Invitation):
 
     def __init__(self, conference, name, number, paper_id, anonymous = False):
 
-        content = invitations.comment
+        content = invitations.comment.copy()
+
         prefix = conference.id + '/Paper' + str(number) + '/'
         signatures_regex = '~.*'
 
@@ -189,7 +191,8 @@ class OfficialCommentInvitation(openreview.Invitation):
 class ReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference, name, number, paper_id, public):
-        content = invitations.review
+        content = invitations.review.copy()
+
         prefix = conference.id + '/Paper' + str(number) + '/'
         readers = ['everyone']
 
