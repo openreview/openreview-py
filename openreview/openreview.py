@@ -56,6 +56,7 @@ class Client(object):
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
         self.messages_url = self.baseurl + '/messages'
+        self.process_logs_url = self.baseurl + '/logs/process'
 
         self.headers = {
             'User-Agent': 'test-create-script',
@@ -625,7 +626,14 @@ class Client(object):
 
         response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
         response = self.__handle_response(response)
-        return response.json()
+        return response.json()['messages']
+
+    def get_process_logs(self, id = None, invitation = None):
+
+        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()['logs']
+
 
 class Group(object):
     def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None):

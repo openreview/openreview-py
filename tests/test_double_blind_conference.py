@@ -440,11 +440,11 @@ class TestDoubleBlindConference():
         assert invitation.process
         assert invitation.web
 
-        response = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
-        assert response
-        assert len(response['messages']) == 1
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        assert messages
+        assert len(messages) == 1
 
-        text = response['messages'][0]['content']['text']
+        text = messages[0]['content']['text']
         assert 'You have been nominated by the program chair committeee of AKBC 2019' in text
 
         # Accept invitation
@@ -483,9 +483,9 @@ class TestDoubleBlindConference():
         assert 'other@mail.com' in result.members
 
         # Don't send the invitation twice
-        response = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
-        assert response
-        assert len(response['messages']) == 1
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        assert messages
+        assert len(messages) == 1
 
         # Remind reviewers
         invited = result = conference.recruit_reviewers(emails = ['another@mail.com'], remind = True)
@@ -501,10 +501,10 @@ class TestDoubleBlindConference():
         assert len(group.members) == 1
         assert 'mbok@mail.com' in group.members
 
-        response = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
-        assert response
-        assert len(response['messages']) == 3
-        tos = [ m['content']['to'] for m in response['messages']]
+        messages = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
+        assert messages
+        assert len(messages) == 3
+        tos = [ m['content']['to'] for m in messages]
         assert 'michael@mail.com' in tos
         assert 'mohit@mail.com' in tos
         assert 'other@mail.com' in tos
@@ -588,4 +588,62 @@ class TestDoubleBlindConference():
 
         assert len(selenium.find_elements_by_class_name('edit_button')) == 0
         assert len(selenium.find_elements_by_class_name('trash_button')) == 0
+
+
+    def test_open_comments(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        conference = builder.get_result()
+
+        conference.open_comments('Public_Comment', public = True, anonymous = True)
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        submission = notes[0]
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Public Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+
+    def test_close_comments(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        conference = builder.get_result()
+
+        conference.close_comments('Public_Comment')
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        submission = notes[0]
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+
+    def test_open_reviews(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        submission = notes[0]
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        conference = builder.get_result()
+        conference.set_authors()
+
+        conference.set_assignment('test@mail.com', submission.number)
+        conference.open_reviews('Official_Review', public = True)
+
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
+
 

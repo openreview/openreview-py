@@ -172,8 +172,18 @@ class Conference(object):
         else:
             self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, anonymous)
 
-    # def close_comments():
-    #     ## disable comments removing the invitees? or setting an expiration date
+    def close_comments(self, name):
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+
+        for i in invitations:
+            i.expdate = round(time.time() * 1000)
+            self.client.post_invitation(i)
+
+        return len(invitations)
+
+    def open_reviews(self, name, public = False):
+        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, public)
 
     def set_program_chairs(self, emails):
         pcs_id = self.get_program_chairs_id()
@@ -195,6 +205,17 @@ class Conference(object):
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, n.content.get('authorids'))
+
+    def set_assignment(self, user, number, is_area_chair = False):
+
+        parent_label = self.reviewers_name
+        individual_label = 'Anon' + self.reviewers_name[:-1]
+
+        if is_area_chair:
+            parent_label = self.area_chairs_name
+            individual_label = self.area_chairs_name[:-1]
+
+        return tools.add_assignment(self.client, number, self.get_id(), user, parent_label = parent_label, individual_label = individual_label)
 
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False):
 
