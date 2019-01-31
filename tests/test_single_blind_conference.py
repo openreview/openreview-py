@@ -323,9 +323,14 @@ class TestSingleBlindConference():
         submission = notes[0]
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_conference_short_name('MLITS 2018')
         conference = builder.get_result()
         conference.set_authors()
+        conference.set_program_chairs(emails = ['pc@mail.com'])
+        conference.set_area_chairs(emails = ['ac@mail.com'])
+        conference.set_reviewers(emails = ['reviewer@mail.com'])
 
+        conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
         conference.open_reviews('Official_Review', public = True)
 
@@ -341,3 +346,34 @@ class TestSingleBlindConference():
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
+
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
+            readers = ['everyone'],
+            writers = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
+            signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission: "Review title"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "Review title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac@mail.com' in recipients
+

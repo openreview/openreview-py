@@ -438,11 +438,11 @@ class TestDoubleBlindConference():
         assert invitation.process
         assert invitation.web
 
-        response = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
-        assert response
-        assert len(response['messages']) == 1
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        assert messages
+        assert len(messages) == 1
 
-        text = response['messages'][0]['content']['text']
+        text = messages[0]['content']['text']
         assert 'You have been nominated by the program chair committeee of AKBC 2019' in text
 
         # Accept invitation
@@ -481,9 +481,9 @@ class TestDoubleBlindConference():
         assert 'other@mail.com' in result.members
 
         # Don't send the invitation twice
-        response = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
-        assert response
-        assert len(response['messages']) == 1
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        assert messages
+        assert len(messages) == 1
 
         # Remind reviewers
         invited = result = conference.recruit_reviewers(emails = ['another@mail.com'], remind = True)
@@ -499,10 +499,10 @@ class TestDoubleBlindConference():
         assert len(group.members) == 1
         assert 'mbok@mail.com' in group.members
 
-        response = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
-        assert response
-        assert len(response['messages']) == 3
-        tos = [ m['content']['to'] for m in response['messages']]
+        messages = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
+        assert messages
+        assert len(messages) == 3
+        tos = [ m['content']['to'] for m in messages]
         assert 'michael@mail.com' in tos
         assert 'mohit@mail.com' in tos
         assert 'other@mail.com' in tos

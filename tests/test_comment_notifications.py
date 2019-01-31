@@ -81,39 +81,39 @@ class TestCommentNotification():
         assert comment_note
         assert comment_note.forum == note.id
 
-        response = client.get_messages(to = 'author@mail.com')
-        assert response
-        assert len(response['messages']) == 2
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author@mail.com')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'test@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'OpenReview signup confirmation'
-        assert response['messages'][1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'author2@mail.com')
-        assert response
-        assert len(response['messages']) == 2
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author2@mail.com')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'reviewer@midl.io')
-        assert response
-        assert len(response['messages']) == 1
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'reviewer@midl.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'areachair@midl.io')
-        assert response
-        assert len(response['messages']) == 1
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'areachair@midl.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'programchair@midl.io')
-        assert response
-        assert len(response['messages']) == 1
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'programchair@midl.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
 
         reply_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
@@ -129,42 +129,42 @@ class TestCommentNotification():
 
         reply_comment_note = test_client.post_note(reply_comment_note)
 
-        response = client.get_messages(to = 'author@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'test@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'OpenReview signup confirmation'
-        assert response['messages'][1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'author2@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author2@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'reviewer@midl.io')
-        assert response
-        assert len(response['messages']) == 1
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'reviewer@midl.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'areachair@midl.io')
-        assert response
-        assert len(response['messages']) == 1
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'areachair@midl.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'programchair@midl.io')
-        assert response
-        assert len(response['messages']) == 2
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'programchair@midl.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
 
         reply2_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
@@ -180,44 +180,44 @@ class TestCommentNotification():
 
         reply2_comment_note = client.post_note(reply2_comment_note)
 
-        response = client.get_messages(to = 'author@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'test@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'OpenReview signup confirmation'
-        assert response['messages'][1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'author2@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author2@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'reviewer@midl.io')
-        assert response
-        assert len(response['messages']) == 2
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'reviewer@midl.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'areachair@midl.io')
-        assert response
-        assert len(response['messages']) == 2
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'areachair@midl.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'programchair@midl.io')
-        assert response
-        assert len(response['messages']) == 2
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'programchair@midl.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
 
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
@@ -250,46 +250,46 @@ class TestCommentNotification():
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
 
-        response = client.get_messages(to = 'author@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'test@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'OpenReview signup confirmation'
-        assert response['messages'][1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'author2@mail.com')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'author2@mail.com')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'reviewer@midl.io')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'reviewer@midl.io')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'areachair@midl.io')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'areachair@midl.io')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
-        response = client.get_messages(to = 'programchair@midl.io')
-        assert response
-        assert len(response['messages']) == 3
-        assert response['messages'][0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
-        assert response['messages'][2]['content']['subject'] == 'OpenReview signup confirmation'
+        messages = client.get_messages(to = 'programchair@midl.io')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == 'OpenReview signup confirmation'
 
 
