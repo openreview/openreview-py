@@ -65,7 +65,7 @@ class Client(object):
         }
         if(self.username!=None and self.password!=None):
             self.login_user(self.username, self.password)
-            self.signature = self.get_profile(self.username).id
+            self.signature = self.get_profile(self.username.lower()).id
 
 
     ## PRIVATE FUNCTIONS

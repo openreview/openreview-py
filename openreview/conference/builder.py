@@ -258,9 +258,9 @@ class Conference(object):
 
         return len(invitations)
 
-    def open_reviews(self, name, public = False):
+    def open_reviews(self, name, due_date = None, public = False):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, public)
+        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, due_date, public)
 
     def set_program_chairs(self, emails):
         pcs_id = self.get_program_chairs_id()

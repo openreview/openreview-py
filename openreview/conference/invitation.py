@@ -222,7 +222,7 @@ class OfficialCommentInvitation(openreview.Invitation):
 
 class ReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, number, paper_id, public):
+    def __init__(self, conference, name, number, paper_id, due_date, public):
         content = invitations.review.copy()
 
         prefix = conference.id + '/Paper' + str(number) + '/'
@@ -246,13 +246,14 @@ class ReviewInvitation(openreview.Invitation):
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
             file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
             super(ReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(number) + '/' + name,
+                duedate = tools.datetime_millis(due_date),
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
                 invitees = [prefix + conference.reviewers_name],
                 reply = {
                     'forum': paper_id,
-                    'replyto': None,
+                    'replyto': paper_id,
                     'readers': {
                         "description": "Select all user groups that should be able to read this comment.",
                         "values": readers
@@ -326,10 +327,10 @@ class InvitationBuilder(object):
         for note in notes:
             self.client.post_invitation(OfficialCommentInvitation(conference, name, note.number, note.id, anonymous))
 
-    def set_review_invitation(self, conference, notes, name, public):
+    def set_review_invitation(self, conference, notes, name, due_date, public):
 
         for note in notes:
-            self.client.post_invitation(ReviewInvitation(conference, name, note.number, note.id, public))
+            self.client.post_invitation(ReviewInvitation(conference, name, note.number, note.id, due_date, public))
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 
