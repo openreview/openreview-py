@@ -434,6 +434,8 @@ class Client(object):
             params['mintcdate'] = mintcdate
         if details != None:
             params['details'] = details
+        else:
+            params['noDetails'] = True
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
