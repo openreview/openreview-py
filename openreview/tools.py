@@ -407,9 +407,11 @@ class iterget:
 
         self.params = params
         self.params.update({
-            'offset': self.offset,
-            'limit': 1000
+            'offset': self.offset
         })
+
+        if 'limit' not in self.params:
+            self.params['limit'] = 1000
 
         self.get_function = get_function
         self.current_batch = self.get_function(**self.params)
@@ -475,7 +477,8 @@ def iterget_notes(client,
         number = None,
         mintcdate = None,
         content = None,
-        details = None):
+        details = None,
+        limit = None):
     '''
     Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
 
@@ -526,6 +529,8 @@ def iterget_notes(client,
         params['content'] = content
     if details != None:
         params['details'] = details
+    if limit != None:
+        params['limit'] = limit
 
     return iterget(client.get_notes, **params)
 
