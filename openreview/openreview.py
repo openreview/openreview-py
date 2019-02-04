@@ -51,7 +51,8 @@ class Client(object):
         self.mail_url = self.baseurl + '/mail'
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
-        self.profiles_url = self.baseurl + '/user/profile'
+        self.profiles_url = self.baseurl + '/profiles'
+        self.profiles_search_url = self.baseurl + '/profiles/search'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -195,58 +196,88 @@ class Client(object):
         Returns a single profile (a note) by id, if available
         """
         tildematch = re.compile('~.+')
-        emailmatch = re.compile('.+@.+')
         if tildematch.match(email_or_id):
             att = 'id'
         else:
             att = 'email'
         response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
         response = self.__handle_response(response)
-        profile = response.json()['profile']
-        return Profile.from_json(profile)
+        profiles = response.json()['profiles']
+        if profiles:
+            return Profile.from_json(profiles[0])
+        else:
+            raise OpenReviewException(['Profile not found'])
 
-    def get_profiles(self, email_or_id_list, limit=1000):
+    ## Deprecated for email_or_id_list, use search_profiles instead
+    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
         """
         |  If the list is tilde_ids, returns an array of profiles
         |  If the list is emails, returns an array of dictionaries with 'email' and 'profile'
         """
 
-        pure_tilde_ids = all(['~' in i for i in email_or_id_list])
-        pure_emails = all(['@' in i for i in email_or_id_list])
+        ## Deprecated, don't use it
+        if email_or_id_list is not None:
+            pure_tilde_ids = all(['~' in i for i in email_or_id_list])
+            pure_emails = all(['@' in i for i in email_or_id_list])
 
-        def get_ids_response(id_list):
-            response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
+            def get_ids_response(id_list):
+                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
+                response = self.__handle_response(response)
+                return [Profile.from_json(p) for p in response.json()['profiles']]
+
+            def get_emails_response(email_list):
+                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
+                response = self.__handle_response(response)
+                return { p['email'] : Profile.from_json(p['profile'])
+                    for p in response.json()['profiles'] }
+
+            if pure_tilde_ids:
+                get_response = get_ids_response
+                update_result = lambda result, response: result.extend(response)
+                result = []
+            elif pure_emails:
+                get_response = get_emails_response
+                update_result = lambda result, response: result.update(response)
+                result = {}
+            else:
+                raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
+
+            done = False
+            offset = 0
+            limit = 1000
+            while not done:
+                current_batch = email_or_id_list[offset:offset+limit]
+                offset += limit
+                response = get_response(current_batch)
+                update_result(result, response)
+                if len(current_batch) < limit:
+                    done = True
+
+            return result
+
+        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
+        response = self.__handle_response(response)
+        return [Profile.from_json(p) for p in response.json()['profiles']]
+
+    def search_profiles(self, emails, ids, term):
+
+        if term:
+            response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
-        def get_emails_response(email_list):
-            response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
+        if emails:
+            response = requests.post(self.profiles_search_url, json = {'emails': emails}, headers = self.headers)
             response = self.__handle_response(response)
             return { p['email'] : Profile.from_json(p['profile'])
                 for p in response.json()['profiles'] }
 
-        if pure_tilde_ids:
-            get_response = get_ids_response
-            update_result = lambda result, response: result.extend(response)
-            result = []
-        elif pure_emails:
-            get_response = get_emails_response
-            update_result = lambda result, response: result.update(response)
-            result = {}
-        else:
-            raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
+        if ids:
+            response = requests.post(self.profiles_search_url, json = {'ids': ids}, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
 
-        done = False
-        offset = 0
-        while not done:
-            current_batch = email_or_id_list[offset:offset+limit]
-            offset += limit
-            response = get_response(current_batch)
-            update_result(result, response)
-            if len(current_batch) < limit:
-                done = True
-
-        return result
+        return []
 
     def get_pdf(self, id):
         '''
