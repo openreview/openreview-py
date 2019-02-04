@@ -20,7 +20,7 @@ def client():
                 }
             ],
         'emails': ['openreview.net'],
-        'preferredEmail': 'openreview.net'
+        'preferredEmail': 'info@openreview.net'
         })
     assert res, "Res i none"
     group = client.get_group(id = 'openreview.net')
