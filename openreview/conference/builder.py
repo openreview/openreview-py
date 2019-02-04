@@ -72,14 +72,29 @@ class Conference(object):
     def get_program_chairs_id(self):
         return self.id + '/' + self.program_chairs_name
 
-    def get_reviewers_id(self):
-        return self.id + '/' + self.reviewers_name
+    def get_reviewers_id(self, number = None):
+        reviewers_id = self.id + '/'
+        if number:
+            reviewers_id = reviewers_id + 'Paper' + str(number) + '/'
 
-    def get_authors_id(self):
-        return self.id + '/' + self.authors_name
+        reviewers_id = reviewers_id + self.reviewers_name
+        return reviewers_id
 
-    def get_area_chairs_id(self):
-        return self.id + '/' + self.area_chairs_name
+    def get_authors_id(self, number = None):
+        authors_id = self.id + '/'
+        if number:
+            authors_id = authors_id + 'Paper' + str(number) + '/'
+
+        authors_id = authors_id + self.authors_name
+        return authors_id
+
+    def get_area_chairs_id(self, number = None):
+        area_chairs_id = self.id + '/'
+        if number:
+            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/'
+
+        area_chairs_id = area_chairs_id + self.area_chairs_name
+        return area_chairs_id
 
     def get_submission_id(self):
         return self.id + '/-/' + self.submission_name
@@ -118,6 +133,9 @@ class Conference(object):
             options['instructions'] = self.header.get('instructions')
             options['deadline'] = self.header.get('deadline')
         return options
+
+    def get_submissions(self):
+        return tools.iterget_notes(self.client, invitation = self.get_blind_submission_id())
 
     def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, additional_readers = [], include_keywords = True, include_TLDR = True):
 
@@ -174,9 +192,58 @@ class Conference(object):
 
         return invitation
 
+    def create_blind_submissions(self, public = False):
+
+        if not self.double_blind:
+            raise openreview.OpenReviewException('Conference is not double blind')
+
+        if next(self.get_submissions(), None):
+            raise openreview.OpenReviewException('Blind submissions already created')
+
+        self.invitation_builder.set_blind_submission_invitation(self)
+        blinded_notes = []
+
+        for note in tools.iterget_notes(self.client, invitation = self.get_submission_id()):
+            blind_note = openreview.Note(
+                original= note.id,
+                invitation= self.get_blind_submission_id(),
+                forum=None,
+                signatures= [self.id],
+                writers= [self.id],
+                readers= [self.id],
+                content= {
+                    "authors": ['Anonymous'],
+                    "authorids": [self.id],
+                    "_bibtex": None
+                })
+
+            posted_blind_note = self.client.post_note(blind_note)
+
+            if public:
+                posted_blind_note.readers = ['everyone']
+            else:
+                posted_blind_note.readers = [
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = posted_blind_note.number),
+                    self.get_reviewers_id(number = posted_blind_note.number),
+                    self.get_authors_id(number = posted_blind_note.number)
+                ]
+
+            posted_blind_note.content = {
+                'authorids': [self.get_authors_id(number = posted_blind_note.number)],
+                'authors': ['Anonymous'],
+                '_bibtex': None #Create bibtext automatically
+            }
+
+            posted_blind_note = self.client.post_note(posted_blind_note)
+            blinded_notes.append(posted_blind_note)
+
+        return blinded_notes
+
+
     def open_comments(self, name, public, anonymous):
         ## Create comment invitations per paper
-        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+        notes_iterator = self.get_submissions()
         if public:
             self.invitation_builder.set_public_comment_invitation(self.id, notes_iterator, name, anonymous)
         else:
@@ -192,7 +259,7 @@ class Conference(object):
         return len(invitations)
 
     def open_reviews(self, name, public = False):
-        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+        notes_iterator = self.get_submissions()
         return self.invitation_builder.set_review_invitation(self, notes_iterator, name, public)
 
     def set_program_chairs(self, emails):
@@ -210,7 +277,7 @@ class Conference(object):
         return self.webfield_builder.set_reviewer_page(self.id, group)
 
     def set_authors(self):
-        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+        notes_iterator = self.get_submissions()
 
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)

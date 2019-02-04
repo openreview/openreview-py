@@ -74,6 +74,38 @@ class SubmissionInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
+class BlindSubmissionsInvitation(openreview.Invitation):
+
+    def __init__(self, conference_id, invitation_id):
+        super(BlindSubmissionsInvitation, self).__init__(id = invitation_id,
+            readers = ['everyone'],
+            writers = [conference_id],
+            signatures = [conference_id],
+            invitees = ['~'],
+            reply = {
+                'forum': None,
+                'replyto': None,
+                'readers': {
+                    'values-regex': '.*'
+                },
+                'writers': {
+                    'values': [conference_id]
+                },
+                'signatures': {
+                    'values': [conference_id]
+                },
+                'content': {
+                    'authors': {
+                        'values': ['Anonymous']
+                    },
+                    'authorids': {
+                        'values-regex': '.*'
+                    }
+                }
+            }
+        )
+
+
 class PublicCommentInvitation(openreview.Invitation):
 
     def __init__(self, conference_id, name, number, paper_id, anonymous = False):
@@ -277,6 +309,12 @@ class InvitationBuilder(object):
             include_TLDR = built_options.get('include_TLDR'))
 
         return self.client.post_invitation(invitation)
+
+    def set_blind_submission_invitation(self, conference):
+
+        invitation = BlindSubmissionsInvitation(conference_id = conference.get_id(), invitation_id = conference.get_blind_submission_id())
+
+        return  self.client.post_invitation(invitation)
 
     def set_public_comment_invitation(self, conference_id, notes, name, anonymous):
 

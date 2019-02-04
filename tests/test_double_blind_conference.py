@@ -589,8 +589,7 @@ class TestDoubleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 0
         assert len(selenium.find_elements_by_class_name('trash_button')) == 0
 
-
-    def test_open_comments(self, client, test_client, selenium, request_page):
+    def test_create_blind_submissions(self, client):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -598,9 +597,31 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         conference = builder.get_result()
 
+        with pytest.raises(openreview.OpenReviewException, match=r'Conference is not double blind'):
+            conference.create_blind_submissions()
+
+        builder.set_double_blind(True)
+        conference = builder.get_result()
+
+        blind_submissions = conference.create_blind_submissions(public = True)
+        assert blind_submissions
+        assert len(blind_submissions) == 1
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Blind submissions already created'):
+            conference.create_blind_submissions()
+
+    def test_open_comments(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        conference = builder.get_result()
+
         conference.open_comments('Public_Comment', public = True, anonymous = True)
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
 
@@ -614,6 +635,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
         conference = builder.get_result()
 
         conference.close_comments('Public_Comment')
@@ -634,6 +656,7 @@ class TestDoubleBlindConference():
         submission = notes[0]
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
         conference = builder.get_result()
         conference.set_authors()
 
