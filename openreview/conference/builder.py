@@ -134,8 +134,8 @@ class Conference(object):
             options['deadline'] = self.header.get('deadline')
         return options
 
-    def get_submissions(self):
-        return tools.iterget_notes(self.client, invitation = self.get_blind_submission_id())
+    def get_submissions(self, details = None):
+        return tools.iterget_notes(self.client, invitation = self.get_blind_submission_id(), details = details)
 
     def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, additional_readers = [], include_keywords = True, include_TLDR = True):
 
@@ -277,11 +277,14 @@ class Conference(object):
         return self.webfield_builder.set_reviewer_page(self.id, group)
 
     def set_authors(self):
-        notes_iterator = self.get_submissions()
+        notes_iterator = self.get_submissions(details = 'original')
 
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
-            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, n.content.get('authorids'))
+            authorids = n.content.get('authorids')
+            if n.details and n.details['original']:
+                authorids = n.details['original']['content']['authorids']
+            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
     def set_assignment(self, user, number, is_area_chair = False):
 

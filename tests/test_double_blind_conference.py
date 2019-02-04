@@ -649,24 +649,87 @@ class TestDoubleBlindConference():
 
     def test_open_reviews(self, client, test_client, selenium, request_page):
 
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert reviewer_client is not None, "Client is none"
+        res = reviewer_client.register_user(email = 'reviewer2@mail.com', first = 'Reviewer', last = 'DoubleBlind', password = '1234')
+        assert res, "Res i none"
+        res = reviewer_client.activate_user('reviewer2@mail.com', {
+            'names': [
+                    {
+                        'first': 'Reviewer',
+                        'last': 'DoubleBlind',
+                        'username': '~Reviewer_DoubleBlind1'
+                    }
+                ],
+            'emails': ['reviewer2@mail.com'],
+            'preferredEmail': 'reviewer2@mail.com'
+            })
+        assert res, "Res i none"
+        group = reviewer_client.get_group(id = 'reviewer2@mail.com')
+        assert group
+        assert group.members == ['~Reviewer_DoubleBlind1']
+
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
-        submission = notes[0]
-
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
+        builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
         conference.set_authors()
+        conference.set_area_chairs(emails = ['ac@mail.com'])
+        conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
-        conference.set_assignment('test@mail.com', submission.number)
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
+        conference.set_assignment('reviewer2@mail.com', submission.number)
         conference.open_reviews('Official_Review', public = True)
 
-        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+        # Reviewer
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
+
+        # Author
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Official_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['everyone'],
+            writers = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your submission: "New paper title"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your assigned paper: "New paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac@mail.com' in recipients
 
 
