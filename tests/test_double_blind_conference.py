@@ -141,6 +141,7 @@ class TestDoubleBlindConference():
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
         builder.set_override_homepage(True)
+        builder.set_double_blind(True)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -175,7 +176,7 @@ class TestDoubleBlindConference():
         assert '"website": "http://www.akbc.ws/2019/"' in groups[2].web
         assert 'Important Information' in groups[2].web
         assert '"deadline": "Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018"' in groups[2].web
-        assert 'BLIND_SUBMISSION_ID' in groups[2].web
+        assert "var BLIND_SUBMISSION_ID = 'AKBC.ws/2019/Conference/-/Blind_Submission';" in groups[2].web
 
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
@@ -257,7 +258,7 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
 
-    def test_post_submissions(self, client, test_client, selenium, request_page):
+    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -299,14 +300,14 @@ class TestDoubleBlindConference():
         assert 10 == invitation.reply['content']['archival_status']['order']
 
         note = openreview.Note(invitation = invitation.id,
-            readers = ['~Test_User1', 'mbok@mail.com', 'andrew@mail.com'],
-            writers = ['~Test_User1', 'mbok@mail.com', 'andrew@mail.com'],
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
-                'authorids': ['test@mail.com', 'mbok@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
                 'subject_areas': [
                     'Databases',
@@ -362,8 +363,7 @@ class TestDoubleBlindConference():
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
 
         # Co-author user
-        co_author_client = openreview.Client(username='mbok@mail.com', password='1234')
-        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", co_author_client.token)
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", peter_client.token)
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -379,7 +379,7 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", co_author_client.token)
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", peter_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-schedule')
@@ -571,7 +571,7 @@ class TestDoubleBlindConference():
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         assert 'New paper title' == notes[0].content['title']
         assert '~Test_User1' in notes[0].writers
-        assert 'mbok@mail.com' in notes[0].writers
+        assert 'peter@mail.com' in notes[0].writers
         assert 'andrew@mail.com' in notes[0].writers
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)

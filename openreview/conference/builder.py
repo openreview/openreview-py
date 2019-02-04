@@ -12,6 +12,7 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.double_blind = False
         self.groups = []
         self.name = ''
         self.short_name = ''
@@ -83,6 +84,12 @@ class Conference(object):
     def get_submission_id(self):
         return self.id + '/-/' + self.submission_name
 
+    def get_blind_submission_id(self):
+        if self.double_blind:
+            return self.id + '/-/Blind_' + self.submission_name
+        else:
+            return self.get_submission_id()
+
     def set_conference_groups(self, groups):
         self.groups = groups
 
@@ -94,6 +101,9 @@ class Conference(object):
 
     def set_homepage_layout(self, layout):
         self.layout = layout
+
+    def set_double_blind(self, double_blind):
+        self.double_blind = double_blind
 
     def get_homepage_options(self):
         options = {}
@@ -366,6 +376,9 @@ class ConferenceBuilder(object):
     def set_override_homepage(self, override):
         self.override_homepage = override
 
+    def set_double_blind(self, double_blind):
+        self.conference.set_double_blind(double_blind)
+
     def get_result(self):
 
         id = self.conference.get_id()
@@ -388,6 +401,7 @@ class ConferenceBuilder(object):
             options['program_chairs_id'] = self.conference.get_program_chairs_id()
             options['area_chairs_id'] = self.conference.get_area_chairs_id()
             options['submission_id'] = self.conference.get_submission_id()
+            options['blind_submission_id'] = self.conference.get_blind_submission_id()
             self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)
