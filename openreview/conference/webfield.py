@@ -123,31 +123,29 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
-    def set_reviewer_page(self, conference_id, group, options = {}):
+    def set_reviewer_page(self, conference, group):
 
-        reviewers_name = group.id.split('/')[-1].replace('_', ' ')
+        reviewers_name = conference.reviewers_name
 
         default_header = {
             'title': reviewers_name + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
-            updates for the ' + group.id + '. It will be regularly updated as the conference \
+            updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
             progresses, so please check back frequently for news and other updates.</p>',
             'schedule': '<h4>Coming Soon</h4>\
             <p>\
                 <em><strong>Please check back later for updates.</strong></em>\
-            </p>',
-            'reviewers_name': reviewers_name
+            </p>'
         }
 
-        header = self.__build_options(default_header, options)
+        header = self.__build_options(default_header, {})
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewersWebfield.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
-            content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + reviewers_name + "';")
-            content = content.replace("var HEADER_TEXT = '';", "var HEADER_TEXT = '" + header.get('title') + "';")
-            content = content.replace("var INSTRUCTIONS = '';", "var INSTRUCTIONS = '" + header.get('instructions') + "';")
-            content = content.replace("var SCHEDULE_HTML = '';", "var SCHEDULE_HTML = '" + header.get('schedule') + "';")
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             group.web = content
             return self.client.post_group(group)
 

@@ -274,7 +274,7 @@ class Conference(object):
         reviewers_id = self.get_reviewers_id()
         group = self.__create_group(reviewers_id, self.id, emails)
 
-        return self.webfield_builder.set_reviewer_page(self.id, group)
+        return self.webfield_builder.set_reviewer_page(self, group)
 
     def set_authors(self):
         notes_iterator = self.get_submissions(details = 'original')
