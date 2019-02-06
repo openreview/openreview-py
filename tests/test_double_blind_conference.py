@@ -19,7 +19,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-
+        builder.set_double_blind(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -69,6 +69,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_name('Automated Knowledge Base Construction')
         builder.set_override_homepage(True)
+        builder.set_double_blind(True)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -226,6 +227,7 @@ class TestDoubleBlindConference():
                 </ul></p>',
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
+        builder.set_double_blind(True)
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
         assert invitation
@@ -270,6 +272,7 @@ class TestDoubleBlindConference():
             'instructions': 'Instructions for author console',
             'schedule': 'This is the author schedule'
         })
+        builder.set_double_blind(True)
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = ['Machine Learning',
             'Natural Language Processing',
@@ -401,6 +404,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_short_name('AKBC 2019')
+        builder.set_double_blind(True)
         conference = builder.get_result()
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
@@ -520,6 +524,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
         conference = builder.get_result()
 
         result = conference.set_program_chairs(['pc@mail.com', 'pc2@mail.com'])
@@ -566,6 +571,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
         conference = builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
