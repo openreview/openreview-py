@@ -332,7 +332,7 @@ class TestSingleBlindConference():
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
-        conference.open_reviews('Official_Review', public = True)
+        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -348,6 +348,8 @@ class TestSingleBlindConference():
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
+            forum = submission.id,
+            replyto = submission.id,
             readers = ['everyone'],
             writers = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
             signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
@@ -365,14 +367,14 @@ class TestSingleBlindConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission: "Review title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission: "New paper title"')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "Review title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
