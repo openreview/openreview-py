@@ -68,4 +68,4 @@ class TestReviewersConference():
         request_page(selenium, "http://localhost:3000/group?id=learningtheory.org/COLT/2019/Conference/Program_Committee", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('areachair-schedule')
+        assert tabs.find_element_by_id('reviewer-schedule')
