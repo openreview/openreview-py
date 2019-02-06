@@ -8,9 +8,7 @@
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
-var HEADER_TEXT = '';
-var INSTRUCTIONS = '';
-var SCHEDULE_HTML = '';
+var HEADER = {};
 
 var paperDisplayOptions = {
   pdfLink: true,
@@ -24,7 +22,7 @@ var paperDisplayOptions = {
 function main() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
-  Webfield.ui.header(HEADER_TEXT, INSTRUCTIONS);
+  Webfield.ui.header(HEADER.title, HEADER.instructions);
 
   renderConferenceTabs();
 
@@ -89,7 +87,7 @@ function renderConferenceTabs() {
     {
       heading: 'Author Schedule',
       id: 'author-schedule',
-      content: SCHEDULE_HTML
+      content: HEADER.schedule
     },
     {
       heading: 'Author Tasks',

@@ -8,7 +8,6 @@ var HEADER = {};
 var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
-var ANONREVIEWER_REGEX = /^MIDL\.io\/2019\/Conference\/Paper(\d+)\/AnonReviewer(\d+)/;
 
 // Ajax functions
 var getNumberfromGroup = function(groupId, name) {

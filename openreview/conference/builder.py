@@ -16,7 +16,8 @@ class Conference(object):
         self.groups = []
         self.name = ''
         self.short_name = ''
-        self.header = {}
+        self.homepage_header = {}
+        self.authorpage_header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.authors_name = 'Authors'
@@ -112,7 +113,13 @@ class Conference(object):
         return self.groups
 
     def set_homepage_header(self, header):
-        self.header = header
+        self.homepage_header = header
+
+    def set_authorpage_header(self, header):
+        self.authorpage_header = header
+
+    def get_authorpage_header(self):
+        return self.authorpage_header
 
     def set_homepage_layout(self, layout):
         self.layout = layout
@@ -124,14 +131,14 @@ class Conference(object):
         options = {}
         if self.name:
             options['subtitle'] = self.name
-        if self.header:
-            options['title'] = self.header.get('title')
-            options['subtitle'] = self.header.get('subtitle')
-            options['location'] = self.header.get('location')
-            options['date'] = self.header.get('date')
-            options['website'] = self.header.get('website')
-            options['instructions'] = self.header.get('instructions')
-            options['deadline'] = self.header.get('deadline')
+        if self.homepage_header:
+            options['title'] = self.homepage_header.get('title')
+            options['subtitle'] = self.homepage_header.get('subtitle')
+            options['location'] = self.homepage_header.get('location')
+            options['date'] = self.homepage_header.get('date')
+            options['website'] = self.homepage_header.get('website')
+            options['instructions'] = self.homepage_header.get('instructions')
+            options['deadline'] = self.homepage_header.get('deadline')
         return options
 
     def get_submissions(self, details = None):
@@ -146,7 +153,7 @@ class Conference(object):
             signatures = [self.id],
             writers = [self.id]
         )
-        self.webfield_builder.set_author_page(self.id, authors_group, { 'title': 'Author console', 'submission_id': self.get_submission_id()})
+        self.webfield_builder.set_author_page(self, authors_group)
 
         ## Submission invitation
         options = {
@@ -439,6 +446,9 @@ class ConferenceBuilder(object):
 
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
+
+    def set_authorpage_header(self, header):
+        self.conference.set_authorpage_header(header)
 
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)

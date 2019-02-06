@@ -103,23 +103,21 @@ class WebfieldBuilder(object):
             return self.client.post_invitation(invitation)
 
 
-    def set_author_page(self, conference_id, group, options = {}):
+    def set_author_page(self, conference, group):
 
         default_header = {
-            'title': group.id,
+            'title': 'Authors Console',
             'instructions': '',
             'schedule': 'TBD'
         }
 
-        header = self.__build_options(default_header, options)
+        header = self.__build_options(default_header, conference.get_authorpage_header())
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/authorWebfield.js')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + header.get('submission_id') + "';")
-            content = content.replace("var HEADER_TEXT = '';", "var HEADER_TEXT = '" + header.get('title') + "';")
-            content = content.replace("var INSTRUCTIONS = '';", "var INSTRUCTIONS = '" + header.get('instructions') + "';")
-            content = content.replace("var SCHEDULE_HTML = '';", "var SCHEDULE_HTML = '" + header.get('schedule') + "';")
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             group.web = content
             return self.client.post_group(group)
 
