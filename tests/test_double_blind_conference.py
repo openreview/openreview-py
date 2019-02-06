@@ -265,6 +265,11 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_short_name('AKBC 2019')
+        builder.set_authorpage_header({
+            'title': 'Author Console',
+            'instructions': 'Instructions for author console',
+            'schedule': 'This is the author schedule'
+        })
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = ['Machine Learning',
             'Natural Language Processing',
