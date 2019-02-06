@@ -11,12 +11,12 @@ var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var ANONREVIEWER_REGEX = /^MIDL\.io\/2019\/Conference\/Paper(\d+)\/AnonReviewer(\d+)/;
 
 // Ajax functions
-var getPaperNumberfromGroup = function(groupId) {
+var getNumberfromGroup = function(groupId, name) {
 
   var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith('Paper'); });
+  paper = _.find(tokens, function(token) { return token.startsWith(name); });
   if (paper) {
-    return parseInt(paper.replace('Paper', ''));
+    return parseInt(paper.replace(name, ''));
   } else {
     return null;
   }
@@ -24,7 +24,7 @@ var getPaperNumberfromGroup = function(groupId) {
 
 var getPaperNumbersfromGroups = function(groups) {
   return _.filter(_.map(groups, function(group) {
-    return getPaperNumberfromGroup(group.id);
+    return getNumberfromGroup(group.id, 'Paper');
   }), _.isInteger);
 };
 
@@ -100,12 +100,9 @@ var getReviewerGroups = function(noteNumbers) {
     .then(function(result) {
 
       _.forEach(result.groups, function(g) {
-        var matches = g.id.match(ANONREVIEWER_REGEX);
-        var num, index;
-        if (matches) {
-          num = parseInt(matches[1], 10);
-          index = parseInt(matches[2], 10);
-
+        var num = getNumberfromGroup(g.id, 'Paper');
+        var index = getNumberfromGroup(g.id, 'AnonReviewer');
+        if (num) {
           if ((num in noteMap) && g.members.length) {
             noteMap[num][index] = g.members[0];
           }
