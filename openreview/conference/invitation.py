@@ -105,6 +105,47 @@ class BlindSubmissionsInvitation(openreview.Invitation):
             }
         )
 
+class BidInvitation(openreview.Invitation):
+    def __init__(self, conference, due_date, request_count, with_area_chairs):
+
+        readers = [
+            conference.get_id(),
+            conference.get_program_chairs_id(),
+            conference.get_reviewers_id()
+        ]
+
+        invitees = [ conference.get_reviewers_id() ]
+        if with_area_chairs:
+            readers.append(conference.get_area_chairs_id())
+            invitees.append(conference.get_area_chairs_id())
+
+        super(BidInvitation, self).__init__(id = conference.get_bid_id(),
+            readers = readers,
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            multiReply = True,
+            taskCompletionCount = request_count,
+            reply = {
+                'forum': None,
+                'replyto': None,
+                'invitation': conference.get_blind_submission_id(),
+                'readers': {
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'tag': {
+                        'required': True,
+                        'value-radio': [ 'High', 'Neutral', 'Low', 'Very Low', 'No Bid']
+                    }
+                }
+            }
+        )
+
+
 
 class PublicCommentInvitation(openreview.Invitation):
 
@@ -316,6 +357,12 @@ class InvitationBuilder(object):
         invitation = BlindSubmissionsInvitation(conference_id = conference.get_id(), invitation_id = conference.get_blind_submission_id())
 
         return  self.client.post_invitation(invitation)
+
+    def set_bid_invitation(self, conference, due_date, request_count, with_area_chairs):
+
+        invitation = BidInvitation(conference, due_date, request_count, with_area_chairs)
+
+        return self.client.post_invitation(invitation)
 
     def set_public_comment_invitation(self, conference_id, notes, name, anonymous):
 

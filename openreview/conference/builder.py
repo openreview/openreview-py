@@ -20,6 +20,7 @@ class Conference(object):
         self.authorpage_header = {}
         self.reviewerpage_header = {}
         self.areachairpage_header = {}
+        self.bidpage_header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.authors_name = 'Authors'
@@ -27,6 +28,7 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
+        self.bid_name = 'Bid'
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
@@ -61,6 +63,11 @@ class Conference(object):
         program_chairs_group = self.client.get_group(self.get_program_chairs_id())
         if program_chairs_group:
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
+
+    def __set_bid_page(self):
+        bid_invitation = self.client.get_invitation(self.get_bid_id())
+        if bid_invitation:
+            return self.webfield_builder.set_bid_page(self, bid_invitation)
 
     def set_id(self, id):
         self.id = id
@@ -128,6 +135,9 @@ class Conference(object):
         else:
             return self.get_submission_id()
 
+    def get_bid_id(self):
+        return self.id + '/-/' + self.bid_name
+
     def set_conference_groups(self, groups):
         self.groups = groups
 
@@ -157,6 +167,13 @@ class Conference(object):
 
     def get_areachairpage_header(self):
         return self.areachairpage_header
+
+    def set_bidpage_header(self, header):
+        self.bidpage_header = header
+        return self.__set_bid_page
+
+    def get_bidpage_header(self):
+        return self.bidpage_header
 
     def set_homepage_layout(self, layout):
         self.layout = layout
@@ -284,6 +301,14 @@ class Conference(object):
 
         return blinded_notes
 
+    def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
+        self.invitation_builder.set_bid_invitation(self, due_date, request_count, with_area_chairs)
+        return self.__set_bid_page()
+
+    def close_bids(self):
+        invitation = self.client.get_invitation(self.get_bid_id())
+        invitation.invitees = []
+        return self.client.post_invitation(invitation)
 
     def open_comments(self, name, public, anonymous):
         ## Create comment invitations per paper

@@ -658,7 +658,7 @@ class TestDoubleBlindConference():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-    def test_open_reviews(self, client, test_client, selenium, request_page):
+    def test_open_bids(self, client, test_client, selenium, request_page):
 
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert reviewer_client is not None, "Client is none"
@@ -679,6 +679,28 @@ class TestDoubleBlindConference():
         group = reviewer_client.get_group(id = 'reviewer2@mail.com')
         assert group
         assert group.members == ['~Reviewer_DoubleBlind1']
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        conference = builder.get_result()
+        conference.set_authors()
+        conference.set_area_chairs(emails = ['ac@mail.com'])
+        conference.set_reviewers(emails = ['reviewer2@mail.com'])
+
+        invitation = conference.open_bids(due_date = datetime.datetime(2019, 10, 5, 18, 00), request_count = 50, with_area_chairs = False)
+        assert invitation
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/-/Bid", reviewer_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+
+
+    def test_open_reviews(self, client, test_client, selenium, request_page):
+
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
