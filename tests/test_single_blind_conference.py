@@ -379,3 +379,107 @@ class TestSingleBlindConference():
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
 
+    def test_consoles(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_conference_short_name('MLITS 2018')
+        conference = builder.get_result()
+
+        # Author user
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Author Console' == console.find_element_by_tag_name('a').text
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('author-schedule')
+        assert 'TBD' == tabs.find_element_by_id('author-schedule').text
+        assert tabs.find_element_by_id('author-tasks')
+        tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
+        assert len(tasks.find_elements_by_class_name('empty-message')) == 1
+        assert tabs.find_element_by_id('your-submissions')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
+        assert len(papers.find_elements_by_class_name('note')) == 1
+
+        conference.set_authorpage_header({
+            'title': 'Author Console',
+            'instructions': 'Set of instructions',
+            'schedule': 'This is a schedule'
+        })
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
+
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert len(header.find_elements_by_tag_name('h1')) == 1
+        assert 'Author Console' == header.find_elements_by_tag_name('h1')[0].text
+        assert len(header.find_elements_by_class_name('description')) == 1
+        assert 'Set of instructions' == header.find_elements_by_class_name('description')[0].text
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('author-schedule')
+        assert 'This is a schedule' == tabs.find_element_by_id('author-schedule').text
+        assert tabs.find_element_by_id('author-tasks')
+        tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
+        assert len(tasks.find_elements_by_class_name('empty-message')) == 1
+        assert tabs.find_element_by_id('your-submissions')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
+        assert len(papers.find_elements_by_class_name('note')) == 1
+
+        # Reviewer user
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer@mail.com', password='1234')
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS", reviewer_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Reviewers Console' == console.find_element_by_tag_name('a').text
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Reviewers", reviewer_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('assigned-papers')
+        assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
+        assert tabs.find_element_by_id('reviewer-schedule')
+        assert len(tabs.find_element_by_id('reviewer-schedule').find_elements_by_tag_name('h4')) == 1
+        assert tabs.find_element_by_id('reviewer-tasks')
+        assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
+
+        conference.set_reviewerpage_header({
+            'title': 'Reviewer Console',
+            'instructions': 'Set of instructions',
+            'schedule': 'This is a schedule'
+        })
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Reviewers", reviewer_client.token)
+
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert len(header.find_elements_by_tag_name('h1')) == 1
+        assert 'Reviewer Console' == header.find_elements_by_tag_name('h1')[0].text
+        assert len(header.find_elements_by_class_name('description')) == 1
+        assert 'Set of instructions' == header.find_elements_by_class_name('description')[0].text
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('assigned-papers')
+        assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
+        assert tabs.find_element_by_id('reviewer-schedule')
+        #assert 'This is a schedule' == tabs.find_element_by_id('reviewer-schedule').text
+        assert tabs.find_element_by_id('reviewer-tasks')
+        assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
+
+
+

@@ -42,6 +42,16 @@ class Conference(object):
         else:
             return self.client.add_members_to_group(group, members)
 
+    def __set_author_page(self):
+        authors_group = self.client.get_group(self.get_authors_id())
+        if authors_group:
+            return self.webfield_builder.set_author_page(self, authors_group)
+
+    def __set_reviewer_page(self):
+        reviewers_group = self.client.get_group(self.get_reviewers_id())
+        if reviewers_group:
+            return self.webfield_builder.set_reviewer_page(self, reviewers_group)
+
     def set_id(self, id):
         self.id = id
 
@@ -119,12 +129,14 @@ class Conference(object):
 
     def set_authorpage_header(self, header):
         self.authorpage_header = header
+        return self.__set_author_page()
 
     def get_authorpage_header(self):
         return self.authorpage_header
 
     def set_reviewerpage_header(self, header):
         self.reviewerpage_header = header
+        return self.__set_reviewer_page()
 
     def get_reviewerpage_header(self):
         return self.reviewerpage_header
@@ -161,7 +173,7 @@ class Conference(object):
     def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, additional_readers = [], include_keywords = True, include_TLDR = True):
 
         ## Author console
-        authors_group = openreview.Group(id = self.id + '/Authors',
+        authors_group = openreview.Group(id = self.get_authors_id(),
             readers = ['everyone'],
             signatories = [self.id],
             signatures = [self.id],
@@ -298,7 +310,7 @@ class Conference(object):
         reviewers_id = self.get_reviewers_id()
         group = self.__create_group(reviewers_id, self.id, emails)
 
-        return self.webfield_builder.set_reviewer_page(self, group)
+        return self.__set_reviewer_page()
 
     def set_authors(self):
         notes_iterator = self.get_submissions(details = 'original')

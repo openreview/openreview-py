@@ -136,7 +136,7 @@ class WebfieldBuilder(object):
             </p>'
         }
 
-        header = self.__build_options(default_header, {})
+        header = self.__build_options(default_header, conference.get_reviewerpage_header())
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f:
             content = f.read()
@@ -162,7 +162,7 @@ class WebfieldBuilder(object):
             </p>'
         }
 
-        header = self.__build_options(default_header, {})
+        header = self.__build_options(default_header, conference.get_areachairpage_header())
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/areachairWebfield.js')) as f:
             content = f.read()
