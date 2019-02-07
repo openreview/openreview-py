@@ -52,6 +52,16 @@ class Conference(object):
         if reviewers_group:
             return self.webfield_builder.set_reviewer_page(self, reviewers_group)
 
+    def __set_area_chair_page(self):
+        area_chairs_group = self.client.get_group(self.get_area_chairs_id())
+        if area_chairs_group:
+            return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
+
+    def __set_program_chair_page(self):
+        program_chairs_group = self.client.get_group(self.get_program_chairs_id())
+        if program_chairs_group:
+            return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
+
     def set_id(self, id):
         self.id = id
 
@@ -143,6 +153,7 @@ class Conference(object):
 
     def set_areachairpage_header(self, header):
         self.areachairpage_header = header
+        return self.__set_area_chair_page()
 
     def get_areachairpage_header(self):
         return self.areachairpage_header
@@ -296,20 +307,15 @@ class Conference(object):
         return self.invitation_builder.set_review_invitation(self, notes_iterator, name, due_date, public)
 
     def set_program_chairs(self, emails):
-        pcs_id = self.get_program_chairs_id()
-        group =  self.__create_group(pcs_id, self.id, emails)
-        return self.webfield_builder.set_program_chair_page(self, group)
+        self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        return self.__set_program_chair_page()
 
     def set_area_chairs(self, emails):
-        acs_id = self.get_area_chairs_id()
-        group = self.__create_group(acs_id, self.id, emails)
-
-        return self.webfield_builder.set_area_chair_page(self, group)
+        self.__create_group(self.get_area_chairs_id(), self.id, emails)
+        return self.__set_area_chair_page()
 
     def set_reviewers(self, emails):
-        reviewers_id = self.get_reviewers_id()
-        group = self.__create_group(reviewers_id, self.id, emails)
-
+        self.__create_group(self.get_reviewers_id(), self.id, emails)
         return self.__set_reviewer_page()
 
     def set_authors(self):
