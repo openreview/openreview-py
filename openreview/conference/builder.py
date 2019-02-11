@@ -12,10 +12,12 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.double_blind = False
         self.groups = []
         self.name = ''
         self.short_name = ''
-        self.header = {}
+        self.homepage_header = {}
+        self.authorpage_header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.authors_name = 'Authors'
@@ -71,17 +73,38 @@ class Conference(object):
     def get_program_chairs_id(self):
         return self.id + '/' + self.program_chairs_name
 
-    def get_reviewers_id(self):
-        return self.id + '/' + self.reviewers_name
+    def get_reviewers_id(self, number = None):
+        reviewers_id = self.id + '/'
+        if number:
+            reviewers_id = reviewers_id + 'Paper' + str(number) + '/'
 
-    def get_authors_id(self):
-        return self.id + '/' + self.authors_name
+        reviewers_id = reviewers_id + self.reviewers_name
+        return reviewers_id
 
-    def get_area_chairs_id(self):
-        return self.id + '/' + self.area_chairs_name
+    def get_authors_id(self, number = None):
+        authors_id = self.id + '/'
+        if number:
+            authors_id = authors_id + 'Paper' + str(number) + '/'
+
+        authors_id = authors_id + self.authors_name
+        return authors_id
+
+    def get_area_chairs_id(self, number = None):
+        area_chairs_id = self.id + '/'
+        if number:
+            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/'
+
+        area_chairs_id = area_chairs_id + self.area_chairs_name
+        return area_chairs_id
 
     def get_submission_id(self):
         return self.id + '/-/' + self.submission_name
+
+    def get_blind_submission_id(self):
+        if self.double_blind:
+            return self.id + '/-/Blind_' + self.submission_name
+        else:
+            return self.get_submission_id()
 
     def set_conference_groups(self, groups):
         self.groups = groups
@@ -90,24 +113,36 @@ class Conference(object):
         return self.groups
 
     def set_homepage_header(self, header):
-        self.header = header
+        self.homepage_header = header
+
+    def set_authorpage_header(self, header):
+        self.authorpage_header = header
+
+    def get_authorpage_header(self):
+        return self.authorpage_header
 
     def set_homepage_layout(self, layout):
         self.layout = layout
+
+    def set_double_blind(self, double_blind):
+        self.double_blind = double_blind
 
     def get_homepage_options(self):
         options = {}
         if self.name:
             options['subtitle'] = self.name
-        if self.header:
-            options['title'] = self.header.get('title')
-            options['subtitle'] = self.header.get('subtitle')
-            options['location'] = self.header.get('location')
-            options['date'] = self.header.get('date')
-            options['website'] = self.header.get('website')
-            options['instructions'] = self.header.get('instructions')
-            options['deadline'] = self.header.get('deadline')
+        if self.homepage_header:
+            options['title'] = self.homepage_header.get('title')
+            options['subtitle'] = self.homepage_header.get('subtitle')
+            options['location'] = self.homepage_header.get('location')
+            options['date'] = self.homepage_header.get('date')
+            options['website'] = self.homepage_header.get('website')
+            options['instructions'] = self.homepage_header.get('instructions')
+            options['deadline'] = self.homepage_header.get('deadline')
         return options
+
+    def get_submissions(self, details = None):
+        return tools.iterget_notes(self.client, invitation = self.get_blind_submission_id(), details = details)
 
     def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, additional_readers = [], include_keywords = True, include_TLDR = True):
 
@@ -118,7 +153,7 @@ class Conference(object):
             signatures = [self.id],
             writers = [self.id]
         )
-        self.webfield_builder.set_author_page(self.id, authors_group, { 'title': 'Author console', 'submission_id': self.get_submission_id()})
+        self.webfield_builder.set_author_page(self, authors_group)
 
         ## Submission invitation
         options = {
@@ -164,16 +199,75 @@ class Conference(object):
 
         return invitation
 
+    def create_blind_submissions(self, public = False):
+
+        if not self.double_blind:
+            raise openreview.OpenReviewException('Conference is not double blind')
+
+        if next(self.get_submissions(), None):
+            raise openreview.OpenReviewException('Blind submissions already created')
+
+        self.invitation_builder.set_blind_submission_invitation(self)
+        blinded_notes = []
+
+        for note in tools.iterget_notes(self.client, invitation = self.get_submission_id()):
+            blind_note = openreview.Note(
+                original= note.id,
+                invitation= self.get_blind_submission_id(),
+                forum=None,
+                signatures= [self.id],
+                writers= [self.id],
+                readers= [self.id],
+                content= {
+                    "authors": ['Anonymous'],
+                    "authorids": [self.id],
+                    "_bibtex": None
+                })
+
+            posted_blind_note = self.client.post_note(blind_note)
+
+            if public:
+                posted_blind_note.readers = ['everyone']
+            else:
+                posted_blind_note.readers = [
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = posted_blind_note.number),
+                    self.get_reviewers_id(number = posted_blind_note.number),
+                    self.get_authors_id(number = posted_blind_note.number)
+                ]
+
+            posted_blind_note.content = {
+                'authorids': [self.get_authors_id(number = posted_blind_note.number)],
+                'authors': ['Anonymous'],
+                '_bibtex': None #Create bibtext automatically
+            }
+
+            posted_blind_note = self.client.post_note(posted_blind_note)
+            blinded_notes.append(posted_blind_note)
+
+        return blinded_notes
+
+
     def open_comments(self, name, public, anonymous):
         ## Create comment invitations per paper
-        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+        notes_iterator = self.get_submissions()
         if public:
             self.invitation_builder.set_public_comment_invitation(self.id, notes_iterator, name, anonymous)
         else:
             self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, anonymous)
 
-    # def close_comments():
-    #     ## disable comments removing the invitees? or setting an expiration date
+    def close_comments(self, name):
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+
+        for i in invitations:
+            i.expdate = round(time.time() * 1000)
+            self.client.post_invitation(i)
+
+        return len(invitations)
+
+    def open_reviews(self, name, due_date = None, public = False):
+        notes_iterator = self.get_submissions()
+        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, due_date, public)
 
     def set_program_chairs(self, emails):
         pcs_id = self.get_program_chairs_id()
@@ -187,14 +281,28 @@ class Conference(object):
         reviewers_id = self.get_reviewers_id()
         group = self.__create_group(reviewers_id, self.id, emails)
 
-        return self.webfield_builder.set_reviewer_page(self.id, group)
+        return self.webfield_builder.set_reviewer_page(self, group)
 
     def set_authors(self):
-        notes_iterator = tools.iterget_notes(self.client, invitation = self.get_submission_id())
+        notes_iterator = self.get_submissions(details = 'original')
 
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
-            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, n.content.get('authorids'))
+            authorids = n.content.get('authorids')
+            if n.details and n.details['original']:
+                authorids = n.details['original']['content']['authorids']
+            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
+
+    def set_assignment(self, user, number, is_area_chair = False):
+
+        parent_label = self.reviewers_name
+        individual_label = 'Anon' + self.reviewers_name[:-1]
+
+        if is_area_chair:
+            parent_label = self.area_chairs_name
+            individual_label = self.area_chairs_name[:-1]
+
+        return tools.add_assignment(self.client, number, self.get_id(), user, parent_label = parent_label, individual_label = individual_label)
 
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False):
 
@@ -288,6 +396,7 @@ class ConferenceBuilder(object):
         self.client = client
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
+        self.override_homepage = False
 
 
     def __build_groups(self, conference_id):
@@ -338,8 +447,17 @@ class ConferenceBuilder(object):
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
 
+    def set_authorpage_header(self, header):
+        self.conference.set_authorpage_header(header)
+
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)
+
+    def set_override_homepage(self, override):
+        self.override_homepage = override
+
+    def set_double_blind(self, double_blind):
+        self.conference.set_double_blind(double_blind)
 
     def get_result(self):
 
@@ -353,15 +471,18 @@ class ConferenceBuilder(object):
             root_id = groups[1].id
         self.client.add_members_to_group(host, root_id)
 
-        options = self.conference.get_homepage_options()
-        options['reviewers_name'] = self.conference.reviewers_name
-        options['area_chairs_name'] = self.conference.area_chairs_name
-        options['reviewers_id'] = self.conference.get_reviewers_id()
-        options['authors_id'] = self.conference.get_authors_id()
-        options['program_chairs_id'] = self.conference.get_program_chairs_id()
-        options['area_chairs_id'] = self.conference.get_area_chairs_id()
-        options['submission_id'] = self.conference.get_submission_id()
-        self.webfield_builder.set_home_page(group = groups[-1], layout = self.conference.layout, options = options)
+        home_group = groups[-1]
+        if not home_group.web or self.override_homepage:
+            options = self.conference.get_homepage_options()
+            options['reviewers_name'] = self.conference.reviewers_name
+            options['area_chairs_name'] = self.conference.area_chairs_name
+            options['reviewers_id'] = self.conference.get_reviewers_id()
+            options['authors_id'] = self.conference.get_authors_id()
+            options['program_chairs_id'] = self.conference.get_program_chairs_id()
+            options['area_chairs_id'] = self.conference.get_area_chairs_id()
+            options['submission_id'] = self.conference.get_submission_id()
+            options['blind_submission_id'] = self.conference.get_blind_submission_id()
+            self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)
         return self.conference

@@ -863,7 +863,7 @@ def assign(client, paper_number, conference,
     use_profile = True):
 
     '''
-    DEPRECATED as of openreveiew-py revision 0.9.5
+    DEPRECATED as of openreview-py revision 0.9.5
 
     Either assigns or unassigns a reviewer to a paper.
     TODO: Is this function really necessary?

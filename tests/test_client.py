@@ -12,15 +12,16 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 8, 'groups is empty'
-        assert groups[0].id == '(anonymous)'
-        assert groups[1].id == 'everyone'
-        assert groups[2].id == '~'
-        assert groups[3].id == '(guest)'
-        assert groups[4].id == '~Super_User1'
-        assert groups[5].id == 'openreview.net'
-        assert groups[6].id == 'active_venues'
-        assert groups[7].id == 'host'
+        assert len(groups) == 11, 'groups is empty'
+        group_names = [g.id for g in groups]
+        assert '(anonymous)' in group_names
+        assert 'everyone' in group_names
+        assert '~' in group_names
+        assert '(guest)' in group_names
+        assert '~Super_User1' in group_names
+        assert 'openreview.net' in group_names
+        assert 'active_venues' in group_names
+        assert 'host' in group_names
 
     def test_get_invitations(self, client):
         invitations = client.get_invitations()
@@ -53,7 +54,7 @@ class TestClient():
         invitations = openreview.tools.get_submission_invitations(guest)
         assert len(invitations) == 0, "Invitations could not be retrieved for guest user"
         venues = openreview.tools.get_all_venues(guest)
-        assert len(venues) == 0, "Venues could not be retrieved for guest user"
+        assert len(venues) == 1, "Venues could not be retrieved for guest user"
 
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
@@ -72,6 +73,9 @@ class TestClient():
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*Profile not found.*'):
             profile = client.get_profile('mbok@sss.edu')
+
+        assert openreview.tools.get_profile(client, '~Super_User1')
+        assert not openreview.tools.get_profile(client, 'mbok@sss.edu')
 
     def test_get_profiles(self, client):
         guest = openreview.Client()
@@ -93,6 +97,17 @@ class TestClient():
 
         profiles = client.get_profiles([])
         assert len(profiles) == 0
+
+        profiles = client.get_profiles()
+        assert len(profiles) == 1
+        assert profiles[0].id == '~Super_User1'
+
+        assert '~Melisa_Bok1' == client.get_profiles(id = '~Melisa_Bok1')[0].id
+        assert '~Melisa_Bok1' == client.get_profiles(email = 'mbok@mail.com')[0].id
+        assert '~Melisa_Bok1' == client.get_profiles(first = 'Melisa')[0].id
+        assert len(client.get_profiles(id = '~Melisa_Bok2')) == 0
+        assert len(client.get_profiles(email = 'mail@mail.com')) == 0
+        assert len(client.get_profiles(first = 'Anna')) == 0
 
     def test_confirm_registration(self):
 
