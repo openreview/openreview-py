@@ -766,3 +766,43 @@ class TestDoubleBlindConference():
         assert 'ac@mail.com' in recipients
 
 
+    def test_consoles(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+
+        #Program chair user
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert pc_client is not None, "Client is none"
+        res = pc_client.register_user(email = 'pc2@mail.com', first = 'ProgramTwoChair', last = 'Test', password = '1234')
+        assert res, "Res i none"
+        res = pc_client.activate_user('pc2@mail.com', {
+            'names': [
+                    {
+                        'first': 'ProgramTwoChair',
+                        'last': 'Test',
+                        'username': '~ProgramTwoChair_Test1'
+                    }
+                ],
+            'emails': ['pc2@mail.com'],
+            'preferredEmail': 'pc2@mail.com'
+            })
+        assert res, "Res i none"
+        group = pc_client.get_group(id = 'pc2@mail.com')
+        assert group
+        assert group.members == ['~ProgramTwoChair_Test1']
+
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", pc_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
