@@ -482,4 +482,36 @@ class TestSingleBlindConference():
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
 
+        #Program chair user
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert pc_client is not None, "Client is none"
+        res = pc_client.register_user(email = 'pc@mail.com', first = 'ProgramChair', last = 'Test', password = '1234')
+        assert res, "Res i none"
+        res = pc_client.activate_user('pc@mail.com', {
+            'names': [
+                    {
+                        'first': 'ProgramChair',
+                        'last': 'Test',
+                        'username': '~ProgramChair_Test1'
+                    }
+                ],
+            'emails': ['pc@mail.com'],
+            'preferredEmail': 'pc@mail.com'
+            })
+        assert res, "Res i none"
+        group = pc_client.get_group(id = 'pc@mail.com')
+        assert group
+        assert group.members == ['~ProgramChair_Test1']
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS", pc_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
+
+
 
