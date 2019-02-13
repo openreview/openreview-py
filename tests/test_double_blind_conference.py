@@ -803,7 +803,7 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Meta_Review',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['everyone'],
+            readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
             writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             content = {
