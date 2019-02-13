@@ -45,22 +45,22 @@ class Conference(object):
             return self.client.add_members_to_group(group, members)
 
     def __set_author_page(self):
-        authors_group = self.client.get_group(self.get_authors_id())
+        authors_group = tools.get_group(self.client, self.get_authors_id())
         if authors_group:
             return self.webfield_builder.set_author_page(self, authors_group)
 
     def __set_reviewer_page(self):
-        reviewers_group = self.client.get_group(self.get_reviewers_id())
+        reviewers_group = tools.get_group(self.client, self.get_reviewers_id())
         if reviewers_group:
             return self.webfield_builder.set_reviewer_page(self, reviewers_group)
 
     def __set_area_chair_page(self):
-        area_chairs_group = self.client.get_group(self.get_area_chairs_id())
+        area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
         if area_chairs_group:
             return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
 
     def __set_program_chair_page(self):
-        program_chairs_group = self.client.get_group(self.get_program_chairs_id())
+        program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
         if program_chairs_group:
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
@@ -578,6 +578,7 @@ class ConferenceBuilder(object):
             options['submission_id'] = self.conference.get_submission_id()
             options['blind_submission_id'] = self.conference.get_blind_submission_id()
             self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
+        self.client.add_members_to_group(home_group, self.conference.get_program_chairs_id())
 
         self.conference.set_conference_groups(groups)
         return self.conference
