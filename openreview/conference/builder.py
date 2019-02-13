@@ -299,6 +299,8 @@ class Conference(object):
             posted_blind_note = self.client.post_note(posted_blind_note)
             blinded_notes.append(posted_blind_note)
 
+        # Update page with double blind submissions
+        self.__set_program_chair_page()
         return blinded_notes
 
     def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
