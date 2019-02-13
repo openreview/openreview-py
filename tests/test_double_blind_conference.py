@@ -829,7 +829,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
 
         #Program chair user
-        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', '1234')
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
 
 
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", pc_client.token)
