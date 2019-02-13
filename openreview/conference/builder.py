@@ -339,6 +339,8 @@ class Conference(object):
 
     def set_program_chairs(self, emails):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        ## Give program chairs admin permissions
+        self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
     def set_area_chairs(self, emails):
@@ -580,7 +582,6 @@ class ConferenceBuilder(object):
             options['submission_id'] = self.conference.get_submission_id()
             options['blind_submission_id'] = self.conference.get_blind_submission_id()
             self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
-        self.client.add_members_to_group(home_group, self.conference.get_program_chairs_id())
 
         self.conference.set_conference_groups(groups)
         return self.conference
