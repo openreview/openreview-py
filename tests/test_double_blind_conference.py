@@ -19,7 +19,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-
+        builder.set_double_blind(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -69,6 +69,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_name('Automated Knowledge Base Construction')
         builder.set_override_homepage(True)
+        builder.set_double_blind(True)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -226,6 +227,7 @@ class TestDoubleBlindConference():
                 </ul></p>',
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
+        builder.set_double_blind(True)
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
         assert invitation
@@ -270,6 +272,7 @@ class TestDoubleBlindConference():
             'instructions': 'Instructions for author console',
             'schedule': 'This is the author schedule'
         })
+        builder.set_double_blind(True)
         conference = builder.get_result()
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = ['Machine Learning',
             'Natural Language Processing',
@@ -401,6 +404,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_short_name('AKBC 2019')
+        builder.set_double_blind(True)
         conference = builder.get_result()
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
@@ -520,6 +524,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
         conference = builder.get_result()
 
         result = conference.set_program_chairs(['pc@mail.com', 'pc2@mail.com'])
@@ -566,6 +571,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
         conference = builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
@@ -652,7 +658,7 @@ class TestDoubleBlindConference():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-    def test_open_reviews(self, client, test_client, selenium, request_page):
+    def test_open_bids(self, client, test_client, selenium, request_page):
 
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert reviewer_client is not None, "Client is none"
@@ -673,6 +679,28 @@ class TestDoubleBlindConference():
         group = reviewer_client.get_group(id = 'reviewer2@mail.com')
         assert group
         assert group.members == ['~Reviewer_DoubleBlind1']
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        conference = builder.get_result()
+        conference.set_authors()
+        conference.set_area_chairs(emails = ['ac@mail.com'])
+        conference.set_reviewers(emails = ['reviewer2@mail.com'])
+
+        invitation = conference.open_bids(due_date = datetime.datetime(2019, 10, 5, 18, 00), request_count = 50, with_area_chairs = False)
+        assert invitation
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/-/Bid", reviewer_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+
+
+    def test_open_reviews(self, client, test_client, selenium, request_page):
+
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -737,4 +765,79 @@ class TestDoubleBlindConference():
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
 
+    def test_open_meta_reviews(self, client, test_client, selenium, request_page):
 
+        ac_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert ac_client is not None, "Client is none"
+        res = ac_client.register_user(email = 'ac@mail.com', first = 'AreaChair', last = 'DoubleBlind', password = '1234')
+        assert res, "Res i none"
+        res = ac_client.activate_user('ac@mail.com', {
+            'names': [
+                    {
+                        'first': 'AreaChair',
+                        'last': 'DoubleBlind',
+                        'username': '~AreaChair_DoubleBlind1'
+                    }
+                ],
+            'emails': ['ac@mail.com'],
+            'preferredEmail': 'ac@mail.com'
+            })
+        assert res, "Res i none"
+        group = ac_client.get_group(id = 'ac@mail.com')
+        assert group
+        assert group.members == ['~AreaChair_DoubleBlind1']
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+
+        conference.open_meta_reviews('Meta_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00))
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Meta_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
+            content = {
+                'title': 'Meta review title',
+                'metareview': 'Paper is very good!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain'
+            }
+        )
+        meta_review_note = ac_client.post_note(note)
+        assert meta_review_note
+
+
+
+    def test_consoles(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+
+        #Program chair user
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
+
+
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", pc_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Program Chair Console' == console.find_element_by_tag_name('a').text

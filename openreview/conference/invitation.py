@@ -105,6 +105,47 @@ class BlindSubmissionsInvitation(openreview.Invitation):
             }
         )
 
+class BidInvitation(openreview.Invitation):
+    def __init__(self, conference, due_date, request_count, with_area_chairs):
+
+        readers = [
+            conference.get_id(),
+            conference.get_program_chairs_id(),
+            conference.get_reviewers_id()
+        ]
+
+        invitees = [ conference.get_reviewers_id() ]
+        if with_area_chairs:
+            readers.append(conference.get_area_chairs_id())
+            invitees.append(conference.get_area_chairs_id())
+
+        super(BidInvitation, self).__init__(id = conference.get_bid_id(),
+            readers = readers,
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            multiReply = True,
+            taskCompletionCount = request_count,
+            reply = {
+                'forum': None,
+                'replyto': None,
+                'invitation': conference.get_blind_submission_id(),
+                'readers': {
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'tag': {
+                        'required': True,
+                        'value-radio': [ 'High', 'Neutral', 'Low', 'Very Low', 'No Bid']
+                    }
+                }
+            }
+        )
+
+
 
 class PublicCommentInvitation(openreview.Invitation):
 
@@ -271,6 +312,44 @@ class ReviewInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
+class MetaReviewInvitation(openreview.Invitation):
+
+    def __init__(self, conference, name, number, paper_id, due_date, public):
+        content = invitations.meta_review.copy()
+
+        readers = ['everyone']
+
+        if not public:
+            readers = [
+                conference.get_area_chairs_id(number),
+                conference.get_program_chairs_id()
+            ]
+
+        super(MetaReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(number) + '/' + name,
+            duedate = tools.datetime_millis(due_date),
+            readers = ['everyone'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = [conference.get_area_chairs_id(number)],
+            reply = {
+                'forum': paper_id,
+                'replyto': paper_id,
+                'readers': {
+                    "description": "Select all user groups that should be able to read this comment.",
+                    "values": readers
+                },
+                'writers': {
+                    'values-regex': conference.get_area_chairs_id(number)[:-1] + '[0-9]+',
+                    'description': 'How your identity will be displayed.'
+                },
+                'signatures': {
+                    'values-regex': conference.get_area_chairs_id(number)[:-1] + '[0-9]+',
+                    'description': 'How your identity will be displayed.'
+                },
+                'content': content
+            }
+        )
+
 
 class InvitationBuilder(object):
 
@@ -317,6 +396,12 @@ class InvitationBuilder(object):
 
         return  self.client.post_invitation(invitation)
 
+    def set_bid_invitation(self, conference, due_date, request_count, with_area_chairs):
+
+        invitation = BidInvitation(conference, due_date, request_count, with_area_chairs)
+
+        return self.client.post_invitation(invitation)
+
     def set_public_comment_invitation(self, conference_id, notes, name, anonymous):
 
         for note in notes:
@@ -331,6 +416,11 @@ class InvitationBuilder(object):
 
         for note in notes:
             self.client.post_invitation(ReviewInvitation(conference, name, note.number, note.id, due_date, public))
+
+    def set_meta_review_invitation(self, conference, notes, name, due_date, public):
+
+        for note in notes:
+            self.client.post_invitation(MetaReviewInvitation(conference, name, note.number, note.id, due_date, public))
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 

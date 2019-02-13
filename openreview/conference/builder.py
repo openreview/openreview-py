@@ -18,6 +18,9 @@ class Conference(object):
         self.short_name = ''
         self.homepage_header = {}
         self.authorpage_header = {}
+        self.reviewerpage_header = {}
+        self.areachairpage_header = {}
+        self.bidpage_header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.authors_name = 'Authors'
@@ -25,6 +28,7 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
+        self.bid_name = 'Bid'
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
@@ -39,6 +43,31 @@ class Conference(object):
                 members = members))
         else:
             return self.client.add_members_to_group(group, members)
+
+    def __set_author_page(self):
+        authors_group = self.client.get_group(self.get_authors_id())
+        if authors_group:
+            return self.webfield_builder.set_author_page(self, authors_group)
+
+    def __set_reviewer_page(self):
+        reviewers_group = self.client.get_group(self.get_reviewers_id())
+        if reviewers_group:
+            return self.webfield_builder.set_reviewer_page(self, reviewers_group)
+
+    def __set_area_chair_page(self):
+        area_chairs_group = self.client.get_group(self.get_area_chairs_id())
+        if area_chairs_group:
+            return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
+
+    def __set_program_chair_page(self):
+        program_chairs_group = self.client.get_group(self.get_program_chairs_id())
+        if program_chairs_group:
+            return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
+
+    def __set_bid_page(self):
+        bid_invitation = self.client.get_invitation(self.get_bid_id())
+        if bid_invitation:
+            return self.webfield_builder.set_bid_page(self, bid_invitation)
 
     def set_id(self, id):
         self.id = id
@@ -106,6 +135,9 @@ class Conference(object):
         else:
             return self.get_submission_id()
 
+    def get_bid_id(self):
+        return self.id + '/-/' + self.bid_name
+
     def set_conference_groups(self, groups):
         self.groups = groups
 
@@ -117,9 +149,31 @@ class Conference(object):
 
     def set_authorpage_header(self, header):
         self.authorpage_header = header
+        return self.__set_author_page()
 
     def get_authorpage_header(self):
         return self.authorpage_header
+
+    def set_reviewerpage_header(self, header):
+        self.reviewerpage_header = header
+        return self.__set_reviewer_page()
+
+    def get_reviewerpage_header(self):
+        return self.reviewerpage_header
+
+    def set_areachairpage_header(self, header):
+        self.areachairpage_header = header
+        return self.__set_area_chair_page()
+
+    def get_areachairpage_header(self):
+        return self.areachairpage_header
+
+    def set_bidpage_header(self, header):
+        self.bidpage_header = header
+        return self.__set_bid_page
+
+    def get_bidpage_header(self):
+        return self.bidpage_header
 
     def set_homepage_layout(self, layout):
         self.layout = layout
@@ -147,7 +201,7 @@ class Conference(object):
     def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, additional_readers = [], include_keywords = True, include_TLDR = True):
 
         ## Author console
-        authors_group = openreview.Group(id = self.id + '/Authors',
+        authors_group = openreview.Group(id = self.get_authors_id(),
             readers = ['everyone'],
             signatories = [self.id],
             signatures = [self.id],
@@ -247,6 +301,14 @@ class Conference(object):
 
         return blinded_notes
 
+    def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
+        self.invitation_builder.set_bid_invitation(self, due_date, request_count, with_area_chairs)
+        return self.__set_bid_page()
+
+    def close_bids(self):
+        invitation = self.client.get_invitation(self.get_bid_id())
+        invitation.invitees = []
+        return self.client.post_invitation(invitation)
 
     def open_comments(self, name, public, anonymous):
         ## Create comment invitations per paper
@@ -269,19 +331,21 @@ class Conference(object):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_review_invitation(self, notes_iterator, name, due_date, public)
 
+    def open_meta_reviews(self, name, due_date = None, public = False):
+        notes_iterator = self.get_submissions()
+        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, due_date, public)
+
     def set_program_chairs(self, emails):
-        pcs_id = self.get_program_chairs_id()
-        return self.__create_group(pcs_id, self.id, emails)
+        self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        return self.__set_program_chair_page()
 
     def set_area_chairs(self, emails):
-        acs_id = self.get_area_chairs_id()
-        return self.__create_group(acs_id, self.id, emails)
+        self.__create_group(self.get_area_chairs_id(), self.id, emails)
+        return self.__set_area_chair_page()
 
     def set_reviewers(self, emails):
-        reviewers_id = self.get_reviewers_id()
-        group = self.__create_group(reviewers_id, self.id, emails)
-
-        return self.webfield_builder.set_reviewer_page(self, group)
+        self.__create_group(self.get_reviewers_id(), self.id, emails)
+        return self.__set_reviewer_page()
 
     def set_authors(self):
         notes_iterator = self.get_submissions(details = 'original')
@@ -301,8 +365,33 @@ class Conference(object):
         if is_area_chair:
             parent_label = self.area_chairs_name
             individual_label = self.area_chairs_name[:-1]
-
-        return tools.add_assignment(self.client, number, self.get_id(), user, parent_label = parent_label, individual_label = individual_label)
+            return tools.add_assignment(self.client,
+            number,
+            self.get_id(),
+            user,
+            parent_label = parent_label,
+            individual_label = individual_label)
+        else:
+            return tools.add_assignment(self.client,
+            number,
+            self.get_id(),
+            user,
+            parent_label = parent_label,
+            individual_label = individual_label,
+            individual_group_params = {
+                'readers': [
+                    self.get_id(),
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = number)
+                ],
+            },
+            parent_group_params = {
+                'readers': [
+                    self.get_id(),
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = number)
+                ]
+            })
 
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False):
 
@@ -449,6 +538,12 @@ class ConferenceBuilder(object):
 
     def set_authorpage_header(self, header):
         self.conference.set_authorpage_header(header)
+
+    def set_reviewerpage_header(self, header):
+        self.conference.set_reviewerpage_header(header)
+
+    def set_areachairpage_header(self, header):
+        self.conference.set_areachairpage_header(header)
 
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)
