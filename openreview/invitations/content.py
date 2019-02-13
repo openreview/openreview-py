@@ -109,8 +109,7 @@ meta_review = {
         'value-dropdown': [
             'Accept (Oral)',
             'Accept (Poster)',
-            'Reject',
-            'Invite to Workshop Track'
+            'Reject'
         ],
         'required': True
     },

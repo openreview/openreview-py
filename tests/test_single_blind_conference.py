@@ -326,7 +326,7 @@ class TestSingleBlindConference():
         builder.set_conference_short_name('MLITS 2018')
         conference = builder.get_result()
         conference.set_authors()
-        conference.set_program_chairs(emails = ['pc@mail.com'])
+        conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer@mail.com'])
 
@@ -485,9 +485,9 @@ class TestSingleBlindConference():
         #Program chair user
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'pc@mail.com', first = 'ProgramChair', last = 'Test', password = '1234')
+        res = pc_client.register_user(email = 'pc2@mail.com', first = 'ProgramChair', last = 'Test', password = '1234')
         assert res, "Res i none"
-        res = pc_client.activate_user('pc@mail.com', {
+        res = pc_client.activate_user('pc2@mail.com', {
             'names': [
                     {
                         'first': 'ProgramChair',
@@ -495,11 +495,11 @@ class TestSingleBlindConference():
                         'username': '~ProgramChair_Test1'
                     }
                 ],
-            'emails': ['pc@mail.com'],
-            'preferredEmail': 'pc@mail.com'
+            'emails': ['pc2@mail.com'],
+            'preferredEmail': 'pc2@mail.com'
             })
         assert res, "Res i none"
-        group = pc_client.get_group(id = 'pc@mail.com')
+        group = pc_client.get_group(id = 'pc2@mail.com')
         assert group
         assert group.members == ['~ProgramChair_Test1']
 

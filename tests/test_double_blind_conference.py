@@ -765,6 +765,58 @@ class TestDoubleBlindConference():
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
 
+    def test_open_meta_reviews(self, client, test_client, selenium, request_page):
+
+        ac_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert ac_client is not None, "Client is none"
+        res = ac_client.register_user(email = 'ac@mail.com', first = 'AreaChair', last = 'DoubleBlind', password = '1234')
+        assert res, "Res i none"
+        res = ac_client.activate_user('ac@mail.com', {
+            'names': [
+                    {
+                        'first': 'AreaChair',
+                        'last': 'DoubleBlind',
+                        'username': '~AreaChair_DoubleBlind1'
+                    }
+                ],
+            'emails': ['ac@mail.com'],
+            'preferredEmail': 'ac@mail.com'
+            })
+        assert res, "Res i none"
+        group = ac_client.get_group(id = 'ac@mail.com')
+        assert group
+        assert group.members == ['~AreaChair_DoubleBlind1']
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+
+        conference.open_meta_reviews('Meta_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Meta_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['everyone'],
+            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
+            content = {
+                'title': 'Meta review title',
+                'metareview': 'Paper is very good!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain'
+            }
+        )
+        meta_review_note = ac_client.post_note(note)
+        assert meta_review_note
+
+
 
     def test_consoles(self, client, test_client, selenium, request_page):
 
