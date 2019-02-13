@@ -704,7 +704,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
         individual groups AND the parent group.
     '''
 
-    individual_groups = client.get_groups(id = '{}/Paper{}/{}.*'.format(conference, paper_number, individual_label))
+    individual_groups = client.get_groups(regex = '{}/Paper{}/{}[0-9]+$'.format(conference, paper_number, individual_label))
     individual_groups = [g for g in individual_groups if g.id != parent_group.id]
     unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
     return [parent_group, individual_groups, unassigned_individual_groups]
