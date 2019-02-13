@@ -795,7 +795,7 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
 
-        conference.open_meta_reviews('Meta_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
+        conference.open_meta_reviews('Meta_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
@@ -829,25 +829,8 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
 
         #Program chair user
-        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
-        assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'pc2@mail.com', first = 'ProgramTwoChair', last = 'Test', password = '1234')
-        assert res, "Res i none"
-        res = pc_client.activate_user('pc2@mail.com', {
-            'names': [
-                    {
-                        'first': 'ProgramTwoChair',
-                        'last': 'Test',
-                        'username': '~ProgramTwoChair_Test1'
-                    }
-                ],
-            'emails': ['pc2@mail.com'],
-            'preferredEmail': 'pc2@mail.com'
-            })
-        assert res, "Res i none"
-        group = pc_client.get_group(id = 'pc2@mail.com')
-        assert group
-        assert group.members == ['~ProgramTwoChair_Test1']
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', '1234')
+
 
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", pc_client.token)
         notes_panel = selenium.find_element_by_id('notes')
