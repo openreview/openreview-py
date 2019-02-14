@@ -115,6 +115,10 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
       return;
     }
     var prevVal = _.has(updatedNote.details, 'tags[0].tag') ? updatedNote.details.tags[0].tag : 'No Bid';
+
+    if (tagObj.ddate) {
+      tagObj.tag = 'No Bid';
+    }
     updatedNote.details.tags[0] = tagObj;
 
     var tagToContainerId = {
