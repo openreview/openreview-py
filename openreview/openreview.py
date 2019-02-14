@@ -410,7 +410,8 @@ class Client(object):
             limit = None,
             offset = None,
             mintcdate = None,
-            details = None):
+            details = None,
+            sort = None):
         """
         Returns a list of Note objects based on the filters provided.
 
@@ -465,6 +466,7 @@ class Client(object):
             params['mintcdate'] = mintcdate
         if details != None:
             params['details'] = details
+        params['sort'] = sort
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)

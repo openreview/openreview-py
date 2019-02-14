@@ -263,7 +263,7 @@ class Conference(object):
         self.invitation_builder.set_blind_submission_invitation(self)
         blinded_notes = []
 
-        for note in tools.iterget_notes(self.client, invitation = self.get_submission_id()):
+        for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
             blind_note = openreview.Note(
                 original= note.id,
                 invitation= self.get_blind_submission_id(),

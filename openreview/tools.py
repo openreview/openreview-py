@@ -475,7 +475,8 @@ def iterget_notes(client,
         number = None,
         mintcdate = None,
         content = None,
-        details = None):
+        details = None,
+        sort = None):
     '''
     Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
 
@@ -526,6 +527,7 @@ def iterget_notes(client,
         params['content'] = content
     if details != None:
         params['details'] = details
+    params['sort'] = sort
 
     return iterget(client.get_notes, **params)
 
