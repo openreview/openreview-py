@@ -195,10 +195,11 @@ class Conference(object):
             options['deadline'] = self.homepage_header.get('deadline')
         return options
 
-    def get_submissions(self, details = None):
-        return tools.iterget_notes(self.client, invitation = self.get_blind_submission_id(), details = details)
+    def get_submissions(self, blind = True, details = None):
+        invitation = self.get_blind_submission_id() if blind else self.get_submission_id()
+        return tools.iterget_notes(self.client, invitation = invitation, details = details)
 
-    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, additional_readers = [], include_keywords = True, include_TLDR = True):
+    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, remove_fields = []):
 
         ## Author console
         authors_group = openreview.Group(id = self.get_authors_id(),
@@ -217,9 +218,7 @@ class Conference(object):
             'due_date': due_date,
             'subject_areas': subject_areas,
             'additional_fields': additional_fields,
-            'additional_readers': additional_readers,
-            'include_keywords': include_keywords,
-            'include_TLDR': include_TLDR
+            'remove_fields': remove_fields
         }
         return self.invitation_builder.set_submission_invitation(self.id, due_date, options)
 

@@ -10,7 +10,7 @@ from .. import tools
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, include_keywords = True, include_TLDR = True, additional_fields = None, additional_readers = []):
+    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, additional_fields = None, remove_fields = []):
 
         content = invitations.submission.copy()
 
@@ -22,23 +22,20 @@ class SubmissionInvitation(openreview.Invitation):
                 'required': True
             }
 
+        for field in remove_fields:
+            del content[field]
+
         for order, key in enumerate(additional_fields, start=10):
             value = additional_fields[key]
             value['order'] = order
             content[key] = value
-
-        if not include_keywords:
-            del content['keywords']
-
-        if not include_TLDR:
-            del content['TL;DR']
 
         readers = {
             'values-copied': [
                 conference_id,
                 '{content.authorids}',
                 '{signatures}'
-            ] + additional_readers
+            ]
         }
 
         if public:
@@ -384,9 +381,7 @@ class InvitationBuilder(object):
             public = built_options.get('public'),
             subject_areas = built_options.get('subject_areas'),
             additional_fields = built_options.get('additional_fields'),
-            additional_readers = built_options.get('additional_readers'),
-            include_keywords = built_options.get('include_keywords'),
-            include_TLDR = built_options.get('include_TLDR'))
+            remove_fields = built_options.get('remove_fields'))
 
         return self.client.post_invitation(invitation)
 
