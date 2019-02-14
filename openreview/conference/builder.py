@@ -45,22 +45,22 @@ class Conference(object):
             return self.client.add_members_to_group(group, members)
 
     def __set_author_page(self):
-        authors_group = self.client.get_group(self.get_authors_id())
+        authors_group = tools.get_group(self.client, self.get_authors_id())
         if authors_group:
             return self.webfield_builder.set_author_page(self, authors_group)
 
     def __set_reviewer_page(self):
-        reviewers_group = self.client.get_group(self.get_reviewers_id())
+        reviewers_group = tools.get_group(self.client, self.get_reviewers_id())
         if reviewers_group:
             return self.webfield_builder.set_reviewer_page(self, reviewers_group)
 
     def __set_area_chair_page(self):
-        area_chairs_group = self.client.get_group(self.get_area_chairs_id())
+        area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
         if area_chairs_group:
             return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
 
     def __set_program_chair_page(self):
-        program_chairs_group = self.client.get_group(self.get_program_chairs_id())
+        program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
         if program_chairs_group:
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
@@ -299,6 +299,8 @@ class Conference(object):
             posted_blind_note = self.client.post_note(posted_blind_note)
             blinded_notes.append(posted_blind_note)
 
+        # Update page with double blind submissions
+        self.__set_program_chair_page()
         return blinded_notes
 
     def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
@@ -337,6 +339,8 @@ class Conference(object):
 
     def set_program_chairs(self, emails):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        ## Give program chairs admin permissions
+        self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
     def set_area_chairs(self, emails):

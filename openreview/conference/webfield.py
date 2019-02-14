@@ -216,7 +216,7 @@ class WebfieldBuilder(object):
         program_chairs_name = conference.program_chairs_name
 
         default_header = {
-            'title': program_chairs_name + ' Console',
+            'title': program_chairs_name.replace('_', ' ') + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
             progresses, so please check back frequently for news and other updates.</p>'
@@ -224,11 +224,15 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, {})
 
+        submission_id = conference.get_submission_id()
+        if next(conference.get_submissions(), None):
+            submission_id = conference.get_blind_submission_id()
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + submission_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             group.web = content
             return self.client.post_group(group)
