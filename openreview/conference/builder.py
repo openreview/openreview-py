@@ -341,6 +341,16 @@ class Conference(object):
         notes_iterator = self.get_submissions(blind=False)
         return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, due_date, public, invitation.reply['content'], additional_fields, remove_fields)
 
+    def close_revise_submissions(self, name):
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+
+        for i in invitations:
+            i.expdate = round(time.time() * 1000)
+            self.client.post_invitation(i)
+
+        return len(invitations)
+
+
     def set_program_chairs(self, emails):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
         ## Give program chairs admin permissions
