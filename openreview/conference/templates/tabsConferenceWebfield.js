@@ -57,7 +57,7 @@ function load() {
 
   var notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
-    details: 'replyCount'
+    details: 'replyCount,original'
   });
 
   if (!user || _.startsWith(user.id, 'guest_')) {

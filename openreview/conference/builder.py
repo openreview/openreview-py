@@ -195,10 +195,11 @@ class Conference(object):
             options['deadline'] = self.homepage_header.get('deadline')
         return options
 
-    def get_submissions(self, details = None):
-        return tools.iterget_notes(self.client, invitation = self.get_blind_submission_id(), details = details)
+    def get_submissions(self, blind = True, details = None):
+        invitation = self.get_blind_submission_id() if blind else self.get_submission_id()
+        return tools.iterget_notes(self.client, invitation = invitation, details = details)
 
-    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, additional_readers = [], include_keywords = True, include_TLDR = True):
+    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, remove_fields = []):
 
         ## Author console
         authors_group = openreview.Group(id = self.get_authors_id(),
@@ -217,9 +218,7 @@ class Conference(object):
             'due_date': due_date,
             'subject_areas': subject_areas,
             'additional_fields': additional_fields,
-            'additional_readers': additional_readers,
-            'include_keywords': include_keywords,
-            'include_TLDR': include_TLDR
+            'remove_fields': remove_fields
         }
         return self.invitation_builder.set_submission_invitation(self.id, due_date, options)
 
@@ -264,7 +263,7 @@ class Conference(object):
         self.invitation_builder.set_blind_submission_invitation(self)
         blinded_notes = []
 
-        for note in tools.iterget_notes(self.client, invitation = self.get_submission_id()):
+        for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
             blind_note = openreview.Note(
                 original= note.id,
                 invitation= self.get_blind_submission_id(),
@@ -337,6 +336,21 @@ class Conference(object):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, due_date, public)
 
+    def open_revise_submissions(self, name, due_date = None, public = False, additional_fields = {}, remove_fields = []):
+        invitation = self.client.get_invitation(self.get_submission_id())
+        notes_iterator = self.get_submissions(blind=False)
+        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, due_date, public, invitation.reply['content'], additional_fields, remove_fields)
+
+    def close_revise_submissions(self, name):
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+
+        for i in invitations:
+            i.expdate = round(time.time() * 1000)
+            self.client.post_invitation(i)
+
+        return len(invitations)
+
+
     def set_program_chairs(self, emails):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
         ## Give program chairs admin permissions
@@ -352,12 +366,12 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_iterator = self.get_submissions(details = 'original')
+        notes_iterator = self.get_submissions(blind=True, details='original')
 
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
             authorids = n.content.get('authorids')
-            if n.details and n.details['original']:
+            if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
