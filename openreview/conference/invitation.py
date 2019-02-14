@@ -102,6 +102,61 @@ class BlindSubmissionsInvitation(openreview.Invitation):
             }
         )
 
+class SubmissionRevisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, name, note, due_date, public, submission_content, additional_fields, remove_fields):
+
+        content = submission_content.copy()
+
+        for field in remove_fields:
+            del content[field]
+
+        for order, key in enumerate(additional_fields, start=10):
+            value = additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        readers = {
+            'values-copied': [
+                conference.get_id(),
+                '{content.authorids}',
+                '{signatures}'
+            ]
+        }
+
+        if public:
+            readers = {
+                'values': ['everyone']
+            }
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            super(SubmissionRevisionInvitation, self).__init__(id = conference.get_id() + '/-/Paper' + str(note.number) + '/' + name,
+                duedate = tools.datetime_millis(due_date),
+                readers = ['everyone'],
+                writers = [conference.get_id()],
+                signatures = [conference.get_id()],
+                invitees = note.content['authorids'] + note.signatures,
+                reply = {
+                    'forum': note.id,
+                    'referent': note.id,
+                    'readers': readers,
+                    'writers': {
+                        'values-copied': [
+                            conference.get_id(),
+                            '{content.authorids}',
+                            '{signatures}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': '~.*'
+                    },
+                    'content': content
+                },
+                process_string = file_content
+            )
+
 class BidInvitation(openreview.Invitation):
     def __init__(self, conference, due_date, request_count, with_area_chairs):
 
@@ -416,6 +471,11 @@ class InvitationBuilder(object):
 
         for note in notes:
             self.client.post_invitation(MetaReviewInvitation(conference, name, note.number, note.id, due_date, public))
+
+    def set_revise_submission_invitation(self, conference, notes, name, due_date, public, submission_content, additional_fields, remove_fields):
+
+        for note in notes:
+            self.client.post_invitation(SubmissionRevisionInvitation(conference, name, note, due_date, public, submission_content, additional_fields, remove_fields))
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 

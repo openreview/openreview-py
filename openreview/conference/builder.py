@@ -336,6 +336,11 @@ class Conference(object):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, due_date, public)
 
+    def open_revise_submissions(self, name, due_date = None, public = False, additional_fields = {}, remove_fields = []):
+        invitation = self.client.get_invitation(self.get_submission_id())
+        notes_iterator = self.get_submissions(blind=False)
+        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, due_date, public, invitation.reply['content'], additional_fields, remove_fields)
+
     def set_program_chairs(self, emails):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
         ## Give program chairs admin permissions
@@ -351,12 +356,12 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_iterator = self.get_submissions(details = 'original')
+        notes_iterator = self.get_submissions(blind=True, details='original')
 
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
             authorids = n.content.get('authorids')
-            if n.details and n.details['original']:
+            if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
