@@ -143,7 +143,8 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
       console.warn('Note not found!');
     }
 
-    // If the current tab is not the All Papers tab remove the note from the DOM
+    // If the current tab is not the All Papers tab remove the note from the DOM and
+    // update the state of tag widget in the All Papers tab
     if (activeTab) {
       var $elem = $(e.target).closest('.note');
       $elem.fadeOut('normal', function() {
@@ -154,6 +155,10 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
           $container.append('<li><p class="empty-message">No papers to display at this time</p></li>');
         }
       });
+
+      var $noteToChange = $('#allPapers .submissions-list .note[data-id="' + updatedNote.id + '"]');
+      $noteToChange.find('label[data-value="' + prevVal + '"]').button('toggle');
+      $noteToChange.find('label[data-value="' + tagObj.tag + '"]').button('toggle');
     }
 
     updateCounts();
