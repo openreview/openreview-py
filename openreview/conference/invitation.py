@@ -191,7 +191,7 @@ class BidInvitation(openreview.Invitation):
                 'content': {
                     'tag': {
                         'required': True,
-                        'value-radio': [ 'High', 'Neutral', 'Low', 'Very Low', 'No Bid']
+                        'value-radio': [ 'Very High', 'High', 'Neutral', 'Low', 'Very Low']
                     }
                 }
             }
