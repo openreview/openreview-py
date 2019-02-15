@@ -88,25 +88,21 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
     activeTab = $(e.target).data('tabIndex');
     var containerId = sections[activeTab].id;
 
-    if (containerId !== 'allPapers') {
-      setTimeout(function() {
-        Webfield.ui.submissionList(binnedNotes[containerId], {
-          heading: null,
-          container: '#' + containerId,
-          search: { enabled: false },
-          displayOptions: paperDisplayOptions,
-          fadeIn: false
-          //pageSize: 50
-        });
-      }, 100);
-    }
+    setTimeout(function() {
+      Webfield.ui.submissionList(binnedNotes[containerId], {
+        heading: null,
+        container: '#' + containerId,
+        search: { enabled: false },
+        displayOptions: paperDisplayOptions,
+        fadeIn: false
+        //pageSize: 50
+      });
+    }, 100);
   });
 
   $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
     var containerId = $(e.target).attr('href');
-    if (containerId !== '#allPapers') {
-      Webfield.ui.spinner(containerId, {inline: true});
-    }
+    Webfield.ui.spinner(containerId, {inline: true});
   });
 
   $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, tagObj) {
@@ -162,6 +158,7 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
   function updateNotes(notes) {
     // Sort notes into bins by bid
     binnedNotes = {
+      allPapers: notes,
       noBid: [],
       veryHigh: [],
       high: [],
