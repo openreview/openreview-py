@@ -157,7 +157,8 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
       });
 
       var $noteToChange = $('#allPapers .submissions-list .note[data-id="' + updatedNote.id + '"]');
-      $noteToChange.find('label[data-value="' + prevVal + '"]').button('toggle');
+      $noteToChange.find('label[data-value="' + prevVal + '"]').removeClass('active')
+        .children('input').prop('checked', false);
       $noteToChange.find('label[data-value="' + tagObj.tag + '"]').button('toggle');
     }
 
