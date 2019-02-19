@@ -153,7 +153,7 @@ function renderContent(notes, userGroups, activityNotes, authorNotes) {
       $('#your-consoles .submissions-list').append([
         '<li class="note invitation-link">',
           '<a href="/group?id=' + AREA_CHAIRS_ID + '" >',
-          AREA_CHAIRS_NAME.replace('_', ' ') + ' Console',
+          AREA_CHAIRS_NAME.replace(/_/g, ' ') + ' Console',
           '</a>',
         '</li>'
       ].join(''));
@@ -163,7 +163,7 @@ function renderContent(notes, userGroups, activityNotes, authorNotes) {
       $('#your-consoles .submissions-list').append([
         '<li class="note invitation-link">',
           '<a href="/group?id=' + REVIEWERS_ID + '" >',
-          REVIEWERS_NAME.replace('_', ' ') + ' Console',
+          REVIEWERS_NAME.replace(/_/g, ' ') + ' Console',
           '</a>',
         '</li>'
       ].join(''));

@@ -284,8 +284,8 @@ class Conference(object):
             else:
                 posted_blind_note.readers = [
                     self.get_program_chairs_id(),
-                    self.get_area_chairs_id(number = posted_blind_note.number),
-                    self.get_reviewers_id(number = posted_blind_note.number),
+                    self.get_area_chairs_id(),
+                    self.get_reviewers_id(),
                     self.get_authors_id(number = posted_blind_note.number)
                 ]
 
