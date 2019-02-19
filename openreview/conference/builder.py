@@ -6,6 +6,7 @@ from .. import openreview
 from .. import tools
 from . import webfield
 from . import invitation
+from . import matching
 
 
 class Conference(object):
@@ -374,6 +375,10 @@ class Conference(object):
             if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
+
+    def setup_matching(self):
+        conference_matching = matching.Matching()
+        return conference_matching.setup(self)
 
     def set_assignment(self, user, number, is_area_chair = False):
 
