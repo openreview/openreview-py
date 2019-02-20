@@ -4,6 +4,7 @@ var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
+var AREA_CHAIR_NAME = '';
 
 var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
 var OFFICIAL_META_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Meta_Review';
@@ -78,11 +79,17 @@ var loadData = function(result) {
   }
 
   var invitationsP = Webfield.getAll('/invitations', {
-    invitation: WILDCARD_INVITATION, invitee: true,
+    regex: WILDCARD_INVITATION, invitee: true,
     duedate: true, replyto: true, details: 'replytoNote,repliedNotes'
   });
 
-  var tagInvitationsP = Webfield.api.getTagInvitations(BLIND_SUBMISSION_ID);
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    tags: true,
+    details:'repliedTags'
+  });
 
   return $.when(
     blindedNotesP,
@@ -454,7 +461,7 @@ var renderTasks = function(invitations, tagInvitations) {
 
   // Filter out non-areachair tasks
   var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf('Area_Chair') !== -1; });
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
   };
   var areachairInvitations = _.filter(invitations, filterFunc);
   var areachairTagInvitations = _.filter(tagInvitations, filterFunc);

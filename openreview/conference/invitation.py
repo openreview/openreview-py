@@ -172,6 +172,7 @@ class BidInvitation(openreview.Invitation):
             invitees.append(conference.get_area_chairs_id())
 
         super(BidInvitation, self).__init__(id = conference.get_bid_id(),
+            duedate = tools.datetime_millis(due_date),
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -191,7 +192,7 @@ class BidInvitation(openreview.Invitation):
                 'content': {
                     'tag': {
                         'required': True,
-                        'value-radio': [ 'High', 'Neutral', 'Low', 'Very Low', 'No Bid']
+                        'value-radio': [ 'Very High', 'High', 'Neutral', 'Low', 'Very Low']
                     }
                 }
             }
