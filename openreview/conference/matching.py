@@ -1,4 +1,5 @@
 import openreview
+import csv
 from collections import defaultdict
 
 class Matching(object):
@@ -100,7 +101,7 @@ class Matching(object):
         return client.post_note(new_metadata_note)
 
 
-    def setup(self, conference):
+    def setup(self, conference, affinity_score_file = None):
 
         client = conference.client
         CONFERENCE_ID = conference.get_id()
@@ -109,6 +110,9 @@ class Matching(object):
         METADATA_INV_ID = CONFERENCE_ID + '/-/Paper_Metadata'
         REVIEWERS_ID = conference.get_reviewers_id()
         AREA_CHAIRS_ID = conference.get_area_chairs_id()
+        scores = ['bid']
+        if affinity_score_file:
+            scores.append('affinity')
 
         metadata_inv = openreview.Invitation.from_json({
             'id': METADATA_INV_ID,
@@ -237,7 +241,7 @@ class Matching(object):
                         'order': 11
                     },
                     'scores_names': {
-                        'values-dropdown': ['bid'],
+                        'values-dropdown': scores,
                         'required': True,
                         'description': 'List of scores names',
                         'order': 12
@@ -306,8 +310,14 @@ class Matching(object):
 
         scores_by_reviewer_by_paper = {note.forum: defaultdict(dict) for note in submissions}
 
-        # An integrity check to verify that the bid tags refer to papers in the conference.
-        #check_inputs(submissions)
+        if affinity_score_file:
+            with open(affinity_score_file) as f:
+                for row in csv.reader(f):
+                    paper_note_id = row[0]
+                    profile_id = row[1]
+                    score = row[2]
+                    if paper_note_id in scores_by_reviewer_by_paper:
+                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'affinity': float(score)})
 
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
