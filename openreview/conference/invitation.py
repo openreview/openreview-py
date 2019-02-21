@@ -516,3 +516,83 @@ class InvitationBuilder(object):
                 process_string = content)
 
             return self.client.post_invitation(invitation)
+
+    def set_recommendation_invitation(self, conference, due_date, notes_iterator, assingment_notes_iterator):
+
+        assignment_note_by_forum = {}
+        for assignment_note in assingment_notes_iterator:
+            assignment_note_by_forum[assignment_note.forum] = assignment_note.content
+
+        # Create super invitation with a webfield
+        recommendation_invitation = openreview.Invitation(
+            id = conference.get_id() + '/-/Recommendation',
+            duedate = tools.datetime_millis(due_date),
+            readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
+            invitees = [],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            multiReply = False,
+            reply = {
+                'invitation': conference.get_blind_submission_id(),
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
+                'signatures': {
+                    'description': 'How your identity will be displayed with the above content.',
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'tag': {
+                        'description': 'Recommend a reviewer to review this paper',
+                        'order': 1,
+                        'required': True,
+                        'values-url': '/groups?id=' + conference.get_reviewers_id()
+                    }
+                }
+            }
+        )
+
+        recommendation_invitation = self.client.post_invitation(recommendation_invitation)
+        # Create subinvitation with different list of reviewers, bid, tpms score.
+
+        for note in notes_iterator:
+            reviewers = []
+            assignment_note = assignment_note_by_forum.get(note.id)
+            if assignment_note:
+                for group in assignment_note['assignedGroups']:
+                    reviewers.append('{profileId} (Assigned) - Bid: {bid} - Tpms: {tpms}'.format(
+                        profileId = group.get('userId'),
+                        bid = group.get('scores').get('bid'),
+                        tpms = group.get('scores').get('affinity'))
+                    )
+                for group in assignment_note['alternateGroups']:
+                    reviewers.append('{profileId} (Alternate) - Bid: {bid} - Tpms: {tpms}'.format(
+                        profileId = group.get('userId'),
+                        bid = group.get('scores').get('bid'),
+                        tpms = group.get('scores').get('affinity'))
+                    )
+            else:
+                raise openreview.OpenReviewException('Assignment note not found for ' + note.id)
+            paper_recommendation_invitation = openreview.Invitation(
+                id = conference.get_id() + '/-/Paper{number}/Recommendation'.format(number = note.number),
+                super = recommendation_invitation.id,
+                invitees = [conference.get_program_chairs_id(), conference.get_id() + '/Paper{number}/Area_Chairs'.format(number = note.number)],
+                writers = [conference.get_id()],
+                signatures = [conference.get_id()],
+                multiReply = False,
+                reply = {
+                    'forum': note.id,
+                    'content': {
+                        'tag': {
+                            'description': 'Recommend reviewer',
+                            'order': 1,
+                            'required': True,
+                            'values-dropdown': reviewers
+                        }
+                    }
+                }
+            )
+            paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
+            print('Posted', paper_recommendation_invitation.id)
+

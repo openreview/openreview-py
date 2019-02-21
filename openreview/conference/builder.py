@@ -70,6 +70,9 @@ class Conference(object):
         if bid_invitation:
             return self.webfield_builder.set_bid_page(self, bid_invitation)
 
+    def __set_recommendation_page(self):
+        return True
+
     def set_id(self, id):
         self.id = id
 
@@ -312,6 +315,13 @@ class Conference(object):
         invitation.invitees = []
         return self.client.post_invitation(invitation)
 
+    def open_recommendations(self, due_date, reviewer_assingment_title):
+        notes_iterator = self.get_submissions()
+        assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
+        self.invitation_builder.set_recommendation_invitation(self, due_date, notes_iterator, assingment_notes_iterator)
+        return self.__set_recommendation_page()
+
+
     def open_comments(self, name, public, anonymous):
         ## Create comment invitations per paper
         notes_iterator = self.get_submissions()
@@ -377,8 +387,8 @@ class Conference(object):
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
     def setup_matching(self):
-        conference_matching = matching.Matching()
-        return conference_matching.setup(self)
+        conference_matching = matching.Matching(self)
+        return conference_matching.setup()
 
     def set_assignment(self, user, number, is_area_chair = False):
 
@@ -415,6 +425,10 @@ class Conference(object):
                     self.get_area_chairs_id(number = number)
                 ]
             })
+
+    def set_assignments(self, assingment_title):
+        conference_matching = matching.Matching(self)
+        return conference_matching.deploy(assingment_title)
 
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False):
 
