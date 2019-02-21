@@ -81,7 +81,7 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
-    def set_bid_page(self, conference, invitation):
+    def set_bid_page(self, conference, invitation, subject_areas):
 
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
@@ -115,6 +115,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + conference.get_bid_id() + "';")
+            content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(subject_areas) + ";")
 
             invitation.web = content
             return self.client.post_invitation(invitation)
