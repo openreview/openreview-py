@@ -7,6 +7,7 @@ var HEADER = {};
 var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
 var BID_ID = '';
+var SUBJECT_AREAS = '';
 
 var USER_SCORES_INVITATION_ID = CONFERENCE_ID + '/-/User_Scores';
 
@@ -269,7 +270,7 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
       search: {
         enabled: true,
         localSearch: true,
-        subjectAreas: [],
+        subjectAreas: SUBJECT_AREAS,
         subjectAreaDropdown: 'basic',
         sort: false,
         onResults: function(searchResults) {

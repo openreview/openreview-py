@@ -65,10 +65,10 @@ class Conference(object):
         if program_chairs_group:
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
-    def __set_bid_page(self):
+    def __set_bid_page(self, subject_areas):
         bid_invitation = self.client.get_invitation(self.get_bid_id())
         if bid_invitation:
-            return self.webfield_builder.set_bid_page(self, bid_invitation)
+            return self.webfield_builder.set_bid_page(self, bid_invitation, subject_areas)
 
     def __set_recommendation_page(self):
         return True
@@ -306,9 +306,9 @@ class Conference(object):
         self.__set_program_chair_page()
         return blinded_notes
 
-    def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
+    def open_bids(self, due_date, request_count = 50, with_area_chairs = False, subject_areas = []):
         self.invitation_builder.set_bid_invitation(self, due_date, request_count, with_area_chairs)
-        return self.__set_bid_page()
+        return self.__set_bid_page(subject_areas)
 
     def close_bids(self):
         invitation = self.client.get_invitation(self.get_bid_id())
@@ -386,9 +386,9 @@ class Conference(object):
                 authorids = n.details['original']['content']['authorids']
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
-    def setup_matching(self):
+    def setup_matching(self, affinity_score_file = None):
         conference_matching = matching.Matching(self)
-        return conference_matching.setup()
+        return conference_matching.setup(affinity_score_file)
 
     def set_assignment(self, user, number, is_area_chair = False):
 
