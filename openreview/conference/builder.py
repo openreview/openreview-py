@@ -324,7 +324,7 @@ class Conference(object):
         invitation.invitees = []
         return self.client.post_invitation(invitation)
 
-    def open_recommendations(self, due_date, reviewer_assingment_title]):
+    def open_recommendations(self, due_date, reviewer_assingment_title):
         notes_iterator = self.get_submissions()
         assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
         self.invitation_builder.set_recommendation_invitation(self, due_date, notes_iterator, assingment_notes_iterator)
