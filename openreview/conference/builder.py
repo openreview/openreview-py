@@ -14,6 +14,7 @@ class Conference(object):
     def __init__(self, client):
         self.client = client
         self.double_blind = False
+        self.subject_areas = []
         self.groups = []
         self.name = ''
         self.short_name = ''
@@ -65,15 +66,15 @@ class Conference(object):
         if program_chairs_group:
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
-    def __set_bid_page(self, subject_areas):
+    def __set_bid_page(self):
         bid_invitation = self.client.get_invitation(self.get_bid_id())
         if bid_invitation:
-            return self.webfield_builder.set_bid_page(self, bid_invitation, subject_areas)
+            return self.webfield_builder.set_bid_page(self, bid_invitation)
 
-    def __set_recommendation_page(self, subject_areas):
+    def __set_recommendation_page(self):
         recommendation_invitation = self.client.get_invitation(self.get_id() + '/-/Recommendation')
         if recommendation_invitation:
-            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, subject_areas)
+            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation)
 
     def set_id(self, id):
         self.id = id
@@ -187,6 +188,12 @@ class Conference(object):
     def set_double_blind(self, double_blind):
         self.double_blind = double_blind
 
+    def set_subject_areas(self, subject_areas):
+        self.subject_areas = subject_areas
+
+    def get_subject_areas(self):
+        return self.subject_areas
+
     def get_homepage_options(self):
         options = {}
         if self.name:
@@ -205,7 +212,7 @@ class Conference(object):
         invitation = self.get_blind_submission_id() if blind else self.get_submission_id()
         return tools.iterget_notes(self.client, invitation = invitation, details = details)
 
-    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, remove_fields = []):
+    def open_submissions(self, due_date = None, public = False, additional_fields = {}, remove_fields = []):
 
         ## Author console
         authors_group = openreview.Group(id = self.get_authors_id(),
@@ -222,7 +229,7 @@ class Conference(object):
             'public': public,
             'submission_name': self.submission_name,
             'due_date': due_date,
-            'subject_areas': subject_areas,
+            'subject_areas': self.subject_areas,
             'additional_fields': additional_fields,
             'remove_fields': remove_fields
         }
@@ -308,20 +315,20 @@ class Conference(object):
         self.__set_program_chair_page()
         return blinded_notes
 
-    def open_bids(self, due_date, request_count = 50, with_area_chairs = False, subject_areas = []):
+    def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
         self.invitation_builder.set_bid_invitation(self, due_date, request_count, with_area_chairs)
-        return self.__set_bid_page(subject_areas)
+        return self.__set_bid_page()
 
     def close_bids(self):
         invitation = self.client.get_invitation(self.get_bid_id())
         invitation.invitees = []
         return self.client.post_invitation(invitation)
 
-    def open_recommendations(self, due_date, reviewer_assingment_title, subject_areas = []):
+    def open_recommendations(self, due_date, reviewer_assingment_title]):
         notes_iterator = self.get_submissions()
         assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
         self.invitation_builder.set_recommendation_invitation(self, due_date, notes_iterator, assingment_notes_iterator)
-        return self.__set_recommendation_page(subject_areas)
+        return self.__set_recommendation_page()
 
 
     def open_comments(self, name, public, anonymous):
@@ -592,6 +599,9 @@ class ConferenceBuilder(object):
 
     def set_double_blind(self, double_blind):
         self.conference.set_double_blind(double_blind)
+
+    def set_subject_areas(self, subject_areas):
+        self.conference.set_subject_areas(subject_areas)
 
     def get_result(self):
 
