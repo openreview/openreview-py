@@ -531,7 +531,7 @@ class InvitationBuilder(object):
             invitees = [],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            multiReply = False,
+            multiReply = True,
             reply = {
                 'invitation': conference.get_blind_submission_id(),
                 'readers': {
@@ -561,13 +561,13 @@ class InvitationBuilder(object):
             assignment_note = assignment_note_by_forum.get(note.id)
             if assignment_note:
                 for group in assignment_note['assignedGroups']:
-                    reviewers.append('{profileId}/Assigned/Bid_{bid}/Tpms:{tpms}'.format(
+                    reviewers.append('{profileId} (A) - Bid: {bid} - Tpms: {tpms}'.format(
                         profileId = group.get('userId'),
                         bid = group.get('scores').get('bid'),
                         tpms = group.get('scores').get('affinity'))
                     )
                 for group in assignment_note['alternateGroups']:
-                    reviewers.append('{profileId}/Alternate/Bid_{bid}/Tpms:{tpms}'.format(
+                    reviewers.append('{profileId} - Bid: {bid} - Tpms: {tpms}'.format(
                         profileId = group.get('userId'),
                         bid = group.get('scores').get('bid'),
                         tpms = group.get('scores').get('affinity'))
@@ -580,7 +580,7 @@ class InvitationBuilder(object):
                 invitees = [conference.get_program_chairs_id(), conference.get_id() + '/Paper{number}/Area_Chairs'.format(number = note.number)],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
-                multiReply = False,
+                multiReply = True,
                 reply = {
                     'forum': note.id,
                     'content': {
