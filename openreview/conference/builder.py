@@ -70,8 +70,10 @@ class Conference(object):
         if bid_invitation:
             return self.webfield_builder.set_bid_page(self, bid_invitation, subject_areas)
 
-    def __set_recommendation_page(self):
-        return True
+    def __set_recommendation_page(self, subject_areas):
+        recommendation_invitation = self.client.get_invitation(self.get_id() + '/-/Recommendation')
+        if recommendation_invitation:
+            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, subject_areas)
 
     def set_id(self, id):
         self.id = id
@@ -315,11 +317,11 @@ class Conference(object):
         invitation.invitees = []
         return self.client.post_invitation(invitation)
 
-    def open_recommendations(self, due_date, reviewer_assingment_title):
+    def open_recommendations(self, due_date, reviewer_assingment_title, subject_areas = []):
         notes_iterator = self.get_submissions()
         assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
         self.invitation_builder.set_recommendation_invitation(self, due_date, notes_iterator, assingment_notes_iterator)
-        return self.__set_recommendation_page()
+        return self.__set_recommendation_page(subject_areas)
 
 
     def open_comments(self, name, public, anonymous):

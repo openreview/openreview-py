@@ -561,13 +561,13 @@ class InvitationBuilder(object):
             assignment_note = assignment_note_by_forum.get(note.id)
             if assignment_note:
                 for group in assignment_note['assignedGroups']:
-                    reviewers.append('{profileId} (Assigned) - Bid: {bid} - Tpms: {tpms}'.format(
+                    reviewers.append('{profileId}/Assigned/Bid_{bid}/Tpms:{tpms}'.format(
                         profileId = group.get('userId'),
                         bid = group.get('scores').get('bid'),
                         tpms = group.get('scores').get('affinity'))
                     )
                 for group in assignment_note['alternateGroups']:
-                    reviewers.append('{profileId} (Alternate) - Bid: {bid} - Tpms: {tpms}'.format(
+                    reviewers.append('{profileId}/Alternate/Bid_{bid}/Tpms:{tpms}'.format(
                         profileId = group.get('userId'),
                         bid = group.get('scores').get('bid'),
                         tpms = group.get('scores').get('affinity'))
