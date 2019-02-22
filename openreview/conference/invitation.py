@@ -10,15 +10,15 @@ from .. import tools
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference_id, conference_short_name, due_date, name, public = False, subject_areas = None, additional_fields = None, remove_fields = []):
+    def __init__(self, conference, due_date, readers, additional_fields, remove_fields):
 
         content = invitations.submission.copy()
 
-        if subject_areas:
+        if conference.get_subject_areas():
             content['subject_areas'] = {
                 'order' : 5,
                 'description' : "Select or type subject area",
-                'values-dropdown': subject_areas,
+                'values-dropdown': conference.get_subject_areas(),
                 'required': True
             }
 
@@ -30,27 +30,14 @@ class SubmissionInvitation(openreview.Invitation):
             value['order'] = order
             content[key] = value
 
-        readers = {
-            'values-copied': [
-                conference_id,
-                '{content.authorids}',
-                '{signatures}'
-            ]
-        }
-
-        if public:
-            readers = {
-                'values': ['everyone']
-            }
-
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference_short_name + "';")
-            super(SubmissionInvitation, self).__init__(id = conference_id + '/-/' + name,
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
                 duedate = tools.datetime_millis(due_date),
                 readers = ['everyone'],
-                writers = [conference_id],
-                signatures = [conference_id],
+                writers = [conference.get_id()],
+                signatures = [conference.get_id()],
                 invitees = ['~'],
                 reply = {
                     'forum': None,
@@ -58,7 +45,7 @@ class SubmissionInvitation(openreview.Invitation):
                     'readers': readers,
                     'writers': {
                         'values-copied': [
-                            conference_id,
+                            conference.get_id(),
                             '{content.authorids}',
                             '{signatures}'
                         ]
@@ -420,24 +407,38 @@ class InvitationBuilder(object):
 
         return merged_options
 
-    def set_submission_invitation(self, conference_id, due_date, options = {}):
+    def set_submission_invitation(self, conference, due_date, additional_fields, remove_fields):
 
-        default_options = {
-            'public': False,
-            'subject_areas': None,
-            'additional_fields': None
-        }
+        readers = {}
 
-        built_options = self.__build_options(default_options, options)
+        ## TODO: move this to an object
+        if conference.double_blind:
+            readers = {
+                'values-copied': [
+                    conference.get_id(),
+                    '{content.authorids}',
+                    '{signatures}'
+                ] + conference.get_original_readers()
+            }
+        else:
+            if conference.submission_public:
+                readers = {
+                    'values': ['everyone']
+                }
+            else:
+                readers = {
+                    'values-copied': [
+                        conference.get_id(),
+                        '{content.authorids}',
+                        '{signatures}'
+                    ] + conference.get_submission_readers()
+                }
 
-        invitation = SubmissionInvitation(conference_id = conference_id,
-            conference_short_name = built_options.get('conference_short_name'),
+        invitation = SubmissionInvitation(conference = conference,
             due_date = due_date,
-            name = built_options.get('submission_name'),
-            public = built_options.get('public'),
-            subject_areas = built_options.get('subject_areas'),
-            additional_fields = built_options.get('additional_fields'),
-            remove_fields = built_options.get('remove_fields'))
+            readers = readers,
+            additional_fields = additional_fields,
+            remove_fields = remove_fields)
 
         return self.client.post_invitation(invitation)
 

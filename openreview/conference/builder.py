@@ -14,6 +14,9 @@ class Conference(object):
     def __init__(self, client):
         self.client = client
         self.double_blind = False
+        self.submission_public = False
+        self.original_readers = []
+        self.subject_areas = []
         self.groups = []
         self.name = ''
         self.short_name = ''
@@ -182,6 +185,28 @@ class Conference(object):
     def set_double_blind(self, double_blind):
         self.double_blind = double_blind
 
+    def set_submission_public(self, submission_public):
+        self.submission_public = submission_public
+
+    def get_submission_readers(self):
+        return [
+            self.get_program_chairs_id(),
+            self.get_area_chairs_id(),
+            self.get_reviewers_id()
+        ]
+
+    def set_original_readers(self, additional_readers):
+        self.original_readers = additional_readers
+
+    def get_original_readers(self):
+        return self.original_readers
+
+    def set_subject_areas(self, subject_areas):
+        self.subject_areas = subject_areas
+
+    def get_subject_areas(self):
+        return self.subject_areas
+
     def get_homepage_options(self):
         options = {}
         if self.name:
@@ -200,7 +225,7 @@ class Conference(object):
         invitation = self.get_blind_submission_id() if blind else self.get_submission_id()
         return tools.iterget_notes(self.client, invitation = invitation, details = details)
 
-    def open_submissions(self, due_date = None, public = False, subject_areas = [], additional_fields = {}, remove_fields = []):
+    def open_submissions(self, due_date = None, additional_fields = {}, remove_fields = []):
 
         ## Author console
         authors_group = openreview.Group(id = self.get_authors_id(),
@@ -212,16 +237,7 @@ class Conference(object):
         self.webfield_builder.set_author_page(self, authors_group)
 
         ## Submission invitation
-        options = {
-            'conference_short_name': self.short_name,
-            'public': public,
-            'submission_name': self.submission_name,
-            'due_date': due_date,
-            'subject_areas': subject_areas,
-            'additional_fields': additional_fields,
-            'remove_fields': remove_fields
-        }
-        return self.invitation_builder.set_submission_invitation(self.id, due_date, options)
+        return self.invitation_builder.set_submission_invitation(self, due_date, additional_fields, remove_fields)
 
     def close_submissions(self, freeze_submissions = True):
 
@@ -253,7 +269,7 @@ class Conference(object):
 
         return invitation
 
-    def create_blind_submissions(self, public = False):
+    def create_blind_submissions(self):
 
         if not self.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
@@ -280,7 +296,7 @@ class Conference(object):
 
             posted_blind_note = self.client.post_note(blind_note)
 
-            if public:
+            if self.submission_public:
                 posted_blind_note.readers = ['everyone']
             else:
                 posted_blind_note.readers = [
@@ -576,6 +592,23 @@ class ConferenceBuilder(object):
 
     def set_double_blind(self, double_blind):
         self.conference.set_double_blind(double_blind)
+
+    def enable_double_blind(self, read_reviewers = False, read_area_chairs = False, read_program_chairs = False):
+        self.conference.set_double_blind(True)
+        additional_readers = []
+        if read_reviewers:
+            additional_readers.append(self.conference.get_reviewers_id())
+        if read_area_chairs:
+            additional_readers.append(self.conference.get_area_chairs_id())
+        if read_program_chairs:
+            additional_readers.append(self.conference.get_program_chairs_id())
+        self.conference.set_original_readers(additional_readers)
+
+    def set_submission_public(self, submission_public):
+        self.conference.set_submission_public(submission_public)
+
+    def set_subject_areas(self, subject_areas):
+        self.conference.set_subject_areas(subject_areas)
 
     def get_result(self):
 
