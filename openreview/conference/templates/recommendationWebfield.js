@@ -86,7 +86,7 @@ function renderContent(notes, tagInvitations) {
   // Set up tabs
   var sections = [{
     heading: 'Your Assigned Papers',
-    id: 'all-submissions',
+    id: 'your-assigned-submissions',
   }];
 
   Webfield.ui.tabPanel(sections, {
@@ -100,7 +100,7 @@ function renderContent(notes, tagInvitations) {
     showContents: true,
     showTags: true,
     tagInvitations: tagInvitations,
-    container: '#all-submissions'
+    container: '#your-assigned-submissions'
   };
 
   Webfield.ui.submissionList(notes, {
