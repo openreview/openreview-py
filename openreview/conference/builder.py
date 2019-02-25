@@ -195,6 +195,7 @@ class Conference(object):
 
     def get_submission_readers(self):
         return [
+            self.get_program_chairs_id(),
             self.get_area_chairs_id(),
             self.get_reviewers_id()
         ]
@@ -605,7 +606,7 @@ class ConferenceBuilder(object):
     def set_double_blind(self, double_blind = True, reviewers_read_original = False, area_chairs_read_original = False):
         self.conference.set_double_blind(double_blind)
 
-        additional_readers = []
+        additional_readers = [self.conference.get_program_chairs_id()]
         if reviewers_read_original:
             additional_readers.append(self.conference.get_reviewers_id())
         if area_chairs_read_original:
