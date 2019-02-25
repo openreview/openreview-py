@@ -87,10 +87,11 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_submission_public(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
+        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
         assert invitation
         assert invitation.duedate == 1570298400000
 
@@ -120,8 +121,9 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_submission_public(True)
         conference = builder.get_result()
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
+        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         assert invitation
         assert invitation.id == 'NIPS.cc/2018/Workshop/MLITS/-/Submission'

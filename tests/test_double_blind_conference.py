@@ -229,6 +229,7 @@ class TestDoubleBlindConference():
         })
         builder.set_double_blind(True)
         conference = builder.get_result()
+
         invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
         assert invitation
         assert invitation.duedate == 1570298400000
@@ -607,6 +608,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_public(True)
         conference = builder.get_result()
 
         with pytest.raises(openreview.OpenReviewException, match=r'Conference is not double blind'):
@@ -615,7 +617,7 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         conference = builder.get_result()
 
-        blind_submissions = conference.create_blind_submissions(public = True)
+        blind_submissions = conference.create_blind_submissions()
         assert blind_submissions
         assert len(blind_submissions) == 1
 
