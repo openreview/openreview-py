@@ -195,7 +195,6 @@ class Conference(object):
 
     def get_submission_readers(self):
         return [
-            self.get_program_chairs_id(),
             self.get_area_chairs_id(),
             self.get_reviewers_id()
         ]
@@ -304,10 +303,7 @@ class Conference(object):
             if self.submission_public:
                 posted_blind_note.readers = ['everyone']
             else:
-                posted_blind_note.readers = [
-                    self.get_program_chairs_id(),
-                    self.get_area_chairs_id(),
-                    self.get_reviewers_id(),
+                posted_blind_note.readers = self.get_submission_readers() + [
                     self.get_authors_id(number = posted_blind_note.number)
                 ]
 
@@ -606,18 +602,14 @@ class ConferenceBuilder(object):
     def set_override_homepage(self, override):
         self.override_homepage = override
 
-    def set_double_blind(self, double_blind):
+    def set_double_blind(self, double_blind = True, reviewers_read_original = False, area_chairs_read_original = False):
         self.conference.set_double_blind(double_blind)
 
-    def enable_double_blind(self, read_reviewers = False, read_area_chairs = False, read_program_chairs = False):
-        self.conference.set_double_blind(True)
         additional_readers = []
-        if read_reviewers:
+        if reviewers_read_original:
             additional_readers.append(self.conference.get_reviewers_id())
-        if read_area_chairs:
+        if area_chairs_read_original:
             additional_readers.append(self.conference.get_area_chairs_id())
-        if read_program_chairs:
-            additional_readers.append(self.conference.get_program_chairs_id())
         self.conference.set_original_readers(additional_readers)
 
     def set_submission_public(self, submission_public):
