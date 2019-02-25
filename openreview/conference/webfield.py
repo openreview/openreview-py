@@ -81,7 +81,7 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
-    def set_bid_page(self, conference, invitation, subject_areas):
+    def set_bid_page(self, conference, invitation):
 
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
@@ -115,7 +115,37 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + conference.get_bid_id() + "';")
-            content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(subject_areas) + ";")
+            content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.get_subject_areas()) + ";")
+
+            invitation.web = content
+            return self.client.post_invitation(invitation)
+
+    def set_recommendation_page(self, conference, invitation):
+
+        default_header = {
+            'title': conference.get_short_name() + ' Reviewer Recommendation Console',
+            'instructions': '<p class="dark">Please select the reviewers you want to recommend for each paper.</p>\
+                <p class="dark"><strong>Please note:</strong></p>\
+                <ul>\
+                    <li>The list of reviewers for each papers are sorted by assignment score.</li>\
+                    <li>Assigned: reviewers assigned using the first macthing, Alternate: next possible reviewers to assign.</li>\
+                </ul>\
+                <p class="dark"><strong>A few tips:</strong></p>\
+                <ul>\
+                    <li>.</li>\
+                    <li>.</li>\
+                </ul>\
+                <br>'
+        }
+
+        header = self.__build_options(default_header, {})
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recommendationWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.get_subject_areas()) + ";")
 
             invitation.web = content
             return self.client.post_invitation(invitation)

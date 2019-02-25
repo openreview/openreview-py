@@ -38,6 +38,8 @@ Set the properties that we need to start the conference
     >>>         </ul></p>',
     >>>     'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, October 5, 2019'
     >>> })
+    >>> conference = builder.set_double_blind(True)
+    >>> conference = builder.set_submission_public(True)
     >>> conference = builder.get_result()
 
 this will setup the home page of the conference: https://opereview.net/group?id=AKBC.ws/2019/Conference
