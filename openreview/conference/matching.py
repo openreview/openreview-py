@@ -4,6 +4,9 @@ from collections import defaultdict
 
 class Matching(object):
 
+    def __init__(self, conference):
+        self.conference = conference
+
     def clear(self, client, invitation):
         note_list = list(openreview.tools.iterget_notes(client, invitation = invitation))
         for note in note_list:
@@ -100,9 +103,40 @@ class Matching(object):
 
         return client.post_note(new_metadata_note)
 
+    def get_assignments(self, config_note, submissions, assignment_notes):
+        assignments = []
 
-    def setup(self, conference, affinity_score_file = None):
+        paper_by_forum = { n.forum: n for n in submissions }
 
+        added_constraints = config_note.content.get('constraints', {})
+
+        for assignment in assignment_notes:
+            assigned_groups = assignment.content['assignedGroups']
+            paper_constraints = added_constraints.get(assignment.forum, {})
+            paper_assigned = []
+            for assignment_entry in assigned_groups:
+                score = assignment_entry.get('finalScore', 0)
+                user_id = assignment_entry['userId']
+                paper_assigned.append(user_id)
+
+                paper = paper_by_forum.get(assignment.forum)
+
+                if paper and paper_constraints.get(user_id) != '-inf':
+                    current_row = [paper.number, paper.forum, user_id, score]
+                    assignments.append(current_row)
+
+            for user, constraint in paper_constraints.items():
+                print('user, constraint', user, constraint)
+                if user not in paper_assigned and constraint == '+inf':
+                    current_row = [paper.number, paper.forum, user, constraint]
+                    assignments.append(current_row)
+
+
+        return sorted(assignments, key=lambda x: x[0])
+
+    def setup(self, affinity_score_file):
+
+        conference = self.conference
         client = conference.client
         CONFERENCE_ID = conference.get_id()
         PROGRAM_CHAIRS_ID = conference.get_program_chairs_id()
@@ -322,6 +356,63 @@ class Matching(object):
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
             self.post_metadata_note(client, note, user_profiles, metadata_inv, scores_by_reviewer, {})
+
+
+    def deploy(self, assingment_title):
+
+        # Get the configuration note to check the group to assign
+        client = self.conference.client
+        notes = client.get_notes(invitation = self.conference.get_id() + '/-/Assignment_Configuration', content = { 'title': assingment_title })
+
+        if notes:
+            configuration_note = notes[0]
+            match_group = configuration_note.content['match_group']
+            is_area_chair = self.conference.get_area_chairs_id() == match_group
+            submissions = openreview.tools.iterget_notes(client, invitation = self.conference.get_blind_submission_id())
+            assignment_notes = openreview.tools.iterget_notes(client, invitation = self.conference.get_id() + '/-/Paper_Assignment', content = { 'title': assingment_title })
+
+
+            assignments = self.get_assignments(configuration_note, submissions, assignment_notes)
+
+            for a in assignments:
+                paper_number = a[0]
+                user = a[2]
+
+                if is_area_chair:
+                    parent_label = 'Area_Chairs'
+                    individual_label = 'Area_Chair'
+                    individual_group_params = {}
+                    parent_group_params = {}
+                else:
+                    parent_label = 'Reviewers'
+                    individual_label = 'AnonReviewer'
+                    individual_group_params = {
+                        'readers': [
+                            self.conference.get_id(),
+                            self.conference.get_program_chairs_id(),
+                            self.conference.get_area_chairs_id(number = paper_number)
+                        ],
+                    }
+                    parent_group_params = {
+                       'readers': [
+                            self.conference.get_id(),
+                            self.conference.get_program_chairs_id(),
+                            self.conference.get_area_chairs_id(number = paper_number)
+                        ]
+                    }
+
+                new_assigned_group = openreview.tools.add_assignment(
+                    client, paper_number, self.conference.get_id(), user,
+                    parent_label = parent_label,
+                    individual_label = individual_label,
+                    individual_group_params = individual_group_params,
+                    parent_group_params = parent_group_params)
+                print(new_assigned_group)
+
+
+        else:
+            raise openreview.OpenReviewException('Configuration not found for ' + assingment_title)
+
 
 
 

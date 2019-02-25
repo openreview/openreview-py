@@ -273,8 +273,7 @@ class TestDoubleBlindConference():
             'schedule': 'This is the author schedule'
         })
         builder.set_double_blind(True)
-        conference = builder.get_result()
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), subject_areas = ['Machine Learning',
+        builder.set_subject_areas(['Machine Learning',
             'Natural Language Processing',
             'Information Extraction',
             'Question Answering',
@@ -291,7 +290,9 @@ class TestDoubleBlindConference():
             'Fairness',
             'Human computation',
             'Crowd-sourcing',
-            'Other'], additional_fields = {
+            'Other'])
+        conference = builder.get_result()
+        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
                 'archival_status': {
                     'description': 'Authors can change the archival/non-archival status up until the decision deadline',
                     'value-radio': [
