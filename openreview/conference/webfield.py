@@ -81,7 +81,7 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
-    def set_bid_page(self, conference, invitation):
+    def set_bid_page(self, conference, invitation, subject_areas):
 
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
@@ -115,6 +115,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + conference.get_bid_id() + "';")
+            content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(subject_areas) + ";")
 
             invitation.web = content
             return self.client.post_invitation(invitation)
@@ -164,7 +165,7 @@ class WebfieldBuilder(object):
         reviewers_name = conference.reviewers_name
 
         default_header = {
-            'title': reviewers_name + ' Console',
+            'title': reviewers_name.replace('_', ' ') + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
             progresses, so please check back frequently for news and other updates.</p>',
@@ -182,6 +183,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var REVIEWER_NAME = {};", "var REVIEWER_NAME = " + conference.reviewers_name + ";")
             group.web = content
             return self.client.post_group(group)
 
@@ -190,7 +192,7 @@ class WebfieldBuilder(object):
         area_chair_name = conference.area_chairs_name
 
         default_header = {
-            'title': area_chair_name + ' Console',
+            'title': area_chair_name.replace('_', ' ') + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
             progresses, so please check back frequently for news and other updates.</p>',
@@ -208,6 +210,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var AREA_CHAIR_NAME = {};", "var AREA_CHAIR_NAME = " + conference.area_chairs_name + ";")
             group.web = content
             return self.client.post_group(group)
 

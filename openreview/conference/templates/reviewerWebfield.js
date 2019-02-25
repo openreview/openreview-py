@@ -4,6 +4,7 @@ var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
+var REVIEWER_NAME = '';
 
 var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
@@ -251,7 +252,7 @@ var displayTasks = function(invitations, tagInvitations){
 
   // Filter out non-reviewer tasks
   var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf('Reviewer') !== -1; });
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) !== -1; });
   };
   var reviewerInvitations = _.filter(invitations, filterFunc);
   var reviewerTagInvitations = _.filter(tagInvitations, filterFunc);
@@ -328,7 +329,7 @@ controller.addHandler('reviewers', {
           getOfficialReviews(noteNumbers),
           getReviewerGroups(noteNumbers),
           Webfield.get('/invitations', {
-            invitation: WILDCARD_INVITATION,
+            regex: WILDCARD_INVITATION,
             invitee: true,
             duedate: true,
             replyto: true,
@@ -337,7 +338,7 @@ controller.addHandler('reviewers', {
             return result.invitations;
           }),
           Webfield.get('/invitations', {
-            invitation: WILDCARD_INVITATION,
+            regex: WILDCARD_INVITATION,
             invitee: true,
             duedate: true,
             tags: true,

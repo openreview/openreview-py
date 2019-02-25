@@ -6,6 +6,7 @@ from .. import openreview
 from .. import tools
 from . import webfield
 from . import invitation
+from . import matching
 
 
 class Conference(object):
@@ -64,10 +65,10 @@ class Conference(object):
         if program_chairs_group:
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
-    def __set_bid_page(self):
+    def __set_bid_page(self, subject_areas):
         bid_invitation = self.client.get_invitation(self.get_bid_id())
         if bid_invitation:
-            return self.webfield_builder.set_bid_page(self, bid_invitation)
+            return self.webfield_builder.set_bid_page(self, bid_invitation, subject_areas)
 
     def set_id(self, id):
         self.id = id
@@ -284,8 +285,8 @@ class Conference(object):
             else:
                 posted_blind_note.readers = [
                     self.get_program_chairs_id(),
-                    self.get_area_chairs_id(number = posted_blind_note.number),
-                    self.get_reviewers_id(number = posted_blind_note.number),
+                    self.get_area_chairs_id(),
+                    self.get_reviewers_id(),
                     self.get_authors_id(number = posted_blind_note.number)
                 ]
 
@@ -302,9 +303,9 @@ class Conference(object):
         self.__set_program_chair_page()
         return blinded_notes
 
-    def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
+    def open_bids(self, due_date, request_count = 50, with_area_chairs = False, subject_areas = []):
         self.invitation_builder.set_bid_invitation(self, due_date, request_count, with_area_chairs)
-        return self.__set_bid_page()
+        return self.__set_bid_page(subject_areas)
 
     def close_bids(self):
         invitation = self.client.get_invitation(self.get_bid_id())
@@ -374,6 +375,10 @@ class Conference(object):
             if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
+
+    def setup_matching(self, affinity_score_file = None):
+        conference_matching = matching.Matching()
+        return conference_matching.setup(self, affinity_score_file)
 
     def set_assignment(self, user, number, is_area_chair = False):
 
