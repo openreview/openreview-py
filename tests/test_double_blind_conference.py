@@ -3,6 +3,7 @@ import openreview
 import pytest
 import requests
 import datetime
+import time
 import os
 import re
 from selenium.webdriver.common.by import By
@@ -230,13 +231,16 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         conference = builder.get_result()
 
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
         assert invitation
-        assert invitation.duedate == 1570298400000
+        assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
+        assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
 
         posted_invitation = client.get_invitation(id = 'AKBC.ws/2019/Conference/-/Submission')
         assert posted_invitation
-        assert posted_invitation.duedate == 1570298400000
+        assert posted_invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
+        assert posted_invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
 
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
 
@@ -293,7 +297,9 @@ class TestDoubleBlindConference():
             'Crowd-sourcing',
             'Other'])
         conference = builder.get_result()
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+
+        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10), additional_fields = {
                 'archival_status': {
                     'description': 'Authors can change the archival/non-archival status up until the decision deadline',
                     'value-radio': [

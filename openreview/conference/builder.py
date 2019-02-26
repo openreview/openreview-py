@@ -230,7 +230,18 @@ class Conference(object):
         invitation = self.get_blind_submission_id() if blind else self.get_submission_id()
         return tools.iterget_notes(self.client, invitation = invitation, details = details)
 
-    def open_submissions(self, due_date = None, additional_fields = {}, remove_fields = []):
+    def open_submissions(self, start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+        '''
+        Creates submission invitation and set the author console.
+
+        :arg start_date: when the invitation start to be active to the general public.
+
+        :arg due_date: paper submission deadline, we will set the exp_date 30 min after this value.
+
+        :arg additional_fields: dictionary of fields to add to the submission form.
+
+        :arg remove_fields: predefined field to remove from the original form: ['title', 'abstract', 'authors', 'authorids', 'keywords', 'TL;DR', 'pdf']
+        '''
 
         ## Author console
         authors_group = openreview.Group(id = self.get_authors_id(),
@@ -242,7 +253,7 @@ class Conference(object):
         self.webfield_builder.set_author_page(self, authors_group)
 
         ## Submission invitation
-        return self.invitation_builder.set_submission_invitation(self, due_date, additional_fields, remove_fields)
+        return self.invitation_builder.set_submission_invitation(self, start_date, due_date, additional_fields, remove_fields)
 
     def close_submissions(self, freeze_submissions = True):
 
@@ -321,8 +332,8 @@ class Conference(object):
         self.__set_program_chair_page()
         return blinded_notes
 
-    def open_bids(self, due_date, request_count = 50, with_area_chairs = False):
-        self.invitation_builder.set_bid_invitation(self, due_date, request_count, with_area_chairs)
+    def open_bids(self, start_date = None, due_date = None, request_count = 50, with_area_chairs = False):
+        self.invitation_builder.set_bid_invitation(self, start_date, due_date, request_count, with_area_chairs)
         return self.__set_bid_page()
 
     def close_bids(self):
@@ -330,20 +341,20 @@ class Conference(object):
         invitation.invitees = []
         return self.client.post_invitation(invitation)
 
-    def open_recommendations(self, due_date, reviewer_assingment_title):
+    def open_recommendations(self, reviewer_assingment_title, start_date = None, due_date = None):
         notes_iterator = self.get_submissions()
         assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
-        self.invitation_builder.set_recommendation_invitation(self, due_date, notes_iterator, assingment_notes_iterator)
+        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assingment_notes_iterator)
         return self.__set_recommendation_page()
 
 
-    def open_comments(self, name, public, anonymous):
+    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False):
         ## Create comment invitations per paper
         notes_iterator = self.get_submissions()
         if public:
-            self.invitation_builder.set_public_comment_invitation(self.id, notes_iterator, name, anonymous)
+            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous)
         else:
-            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, anonymous)
+            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous)
 
     def close_comments(self, name):
         invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
@@ -354,18 +365,18 @@ class Conference(object):
 
         return len(invitations)
 
-    def open_reviews(self, name, due_date = None, public = False):
+    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, due_date, public)
+        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, start_date, due_date, public)
 
-    def open_meta_reviews(self, name, due_date = None, public = False):
+    def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, due_date, public)
+        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, start_date, due_date, public)
 
-    def open_revise_submissions(self, name, due_date = None, public = False, additional_fields = {}, remove_fields = []):
+    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields = []):
         invitation = self.client.get_invitation(self.get_submission_id())
         notes_iterator = self.get_submissions(blind=False)
-        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, due_date, public, invitation.reply['content'], additional_fields, remove_fields)
+        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, public, invitation.reply['content'], additional_fields, remove_fields)
 
     def close_revise_submissions(self, name):
         invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
