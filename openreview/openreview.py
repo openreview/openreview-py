@@ -929,8 +929,9 @@ class Note(object):
         referent=None,
         replyto=None,
         nonreaders=None,
-        details = None,
-        tauthor=None):
+        details=None,
+        tauthor=None,
+        metaContent={}):
 
         self.id = id
         self.original = original
@@ -952,6 +953,8 @@ class Note(object):
         self.details = details
         if tauthor:
             self.tauthor = tauthor
+        if metaContent:
+            self.metaContent = metaContent
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -983,7 +986,8 @@ class Note(object):
             'signatures': self.signatures,
             'writers': self.writers,
             'number': self.number,
-            'details': self.details
+            'details': self.details,
+            'metaContent': self.metaContent
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
@@ -1014,7 +1018,8 @@ class Note(object):
         signatures=n.get('signatures'),
         writers=n.get('writers'),
         details=n.get('details'),
-        tauthor=n.get('tauthor')
+        tauthor=n.get('tauthor'),
+        metaContent=n.get('metaContent')
         )
         return note
 
