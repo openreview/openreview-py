@@ -23,8 +23,7 @@ def get_profile(client, value):
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if e.args[0][0] != 'Profile not found':
-            print("OpenReviewException: {0}".format(e))
-            return e
+            raise e
     return profile
 
 def get_group(client, id):
@@ -35,8 +34,7 @@ def get_group(client, id):
         # throw an error if it is something other than "not found"
         error = e.args[0][0]
         if not error.startswith('Group Not Found'):
-            print("OpenReviewException: {0}".format(error))
-            return e
+            raise e
     return group
 
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
@@ -101,7 +99,8 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
             }
             client.post_group(tilde_group)
             client.post_group(email_group)
-            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content))
+
+            profile = client.update_profile(openreview.Profile(id=tilde_id, content=profile_content))
 
             return profile
 
