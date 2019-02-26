@@ -318,7 +318,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['url']
 
-    def update_profile(self, profile):
+    def post_profile(self, profile):
         '''
         Updates the profile
         '''

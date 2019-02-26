@@ -100,7 +100,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
             client.post_group(tilde_group)
             client.post_group(email_group)
 
-            profile = client.update_profile(openreview.Profile(id=tilde_id, content=profile_content))
+            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content))
 
             return profile
 
