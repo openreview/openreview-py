@@ -8,3 +8,4 @@ Examples
    get_all_venues
    get_submission_invitations
    post_profiles
+   update_profiles
