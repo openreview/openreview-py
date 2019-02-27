@@ -372,10 +372,10 @@ class Conference(object):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, start_date, due_date, public)
 
-    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields = []):
+    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         invitation = self.client.get_invitation(self.get_submission_id())
         notes_iterator = self.get_submissions(blind=False)
-        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, public, invitation.reply['content'], additional_fields, remove_fields)
+        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)

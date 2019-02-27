@@ -95,7 +95,7 @@ class BlindSubmissionsInvitation(openreview.Invitation):
 
 class SubmissionRevisionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, due_date, public, submission_content, additional_fields, remove_fields):
+    def __init__(self, conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields):
 
         content = submission_content.copy()
 
@@ -106,19 +106,6 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             value = additional_fields[key]
             value['order'] = order
             content[key] = value
-
-        readers = {
-            'values-copied': [
-                conference.get_id(),
-                '{content.authorids}',
-                '{signatures}'
-            ]
-        }
-
-        if public:
-            readers = {
-                'values': ['everyone']
-            }
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
             file_content = f.read()
@@ -487,10 +474,35 @@ class InvitationBuilder(object):
         for note in notes:
             self.client.post_invitation(MetaReviewInvitation(conference, name, note, start_date, due_date, public))
 
-    def set_revise_submission_invitation(self, conference, notes, name, start_date, due_date, public, submission_content, additional_fields, remove_fields):
+    def set_revise_submission_invitation(self, conference, notes, name, start_date, due_date, submission_content, additional_fields, remove_fields):
+
+        readers = {}
+
+        ## TODO: move this to an object
+        if conference.double_blind:
+            readers = {
+                'values-copied': [
+                    conference.get_id(),
+                    '{content.authorids}',
+                    '{signatures}'
+                ] + conference.get_original_readers()
+            }
+        else:
+            if conference.submission_public:
+                readers = {
+                    'values': ['everyone']
+                }
+            else:
+                readers = {
+                    'values-copied': [
+                        conference.get_id(),
+                        '{content.authorids}',
+                        '{signatures}'
+                    ] + conference.get_submission_readers()
+                }
 
         for note in notes:
-            self.client.post_invitation(SubmissionRevisionInvitation(conference, name, note, start_date, due_date, public, submission_content, additional_fields, remove_fields))
+            self.client.post_invitation(SubmissionRevisionInvitation(conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields))
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 
