@@ -7,7 +7,8 @@ import openreview
 from .. import invitations
 from .. import tools
 
-SUBMISSION_BUFFER_DATE = 30
+SHORT_BUFFER_MIN = 30
+LONG_BUFFER_DAYS = 10
 
 class SubmissionInvitation(openreview.Invitation):
 
@@ -37,7 +38,7 @@ class SubmissionInvitation(openreview.Invitation):
             super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
                 cdate = tools.datetime_millis(start_date),
                 duedate = tools.datetime_millis(due_date),
-                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SUBMISSION_BUFFER_DATE)),
+                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
                 readers = ['everyone'],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
@@ -63,11 +64,11 @@ class SubmissionInvitation(openreview.Invitation):
 
 class BlindSubmissionsInvitation(openreview.Invitation):
 
-    def __init__(self, conference_id, invitation_id):
-        super(BlindSubmissionsInvitation, self).__init__(id = invitation_id,
+    def __init__(self, conference):
+        super(BlindSubmissionsInvitation, self).__init__(id = conference.get_blind_submission_id(),
             readers = ['everyone'],
-            writers = [conference_id],
-            signatures = [conference_id],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
             invitees = ['~'],
             reply = {
                 'forum': None,
@@ -76,10 +77,10 @@ class BlindSubmissionsInvitation(openreview.Invitation):
                     'values-regex': '.*'
                 },
                 'writers': {
-                    'values': [conference_id]
+                    'values': [conference.get_id()]
                 },
                 'signatures': {
-                    'values': [conference_id]
+                    'values': [conference.get_id()]
                 },
                 'content': {
                     'authors': {
@@ -165,6 +166,7 @@ class BidInvitation(openreview.Invitation):
         super(BidInvitation, self).__init__(id = conference.get_bid_id(),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -335,6 +337,7 @@ class ReviewInvitation(openreview.Invitation):
             super(ReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
                 cdate = tools.datetime_millis(start_date),
                 duedate = tools.datetime_millis(due_date),
+                expdate = tools.datetime_millis(due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)),
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
@@ -375,6 +378,7 @@ class MetaReviewInvitation(openreview.Invitation):
         super(MetaReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)),
             readers = ['everyone'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -453,7 +457,7 @@ class InvitationBuilder(object):
 
     def set_blind_submission_invitation(self, conference):
 
-        invitation = BlindSubmissionsInvitation(conference_id = conference.get_id(), invitation_id = conference.get_blind_submission_id())
+        invitation = BlindSubmissionsInvitation(conference = conference)
 
         return  self.client.post_invitation(invitation)
 
