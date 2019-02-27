@@ -78,6 +78,32 @@ class Conference(object):
         if recommendation_invitation:
             return self.webfield_builder.set_recommendation_page(self, recommendation_invitation)
 
+    def __expire_invitation(self, invitation_id):
+        # Get invitation
+        invitation = self.client.get_invitation(id = invitation_id)
+
+        # Force the expdate
+        now = round(time.time() * 1000)
+        if not invitation.expdate or invitation.expdate > now:
+            invitation.expdate = now
+            invitation = self.client.post_invitation(invitation)
+
+        return invitation
+
+    ## TODO: use a super invitation here
+    def __expire_invitations(self, name):
+
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+
+        now = round(time.time() * 1000)
+
+        for invitation in invitations:
+            if not invitation.expdate or invitation.expdate > now:
+                invitation.expdate = now
+                invitation = self.client.post_invitation(invitation)
+
+        return len(invitations)
+
     def set_id(self, id):
         self.id = id
 
@@ -255,29 +281,10 @@ class Conference(object):
         ## Submission invitation
         return self.invitation_builder.set_submission_invitation(self, start_date, due_date, additional_fields, remove_fields)
 
-    def close_submissions(self, freeze_submissions = True):
+    def close_submissions(self):
 
-        # Get invitation
-        invitation = self.client.get_invitation(id = self.get_submission_id())
-
-        # Set duedate in the past
-        now = round(time.time() * 1000)
-        if invitation.duedate > now:
-            invitation.duedate = now
-        invitation = self.client.post_invitation(invitation)
-
-        # If freeze submissions then remove writers
-        # use a process pool to run this
-        if freeze_submissions:
-            if invitation.reply['writers'] != self.id:
-                invitation.reply['writers'] = self.id
-                invitation = self.client.post_invitation(invitation)
-
-            notes_iterator = tools.iterget_notes(self.client, invitation = invitation.id)
-            for note in notes_iterator:
-                if note.writers != [self.id]:
-                    note.writers = [self.id]
-                    self.client.post_note(note)
+        # Expire invitation
+        invitation = self.__expire_invitation(self.get_submission_id())
 
         # Add venue to active venues
         active_venues_group = self.client.get_group(id = 'active_venues')
@@ -337,9 +344,7 @@ class Conference(object):
         return self.__set_bid_page()
 
     def close_bids(self):
-        invitation = self.client.get_invitation(self.get_bid_id())
-        invitation.invitees = []
-        return self.client.post_invitation(invitation)
+        return self.__expire_invitation(self.get_bid_id())
 
     def open_recommendations(self, reviewer_assingment_title, start_date = None, due_date = None):
         notes_iterator = self.get_submissions()
@@ -357,13 +362,7 @@ class Conference(object):
             self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous)
 
     def close_comments(self, name):
-        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
-
-        for i in invitations:
-            i.expdate = round(time.time() * 1000)
-            self.client.post_invitation(i)
-
-        return len(invitations)
+        return self.__expire_invitations(name)
 
     def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
@@ -379,13 +378,7 @@ class Conference(object):
         return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, public, invitation.reply['content'], additional_fields, remove_fields)
 
     def close_revise_submissions(self, name):
-        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
-
-        for i in invitations:
-            i.expdate = round(time.time() * 1000)
-            self.client.post_invitation(i)
-
-        return len(invitations)
+        return self.__expire_invitations(name)
 
 
     def set_program_chairs(self, emails):

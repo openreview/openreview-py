@@ -53,7 +53,7 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
-        conference.close_submissions(freeze_submissions = True)
+        conference.close_submissions()
 
         conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@midl.io'])

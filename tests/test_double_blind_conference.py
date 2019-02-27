@@ -601,7 +601,7 @@ class TestDoubleBlindConference():
         conference.close_submissions()
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         submission = notes[0]
-        assert ['AKBC.ws/2019/Conference'] == submission.writers
+        assert ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
 
