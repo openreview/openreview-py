@@ -915,11 +915,14 @@ def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
 
 def datetime_millis(dt):
     '''
-    Convets a datetim to milliseconds.
+    Convets a datetime to milliseconds.
 
     '''
-    epoch = datetime.datetime.utcfromtimestamp(0)
-    return int((dt - epoch).total_seconds() * 1000)
+    if isinstance(dt, datetime.datetime):
+        epoch = datetime.datetime.utcfromtimestamp(0)
+        return int((dt - epoch).total_seconds() * 1000)
+
+    return dt
 
 def recruit_reviewer(client, user, first,
     hash_seed,

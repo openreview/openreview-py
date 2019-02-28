@@ -19,7 +19,7 @@ var AUTHORS_ID = '';
 var HEADER = {};
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
-var BUFFER = 1000 * 60;  // 1 minutes
+var BUFFER = 0;  // deprecated
 var PAGE_SIZE = 50;
 
 var paperDisplayOptions = {

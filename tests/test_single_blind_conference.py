@@ -3,6 +3,7 @@ import openreview
 import pytest
 import requests
 import datetime
+import time
 import os
 
 class TestSingleBlindConference():
@@ -91,13 +92,32 @@ class TestSingleBlindConference():
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+
+        invitation = conference.open_submissions(start_date = now + datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40))
         assert invitation
-        assert invitation.duedate == 1570298400000
+        assert invitation.cdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
+        assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
+        assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 70))
 
         posted_invitation = client.get_invitation(id = 'NIPS.cc/2018/Workshop/MLITS/-/Submission')
         assert posted_invitation
-        assert posted_invitation.duedate == 1570298400000
+        assert posted_invitation.cdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
+        assert posted_invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
+        assert posted_invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 70))
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS")
+
+        assert "NIPS 2018 Workshop MLITS | OpenReview" in selenium.title
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
+
+        invitation = conference.open_submissions(start_date = now - datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40))
+        assert invitation
+        assert invitation.cdate == openreview.tools.datetime_millis(now - datetime.timedelta(minutes = 10))
+        assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
+        assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 70))
 
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS")
 
@@ -123,7 +143,11 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_submission_public(True)
         conference = builder.get_result()
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+
+        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+
+        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
+
 
         assert invitation
         assert invitation.id == 'NIPS.cc/2018/Workshop/MLITS/-/Submission'
@@ -254,7 +278,7 @@ class TestSingleBlindConference():
         conference.close_submissions()
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
-        assert ['NIPS.cc/2018/Workshop/MLITS'] == submission.writers
+        assert ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
 
