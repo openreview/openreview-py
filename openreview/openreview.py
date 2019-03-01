@@ -259,7 +259,7 @@ class Client(object):
         response = self.__handle_response(response)
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
-    def search_profiles(self, emails, ids, term):
+    def search_profiles(self, emails = None, ids = None, term = None):
 
         if term:
             response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
@@ -269,7 +269,7 @@ class Client(object):
         if emails:
             response = requests.post(self.profiles_search_url, json = {'emails': emails}, headers = self.headers)
             response = self.__handle_response(response)
-            return { p['email'] : Profile.from_json(p['profile'])
+            return { p['email'] : Profile.from_json(p)
                 for p in response.json()['profiles'] }
 
         if ids:

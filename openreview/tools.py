@@ -1116,8 +1116,8 @@ def get_conflicts(author_profiles, user_profile):
     author_emails = set()
     author_relations = set()
 
-    for author_email, profile in author_profiles.items():
-        author_info = get_author_info(profile, author_email)
+    for profile in author_profiles:
+        author_info = get_profile_info(profile)
 
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
@@ -1132,18 +1132,6 @@ def get_conflicts(author_profiles, user_profile):
     conflicts.update(author_emails.intersection(user_info['emails']))
 
     return list(conflicts)
-
-
-def get_author_info(profile, email):
-    if profile:
-        return get_profile_info(profile)
-    else:
-        return {
-            'domains': openreview.tools.subdomains(email),
-            'emails': [email],
-            'relations': []
-        }
-
 
 def get_profile_info(profile):
     domains = set()
