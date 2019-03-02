@@ -4,7 +4,7 @@ Add evidence to a profile
 
 Add DBLP link:
 
-    >>> updated_profile = client.update_profile(openreview.Profile(referent = '~Melisa_TestBok1',
+    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
     >>>                    invitation = '~/-/invitation',
     >>>                    signatures = ['~Melisa_TestBok1'],
     >>>                    content = {
@@ -19,7 +19,7 @@ Get references:
 
 Add a history record:
 
-    >>> updated_profile = client.update_profile(openreview.Profile(referent = '~Melisa_TestBok1',
+    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
     >>>                    invitation = '~/-/invitation',
     >>>                    signatures = ['~Melisa_TestBok1'],
     >>>                    content = {
@@ -33,7 +33,7 @@ Add a history record:
 
 Add email:
 
-    >>> updated_profile = client.update_profile(openreview.Profile(referent = '~Melisa_TestBok1',
+    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
     >>>                    invitation = '~/-/invitation',
     >>>                    signatures = ['~Melisa_TestBok1'],
     >>>                    content = {
@@ -43,7 +43,7 @@ Add email:
 
 Remove email:
 
-    >>> updated_profile = client.update_profile(openreview.Profile(referent = '~Melisa_TestBok1',
+    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
     >>>                    invitation = '~/-/invitation',
     >>>                    signatures = ['~Melisa_TestBok1'],
     >>>                    content = {},

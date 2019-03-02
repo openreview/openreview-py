@@ -55,19 +55,17 @@ function load() {
     });
 
     invitationsP = Webfield.get('/invitations', {
-      invitation: CONFERENCE_ID + '/-/.*',
+      regex: CONFERENCE_ID + '/-/.*',
       invitee: true,
       duedate: true,
       replyto: true,
       details:'replytoNote,repliedNotes'
     }).then(function(result) {
-      return _.filter(result.invitations, function(i) {
-        return i.id.startsWith(CONFERENCE_ID);
-      });
+      return result.invitations;
     });
 
     tagInvitationsP = Webfield.get('/invitations', {
-      invitation: CONFERENCE_ID + '/-/.*',
+      regex: CONFERENCE_ID + '/-/.*',
       invitee: true,
       duedate: true,
       tags: true,
@@ -114,16 +112,7 @@ function renderContent(authorNotes, invitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  // Filter out non-author tasks
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) {
-      return invitee.indexOf('Authors') !== -1;
-    });
-  };
-  var authorInvitations = _.filter(invitations, filterFunc);
-  var authorTagInvitations = _.filter(tagInvitations, filterFunc);
-
-  Webfield.ui.newTaskList(authorInvitations, authorTagInvitations, tasksOptions)
+  Webfield.ui.newTaskList(invitations, tagInvitations, tasksOptions);
   $('.tabs-container a[href="#author-tasks"]').parent().show();
 
   // Your Private Versions and Your Anonymous Versions tabs

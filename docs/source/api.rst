@@ -31,3 +31,17 @@ Tools
 
 .. automodule:: tools
    :members:
+
+
+Conference Builder
+-------------------
+
+.. automodule:: conference.builder
+
+.. autoclass:: Conference
+   :members:
+
+.. autoclass:: ConferenceBuilder
+   :members:
+
+

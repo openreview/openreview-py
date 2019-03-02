@@ -23,8 +23,7 @@ def get_profile(client, value):
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if e.args[0][0] != 'Profile not found':
-            print("OpenReviewException: {0}".format(e))
-            return e
+            raise e
     return profile
 
 def get_group(client, id):
@@ -35,7 +34,6 @@ def get_group(client, id):
         # throw an error if it is something other than "not found"
         error = e.args[0][0]
         if not error.startswith('Group Not Found'):
-            print("OpenReviewException: {0}".format(error))
             raise e
     return group
 
@@ -101,6 +99,7 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
             }
             client.post_group(tilde_group)
             client.post_group(email_group)
+
             profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content))
 
             return profile
@@ -916,11 +915,14 @@ def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
 
 def datetime_millis(dt):
     '''
-    Convets a datetim to milliseconds.
+    Converts a datetime to milliseconds.
 
     '''
-    epoch = datetime.datetime.utcfromtimestamp(0)
-    return int((dt - epoch).total_seconds() * 1000)
+    if isinstance(dt, datetime.datetime):
+        epoch = datetime.datetime.utcfromtimestamp(0)
+        return int((dt - epoch).total_seconds() * 1000)
+
+    return dt
 
 def recruit_reviewer(client, user, first,
     hash_seed,
