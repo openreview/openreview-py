@@ -320,18 +320,6 @@ class Client(object):
 
     def post_profile(self, profile):
         '''
-        Posts the profile
-        '''
-        response = requests.put(
-            self.profiles_url,
-            json = { 'id': profile.id, 'content': profile.content },
-            headers = self.headers)
-
-        response = self.__handle_response(response)
-        return Profile.from_json(response.json())
-
-    def update_profile(self, profile):
-        '''
         Updates the profile
         '''
         response = requests.post(
