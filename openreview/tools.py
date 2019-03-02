@@ -36,7 +36,7 @@ def get_group(client, id):
         error = e.args[0][0]
         if not error.startswith('Group Not Found'):
             print("OpenReviewException: {0}".format(error))
-            return e
+            raise e
     return group
 
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):

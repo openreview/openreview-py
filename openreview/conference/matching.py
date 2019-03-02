@@ -144,6 +144,7 @@ class Matching(object):
         METADATA_INV_ID = CONFERENCE_ID + '/-/Paper_Metadata'
         REVIEWERS_ID = conference.get_reviewers_id()
         AREA_CHAIRS_ID = conference.get_area_chairs_id()
+        ASSIGNMENT_INV_ID = self.conference.get_paper_assignment_id()
         scores = ['bid']
         if affinity_score_file:
             scores.append('affinity')
@@ -174,7 +175,7 @@ class Matching(object):
             }
         })
 
-        ASSIGNMENT_INV_ID = CONFERENCE_ID + '/-/Paper_Assignment'
+
 
         assignment_inv = openreview.Invitation.from_json({
             'id': ASSIGNMENT_INV_ID,
@@ -251,7 +252,7 @@ class Matching(object):
                         'order': 7
                     },
                     'paper_invitation': {
-                        'value': CONFERENCE_ID + '/-/Blind_Submission',
+                        'value': self.conference.get_blind_submission_id(),
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 8
@@ -357,6 +358,9 @@ class Matching(object):
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
             self.post_metadata_note(client, note, user_profiles, metadata_inv, scores_by_reviewer, {})
 
+
+    def get_assignment_notes (self):
+        return self.conference.client.get_notes(invitation = self.conference.get_paper_assignment_id())
 
     def deploy(self, assingment_title):
 
