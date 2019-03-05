@@ -253,13 +253,13 @@ class WebfieldBuilder(object):
             progresses, so please check back frequently for news and other updates.</p>\
                 <ul>{0}{1}</ul>'
         
-        area_chair_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=edit\">Accepted</a>, \
-                <a href=\"/group?id={1}/Invited&mode=edit\">Invited</a>, \
-                    <a href=\"/group?id={1}/Declined&mode=edit\">Declined</a></li>'.format(conference.area_chairs_name.replace('_', ' '), conference.get_area_chairs_id())
+        area_chair_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
+                <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
+                    <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.area_chairs_name.replace('_', ' '), conference.get_area_chairs_id())
         
-        reviewer_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=edit\">Accepted</a>, \
-            <a href=\"/group?id={1}/Invited&mode=edit\">Invited</a>, \
-                <a href=\"/group?id={1}/Declined&mode=edit\">Declined</a></li>'.format(conference.reviewers_name.replace('_', ' '), conference.get_reviewers_id())
+        reviewer_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
+            <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
+                <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.reviewers_name.replace('_', ' '), conference.get_reviewers_id())
 
         default_header = {
             'title': program_chairs_name.replace('_', ' ') + ' Console',
