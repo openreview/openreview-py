@@ -98,6 +98,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
     def __init__(self, conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields):
 
         content = submission_content.copy()
+        referent = note.original if conference.double_blind else note.id
 
         for field in remove_fields:
             del content[field]
@@ -118,8 +119,8 @@ class SubmissionRevisionInvitation(openreview.Invitation):
                 signatures = [conference.get_id()],
                 invitees = note.content['authorids'] + note.signatures,
                 reply = {
-                    'forum': note.id,
-                    'referent': note.id,
+                    'forum': referent,
+                    'referent': referent,
                     'readers': readers,
                     'writers': {
                         'values-copied': [
