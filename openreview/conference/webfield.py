@@ -248,11 +248,22 @@ class WebfieldBuilder(object):
 
         program_chairs_name = conference.program_chairs_name
 
+        instruction_str = '<p class="dark">This page provides information and status \
+            updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
+            progresses, so please check back frequently for news and other updates.</p>\
+                <ul>{0}{1}</ul>'
+        
+        area_chair_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=edit\">Accepted</a>, \
+                <a href=\"/group?id={1}/Invited&mode=edit\">Invited</a>, \
+                    <a href=\"/group?id={1}/Declined&mode=edit\">Declined</a></li>'.format(conference.area_chairs_name.replace('_', ' '), conference.get_area_chairs_id())
+        
+        reviewer_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=edit\">Accepted</a>, \
+            <a href=\"/group?id={1}/Invited&mode=edit\">Invited</a>, \
+                <a href=\"/group?id={1}/Declined&mode=edit\">Declined</a></li>'.format(conference.reviewers_name.replace('_', ' '), conference.get_reviewers_id())
+
         default_header = {
             'title': program_chairs_name.replace('_', ' ') + ' Console',
-            'instructions': '<p class="dark">This page provides information and status \
-            updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>'
+            'instructions': instruction_str.format(area_chair_links, reviewer_links)
         }
 
         header = self.__build_options(default_header, {})
