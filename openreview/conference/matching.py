@@ -73,6 +73,27 @@ class Matching(object):
 
         return entries
 
+    def _get_profiles(self, client, ids_or_emails):
+        ids = []
+        emails = []
+        for member in ids_or_emails:
+            if '~' in member:
+                ids.append(member)
+            else:
+                emails.append(member)
+
+        profiles = client.search_profiles(ids = ids)
+
+        profile_by_email = client.search_profiles(emails = emails)
+        for email in emails:
+            profiles.append(profile_by_email.get(email, openreview.Profile(id = email,
+            content = {
+                'emails': [email],
+                'preferredEmail': email
+            })))
+
+        return profiles
+
     def post_metadata_note(self,
         client,
         note,
@@ -85,7 +106,7 @@ class Matching(object):
         if note.details.get('original'):
             authorids = note.details['original']['content']['authorids']
         paper_bid_jsons = note.details['tags']
-        paper_author_profiles = client.get_profiles(authorids)
+        paper_author_profiles = self._get_profiles(client, authorids)
         print('Paper',note.id)
         entries = self._build_entries(paper_author_profiles, reviewer_profiles, paper_bid_jsons, paper_tpms_scores, manual_conflicts_by_id)
 
@@ -140,7 +161,7 @@ class Matching(object):
         client = conference.client
         CONFERENCE_ID = conference.get_id()
         PROGRAM_CHAIRS_ID = conference.get_program_chairs_id()
-        SUBMISSION_ID = conference.get_submission_id()
+        SUBMISSION_ID = conference.get_blind_submission_id()
         METADATA_INV_ID = CONFERENCE_ID + '/-/Paper_Metadata'
         REVIEWERS_ID = conference.get_reviewers_id()
         AREA_CHAIRS_ID = conference.get_area_chairs_id()
@@ -174,7 +195,6 @@ class Matching(object):
                 'content': {}
             }
         })
-
 
 
         assignment_inv = openreview.Invitation.from_json({
@@ -252,7 +272,7 @@ class Matching(object):
                         'order': 7
                     },
                     'paper_invitation': {
-                        'value': self.conference.get_blind_submission_id(),
+                        'value': SUBMISSION_ID,
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 8

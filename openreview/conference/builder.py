@@ -255,8 +255,8 @@ class Conference(object):
             options['deadline'] = self.homepage_header.get('deadline')
         return options
 
-    def get_submissions(self, blind = True, details = None):
-        invitation = self.get_blind_submission_id() if blind else self.get_submission_id()
+    def get_submissions(self, details = None):
+        invitation = self.get_blind_submission_id()
         return tools.iterget_notes(self.client, invitation = invitation, details = details)
 
     def open_submissions(self, start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
@@ -377,7 +377,7 @@ class Conference(object):
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         invitation = self.client.get_invitation(self.get_submission_id())
-        notes_iterator = self.get_submissions(blind=False)
+        notes_iterator = self.get_submissions()
         return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def close_revise_submissions(self, name):
@@ -399,7 +399,7 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_iterator = self.get_submissions(blind=True, details='original')
+        notes_iterator = self.get_submissions(details='original')
 
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
