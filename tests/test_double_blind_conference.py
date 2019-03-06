@@ -639,15 +639,44 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         conference = builder.get_result()
 
+        user_client = openreview.Client(baseurl = 'http://localhost:3000')
+        res = user_client.register_user(email = 'user@mail.com', first = 'User', last = 'Test', password = '1234')
+        assert res, "Res i none"
+        res = user_client.activate_user('user@mail.com', {
+            'names': [
+                    {
+                        'first': 'User',
+                        'last': 'Test',
+                        'username': '~User_Test1'
+                    }
+                ],
+            'emails': ['user@mail.com'],
+            'preferredEmail': 'user@mail.com'
+            })
+
         conference.open_comments('Public_Comment', public = True, anonymous = True)
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        notes = user_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
-        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, user_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Public Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Public_Comment',
+            readers = ['everyone'],
+            writers = ['~User_Test1'],
+            signatures = ['~User_Test1'],
+            forum = submission.id,
+            replyto = submission.id,
+            content = {
+                'title': 'Comment title',
+                'comment': 'This is a comment'
+            }
+        )
+        note = user_client.post_note(note)
+        assert note
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 

@@ -348,7 +348,7 @@ class Client(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None):
+    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None, expired = None):
         """
         Returns a list of Invitation objects based on the filters provided.
         """
@@ -377,6 +377,7 @@ class Client(object):
         params['details'] = details
         params['limit'] = limit
         params['offset'] = offset
+        params['expired'] = expired
 
         response = requests.get(self.invitations_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
@@ -862,7 +863,7 @@ class Invitation(object):
             body['web']=self.web
         if hasattr(self,'process'):
             body['process']=self.process
-        return body
+        return { k: v for k, v in body.items() if v }
 
     @classmethod
     def from_json(Invitation,i):
