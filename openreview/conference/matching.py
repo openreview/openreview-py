@@ -338,20 +338,14 @@ class Matching(object):
         reviewers_group = openreview.tools.replace_members_with_ids(client,reviewers_group)
         if not all(['~' in member for member in reviewers_group.members]):
             print('WARNING: not all reviewers have been converted to profile IDs. Members without profiles will not have metadata created.')
-        valid_reviewers_ids = [r for r in reviewers_group.members if '~' in r]
-
-        reviewers_profiles = client.get_profiles(valid_reviewers_ids)
 
         areachairs_group = client.get_group(AREA_CHAIRS_ID)
         # The areachairs are all emails so convert to tilde ids
         areachairs_group = openreview.tools.replace_members_with_ids(client,areachairs_group)
         if not all(['~' in member for member in areachairs_group.members]):
             print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
-        valid_ac_ids = [r for r in areachairs_group.members if '~' in r]
 
-        ac_profiles = client.get_profiles(valid_ac_ids)
-
-        user_profiles = ac_profiles + reviewers_profiles
+        user_profiles = self._get_profiles(client, reviewers_group.members + areachairs_group.members)
 
 
         # create metadata
