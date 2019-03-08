@@ -36,9 +36,9 @@ class TestOptionalDoubleBlind():
 
         now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
         invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10), additional_fields = {
-            "anonymized": {
+            "author_identity_visibility": {
                 "order": 4,
-                "value-checkbox": "Anonymize author identities",
+                "value-checkbox": 'Reveal author identities',
                 "required": False
             }
         })
@@ -52,13 +52,28 @@ class TestOptionalDoubleBlind():
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
-                'anonymized': 'Anonymize author identities'
+                'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
         url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
         note.content['pdf'] = url
         test_client.post_note(note)
+
+        note_2 = openreview.Note(invitation = invitation.id,
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'This is an abstract 2',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'author_identity_visibility': 'Reveal author identities'
+            }
+        )
+        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note_2.content['pdf'] = url
+        test_client.post_note(note_2)        
 
         # Author user
         request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/VRDIP", test_client.token)
@@ -84,13 +99,13 @@ class TestOptionalDoubleBlind():
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        assert len(papers.find_elements_by_class_name('note')) == 2
 
         conference.close_submissions()
 
         blind_submissions = conference.create_blind_submissions()
         assert blind_submissions
-        assert len(blind_submissions) == 1
+        assert len(blind_submissions) == 2
 
         guest_client = openreview.Client()
 
@@ -105,9 +120,9 @@ class TestOptionalDoubleBlind():
         submissions = tabs.find_element_by_id('all-submissions')
         assert submissions
         assert len(submissions.find_elements_by_class_name('submissions-list')) == 1
-        assert len(submissions.find_elements_by_class_name('note-authors')) == 1
-        authors = submissions.find_elements_by_class_name('note-authors')[0]
-        assert 'Anonymous' == authors.text
+        assert len(submissions.find_elements_by_class_name('note-authors')) == 2
+        assert 'Test User, Peter User, Andrew Mc' == submissions.find_elements_by_class_name('note-authors')[0].text
+        assert 'Anonymous' == submissions.find_elements_by_class_name('note-authors')[1].text
         
 
 

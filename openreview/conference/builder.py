@@ -307,6 +307,18 @@ class Conference(object):
         blinded_notes = []
 
         for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
+
+            content = {
+                'authors': ['Anonymous'],
+                'authorids': [self.id],
+                '_bibtex': None
+            }
+
+            if 'author_identity_visibility' in note.content:
+                content = {
+                    "_bibtex": None
+                }
+
             blind_note = openreview.Note(
                 original= note.id,
                 invitation= self.get_blind_submission_id(),
@@ -314,11 +326,7 @@ class Conference(object):
                 signatures= [self.id],
                 writers= [self.id],
                 readers= [self.id],
-                content= {
-                    "authors": ['Anonymous'],
-                    "authorids": [self.id],
-                    "_bibtex": None
-                })
+                content= content)
 
             posted_blind_note = self.client.post_note(blind_note)
 
@@ -329,12 +337,10 @@ class Conference(object):
                     self.get_authors_id(number = posted_blind_note.number)
                 ]
 
-            posted_blind_note.content = {
-                'authorids': [self.get_authors_id(number = posted_blind_note.number)],
-                'authors': ['Anonymous'],
-                '_bibtex': None #Create bibtext automatically
-            }
+            if 'authorids' in content:
+                content['authorids'] = [self.get_authors_id(number = posted_blind_note.number)]
 
+            posted_blind_note.content = content
             posted_blind_note = self.client.post_note(posted_blind_note)
             blinded_notes.append(posted_blind_note)
 
