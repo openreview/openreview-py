@@ -314,7 +314,7 @@ class Conference(object):
                 '_bibtex': None
             }
 
-            if 'author_identity_visibility' in note.content:
+            if note.content.get('author_identity_visibility'):
                 content = {
                     "_bibtex": None
                 }
