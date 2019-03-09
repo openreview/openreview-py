@@ -186,7 +186,10 @@ function renderContent(notes, userGroups, activityNotes, authorNotes) {
   // All Submitted Papers tab
   var submissionListOptions = _.assign({}, paperDisplayOptions, {
     showTags: false,
-    container: '#all-submissions'
+    container: '#all-submissions',
+    queryParams: {
+      details: 'replyCount,original'
+    }    
   });
 
   $(submissionListOptions.container).empty();
