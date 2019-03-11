@@ -6,6 +6,7 @@ var CONFERENCE_ID = '';
 var HEADER = {};
 var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
+var SUBMISSION_ID = '';
 var BID_ID = '';
 var SUBJECT_AREAS = '';
 
@@ -34,7 +35,7 @@ function load() {
     });
   });
 
-  var authoredNotesP = Webfield.getAll('/notes', {'content.authorids': user.profile.id, invitation: BLIND_SUBMISSION_ID});
+  var authoredNotesP = Webfield.getAll('/notes', {'content.authorids': user.profile.id, invitation: SUBMISSION_ID});
 
   var tagInvitationsP = Webfield.getAll('/invitations', {id: BID_ID}).then(function(invitations) {
     return invitations.filter(function(invitation) {
@@ -69,7 +70,7 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
   });
 
   validNotes = _.filter(validNotes, function(note){
-    return !_.includes(authoredNoteIds, note.original);
+    return !_.includes(authoredNoteIds, note.original || note.id);
   })
   validNotes = addMetadataToNotes(validNotes, metadataNotesMap);
 
