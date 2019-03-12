@@ -408,9 +408,9 @@ class Conference(object):
                 authorids = n.details['original']['content']['authorids']
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
-    def setup_matching(self, affinity_score_file = None):
+    def setup_matching(self, affinity_score_file = None, tpms_score_file = None):
         conference_matching = matching.Matching(self)
-        return conference_matching.setup(affinity_score_file)
+        return conference_matching.setup(affinity_score_file, tpms_score_file)
 
     def set_assignment(self, user, number, is_area_chair = False):
 

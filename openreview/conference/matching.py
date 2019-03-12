@@ -155,7 +155,7 @@ class Matching(object):
 
         return sorted(assignments, key=lambda x: x[0])
 
-    def setup(self, affinity_score_file):
+    def setup(self, affinity_score_file = None, tpms_score_file = None):
 
         conference = self.conference
         client = conference.client
@@ -169,6 +169,8 @@ class Matching(object):
         scores = ['bid']
         if affinity_score_file:
             scores.append('affinity')
+        if tpms_score_file:
+            scores.append('tpms')
 
         metadata_inv = openreview.Invitation.from_json({
             'id': METADATA_INV_ID,
@@ -353,9 +355,15 @@ class Matching(object):
         config_inv = client.post_invitation(config_inv)
         assignment_inv = client.post_invitation(assignment_inv)
 
-        # We need to use Blind_Submissions in this conference.
+        # Get the submissions.
         submissions = list(openreview.tools.iterget_notes(
             client, invitation = conference.get_blind_submission_id(), details='original,tags'))
+
+        submissions_per_number = { note.number: note for note in submissions }
+        profiles_by_email = {}
+        for profile in user_profiles:
+            for email in profile.content['emails']:
+                profiles_by_email[email] = profile
 
         scores_by_reviewer_by_paper = {note.forum: defaultdict(dict) for note in submissions}
 
@@ -367,6 +375,15 @@ class Matching(object):
                     score = row[2]
                     if paper_note_id in scores_by_reviewer_by_paper:
                         scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'affinity': float(score)})
+
+        if tpms_score_file:
+            with open(tpms_score_file) as f:
+                for row in csv.reader(f):
+                    paper_note_id = submissions_per_number[int(row[0])].id
+                    profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
+                    score = row[2]
+                    if paper_note_id in scores_by_reviewer_by_paper:
+                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})                    
 
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
