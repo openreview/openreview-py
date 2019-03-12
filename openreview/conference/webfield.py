@@ -114,6 +114,7 @@ class WebfieldBuilder(object):
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + conference.get_bid_id() + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.get_subject_areas()) + ";")
 
@@ -248,11 +249,22 @@ class WebfieldBuilder(object):
 
         program_chairs_name = conference.program_chairs_name
 
+        instruction_str = '<p class="dark">This page provides information and status \
+            updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
+            progresses, so please check back frequently for news and other updates.</p>\
+                <ul>{0}{1}</ul>'
+        
+        area_chair_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
+                <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
+                    <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.area_chairs_name.replace('_', ' '), conference.get_area_chairs_id())
+        
+        reviewer_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
+            <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
+                <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.reviewers_name.replace('_', ' '), conference.get_reviewers_id())
+
         default_header = {
             'title': program_chairs_name.replace('_', ' ') + ' Console',
-            'instructions': '<p class="dark">This page provides information and status \
-            updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>'
+            'instructions': instruction_str.format(area_chair_links, reviewer_links)
         }
 
         header = self.__build_options(default_header, {})

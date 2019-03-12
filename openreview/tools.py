@@ -915,7 +915,7 @@ def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
 
 def datetime_millis(dt):
     '''
-    Convets a datetime to milliseconds.
+    Converts a datetime to milliseconds.
 
     '''
     if isinstance(dt, datetime.datetime):

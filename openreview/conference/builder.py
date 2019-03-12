@@ -179,6 +179,9 @@ class Conference(object):
     def get_conference_groups(self):
         return self.groups
 
+    def get_paper_assignment_id (self):
+        return self.id + '/-/' + 'Paper_Assignment'
+
     def set_homepage_header(self, header):
         self.homepage_header = header
 
@@ -551,7 +554,6 @@ class ConferenceBuilder(object):
 
         for p in paths:
             group = tools.get_group(self.client, id = p)
-
             if group is None:
                 group = self.client.post_group(openreview.Group(
                     id = p,
