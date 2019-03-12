@@ -34,7 +34,7 @@ class TestCommentNotification():
         builder.set_submission_public(True)
         conference = builder.get_result()
 
-        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+        now = datetime.datetime.utcnow()
         invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
 
         note = openreview.Note(invitation = invitation.id,

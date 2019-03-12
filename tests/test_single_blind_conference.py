@@ -92,7 +92,8 @@ class TestSingleBlindConference():
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+        now = datetime.datetime.utcnow()
+
 
         invitation = conference.open_submissions(start_date = now + datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40))
         assert invitation
@@ -144,7 +145,7 @@ class TestSingleBlindConference():
         builder.set_submission_public(True)
         conference = builder.get_result()
 
-        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+        now = datetime.datetime.utcnow()
 
         invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
 
