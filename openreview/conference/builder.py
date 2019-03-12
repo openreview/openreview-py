@@ -33,6 +33,7 @@ class Conference(object):
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
         self.bid_name = 'Bid'
+        self.recommendation_name = 'Recommendation'
         self.registation_name = 'Registration'
         self.layout = 'tabs'
 
@@ -173,6 +174,14 @@ class Conference(object):
 
     def get_bid_id(self):
         return self.id + '/-/' + self.bid_name
+
+    def get_recommendation_id(self, number = None):
+        recommendation_id = self.id + '/'
+        if number:
+            recommendation_id = recommendation_id + 'Paper' + str(number) + '/'
+
+        recommendation_id = recommendation_id + self.recommendation_name
+        return recommendation_id       
 
     def get_registration_id(self):
         return self.id + '/-/' + self.registation_name        

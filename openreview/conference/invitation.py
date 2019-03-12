@@ -552,7 +552,7 @@ class InvitationBuilder(object):
 
         # Create super invitation with a webfield
         recommendation_invitation = openreview.Invitation(
-            id = conference.get_id() + '/-/Recommendation',
+            id = conference.get_recommendation_id(),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
             readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
@@ -603,7 +603,7 @@ class InvitationBuilder(object):
             else:
                 raise openreview.OpenReviewException('Assignment note not found for ' + note.id)
             paper_recommendation_invitation = openreview.Invitation(
-                id = conference.get_id() + '/-/Paper{number}/Recommendation'.format(number = note.number),
+                id = conference.get_recommendation_id(number = note.number),
                 super = recommendation_invitation.id,
                 invitees = [conference.get_program_chairs_id(), conference.get_id() + '/Paper{number}/Area_Chairs'.format(number = note.number)],
                 writers = [conference.get_id()],

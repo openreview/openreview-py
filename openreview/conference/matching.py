@@ -105,14 +105,16 @@ class Matching(object):
         reviewer_profiles,
         metadata_inv,
         paper_tpms_scores,
-        manual_conflicts_by_id):
+        manual_conflicts_by_id,
+        bid_invitation,
+        recommendation_invitation):
 
         authorids = note.content['authorids']
         if note.details.get('original'):
             authorids = note.details['original']['content']['authorids']
-        paper_bid_jsons = note.details['tags']
+        paper_bid_jsons = list(filter(lambda t: t['invitation'] == bid_invitation, note.details['tags']))
+        paper_recommendation_jsons = list(filter(lambda t: t['invitation'] == recommendation_invitation, note.details['tags']))
         paper_author_profiles = self._get_profiles(client, authorids)
-        print('Paper',note.id)
         entries = self._build_entries(paper_author_profiles, reviewer_profiles, paper_bid_jsons, paper_tpms_scores, manual_conflicts_by_id)
 
         new_metadata_note = openreview.Note(**{
@@ -406,7 +408,7 @@ class Matching(object):
 
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
-            self.post_metadata_note(client, note, user_profiles, metadata_inv, scores_by_reviewer, {})
+            self.post_metadata_note(client, note, user_profiles, metadata_inv, scores_by_reviewer, {}, conference.get_bid_id(), conference.get_recommendation_id(note.number))
 
 
     def get_assignment_notes (self):
