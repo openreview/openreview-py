@@ -33,6 +33,7 @@ class Conference(object):
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
         self.bid_name = 'Bid'
+        self.registation_name = 'Registration'
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
@@ -172,6 +173,9 @@ class Conference(object):
 
     def get_bid_id(self):
         return self.id + '/-/' + self.bid_name
+
+    def get_registration_id(self):
+        return self.id + '/-/' + self.registation_name        
 
     def set_conference_groups(self, groups):
         self.groups = groups

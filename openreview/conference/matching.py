@@ -12,6 +12,11 @@ class Matching(object):
         for note in note_list:
             client.delete_note(note)
 
+    def _jaccard_similarity(self, list1, list2):
+        intersection = len(list(set(list1).intersection(list2)))
+        union = (len(list1) + len(list2)) - intersection
+        return float(intersection / union)            
+
     def _append_manual_conflicts(self, profile, manual_user_conflicts):
         for conflict_domain in manual_user_conflicts:
             manual_entry = {
@@ -171,6 +176,8 @@ class Matching(object):
             scores.append('affinity')
         if tpms_score_file:
             scores.append('tpms')
+        if conference.subject_areas:
+            scores.append('subjectArea')
 
         metadata_inv = openreview.Invitation.from_json({
             'id': METADATA_INV_ID,
@@ -383,7 +390,19 @@ class Matching(object):
                     profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
                     score = row[2]
                     if paper_note_id in scores_by_reviewer_by_paper:
-                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})                    
+                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})
+
+        if conference.subject_areas:
+            user_subject_areas = list(openreview.tools.iterget_notes(client, invitation = conference.get_registration_id()))
+            for note in submissions:
+                note_subject_areas = note.content['subject_areas']
+                paper_note_id = note.id
+                for subject_area_note in user_subject_areas:
+                    profile_id = subject_area_note.signatures[0]
+                    subject_areas = subject_area_note.content['subject_areas']
+                    score = self._jaccard_similarity(note_subject_areas, subject_areas)
+                    if paper_note_id in scores_by_reviewer_by_paper:
+                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'subjectArea': float(score)})                    
 
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
