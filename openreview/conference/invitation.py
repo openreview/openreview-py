@@ -627,3 +627,122 @@ class InvitationBuilder(object):
             )
             paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
 
+
+    def set_registration_invitation(self, conference, start_date, due_date, with_area_chairs):
+
+        invitees = []
+        if with_area_chairs:
+            invitees.append(conference.get_area_chairs_id())
+        invitees.append(conference.get_reviewers_id())
+
+        subj_desc = 'To properly assign papers to reviewers, we ask that reviewers provide their areas of expertise from among the provided list of subject areas. Please submit your areas of expertise by selecting the appropriate options from the "Subject Areas" list.\n\n'
+
+        coi_desc = 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. After you have updated your profile, please confirm that your OpenReview profile is up-to-date by selecting yes in the "Profile Confirmed" section.\n\n'
+
+        tpms_desc = 'In addition to subject areas, we will be using the Toronto Paper Matching System (TPMS) to compute paper-reviewer affinity scores. Please take a moment to sign up for TPMS and/or update your TPMS account with your latest papers. Then, please ensure that the email address that is affiliated with your TPMS account is linked to your OpenReview profile. After you have done this, please confirm that your TPMS account is up-to-date by selecting yes in the "TPMS Account Confirmed" section.\n\n'
+
+
+        # Create super invitation with a webfield
+        registration_parent_invitation = openreview.Invitation(
+            id = conference.get_id() + '/-/Parent/Registration',
+            readers = ['everyone'],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            reply = {
+                'forum': None,
+                'replyto': None,
+                'readers': {'values': invitees},
+                'writers': {'values': [conference.get_id()]},
+                'signatures': {'values': [conference.get_id()]},
+                'content': {
+                    'title': {'value': conference.get_short_name() + ' Registration'},
+                    'subject_areas': {
+                        'value': subj_desc,
+                        'order': 1
+                    },
+                    'profile confirmed': {
+                        'value': coi_desc,
+                        'order': 2
+                    },
+                    'TPMS account confirmed': {
+                        'value': tpms_desc,
+                        'order': 3
+                    }
+                }
+            }
+        )
+
+        registration_parent_invitation = self.client.post_invitation(registration_parent_invitation)
+
+        registration_parent = self.client.post_note(openreview.Note(
+            invitation = registration_parent_invitation.id,
+            readers = invitees,
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            replyto = None,
+            forum = None,
+            content = {
+                'title': registration_parent_invitation.reply['content']['title']['value'],
+                'subject_areas': registration_parent_invitation.reply['content']['subject_areas']['value'],
+                'profile confirmed': registration_parent_invitation.reply['content']['profile confirmed']['value'],
+                'TPMS account confirmed': registration_parent_invitation.reply['content']['TPMS account confirmed']['value'],
+            }            
+        ))
+
+        registration_invitation = self.client.post_invitation(openreview.Invitation(
+            id = conference.get_registration_id(),
+            cdate = tools.datetime_millis(start_date),
+            duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date),
+            readers = ['everyone'],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            reply = {
+                'forum': registration_parent.id,
+                'replyto': registration_parent.id,
+                'readers': {
+                    'description': 'Users who can read this',
+                    'values-copied': [
+                        conference.get_id(),
+                        '{signatures}'
+                    ]
+                },
+                'writers': {
+                    'description': 'How your identity will be displayed.',
+                    'values-copied': [
+                        conference.get_id(),
+                        '{signatures}'
+                    ]
+                },
+                'signatures': {
+                    'description': 'How your identity will be displayed.',
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'title': {
+                        'value': conference.get_short_name() + ' Registration',
+                        'order': 1
+                    },
+                    'subject_areas': {
+                        'values-dropdown': conference.get_subject_areas(),
+                        'required': True,
+                        'order': 2
+                    },
+                    'profile confirmed': {
+                        'value-radio': ['Yes', 'No'],
+                        'required': True,
+                        'order': 3
+                    },
+                    'TPMS account confirmed': {
+                        'value-radio': ['Yes', 'No'],
+                        'required': True,
+                        'order': 4
+                    }
+                }
+            }
+        ))
+
+        return self.client.post_invitation(registration_invitation)
+

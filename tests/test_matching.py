@@ -464,3 +464,126 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
         assert metadata_notes[2].content['entries'][4].get('conflicts') is None  
+
+
+    def test_setup_matching_with_subject_areas(self, client, test_client, helpers): 
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        builder.set_conference_id('auai.org/UAI/2019/Conference')
+        builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
+        builder.set_conference_short_name('UAI 2019')
+        builder.set_homepage_header({
+        'title': 'UAI 2019',
+        'subtitle': 'Conference on Uncertainty in Artificial Intelligence',
+        'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2019, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2019',
+        'date': 'July 22 - July 25, 2019',
+        'website': 'http://auai.org/uai2019/',
+        'location': 'Tel Aviv, Israel',
+        'instructions': '''<p><strong>Important Information about Anonymity:</strong><br>
+            When you post a submission to UAI 2019, please provide the real names and email addresses of authors in the submission form below (but NOT in the manuscript).
+            The <em>original</em> record of your submission will be private, and will contain your real name(s).
+            The PDF in your submission should not contain the names of the authors. </p>
+            <p><strong>Conflict of Interest:</strong><br>
+            Please make sure that your current and previous affiliations listed on your OpenReview <a href=\"/profile\">profile page</a> is up-to-date to avoid conflict of interest.</p>
+            <p><strong>Questions or Concerns:</strong><br> Please contact the UAI 2019 Program chairs at <a href=\"mailto:uai2019chairs@gmail.com\">uai2019chairs@gmail.com</a>.
+            <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
+            </p>'''
+        })
+        print ('Homepage header set')
+        builder.set_conference_area_chairs_name('Senior_Program_Committee')
+        builder.set_conference_reviewers_name('Program_Committee')
+        builder.set_double_blind(True)
+        builder.set_override_homepage(True)
+        builder.set_subject_areas([
+            "Algorithms: Approximate Inference",
+            "Algorithms: Belief Propagation",
+            "Algorithms: Distributed and Parallel",
+            "Algorithms: Exact Inference",
+        ])
+        conference = builder.get_result()
+        assert conference, 'conference is None'
+
+        blinded_notes = list(conference.get_submissions())
+
+        ## Open reviewer recommendations
+        now = datetime.datetime.utcnow()
+        invitation = conference.open_registration(due_date = now + datetime.timedelta(minutes = 40))
+
+        ## Recommend reviewers
+        ac1_client = helpers.get_user('ac1@cmu.edu')
+        ac1_client.post_note(openreview.Note(invitation = conference.get_registration_id(),
+            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+            signatures = ['~AreaChair_One1'],
+            forum = invitation.reply['forum'],
+            content = {
+                'title': 'UAI 2019 Registration',
+                'subject_areas': ['Algorithms: Approximate Inference', 'Algorithms: Exact Inference'],
+                'profile confirmed': 'Yes',
+                'TPMS account confirmed': 'Yes'
+            }
+        ))
+
+        ## Set up matching
+        metadata_notes = conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
+        assert metadata_notes
+        assert len(metadata_notes) == 3
+
+        ## Assert Paper 1 scores
+        assert metadata_notes[0].forum == blinded_notes[0].id
+        assert len(metadata_notes[0].content['entries']) == 5
+        assert metadata_notes[0].content['entries'][0]['userid'] == '~AreaChair_One1'
+        assert metadata_notes[0].content['entries'][0]['scores'] == { 'bid': -1, 'tpms': 0.3, 'subjectArea': 0.3333333333333333 }
+        assert metadata_notes[0].content['entries'][0].get('conflicts') is None
+        assert metadata_notes[0].content['entries'][1]['userid'] == '~Reviewer_One1'
+        assert metadata_notes[0].content['entries'][1]['scores'] == { 'bid': -0.5, 'tpms': 0.8, 'recommendation': 1 }
+        assert metadata_notes[0].content['entries'][1].get('conflicts') is None
+        assert metadata_notes[0].content['entries'][2]['userid'] == 'r2@google.com'
+        assert metadata_notes[0].content['entries'][2]['scores'] == {'tpms': 0.77}
+        assert metadata_notes[0].content['entries'][2].get('conflicts') is None
+        assert metadata_notes[0].content['entries'][3]['userid'] == 'r3@fb.com'
+        assert metadata_notes[0].content['entries'][3]['scores'] == {'tpms': 0.21}
+        assert metadata_notes[0].content['entries'][3].get('conflicts') is None
+        assert metadata_notes[0].content['entries'][4]['userid'] == 'ac2@umass.edu'
+        assert metadata_notes[0].content['entries'][4]['scores'] == {'tpms': 0.6}
+        assert metadata_notes[0].content['entries'][4]['conflicts'] == [ 'umass.edu' ]
+
+        ## Assert Paper 2 scores
+        assert metadata_notes[1].forum == blinded_notes[1].id
+        assert len(metadata_notes[0].content['entries']) == 5
+        assert metadata_notes[1].content['entries'][0]['userid'] == '~AreaChair_One1'
+        assert metadata_notes[1].content['entries'][0]['scores'] == { 'bid': -0.5, 'tpms': 0.2, 'subjectArea': 1  }
+        assert metadata_notes[1].content['entries'][0].get('conflicts') is None
+        assert metadata_notes[1].content['entries'][1]['userid'] == '~Reviewer_One1'
+        assert metadata_notes[1].content['entries'][1]['scores'] == { 'bid': 1, 'tpms': 0.8  }
+        assert metadata_notes[1].content['entries'][1]['conflicts'] == [ 'mit.edu' ]
+        assert metadata_notes[1].content['entries'][2]['userid'] == 'r2@google.com'
+        assert metadata_notes[1].content['entries'][2]['scores'] == {'tpms': 0.66, 'recommendation': 1}
+        assert metadata_notes[1].content['entries'][2].get('conflicts') is None
+        assert metadata_notes[1].content['entries'][3]['userid'] == 'r3@fb.com'
+        assert metadata_notes[1].content['entries'][3]['scores'] == {'tpms': 0.31, 'recommendation': 0.75}
+        assert metadata_notes[1].content['entries'][3].get('conflicts') is None
+        assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
+        assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+
+        ## Assert Paper 3 scores
+        assert metadata_notes[2].forum == blinded_notes[2].id
+        assert len(metadata_notes[2].content['entries']) == 5
+        assert metadata_notes[2].content['entries'][0]['userid'] == '~AreaChair_One1'
+        assert metadata_notes[2].content['entries'][0]['scores'] == { 'bid': 0.5, 'tpms': 0.1 , 'subjectArea': 0.3333333333333333}
+        assert metadata_notes[2].content['entries'][0]['conflicts'] == [ 'cmu.edu' ]
+        assert metadata_notes[2].content['entries'][1]['userid'] == '~Reviewer_One1'
+        assert metadata_notes[2].content['entries'][1]['scores'] == {'tpms': 0.8}
+        assert metadata_notes[2].content['entries'][1].get('conflicts') is None
+        assert metadata_notes[2].content['entries'][2]['userid'] == 'r2@google.com'
+        assert metadata_notes[2].content['entries'][2]['scores'] == {'tpms': 0.55}
+        assert metadata_notes[2].content['entries'][2].get('conflicts') is None
+        assert metadata_notes[2].content['entries'][3]['userid'] == 'r3@fb.com'
+        assert metadata_notes[2].content['entries'][3]['scores'] == {'tpms': 0.51}
+        assert metadata_notes[2].content['entries'][3].get('conflicts') is None
+        assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
+        assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
+        assert metadata_notes[2].content['entries'][4].get('conflicts') is None  
