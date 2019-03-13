@@ -556,6 +556,7 @@ class InvitationBuilder(object):
             id = conference.get_recommendation_id(),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
             readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             invitees = [],
             writers = [conference.get_id()],
@@ -614,6 +615,9 @@ class InvitationBuilder(object):
                 }
             paper_recommendation_invitation = openreview.Invitation(
                 id = conference.get_recommendation_id(number = note.number),
+                cdate = tools.datetime_millis(start_date),
+                duedate = tools.datetime_millis(due_date),
+                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
                 super = recommendation_invitation.id,
                 invitees = [conference.get_program_chairs_id(), conference.get_id() + '/Paper{number}/Area_Chairs'.format(number = note.number)],
                 writers = [conference.get_id()],
@@ -622,5 +626,4 @@ class InvitationBuilder(object):
                 reply = reply
             )
             paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
-            print('Posted', paper_recommendation_invitation.id)
 

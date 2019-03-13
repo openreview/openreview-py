@@ -401,7 +401,7 @@ class TestMatching():
             signatures = ['~AreaChair_One1'],
             forum = blinded_notes[1].id,
             tag = 'r3@fb.com'
-        ))       
+        ))
 
         ## Set up matching
         metadata_notes = conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
@@ -415,7 +415,7 @@ class TestMatching():
         assert metadata_notes[0].content['entries'][0]['scores'] == { 'bid': -1, 'tpms': 0.3 }
         assert metadata_notes[0].content['entries'][0].get('conflicts') is None
         assert metadata_notes[0].content['entries'][1]['userid'] == '~Reviewer_One1'
-        assert metadata_notes[0].content['entries'][1]['scores'] == { 'bid': -0.5, 'tpms': 0.8 }
+        assert metadata_notes[0].content['entries'][1]['scores'] == { 'bid': -0.5, 'tpms': 0.8, 'recommendation': 1 }
         assert metadata_notes[0].content['entries'][1].get('conflicts') is None
         assert metadata_notes[0].content['entries'][2]['userid'] == 'r2@google.com'
         assert metadata_notes[0].content['entries'][2]['scores'] == {'tpms': 0.77}
@@ -437,10 +437,10 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][1]['scores'] == { 'bid': 1, 'tpms': 0.8  }
         assert metadata_notes[1].content['entries'][1]['conflicts'] == [ 'mit.edu' ]
         assert metadata_notes[1].content['entries'][2]['userid'] == 'r2@google.com'
-        assert metadata_notes[1].content['entries'][2]['scores'] == {'tpms': 0.66}
+        assert metadata_notes[1].content['entries'][2]['scores'] == {'tpms': 0.66, 'recommendation': 1}
         assert metadata_notes[1].content['entries'][2].get('conflicts') is None
         assert metadata_notes[1].content['entries'][3]['userid'] == 'r3@fb.com'
-        assert metadata_notes[1].content['entries'][3]['scores'] == {'tpms': 0.31}
+        assert metadata_notes[1].content['entries'][3]['scores'] == {'tpms': 0.31, 'recommendation': 0.75}
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}

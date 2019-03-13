@@ -32,7 +32,7 @@ class Matching(object):
         return profile
 
 
-    def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, scores_by_reviewer, manual_conflicts_by_id):
+    def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, scores_by_reviewer, manual_conflicts_by_id):
         entries = []
         for profile in reviewer_profiles:
             bid_score_map = {
@@ -65,6 +65,15 @@ class Matching(object):
                     bid_score = bid_score_map.get(tag, 0.0)
                     if bid_score != 0.0:
                         user_entry['scores']['bid'] = bid_score
+
+            reviewer_recommendations = [ t['tag'] for t in sorted(paper_recommendation_jsons, key=lambda x: x['cdate'])]
+            if reviewer_recommendations:
+                ## Set value between High(0.5) and Very High(1)
+                count = len(reviewer_recommendations)
+                if profile.id in reviewer_recommendations:
+                    index = reviewer_recommendations.index(profile.id)
+                    score = 0.5 + (0.5 * float((count - index) / count))
+                    user_entry['scores']['recommendation'] = score
 
             manual_user_conflicts = manual_conflicts_by_id.get(profile.id, [])
             if manual_user_conflicts:
@@ -104,7 +113,7 @@ class Matching(object):
         note,
         reviewer_profiles,
         metadata_inv,
-        paper_tpms_scores,
+        paper_scores,
         manual_conflicts_by_id,
         bid_invitation,
         recommendation_invitation):
@@ -115,7 +124,7 @@ class Matching(object):
         paper_bid_jsons = list(filter(lambda t: t['invitation'] == bid_invitation, note.details['tags']))
         paper_recommendation_jsons = list(filter(lambda t: t['invitation'] == recommendation_invitation, note.details['tags']))
         paper_author_profiles = self._get_profiles(client, authorids)
-        entries = self._build_entries(paper_author_profiles, reviewer_profiles, paper_bid_jsons, paper_tpms_scores, manual_conflicts_by_id)
+        entries = self._build_entries(paper_author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, paper_scores, manual_conflicts_by_id)
 
         new_metadata_note = openreview.Note(**{
             'forum': note.id,
