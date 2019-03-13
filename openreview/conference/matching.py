@@ -189,6 +189,11 @@ class Matching(object):
             scores.append('tpms')
         if conference.subject_areas:
             scores.append('subjectArea')
+        try:
+            client.get_invitation(conference.get_recommendation_id())
+            scores.append('recommendation')
+        except openreview.OpenReviewException:
+            print('Recommendation invitation not found')
 
         metadata_inv = openreview.Invitation.from_json({
             'id': METADATA_INV_ID,

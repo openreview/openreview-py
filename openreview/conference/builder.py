@@ -181,7 +181,7 @@ class Conference(object):
             recommendation_id = recommendation_id + '/Paper' + str(number)
 
         recommendation_id = recommendation_id + '/-/' + self.recommendation_name
-        return recommendation_id       
+        return recommendation_id   
 
     def get_registration_id(self):
         return self.id + '/-/' + self.registation_name        
