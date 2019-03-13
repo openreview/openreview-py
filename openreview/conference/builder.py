@@ -176,11 +176,11 @@ class Conference(object):
         return self.id + '/-/' + self.bid_name
 
     def get_recommendation_id(self, number = None):
-        recommendation_id = self.id + '/'
+        recommendation_id = self.id
         if number:
-            recommendation_id = recommendation_id + 'Paper' + str(number) + '/'
+            recommendation_id = recommendation_id + '/Paper' + str(number)
 
-        recommendation_id = recommendation_id + self.recommendation_name
+        recommendation_id = recommendation_id + '/-/' + self.recommendation_name
         return recommendation_id       
 
     def get_registration_id(self):
@@ -362,9 +362,13 @@ class Conference(object):
     def close_bids(self):
         return self.__expire_invitation(self.get_bid_id())
 
-    def open_recommendations(self, reviewer_assingment_title, start_date = None, due_date = None):
+    def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
-        assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
+        assingment_notes_iterator = None
+        
+        if reviewer_assingment_title:
+            assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
+        
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assingment_notes_iterator)
         return self.__set_recommendation_page()
 

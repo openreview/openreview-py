@@ -547,8 +547,9 @@ class InvitationBuilder(object):
     def set_recommendation_invitation(self, conference, start_date, due_date, notes_iterator, assingment_notes_iterator):
 
         assignment_note_by_forum = {}
-        for assignment_note in assingment_notes_iterator:
-            assignment_note_by_forum[assignment_note.forum] = assignment_note.content
+        if assingment_notes_iterator:
+            for assignment_note in assingment_notes_iterator:
+                assignment_note_by_forum[assignment_note.forum] = assignment_note.content
 
         # Create super invitation with a webfield
         recommendation_invitation = openreview.Invitation(
@@ -572,7 +573,7 @@ class InvitationBuilder(object):
                 },
                 'content': {
                     'tag': {
-                        'description': 'Recommend a reviewer to review this paper',
+                        'description': 'Recommend reviewer',
                         'order': 1,
                         'required': True,
                         'values-url': '/groups?id=' + conference.get_reviewers_id()
@@ -587,6 +588,9 @@ class InvitationBuilder(object):
         for note in notes_iterator:
             reviewers = []
             assignment_note = assignment_note_by_forum.get(note.id)
+            reply = {
+                'forum': note.id
+            }
             if assignment_note:
                 for group in assignment_note['assignedGroups']:
                     reviewers.append('{profileId} (A) - Bid: {bid} - Tpms: {tpms}'.format(
@@ -600,8 +604,14 @@ class InvitationBuilder(object):
                         bid = group.get('scores').get('bid'),
                         tpms = group.get('scores').get('affinity'))
                     )
-            else:
-                raise openreview.OpenReviewException('Assignment note not found for ' + note.id)
+                reply['content'] = {
+                    'tag': {
+                        'description': 'Recommend reviewer',
+                        'order': 1,
+                        'required': True,
+                        'values-dropdown': reviewers
+                    }
+                }
             paper_recommendation_invitation = openreview.Invitation(
                 id = conference.get_recommendation_id(number = note.number),
                 super = recommendation_invitation.id,
@@ -609,17 +619,7 @@ class InvitationBuilder(object):
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
                 multiReply = True,
-                reply = {
-                    'forum': note.id,
-                    'content': {
-                        'tag': {
-                            'description': 'Recommend reviewer',
-                            'order': 1,
-                            'required': True,
-                            'values-dropdown': reviewers
-                        }
-                    }
-                }
+                reply = reply
             )
             paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
             print('Posted', paper_recommendation_invitation.id)
