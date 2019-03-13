@@ -231,7 +231,7 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         conference = builder.get_result()
 
-        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+        now = datetime.datetime.utcnow()
         invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
         assert invitation
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
@@ -298,7 +298,7 @@ class TestDoubleBlindConference():
             'Other'])
         conference = builder.get_result()
 
-        now = datetime.datetime.now() + datetime.timedelta(hours = (time.timezone / 3600.0))
+        now = datetime.datetime.utcnow()
         invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10), additional_fields = {
                 'archival_status': {
                     'description': 'Authors can change the archival/non-archival status up until the decision deadline',

@@ -21,7 +21,7 @@ class Helpers:
                     }
                 ],
             'emails': [email],
-            'preferredEmail': email
+            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
             })
         assert res, "Res i none"
         return client
