@@ -406,9 +406,20 @@ class Matching(object):
                     if paper_note_id in scores_by_reviewer_by_paper:
                         scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'subjectArea': float(score)})                    
 
+        metadata_notes = []
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
-            self.post_metadata_note(client, note, user_profiles, metadata_inv, scores_by_reviewer, {}, conference.get_bid_id(), conference.get_recommendation_id(note.number))
+            metadata_notes.append(self.post_metadata_note(client, 
+                note, 
+                user_profiles, 
+                metadata_inv, 
+                scores_by_reviewer, 
+                {}, 
+                conference.get_bid_id(), 
+                conference.get_recommendation_id(note.number))
+            )
+
+        return metadata_notes
 
 
     def get_assignment_notes (self):
