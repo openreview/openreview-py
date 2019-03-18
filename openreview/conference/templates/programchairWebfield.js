@@ -515,7 +515,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         forumUrl: '/forum?' + $.param({
           id: note.forum,
           noteId: note.id,
-          invitationId: CONFERENCE + '/-/Paper' + note.number + '/Official_Review'
+          invitationId: CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review'
         })
       });
     }

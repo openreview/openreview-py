@@ -477,7 +477,7 @@ class Conference(object):
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
         recruit_message = '''Dear {name},
 
-        You have been nominated by the program chair committeee of ''' + self.short_name + ''' to serve as a reviewer.  As a respected researcher in the area, we hope you will accept and help us make the conference a success.
+        You have been nominated by the program chair committee of ''' + self.short_name + ''' to serve as a reviewer.  As a respected researcher in the area, we hope you will accept and help us make the conference a success.
 
         Reviewers are also welcome to submit papers, so please also consider submitting to the conference!
 
