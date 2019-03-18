@@ -644,7 +644,7 @@ class InvitationBuilder(object):
 
         # Create super invitation with a webfield
         registration_parent_invitation = openreview.Invitation(
-            id = conference.get_id() + '/-/Parent/Registration',
+            id = conference.get_id() + '/-/Super/Registration',
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
