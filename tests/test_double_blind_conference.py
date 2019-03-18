@@ -462,7 +462,7 @@ class TestDoubleBlindConference():
         assert len(messages) == 1
 
         text = messages[0]['content']['text']
-        assert 'You have been nominated by the program chair committeee of AKBC 2019' in text
+        assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Accept invitation
         accept_url = re.search('http://.*response=Yes', text).group(0)
