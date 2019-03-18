@@ -364,12 +364,12 @@ class Conference(object):
 
     def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
-        assingment_notes_iterator = None
+        assignment_notes_iterator = None
         
         if reviewer_assingment_title:
-            assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
+            assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
         
-        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assingment_notes_iterator)
+        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
     def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):

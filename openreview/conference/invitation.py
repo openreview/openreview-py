@@ -544,11 +544,11 @@ class InvitationBuilder(object):
 
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_invitation(self, conference, start_date, due_date, notes_iterator, assingment_notes_iterator):
+    def set_recommendation_invitation(self, conference, start_date, due_date, notes_iterator, assignment_notes_iterator):
 
         assignment_note_by_forum = {}
-        if assingment_notes_iterator:
-            for assignment_note in assingment_notes_iterator:
+        if assignment_notes_iterator:
+            for assignment_note in assignment_notes_iterator:
                 assignment_note_by_forum[assignment_note.forum] = assignment_note.content
 
         # Create super invitation with a webfield
