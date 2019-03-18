@@ -15,7 +15,7 @@ class Matching(object):
     def _jaccard_similarity(self, list1, list2):
         intersection = len(list(set(list1).intersection(list2)))
         union = (len(list1) + len(list2)) - intersection
-        return float(intersection / union)            
+        return (float(intersection) / union)            
 
     def _append_manual_conflicts(self, profile, manual_user_conflicts):
         for conflict_domain in manual_user_conflicts:
@@ -72,7 +72,7 @@ class Matching(object):
                 count = len(reviewer_recommendations)
                 if profile.id in reviewer_recommendations:
                     index = reviewer_recommendations.index(profile.id)
-                    score = 0.5 + (0.5 * float((count - index) / count))
+                    score = 0.5 + (0.5 * (float(count - index) / count))
                     user_entry['scores']['recommendation'] = score
 
             manual_user_conflicts = manual_conflicts_by_id.get(profile.id, [])
