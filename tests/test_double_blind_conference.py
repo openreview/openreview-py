@@ -614,7 +614,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_public(True)
+        builder.set_submission_public(False)
         conference = builder.get_result()
 
         with pytest.raises(openreview.OpenReviewException, match=r'Conference is not double blind'):
@@ -627,8 +627,23 @@ class TestDoubleBlindConference():
         assert blind_submissions
         assert len(blind_submissions) == 1
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Blind submissions already created'):
-            conference.create_blind_submissions()
+        blind_submissions_2 = conference.create_blind_submissions()
+        assert blind_submissions_2
+        assert len(blind_submissions_2) == 1
+        assert blind_submissions[0].id == blind_submissions_2[0].id
+        assert blind_submissions_2[0].readers == ['AKBC.ws/2019/Conference/Program_Chairs',
+         'AKBC.ws/2019/Conference/Area_Chairs', 
+         'AKBC.ws/2019/Conference/Reviewers', 
+         'AKBC.ws/2019/Conference/Paper1/Authors']
+
+        builder.set_submission_public(True)
+        conference = builder.get_result()
+        blind_submissions_3 = conference.create_blind_submissions()
+        assert blind_submissions_3
+        assert len(blind_submissions_3) == 1
+        assert blind_submissions[0].id == blind_submissions_3[0].id
+        assert blind_submissions_3[0].readers == ['everyone']       
+
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
