@@ -300,14 +300,15 @@ class Conference(object):
         if not self.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
 
-        if next(self.get_submissions(), None):
-            raise openreview.OpenReviewException('Blind submissions already created')
+        submissions_by_original = { note.original: note.id for note in self.get_submissions() }
 
         self.invitation_builder.set_blind_submission_invitation(self)
         blinded_notes = []
 
         for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
+            note_id = submissions_by_original.get(note.id)
             blind_note = openreview.Note(
+                id = note_id,
                 original= note.id,
                 invitation= self.get_blind_submission_id(),
                 forum=None,
