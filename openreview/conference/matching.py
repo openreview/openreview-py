@@ -90,7 +90,7 @@ class Matching(object):
             entries.append(user_entry)
 
         ## Assert amount of bids and tags
-        assert bid_count == len(paper_bid_jsons), 'Incorrect number(score_count: '+ bid_count + ' tag_count:' + len(paper_bid_jsons) +') of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
+        assert bid_count == len(paper_bid_jsons), 'Incorrect number(score_count: '+ str(bid_count) + ' tag_count:' + str(len(paper_bid_jsons)) +') of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
         return entries
 
     def _get_profiles(self, client, ids_or_emails):
