@@ -532,7 +532,7 @@ class InvitationBuilder(object):
             content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
             content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")
             invitation = openreview.Invitation(id = conference_id + '/-/Recruit_' + options.get('reviewers_name', 'Reviewers'),
-                duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.now())),
+                duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
                 readers = ['everyone'],
                 nonreaders = [],
                 invitees = ['everyone'],
@@ -544,17 +544,19 @@ class InvitationBuilder(object):
 
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_invitation(self, conference, start_date, due_date, notes_iterator, assingment_notes_iterator):
+    def set_recommendation_invitation(self, conference, start_date, due_date, notes_iterator, assignment_notes_iterator):
 
         assignment_note_by_forum = {}
-        for assignment_note in assingment_notes_iterator:
-            assignment_note_by_forum[assignment_note.forum] = assignment_note.content
+        if assignment_notes_iterator:
+            for assignment_note in assignment_notes_iterator:
+                assignment_note_by_forum[assignment_note.forum] = assignment_note.content
 
         # Create super invitation with a webfield
         recommendation_invitation = openreview.Invitation(
-            id = conference.get_id() + '/-/Recommendation',
+            id = conference.get_recommendation_id(),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
             readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             invitees = [],
             writers = [conference.get_id()],
@@ -572,7 +574,7 @@ class InvitationBuilder(object):
                 },
                 'content': {
                     'tag': {
-                        'description': 'Recommend a reviewer to review this paper',
+                        'description': 'Recommend reviewer',
                         'order': 1,
                         'required': True,
                         'values-url': '/groups?id=' + conference.get_reviewers_id()
@@ -587,6 +589,9 @@ class InvitationBuilder(object):
         for note in notes_iterator:
             reviewers = []
             assignment_note = assignment_note_by_forum.get(note.id)
+            reply = {
+                'forum': note.id
+            }
             if assignment_note:
                 for group in assignment_note['assignedGroups']:
                     reviewers.append('{profileId} (A) - Bid: {bid} - Tpms: {tpms}'.format(
@@ -600,27 +605,144 @@ class InvitationBuilder(object):
                         bid = group.get('scores').get('bid'),
                         tpms = group.get('scores').get('affinity'))
                     )
-            else:
-                raise openreview.OpenReviewException('Assignment note not found for ' + note.id)
+                reply['content'] = {
+                    'tag': {
+                        'description': 'Recommend reviewer',
+                        'order': 1,
+                        'required': True,
+                        'values-dropdown': reviewers
+                    }
+                }
             paper_recommendation_invitation = openreview.Invitation(
-                id = conference.get_id() + '/-/Paper{number}/Recommendation'.format(number = note.number),
+                id = conference.get_recommendation_id(number = note.number),
+                cdate = tools.datetime_millis(start_date),
+                duedate = tools.datetime_millis(due_date),
+                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
                 super = recommendation_invitation.id,
                 invitees = [conference.get_program_chairs_id(), conference.get_id() + '/Paper{number}/Area_Chairs'.format(number = note.number)],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
                 multiReply = True,
-                reply = {
-                    'forum': note.id,
-                    'content': {
-                        'tag': {
-                            'description': 'Recommend reviewer',
-                            'order': 1,
-                            'required': True,
-                            'values-dropdown': reviewers
-                        }
-                    }
-                }
+                reply = reply
             )
             paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
-            print('Posted', paper_recommendation_invitation.id)
+
+
+    def set_registration_invitation(self, conference, start_date, due_date, with_area_chairs):
+
+        invitees = []
+        if with_area_chairs:
+            invitees.append(conference.get_area_chairs_id())
+        invitees.append(conference.get_reviewers_id())
+
+        subj_desc = 'To properly assign papers to reviewers, we ask that reviewers provide their areas of expertise from among the provided list of subject areas. Please submit your areas of expertise by selecting the appropriate options from the "Subject Areas" list.\n\n'
+
+        coi_desc = 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. After you have updated your profile, please confirm that your OpenReview profile is up-to-date by selecting yes in the "Profile Confirmed" section.\n\n'
+
+        tpms_desc = 'In addition to subject areas, we will be using the Toronto Paper Matching System (TPMS) to compute paper-reviewer affinity scores. Please take a moment to sign up for TPMS and/or update your TPMS account with your latest papers. Then, please ensure that the email address that is affiliated with your TPMS account is linked to your OpenReview profile. After you have done this, please confirm that your TPMS account is up-to-date by selecting yes in the "TPMS Account Confirmed" section.\n\n'
+
+
+        # Create super invitation with a webfield
+        registration_parent_invitation = openreview.Invitation(
+            id = conference.get_id() + '/-/Super/Registration',
+            readers = ['everyone'],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            reply = {
+                'forum': None,
+                'replyto': None,
+                'readers': {'values': invitees},
+                'writers': {'values': [conference.get_id()]},
+                'signatures': {'values': [conference.get_id()]},
+                'content': {
+                    'title': {'value': conference.get_short_name() + ' Registration'},
+                    'subject_areas': {
+                        'value': subj_desc,
+                        'order': 1
+                    },
+                    'profile confirmed': {
+                        'value': coi_desc,
+                        'order': 2
+                    },
+                    'TPMS account confirmed': {
+                        'value': tpms_desc,
+                        'order': 3
+                    }
+                }
+            }
+        )
+
+        registration_parent_invitation = self.client.post_invitation(registration_parent_invitation)
+
+        registration_parent = self.client.post_note(openreview.Note(
+            invitation = registration_parent_invitation.id,
+            readers = invitees,
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            replyto = None,
+            forum = None,
+            content = {
+                'title': registration_parent_invitation.reply['content']['title']['value'],
+                'subject_areas': registration_parent_invitation.reply['content']['subject_areas']['value'],
+                'profile confirmed': registration_parent_invitation.reply['content']['profile confirmed']['value'],
+                'TPMS account confirmed': registration_parent_invitation.reply['content']['TPMS account confirmed']['value'],
+            }            
+        ))
+
+        registration_invitation = self.client.post_invitation(openreview.Invitation(
+            id = conference.get_registration_id(),
+            cdate = tools.datetime_millis(start_date),
+            duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date),
+            readers = ['everyone'],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            reply = {
+                'forum': registration_parent.id,
+                'replyto': registration_parent.id,
+                'readers': {
+                    'description': 'Users who can read this',
+                    'values-copied': [
+                        conference.get_id(),
+                        '{signatures}'
+                    ]
+                },
+                'writers': {
+                    'description': 'How your identity will be displayed.',
+                    'values-copied': [
+                        conference.get_id(),
+                        '{signatures}'
+                    ]
+                },
+                'signatures': {
+                    'description': 'How your identity will be displayed.',
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'title': {
+                        'value': conference.get_short_name() + ' Registration',
+                        'order': 1
+                    },
+                    'subject_areas': {
+                        'values-dropdown': conference.get_subject_areas(),
+                        'required': True,
+                        'order': 2
+                    },
+                    'profile confirmed': {
+                        'value-radio': ['Yes', 'No'],
+                        'required': True,
+                        'order': 3
+                    },
+                    'TPMS account confirmed': {
+                        'value-radio': ['Yes', 'No'],
+                        'required': True,
+                        'order': 4
+                    }
+                }
+            }
+        ))
+
+        return self.client.post_invitation(registration_invitation)
 

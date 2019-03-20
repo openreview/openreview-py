@@ -33,6 +33,8 @@ class Conference(object):
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
         self.bid_name = 'Bid'
+        self.recommendation_name = 'Recommendation'
+        self.registration_name = 'Registration'
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
@@ -172,6 +174,17 @@ class Conference(object):
 
     def get_bid_id(self):
         return self.id + '/-/' + self.bid_name
+
+    def get_recommendation_id(self, number = None):
+        recommendation_id = self.id
+        if number:
+            recommendation_id = recommendation_id + '/Paper' + str(number)
+
+        recommendation_id = recommendation_id + '/-/' + self.recommendation_name
+        return recommendation_id   
+
+    def get_registration_id(self):
+        return self.id + '/-/' + self.registration_name        
 
     def set_conference_groups(self, groups):
         self.groups = groups
@@ -350,12 +363,18 @@ class Conference(object):
     def close_bids(self):
         return self.__expire_invitation(self.get_bid_id())
 
-    def open_recommendations(self, reviewer_assingment_title, start_date = None, due_date = None):
+    def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
-        assingment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
-        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assingment_notes_iterator)
+        assignment_notes_iterator = None
+        
+        if reviewer_assingment_title:
+            assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
+        
+        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
+    def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
+        return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
 
     def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False):
         ## Create comment invitations per paper
@@ -409,9 +428,9 @@ class Conference(object):
                 authorids = n.details['original']['content']['authorids']
             self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
-    def setup_matching(self, affinity_score_file = None):
+    def setup_matching(self, affinity_score_file = None, tpms_score_file = None):
         conference_matching = matching.Matching(self)
-        return conference_matching.setup(affinity_score_file)
+        return conference_matching.setup(affinity_score_file, tpms_score_file)
 
     def set_assignment(self, user, number, is_area_chair = False):
 

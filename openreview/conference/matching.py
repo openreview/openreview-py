@@ -1,3 +1,4 @@
+from __future__ import division
 import openreview
 import csv
 from collections import defaultdict
@@ -11,6 +12,13 @@ class Matching(object):
         note_list = list(openreview.tools.iterget_notes(client, invitation = invitation))
         for note in note_list:
             client.delete_note(note)
+
+    def _jaccard_similarity(self, list1, list2):
+        set1 = set(list1)
+        set2 = set(list2)
+        intersection = set1.intersection(set2)
+        union = set1.union(set2)
+        return len(intersection) / len(union)          
 
     def _append_manual_conflicts(self, profile, manual_user_conflicts):
         for conflict_domain in manual_user_conflicts:
@@ -27,7 +35,7 @@ class Matching(object):
         return profile
 
 
-    def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, scores_by_reviewer, manual_conflicts_by_id):
+    def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, scores_by_reviewer, manual_conflicts_by_id):
         entries = []
         for profile in reviewer_profiles:
             bid_score_map = {
@@ -60,6 +68,15 @@ class Matching(object):
                     bid_score = bid_score_map.get(tag, 0.0)
                     if bid_score != 0.0:
                         user_entry['scores']['bid'] = bid_score
+
+            reviewer_recommendations = [ t['tag'] for t in sorted(paper_recommendation_jsons, key=lambda x: x['cdate'])]
+            if reviewer_recommendations:
+                ## Set value between High(0.5) and Very High(1)
+                count = len(reviewer_recommendations)
+                if profile.id in reviewer_recommendations:
+                    index = reviewer_recommendations.index(profile.id)
+                    score = 0.5 + (0.5 * ((count - index) / count))
+                    user_entry['scores']['recommendation'] = score
 
             manual_user_conflicts = manual_conflicts_by_id.get(profile.id, [])
             if manual_user_conflicts:
@@ -99,16 +116,18 @@ class Matching(object):
         note,
         reviewer_profiles,
         metadata_inv,
-        paper_tpms_scores,
-        manual_conflicts_by_id):
+        paper_scores,
+        manual_conflicts_by_id,
+        bid_invitation,
+        recommendation_invitation):
 
         authorids = note.content['authorids']
         if note.details.get('original'):
             authorids = note.details['original']['content']['authorids']
-        paper_bid_jsons = note.details['tags']
+        paper_bid_jsons = list(filter(lambda t: t['invitation'] == bid_invitation, note.details['tags']))
+        paper_recommendation_jsons = list(filter(lambda t: t['invitation'] == recommendation_invitation, note.details['tags']))
         paper_author_profiles = self._get_profiles(client, authorids)
-        print('Paper',note.id)
-        entries = self._build_entries(paper_author_profiles, reviewer_profiles, paper_bid_jsons, paper_tpms_scores, manual_conflicts_by_id)
+        entries = self._build_entries(paper_author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, paper_scores, manual_conflicts_by_id)
 
         new_metadata_note = openreview.Note(**{
             'forum': note.id,
@@ -155,7 +174,7 @@ class Matching(object):
 
         return sorted(assignments, key=lambda x: x[0])
 
-    def setup(self, affinity_score_file):
+    def setup(self, affinity_score_file = None, tpms_score_file = None):
 
         conference = self.conference
         client = conference.client
@@ -169,6 +188,15 @@ class Matching(object):
         scores = ['bid']
         if affinity_score_file:
             scores.append('affinity')
+        if tpms_score_file:
+            scores.append('tpms')
+        if conference.subject_areas:
+            scores.append('subjectArea')
+        try:
+            client.get_invitation(conference.get_recommendation_id())
+            scores.append('recommendation')
+        except openreview.OpenReviewException:
+            print('Recommendation invitation not found')
 
         metadata_inv = openreview.Invitation.from_json({
             'id': METADATA_INV_ID,
@@ -353,9 +381,15 @@ class Matching(object):
         config_inv = client.post_invitation(config_inv)
         assignment_inv = client.post_invitation(assignment_inv)
 
-        # We need to use Blind_Submissions in this conference.
+        # Get the submissions.
         submissions = list(openreview.tools.iterget_notes(
             client, invitation = conference.get_blind_submission_id(), details='original,tags'))
+
+        submissions_per_number = { note.number: note for note in submissions }
+        profiles_by_email = {}
+        for profile in user_profiles:
+            for email in profile.content['emails']:
+                profiles_by_email[email] = profile
 
         scores_by_reviewer_by_paper = {note.forum: defaultdict(dict) for note in submissions}
 
@@ -368,9 +402,41 @@ class Matching(object):
                     if paper_note_id in scores_by_reviewer_by_paper:
                         scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'affinity': float(score)})
 
+        if tpms_score_file:
+            with open(tpms_score_file) as f:
+                for row in csv.reader(f):
+                    paper_note_id = submissions_per_number[int(row[0])].id
+                    profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
+                    score = row[2]
+                    if paper_note_id in scores_by_reviewer_by_paper:
+                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})
+
+        if conference.subject_areas:
+            user_subject_areas = list(openreview.tools.iterget_notes(client, invitation = conference.get_registration_id()))
+            for note in submissions:
+                note_subject_areas = note.content['subject_areas']
+                paper_note_id = note.id
+                for subject_area_note in user_subject_areas:
+                    profile_id = subject_area_note.signatures[0]
+                    subject_areas = subject_area_note.content['subject_areas']
+                    score = self._jaccard_similarity(note_subject_areas, subject_areas)
+                    if paper_note_id in scores_by_reviewer_by_paper:
+                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'subjectArea': float(score)})                    
+
+        metadata_notes = []
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
-            self.post_metadata_note(client, note, user_profiles, metadata_inv, scores_by_reviewer, {})
+            metadata_notes.append(self.post_metadata_note(client, 
+                note, 
+                user_profiles, 
+                metadata_inv, 
+                scores_by_reviewer, 
+                {}, 
+                conference.get_bid_id(), 
+                conference.get_recommendation_id(note.number))
+            )
+
+        return metadata_notes
 
 
     def get_assignment_notes (self):
