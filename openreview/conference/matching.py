@@ -90,6 +90,8 @@ class Matching(object):
             entries.append(user_entry)
 
         ## Assert amount of bids and tags
+        difference = list(set([profile.id for profile in reviewer_profiles]).symmetric_difference(set([tag['signatures'][0] for tag in paper_bid_jsons])))
+        assert len(difference) == 0, 'There is a difference between profile and tags: ' + difference
         assert bid_count == len(paper_bid_jsons), 'Incorrect number(score_count: '+ str(bid_count) + ' tag_count:' + str(len(paper_bid_jsons)) +') of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
         return entries
 
