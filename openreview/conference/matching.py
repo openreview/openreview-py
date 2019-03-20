@@ -37,6 +37,7 @@ class Matching(object):
 
     def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, scores_by_reviewer, manual_conflicts_by_id):
         entries = []
+        bid_count = 0
         for profile in reviewer_profiles:
             bid_score_map = {
                 'Very High': 1.0,
@@ -66,6 +67,7 @@ class Matching(object):
                     user_entry['conflicts'] = ['self-declared COI']
                 else:
                     bid_score = bid_score_map.get(tag, 0.0)
+                    bid_count += 1
                     if bid_score != 0.0:
                         user_entry['scores']['bid'] = bid_score
 
@@ -88,6 +90,8 @@ class Matching(object):
 
             entries.append(user_entry)
 
+        ## Assert amount of bids and tags
+        assert bid_count == len(paper_bid_jsons), 'Incorrect number of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
         return entries
 
     def _get_profiles(self, client, ids_or_emails):
