@@ -49,7 +49,6 @@ class Matching(object):
             try:
                 reviewer_bids = sorted([t for t in paper_bid_jsons if profile.id in t['signatures']], key=lambda t: t.get('tmdate',0), reverse=True)
             except TypeError as e:
-                print(paper_bid_jsons)
                 raise e
             reviewer_scores = scores_by_reviewer.get(profile.id, {})
 
@@ -91,7 +90,7 @@ class Matching(object):
             entries.append(user_entry)
 
         ## Assert amount of bids and tags
-        assert bid_count == len(paper_bid_jsons), 'Incorrect number of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
+        assert bid_count == len(paper_bid_jsons), 'Incorrect number(score_count: '+ bid_count + ' tag_count:' + len(paper_bid_jsons) +') of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
         return entries
 
     def _get_profiles(self, client, ids_or_emails):
