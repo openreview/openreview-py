@@ -1,3 +1,4 @@
+from __future__ import division
 import openreview
 import csv
 from collections import defaultdict
@@ -13,9 +14,11 @@ class Matching(object):
             client.delete_note(note)
 
     def _jaccard_similarity(self, list1, list2):
-        intersection = len(list(set(list1).intersection(list2)))
-        union = (len(list1) + len(list2)) - intersection
-        return (float(intersection) / union)            
+        set1 = set(list1)
+        set2 = set(list2)
+        intersection = set1.intersection(set2)
+        union = set1.union(set2)
+        return len(intersection) / len(union)          
 
     def _append_manual_conflicts(self, profile, manual_user_conflicts):
         for conflict_domain in manual_user_conflicts:
@@ -72,7 +75,7 @@ class Matching(object):
                 count = len(reviewer_recommendations)
                 if profile.id in reviewer_recommendations:
                     index = reviewer_recommendations.index(profile.id)
-                    score = 0.5 + (0.5 * (float(count - index) / count))
+                    score = 0.5 + (0.5 * ((count - index) / count))
                     user_entry['scores']['recommendation'] = score
 
             manual_user_conflicts = manual_conflicts_by_id.get(profile.id, [])
