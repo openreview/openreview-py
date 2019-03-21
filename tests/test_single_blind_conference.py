@@ -438,6 +438,9 @@ class TestSingleBlindConference():
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
         assert len(notes) == 2
 
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 0        
+
     def test_consoles(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
