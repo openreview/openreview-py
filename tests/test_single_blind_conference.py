@@ -396,11 +396,7 @@ class TestSingleBlindConference():
         assert process_logs[0]['status'] == 'ok'
 
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission: "New paper title"')
-        assert len(messages) == 3
-        recipients = [m['content']['to'] for m in messages]
-        assert 'test@mail.com' in recipients
-        assert 'peter@mail.com' in recipients
-        assert 'andrew@mail.com' in recipients
+        assert len(messages) == 0
 
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
         assert len(messages) == 1
