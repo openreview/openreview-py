@@ -398,8 +398,12 @@ class Conference(object):
         :arg release_to_authors: allow the author to read the review once is posted, default = False.
         :arg release_to_reviewers: allow the paper reviewers to read the review once is potest, default = False => only reviewers with submitted reviews can see other reviews.
         """
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, start_date, due_date, public, release_to_authors, release_to_reviewers)
+        notes = list(self.get_submissions())
+        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers)
+        ## Create submitted groups if they don't exist
+        for n in notes:
+            self.__create_group(self.get_reviewers_id( number = n.number) + '/Submitted', self.get_program_chairs_id())
+        return invitations
 
     def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
