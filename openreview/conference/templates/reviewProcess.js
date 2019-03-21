@@ -29,9 +29,10 @@ function(){
       };
       var areachairMailP = or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token );
       var authorMailP = or3client.or3request( or3client.mailUrl, author_mail, 'POST', token );
+      var addSubmittedP = or3client.addGroupMember(PAPER_REVIEWERS + '/Submitted', note.signatures[0], token);
 
-      return Promise.all([areachairMailP, authorMailP]);
-    })
+      return Promise.all([areachairMailP, authorMailP, addSubmittedP]);
+    })   
     .then(result => done())
     .catch(error => done(error));
     return true;
