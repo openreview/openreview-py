@@ -358,7 +358,7 @@ class TestSingleBlindConference():
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
+        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -376,7 +376,8 @@ class TestSingleBlindConference():
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['everyone'],
+            readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
+            nonreaders = ['NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
             writers = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
             signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
             content = {
@@ -404,6 +405,14 @@ class TestSingleBlindConference():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
+
+        ## Check review visibility
+        notes = reviewer_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 1
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 0
+
 
     def test_consoles(self, client, test_client, selenium, request_page):
 

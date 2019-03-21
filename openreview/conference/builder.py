@@ -387,9 +387,19 @@ class Conference(object):
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False):
+    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        """
+        Create review invitations for all the available submissions.
+
+        :arg name: name of the official invitation, default = 'Official_Review'.
+        :arg start_date: when the review period starts. default = now.
+        :arg due_date: expected date to finish the review.
+        :arg public: set the readership of the review to the general public.
+        :arg release_to_authors: allow the author to read the review once is posted, default = False.
+        :arg release_to_reviewers: allow the paper reviewers to read the review once is potest, default = False => only reviewers with submitted reviews can see other reviews.
+        """
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, start_date, due_date, public)
+        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, start_date, due_date, public, release_to_authors, release_to_reviewers)
 
     def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
