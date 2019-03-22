@@ -350,6 +350,7 @@ class TestSingleBlindConference():
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_program_chairs(emails = ['pc2@mail.com'])

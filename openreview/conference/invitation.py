@@ -314,10 +314,9 @@ class ReviewInvitation(openreview.Invitation):
             readers = ['everyone']
             nonreaders = []
         else:
-            readers = [
-                conference.get_program_chairs_id(),
-                conference.get_area_chairs_id(number = note.number)
-            ]
+            readers = [ conference.get_program_chairs_id()]
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number = note.number))
 
         if release_to_reviewers:
             readers.append(conference.get_reviewers_id(number = note.number))

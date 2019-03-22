@@ -15,6 +15,7 @@ class Conference(object):
         self.client = client
         self.double_blind = False
         self.submission_public = False
+        self.use_area_chairs = False
         self.original_readers = []
         self.subject_areas = []
         self.groups = []
@@ -128,7 +129,10 @@ class Conference(object):
         self.reviewers_name = name
 
     def set_area_chairs_name(self, name):
-        self.area_chairs_name = name
+        if self.use_area_chairs:
+            self.area_chairs_name = name
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
@@ -213,8 +217,11 @@ class Conference(object):
         return self.reviewerpage_header
 
     def set_areachairpage_header(self, header):
-        self.areachairpage_header = header
-        return self.__set_area_chair_page()
+        if self.use_area_chairs:
+            self.areachairpage_header = header
+            return self.__set_area_chair_page()
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
     def get_areachairpage_header(self):
         return self.areachairpage_header
@@ -235,12 +242,18 @@ class Conference(object):
     def set_submission_public(self, submission_public):
         self.submission_public = submission_public
 
+    def has_area_chairs(self, has_area_chairs):
+        self.use_area_chairs = has_area_chairs
+
     def get_submission_readers(self):
-        return [
-            self.get_program_chairs_id(),
-            self.get_area_chairs_id(),
-            self.get_reviewers_id()
-        ]
+        readers = [self.get_program_chairs_id()]
+
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id())
+
+        readers.append(self.get_reviewers_id())
+
+        return readers
 
     def set_original_readers(self, additional_readers):
         self.original_readers = additional_readers
@@ -426,8 +439,11 @@ class Conference(object):
         return self.__set_program_chair_page()
 
     def set_area_chairs(self, emails):
-        self.__create_group(self.get_area_chairs_id(), self.id, emails)
-        return self.__set_area_chair_page()
+        if self.use_area_chairs:
+            self.__create_group(self.get_area_chairs_id(), self.id, emails)
+            return self.__set_area_chair_page()
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
     def set_reviewers(self, emails):
         self.__create_group(self.get_reviewers_id(), self.id, emails)
@@ -659,6 +675,9 @@ class ConferenceBuilder(object):
 
     def set_subject_areas(self, subject_areas):
         self.conference.set_subject_areas(subject_areas)
+
+    def has_area_chairs(self, has_area_chairs):
+        self.conference.has_area_chairs(has_area_chairs)
 
     def get_result(self):
 
