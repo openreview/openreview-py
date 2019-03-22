@@ -359,7 +359,19 @@ class TestSingleBlindConference():
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
         conference.set_assignment('reviewer3@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+            'rating': {
+                'order': 3,
+                'value-dropdown': [
+                    '5',
+                    '4',
+                    '3',
+                    '2',
+                    '1'
+                ],
+                'required': True
+            }            
+        })
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -384,7 +396,7 @@ class TestSingleBlindConference():
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
-                'rating': '9: Top 15% of accepted papers, strong accept',
+                'rating': '5',
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
             }
         )
@@ -424,7 +436,7 @@ class TestSingleBlindConference():
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
-                'rating': '9: Top 15% of accepted papers, strong accept',
+                'rating': '2',
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
             }
         )

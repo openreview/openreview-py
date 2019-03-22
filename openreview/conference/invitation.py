@@ -299,8 +299,11 @@ class OfficialCommentInvitation(openreview.Invitation):
 
 class ReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers):
+    def __init__(self, conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields):
         content = invitations.review.copy()
+
+        for key in additional_fields:
+            content[key] = additional_fields[key]        
 
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
         
@@ -309,6 +312,7 @@ class ReviewInvitation(openreview.Invitation):
 
         if public:
             readers = ['everyone']
+            nonreaders = []
         else:
             readers = [
                 conference.get_program_chairs_id(),
@@ -479,10 +483,10 @@ class InvitationBuilder(object):
         for note in notes:
             self.client.post_invitation(OfficialCommentInvitation(conference, name, note, start_date, anonymous))
 
-    def set_review_invitation(self, conference, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers):
+    def set_review_invitation(self, conference, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields):
 
         for note in notes:
-            self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers))
+            self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields))
 
     def set_meta_review_invitation(self, conference, notes, name, start_date, due_date, public):
 
