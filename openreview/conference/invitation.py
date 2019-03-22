@@ -299,19 +299,33 @@ class OfficialCommentInvitation(openreview.Invitation):
 
 class ReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, due_date, public):
+    def __init__(self, conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields):
         content = invitations.review.copy()
 
-        prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
-        readers = ['everyone']
+        for key in additional_fields:
+            content[key] = additional_fields[key]        
 
-        if not public:
-            readers = [
-                conference.get_authors_id(number = note.number),
-                conference.get_reviewers_id(number = note.number),
-                conference.get_area_chairs_id(number = note.number),
-                conference.get_program_chairs_id()
-            ]
+        prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
+        
+        readers = []
+        nonreaders = [conference.get_authors_id(number = note.number)]
+
+        if public:
+            readers = ['everyone']
+            nonreaders = []
+        else:
+            readers = [ conference.get_program_chairs_id()]
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number = note.number))
+
+        if release_to_reviewers:
+            readers.append(conference.get_reviewers_id(number = note.number))
+        else:
+            readers.append(conference.get_reviewers_id(number = note.number) + '/Submitted')
+
+        if release_to_authors:
+            readers.append(conference.get_authors_id(number = note.number))
+            nonreaders = []
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
             file_content = f.read()
@@ -337,6 +351,9 @@ class ReviewInvitation(openreview.Invitation):
                         "description": "Select all user groups that should be able to read this comment.",
                         "values": readers
                     },
+                    'nonreaders': {
+                        "values": nonreaders
+                    },                    
                     'writers': {
                         'values-regex': prefix + 'Anon' + conference.reviewers_name[:-1] + '[0-9]+',
                         'description': 'How your identity will be displayed.'
@@ -465,10 +482,10 @@ class InvitationBuilder(object):
         for note in notes:
             self.client.post_invitation(OfficialCommentInvitation(conference, name, note, start_date, anonymous))
 
-    def set_review_invitation(self, conference, notes, name, start_date, due_date, public):
+    def set_review_invitation(self, conference, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields):
 
         for note in notes:
-            self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, public))
+            self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields))
 
     def set_meta_review_invitation(self, conference, notes, name, start_date, due_date, public):
 

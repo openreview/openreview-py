@@ -15,6 +15,7 @@ class Conference(object):
         self.client = client
         self.double_blind = False
         self.submission_public = False
+        self.use_area_chairs = False
         self.original_readers = []
         self.subject_areas = []
         self.groups = []
@@ -128,7 +129,10 @@ class Conference(object):
         self.reviewers_name = name
 
     def set_area_chairs_name(self, name):
-        self.area_chairs_name = name
+        if self.use_area_chairs:
+            self.area_chairs_name = name
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
@@ -213,8 +217,11 @@ class Conference(object):
         return self.reviewerpage_header
 
     def set_areachairpage_header(self, header):
-        self.areachairpage_header = header
-        return self.__set_area_chair_page()
+        if self.use_area_chairs:
+            self.areachairpage_header = header
+            return self.__set_area_chair_page()
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
     def get_areachairpage_header(self):
         return self.areachairpage_header
@@ -235,12 +242,18 @@ class Conference(object):
     def set_submission_public(self, submission_public):
         self.submission_public = submission_public
 
+    def has_area_chairs(self, has_area_chairs):
+        self.use_area_chairs = has_area_chairs
+
     def get_submission_readers(self):
-        return [
-            self.get_program_chairs_id(),
-            self.get_area_chairs_id(),
-            self.get_reviewers_id()
-        ]
+        readers = [self.get_program_chairs_id()]
+
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id())
+
+        readers.append(self.get_reviewers_id())
+
+        return readers
 
     def set_original_readers(self, additional_readers):
         self.original_readers = additional_readers
@@ -387,9 +400,24 @@ class Conference(object):
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False):
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_review_invitation(self, notes_iterator, name, start_date, due_date, public)
+    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, additional_fields = {}):
+        """
+        Create review invitations for all the available submissions.
+
+        :arg name: name of the official invitation, default = 'Official_Review'.
+        :arg start_date: when the review period starts. default = now.
+        :arg due_date: expected date to finish the review.
+        :arg public: set the readership of the review to the general public.
+        :arg release_to_authors: allow the author to read the review once is posted, default = False.
+        :arg release_to_reviewers: allow the paper reviewers to read the review once is potest, default = False => only reviewers with submitted reviews can see other reviews.
+        :arg additional_fields: field to add/overwrite to the review invitation
+        """
+        notes = list(self.get_submissions())
+        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields)
+        ## Create submitted groups if they don't exist
+        for n in notes:
+            self.__create_group(self.get_reviewers_id( number = n.number) + '/Submitted', self.get_program_chairs_id())
+        return invitations
 
     def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
@@ -411,8 +439,11 @@ class Conference(object):
         return self.__set_program_chair_page()
 
     def set_area_chairs(self, emails):
-        self.__create_group(self.get_area_chairs_id(), self.id, emails)
-        return self.__set_area_chair_page()
+        if self.use_area_chairs:
+            self.__create_group(self.get_area_chairs_id(), self.id, emails)
+            return self.__set_area_chair_page()
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
     def set_reviewers(self, emails):
         self.__create_group(self.get_reviewers_id(), self.id, emails)
@@ -603,6 +634,7 @@ class ConferenceBuilder(object):
         self.conference.set_reviewers_name(name)
 
     def set_conference_area_chairs_name(self, name):
+        self.conference.has_area_chairs(True)
         self.conference.set_area_chairs_name(name)
 
     def set_conference_program_chairs_name(self, name):
@@ -621,6 +653,7 @@ class ConferenceBuilder(object):
         self.conference.set_reviewerpage_header(header)
 
     def set_areachairpage_header(self, header):
+        self.conference.has_area_chairs(True)
         self.conference.set_areachairpage_header(header)
 
     def set_homepage_layout(self, layout):
@@ -644,6 +677,9 @@ class ConferenceBuilder(object):
 
     def set_subject_areas(self, subject_areas):
         self.conference.set_subject_areas(subject_areas)
+
+    def has_area_chairs(self, has_area_chairs):
+        self.conference.has_area_chairs(has_area_chairs)
 
     def get_result(self):
 

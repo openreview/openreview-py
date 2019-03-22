@@ -320,7 +320,7 @@ class TestSingleBlindConference():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-    def test_open_reviews(self, client, test_client, selenium, request_page):
+    def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert reviewer_client is not None, "Client is none"
@@ -350,15 +350,29 @@ class TestSingleBlindConference():
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac@mail.com'])
-        conference.set_reviewers(emails = ['reviewer@mail.com'])
+        conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
+        conference.set_assignment('reviewer3@mail.com', submission.number)
+        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+            'rating': {
+                'order': 3,
+                'value-dropdown': [
+                    '5',
+                    '4',
+                    '3',
+                    '2',
+                    '1'
+                ],
+                'required': True
+            }            
+        })
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -376,13 +390,14 @@ class TestSingleBlindConference():
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['everyone'],
+            readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
+            nonreaders = ['NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
             writers = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
             signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
-                'rating': '9: Top 15% of accepted papers, strong accept',
+                'rating': '5',
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
             }
         )
@@ -394,16 +409,51 @@ class TestSingleBlindConference():
         assert process_logs[0]['status'] == 'ok'
 
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission: "New paper title"')
-        assert len(messages) == 3
-        recipients = [m['content']['to'] for m in messages]
-        assert 'test@mail.com' in recipients
-        assert 'peter@mail.com' in recipients
-        assert 'andrew@mail.com' in recipients
+        assert len(messages) == 0
 
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
+
+        ## Check review visibility
+        notes = reviewer_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 1
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 0
+
+        reviewer2_client = helpers.create_user('reviewer3@mail.com', 'Reviewer', 'Three')
+        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 0  
+
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
+            nonreaders = ['NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
+            writers = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer2'],
+            signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer2'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '2',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        review_note = reviewer2_client.post_note(note)
+        assert review_note   
+
+        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 2
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        assert len(notes) == 0
+
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac@mail.com' in recipients             
 
     def test_consoles(self, client, test_client, selenium, request_page):
 

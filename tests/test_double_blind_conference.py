@@ -615,6 +615,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_public(False)
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         with pytest.raises(openreview.OpenReviewException, match=r'Conference is not double blind'):
@@ -709,6 +710,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
+        builder.has_area_chairs(True)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
@@ -722,7 +724,7 @@ class TestDoubleBlindConference():
         assert tabs
 
 
-    def test_open_reviews(self, client, test_client, selenium, request_page):
+    def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
@@ -731,6 +733,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
+        builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
         conference.set_authors()
@@ -742,7 +745,7 @@ class TestDoubleBlindConference():
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), public = True)
+        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), release_to_authors = True, release_to_reviewers = True)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -760,7 +763,10 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Official_Review',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['everyone'],
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 
+            'AKBC.ws/2019/Conference/Paper1/Area_Chairs', 
+            'AKBC.ws/2019/Conference/Paper1/Reviewers', 
+            'AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
             content = {
@@ -785,9 +791,17 @@ class TestDoubleBlindConference():
         assert 'andrew@mail.com' in recipients
 
         messages = client.get_messages(subject = '[AKBC 2019] Review posted to your assigned paper: "New paper title"')
-        assert len(messages) == 1
+        assert len(messages) == 2
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
+        assert 'reviewer2@mail.com' in recipients
+
+        ## Check review visibility
+        notes = reviewer_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper1/Official_Review')
+        assert len(notes) == 1
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper1/Official_Review')
+        assert len(notes) == 1        
 
     def test_open_meta_reviews(self, client, test_client, selenium, request_page):
 
