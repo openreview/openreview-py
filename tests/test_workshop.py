@@ -263,16 +263,16 @@ class TestWorkshop():
         builder.has_area_chairs(False)
         conference = builder.get_result()
         conference.set_authors()
-        conference.set_reviewers(emails = ['reviewer3@mail.com'])
+        conference.set_reviewers(emails = ['reviewer4@mail.com'])
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[0]
 
-        conference.set_assignment('reviewer3@mail.com', submission.number)
+        conference.set_assignment('reviewer4@mail.com', submission.number)
         conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         # Reviewer
-        reviewer_client = helpers.create_user('reviewer3@mail.com', 'Reviewer', 'Three')
+        reviewer_client = helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')

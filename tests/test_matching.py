@@ -45,7 +45,6 @@ class TestMatching():
         builder.set_conference_reviewers_name('Program_Committee')
         builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.has_area_chairs(True)
         builder.set_subject_areas([
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",

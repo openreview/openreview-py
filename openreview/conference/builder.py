@@ -634,6 +634,7 @@ class ConferenceBuilder(object):
         self.conference.set_reviewers_name(name)
 
     def set_conference_area_chairs_name(self, name):
+        self.conference.has_area_chairs(True)
         self.conference.set_area_chairs_name(name)
 
     def set_conference_program_chairs_name(self, name):
@@ -652,6 +653,7 @@ class ConferenceBuilder(object):
         self.conference.set_reviewerpage_header(header)
 
     def set_areachairpage_header(self, header):
+        self.conference.has_area_chairs(True)
         self.conference.set_areachairpage_header(header)
 
     def set_homepage_layout(self, layout):
