@@ -788,9 +788,10 @@ class TestDoubleBlindConference():
         assert 'andrew@mail.com' in recipients
 
         messages = client.get_messages(subject = '[AKBC 2019] Review posted to your assigned paper: "New paper title"')
-        assert len(messages) == 1
+        assert len(messages) == 2
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
+        assert 'reviewer2@mail.com' in recipients
 
         ## Check review visibility
         notes = reviewer_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper1/Official_Review')
