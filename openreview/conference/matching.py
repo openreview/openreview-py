@@ -37,6 +37,7 @@ class Matching(object):
 
     def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, scores_by_reviewer, manual_conflicts_by_id):
         entries = []
+        bid_count = 0
         for profile in reviewer_profiles:
             bid_score_map = {
                 'Very High': 1.0,
@@ -48,7 +49,6 @@ class Matching(object):
             try:
                 reviewer_bids = sorted([t for t in paper_bid_jsons if profile.id in t['signatures']], key=lambda t: t.get('tmdate',0), reverse=True)
             except TypeError as e:
-                print(paper_bid_jsons)
                 raise e
             reviewer_scores = scores_by_reviewer.get(profile.id, {})
 
@@ -66,6 +66,7 @@ class Matching(object):
                     user_entry['conflicts'] = ['self-declared COI']
                 else:
                     bid_score = bid_score_map.get(tag, 0.0)
+                    bid_count += 1
                     if bid_score != 0.0:
                         user_entry['scores']['bid'] = bid_score
 
@@ -88,6 +89,10 @@ class Matching(object):
 
             entries.append(user_entry)
 
+        ## Assert amount of bids and tags
+        difference = list(set([tag['signatures'][0] for tag in paper_bid_jsons]) - set([profile.id for profile in reviewer_profiles]))
+        assert len(difference) == 0, 'There is a difference in forum: ' + paper_bid_jsons[0]['forum'] + ' for tags with no profile found: ' + ','.join(difference)
+        assert bid_count == len(paper_bid_jsons), 'Incorrect number(score_count: '+ str(bid_count) + ' tag_count:' + str(len(paper_bid_jsons)) +') of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
         return entries
 
     def _get_profiles(self, client, ids_or_emails):
