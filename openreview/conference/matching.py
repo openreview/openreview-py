@@ -372,14 +372,17 @@ class Matching(object):
         if not all(['~' in member for member in reviewers_group.members]):
             print('WARNING: not all reviewers have been converted to profile IDs. Members without profiles will not have metadata created.')
 
-        areachairs_group = client.get_group(AREA_CHAIRS_ID)
-        # The areachairs are all emails so convert to tilde ids
-        areachairs_group = openreview.tools.replace_members_with_ids(client,areachairs_group)
-        if not all(['~' in member for member in areachairs_group.members]):
-            print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
 
-        user_profiles = self._get_profiles(client, reviewers_group.members + areachairs_group.members)
+        if conference.use_area_chairs:
+            areachairs_group = client.get_group(AREA_CHAIRS_ID)
+            # The areachairs are all emails so convert to tilde ids
+            areachairs_group = openreview.tools.replace_members_with_ids(client,areachairs_group)
+            if not all(['~' in member for member in areachairs_group.members]):
+                print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
 
+            user_profiles = self._get_profiles(client, reviewers_group.members + areachairs_group.members)
+        else:
+            user_profiles = self._get_profiles(client, reviewers_group.members)
 
         # create metadata
         metadata_inv = client.post_invitation(metadata_inv)
