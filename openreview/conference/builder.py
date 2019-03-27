@@ -185,10 +185,10 @@ class Conference(object):
             recommendation_id = recommendation_id + '/Paper' + str(number)
 
         recommendation_id = recommendation_id + '/-/' + self.recommendation_name
-        return recommendation_id   
+        return recommendation_id
 
     def get_registration_id(self):
-        return self.id + '/-/' + self.registration_name        
+        return self.id + '/-/' + self.registration_name
 
     def set_conference_groups(self, groups):
         self.groups = groups
@@ -379,10 +379,10 @@ class Conference(object):
     def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
         assignment_notes_iterator = None
-        
+
         if reviewer_assingment_title:
             assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
-        
+
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
@@ -400,20 +400,21 @@ class Conference(object):
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, additional_fields = {}):
+    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, additional_fields = {}):
         """
         Create review invitations for all the available submissions.
 
         :arg name: name of the official invitation, default = 'Official_Review'.
         :arg start_date: when the review period starts. default = now.
         :arg due_date: expected date to finish the review.
+        :arg allow_de_anonymization: indicates if the review can be signed with a real identity or not.
         :arg public: set the readership of the review to the general public.
         :arg release_to_authors: allow the author to read the review once is posted, default = False.
         :arg release_to_reviewers: allow the paper reviewers to read the review once is potest, default = False => only reviewers with submitted reviews can see other reviews.
         :arg additional_fields: field to add/overwrite to the review invitation
         """
         notes = list(self.get_submissions())
-        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields)
+        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields)
         ## Create submitted groups if they don't exist
         for n in notes:
             self.__create_group(self.get_reviewers_id( number = n.number) + '/Submitted', self.get_program_chairs_id())

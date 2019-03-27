@@ -299,14 +299,17 @@ class OfficialCommentInvitation(openreview.Invitation):
 
 class ReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields):
+    def __init__(self, conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields):
         content = invitations.review.copy()
 
         for key in additional_fields:
-            content[key] = additional_fields[key]        
+            content[key] = additional_fields[key]
 
-        prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
-        
+        signature_regex = conference.get_id() + '/Paper' + str(note.number) + '/Anon' + conference.reviewers_name[:-1] + '[0-9]+'
+
+        if allow_de_anonymization:
+            signature_regex = signature_regex + '|~.*'
+
         readers = []
         nonreaders = [conference.get_authors_id(number = note.number)]
 
@@ -326,6 +329,7 @@ class ReviewInvitation(openreview.Invitation):
         if release_to_authors:
             readers.append(conference.get_authors_id(number = note.number))
             nonreaders = []
+
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
             file_content = f.read()
@@ -353,13 +357,13 @@ class ReviewInvitation(openreview.Invitation):
                     },
                     'nonreaders': {
                         "values": nonreaders
-                    },                    
+                    },
                     'writers': {
-                        'values-regex': prefix + 'Anon' + conference.reviewers_name[:-1] + '[0-9]+',
+                        'values-regex': signature_regex,
                         'description': 'How your identity will be displayed.'
                     },
                     'signatures': {
-                        'values-regex': prefix + 'Anon' + conference.reviewers_name[:-1] + '[0-9]+',
+                        'values-regex': signature_regex,
                         'description': 'How your identity will be displayed.'
                     },
                     'content': content
@@ -482,10 +486,14 @@ class InvitationBuilder(object):
         for note in notes:
             self.client.post_invitation(OfficialCommentInvitation(conference, name, note, start_date, anonymous))
 
-    def set_review_invitation(self, conference, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields):
+    def set_review_invitation(self, conference, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields):
 
+        invitations = []
         for note in notes:
-            self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields))
+            invitations.append(self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields)))
+
+        return invitations
+
 
     def set_meta_review_invitation(self, conference, notes, name, start_date, due_date, public):
 
@@ -704,7 +712,7 @@ class InvitationBuilder(object):
                 'subject_areas': registration_parent_invitation.reply['content']['subject_areas']['value'],
                 'profile confirmed': registration_parent_invitation.reply['content']['profile confirmed']['value'],
                 'TPMS account confirmed': registration_parent_invitation.reply['content']['TPMS account confirmed']['value'],
-            }            
+            }
         ))
 
         registration_invitation = self.client.post_invitation(openreview.Invitation(
