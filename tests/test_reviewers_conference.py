@@ -84,7 +84,7 @@ class TestReviewersConference():
         'deadline': 'Submission Deadline: 11th of March, 2019, 23:59 Hawaii time',
         'date': '3 June 2019',
         'website': 'http://kgb-workshop.org/',
-        'location': 'Portorož, Slovenia',
+        'location': 'Portoroz, Slovenia',
         'instructions': ' '
         })
         builder.set_conference_submission_name('Submission')
