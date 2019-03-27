@@ -71,7 +71,7 @@ class TestReviewersConference():
         assert tabs.find_element_by_id('reviewer-schedule')
 
 
-    def test_optional_signatures(self, client, test_client, helpers, selenium, request_page):
+    def test_allow_review_de_anonymization(self, client, test_client, helpers, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
 
@@ -112,21 +112,30 @@ class TestReviewersConference():
         assert note
 
         conference.set_authors()
-        conference.set_reviewers(['reviewer_kgb@mail.com'])
+        conference.set_reviewers(['reviewer_kgb@mail.com', 'reviewer_kgb2@mail.com'])
         conference.set_program_chairs([])
         conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')
+        reviewer_client = helpers.create_user('reviewer_kgb2@mail.com', 'Reviewer', 'KGBTwo')
+        conference.set_assignment(number = 1, user = '~Reviewer_KGBTwo1')
 
         invitations = conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
         assert invitations
 
-        reviewer_client = helpers.create_user('reviewer_kgb@mail.com', 'Reviewer', 'KGB')
+        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)
+        reviews = selenium.find_elements_by_class_name('reviewer-progress')
+        assert reviews
+        assert len(reviews) == 5
+        headers = reviews[0].find_elements_by_tag_name('h4')
+        assert headers
+        assert headers[0].text == '0 of 2 Reviews Submitted'
+
         note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2019/Workshop/KGB/-/Paper1/Official_Review',
             forum = note.id,
             replyto = note.id,
             readers = ['eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs', 'eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/Reviewers/Submitted'],
             nonreaders = ['eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/Authors'],
-            writers = ['~Reviewer_KGB1'],
-            signatures = ['~Reviewer_KGB1'],
+            writers = ['~Reviewer_KGBTwo1'],
+            signatures = ['~Reviewer_KGBTwo1'],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
@@ -140,7 +149,10 @@ class TestReviewersConference():
         request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
-        assert len(reviews) == 3
+        assert len(reviews) == 5
         headers = reviews[0].find_elements_by_tag_name('h4')
         assert headers
-        assert headers[0].text == '1 of 1 Reviews Submitted'
+        assert headers[0].text == '1 of 2 Reviews Submitted'
+
+
+

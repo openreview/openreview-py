@@ -49,8 +49,13 @@ var getOfficialReviews = function(noteNumbers) {
     var ratingExp = /^(\d+): .*/;
 
     _.forEach(notes, function(n) {
-      var num = getNumberfromGroup(n.signatures[0], 'Paper');
-      var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
+      if (_.startsWith(n.signatures[0], '~')) {
+        var num = getNumberfromGroup(n.invitation, 'Paper');
+        var index = n.signatures[0];
+      } else {
+        var num = getNumberfromGroup(n.signatures[0], 'Paper');
+        var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
+      }
       if (num) {
         if (num in noteMap) {
           ratingMatch = n.content.rating.match(ratingExp);
@@ -417,7 +422,7 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
         }
 
         var reviews = completedReviews[number];
-        var review = reviews[reviewerNum];
+        var review = reviews[reviewerNum] || reviews[reviewer];
         var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + number + '/Meta_Review']);
 
         papers.push({
@@ -498,9 +503,10 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var ratings = [];
   var confidences = [];
   for (var reviewerNum in reviewerIds) {
-    if (reviewerNum in completedReviews) {
-      reviewObj = completedReviews[reviewerNum];
-      combinedObj[reviewerNum] = _.assign({}, reviewerIds[reviewerNum], {
+    var reviewer = reviewerIds[reviewerNum]
+    if (reviewerNum in completedReviews || reviewer.id in completedReviews) {
+      reviewObj = completedReviews[reviewerNum] || completedReviews[reviewer.id];
+      combinedObj[reviewerNum] = _.assign({}, reviewer, {
         completedReview: true,
         forum: reviewObj.forum,
         note: reviewObj.id,
@@ -511,7 +517,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
       ratings.push(reviewObj.rating);
       confidences.push(reviewObj.confidence);
     } else {
-      combinedObj[reviewerNum] = _.assign({}, reviewerIds[reviewerNum], {
+      combinedObj[reviewerNum] = _.assign({}, reviewer, {
         forumUrl: '/forum?' + $.param({
           id: note.forum,
           noteId: note.id,
