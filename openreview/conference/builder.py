@@ -185,10 +185,10 @@ class Conference(object):
             recommendation_id = recommendation_id + '/Paper' + str(number)
 
         recommendation_id = recommendation_id + '/-/' + self.recommendation_name
-        return recommendation_id   
+        return recommendation_id
 
     def get_registration_id(self):
-        return self.id + '/-/' + self.registration_name        
+        return self.id + '/-/' + self.registration_name
 
     def set_conference_groups(self, groups):
         self.groups = groups
@@ -379,10 +379,10 @@ class Conference(object):
     def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
         assignment_notes_iterator = None
-        
+
         if reviewer_assingment_title:
             assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
-        
+
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
@@ -686,7 +686,9 @@ class ConferenceBuilder(object):
         id = self.conference.get_id()
         groups = self.__build_groups(id)
         for g in groups[:-1]:
-            self.webfield_builder.set_landing_page(g)
+            # set a landing page only where there is not special webfield
+            if not g.web or 'VENUE_LINKS' in g.web:
+                self.webfield_builder.set_landing_page(g)
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id
         if root_id == root_id.lower():
