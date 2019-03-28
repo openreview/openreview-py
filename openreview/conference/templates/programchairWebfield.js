@@ -4,6 +4,7 @@ var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
+var SHOW_AC_TAB = false;
 
 var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
 var OFFICIAL_META_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Meta_Review';
@@ -190,27 +191,33 @@ var displayHeader = function() {
   Webfield.ui.header(HEADER.title, HEADER.instructions);
 
   var loadingMessage = '<p class="empty-message">Loading...</p>';
-  Webfield.ui.tabPanel([
+  var tabs = [
     {
       heading: 'Paper Status',
       id: 'paper-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll',
       active: true
-    },
-    {
+    }
+  ];
+
+  if (SHOW_AC_TAB) {
+    tabs.push(    {
       heading: 'Area Chair Status',
       id: 'areachair-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll'
-    },
-    {
-      heading: 'Reviewer Status',
-      id: 'reviewer-status',
-      content: loadingMessage,
-      extraClasses: 'horizontal-scroll'
-    }
-  ]);
+    });
+  }
+
+  tabs.push(    {
+    heading: 'Reviewer Status',
+    id: 'reviewer-status',
+    content: loadingMessage,
+    extraClasses: 'horizontal-scroll'
+  });
+
+  Webfield.ui.tabPanel(tabs);
 };
 
 var displaySortPanel = function(container, sortOptions, sortResults) {
@@ -721,12 +728,18 @@ controller.addHandler('areachairs', {
     getBlindedNotes()
     .then(function(notes) {
       var noteNumbers = _.map(notes, function(note) { return note.number; });
+      var metaReviewsP = $.Deferred().resolve({ notes: []});
+      var areaChairGroupsP = $.Deferred().resolve({ byNotes: buildNoteMap(noteNumbers), byAreaChairs: {}});
+      if (SHOW_AC_TAB) {
+        metaReviewsP = getMetaReviews();
+        areaChairGroupsP = getAreaChairGroups(noteNumbers);
+      }
       return $.when(
         notes,
         getOfficialReviews(noteNumbers),
-        getMetaReviews(),
+        metaReviewsP,
         getReviewerGroups(noteNumbers),
-        getAreaChairGroups(noteNumbers)
+        areaChairGroupsP
       );
     })
     .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups) {
@@ -743,7 +756,9 @@ controller.addHandler('areachairs', {
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
         displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, '#paper-status');
-        displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
+        if (SHOW_AC_TAB) {
+          displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
+        }
         displayPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, reviewerGroups.byReviewers, '#reviewer-status');
 
         Webfield.ui.done();

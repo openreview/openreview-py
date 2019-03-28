@@ -526,13 +526,14 @@ class TestDoubleBlindConference():
         assert 'mohit@mail.com' in tos
         assert 'other@mail.com' in tos
 
-    def test_set_program_chairs(self, client):
+    def test_set_program_chairs(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         result = conference.set_program_chairs(['pc@mail.com', 'pc2@mail.com'])
@@ -572,6 +573,11 @@ class TestDoubleBlindConference():
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group
         assert len(group.members) == 1
+
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Program_Chairs", client.token)
+        assert selenium.find_element_by_link_text('Paper Status')
+        assert selenium.find_element_by_link_text('Area Chair Status')
+        assert selenium.find_element_by_link_text('Reviewer Status')
 
     def test_close_submission(self, client, test_client, selenium, request_page):
 
@@ -633,8 +639,8 @@ class TestDoubleBlindConference():
         assert len(blind_submissions_2) == 1
         assert blind_submissions[0].id == blind_submissions_2[0].id
         assert blind_submissions_2[0].readers == ['AKBC.ws/2019/Conference/Program_Chairs',
-         'AKBC.ws/2019/Conference/Area_Chairs', 
-         'AKBC.ws/2019/Conference/Reviewers', 
+         'AKBC.ws/2019/Conference/Area_Chairs',
+         'AKBC.ws/2019/Conference/Reviewers',
          'AKBC.ws/2019/Conference/Paper1/Authors']
 
         builder.set_submission_public(True)
@@ -643,7 +649,7 @@ class TestDoubleBlindConference():
         assert blind_submissions_3
         assert len(blind_submissions_3) == 1
         assert blind_submissions[0].id == blind_submissions_3[0].id
-        assert blind_submissions_3[0].readers == ['everyone']       
+        assert blind_submissions_3[0].readers == ['everyone']
 
 
     def test_open_comments(self, client, test_client, selenium, request_page):
@@ -763,9 +769,9 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Official_Review',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 
-            'AKBC.ws/2019/Conference/Paper1/Area_Chairs', 
-            'AKBC.ws/2019/Conference/Paper1/Reviewers', 
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs',
+            'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
+            'AKBC.ws/2019/Conference/Paper1/Reviewers',
             'AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
@@ -801,7 +807,7 @@ class TestDoubleBlindConference():
         assert len(notes) == 1
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper1/Official_Review')
-        assert len(notes) == 1        
+        assert len(notes) == 1
 
     def test_open_meta_reviews(self, client, test_client, selenium, request_page):
 

@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 
 class TestReviewersConference():
 
@@ -153,6 +154,14 @@ class TestReviewersConference():
         headers = reviews[0].find_elements_by_tag_name('h4')
         assert headers
         assert headers[0].text == '1 of 2 Reviews Submitted'
+
+        assert selenium.find_element_by_link_text('Paper Status')
+        try:
+            selenium.find_element_by_link_text('Area Chair Status')
+        except NoSuchElementException as e:
+            assert 'Unable to locate element: Area Chair Status' in e.args
+
+        assert selenium.find_element_by_link_text('Reviewer Status')
 
 
 
