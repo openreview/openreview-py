@@ -116,8 +116,7 @@ class TestReviewersConference():
         conference.set_reviewers(['reviewer_kgb@mail.com', 'reviewer_kgb2@mail.com'])
         conference.set_program_chairs([])
         conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')
-        reviewer_client = helpers.create_user('reviewer_kgb2@mail.com', 'Reviewer', 'KGBTwo')
-        conference.set_assignment(number = 1, user = '~Reviewer_KGBTwo1')
+        conference.set_assignment(number = 1, user = 'reviewer_kgb2@mail.com')
 
         invitations = conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
         assert invitations
@@ -144,6 +143,7 @@ class TestReviewersConference():
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
             }
         )
+        reviewer_client = helpers.create_user('reviewer_kgb2@mail.com', 'Reviewer', 'KGBTwo')
         review_note = reviewer_client.post_note(note)
         assert review_note
 

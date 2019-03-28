@@ -144,12 +144,26 @@ var getAreaChairGroups = function(noteNumbers) {
 };
 
 var getUserProfiles = function(userIds) {
-  return $.post('/user/profiles', JSON.stringify({ids: userIds}))
-  .then(function(result) {
+  var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
+  var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
+
+  return $.when(
+    $.post('/profiles/search', JSON.stringify({ids: ids})),
+    $.post('/profiles/search', JSON.stringify({emails: emails}))
+  )
+  .then(function(result1, result2) {
 
     var profileMap = {};
 
-    _.forEach(result.profiles, function(profile) {
+    _.forEach(result1[0].profiles, function(profile) {
+
+      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+      profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profileMap[profile.id] = profile;
+    })
+
+    _.forEach(result2[0].profiles, function(profile) {
 
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
@@ -166,14 +180,19 @@ var getUserProfiles = function(userIds) {
 };
 
 var findProfile = function(profiles, id) {
-  var profile = profiles[id];
+  var profile = _.find(profiles, function(p) {
+    return _.includes(p.content.names, id) || _.includes(p.content.emails, id);
+  });
   if (profile) {
     return profile;
   } else {
     return {
       id: id,
       name: '',
-      email: id
+      email: id,
+      content: {
+        names: [{ username: id }]
+      }
     }
   }
 }
@@ -408,9 +427,19 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
   var rowData = [];
   var index = 1;
   var sortedReviewerIds = _.sortBy(_.keys(reviewerById));
+  var findReview = function(reviews, profile) {
+    var found;
+    profile.content.names.forEach(function(name) {
+      if (reviews[name.username]) {
+        found = reviews[name.username];
+      }
+    })
+    return found;
+  }
 
   _.forEach(sortedReviewerIds, function(reviewer) {
     var numbers = reviewerById[reviewer];
+    var reviewerProfile = findProfile(profiles, reviewer);
 
     var papers = [];
     _.forEach(numbers, function(number) {
@@ -429,7 +458,7 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
         }
 
         var reviews = completedReviews[number];
-        var review = reviews[reviewerNum] || reviews[reviewer];
+        var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
         var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + number + '/Meta_Review']);
 
         papers.push({
@@ -443,7 +472,6 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
 
     });
 
-    var reviewerProfile = findProfile(profiles, reviewer);
     rowData.push(buildPCTableRow(index, reviewerProfile, papers));
     index++;
   });
