@@ -181,7 +181,7 @@ var getUserProfiles = function(userIds) {
 
 var findProfile = function(profiles, id) {
   var profile = _.find(profiles, function(p) {
-    return _.includes(p.content.names, id) || _.includes(p.content.emails, id);
+    return _.find(p.content.names, function(n) { return n.username == id; }) || _.includes(p.content.emails, id);
   });
   if (profile) {
     return profile;
