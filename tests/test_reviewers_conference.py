@@ -159,7 +159,7 @@ class TestReviewersConference():
         try:
             selenium.find_element_by_link_text('Area Chair Status')
         except NoSuchElementException as e:
-            assert 'Unable to locate element: Area Chair Status' in e.args
+            assert e
 
         assert selenium.find_element_by_link_text('Reviewer Status')
 
