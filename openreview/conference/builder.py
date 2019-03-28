@@ -416,7 +416,7 @@ class Conference(object):
         invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields)
         ## Create submitted groups if they don't exist
         for n in notes:
-            self.__create_group(self.get_reviewers_id( number = n.number) + '/Submitted', self.get_program_chairs_id())
+            self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
         return invitations
 
     def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
