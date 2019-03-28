@@ -252,19 +252,22 @@ class WebfieldBuilder(object):
         instruction_str = '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
             progresses, so please check back frequently for news and other updates.</p>\
-                <ul>{0}{1}</ul>'
-        
-        area_chair_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
+                <ul>'
+
+        if conference.use_area_chairs:
+            instruction_str =  instruction_str + '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
                 <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
-                    <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.area_chairs_name.replace('_', ' '), conference.get_area_chairs_id())
-        
-        reviewer_links = '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
+                <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.area_chairs_name.replace('_', ' '), conference.get_area_chairs_id())
+
+        instruction_str = instruction_str + '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
             <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
-                <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.reviewers_name.replace('_', ' '), conference.get_reviewers_id())
+            <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.reviewers_name.replace('_', ' '), conference.get_reviewers_id())
+
+        instruction_str = instruction_str + '</ul>'
 
         default_header = {
             'title': program_chairs_name.replace('_', ' ') + ' Console',
-            'instructions': instruction_str.format(area_chair_links, reviewer_links)
+            'instructions': instruction_str
         }
 
         header = self.__build_options(default_header, {})
@@ -279,6 +282,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + submission_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var SHOW_AC_TAB = false;", "var SHOW_AC_TAB = true;" if conference.use_area_chairs else "var SHOW_AC_TAB = false;")
             group.web = content
             return self.client.post_group(group)
 

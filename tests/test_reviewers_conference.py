@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 
 class TestReviewersConference():
 
@@ -69,3 +70,98 @@ class TestReviewersConference():
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('reviewer-schedule')
+
+
+    def test_allow_review_de_anonymization(self, client, test_client, helpers, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+
+        builder.set_conference_id('eswc-conferences.org/ESWC/2019/Workshop/KGB')
+        builder.set_conference_name('Knowledge Graph Building Workshop')
+        builder.set_conference_short_name('KGB 2019')
+        builder.set_homepage_header({
+        'title': 'Knowledge Graph Building Workshop',
+        'subtitle': 'Co-located with the Extended Semantic Web Conference 2019',
+        'deadline': 'Submission Deadline: 11th of March, 2019, 23:59 Hawaii time',
+        'date': '3 June 2019',
+        'website': 'http://kgb-workshop.org/',
+        'location': 'Portoroz, Slovenia',
+        'instructions': ' '
+        })
+        builder.set_conference_submission_name('Submission')
+        builder.set_submission_public(True)
+        builder.set_override_homepage(True)
+        conference = builder.get_result()
+
+        now = datetime.datetime.utcnow()
+        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['everyone'],
+            writers = ['~Test_User1', 'author@mail.com', 'author2@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
+                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'pdf': '/pdf/sdfskdls.pdf'
+            }
+        )
+
+        note = test_client.post_note(note)
+        assert note
+
+        conference.set_authors()
+        conference.set_reviewers(['reviewer_kgb@mail.com', 'reviewer_kgb2@mail.com'])
+        conference.set_program_chairs([])
+        conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')
+        conference.set_assignment(number = 1, user = 'reviewer_kgb2@mail.com')
+
+        invitations = conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
+        assert invitations
+
+        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)
+        reviews = selenium.find_elements_by_class_name('reviewer-progress')
+        assert reviews
+        assert len(reviews) == 5
+        headers = reviews[0].find_elements_by_tag_name('h4')
+        assert headers
+        assert headers[0].text == '0 of 2 Reviews Submitted'
+
+        note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2019/Workshop/KGB/-/Paper1/Official_Review',
+            forum = note.id,
+            replyto = note.id,
+            readers = ['eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs', 'eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/Reviewers/Submitted'],
+            nonreaders = ['eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/Authors'],
+            writers = ['~Reviewer_KGBTwo1'],
+            signatures = ['~Reviewer_KGBTwo1'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '2: Strong rejection',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        reviewer_client = helpers.create_user('reviewer_kgb2@mail.com', 'Reviewer', 'KGBTwo')
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
+        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)
+        reviews = selenium.find_elements_by_class_name('reviewer-progress')
+        assert reviews
+        assert len(reviews) == 5
+        headers = reviews[0].find_elements_by_tag_name('h4')
+        assert headers
+        assert headers[0].text == '1 of 2 Reviews Submitted'
+
+        assert selenium.find_element_by_link_text('Paper Status')
+        try:
+            selenium.find_element_by_link_text('Area Chair Status')
+        except NoSuchElementException as e:
+            assert e
+
+        assert selenium.find_element_by_link_text('Reviewer Status')
+
+
+

@@ -10,11 +10,11 @@ class TestTools():
 
     def test_get_submission_invitations(self, client):
         invitations = openreview.tools.get_submission_invitations(client)
-        assert len(invitations) == 4, "Invitations could not be retrieved"
+        assert len(invitations) == 5, "Invitations could not be retrieved"
 
     def test_get_all_venues(self, client):
         venues = openreview.tools.get_all_venues(client)
-        assert len(venues) == 7, "Venues could not be retrieved"
+        assert len(venues) == 8, "Venues could not be retrieved"
 
     def test_iterget_notes(self, client):
         notes_iterator = openreview.tools.iterget_notes(client)
