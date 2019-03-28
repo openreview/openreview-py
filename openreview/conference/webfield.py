@@ -282,7 +282,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + submission_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var SHOW_AC_TAB = false;", "var SHOW_AC_TAB = " + 'true' if conference.use_area_chairs else 'false'  + ";")
+            content = content.replace("var SHOW_AC_TAB = false;", "var SHOW_AC_TAB = true;" if conference.use_area_chairs else "var SHOW_AC_TAB = false;")
             group.web = content
             return self.client.post_group(group)
 
