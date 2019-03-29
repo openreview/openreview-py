@@ -38,7 +38,7 @@ class SubmissionInvitation(openreview.Invitation):
             super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
                 cdate = tools.datetime_millis(start_date),
                 duedate = tools.datetime_millis(due_date),
-                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
+                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
                 readers = ['everyone'],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
