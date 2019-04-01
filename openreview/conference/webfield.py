@@ -79,6 +79,7 @@ class WebfieldBuilder(object):
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id') + "';")
 
             group.web = content
+            group.signatures = [self.client.profile.id]
             return self.client.post_group(group)
 
     def set_bid_page(self, conference, invitation):
