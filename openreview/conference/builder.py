@@ -618,7 +618,8 @@ class ConferenceBuilder(object):
                     writers = [p],
                     signatories = [p],
                     signatures = ['~Super_User1'],
-                    members = [])
+                    members = [],
+                    details = { 'writable': True })
                 )
                 self.conference.new = True
 
@@ -693,7 +694,8 @@ class ConferenceBuilder(object):
         groups = self.__build_groups(id)
         for g in groups[:-1]:
             # set a landing page only where there is not special webfield
-            if not g.web or 'VENUE_LINKS' in g.web:
+            writable = g.details.get('writable') if g.details else True
+            if writable and not g.web or 'VENUE_LINKS' in g.web:
                 self.webfield_builder.set_landing_page(g)
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id

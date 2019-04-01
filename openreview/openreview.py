@@ -658,7 +658,7 @@ class Client(object):
 
 
 class Group(object):
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
@@ -673,6 +673,7 @@ class Group(object):
         if web != None:
             with open(web) as f:
                 self.web = f.read()
+        self.details = details
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -697,7 +698,8 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
-            'web': self.web
+            'web': self.web,
+            'details': self.details
         }
         # if self.web !=None:
         #     body['web']=self.web
@@ -718,7 +720,8 @@ class Group(object):
             readers = g.get('readers'),
             nonreaders = g.get('nonreaders'),
             signatories = g.get('signatories'),
-            signatures = g.get('signatures'))
+            signatures = g.get('signatures'),
+            details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
         return group
