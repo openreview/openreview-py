@@ -43,6 +43,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
             if group.web != content:
+                group.web = content
                 return self.client.post_group(group)
             else:
                 return group
@@ -81,6 +82,7 @@ class WebfieldBuilder(object):
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id') + "';")
 
             if group.web != content:
+                group.web = content
                 return self.client.post_group(group)
             else:
                 return group
