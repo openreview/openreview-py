@@ -55,7 +55,7 @@ class TestSingleBlindConference():
         assert groups[3].readers == ['everyone']
         assert groups[3].nonreaders == []
         assert groups[3].writers == ['NIPS.cc/2018/Workshop/MLITS']
-        assert groups[3].signatures == ['~Super_User1']
+        assert groups[3].signatures == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatories == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].members == []
         assert '"title": "2018 NIPS MLITS Workshop"' in groups[3].web
@@ -371,7 +371,7 @@ class TestSingleBlindConference():
                     '1'
                 ],
                 'required': True
-            }            
+            }
         })
 
         # Reviewer
@@ -425,7 +425,7 @@ class TestSingleBlindConference():
 
         reviewer2_client = helpers.create_user('reviewer3@mail.com', 'Reviewer', 'Three')
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
-        assert len(notes) == 0  
+        assert len(notes) == 0
 
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
             forum = submission.id,
@@ -442,7 +442,7 @@ class TestSingleBlindConference():
             }
         )
         review_note = reviewer2_client.post_note(note)
-        assert review_note   
+        assert review_note
 
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
         assert len(notes) == 2
@@ -453,7 +453,7 @@ class TestSingleBlindConference():
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
         assert len(messages) == 2
         recipients = [m['content']['to'] for m in messages]
-        assert 'ac@mail.com' in recipients             
+        assert 'ac@mail.com' in recipients
 
     def test_consoles(self, client, test_client, selenium, request_page):
 
