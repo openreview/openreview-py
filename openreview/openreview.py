@@ -35,13 +35,11 @@ class Client(object):
         if not self.baseurl:
             self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
 
-        self.username = username
         if not username:
-            self.username = os.environ.get('OPENREVIEW_USERNAME')
+            username = os.environ.get('OPENREVIEW_USERNAME')
 
-        self.password = password
         if not password:
-            self.password = os.environ.get('OPENREVIEW_PASSWORD')
+            password = os.environ.get('OPENREVIEW_PASSWORD')
 
         self.token = token
         self.groups_url = self.baseurl + '/groups'
@@ -63,15 +61,21 @@ class Client(object):
             'User-Agent': 'test-create-script',
             'Authorization': self.token
         }
-        if(self.username!=None and self.password!=None):
-            self.login_user(self.username, self.password)
-            self.signature = self.get_profile(self.username.lower()).id
+
+        if username and password:
+            self.login_user(username, password)
+
+        if token:
+            profiles = self.get_profiles()
+            if profiles:
+                self.profile = profiles[0]
 
 
     ## PRIVATE FUNCTIONS
 
     def __handle_token(self, response):
         self.token = str(response['token'])
+        self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
         return response
 
@@ -524,8 +528,8 @@ class Client(object):
         |  If the group is unsigned, signs it using the client's default signature.
         """
         if overwrite or not self.exists(group.id):
-            if not group.signatures: group.signatures = [self.signature]
-            if not group.writers: group.writers = [self.signature]
+            if not group.signatures: group.signatures = [self.profile.id]
+            if not group.writers: group.writers = [self.profile.id]
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
 
@@ -546,7 +550,7 @@ class Client(object):
         |  Posts the note. Upon success, returns the posted Note object.
         |  If the note is unsigned, signs it using the client's default signature
         """
-        if not note.signatures: note.signatures = [self.signature]
+        if not note.signatures: note.signatures = [self.profile.id]
         response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
         response = self.__handle_response(response)
 
@@ -658,7 +662,7 @@ class Client(object):
 
 
 class Group(object):
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
@@ -673,6 +677,7 @@ class Group(object):
         if web != None:
             with open(web) as f:
                 self.web = f.read()
+        self.details = details
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -697,7 +702,8 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
-            'web': self.web
+            'web': self.web,
+            'details': self.details
         }
         # if self.web !=None:
         #     body['web']=self.web
@@ -718,7 +724,8 @@ class Group(object):
             readers = g.get('readers'),
             nonreaders = g.get('nonreaders'),
             signatories = g.get('signatories'),
-            signatures = g.get('signatures'))
+            signatures = g.get('signatures'),
+            details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
         return group

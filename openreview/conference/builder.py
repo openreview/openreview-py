@@ -618,7 +618,8 @@ class ConferenceBuilder(object):
                     writers = [p],
                     signatories = [p],
                     signatures = ['~Super_User1'],
-                    members = [])
+                    members = [],
+                    details = { 'writable': True })
                 )
                 self.conference.new = True
 
@@ -693,16 +694,21 @@ class ConferenceBuilder(object):
         groups = self.__build_groups(id)
         for g in groups[:-1]:
             # set a landing page only where there is not special webfield
-            if not g.web or 'VENUE_LINKS' in g.web:
+            writable = g.details.get('writable') if g.details else True
+            if writable and (not g.web or 'VENUE_LINKS' in g.web):
                 self.webfield_builder.set_landing_page(g)
+
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id
         if root_id == root_id.lower():
             root_id = groups[1].id
-        self.client.add_members_to_group(host, root_id)
+        writable = host.details.get('writable') if host.details else True
+        if writable:
+            self.client.add_members_to_group(host, root_id)
 
         home_group = groups[-1]
-        if not home_group.web or self.override_homepage:
+        writable = home_group.details.get('writable') if home_group.details else True
+        if writable and (not home_group.web or self.override_homepage):
             options = self.conference.get_homepage_options()
             options['reviewers_name'] = self.conference.reviewers_name
             options['area_chairs_name'] = self.conference.area_chairs_name

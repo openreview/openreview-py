@@ -44,7 +44,7 @@ class TestDoubleBlindConference():
         assert groups[2].readers == ['everyone']
         assert groups[2].nonreaders == []
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
-        assert groups[2].signatures == ['~Super_User1']
+        assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
         assert groups[2].members == []
         assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
@@ -95,7 +95,7 @@ class TestDoubleBlindConference():
         assert groups[2].readers == ['everyone']
         assert groups[2].nonreaders == []
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
-        assert groups[2].signatures == ['~Super_User1']
+        assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
         assert groups[2].members == []
         assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
@@ -168,7 +168,7 @@ class TestDoubleBlindConference():
         assert groups[2].readers == ['everyone']
         assert groups[2].nonreaders == []
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
-        assert groups[2].signatures == ['~Super_User1']
+        assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
         assert groups[2].members == []
         assert '"title": "AKBC 2019"' in groups[2].web
