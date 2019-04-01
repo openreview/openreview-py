@@ -691,7 +691,8 @@ class ConferenceBuilder(object):
         root_id = groups[0].id
         if root_id == root_id.lower():
             root_id = groups[1].id
-        self.client.add_members_to_group(host, root_id)
+        if root_id not in host.members:
+            self.client.add_members_to_group(host, root_id)
 
         home_group = groups[-1]
         if not home_group.web or self.override_homepage:

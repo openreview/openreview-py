@@ -42,8 +42,10 @@ class WebfieldBuilder(object):
             content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-            group.web = content
-            return self.client.post_group(group)
+            if group.web != content:
+                return self.client.post_group(group)
+            else:
+                return group
 
 
     def set_home_page(self, group, layout, options = {}):
@@ -78,8 +80,10 @@ class WebfieldBuilder(object):
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + options.get('program_chairs_id') + "';")
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id') + "';")
 
-            group.web = content
-            return self.client.post_group(group)
+            if group.web != content:
+                return self.client.post_group(group)
+            else:
+                return group
 
     def set_bid_page(self, conference, invitation):
 
