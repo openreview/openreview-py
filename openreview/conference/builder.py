@@ -13,6 +13,7 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.new = False
         self.double_blind = False
         self.submission_public = False
         self.use_area_chairs = False
@@ -112,6 +113,9 @@ class Conference(object):
 
     def get_id(self):
         return self.id
+
+    def is_new(self):
+        return self.new
 
     def set_name(self, name):
         self.name = name
@@ -616,6 +620,7 @@ class ConferenceBuilder(object):
                     signatures = ['~Super_User1'],
                     members = [])
                 )
+                self.conference.new = True
 
             groups.append(group)
 
