@@ -428,6 +428,10 @@ class Conference(object):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, start_date, due_date, public)
 
+    def open_decisions(self, name = 'Decision', options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        notes_iterator = self.get_submissions()
+        return self.invitation_builder.set_decision_invitation(self, notes_iterator, name, options, start_date, due_date, public, release_to_authors, release_to_reviewers)
+
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         invitation = self.client.get_invitation(self.get_submission_id())
         notes_iterator = self.get_submissions()
