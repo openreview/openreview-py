@@ -860,6 +860,78 @@ class TestDoubleBlindConference():
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
 
+    def test_open_decisions(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+
+        conference.set_program_chairs(emails = ['akbc_pc@mail.com'])
+        conference.open_decisions()
+
+        pc_client = helpers.create_user('akbc_pc@mail.com', 'AKBC', 'Pc')
+
+        notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Decision',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            nonreaders = ['AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            content = {
+                'title': 'Acceptance Decision',
+                'decision': 'Accept (Oral)',
+                'comment': 'Great!',
+            }
+        )
+
+        meta_review_note = pc_client.post_note(note)
+        assert meta_review_note
+
+        conference.open_decisions(public=True)
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Decision',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['everyone'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            content = {
+                'title': 'Acceptance Decision',
+                'decision': 'Accept (Oral)',
+                'comment': 'Great!',
+            }
+        )
+
+        meta_review_note = pc_client.post_note(note)
+        assert meta_review_note
+
+        conference.open_decisions(release_to_authors=True)
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Decision',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs',
+            'AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            content = {
+                'title': 'Acceptance Decision',
+                'decision': 'Accept (Oral)',
+                'comment': 'Great!',
+            }
+        )
+
+        meta_review_note = pc_client.post_note(note)
+        assert meta_review_note
+
 
 
     def test_consoles(self, client, test_client, selenium, request_page):

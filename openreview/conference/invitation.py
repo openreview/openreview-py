@@ -411,6 +411,77 @@ class MetaReviewInvitation(openreview.Invitation):
             }
         )
 
+class DecisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, name, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
+        content = {
+            'title': {
+                'order': 1,
+                'required': True,
+                'value': 'Acceptance Decision'
+            },
+            'decision': {
+                'order': 2,
+                'required': True,
+                'value-radio': options,
+                'description': 'Acceptance decision'
+            },
+            'comment': {
+                'order': 3,
+                'required': False,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': ''
+            }
+        }
+
+        readers = []
+        nonreaders = [conference.get_authors_id(number = note.number)]
+
+        if public:
+            readers = ['everyone']
+            nonreaders = []
+        else:
+            readers = [ conference.get_program_chairs_id()]
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number = note.number))
+
+        if release_to_reviewers:
+            readers.append(conference.get_reviewers_id(number = note.number))
+
+        if release_to_authors:
+            readers.append(conference.get_authors_id(number = note.number))
+            nonreaders = []
+
+        super(DecisionInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
+            cdate = tools.datetime_millis(start_date),
+            duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = LONG_BUFFER_DAYS)) if due_date else None,
+            readers = ['everyone'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = [conference.get_program_chairs_id()],
+            reply = {
+                'forum': note.id,
+                'replyto': note.id,
+                'readers': {
+                    "description": "Select all user groups that should be able to read this comment.",
+                    "values": readers
+                },
+                'nonreaders': {
+                    "values": nonreaders
+                },
+                'writers': {
+                    'values-regex': [conference.get_program_chairs_id()],
+                    'description': 'How your identity will be displayed.'
+                },
+                'signatures': {
+                    'values': [conference.get_program_chairs_id()],
+                    'description': 'How your identity will be displayed.'
+                },
+                'content': content
+            }
+        )
+
 
 class InvitationBuilder(object):
 
@@ -499,6 +570,11 @@ class InvitationBuilder(object):
 
         for note in notes:
             self.client.post_invitation(MetaReviewInvitation(conference, name, note, start_date, due_date, public))
+
+    def set_decision_invitation(self, conference, notes, name, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
+
+        for note in notes:
+            self.client.post_invitation(DecisionInvitation(conference, name, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers))
 
     def set_revise_submission_invitation(self, conference, notes, name, start_date, due_date, submission_content, additional_fields, remove_fields):
 
