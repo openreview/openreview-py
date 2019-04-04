@@ -42,6 +42,7 @@ class Client(object):
             password = os.environ.get('OPENREVIEW_PASSWORD')
 
         self.token = token
+        self.profile = None
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -66,9 +67,10 @@ class Client(object):
             self.login_user(username, password)
 
         if token:
-            profiles = self.get_profiles()
-            if profiles:
-                self.profile = profiles[0]
+            try:
+                self.profile = self.get_profile()
+            except:
+                self.profile = None
 
 
     ## PRIVATE FUNCTIONS
@@ -195,16 +197,19 @@ class Client(object):
         t = response.json()['tags'][0]
         return Tag.from_json(t)
 
-    def get_profile(self, email_or_id):
+    def get_profile(self, email_or_id = None):
         """
         Returns a single profile (a note) by id, if available
         """
-        tildematch = re.compile('~.+')
-        if tildematch.match(email_or_id):
-            att = 'id'
-        else:
-            att = 'email'
-        response = requests.get(self.profiles_url, params = {att: email_or_id}, headers = self.headers)
+        params = {}
+        if email_or_id:
+            tildematch = re.compile('~.+')
+            if tildematch.match(email_or_id):
+                att = 'id'
+            else:
+                att = 'email'
+            params[att] = email_or_id
+        response = requests.get(self.profiles_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
