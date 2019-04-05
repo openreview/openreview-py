@@ -150,9 +150,10 @@ class Conference(object):
     def get_reviewers_id(self, number = None):
         reviewers_id = self.id + '/'
         if number:
-            reviewers_id = reviewers_id + 'Paper' + str(number) + '/'
-
-        reviewers_id = reviewers_id + self.reviewers_name
+            # TODO: Remove the "Reviewers" label from the end of this group as this forces individual groups to be "PaperX/Reviewers"
+            reviewers_id = reviewers_id + 'Paper' + str(number) + '/Reviewers'
+        else:
+            reviewers_id = reviewers_id + self.reviewers_name
         return reviewers_id
 
     def get_authors_id(self, number = None):
@@ -166,9 +167,10 @@ class Conference(object):
     def get_area_chairs_id(self, number = None):
         area_chairs_id = self.id + '/'
         if number:
-            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/'
-
-        area_chairs_id = area_chairs_id + self.area_chairs_name
+            # TODO: Remove the "Area_Chairs" label from the end of this group as this forces individual groups to be "PaperX/Area_Chairs"
+            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/Area_Chairs'
+        else:
+            area_chairs_id = area_chairs_id + self.area_chairs_name
         return area_chairs_id
 
     def get_submission_id(self):
