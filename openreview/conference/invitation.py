@@ -639,9 +639,7 @@ class InvitationBuilder(object):
     def set_revise_review_invitation(self, conference, reviews, name, start_date, due_date, additional_fields, remove_fields):
 
         for review in reviews:
-            i = ReviewRevisionInvitation(conference, name, review, start_date, due_date, additional_fields, remove_fields)
-            print('INVITATION', i)
-            self.client.post_invitation(i)
+            self.client.post_invitation(ReviewRevisionInvitation(conference, name, review, start_date, due_date, additional_fields, remove_fields))
 
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
