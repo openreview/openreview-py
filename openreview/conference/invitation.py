@@ -371,6 +371,25 @@ class ReviewInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
+class ReviewRevisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, name, review, start_date, due_date, additional_fields, remove_fields):
+
+        super(ReviewRevisionInvitation, self).__init__(id = '{review_invitation}/{anon_reviewer}/{name}'.format(review_invitation = review.invitation, anon_reviewer = review.signatures[0].split('/')[-1], name = name),
+            super = review.invitation,
+            cdate = tools.datetime_millis(start_date),
+            duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = LONG_BUFFER_DAYS)) if due_date else None,
+            reply = {
+                'forum': review.forum,
+                'replyto': None,
+                'referent': review.id
+            },
+            writers = [ review.invitation.split('/-/')[0] ],
+            signatures = [ review.invitation.split('/-/')[0] ]
+        )
+
+
 class MetaReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference, name, note, start_date, due_date, public):
@@ -605,6 +624,14 @@ class InvitationBuilder(object):
 
         for note in notes:
             self.client.post_invitation(SubmissionRevisionInvitation(conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields))
+
+    def set_revise_review_invitation(self, conference, reviews, name, start_date, due_date, additional_fields, remove_fields):
+
+        for review in reviews:
+            i = ReviewRevisionInvitation(conference, name, review, start_date, due_date, additional_fields, remove_fields)
+            print('INVITATION', i)
+            self.client.post_invitation(i)
+
 
     def set_reviewer_recruiter_invitation(self, conference_id, options = {}):
 
