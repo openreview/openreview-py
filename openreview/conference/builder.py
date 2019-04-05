@@ -97,7 +97,7 @@ class Conference(object):
     ## TODO: use a super invitation here
     def __expire_invitations(self, name):
 
-        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}$'.format(id = self.get_id(), name = name)))
 
         now = round(time.time() * 1000)
 
