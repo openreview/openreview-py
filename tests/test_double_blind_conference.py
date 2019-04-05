@@ -832,7 +832,8 @@ class TestDoubleBlindConference():
         assert reviews
         review = reviews[0]
 
-        conference.open_revise_reviews()
+        now = datetime.datetime.utcnow()
+        conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
         conference.close_reviews()
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Official_Review/AnonReviewer1/Revision',
@@ -853,6 +854,23 @@ class TestDoubleBlindConference():
         )
         review_note = reviewer_client.post_note(note)
         assert review_note
+
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[AKBC 2019] Revised review posted to your submission: "New paper title"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[AKBC 2019] Revised review posted to your assigned paper: "New paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac@mail.com' in recipients
+        assert 'reviewer2@mail.com' in recipients
 
     def test_open_meta_reviews(self, client, test_client, selenium, request_page):
 

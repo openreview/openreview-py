@@ -375,19 +375,30 @@ class ReviewRevisionInvitation(openreview.Invitation):
 
     def __init__(self, conference, name, review, start_date, due_date, additional_fields, remove_fields):
 
-        super(ReviewRevisionInvitation, self).__init__(id = '{review_invitation}/{anon_reviewer}/{name}'.format(review_invitation = review.invitation, anon_reviewer = review.signatures[0].split('/')[-1], name = name),
-            super = review.invitation,
-            cdate = tools.datetime_millis(start_date),
-            duedate = tools.datetime_millis(due_date),
-            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = LONG_BUFFER_DAYS)) if due_date else None,
-            reply = {
-                'forum': review.forum,
-                'replyto': None,
-                'referent': review.id
-            },
-            writers = [ review.invitation.split('/-/')[0] ],
-            signatures = [ review.invitation.split('/-/')[0] ]
-        )
+        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewRevisionProcess.js')) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+            file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
+
+            super(ReviewRevisionInvitation, self).__init__(id = '{review_invitation}/{anon_reviewer}/{name}'.format(review_invitation = review.invitation, anon_reviewer = review.signatures[0].split('/')[-1], name = name),
+                super = review.invitation,
+                cdate = tools.datetime_millis(start_date),
+                duedate = tools.datetime_millis(due_date),
+                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = LONG_BUFFER_DAYS)) if due_date else None,
+                reply = {
+                    'forum': review.forum,
+                    'replyto': None,
+                    'referent': review.id
+                },
+                writers = [ review.invitation.split('/-/')[0] ],
+                signatures = [ review.invitation.split('/-/')[0] ],
+                process_string = file_content
+            )
 
 
 class MetaReviewInvitation(openreview.Invitation):
