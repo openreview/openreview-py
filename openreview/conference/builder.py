@@ -97,7 +97,7 @@ class Conference(object):
     ## TODO: use a super invitation here
     def __expire_invitations(self, name):
 
-        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}$'.format(id = self.get_id(), name = name)))
 
         now = round(time.time() * 1000)
 
@@ -426,6 +426,9 @@ class Conference(object):
             self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
         return invitations
 
+    def close_reviews(self, name = 'Official_Review'):
+        return self.__expire_invitations(name)
+
     def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, start_date, due_date, public)
@@ -438,6 +441,11 @@ class Conference(object):
         invitation = self.client.get_invitation(self.get_submission_id())
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+
+    def open_revise_reviews(self, name = 'Revision', review_name = 'Official_Review', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+
+        review_iterator = tools.iterget_notes(self.client, invitation = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = review_name))
+        return self.invitation_builder.set_revise_review_invitation(self, review_iterator, name, start_date, due_date, additional_fields, remove_fields)
 
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)
