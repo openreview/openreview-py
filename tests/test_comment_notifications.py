@@ -357,24 +357,46 @@ class TestCommentNotification():
 
         conference.close_submissions()
         blinded_notes = conference.create_blind_submissions()
+        paper_note = blinded_notes[0]
         conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@auai.org'])
+        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
+        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer2@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
+        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'areachair@auai.org', individual_label='Area_Chair', parent_label='Area_Chairs')
+
+        conference.open_reviews(release_to_authors=True)
+
+        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/-/Paper1/Official_Review',
+            forum = paper_note.id,
+            replyto = paper_note.id,
+            readers = ['auai.org/UAI/2020/Conference/Program_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Area_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Reviewers/Submitted',
+            'auai.org/UAI/2020/Conference/Paper1/Authors'],
+            writers = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1'],
+            signatures = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        reviewer_client = helpers.create_user('reviewer@auai.org', 'Reviewer', 'UAI')
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True)
-        paper_note = blinded_notes[0]
 
         comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
-        reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = paper_note.number)
+        reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = paper_note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = paper_note.number)
 
-        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer@auai.org')
-        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer2@auai.org')
-        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'areachair@auai.org', individual_label='Area_Chair', parent_label='Area_Chairs')
-
         comment_note = openreview.Note(invitation = comment_invitation_id,
-            forum = paper_note.id,
-            replyto = paper_note.id,
+            forum = review_note.forum,
+            replyto = review_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
             writers = [conference.id, 'reviewer@auai.org'],
             signatures = [anon_reviewers_group_id],
@@ -383,7 +405,6 @@ class TestCommentNotification():
                 'comment': 'This is an comment'
             }
         )
-        reviewer_client = helpers.create_user('reviewer@auai.org', 'Reviewer', 'UAI')
         comment_note = reviewer_client.post_note(comment_note)
 
         messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*')
