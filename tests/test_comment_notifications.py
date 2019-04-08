@@ -360,6 +360,8 @@ class TestCommentNotification():
         paper_note = blinded_notes[0]
         conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@auai.org'])
+        conference.set_area_chairs(emails = ['areachair@auai.org'])
+        conference.set_reviewers(emails = ['reviewer@auai.org', 'reviewer2@auai.org'])
         openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
         openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer2@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
         openreview.tools.add_assignment(client, paper_note.number, conference.id, 'areachair@auai.org', individual_label='Area_Chair', parent_label='Area_Chairs')
@@ -418,13 +420,70 @@ class TestCommentNotification():
         assert messages[0]['content']['to'] == 'areachair@auai.org'
 
         messages = client.get_messages(subject='.*UAI.*Comment posted to a paper you are reviewing. Paper Number: 1.*')
-        assert messages
-        assert len(messages) == 1
-        assert messages[0]['content']['to'] == 'reviewer2@auai.org'
+        assert not messages
 
         messages = client.get_messages(subject='.*UAI.*Your submission has received a comment. Paper Title: .*')
         assert messages
         assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author2@mail.com' in recipients
+        assert 'author@mail.com' in recipients
+        assert 'test@mail.com' in recipients
+
+        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/-/Paper1/Official_Review',
+            forum = paper_note.id,
+            replyto = paper_note.id,
+            readers = ['auai.org/UAI/2020/Conference/Program_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Area_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Reviewers/Submitted',
+            'auai.org/UAI/2020/Conference/Paper1/Authors'],
+            writers = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer2'],
+            signatures = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer2'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        reviewer2_client = helpers.create_user('reviewer2@auai.org', 'Reviewer', 'UAITwo')
+        review_note = reviewer2_client.post_note(note)
+        assert review_note
+
+        comment_note = openreview.Note(invitation = comment_invitation_id,
+            forum = review_note.forum,
+            replyto = review_note.id,
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            writers = [conference.id, 'reviewer@auai.org'],
+            signatures = [anon_reviewers_group_id],
+            content = {
+                'title': 'Second Comment title',
+                'comment': 'This is an a second comment to a review'
+            }
+        )
+        comment_note = reviewer_client.post_note(comment_note)
+
+        messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['to'] == 'programchair@auai.org'
+        assert messages[1]['content']['to'] == 'programchair@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper in your area. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['to'] == 'areachair@auai.org'
+        assert messages[1]['content']['to'] == 'areachair@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper you are reviewing. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'reviewer2@auai.org'
+
+
+        messages = client.get_messages(subject='.*UAI.*Your submission has received a comment. Paper Title: .*')
+        assert messages
+        assert len(messages) == 6
         recipients = [m['content']['to'] for m in messages]
         assert 'author2@mail.com' in recipients
         assert 'author@mail.com' in recipients
