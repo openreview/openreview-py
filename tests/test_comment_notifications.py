@@ -57,7 +57,7 @@ class TestCommentNotification():
 
         conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True)
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers= True)
 
         comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
