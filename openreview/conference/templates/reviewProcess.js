@@ -18,42 +18,36 @@ function(){
       REVIEWERS_SUBMITTED = PAPER_REVIEWERS + '/Submitted'
 
       var review_writer_mail = {
-        "groups": note.signatures,
-        "subject": "[" + SHORT_PHRASE + "] Your review has been received on your assigned paper: \"" + forum.content.title + "\"",
-        "message": "We have received your review on a submission to " + SHORT_PHRASE + ".\n\nPaper title: " + forum.content.title + "\n\n Review title: " + note.content.title + "\n\nReview comment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
+        groups: note.signatures,
+        subject: "[" + SHORT_PHRASE + "] Your review has been received on your assigned paper: \"" + forum.content.title + "\"",
+        message: "We have received your review on a submission to " + SHORT_PHRASE + ".\n\nPaper title: " + forum.content.title + "\n\n Review title: " + note.content.title + "\n\nReview comment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
       };
       promises.push(or3client.or3request( or3client.mailUrl, review_writer_mail, 'POST', token ));
 
       if (note.readers.includes('everyone') || note.readers.includes(PAPER_AREACHAIRS)) {
         var areachair_mail = {
-          "groups": [PAPER_AREACHAIRS],
-          "subject": "[" + SHORT_PHRASE + "] Review posted to your assigned paper: \"" + forum.content.title + "\"",
-          "message": "A submission to " + SHORT_PHRASE + ", for which you are an official area chair, has received a review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
+          groups: [PAPER_AREACHAIRS],
+          subjec : "[" + SHORT_PHRASE + "] Review posted to your assigned paper: \"" + forum.content.title + "\"",
+          message: "A submission to " + SHORT_PHRASE + ", for which you are an official area chair, has received a review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token ));
       }
 
       if (note.readers.includes('everyone') || note.readers.includes(PAPER_REVIEWERS)) {
         var reviewer_mail = {
-          "groups": [PAPER_REVIEWERS],
-          "subject": "[" + SHORT_PHRASE + "] Review posted to your assigned paper: \"" + forum.content.title + "\"",
-          "message": "A submission to " + SHORT_PHRASE + ", for which you are a reviewer, has received a review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
+          groups: [PAPER_REVIEWERS],
+          ignoreGroups: [note.tauthor],
+          subject: "[" + SHORT_PHRASE + "] Review posted to your assigned paper: \"" + forum.content.title + "\"",
+          message: "A submission to " + SHORT_PHRASE + ", for which you are a reviewer, has received a review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
-      } else if (note.readers.includes(REVIEWERS_SUBMITTED)) {
-        var submitted_reviewer_mail = {
-          "groups": [REVIEWERS_SUBMITTED],
-          "subject": "[" + SHORT_PHRASE + "] Review posted to your assigned paper: \"" + forum.content.title + "\"",
-          "message": "A submission to " + SHORT_PHRASE + ", for which you also submitted a review earlier, has received a new review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
-        };
-        promises.push(or3client.or3request( or3client.mailUrl, submitted_reviewer_mail, 'POST', token ));
       }
 
       if (note.readers.includes('everyone') || note.readers.includes(PAPER_AUTHORS)) {
         var author_mail = {
-          "groups": [PAPER_AUTHORS],
-          "subject": "[" + SHORT_PHRASE + "] Review posted to your submission: \"" + forum.content.title + "\"",
-          "message": "Your submission to " + SHORT_PHRASE + " has received a review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
+          groups: [PAPER_AUTHORS],
+          subject: "[" + SHORT_PHRASE + "] Review posted to your submission: \"" + forum.content.title + "\"",
+          message: "Your submission to " + SHORT_PHRASE + " has received a review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, author_mail, 'POST', token ));
       }
