@@ -300,11 +300,11 @@ class TestCommentNotification():
 
 
         builder = openreview.conference.ConferenceBuilder(client)
-        builder.set_conference_id('auai.org/UAI/2019/Conference')
+        builder.set_conference_id('auai.org/UAI/2020/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
-        builder.set_conference_short_name('UAI 2019')
+        builder.set_conference_short_name('UAI 2020')
         builder.set_homepage_header({
-        'title': 'UAI 2019',
+        'title': 'UAI 2020',
         'subtitle': 'Conference on Uncertainty in Artificial Intelligence',
         'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2019, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2019',
         'date': 'July 22 - July 25, 2019',
@@ -324,6 +324,12 @@ class TestCommentNotification():
         builder.set_conference_reviewers_name('Program_Committee')
         builder.set_double_blind(True)
         builder.set_override_homepage(True)
+        builder.set_subject_areas([
+            "Algorithms: Approximate Inference",
+            "Algorithms: Belief Propagation",
+            "Algorithms: Distributed and Parallel",
+            "Algorithms: Exact Inference",
+        ])
         conference = builder.get_result()
 
         now = datetime.datetime.utcnow()
@@ -338,7 +344,11 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/sdfskdls.pdf',
+                'subject_areas': [
+                    'Algorithms: Approximate Inference',
+                    'Algorithms: Belief Propagation'
+                ]
             }
         )
 
