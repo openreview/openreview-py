@@ -416,6 +416,11 @@ class TestSingleBlindConference():
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
 
+        messages = client.get_messages(subject = '[MLITS 2018] Your review has been received on your assigned paper: "New paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer@mail.com' in recipients
+
         ## Check review visibility
         notes = reviewer_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
         assert len(notes) == 1

@@ -27,7 +27,7 @@ function(){
       if (note.readers.includes('everyone') || note.readers.includes(PAPER_AREACHAIRS)) {
         var areachair_mail = {
           groups: [PAPER_AREACHAIRS],
-          subjec : "[" + SHORT_PHRASE + "] Review posted to your assigned paper: \"" + forum.content.title + "\"",
+          subject : "[" + SHORT_PHRASE + "] Review posted to your assigned paper: \"" + forum.content.title + "\"",
           message: "A submission to " + SHORT_PHRASE + ", for which you are an official area chair, has received a review. \n\nTitle: " + note.content.title + "\n\nComment: " + note.content.review + "\n\nTo view the review, click here: " + baseUrl + "/forum?id=" + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token ));
