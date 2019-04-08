@@ -464,7 +464,8 @@ def iterget_tags(client, id = None, invitation = None, forum = None):
 def iterget_edges (client,
                    invitation = None,
                    head = None,
-                   tail = None):
+                   tail = None,
+                   label = None):
     params = {}
     if invitation != None:
         params['invitation'] = invitation
@@ -472,6 +473,8 @@ def iterget_edges (client,
         params['head'] = head
     if tail != None:
         params['tail'] = tail
+    if label != None:
+        params['label'] = label
     return iterget(client.get_edges, **params)
 
 

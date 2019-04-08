@@ -52,6 +52,7 @@ class Client(object):
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
         self.edges_url = self.baseurl + '/edges'
+        self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.reference_url = self.baseurl + '/references'
@@ -607,6 +608,29 @@ class Client(object):
         response = self.__handle_response(response)
 
         return Edge.from_json(response.json())
+
+    def post_edges (self, edges):
+        '''
+        Posts the list of Edges.   Returns a list Edge objects updated with their ids.
+        :param edges:
+        :return:
+        '''
+        send_json = [edge.to_json() for edge in edges]
+        response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
+        received_json_array = response.json()
+        edge_objects = [Edge.from_json(edge) for edge in received_json_array]
+        return edge_objects
+
+    def post_bulk_edges (self, edges):
+        offset=50000 # post_edges works for 50,000 edges but not for 100,000
+        num_edges = len(edges)
+        result = []
+        for i in range(0, num_edges, offset):
+            end = i + offset if i+offset < num_edges else num_edges
+            batch = self.post_edges(edges[i:end])
+            result += batch
+        return result
+
 
     def delete_note(self, note):
         """
