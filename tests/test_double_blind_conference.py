@@ -809,6 +809,69 @@ class TestDoubleBlindConference():
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper1/Official_Review')
         assert len(notes) == 1
 
+    def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
+
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.has_area_chairs(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+        conference.set_authors()
+        conference.set_area_chairs(emails = ['ac@mail.com'])
+        conference.set_reviewers(emails = ['reviewer2@mail.com'])
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        reviews = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper.*/Official_Review')
+        assert reviews
+        review = reviews[0]
+
+        now = datetime.datetime.utcnow()
+        conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
+        conference.close_reviews()
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Official_Review/AnonReviewer1/Revision',
+            forum = submission.id,
+            referent = review.id,
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs',
+            'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
+            'AKBC.ws/2019/Conference/Paper1/Reviewers',
+            'AKBC.ws/2019/Conference/Paper1/Authors'],
+            writers = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
+            content = {
+                'title': 'UPDATED Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[AKBC 2019] Revised review posted to your submission: "New paper title"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[AKBC 2019] Revised review posted to your assigned paper: "New paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac@mail.com' in recipients
+        assert 'reviewer2@mail.com' in recipients
+
     def test_open_meta_reviews(self, client, test_client, selenium, request_page):
 
         ac_client = openreview.Client(baseurl = 'http://localhost:3000')
