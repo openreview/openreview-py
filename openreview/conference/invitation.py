@@ -313,7 +313,7 @@ class ReviewInvitation(openreview.Invitation):
         for key in additional_fields:
             content[key] = additional_fields[key]
 
-        signature_regex = conference.get_id() + '/Paper' + str(note.number) + '/Anon' + conference.reviewers_name[:-1] + '[0-9]+'
+        signature_regex = conference.get_id() + '/Paper' + str(note.number) + '/AnonReviewer[0-9]+'
 
         if allow_de_anonymization:
             signature_regex = signature_regex + '|~.*'
