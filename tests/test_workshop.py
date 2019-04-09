@@ -391,3 +391,23 @@ class TestWorkshop():
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
 
+        conference.open_comments(name = 'Public_Comment', public = True, anonymous = False)
+
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Public_Comment',
+            forum = submission.id,
+            replyto = review.id,
+            readers = ['everyone'],
+            writers = ['~Reviewer_Four1'],
+            signatures = ['~Reviewer_Four1'],
+            content = {
+                'title': 'Comment title',
+                'comment': 'Paper is very good!'
+            }
+        )
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
