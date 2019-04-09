@@ -395,13 +395,13 @@ class Conference(object):
     def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
         return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
 
-    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False):
+    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False):
         ## Create comment invitations per paper
         notes_iterator = self.get_submissions()
         if public:
-            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous)
+            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous, reader_selection)
         else:
-            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers)
+            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers, reader_selection)
 
     def close_comments(self, name):
         return self.__expire_invitations(name)
@@ -416,7 +416,7 @@ class Conference(object):
         :arg allow_de_anonymization: indicates if the review can be signed with a real identity or not.
         :arg public: set the readership of the review to the general public.
         :arg release_to_authors: allow the author to read the review once is posted, default = False.
-        :arg release_to_reviewers: allow the paper reviewers to read the review once is potest, default = False => only reviewers with submitted reviews can see other reviews.
+        :arg release_to_reviewers: allow the paper reviewers to read the review once it is posted, default = False => only reviewers with submitted reviews can see other reviews.
         :arg additional_fields: field to add/overwrite to the review invitation
         """
         notes = list(self.get_submissions())
