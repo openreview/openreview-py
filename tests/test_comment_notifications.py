@@ -57,7 +57,7 @@ class TestCommentNotification():
 
         conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True)
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers= True)
 
         comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -296,3 +296,195 @@ class TestCommentNotification():
         assert messages[2]['content']['subject'] == 'OpenReview signup confirmation'
 
 
+    def test_notify_submitted_reviewers(self, client, test_client, helpers):
+
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        builder.set_conference_id('auai.org/UAI/2020/Conference')
+        builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
+        builder.set_conference_short_name('UAI 2020')
+        builder.set_homepage_header({
+        'title': 'UAI 2020',
+        'subtitle': 'Conference on Uncertainty in Artificial Intelligence',
+        'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2019, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2019',
+        'date': 'July 22 - July 25, 2019',
+        'website': 'http://auai.org/uai2019/',
+        'location': 'Tel Aviv, Israel',
+        'instructions': '''<p><strong>Important Information about Anonymity:</strong><br>
+            When you post a submission to UAI 2019, please provide the real names and email addresses of authors in the submission form below (but NOT in the manuscript).
+            The <em>original</em> record of your submission will be private, and will contain your real name(s).
+            The PDF in your submission should not contain the names of the authors. </p>
+            <p><strong>Conflict of Interest:</strong><br>
+            Please make sure that your current and previous affiliations listed on your OpenReview <a href=\"/profile\">profile page</a> is up-to-date to avoid conflict of interest.</p>
+            <p><strong>Questions or Concerns:</strong><br> Please contact the UAI 2019 Program chairs at <a href=\"mailto:uai2019chairs@gmail.com\">uai2019chairs@gmail.com</a>.
+            <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
+            </p>'''
+        })
+        builder.set_conference_area_chairs_name('Senior_Program_Committee')
+        builder.set_conference_reviewers_name('Program_Committee')
+        builder.set_double_blind(True)
+        builder.set_override_homepage(True)
+        builder.set_subject_areas([
+            "Algorithms: Approximate Inference",
+            "Algorithms: Belief Propagation",
+            "Algorithms: Distributed and Parallel",
+            "Algorithms: Exact Inference",
+        ])
+        conference = builder.get_result()
+
+        now = datetime.datetime.utcnow()
+        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['everyone'],
+            writers = ['~Test_User1', 'author@mail.com', 'author2@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
+                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'pdf': '/pdf/sdfskdls.pdf',
+                'subject_areas': [
+                    'Algorithms: Approximate Inference',
+                    'Algorithms: Belief Propagation'
+                ]
+            }
+        )
+
+        note = test_client.post_note(note)
+        assert note
+
+        conference.close_submissions()
+        blinded_notes = conference.create_blind_submissions()
+        paper_note = blinded_notes[0]
+        conference.set_authors()
+        conference.set_program_chairs(emails= ['programchair@auai.org'])
+        conference.set_area_chairs(emails = ['areachair@auai.org'])
+        conference.set_reviewers(emails = ['reviewer@auai.org', 'reviewer2@auai.org'])
+        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
+        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer2@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
+        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'areachair@auai.org', individual_label='Area_Chair', parent_label='Area_Chairs')
+
+        conference.open_reviews(release_to_authors=True)
+
+        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/-/Paper1/Official_Review',
+            forum = paper_note.id,
+            replyto = paper_note.id,
+            readers = ['auai.org/UAI/2020/Conference/Program_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Area_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Reviewers/Submitted',
+            'auai.org/UAI/2020/Conference/Paper1/Authors'],
+            writers = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1'],
+            signatures = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        reviewer_client = helpers.create_user('reviewer@auai.org', 'Reviewer', 'UAI')
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True)
+
+        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
+        authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
+        reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
+        anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = paper_note.number)
+        acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = paper_note.number)
+
+        comment_note = openreview.Note(invitation = comment_invitation_id,
+            forum = review_note.forum,
+            replyto = review_note.id,
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            writers = [conference.id, 'reviewer@auai.org'],
+            signatures = [anon_reviewers_group_id],
+            content = {
+                'title': 'Comment title',
+                'comment': 'This is an comment'
+            }
+        )
+        comment_note = reviewer_client.post_note(comment_note)
+
+        messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'programchair@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper in your area. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'areachair@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper you are reviewing. Paper Number: 1.*')
+        assert not messages
+
+        messages = client.get_messages(subject='.*UAI.*Your submission has received a comment. Paper Title: .*')
+        assert messages
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author2@mail.com' in recipients
+        assert 'author@mail.com' in recipients
+        assert 'test@mail.com' in recipients
+
+        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/-/Paper1/Official_Review',
+            forum = paper_note.id,
+            replyto = paper_note.id,
+            readers = ['auai.org/UAI/2020/Conference/Program_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Area_Chairs',
+            'auai.org/UAI/2020/Conference/Paper1/Reviewers/Submitted',
+            'auai.org/UAI/2020/Conference/Paper1/Authors'],
+            writers = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer2'],
+            signatures = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer2'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        reviewer2_client = helpers.create_user('reviewer2@auai.org', 'Reviewer', 'UAITwo')
+        review_note = reviewer2_client.post_note(note)
+        assert review_note
+
+        comment_note = openreview.Note(invitation = comment_invitation_id,
+            forum = review_note.forum,
+            replyto = review_note.id,
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            writers = [conference.id, 'reviewer@auai.org'],
+            signatures = [anon_reviewers_group_id],
+            content = {
+                'title': 'Second Comment title',
+                'comment': 'This is an a second comment to a review'
+            }
+        )
+        comment_note = reviewer_client.post_note(comment_note)
+
+        messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['to'] == 'programchair@auai.org'
+        assert messages[1]['content']['to'] == 'programchair@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper in your area. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['to'] == 'areachair@auai.org'
+        assert messages[1]['content']['to'] == 'areachair@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper you are reviewing. Paper Number: 1.*')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'reviewer2@auai.org'
+
+
+        messages = client.get_messages(subject='.*UAI.*Your submission has received a comment. Paper Title: .*')
+        assert messages
+        assert len(messages) == 6
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author2@mail.com' in recipients
+        assert 'author@mail.com' in recipients
+        assert 'test@mail.com' in recipients
