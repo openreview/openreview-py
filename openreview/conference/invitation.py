@@ -252,6 +252,13 @@ class OfficialCommentInvitation(openreview.Invitation):
         area_chairs_id = conference.get_area_chairs_id(number = note.number)
         program_chairs_id = conference.get_program_chairs_id()
 
+        committee = []
+        committee.append(authors_id)
+        committee.append(reviewers_id)
+        if conference.use_area_chairs:
+            committee.append(area_chairs_id)
+        committee.append(program_chairs_id)
+
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
         signatures_regex = '~.*'
 
@@ -265,30 +272,22 @@ class OfficialCommentInvitation(openreview.Invitation):
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
             file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + authors_id + "';")
             file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + reviewers_id + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
             file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + program_chairs_id + "';")
+            if conference.use_area_chairs:
+                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
+
             super(OfficialCommentInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
                 cdate = tools.datetime_millis(start_date),
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
-                invitees = [
-                    authors_id,
-                    reviewers_id,
-                    area_chairs_id,
-                    program_chairs_id
-                ],
+                invitees = committee,
                 reply = {
                     'forum': note.id,
                     'replyto': None,
                     'readers': {
                         "description": "Select all user groups that should be able to read this comment.",
-                        "values-dropdown": [
-                            authors_id,
-                            reviewers_id,
-                            area_chairs_id,
-                            program_chairs_id
-                        ]
+                        "values-dropdown": committee
                     },
                     'writers': {
                         'values-copied': [
