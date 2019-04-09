@@ -423,8 +423,8 @@ class MetaReviewInvitation(openreview.Invitation):
 
         if conference.use_area_chairs:
             regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
-            invitees = [conference.get_area_chairs_id()]
-            private_readers.append(conference.get_area_chairs_id())
+            invitees = [conference.get_area_chairs_id(number = note.number)]
+            private_readers = [conference.get_area_chairs_id(number = note.number), conference.get_program_chairs_id()]
 
         if not public:
             readers = private_readers
