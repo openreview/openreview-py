@@ -417,12 +417,17 @@ class MetaReviewInvitation(openreview.Invitation):
         content = invitations.meta_review.copy()
 
         readers = ['everyone']
+        regex = conference.get_program_chairs_id()
+        invitees = [conference.get_program_chairs_id()]
+        private_readers = [conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
+            invitees = [conference.get_area_chairs_id()]
+            private_readers.append(conference.get_area_chairs_id())
 
         if not public:
-            readers = [
-                conference.get_area_chairs_id(note.number),
-                conference.get_program_chairs_id()
-            ]
+            readers = private_readers
 
         super(MetaReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
             cdate = tools.datetime_millis(start_date),
@@ -431,7 +436,7 @@ class MetaReviewInvitation(openreview.Invitation):
             readers = ['everyone'],
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [conference.get_area_chairs_id(note.number)],
+            invitees = invitees,
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
@@ -440,11 +445,11 @@ class MetaReviewInvitation(openreview.Invitation):
                     "values": readers
                 },
                 'writers': {
-                    'values-regex': conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+',
+                    'values-regex': regex,
                     'description': 'How your identity will be displayed.'
                 },
                 'signatures': {
-                    'values-regex': conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+',
+                    'values-regex': regex,
                     'description': 'How your identity will be displayed.'
                 },
                 'content': content
