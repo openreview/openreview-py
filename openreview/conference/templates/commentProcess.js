@@ -50,7 +50,7 @@ function(){
         promises.push(or3client.or3request(or3client.mailUrl, reviewer_mail, 'POST', token));
       }
 
-      if(note.readers.includes(AREA_CHAIRS_ID) || note.readers.includes('everyone')){
+      if(AREA_CHAIRS_ID && (note.readers.includes(AREA_CHAIRS_ID) || note.readers.includes('everyone'))){
         promises.push(or3client.or3request(or3client.mailUrl, ac_mail, 'POST', token));
       }
 
