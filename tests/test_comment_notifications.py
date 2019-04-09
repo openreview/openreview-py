@@ -121,7 +121,7 @@ class TestCommentNotification():
         reply_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
             replyto = comment_note.id,
-            readers = [authors_group_id, conference.get_program_chairs_id()],
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
             writers = [conference.id, 'test@mail.com'],
             signatures = [authors_group_id],
             content = {
@@ -155,12 +155,13 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
-        assert len(messages) == 1
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
-        assert len(messages) == 1
+        assert len(messages) == 2
         assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@midl.io')
@@ -172,7 +173,7 @@ class TestCommentNotification():
         reply2_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
             replyto = comment_note.id,
-            readers = [reviewers_group_id, acs_group_id],
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
             writers = [conference.id, 'reviewer@midl.io'],
             signatures = [anon_reviewers_group_id],
             content = {
@@ -185,42 +186,48 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
-        assert len(messages) == 3
+        assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
-        assert len(messages) == 3
+        assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
         assert messages[1]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'author2@mail.com')
         assert messages
-        assert len(messages) == 3
+        assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
-        assert len(messages) == 2
+        assert len(messages) == 3
         assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
-        assert len(messages) == 2
+        assert len(messages) == 3
         assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@midl.io')
         assert messages
-        assert len(messages) == 2
+        assert len(messages) == 3
         assert messages[0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
 
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
@@ -242,7 +249,7 @@ class TestCommentNotification():
         reply3_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
             replyto = comment_note.id,
-            readers = [reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
             writers = [conference.id, 'programchair@midl.io'],
             signatures = [conference.get_program_chairs_id()],
             content = {
@@ -255,10 +262,11 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
-        assert len(messages) == 3
+        assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[MIDL 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
