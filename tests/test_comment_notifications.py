@@ -612,13 +612,6 @@ class TestCommentNotification():
         assert messages[1]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        messages = client.get_messages(to = 'test@mail.com')
-        assert messages
-        assert len(messages) == 11
-        assert messages[8]['content']['subject'] == 'OpenReview signup confirmation'
-        assert messages[9]['content']['subject'] == 'COLT 2019 has received your submission titled Paper title'
-        assert messages[10]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
-
         messages = client.get_messages(to = 'author2@colt.io')
         assert messages
         assert len(messages) == 3
@@ -665,13 +658,12 @@ class TestCommentNotification():
         assert messages[2]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        # messages = client.get_messages(to = 'test@mail.com')
-        # assert messages
-        # assert len(messages) == 12
-        # assert messages[8]['content']['subject'] == 'OpenReview signup confirmation'
-        # assert messages[9]['content']['subject'] == 'COLT 2019 has received your submission titled Paper title'
-        # assert messages[10]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        # assert messages[11]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 11
+        assert messages[8]['content']['subject'] == 'COLT 2019 has received your submission titled Paper title'
+        assert messages[9]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[10]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'author2@colt.io')
         assert messages
@@ -742,14 +734,13 @@ class TestCommentNotification():
         assert messages[3]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
         assert messages[4]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
-        # messages = client.get_messages(to = 'test@mail.com')
-        # assert messages
-        # assert len(messages) == 13
-        # assert messages[8]['content']['subject'] == 'OpenReview signup confirmation'
-        # assert messages[9]['content']['subject'] == 'COLT 2019 has received your submission titled Paper title'
-        # assert messages[10]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        # assert messages[11]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
-        # assert messages[12]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 12
+        assert messages[8]['content']['subject'] == 'COLT 2019 has received your submission titled Paper title'
+        assert messages[9]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[10]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[11]['content']['subject'] == '[COLT 2019] Your submission has received a comment. Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'author2@colt.io')
         assert messages
