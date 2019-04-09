@@ -220,7 +220,7 @@ class PublicCommentInvitation(openreview.Invitation):
             else:
                 reply_readers = {
                     "description": "User groups that will be able to read this comment.",
-                    "values": ["everyone"] + committee
+                    "values": ["everyone"]
                 }
 
             super(PublicCommentInvitation, self).__init__(id = conference.get_id() + '/-/Paper' + str(note.number) + '/' + name,
