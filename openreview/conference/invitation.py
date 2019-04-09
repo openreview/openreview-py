@@ -186,6 +186,18 @@ class PublicCommentInvitation(openreview.Invitation):
 
         content = invitations.comment.copy()
 
+        authors_id = conference.get_authors_id(number = note.number)
+        reviewers_id = conference.get_reviewers_id(number = note.number)
+        area_chairs_id = conference.get_area_chairs_id(number = note.number)
+        program_chairs_id = conference.get_program_chairs_id()
+
+        committee = []
+        committee.append(authors_id)
+        committee.append(reviewers_id)
+        if conference.use_area_chairs:
+            committee.append(area_chairs_id)
+        committee.append(program_chairs_id)
+
         signatures_regex = '~.*'
 
         if anonymous:
@@ -196,25 +208,19 @@ class PublicCommentInvitation(openreview.Invitation):
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
             file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id(number = note.number) + "';")
             file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id(number = note.number) + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id(number = note.number) + "';")
             file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+            if conference.use_area_chairs:
+                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
+
             if reader_selection:
                 reply_readers = {
                     "description": "Select all user groups that should be able to read this comment.",
-                    "values-dropdown": [
-                        "everyone",
-                        conference.get_authors_id(number = note.number),
-                        conference.get_reviewers_id(number = note.number),
-                        conference.get_area_chairs_id(number = note.number),
-                        conference.get_id() + '/' + "Program_Chairs"
-                    ]
+                    "values-dropdown": ["everyone"] + committee
                 }
             else:
                 reply_readers = {
                     "description": "User groups that will be able to read this comment.",
-                    "values": [
-                        "everyone"
-                    ]
+                    "values": ["everyone"] + committee
                 }
 
             super(PublicCommentInvitation, self).__init__(id = conference.get_id() + '/-/Paper' + str(note.number) + '/' + name,
@@ -223,12 +229,7 @@ class PublicCommentInvitation(openreview.Invitation):
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
                 invitees = ['~'],
-                noninvitees = [
-                    conference.get_authors_id(number = note.number),
-                    conference.get_reviewers_id(number = note.number),
-                    conference.get_area_chairs_id(number = note.number),
-                    conference.get_id() + '/' + "Program_Chairs"
-                ],
+                noninvitees = committee,
                 reply = {
                     'forum': note.id,
                     'replyto': None,
@@ -260,12 +261,18 @@ class OfficialCommentInvitation(openreview.Invitation):
         area_chairs_id = conference.get_area_chairs_id(number = note.number)
         program_chairs_id = conference.get_program_chairs_id()
 
+        committee = []
+        committee.append(authors_id)
+        committee.append(reviewers_id)
+        if conference.use_area_chairs:
+            committee.append(area_chairs_id)
+        committee.append(program_chairs_id)
+
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
         signatures_regex = '~.*'
 
         if anonymous:
-            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix,
-            conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name)
+            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name)
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
             file_content = f.read()
@@ -273,40 +280,28 @@ class OfficialCommentInvitation(openreview.Invitation):
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
             file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + authors_id + "';")
             file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + reviewers_id + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
             file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + program_chairs_id + "';")
+            if conference.use_area_chairs:
+                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
+
             if reader_selection:
                 reply_readers = {
                     "description": "Select all user groups that should be able to read this comment.",
-                    "values-dropdown": [
-                        authors_id,
-                        reviewers_id,
-                        area_chairs_id,
-                        program_chairs_id
-                    ]
+                    "values-dropdown": committee
                 }
             else:
                 reply_readers = {
                     "description": "User groups that will be able to read this comment.",
-                    "values": [
-                        authors_id,
-                        reviewers_id,
-                        area_chairs_id,
-                        program_chairs_id
-                    ]
+                    "values": committee
                 }
+
 
             super(OfficialCommentInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
                 cdate = tools.datetime_millis(start_date),
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
-                invitees = [
-                    authors_id,
-                    reviewers_id,
-                    area_chairs_id,
-                    program_chairs_id
-                ],
+                invitees = committee,
                 reply = {
                     'forum': note.id,
                     'replyto': None,
@@ -435,12 +430,17 @@ class MetaReviewInvitation(openreview.Invitation):
         content = invitations.meta_review.copy()
 
         readers = ['everyone']
+        regex = conference.get_program_chairs_id()
+        invitees = [conference.get_program_chairs_id()]
+        private_readers = [conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
+            invitees = [conference.get_area_chairs_id(number = note.number)]
+            private_readers = [conference.get_area_chairs_id(number = note.number), conference.get_program_chairs_id()]
 
         if not public:
-            readers = [
-                conference.get_area_chairs_id(note.number),
-                conference.get_program_chairs_id()
-            ]
+            readers = private_readers
 
         super(MetaReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
             cdate = tools.datetime_millis(start_date),
@@ -449,7 +449,7 @@ class MetaReviewInvitation(openreview.Invitation):
             readers = ['everyone'],
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [conference.get_area_chairs_id(note.number)],
+            invitees = invitees,
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
@@ -458,11 +458,11 @@ class MetaReviewInvitation(openreview.Invitation):
                     "values": readers
                 },
                 'writers': {
-                    'values-regex': conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+',
+                    'values-regex': regex,
                     'description': 'How your identity will be displayed.'
                 },
                 'signatures': {
-                    'values-regex': conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+',
+                    'values-regex': regex,
                     'description': 'How your identity will be displayed.'
                 },
                 'content': content

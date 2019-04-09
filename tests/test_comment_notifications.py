@@ -32,6 +32,7 @@ class TestCommentNotification():
         })
         builder.set_conference_submission_name('Full_Submission')
         builder.set_submission_public(True)
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         now = datetime.datetime.utcnow()
