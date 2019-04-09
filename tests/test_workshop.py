@@ -520,6 +520,6 @@ class TestWorkshop():
                 'confidence': '4: The area chair is confident but not absolutely certain'
             }
         )
-        pc_client = helpers.create_user('program_chairs@hsdip.org', 'Program', 'Chair')
+        pc_client = helpers.create_user('program_chairs@hsdip.org', 'Program', 'HSDIPChair')
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
