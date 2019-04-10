@@ -350,7 +350,7 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True)
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, email_pcs = True)
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Comment',
             forum = submission.id,
