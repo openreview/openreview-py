@@ -406,7 +406,7 @@ class Conference(object):
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, additional_fields = {}):
+    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = True, additional_fields = {}):
         """
         Create review invitations for all the available submissions.
 
@@ -420,7 +420,7 @@ class Conference(object):
         :arg additional_fields: field to add/overwrite to the review invitation
         """
         notes = list(self.get_submissions())
-        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields)
+        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
         ## Create submitted groups if they don't exist
         for n in notes:
             self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
