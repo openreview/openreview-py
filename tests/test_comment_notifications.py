@@ -58,7 +58,7 @@ class TestCommentNotification():
 
         conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers= True, reader_selection=True)
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers= True, reader_selection=True, email_pcs=True)
 
         comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -388,7 +388,7 @@ class TestCommentNotification():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True)
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, email_pcs=True)
 
         comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
@@ -532,8 +532,8 @@ class TestCommentNotification():
         conference.close_submissions()
 
         conference.set_authors()
-        conference.set_program_chairs(emails= ['programchair@colt.io'])
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers= True)
+        conference.set_program_chairs(emails = ['programchair@colt.io'])
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, email_pcs = True)
 
         comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -774,3 +774,219 @@ class TestCommentNotification():
         assert messages[1]['content']['subject'] == '[COLT 2018] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == 'OpenReview signup confirmation'
+
+
+    def test_notify_except_program_chairs(self, client, test_client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+
+        builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
+        builder.set_conference_name('Conference on Learning Theory')
+        builder.set_conference_short_name('COLT 2017')
+        builder.set_homepage_header({
+        'title': 'COLT 2017',
+        'subtitle': 'Conference on Learning Theory',
+        'deadline': 'Submission Deadline: 11:00pm Eastern Standard Time, February 1, 2019',
+        'date': 'June 25 - June 28, 2019',
+        'website': 'http://learningtheory.org/colt2017/',
+        'location': 'Phoenix, Arizona, United States'
+        })
+        builder.set_conference_submission_name('Full_Submission')
+        builder.set_submission_public(True)
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        now = datetime.datetime.utcnow()
+        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['everyone'],
+            writers = ['~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'author@colt17.io', 'author2@colt17.io'],
+                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'pdf': '/pdf/sdfskdls.pdf'
+            }
+        )
+
+        note = test_client.post_note(note)
+        assert note
+
+        conference.close_submissions()
+
+        conference.set_authors()
+        conference.set_program_chairs(emails = ['programchair@colt17.io'])
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True)
+
+        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
+        authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
+        reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
+        anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
+        acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
+
+        openreview.tools.add_assignment(client, note.number, conference.id, 'reviewer@colt17.io')
+        openreview.tools.add_assignment(client, note.number, conference.id, 'areachair@colt17.io', individual_label='Area_Chair', parent_label='Area_Chairs')
+
+        comment_note = openreview.Note(invitation = comment_invitation_id,
+            forum = note.id,
+            replyto = note.id,
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            writers = [conference.id, 'reviewer@colt17.io'],
+            signatures = [anon_reviewers_group_id],
+            content = {
+                'title': 'Comment title',
+                'comment': 'This is an comment'
+            }
+        )
+        comment_note = client.post_note(comment_note)
+
+        assert comment_note
+        assert comment_note.forum == note.id
+
+        messages = client.get_messages(to = 'author@colt17.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 14
+        assert messages[12]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[13]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'author2@colt17.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'reviewer@colt17.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'areachair@colt17.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'programchair@colt17.io')
+        assert len(messages) == 0
+
+        reply_comment_note = openreview.Note(invitation = comment_invitation_id,
+            forum = note.id,
+            replyto = comment_note.id,
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            writers = [conference.id, 'test@mail.com'],
+            signatures = [authors_group_id],
+            content = {
+                'title': 'Reply to comment title',
+                'comment': 'This is a reply to the comment'
+            }
+        )
+        reply_comment_note = test_client.post_note(reply_comment_note)
+
+        messages = client.get_messages(to = 'author@colt17.io')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'author2@colt17.io')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'reviewer@colt17.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'areachair@colt17.io')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'programchair@colt17.io')
+        assert len(messages) == 0
+
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
+        assert pc_client is not None, "Client is none"
+        res = pc_client.register_user(email = 'programchair@colt17.io', first = 'Program', last = 'Chair', password = '1234')
+        assert res, "Res i none"
+        res = pc_client.activate_user('programchair@colt17.io', {
+            'names': [
+                    {
+                        'first': 'Program',
+                        'last': 'Chair',
+                        'username': '~Program_Chair3'
+                    }
+                ],
+            'emails': ['programchair@colt17.io'],
+            'preferredEmail': 'programchair@colt17.io'
+            })
+        assert res
+
+        reply3_comment_note = openreview.Note(invitation = comment_invitation_id,
+            forum = note.id,
+            replyto = comment_note.id,
+            readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            writers = [conference.id, 'programchair@colt17.io'],
+            signatures = [conference.get_program_chairs_id()],
+            content = {
+                'title': 'Another reply to comment title',
+                'comment': 'This is a reply to the comment'
+            }
+        )
+
+        reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        messages = client.get_messages(to = 'author@colt17.io')
+        assert messages
+        assert len(messages) == 4
+        assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        assert len(messages) == 15
+        assert messages[12]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[13]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[14]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'author2@colt17.io')
+        assert messages
+        assert len(messages) == 4
+        assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[COLT 2017] Your submission has received a comment. Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'reviewer@colt17.io')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'areachair@colt17.io')
+        assert messages
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+
+        messages = client.get_messages(to = 'programchair@colt17.io')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'

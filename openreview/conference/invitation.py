@@ -182,7 +182,7 @@ class BidInvitation(openreview.Invitation):
 
 class PublicCommentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, anonymous = False, reader_selection = False):
+    def __init__(self, conference, name, note, start_date, anonymous = False, reader_selection = False, email_pcs = False):
 
         content = invitations.comment.copy()
 
@@ -208,7 +208,9 @@ class PublicCommentInvitation(openreview.Invitation):
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
             file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id(number = note.number) + "';")
             file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id(number = note.number) + "';")
-            file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+            if email_pcs:
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+
             if conference.use_area_chairs:
                 file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
 
@@ -251,7 +253,7 @@ class PublicCommentInvitation(openreview.Invitation):
 
 class OfficialCommentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, anonymous, unsubmitted_reviewers, reader_selection = False):
+    def __init__(self, conference, name, note, start_date, anonymous, unsubmitted_reviewers, reader_selection = False, email_pcs = False):
 
         content = invitations.comment.copy()
         authors_id = conference.get_authors_id(number = note.number)
@@ -280,7 +282,9 @@ class OfficialCommentInvitation(openreview.Invitation):
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
             file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + authors_id + "';")
             file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + reviewers_id + "';")
-            file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + program_chairs_id + "';")
+            if email_pcs:
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + program_chairs_id + "';")
+
             if conference.use_area_chairs:
                 file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
 
@@ -323,7 +327,7 @@ class OfficialCommentInvitation(openreview.Invitation):
 
 class ReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields):
+    def __init__(self, conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
         content = invitations.review.copy()
 
         for key in additional_fields:
@@ -363,7 +367,9 @@ class ReviewInvitation(openreview.Invitation):
             file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
             file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
-            file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
+            if email_pcs:
+                file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
+
             super(ReviewInvitation, self).__init__(id = conference.id + '/-/Paper' + str(note.number) + '/' + name,
                 cdate = tools.datetime_millis(start_date),
                 duedate = tools.datetime_millis(due_date),
@@ -604,21 +610,21 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(invitation)
 
-    def set_public_comment_invitation(self, conference, notes, name, start_date, anonymous, reader_selection):
+    def set_public_comment_invitation(self, conference, notes, name, start_date, anonymous, reader_selection, email_pcs):
 
         for note in notes:
-            self.client.post_invitation(PublicCommentInvitation(conference, name, note, start_date, anonymous, reader_selection))
+            self.client.post_invitation(PublicCommentInvitation(conference, name, note, start_date, anonymous, reader_selection, email_pcs))
 
-    def set_private_comment_invitation(self, conference, notes, name, start_date, anonymous, unsubmitted_reviewers, reader_selection):
+    def set_private_comment_invitation(self, conference, notes, name, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs):
 
         for note in notes:
-            self.client.post_invitation(OfficialCommentInvitation(conference, name, note, start_date, anonymous, unsubmitted_reviewers, reader_selection))
+            self.client.post_invitation(OfficialCommentInvitation(conference, name, note, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs))
 
-    def set_review_invitation(self, conference, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields):
+    def set_review_invitation(self, conference, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
 
         invitations = []
         for note in notes:
-            invitations.append(self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields)))
+            invitations.append(self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)))
 
         return invitations
 

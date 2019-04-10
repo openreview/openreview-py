@@ -395,18 +395,18 @@ class Conference(object):
     def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
         return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
 
-    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False):
+    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
         ## Create comment invitations per paper
         notes_iterator = self.get_submissions()
         if public:
-            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous, reader_selection)
+            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous, reader_selection, email_pcs)
         else:
-            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers, reader_selection)
+            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
 
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, additional_fields = {}):
+    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         """
         Create review invitations for all the available submissions.
 
@@ -420,7 +420,7 @@ class Conference(object):
         :arg additional_fields: field to add/overwrite to the review invitation
         """
         notes = list(self.get_submissions())
-        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, additional_fields)
+        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
         ## Create submitted groups if they don't exist
         for n in notes:
             self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
