@@ -395,18 +395,18 @@ class Conference(object):
     def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
         return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
 
-    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False):
+    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
         ## Create comment invitations per paper
         notes_iterator = self.get_submissions()
         if public:
-            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous, reader_selection)
+            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous, reader_selection, email_pcs)
         else:
-            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers, reader_selection)
+            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
 
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = True, additional_fields = {}):
+    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         """
         Create review invitations for all the available submissions.
 
