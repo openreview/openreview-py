@@ -524,3 +524,47 @@ class TestWorkshop():
         pc_client = helpers.create_user('program_chairs@hsdip.org', 'Program', 'HSDIPChair')
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
+
+    def test_open_decisions(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
+        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
+        builder.set_conference_short_name('ICAPS HSDIP 2019')
+        builder.set_homepage_header({
+        'title': 'Heuristics and Search for Domain-independent Planning',
+        'subtitle': 'ICAPS 2019 Workshop',
+        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
+        'date': 'July 11-15, 2019',
+        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
+        'location': 'Berkeley, CA, USA'
+        })
+        builder.set_double_blind(True)
+        builder.set_submission_public(False)
+        builder.has_area_chairs(False)
+        conference = builder.get_result()
+
+        conference.open_decisions()
+
+        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
+
+        notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        submission = notes[0]
+
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Decision',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            nonreaders = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
+            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            content = {
+                'title': 'Acceptance Decision',
+                'decision': 'Accept (Oral)',
+                'comment': 'this is a comment'
+            }
+        )
+        decision_note = pc_client.post_note(note)
+        assert decision_note
