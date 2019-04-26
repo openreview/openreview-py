@@ -152,6 +152,14 @@ class Client(object):
 
         return json_response
 
+    def reset_password(self, token, password):
+        response = requests.put(self.baseurl + '/reset/' + token, json = { 'password': password }, headers = self.headers)
+        response = self.__handle_response(response)
+        json_response = response.json()
+        self.__handle_token(json_response)
+
+        return json_response
+
     def get_activatable(self, token = None):
         '''
         Returns the activation token for a registered user

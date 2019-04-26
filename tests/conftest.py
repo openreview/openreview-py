@@ -21,7 +21,7 @@ class Helpers:
                     }
                 ],
             'emails': [email],
-            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
+            'preferredEmail': email
             })
         assert res, "Res i none"
         return client
@@ -32,11 +32,12 @@ class Helpers:
 
 @pytest.fixture
 def helpers():
-    return Helpers        
+    return Helpers
 
 @pytest.fixture(scope="session")
 def client():
-    client = Helpers.create_user('openreview.net', 'Super', 'User')
+    client = openreview.Client(baseurl = 'http://localhost:3000')
+    client.reset_password('openreview.net', '1234')
     yield client
 
 @pytest.fixture(scope="session")
