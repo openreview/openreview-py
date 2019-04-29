@@ -62,7 +62,7 @@ def get_conference(client, request_form_id, content_override_args={}):
         'Submissions should be public, but reviews should be private.' == note.content.get('Open Reviewing Policy', '') :
         builder.set_submission_public(True)
 
-    # this doesn't exist in the request form yet,
+    # 'Custom Submission Fields' doesn't exist in the request form yet,
     # but it can be added through a script via the
     # `content_override_args` parameter.
     additional_fields = note.content.get('Custom Submission Fields', {})
