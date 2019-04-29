@@ -40,7 +40,7 @@ class TestCommentNotification():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'author@mail.com', 'author2@mail.com'],
+            writers = [conference.get_id(), '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
@@ -53,6 +53,10 @@ class TestCommentNotification():
 
         note = test_client.post_note(note)
         assert note
+
+        logs = client.get_process_logs(id = note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         conference.close_submissions()
 
@@ -337,7 +341,7 @@ class TestCommentNotification():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'author@mail.com', 'author2@mail.com'],
+            writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
@@ -515,7 +519,7 @@ class TestCommentNotification():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'author@colt.io', 'author2@colt.io'],
+            writers = [conference.get_id(), '~Test_User1', 'author@colt.io', 'author2@colt.io'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
@@ -801,7 +805,7 @@ class TestCommentNotification():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
+            writers = [conference.id, '~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
