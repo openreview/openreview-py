@@ -366,9 +366,9 @@ class TestCommentNotification():
         conference.set_program_chairs(emails= ['programchair@auai.org'])
         conference.set_area_chairs(emails = ['areachair@auai.org'])
         conference.set_reviewers(emails = ['reviewer@auai.org', 'reviewer2@auai.org'])
-        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
-        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'reviewer2@auai.org', individual_label='AnonReviewer', parent_label='Reviewers')
-        openreview.tools.add_assignment(client, paper_note.number, conference.id, 'areachair@auai.org', individual_label='Area_Chair', parent_label='Area_Chairs')
+        conference.set_assignment('reviewer@auai.org', 1)
+        conference.set_assignment('reviewer2@auai.org', 1)
+        conference.set_assignment('areachair@auai.org', 1, True)
 
         conference.open_reviews(release_to_authors=True)
 
@@ -493,6 +493,35 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
+    def test_remind_reviewers(self, client, helpers):
+
+        ac_client = helpers.create_user('areachair@auai.org', 'Area', 'ChairUAI')
+        subject = 'Remind to reviewers'
+        recipients = ['reviewer@auai.org']
+        message = 'This is a reminder'
+        response = ac_client.send_mail(subject, recipients, message)
+        assert response
+
+        messages = client.get_messages(subject='Remind to reviewers')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'reviewer@auai.org'
+
+        recipients = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1']
+        response = ac_client.send_mail(subject, recipients, 'This is a second reminder')
+        assert response
+
+        messages_2 = client.get_messages(subject='.*Remind to reviewers.*')
+        assert messages_2
+        assert len(messages_2) == 2
+        assert messages_2[0]['content']['to'] == 'reviewer@auai.org'
+        assert messages_2[1]['content']['to'] == 'reviewer@auai.org'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'):
+            ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
+
+        with pytest.raises(openreview.OpenReviewException, match=r"[{'type': 'forbidden', 'path': 'id', 'value': 'auai.org/UAI/2020/Conference/Program_Committee', 'user': 'areachair@auai.org'}]"):
+            ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
 
     def test_notify_all_mandatory_readers(self, client, test_client):
 
