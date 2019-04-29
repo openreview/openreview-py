@@ -1,9 +1,10 @@
 import openreview
 import datetime
 
-def get_conference(client, request_form_id):
+def get_conference(client, request_form_id, content_override_args={}):
 
     note = client.get_note(request_form_id)
+    note.content.update(content_override_args)
 
     if note.invitation not in 'OpenReview.net/Support/-/Request_Form':
         raise openreview.OpenReviewException('Invalid request form invitation')
@@ -61,9 +62,16 @@ def get_conference(client, request_form_id):
         'Submissions should be public, but reviews should be private.' == note.content.get('Open Reviewing Policy', '') :
         builder.set_submission_public(True)
 
+    # this doesn't exist in the request form yet,
+    # but it can be added through a script via the
+    # `content_override_args` parameter.
+    additional_fields = note.content.get('Custom Submission Fields', {})
 
     builder.set_override_homepage(True)
     conference = builder.get_result()
-    conference.open_submissions(start_date = submission_start_date, due_date = submission_due_date)
+    conference.open_submissions(
+        start_date = submission_start_date,
+        due_date = submission_due_date,
+        additional_fields = additional_fields)
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference
