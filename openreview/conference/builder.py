@@ -607,6 +607,13 @@ class Conference(object):
 
         return self.client.get_group(id = reviewers_invited_id)
 
+    def set_homepage_decisions(self, invitation_name = 'Decision'):
+        home_group = self.client.get_group(self.id)
+        options = self.get_homepage_options()
+        options['blind_submission_id'] = self.get_blind_submission_id()
+        options['decision_invitation_regex'] = self.id + '/-/Paper.*/' + invitation_name
+        self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
+
 
 class ConferenceBuilder(object):
 
