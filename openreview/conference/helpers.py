@@ -8,8 +8,8 @@ def get_conference(client, request_form_id):
     if note.invitation not in 'OpenReview.net/Support/-/Request_Form':
         raise openreview.OpenReviewException('Invalid request form invitation')
 
-    if not note.content.get('conference_id'):
-        raise openreview.OpenReviewException('conference_id is not set')
+    if not note.content.get('venue_id') and not note.content.get('conference_id'):
+        raise openreview.OpenReviewException('venue_id is not set')
 
     builder = openreview.conference.ConferenceBuilder(client)
 
@@ -39,7 +39,7 @@ def get_conference(client, request_form_id):
             submission_due_date = datetime.datetime.strptime(note.content.get('Submission Deadline'), '%Y/%m/%d')
         submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
 
-    builder.set_conference_id(note.content['conference_id'])
+    builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
     builder.set_conference_name(note.content['Official Conference Name'])
     builder.set_conference_short_name(note.content['Abbreviated Conference Name'])
     builder.set_homepage_header({
