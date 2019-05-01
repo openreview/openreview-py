@@ -607,11 +607,19 @@ class Conference(object):
 
         return self.client.get_group(id = reviewers_invited_id)
 
-    def set_homepage_decisions(self, invitation_name = 'Decision'):
+    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
         options['blind_submission_id'] = self.get_blind_submission_id()
         options['decision_invitation_regex'] = self.id + '/-/Paper.*/' + invitation_name
+        if not decision_heading_map:
+            decision_heading_map = {}
+            invitations = self.client.get_invitations(regex = self.id + '/-/Paper.*/' + invitation_name, limit = 1)
+            if invitations:
+                for option in invitations[0].reply['content']['decision']['value-radio']:
+                    decision_heading_map[option] = option + ' Papers'
+        options['decision_heading_map'] = decision_heading_map
+
         self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
 
 

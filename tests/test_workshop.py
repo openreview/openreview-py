@@ -590,7 +590,11 @@ class TestWorkshop():
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
-        conference.set_homepage_decisions()
+        conference.set_homepage_decisions(decision_heading_map = {
+            'Accept (Oral)': 'Oral Presentations',
+            'Accept (Poster)': 'Post Presentations',
+            'Reject': 'All Presentations'
+        })
 
         request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
