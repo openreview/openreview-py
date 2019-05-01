@@ -27,7 +27,7 @@ function main() {
 // Load makes all the API calls needed to get the data to render the page
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
-  var notesP = Webfield.getAll('/notes', { invitation: BLIND_SUBMISSION_ID, details: 'replyCount' });
+  var notesP = Webfield.getAll('/notes', { invitation: BLIND_SUBMISSION_ID, details: 'replyCount,original' });
 
   var withdrawnNotesP = WITHDRAWN_INVITATION ? Webfield.getAll('/notes', { invitation: WITHDRAWN_INVITATION, noDetails: true }) : Promise.resolve({ notes: []});
 
@@ -65,7 +65,7 @@ function renderContent(notes, withdrawnNotes, decisionsNotes) {
 
   _.forEach(decisionsNotes, function(d) {
     if (_.has(notesDict, d.forum)) {
-      papersByDecision[d.content.decision].push(d.forum);
+      papersByDecision[d.content.decision].push(notesDict[d.forum]);
     }
   });
 
