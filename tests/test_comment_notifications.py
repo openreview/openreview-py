@@ -990,3 +990,82 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 1
         assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+
+
+    def test_notify_except_authors_are_program_chairs(self, client, test_client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+
+        builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
+        builder.set_conference_name('Conference on Learning Theory')
+        builder.set_conference_short_name('COLT 2017')
+        builder.set_homepage_header({
+        'title': 'COLT 2017',
+        'subtitle': 'Conference on Learning Theory',
+        'deadline': 'Submission Deadline: 11:00pm Eastern Standard Time, February 1, 2019',
+        'date': 'June 25 - June 28, 2019',
+        'website': 'http://learningtheory.org/colt2017/',
+        'location': 'Phoenix, Arizona, United States'
+        })
+        builder.set_conference_submission_name('Full_Submission')
+        builder.set_submission_public(True)
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        conference.set_program_chairs(emails = ['author2@colt17.io'])
+        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, reader_selection = True, email_pcs = True )
+
+        notes = list(conference.get_submissions())
+        assert notes
+        note = notes[0]
+
+        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
+        authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
+        reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
+        anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
+        acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
+
+        openreview.tools.add_assignment(client, note.number, conference.id, 'reviewer@colt17.io')
+        openreview.tools.add_assignment(client, note.number, conference.id, 'areachair@colt17.io', individual_label='Area_Chair', parent_label='Area_Chairs')
+
+        comment_note = openreview.Note(invitation = comment_invitation_id,
+            forum = note.id,
+            replyto = note.id,
+            readers = [reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
+            nonreaders = [authors_group_id],
+            writers = [conference.id, 'reviewer@colt17.io'],
+            signatures = [anon_reviewers_group_id],
+            content = {
+                'title': '[NO_AUTHORS] comment',
+                'comment': 'This is an comment'
+            }
+        )
+        comment_note = client.post_note(comment_note)
+
+        assert comment_note
+        assert comment_note.forum == note.id
+
+        messages = client.get_messages(to = 'author@colt17.io')
+        assert messages
+        expected_messages = [m for m in messages if '[NO_AUTHORS]' in m['content']['text']]
+        assert len(expected_messages) == 0
+
+        messages = client.get_messages(to = 'test@mail.com')
+        assert messages
+        expected_messages = [m for m in messages if '[NO_AUTHORS]' in m['content']['text']]
+        assert len(expected_messages) == 0
+
+        messages = client.get_messages(to = 'author2@colt17.io')
+        assert messages
+        expected_messages = [m for m in messages if '[NO_AUTHORS]' in m['content']['text']]
+        assert len(expected_messages) == 0
+
+        messages = client.get_messages(to = 'reviewer@colt17.io')
+        assert messages
+        expected_messages = [m for m in messages if '[NO_AUTHORS]' in m['content']['text']]
+        assert len(expected_messages) == 1
+
+        messages = client.get_messages(to = 'areachair@colt17.io')
+        assert messages
+        expected_messages = [m for m in messages if '[NO_AUTHORS]' in m['content']['text']]
+        assert len(expected_messages) == 1

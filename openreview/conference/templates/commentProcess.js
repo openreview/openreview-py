@@ -26,13 +26,6 @@ function(){
         message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
       };
 
-      var pc_mail = {
-        groups: [PROGRAM_CHAIRS_ID],
-        ignoreGroups: [note.tauthor],
-        subject: '[' + SHORT_PHRASE + '] A comment was posted. Paper Number: ' + forumNote.number + ', Paper Title: \"' + forumNote.content.title + '\"',
-        message: 'A comment was posted to a paper for which you are serving as Program Chair.\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
-      };
-
       var author_mail = {
         groups: forumNote.content.authorids,
         ignoreGroups: [note.tauthor],
@@ -55,6 +48,16 @@ function(){
       }
 
       if(PROGRAM_CHAIRS_ID && (note.readers.includes(PROGRAM_CHAIRS_ID) || note.readers.includes('everyone'))){
+
+        var ignoreGroups = note.nonreaders || [];
+        ignoreGroups.push(note.tauthor);
+        var pc_mail = {
+          groups: [PROGRAM_CHAIRS_ID],
+          ignoreGroups: ignoreGroups,
+          subject: '[' + SHORT_PHRASE + '] A comment was posted. Paper Number: ' + forumNote.number + ', Paper Title: \"' + forumNote.content.title + '\"',
+          message: 'A comment was posted to a paper for which you are serving as Program Chair.\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        };
+
         promises.push(or3client.or3request(or3client.mailUrl, pc_mail, 'POST', token));
       }
 
