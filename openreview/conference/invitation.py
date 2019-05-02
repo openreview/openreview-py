@@ -216,7 +216,7 @@ class PublicCommentInvitation(openreview.Invitation):
 
             if reader_selection:
                 reply_readers = {
-                    "description": "Select all user groups that should be able to read this comment.",
+                    "description": "Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response",
                     "values-dropdown": ["everyone"] + committee
                 }
             else:
@@ -290,7 +290,7 @@ class OfficialCommentInvitation(openreview.Invitation):
 
             if reader_selection:
                 reply_readers = {
-                    "description": "Select all user groups that should be able to read this comment.",
+                    "description": "Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response",
                     "values-dropdown": committee
                 }
             else:
