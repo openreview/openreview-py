@@ -568,3 +568,44 @@ class TestWorkshop():
         )
         decision_note = pc_client.post_note(note)
         assert decision_note
+
+    def test_release_decisions(self, client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
+        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
+        builder.set_conference_short_name('ICAPS HSDIP 2019')
+        builder.set_homepage_header({
+        'title': 'Heuristics and Search for Domain-independent Planning',
+        'subtitle': 'ICAPS 2019 Workshop',
+        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
+        'date': 'July 11-15, 2019',
+        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
+        'location': 'Berkeley, CA, USA'
+        })
+        builder.set_double_blind(True)
+        builder.set_submission_public(False)
+        builder.has_area_chairs(False)
+        conference = builder.get_result()
+
+        conference.set_homepage_decisions(decision_heading_map = {
+            'Accept (Oral)': 'Oral Presentations',
+            'Accept (Poster)': 'Post Presentations',
+            'Reject': 'All Presentations'
+        })
+
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
+        assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert "Heuristics and Search for Domain-independent Planning" == header.find_element_by_tag_name("h1").text
+        assert "ICAPS 2019 Workshop" == header.find_element_by_tag_name("h3").text
+        assert "Berkeley, CA, USA" == header.find_element_by_xpath(".//span[@class='venue-location']").text
+        assert "July 11-15, 2019" == header.find_element_by_xpath(".//span[@class='venue-date']").text
+        assert "https://icaps19.icaps-conference.org/workshops/HSDIP/index" in header.find_element_by_xpath(".//span[@class='venue-website']/a").text
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
