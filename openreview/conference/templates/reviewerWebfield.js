@@ -6,8 +6,8 @@ var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var REVIEWER_NAME = '';
 
-var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/Paper.*/-/Official_Review';
+var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 
 // Ajax functions
@@ -42,7 +42,7 @@ var getBlindedNotes = function(noteNumbers) {
 };
 
 var getAllRatings = function(callback) {
-  var invitationId = CONFERENCE_ID + '/-/Paper.*/Review_Rating';
+  var invitationId = CONFERENCE_ID + '/Paper.*/-/Review_Rating';
   var allNotes = [];
 
   function getPromise(offset, limit) {
@@ -222,7 +222,7 @@ var displayStatusTable = function(profiles, notes, completedRatings, officialRev
         revIds[revNumber] = profile;
       }
 
-      var officialReview = _.find(officialReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review']);
+      var officialReview = _.find(officialReviews, ['invitation', CONFERENCE_ID + '/Paper' + note.number + '/-/Official_Review']);
       return buildTableRow(
         note, revIds, completedRatings[note.number], officialReview
       );
@@ -280,7 +280,7 @@ var buildTableRow = function(note, reviewerIds, completedRatings, officialReview
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review'
+    invitationId: CONFERENCE_ID + '/Paper' + note.number + '/-/Official_Review'
   };
   var reviewStatus = {
     invitationUrl: '/forum?' + $.param(invitationUrlParams),

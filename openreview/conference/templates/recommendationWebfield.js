@@ -47,7 +47,7 @@ function load() {
     }
 
     var tagInvitationsP = Webfield.getAll('/invitations', {
-      regex: CONFERENCE_ID + '/-/Paper.*/Recommendation', tags: true, invitee: true
+      regex: CONFERENCE_ID + '/Paper.*/-/Recommendation', tags: true, invitee: true
     });
 
     return $.when(notesP, tagInvitationsP);

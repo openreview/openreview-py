@@ -60,7 +60,7 @@ class TestCommentNotification():
         conference.set_program_chairs(emails= ['programchair@midl.io'])
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers= True, reader_selection=True, email_pcs=True)
 
-        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
+        comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
@@ -368,7 +368,7 @@ class TestCommentNotification():
 
         conference.open_reviews(release_to_authors=True)
 
-        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/Paper1/-/Official_Review',
             forum = paper_note.id,
             replyto = paper_note.id,
             readers = ['auai.org/UAI/2020/Conference/Program_Chairs',
@@ -390,7 +390,7 @@ class TestCommentNotification():
 
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, email_pcs=True)
 
-        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
+        comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = paper_note.number)
@@ -430,7 +430,7 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/Paper1/-/Official_Review',
             forum = paper_note.id,
             replyto = paper_note.id,
             readers = ['auai.org/UAI/2020/Conference/Program_Chairs',
@@ -535,7 +535,7 @@ class TestCommentNotification():
         conference.set_program_chairs(emails = ['programchair@colt.io'])
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, email_pcs = True)
 
-        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
+        comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
@@ -821,7 +821,7 @@ class TestCommentNotification():
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True)
 
-        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
+        comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
@@ -1019,7 +1019,7 @@ class TestCommentNotification():
         assert notes
         note = notes[0]
 
-        comment_invitation_id = '{conference_id}/-/Paper{number}/Official_Comment'.format(conference_id = conference.id, number = note.number)
+        comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id = conference.id, number = note.number)
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)

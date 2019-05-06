@@ -18,7 +18,7 @@ var AUTHORS_ID = '';
 
 var HEADER = {};
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var BUFFER = 0;  // deprecated
 var PAGE_SIZE = 50;
 
@@ -189,7 +189,7 @@ function renderContent(notes, userGroups, activityNotes, authorNotes) {
     container: '#all-submissions',
     queryParams: {
       details: 'replyCount,original'
-    }    
+    }
   });
 
   $(submissionListOptions.container).empty();

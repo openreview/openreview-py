@@ -292,8 +292,9 @@ class TestSingleBlindConference():
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         conference = builder.get_result()
+        conference.set_authors()
 
-        conference.open_comments('Public_Comment', public = True, anonymous = True)
+        conference.open_comments('Official_Comment', public = False, anonymous = True)
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -301,7 +302,7 @@ class TestSingleBlindConference():
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Public Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+        assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
@@ -311,7 +312,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         conference = builder.get_result()
 
-        conference.close_comments('Public_Comment')
+        conference.close_comments('Official_Comment')
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -387,7 +388,7 @@ class TestSingleBlindConference():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
@@ -422,17 +423,17 @@ class TestSingleBlindConference():
         assert 'reviewer@mail.com' in recipients
 
         ## Check review visibility
-        notes = reviewer_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = reviewer_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 1
 
-        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
         reviewer2_client = helpers.create_user('reviewer3@mail.com', 'Reviewer', 'Three')
-        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
-        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
@@ -449,10 +450,10 @@ class TestSingleBlindConference():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
-        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 2
 
-        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')

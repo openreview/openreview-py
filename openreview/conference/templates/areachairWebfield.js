@@ -6,9 +6,9 @@ var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var AREA_CHAIR_NAME = '';
 
-var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
-var OFFICIAL_META_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Meta_Review';
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/Paper.*/-/Official_Review';
+var OFFICIAL_META_REVIEW_INVITATION = CONFERENCE_ID + '/Paper.*/-/Meta_Review';
+var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair.*';
 
@@ -228,7 +228,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
       revIds[revNumber] = _.get(profiles, uId, { id: uId, name: '', email: uId });
     }
 
-    var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + note.number + '/Meta_Review']);
+    var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/Paper' + note.number + '/-/Meta_Review']);
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
 
     return buildTableRow(note, revIds, noteCompletedReviews, metaReview);
@@ -293,7 +293,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
         var forumUrl = 'https://openreview.net/forum?' + $.param({
           id: row[2].forum,
           noteId: row[2].id,
-          invitationId: CONFERENCE_ID + '/-/Paper' + row[2].number + '/Official_Review'
+          invitationId: CONFERENCE_ID + '/Paper' + row[2].number + '/-/Official_Review'
         });
         reviewerMessages.push({
           groups: _.map(users, 'id'),
@@ -523,7 +523,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: note.forum,
         noteId: note.id,
-        invitationId: CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review'
+        invitationId: CONFERENCE_ID + '/Paper' + note.number + '/-/Official_Review'
       });
       var lastReminderSent = localStorage.getItem(forumUrl + '|' + reviewer.id);
       combinedObj[reviewerNum] = {
@@ -572,7 +572,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: CONFERENCE_ID + '/-/Paper' + note.number + '/Meta_Review'
+    invitationId: CONFERENCE_ID + '/Paper' + note.number + '/-/Meta_Review'
   };
   var cell5 = {
     invitationUrl: '/forum?' + $.param(invitationUrlParams)
