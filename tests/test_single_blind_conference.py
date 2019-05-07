@@ -461,13 +461,14 @@ class TestSingleBlindConference():
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
 
-    def test_consoles(self, client, test_client, selenium, request_page):
+    def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         # Author user
@@ -563,6 +564,33 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('reviewer-tasks')
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
+        # Area chair user
+        ac_client = helpers.create_user('ac@mail.com', 'AC', 'MLITS')
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS", ac_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Area Chairs Console' == console.find_element_by_tag_name('a').text
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Area_Chairs", ac_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('assigned-papers')
+        assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
+        assert tabs.find_element_by_id('areachair-schedule')
+        assert len(tabs.find_element_by_id('areachair-schedule').find_elements_by_tag_name('h4')) == 1
+        assert tabs.find_element_by_id('areachair-tasks')
+        assert len(tabs.find_element_by_id('areachair-tasks').find_elements_by_class_name('note')) == 0
+        reviews = tabs.find_elements_by_class_name('reviewer-progress')
+        assert reviews
+        assert len(reviews) == 1
+        headers = reviews[0].find_elements_by_tag_name('h4')
+        assert headers
+        assert headers[0].text == '2 of 2 Reviews Submitted'
 
         #Program chair user
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')

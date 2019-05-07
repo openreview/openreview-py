@@ -37,6 +37,8 @@ class Conference(object):
         self.bid_name = 'Bid'
         self.recommendation_name = 'Recommendation'
         self.registration_name = 'Registration'
+        self.review_name = 'Official_Review'
+        self.meta_review_name = 'Meta_Review'
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
@@ -448,7 +450,6 @@ class Conference(object):
     def open_revise_reviews(self, name = 'Revision', review_name = 'Official_Review', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
 
         invitation = self.get_invitation_id(review_name, '.*')
-        print('INVITATION', invitation)
         review_iterator = tools.iterget_notes(self.client, invitation = invitation)
         return self.invitation_builder.set_revise_review_invitation(self, review_iterator, name, start_date, due_date, additional_fields, remove_fields)
 
@@ -520,7 +521,7 @@ class Conference(object):
                     self.get_program_chairs_id(),
                     self.get_area_chairs_id(number = number)
                 ]
-            })
+            }, use_profile = True)
 
     def set_assignments(self, assingment_title):
         conference_matching = matching.Matching(self)
