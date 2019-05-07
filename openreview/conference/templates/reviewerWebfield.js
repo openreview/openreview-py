@@ -6,6 +6,7 @@ var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var REVIEWER_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
+var LEGACY_INVITATION_ID = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
@@ -29,6 +30,9 @@ var getPaperNumbersfromGroups = function(groups) {
 };
 
 var getInvitationId = function(name, number) {
+  if (LEGACY_INVITATION_ID) {
+    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
+  }
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
 }
 
@@ -165,7 +169,7 @@ var getOfficialReviews = function(noteNumbers) {
     return $.Deferred().resolve({});
   }
 
-  return $.getJSON('notes', { invitation: OFFICIAL_REVIEW_INVITATION, tauthor: true, noDetails: true })
+  return $.getJSON('notes', { invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true, noDetails: true })
     .then(function(result) {
       return result.notes;
     }).fail(function(error) {

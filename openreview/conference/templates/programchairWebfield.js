@@ -5,6 +5,7 @@ var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var SHOW_AC_TAB = false;
+var LEGACY_INVITATION_ID = false;
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
 var DECISION_NAME = '';
@@ -32,6 +33,9 @@ var getPaperNumbersfromGroups = function(groups) {
 };
 
 var getInvitationId = function(name, number) {
+  if (LEGACY_INVITATION_ID) {
+    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
+  }
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
 }
 

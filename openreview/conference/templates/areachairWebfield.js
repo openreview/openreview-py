@@ -7,6 +7,7 @@ var HEADER = {};
 var AREA_CHAIR_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
+var LEGACY_INVITATION_ID = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
@@ -57,6 +58,9 @@ var buildNoteMap = function(noteNumbers) {
 };
 
 var getInvitationId = function(name, number) {
+  if (LEGACY_INVITATION_ID) {
+    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
+  }
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
 }
 

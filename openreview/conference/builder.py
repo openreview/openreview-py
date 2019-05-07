@@ -17,6 +17,7 @@ class Conference(object):
         self.double_blind = False
         self.submission_public = False
         self.use_area_chairs = False
+        self.legacy_invitation_id = False
         self.original_readers = []
         self.subject_areas = []
         self.groups = []
@@ -197,9 +198,14 @@ class Conference(object):
     def get_invitation_id(self, name, number = None):
         invitation_id = self.id
         if number:
-            invitation_id = invitation_id + '/Paper' + str(number)
+            if self.legacy_invitation_id:
+                invitation_id = invitation_id + '/-/Paper' + str(number) + '/'
+            else:
+                invitation_id = invitation_id + '/Paper' + str(number) + '/-/'
+        else:
+            invitation_id = invitation_id + '/-/'
 
-        invitation_id = invitation_id + '/-/' + name
+        invitation_id =  invitation_id + name
         return invitation_id
 
     def set_conference_groups(self, groups):
@@ -707,6 +713,18 @@ class ConferenceBuilder(object):
 
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
+
+    def set_review_name(self, review_name):
+        self.conference.review_name = review_name
+
+    def set_meta_review_name(self, meta_review_name):
+        self.conference.meta_review_name = meta_review_name
+
+    def set_decision_name(self, decision_name):
+        self.conference.decision_name = decision_name
+
+    def use_legacy_invitation_id(self, legacy_invitation_id):
+        self.conference.legacy_invitation_id = legacy_invitation_id
 
     def get_result(self):
 
