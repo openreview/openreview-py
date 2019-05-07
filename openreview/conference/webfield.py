@@ -216,6 +216,7 @@ class WebfieldBuilder(object):
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var REVIEWER_NAME = {};", "var REVIEWER_NAME = " + conference.reviewers_name + ";")
+            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_name + "';")
             group.web = content
             return self.client.post_group(group)
 

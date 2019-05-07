@@ -788,7 +788,7 @@ class InvitationBuilder(object):
                 duedate = tools.datetime_millis(due_date),
                 expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
                 super = recommendation_invitation.id,
-                invitees = [conference.get_program_chairs_id(), conference.get_id() + '/Paper{number}/Area_Chairs'.format(number = note.number)],
+                invitees = [conference.get_program_chairs_id(), conference.get_area_chairs_id(note.number)],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
                 multiReply = True,
