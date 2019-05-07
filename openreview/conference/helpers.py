@@ -64,6 +64,8 @@ def get_conference(client, request_form_id):
 
     builder.set_override_homepage(True)
     conference = builder.get_result()
-    conference.open_submissions(start_date = submission_start_date, due_date = submission_due_date)
+
+    submission_additional_options = note.content.get('Additional Submission Options', {})
+    conference.open_submissions(start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference
