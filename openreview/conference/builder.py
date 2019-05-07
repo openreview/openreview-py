@@ -39,6 +39,7 @@ class Conference(object):
         self.registration_name = 'Registration'
         self.review_name = 'Official_Review'
         self.meta_review_name = 'Meta_Review'
+        self.decision_name = 'Decision'
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):

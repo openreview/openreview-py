@@ -231,7 +231,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
       revIds[revNumber] = _.get(profiles, uId, { id: uId, name: '', email: uId });
     }
 
-    var metaReview = _.find(metaReviews, ['invitation', getInvitationId('Meta_Review', note.number)]);
+    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
 
     return buildTableRow(note, revIds, noteCompletedReviews, metaReview);
@@ -296,7 +296,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
         var forumUrl = 'https://openreview.net/forum?' + $.param({
           id: row[2].forum,
           noteId: row[2].id,
-          invitationId: getInvitationId('Official_Review', row[2].number)
+          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row[2].number)
         });
         reviewerMessages.push({
           groups: _.map(users, 'id'),
@@ -526,7 +526,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: note.forum,
         noteId: note.id,
-        invitationId: getInvitationId('Official_Review', note.number)
+        invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
       });
       var lastReminderSent = localStorage.getItem(forumUrl + '|' + reviewer.id);
       combinedObj[reviewerNum] = {
