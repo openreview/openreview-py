@@ -952,7 +952,7 @@ class TestDoubleBlindConference():
 
         conference.set_assignment('meta_additional@mail.com', submission.number, is_area_chair = True)
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Meta_Review',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
