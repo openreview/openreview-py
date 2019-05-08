@@ -274,7 +274,7 @@ class TestWorkshop():
 
         conference.set_assignment('reviewer4@mail.com', submission.number)
         now = datetime.datetime.utcnow()
-        conference.open_reviews('Official_Review', due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
+        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
         reply_row = selenium.find_element_by_class_name('reply_row')
@@ -503,7 +503,7 @@ class TestWorkshop():
         builder.set_submission_public(False)
         builder.has_area_chairs(False)
         conference = builder.get_result()
-        conference.open_meta_reviews('Meta_Review')
+        conference.open_meta_reviews()
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[0]

@@ -753,7 +753,7 @@ class TestDoubleBlindConference():
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)
         now = datetime.datetime.utcnow()
-        conference.open_reviews('Official_Review', due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
+        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -908,7 +908,7 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
 
-        conference.open_meta_reviews('Meta_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        conference.open_meta_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]

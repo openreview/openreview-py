@@ -361,7 +361,7 @@ class TestSingleBlindConference():
         conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
         conference.set_assignment('reviewer3@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        conference.open_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
