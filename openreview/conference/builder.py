@@ -418,7 +418,7 @@ class Conference(object):
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
+    def open_reviews(self, start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         """
         Create review invitations for all the available submissions.
 
@@ -432,31 +432,31 @@ class Conference(object):
         :arg additional_fields: field to add/overwrite to the review invitation
         """
         notes = list(self.get_submissions())
-        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
+        invitations = self.invitation_builder.set_review_invitation(self, notes, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
         ## Create submitted groups if they don't exist
         for n in notes:
             self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
         return invitations
 
-    def close_reviews(self, name = 'Official_Review'):
-        return self.__expire_invitations(name)
+    def close_reviews(self):
+        return self.__expire_invitations(self.review_name)
 
-    def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
+    def open_meta_reviews(self, start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, start_date, due_date, public)
+        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, start_date, due_date, public)
 
-    def open_decisions(self, name = 'Decision', options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+    def open_decisions(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_decision_invitation(self, notes_iterator, name, options, start_date, due_date, public, release_to_authors, release_to_reviewers)
+        return self.invitation_builder.set_decision_invitation(self, notes_iterator, options, start_date, due_date, public, release_to_authors, release_to_reviewers)
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         invitation = self.client.get_invitation(self.get_submission_id())
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
-    def open_revise_reviews(self, name = 'Revision', review_name = 'Official_Review', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+    def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
 
-        invitation = self.get_invitation_id(review_name, '.*')
+        invitation = self.get_invitation_id(self.review_name, '.*')
         review_iterator = tools.iterget_notes(self.client, invitation = invitation)
         return self.invitation_builder.set_revise_review_invitation(self, review_iterator, name, start_date, due_date, additional_fields, remove_fields)
 

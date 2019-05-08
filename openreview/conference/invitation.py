@@ -327,7 +327,7 @@ class OfficialCommentInvitation(openreview.Invitation):
 
 class ReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
+    def __init__(self, conference, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
         content = invitations.review.copy()
 
         for key in additional_fields:
@@ -370,7 +370,7 @@ class ReviewInvitation(openreview.Invitation):
             if email_pcs:
                 file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
 
-            super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(name, note.number),
+            super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(conference.review_name, note.number),
                 cdate = tools.datetime_millis(start_date),
                 duedate = tools.datetime_millis(due_date),
                 expdate = tools.datetime_millis(due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if due_date else None,
@@ -431,7 +431,7 @@ class ReviewRevisionInvitation(openreview.Invitation):
 
 class MetaReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, due_date, public):
+    def __init__(self, conference, note, start_date, due_date, public):
         content = invitations.meta_review.copy()
 
         readers = ['everyone']
@@ -447,7 +447,7 @@ class MetaReviewInvitation(openreview.Invitation):
         if not public:
             readers = private_readers
 
-        super(MetaReviewInvitation, self).__init__(id = conference.get_invitation_id(name, note.number),
+        super(MetaReviewInvitation, self).__init__(id = conference.get_invitation_id(conference.meta_review_name, note.number),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
             expdate = tools.datetime_millis(due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if due_date else None,
@@ -476,7 +476,7 @@ class MetaReviewInvitation(openreview.Invitation):
 
 class DecisionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
+    def __init__(self, conference, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
         content = {
             'title': {
                 'order': 1,
@@ -515,7 +515,7 @@ class DecisionInvitation(openreview.Invitation):
             readers.append(conference.get_authors_id(number = note.number))
             nonreaders = []
 
-        super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(name, note.number),
+        super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(conference.decision_name, note.number),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
             expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = LONG_BUFFER_DAYS)) if due_date else None,
@@ -619,24 +619,24 @@ class InvitationBuilder(object):
         for note in notes:
             self.client.post_invitation(OfficialCommentInvitation(conference, name, note, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs))
 
-    def set_review_invitation(self, conference, notes, name, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
+    def set_review_invitation(self, conference, notes, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
 
         invitations = []
         for note in notes:
-            invitations.append(self.client.post_invitation(ReviewInvitation(conference, name, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)))
+            invitations.append(self.client.post_invitation(ReviewInvitation(conference, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)))
 
         return invitations
 
 
-    def set_meta_review_invitation(self, conference, notes, name, start_date, due_date, public):
+    def set_meta_review_invitation(self, conference, notes, start_date, due_date, public):
 
         for note in notes:
-            self.client.post_invitation(MetaReviewInvitation(conference, name, note, start_date, due_date, public))
+            self.client.post_invitation(MetaReviewInvitation(conference, note, start_date, due_date, public))
 
-    def set_decision_invitation(self, conference, notes, name, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
+    def set_decision_invitation(self, conference, notes, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
 
         for note in notes:
-            self.client.post_invitation(DecisionInvitation(conference, name, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers))
+            self.client.post_invitation(DecisionInvitation(conference, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers))
 
     def set_revise_submission_invitation(self, conference, notes, name, start_date, due_date, submission_content, additional_fields, remove_fields):
 
