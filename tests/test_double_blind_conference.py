@@ -657,8 +657,9 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
         conference = builder.get_result()
+        conference.set_authors()
 
-        conference.open_comments('Public_Comment', public = True, anonymous = True)
+        conference.open_comments('Official_Comment', public = False, anonymous = True)
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
@@ -666,7 +667,7 @@ class TestDoubleBlindConference():
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Public Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+        assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
@@ -677,7 +678,7 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         conference = builder.get_result()
 
-        conference.close_comments('Public_Comment')
+        conference.close_comments('Official_Comment')
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         submission = notes[0]
@@ -718,8 +719,8 @@ class TestDoubleBlindConference():
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
-
-        invitation = conference.open_bids(due_date = datetime.datetime(2019, 10, 5, 18, 00), request_count = 50, with_area_chairs = False)
+        now = datetime.datetime.utcnow()
+        invitation = conference.open_bids(due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, with_area_chairs = False)
         assert invitation
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/-/Bid", reviewer_client.token)
@@ -747,7 +748,8 @@ class TestDoubleBlindConference():
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), release_to_authors = True, release_to_reviewers = True)
+        now = datetime.datetime.utcnow()
+        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -762,7 +764,7 @@ class TestDoubleBlindConference():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Program_Chairs',
@@ -803,10 +805,10 @@ class TestDoubleBlindConference():
         assert 'reviewer2@mail.com' in recipients
 
         ## Check review visibility
-        notes = reviewer_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper1/Official_Review')
+        notes = reviewer_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Official_Review')
         assert len(notes) == 1
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper1/Official_Review')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Official_Review')
         assert len(notes) == 1
 
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
@@ -828,15 +830,14 @@ class TestDoubleBlindConference():
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
 
-        reviews = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Paper.*/Official_Review')
+        reviews = test_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
         assert reviews
         review = reviews[0]
 
         now = datetime.datetime.utcnow()
-        conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
-        conference.close_reviews()
+        conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 100))
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Official_Review/AnonReviewer1/Revision',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Official_Review/AnonReviewer1/Revision',
             forum = submission.id,
             referent = review.id,
             readers = ['AKBC.ws/2019/Conference/Program_Chairs',
@@ -903,12 +904,12 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
 
-        conference.open_meta_reviews('Meta_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        conference.open_meta_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Meta_Review',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
@@ -938,7 +939,7 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
 
-        conference.open_meta_reviews('Meta_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        conference.open_meta_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
@@ -987,7 +988,7 @@ class TestDoubleBlindConference():
         notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Decision',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Program_Chairs'],
@@ -1006,7 +1007,7 @@ class TestDoubleBlindConference():
 
         conference.open_decisions(public=True)
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Decision',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
             readers = ['everyone'],
@@ -1024,7 +1025,7 @@ class TestDoubleBlindConference():
 
         conference.open_decisions(release_to_authors=True)
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/-/Paper1/Decision',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Program_Chairs',
