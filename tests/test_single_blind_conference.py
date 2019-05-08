@@ -292,8 +292,9 @@ class TestSingleBlindConference():
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         conference = builder.get_result()
+        conference.set_authors()
 
-        conference.open_comments('Public_Comment', public = True, anonymous = True)
+        conference.open_comments('Official_Comment', public = False, anonymous = True)
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -301,7 +302,7 @@ class TestSingleBlindConference():
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Public Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+        assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
@@ -311,7 +312,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         conference = builder.get_result()
 
-        conference.close_comments('Public_Comment')
+        conference.close_comments('Official_Comment')
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -354,13 +355,13 @@ class TestSingleBlindConference():
         conference = builder.get_result()
         conference.set_authors()
         conference.set_program_chairs(emails = ['pc2@mail.com'])
-        conference.set_area_chairs(emails = ['ac@mail.com'])
+        conference.set_area_chairs(emails = ['ac2@mail.com'])
         conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
 
-        conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
+        conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
         conference.set_assignment('reviewer3@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        conference.open_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -387,7 +388,7 @@ class TestSingleBlindConference():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
@@ -414,7 +415,7 @@ class TestSingleBlindConference():
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
-        assert 'ac@mail.com' in recipients
+        assert 'ac2@mail.com' in recipients
 
         messages = client.get_messages(subject = '[MLITS 2018] Your review has been received on your assigned paper: "New paper title"')
         assert len(messages) == 1
@@ -422,17 +423,17 @@ class TestSingleBlindConference():
         assert 'reviewer@mail.com' in recipients
 
         ## Check review visibility
-        notes = reviewer_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = reviewer_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 1
 
-        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
         reviewer2_client = helpers.create_user('reviewer3@mail.com', 'Reviewer', 'Three')
-        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
-        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
@@ -449,24 +450,25 @@ class TestSingleBlindConference():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
-        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 2
 
-        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Paper1/Official_Review')
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
         assert len(messages) == 2
         recipients = [m['content']['to'] for m in messages]
-        assert 'ac@mail.com' in recipients
+        assert 'ac2@mail.com' in recipients
 
-    def test_consoles(self, client, test_client, selenium, request_page):
+    def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         # Author user
@@ -562,27 +564,36 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('reviewer-tasks')
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
+        # Area chair user
+        ac_client = helpers.create_user('ac2@mail.com', 'AC', 'MLITS')
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS", ac_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Area Chairs Console' == console.find_element_by_tag_name('a').text
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Area_Chairs", ac_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('assigned-papers')
+        assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
+        assert tabs.find_element_by_id('areachair-schedule')
+        assert len(tabs.find_element_by_id('areachair-schedule').find_elements_by_tag_name('h4')) == 1
+        assert tabs.find_element_by_id('areachair-tasks')
+        assert len(tabs.find_element_by_id('areachair-tasks').find_elements_by_class_name('note')) == 0
+        reviews = tabs.find_elements_by_class_name('reviewer-progress')
+        assert reviews
+        assert len(reviews) == 1
+        headers = reviews[0].find_elements_by_tag_name('h4')
+        assert headers
+        assert headers[0].text == '2 of 2 Reviews Submitted'
 
         #Program chair user
-        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
-        assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'pc2@mail.com', first = 'ProgramChair', last = 'Test', password = '1234')
-        assert res, "Res i none"
-        res = pc_client.activate_user('pc2@mail.com', {
-            'names': [
-                    {
-                        'first': 'ProgramChair',
-                        'last': 'Test',
-                        'username': '~ProgramChair_Test1'
-                    }
-                ],
-            'emails': ['pc2@mail.com'],
-            'preferredEmail': 'pc2@mail.com'
-            })
-        assert res, "Res i none"
-        group = pc_client.get_group(id = 'pc2@mail.com')
-        assert group
-        assert group.members == ['~ProgramChair_Test1']
+        pc_client = helpers.create_user('pc2@mail.com', 'ProgramChair', 'Test')
 
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS", pc_client.token)
         notes_panel = selenium.find_element_by_id('notes')
@@ -594,5 +605,11 @@ class TestSingleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
 
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Program_Chairs", pc_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('areachair-status')
+        assert tabs.find_element_by_id('reviewer-status')
 
 
