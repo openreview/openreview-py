@@ -55,7 +55,7 @@ function load() {
     });
 
     invitationsP = Webfield.get('/invitations', {
-      regex: CONFERENCE_ID + '/-/.*',
+      regex: CONFERENCE_ID + '.*',
       invitee: true,
       duedate: true,
       replyto: true,
@@ -65,7 +65,7 @@ function load() {
     });
 
     tagInvitationsP = Webfield.get('/invitations', {
-      regex: CONFERENCE_ID + '/-/.*',
+      regex: CONFERENCE_ID + '.*',
       invitee: true,
       duedate: true,
       tags: true,

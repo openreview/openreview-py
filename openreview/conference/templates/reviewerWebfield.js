@@ -5,9 +5,10 @@ var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var REVIEWER_NAME = '';
+var OFFICIAL_REVIEW_NAME = '';
+var LEGACY_INVITATION_ID = false;
 
-var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 
 // Ajax functions
@@ -28,6 +29,13 @@ var getPaperNumbersfromGroups = function(groups) {
   }), _.isInteger);
 };
 
+var getInvitationId = function(name, number) {
+  if (LEGACY_INVITATION_ID) {
+    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
+  }
+  return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
+}
+
 var getBlindedNotes = function(noteNumbers) {
   if (!noteNumbers.length) {
     return $.Deferred().resolve([]);
@@ -42,7 +50,7 @@ var getBlindedNotes = function(noteNumbers) {
 };
 
 var getAllRatings = function(callback) {
-  var invitationId = CONFERENCE_ID + '/-/Paper.*/Review_Rating';
+  var invitationId = getInvitationId('Review_Rating', '.*');
   var allNotes = [];
 
   function getPromise(offset, limit) {
@@ -161,7 +169,7 @@ var getOfficialReviews = function(noteNumbers) {
     return $.Deferred().resolve({});
   }
 
-  return $.getJSON('notes', { invitation: OFFICIAL_REVIEW_INVITATION, tauthor: true, noDetails: true })
+  return $.getJSON('notes', { invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true, noDetails: true })
     .then(function(result) {
       return result.notes;
     }).fail(function(error) {
@@ -222,7 +230,7 @@ var displayStatusTable = function(profiles, notes, completedRatings, officialRev
         revIds[revNumber] = profile;
       }
 
-      var officialReview = _.find(officialReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review']);
+      var officialReview = _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]);
       return buildTableRow(
         note, revIds, completedRatings[note.number], officialReview
       );
@@ -280,7 +288,7 @@ var buildTableRow = function(note, reviewerIds, completedRatings, officialReview
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review'
+    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
   };
   var reviewStatus = {
     invitationUrl: '/forum?' + $.param(invitationUrlParams),
