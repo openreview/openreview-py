@@ -630,7 +630,6 @@ class InvitationBuilder(object):
 
         return invitations
 
-
     def set_meta_review_invitation(self, conference, notes, start_date, due_date, public, additional_fields):
 
         for note in notes:
