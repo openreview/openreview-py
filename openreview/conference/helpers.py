@@ -67,7 +67,7 @@ def get_conference(client, request_form_id):
     conference = builder.get_result()
 
     submission_additional_options = note.content.get('Additional Submission Options', {})
-    if submission_additional_options and isinstance(submission_additional_options, str):
+    if submission_additional_options:
             submission_additional_options = json.loads(submission_additional_options)
 
     conference.open_submissions(start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
