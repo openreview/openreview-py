@@ -28,9 +28,6 @@ class SubmissionInvitation(openreview.Invitation):
         for field in remove_fields:
             del content[field]
 
-        if isinstance(additional_fields, str):
-            additional_fields = json.loads(additional_fields)
-
         for order, key in enumerate(additional_fields, start=10):
             value = additional_fields[key]
             value['order'] = order
