@@ -19,7 +19,7 @@ jobs:
           name: install and run app
           command: |
             cd ~/openreview
-            npm install
+            npm install --production
             sudo npm install -g grunt-cli
             grunt regen
             mkdir pdfs
