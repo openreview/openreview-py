@@ -16,13 +16,17 @@ jobs:
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
-          name: install and run app
+          name: install app
           command: |
             cd ~/openreview
             npm install
             sudo npm install -g grunt-cli
             grunt regen
             mkdir pdfs
+      - run:
+          name: run app
+          command: |
+            cd ~/openreview
             NODE_ENV=circleci node scripts/clean_start_app.js
           background: true
       - run:
@@ -69,13 +73,17 @@ jobs:
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
-          name: install and run app
+          name: install app
           command: |
             cd ~/openreview
             npm install
             sudo npm install -g grunt-cli
             grunt regen
             mkdir pdfs
+      - run:
+          name: run app
+          command: |
+            cd ~/openreview
             NODE_ENV=circleci node scripts/clean_start_app.js
           background: true
       - run:
