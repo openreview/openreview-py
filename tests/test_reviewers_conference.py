@@ -129,7 +129,7 @@ class TestReviewersConference():
         assert headers
         assert headers[0].text == '0 of 2 Reviews Submitted'
 
-        note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2019/Workshop/KGB/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/-/Official_Review',
             forum = note.id,
             replyto = note.id,
             readers = ['eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs', 'eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/Reviewers/Submitted'],
