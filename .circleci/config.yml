@@ -19,7 +19,7 @@ jobs:
           name: install and run app
           command: |
             cd ~/openreview
-            npm install --production
+            npm install
             sudo npm install -g grunt-cli
             grunt regen
             mkdir pdfs
@@ -72,7 +72,7 @@ jobs:
           name: install and run app
           command: |
             cd ~/openreview
-            npm install --production
+            npm install
             sudo npm install -g grunt-cli
             grunt regen
             mkdir pdfs
