@@ -4,7 +4,6 @@ import os
 import json
 import datetime
 import openreview
-import json
 from .. import invitations
 from .. import tools
 
