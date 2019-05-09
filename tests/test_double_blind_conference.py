@@ -965,7 +965,7 @@ class TestDoubleBlindConference():
                 'confidence': '4: The area chair is confident but not absolutely certain'
             }
         )
-        with pytest.raises(openreview.OpenReviewException, match=r'\'type\': \'missing\', \'path\': \'content.best paper\''):
+        with pytest.raises(openreview.OpenReviewException, match=r'\'path\': \'content\.best paper\''):
             meta_review_note = ac_client.post_note(note)
         note.content['best paper'] = 'Yes'
         meta_review_note = ac_client.post_note(note)
