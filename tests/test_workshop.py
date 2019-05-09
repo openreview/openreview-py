@@ -269,13 +269,14 @@ class TestWorkshop():
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[0]
 
-        conference.set_assignment('reviewer4@mail.com', submission.number)
-        conference.open_reviews('Official_Review', due_date = datetime.datetime(2019, 10, 5, 18, 00), release_to_authors= True, release_to_reviewers=True)
-
         # Reviewer
         reviewer_client = helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
-        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
 
+        conference.set_assignment('reviewer4@mail.com', submission.number)
+        now = datetime.datetime.utcnow()
+        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
+
+        request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
@@ -286,7 +287,7 @@ class TestWorkshop():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Review',
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
@@ -315,10 +316,10 @@ class TestWorkshop():
         assert len(messages) == 0
 
         ## Check review visibility
-        notes = reviewer_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Review')
+        notes = reviewer_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert len(notes) == 1
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Review')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert len(notes) == 1
 
     def test_open_comments(self, client, test_client, selenium, request_page, helpers):
@@ -346,13 +347,13 @@ class TestWorkshop():
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[0]
 
-        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Review')
+        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert reviews
         review = reviews[0]
 
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, email_pcs = True)
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Comment',
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Comment',
             forum = submission.id,
             replyto = review.id,
             readers = [
@@ -394,7 +395,7 @@ class TestWorkshop():
 
         conference.open_comments(name = 'Public_Comment', public = True, anonymous = False)
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Public_Comment',
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Public_Comment',
             forum = submission.id,
             replyto = review.id,
             readers = ['everyone'],
@@ -439,15 +440,14 @@ class TestWorkshop():
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[0]
 
-        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Review')
+        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert reviews
         review = reviews[0]
 
         now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
-        conference.close_reviews()
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Official_Review/AnonReviewer1/Revision',
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review/AnonReviewer1/Revision',
             forum = submission.id,
             referent = review.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
@@ -503,12 +503,12 @@ class TestWorkshop():
         builder.set_submission_public(False)
         builder.has_area_chairs(False)
         conference = builder.get_result()
-        conference.open_meta_reviews('Meta_Review')
+        conference.open_meta_reviews()
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[0]
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Meta_Review',
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Meta_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
@@ -553,7 +553,7 @@ class TestWorkshop():
         notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[0]
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Paper1/Decision',
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
@@ -568,3 +568,44 @@ class TestWorkshop():
         )
         decision_note = pc_client.post_note(note)
         assert decision_note
+
+    def test_release_decisions(self, client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
+        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
+        builder.set_conference_short_name('ICAPS HSDIP 2019')
+        builder.set_homepage_header({
+        'title': 'Heuristics and Search for Domain-independent Planning',
+        'subtitle': 'ICAPS 2019 Workshop',
+        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
+        'date': 'July 11-15, 2019',
+        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
+        'location': 'Berkeley, CA, USA'
+        })
+        builder.set_double_blind(True)
+        builder.set_submission_public(False)
+        builder.has_area_chairs(False)
+        conference = builder.get_result()
+
+        conference.set_homepage_decisions(decision_heading_map = {
+            'Accept (Oral)': 'Oral Presentations',
+            'Accept (Poster)': 'Post Presentations',
+            'Reject': 'All Presentations'
+        })
+
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
+        assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert "Heuristics and Search for Domain-independent Planning" == header.find_element_by_tag_name("h1").text
+        assert "ICAPS 2019 Workshop" == header.find_element_by_tag_name("h3").text
+        assert "Berkeley, CA, USA" == header.find_element_by_xpath(".//span[@class='venue-location']").text
+        assert "July 11-15, 2019" == header.find_element_by_xpath(".//span[@class='venue-date']").text
+        assert "https://icaps19.icaps-conference.org/workshops/HSDIP/index" in header.find_element_by_xpath(".//span[@class='venue-website']/a").text
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs

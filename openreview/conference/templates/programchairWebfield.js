@@ -5,11 +5,12 @@ var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var SHOW_AC_TAB = false;
+var LEGACY_INVITATION_ID = false;
+var OFFICIAL_REVIEW_NAME = '';
+var OFFICIAL_META_REVIEW_NAME = '';
+var DECISION_NAME = '';
 
-var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
-var OFFICIAL_META_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Meta_Review';
-var OFFICIAL_DECISION_INVITATION = CONFERENCE_ID + '/-/Paper.*/Decision';
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 
@@ -31,6 +32,13 @@ var getPaperNumbersfromGroups = function(groups) {
   }), _.isInteger);
 };
 
+var getInvitationId = function(name, number) {
+  if (LEGACY_INVITATION_ID) {
+    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
+  }
+  return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
+}
+
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID, noDetails: true
@@ -45,7 +53,7 @@ var getOfficialReviews = function(noteNumbers) {
   var noteMap = buildNoteMap(noteNumbers);
 
   return Webfield.getAll('/notes', {
-    invitation: OFFICIAL_REVIEW_INVITATION, noDetails: true
+    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), noDetails: true
   })
   .then(function(notes) {
     var ratingExp = /^(\d+): .*/;
@@ -200,13 +208,13 @@ var findProfile = function(profiles, id) {
 
 var getMetaReviews = function() {
   return Webfield.getAll('/notes', {
-    invitation: OFFICIAL_META_REVIEW_INVITATION, noDetails: true
+    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*'), noDetails: true
   });
 };
 
 var getDecisionReviews = function() {
   return Webfield.getAll('/notes', {
-    invitation: OFFICIAL_DECISION_INVITATION, noDetails: true
+    invitation: getInvitationId(DECISION_NAME, '.*'), noDetails: true
   });
 };
 
@@ -285,11 +293,11 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
     if (areachairId) {
       areachairProfile = findProfile(profiles, areachairId);
     } else {
-      areachairProfile.name = view.prettyId(CONFERENCE_ID + '/-/Paper' + note.number + '/Area_Chair');
+      areachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
       areachairProfile.email = '-';
     }
-    var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + note.number + '/Meta_Review']);
-    var decision = _.find(decisions, ['invitation', CONFERENCE_ID + '/-/Paper' + note.number + '/Decision']);
+    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
   });
 
@@ -373,7 +381,7 @@ var displaySPCStatusTable = function(profiles, notes, completedReviews, metaRevi
       if (note) {
         var reviewers = reviewerIds[number];
         var reviews = completedReviews[number];
-        var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + number + '/Meta_Review']);
+        var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
 
         papers.push({
           note: note,
@@ -473,7 +481,7 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
 
         var reviews = completedReviews[number];
         var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
-        var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + number + '/Meta_Review']);
+        var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
 
         papers.push({
           note: note,
@@ -570,7 +578,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         forumUrl: '/forum?' + $.param({
           id: note.forum,
           noteId: note.id,
-          invitationId: CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review'
+          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
         })
       });
     }
