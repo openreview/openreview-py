@@ -407,7 +407,7 @@ class iterget:
         self.params = params
         self.params.update({
             'offset': self.offset,
-            'limit': 1000
+            'limit': params.get('limit') or 1000
         })
 
         self.get_function = get_function
@@ -465,7 +465,8 @@ def iterget_edges (client,
                    invitation = None,
                    head = None,
                    tail = None,
-                   label = None):
+                   label = None,
+                   limit = None):
     params = {}
     if invitation != None:
         params['invitation'] = invitation
@@ -475,6 +476,8 @@ def iterget_edges (client,
         params['tail'] = tail
     if label != None:
         params['label'] = label
+    if limit != None:
+        params['limit'] = limit
     return iterget(client.get_edges, **params)
 
 
