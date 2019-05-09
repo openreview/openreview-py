@@ -2,13 +2,21 @@
 // Add Bid Interface
 // ------------------------------------
 
-var CONFERENCE_ID = '';
-var HEADER = {};
+// var CONFERENCE_ID = '';
+// var HEADER = {};
+// var SHORT_PHRASE = '';
+// var BLIND_SUBMISSION_ID = '';
+// var SUBMISSION_ID = '';
+// var BID_ID = '';
+// var SUBJECT_AREAS = '';
+
+var CONFERENCE_ID = 'AKBC.ws/2019/Conference';
+var HEADER = {"title": " Bidding Console", "instructions": "<p class=\"dark\">Please indicate your level of interest in reviewing                 the submitted papers below, on a scale from \"Very Low\" to \"Very High\".</p>                <p class=\"dark\"><strong>Please note:</strong></p>                <ul>                    <li>Please update your Conflict of Interest details on your profile page, specifically \"Emails\", \"Education and Career History\" & \"Advisors and Other Relations\" fields.</li>                    <li>The default bid on each paper is \"No Bid\".</li>                </ul>                <p class=\"dark\"><strong>A few tips:</strong></p>                <ul>                    <li>Please bid on as many papers as possible to ensure that your preferences are taken into account.</li>                    <li>For the best bidding experience, <strong>it is recommended that you filter papers by Subject Area</strong> and search for key phrases in paper metadata using the search form.</li>                </ul>                <p class=\"dark\"><strong>Bid Score Value Mapping:</strong></p>                <ul>                    <li>Very high (+1.0)</li>                    <li>High (+0.5)</li>                    <li>Neutral, No Bid (0.0)</li>                    <li>Low (-0.5) </li>                    <li>Very Low (-1.0)</li>                </ul><br>"};
 var SHORT_PHRASE = '';
-var BLIND_SUBMISSION_ID = '';
-var SUBMISSION_ID = '';
-var BID_ID = '';
-var SUBJECT_AREAS = '';
+var BLIND_SUBMISSION_ID = 'AKBC.ws/2019/Conference/-/Blind_Submission';
+var SUBMISSION_ID = 'AKBC.ws/2019/Conference/-/Submission';
+var BID_ID = 'AKBC.ws/2019/Conference/-/Bid';
+var SUBJECT_AREAS = [];
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -45,7 +53,7 @@ function load() {
 
     return edges.reduce(function(noteMap, edge) {
       // Only include the users bids in the map
-      if (edge.head === window.user.profile.id) {
+      if (edge.head === user.profile.id) {
         noteMap[edge.tail] = edge;
       }
       return noteMap;
@@ -65,7 +73,7 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   validNotes = _.filter(validNotes, function(note){
     return !_.includes(authoredNoteIds, note.original || note.id);
   })
-  validNotes = addEdgesToNotes(validNotes, edgesMap);
+  addEdgesToNotes(validNotes, edgesMap);
 
   var activeTab = 0;
   var sections;
@@ -323,6 +331,8 @@ function addEdgesToNotes(validNotes, edgesMap) {
     var noteId = validNotes[i].id;
     if (edgesMap.hasOwnProperty(noteId)) {
       validNotes[i].details.edges = [edgesMap[noteId]];
+    } else {
+      validNotes[i].details.edges = [];
     }
   }
 }
