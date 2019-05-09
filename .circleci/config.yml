@@ -23,12 +23,11 @@ jobs:
             sudo npm install -g grunt-cli
             grunt regen
             mkdir pdfs
-            NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
           command: |
             cd ~/openreview
-            NODE_ENV=circleci node app
+            NODE_ENV=circleci node scripts/clean_start_app.js
           background: true
       - run:
           shell: /bin/sh
@@ -81,12 +80,11 @@ jobs:
             sudo npm install -g grunt-cli
             grunt regen
             mkdir pdfs
-            NODE_ENV=circleci node scripts/setup.js
       - run:
           name: run app
           command: |
             cd ~/openreview
-            NODE_ENV=circleci node app
+            NODE_ENV=circleci node scripts/clean_start_app.js
           background: true
       - run:
           shell: /bin/sh

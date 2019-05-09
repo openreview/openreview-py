@@ -4,10 +4,13 @@ var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
+var SHOW_AC_TAB = false;
+var LEGACY_INVITATION_ID = false;
+var OFFICIAL_REVIEW_NAME = '';
+var OFFICIAL_META_REVIEW_NAME = '';
+var DECISION_NAME = '';
 
-var OFFICIAL_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Official_Review';
-var OFFICIAL_META_REVIEW_INVITATION = CONFERENCE_ID + '/-/Paper.*/Meta_Review';
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 
@@ -29,6 +32,13 @@ var getPaperNumbersfromGroups = function(groups) {
   }), _.isInteger);
 };
 
+var getInvitationId = function(name, number) {
+  if (LEGACY_INVITATION_ID) {
+    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
+  }
+  return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
+}
+
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID, noDetails: true
@@ -43,14 +53,19 @@ var getOfficialReviews = function(noteNumbers) {
   var noteMap = buildNoteMap(noteNumbers);
 
   return Webfield.getAll('/notes', {
-    invitation: OFFICIAL_REVIEW_INVITATION, noDetails: true
+    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), noDetails: true
   })
   .then(function(notes) {
     var ratingExp = /^(\d+): .*/;
 
     _.forEach(notes, function(n) {
-      var num = getNumberfromGroup(n.signatures[0], 'Paper');
-      var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
+      if (_.startsWith(n.signatures[0], '~')) {
+        var num = getNumberfromGroup(n.invitation, 'Paper');
+        var index = n.signatures[0];
+      } else {
+        var num = getNumberfromGroup(n.signatures[0], 'Paper');
+        var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
+      }
       if (num) {
         if (num in noteMap) {
           ratingMatch = n.content.rating.match(ratingExp);
@@ -138,12 +153,26 @@ var getAreaChairGroups = function(noteNumbers) {
 };
 
 var getUserProfiles = function(userIds) {
-  return $.post('/user/profiles', JSON.stringify({ids: userIds}))
-  .then(function(result) {
+  var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
+  var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
+
+  return $.when(
+    $.post('/profiles/search', JSON.stringify({ids: ids})),
+    $.post('/profiles/search', JSON.stringify({emails: emails}))
+  )
+  .then(function(result1, result2) {
 
     var profileMap = {};
 
-    _.forEach(result.profiles, function(profile) {
+    _.forEach(result1[0].profiles, function(profile) {
+
+      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+      profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profileMap[profile.id] = profile;
+    })
+
+    _.forEach(result2[0].profiles, function(profile) {
 
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
@@ -160,21 +189,32 @@ var getUserProfiles = function(userIds) {
 };
 
 var findProfile = function(profiles, id) {
-  var profile = profiles[id];
+  var profile = _.find(profiles, function(p) {
+    return _.find(p.content.names, function(n) { return n.username == id; }) || _.includes(p.content.emails, id);
+  });
   if (profile) {
     return profile;
   } else {
     return {
       id: id,
       name: '',
-      email: id
+      email: id,
+      content: {
+        names: [{ username: id }]
+      }
     }
   }
 }
 
 var getMetaReviews = function() {
   return Webfield.getAll('/notes', {
-    invitation: OFFICIAL_META_REVIEW_INVITATION, noDetails: true
+    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*'), noDetails: true
+  });
+};
+
+var getDecisionReviews = function() {
+  return Webfield.getAll('/notes', {
+    invitation: getInvitationId(DECISION_NAME, '.*'), noDetails: true
   });
 };
 
@@ -185,27 +225,33 @@ var displayHeader = function() {
   Webfield.ui.header(HEADER.title, HEADER.instructions);
 
   var loadingMessage = '<p class="empty-message">Loading...</p>';
-  Webfield.ui.tabPanel([
+  var tabs = [
     {
       heading: 'Paper Status',
       id: 'paper-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll',
       active: true
-    },
-    {
+    }
+  ];
+
+  if (SHOW_AC_TAB) {
+    tabs.push(    {
       heading: 'Area Chair Status',
       id: 'areachair-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll'
-    },
-    {
-      heading: 'Reviewer Status',
-      id: 'reviewer-status',
-      content: loadingMessage,
-      extraClasses: 'horizontal-scroll'
-    }
-  ]);
+    });
+  }
+
+  tabs.push(    {
+    heading: 'Reviewer Status',
+    id: 'reviewer-status',
+    content: loadingMessage,
+    extraClasses: 'horizontal-scroll'
+  });
+
+  Webfield.ui.tabPanel(tabs);
 };
 
 var displaySortPanel = function(container, sortOptions, sortResults) {
@@ -231,7 +277,7 @@ var displaySortPanel = function(container, sortOptions, sortResults) {
   });
 };
 
-var displayPaperStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, areachairIds, container, options) {
+var displayPaperStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, areachairIds, decisions, container, options) {
 
   var rowData = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number];
@@ -247,11 +293,12 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
     if (areachairId) {
       areachairProfile = findProfile(profiles, areachairId);
     } else {
-      areachairProfile.name = view.prettyId(CONFERENCE_ID + '/-/Paper' + note.number + '/Area_Chair');
+      areachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
       areachairProfile.email = '-';
     }
-    var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + note.number + '/Meta_Review']);
-    return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile);
+    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
+    return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
   });
 
   var toNumber = function(value) {
@@ -290,17 +337,23 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
-      return [number, summaryHtml, reviewHtml, areachairHtml];
+      var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
+      return [number, summaryHtml, reviewHtml, areachairHtml, decisionHtml];
     });
 
     var tableHTML = Handlebars.templates['components/table']({
-      headings: ['#', 'Paper Summary', 'Review Progress', 'Status'],
+      headings: ['#', 'Paper Summary', 'Review Progress', 'Status', 'Decision'],
       rows: rowData,
       extraClasses: 'console-table paper-table'
     });
 
     $(container).find('.table-container').remove();
     $(container).append(tableHTML);
+    $('.console-table th').eq(0).css('width', '4%');
+    $('.console-table th').eq(1).css('width', '26%');
+    $('.console-table th').eq(2).css('width', '30%');
+    $('.console-table th').eq(3).css('width', '25%');
+    $('.console-table th').eq(4).css('width', '15%');
   }
 
   if (rowData.length) {
@@ -328,7 +381,7 @@ var displaySPCStatusTable = function(profiles, notes, completedReviews, metaRevi
       if (note) {
         var reviewers = reviewerIds[number];
         var reviews = completedReviews[number];
-        var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + number + '/Meta_Review']);
+        var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
 
         papers.push({
           note: note,
@@ -396,9 +449,19 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
   var rowData = [];
   var index = 1;
   var sortedReviewerIds = _.sortBy(_.keys(reviewerById));
+  var findReview = function(reviews, profile) {
+    var found;
+    profile.content.names.forEach(function(name) {
+      if (reviews[name.username]) {
+        found = reviews[name.username];
+      }
+    })
+    return found;
+  }
 
   _.forEach(sortedReviewerIds, function(reviewer) {
     var numbers = reviewerById[reviewer];
+    var reviewerProfile = findProfile(profiles, reviewer);
 
     var papers = [];
     _.forEach(numbers, function(number) {
@@ -417,8 +480,8 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
         }
 
         var reviews = completedReviews[number];
-        var review = reviews[reviewerNum];
-        var metaReview = _.find(metaReviews, ['invitation', CONFERENCE_ID + '/-/Paper' + number + '/Meta_Review']);
+        var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
+        var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
 
         papers.push({
           note: note,
@@ -431,7 +494,6 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
 
     });
 
-    var reviewerProfile = findProfile(profiles, reviewer);
     rowData.push(buildPCTableRow(index, reviewerProfile, papers));
     index++;
   });
@@ -488,7 +550,7 @@ var displayError = function(message) {
 
 
 // Helper functions
-var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile) {
+var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
   // Build Note Summary Cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
 
@@ -498,9 +560,10 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var ratings = [];
   var confidences = [];
   for (var reviewerNum in reviewerIds) {
-    if (reviewerNum in completedReviews) {
-      reviewObj = completedReviews[reviewerNum];
-      combinedObj[reviewerNum] = _.assign({}, reviewerIds[reviewerNum], {
+    var reviewer = reviewerIds[reviewerNum]
+    if (reviewerNum in completedReviews || reviewer.id in completedReviews) {
+      reviewObj = completedReviews[reviewerNum] || completedReviews[reviewer.id];
+      combinedObj[reviewerNum] = _.assign({}, reviewer, {
         completedReview: true,
         forum: reviewObj.forum,
         note: reviewObj.id,
@@ -511,11 +574,11 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
       ratings.push(reviewObj.rating);
       confidences.push(reviewObj.confidence);
     } else {
-      combinedObj[reviewerNum] = _.assign({}, reviewerIds[reviewerNum], {
+      combinedObj[reviewerNum] = _.assign({}, reviewer, {
         forumUrl: '/forum?' + $.param({
           id: note.forum,
           noteId: note.id,
-          invitationId: CONFERENCE_ID + '/-/Paper' + note.number + '/Official_Review'
+          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
         })
       });
     }
@@ -560,7 +623,8 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   return {
     note: note,
     reviewProgressData: reviewProgressData,
-    areachairProgressData: areachairProgressData
+    areachairProgressData: areachairProgressData,
+    decision: decision
   }
 };
 
@@ -715,15 +779,23 @@ controller.addHandler('areachairs', {
     getBlindedNotes()
     .then(function(notes) {
       var noteNumbers = _.map(notes, function(note) { return note.number; });
+      var metaReviewsP = $.Deferred().resolve({ notes: []});
+      var areaChairGroupsP = $.Deferred().resolve({ byNotes: buildNoteMap(noteNumbers), byAreaChairs: {}});
+      if (SHOW_AC_TAB) {
+        metaReviewsP = getMetaReviews();
+        areaChairGroupsP = getAreaChairGroups(noteNumbers);
+      }
+      var decisionReviewsP = getDecisionReviews();
       return $.when(
         notes,
         getOfficialReviews(noteNumbers),
-        getMetaReviews(),
+        metaReviewsP,
         getReviewerGroups(noteNumbers),
-        getAreaChairGroups(noteNumbers)
+        areaChairGroupsP,
+        decisionReviewsP
       );
     })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups) {
+    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions) {
       var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
         return result.concat(_.values(idsObj));
       }, []));
@@ -736,8 +808,10 @@ controller.addHandler('areachairs', {
 
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
-        displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, '#paper-status');
-        displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
+        displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, decisions, '#paper-status');
+        if (SHOW_AC_TAB) {
+          displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
+        }
         displayPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, reviewerGroups.byReviewers, '#reviewer-status');
 
         Webfield.ui.done();

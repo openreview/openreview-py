@@ -859,6 +859,8 @@ def remove_assignment(client, paper_number, conference, reviewer,
 
     user_groups = [g.id for g in client.get_groups(member=user)]
     user_groups.append(user)
+    if ('@' in reviewer) and (reviewer not in user_groups):
+        user_groups.append(reviewer)
 
     affected_groups = set()
 
@@ -871,7 +873,7 @@ def remove_assignment(client, paper_number, conference, reviewer,
         for individual_group in assigned_individual_groups:
             affected_groups.add(individual_group.id)
             client.remove_members_from_group(individual_group, user_entity)
-    return (user,list(affected_groups))
+    return (user, list(affected_groups))
 
 
 def assign(client, paper_number, conference,
