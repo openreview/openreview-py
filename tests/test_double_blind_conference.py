@@ -943,7 +943,7 @@ class TestDoubleBlindConference():
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
-                'required' : False
+                'required' : True
             }
         })
 
@@ -962,10 +962,12 @@ class TestDoubleBlindConference():
                 'title': 'Meta review title',
                 'metareview': 'Excellent Paper!',
                 'recommendation': 'Accept (Oral)',
-                'confidence': '4: The area chair is confident but not absolutely certain',
-                'best paper': 'Yes'
+                'confidence': '4: The area chair is confident but not absolutely certain'
             }
         )
+        with pytest.raises(openreview.OpenReviewException, match=r'\'type\': \'missing\', \'path\': \'content.best paper\''):
+            meta_review_note = ac_client.post_note(note)
+        note.content['best paper'] = 'Yes'
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
         assert meta_review_note.content['best paper'] == 'Yes', 'Additional field not initialized'
