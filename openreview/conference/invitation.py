@@ -172,9 +172,15 @@ class BidInvitation(openreview.Invitation):
                     'values-regex': '~.*'
                 },
                 'content': {
-                    'tag': {
+                    'edge': {
                         'required': True,
-                        'value-radio': [ 'Very High', 'High', 'Neutral', 'Low', 'Very Low']
+                        'value-radio': [
+                            ['Very High', 1],
+                            ['High', 0.5],
+                            ['Neutral', 0],
+                            ['Low', -0.5],
+                            ['Very Low', -1]
+                        ]
                     }
                 }
             }
@@ -303,10 +309,10 @@ class ReviewInvitation(openreview.Invitation):
         content = invitations.review.copy()
 
         for key in additional_fields:
-            content[key] = additional_fields[key]        
+            content[key] = additional_fields[key]
 
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
-        
+
         readers = []
         nonreaders = [conference.get_authors_id(number = note.number)]
 
@@ -353,7 +359,7 @@ class ReviewInvitation(openreview.Invitation):
                     },
                     'nonreaders': {
                         "values": nonreaders
-                    },                    
+                    },
                     'writers': {
                         'values-regex': prefix + 'Anon' + conference.reviewers_name[:-1] + '[0-9]+',
                         'description': 'How your identity will be displayed.'
@@ -704,7 +710,7 @@ class InvitationBuilder(object):
                 'subject_areas': registration_parent_invitation.reply['content']['subject_areas']['value'],
                 'profile confirmed': registration_parent_invitation.reply['content']['profile confirmed']['value'],
                 'TPMS account confirmed': registration_parent_invitation.reply['content']['TPMS account confirmed']['value'],
-            }            
+            }
         ))
 
         registration_invitation = self.client.post_invitation(openreview.Invitation(
