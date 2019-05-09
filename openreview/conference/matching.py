@@ -18,7 +18,7 @@ class Matching(object):
         set2 = set(list2)
         intersection = set1.intersection(set2)
         union = set1.union(set2)
-        return len(intersection) / len(union)          
+        return len(intersection) / len(union)
 
     def _append_manual_conflicts(self, profile, manual_user_conflicts):
         for conflict_domain in manual_user_conflicts:
@@ -37,6 +37,7 @@ class Matching(object):
 
     def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, scores_by_reviewer, manual_conflicts_by_id):
         entries = []
+        bid_count = 0
         for profile in reviewer_profiles:
             bid_score_map = {
                 'Very High': 1.0,
@@ -48,7 +49,6 @@ class Matching(object):
             try:
                 reviewer_bids = sorted([t for t in paper_bid_jsons if profile.id in t['signatures']], key=lambda t: t.get('tmdate',0), reverse=True)
             except TypeError as e:
-                print(paper_bid_jsons)
                 raise e
             reviewer_scores = scores_by_reviewer.get(profile.id, {})
 
@@ -66,6 +66,7 @@ class Matching(object):
                     user_entry['conflicts'] = ['self-declared COI']
                 else:
                     bid_score = bid_score_map.get(tag, 0.0)
+                    bid_count += 1
                     if bid_score != 0.0:
                         user_entry['scores']['bid'] = bid_score
 
@@ -88,6 +89,10 @@ class Matching(object):
 
             entries.append(user_entry)
 
+        ## Assert amount of bids and tags
+        difference = list(set([tag['signatures'][0] for tag in paper_bid_jsons]) - set([profile.id for profile in reviewer_profiles]))
+        assert len(difference) == 0, 'There is a difference in forum: ' + paper_bid_jsons[0]['forum'] + ' for tags with no profile found: ' + ','.join(difference)
+        assert bid_count == len(paper_bid_jsons), 'Incorrect number(score_count: '+ str(bid_count) + ' tag_count:' + str(len(paper_bid_jsons)) +') of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
         return entries
 
     def _get_profiles(self, client, ids_or_emails):
@@ -367,14 +372,17 @@ class Matching(object):
         if not all(['~' in member for member in reviewers_group.members]):
             print('WARNING: not all reviewers have been converted to profile IDs. Members without profiles will not have metadata created.')
 
-        areachairs_group = client.get_group(AREA_CHAIRS_ID)
-        # The areachairs are all emails so convert to tilde ids
-        areachairs_group = openreview.tools.replace_members_with_ids(client,areachairs_group)
-        if not all(['~' in member for member in areachairs_group.members]):
-            print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
 
-        user_profiles = self._get_profiles(client, reviewers_group.members + areachairs_group.members)
+        if conference.use_area_chairs:
+            areachairs_group = client.get_group(AREA_CHAIRS_ID)
+            # The areachairs are all emails so convert to tilde ids
+            areachairs_group = openreview.tools.replace_members_with_ids(client,areachairs_group)
+            if not all(['~' in member for member in areachairs_group.members]):
+                print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
 
+            user_profiles = self._get_profiles(client, reviewers_group.members + areachairs_group.members)
+        else:
+            user_profiles = self._get_profiles(client, reviewers_group.members)
 
         # create metadata
         metadata_inv = client.post_invitation(metadata_inv)
@@ -421,18 +429,18 @@ class Matching(object):
                     subject_areas = subject_area_note.content['subject_areas']
                     score = self._jaccard_similarity(note_subject_areas, subject_areas)
                     if paper_note_id in scores_by_reviewer_by_paper:
-                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'subjectArea': float(score)})                    
+                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'subjectArea': float(score)})
 
         metadata_notes = []
         for note in submissions:
             scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
-            metadata_notes.append(self.post_metadata_note(client, 
-                note, 
-                user_profiles, 
-                metadata_inv, 
-                scores_by_reviewer, 
-                {}, 
-                conference.get_bid_id(), 
+            metadata_notes.append(self.post_metadata_note(client,
+                note,
+                user_profiles,
+                metadata_inv,
+                scores_by_reviewer,
+                {},
+                conference.get_bid_id(),
                 conference.get_recommendation_id(note.number))
             )
 
@@ -474,14 +482,14 @@ class Matching(object):
                         'readers': [
                             self.conference.get_id(),
                             self.conference.get_program_chairs_id(),
-                            self.conference.get_area_chairs_id(number = paper_number)
+                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
                         ],
                     }
                     parent_group_params = {
                        'readers': [
                             self.conference.get_id(),
                             self.conference.get_program_chairs_id(),
-                            self.conference.get_area_chairs_id(number = paper_number)
+                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
                         ]
                     }
 

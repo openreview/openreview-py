@@ -13,9 +13,11 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.new = False
         self.double_blind = False
         self.submission_public = False
         self.use_area_chairs = False
+        self.legacy_invitation_id = False
         self.original_readers = []
         self.subject_areas = []
         self.groups = []
@@ -36,6 +38,9 @@ class Conference(object):
         self.bid_name = 'Bid'
         self.recommendation_name = 'Recommendation'
         self.registration_name = 'Registration'
+        self.review_name = 'Official_Review'
+        self.meta_review_name = 'Meta_Review'
+        self.decision_name = 'Decision'
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = []):
@@ -77,7 +82,7 @@ class Conference(object):
             return self.webfield_builder.set_bid_page(self, bid_invitation)
 
     def __set_recommendation_page(self):
-        recommendation_invitation = self.client.get_invitation(self.get_id() + '/-/Recommendation')
+        recommendation_invitation = self.client.get_invitation(self.get_recommendation_id())
         if recommendation_invitation:
             return self.webfield_builder.set_recommendation_page(self, recommendation_invitation)
 
@@ -96,7 +101,7 @@ class Conference(object):
     ## TODO: use a super invitation here
     def __expire_invitations(self, name):
 
-        invitations = list(tools.iterget_invitations(self.client, regex = '{id}/-/Paper.*/{name}'.format(id = self.get_id(), name = name)))
+        invitations = list(tools.iterget_invitations(self.client, regex = self.get_invitation_id(name, '.*')))
 
         now = round(time.time() * 1000)
 
@@ -112,6 +117,9 @@ class Conference(object):
 
     def get_id(self):
         return self.id
+
+    def is_new(self):
+        return self.new
 
     def set_name(self, name):
         self.name = name
@@ -146,9 +154,10 @@ class Conference(object):
     def get_reviewers_id(self, number = None):
         reviewers_id = self.id + '/'
         if number:
-            reviewers_id = reviewers_id + 'Paper' + str(number) + '/'
-
-        reviewers_id = reviewers_id + self.reviewers_name
+            # TODO: Remove the "Reviewers" label from the end of this group as this forces individual groups to be "PaperX/Reviewers"
+            reviewers_id = reviewers_id + 'Paper' + str(number) + '/Reviewers'
+        else:
+            reviewers_id = reviewers_id + self.reviewers_name
         return reviewers_id
 
     def get_authors_id(self, number = None):
@@ -162,33 +171,42 @@ class Conference(object):
     def get_area_chairs_id(self, number = None):
         area_chairs_id = self.id + '/'
         if number:
-            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/'
-
-        area_chairs_id = area_chairs_id + self.area_chairs_name
+            # TODO: Remove the "Area_Chairs" label from the end of this group as this forces individual groups to be "PaperX/Area_Chairs"
+            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/Area_Chairs'
+        else:
+            area_chairs_id = area_chairs_id + self.area_chairs_name
         return area_chairs_id
 
     def get_submission_id(self):
-        return self.id + '/-/' + self.submission_name
+        return self.get_invitation_id(self.submission_name)
 
     def get_blind_submission_id(self):
+        name = self.submission_name
         if self.double_blind:
-            return self.id + '/-/Blind_' + self.submission_name
-        else:
-            return self.get_submission_id()
+            name = 'Blind_' + self.submission_name
+        return self.get_invitation_id(name)
 
     def get_bid_id(self):
-        return self.id + '/-/' + self.bid_name
+        return self.get_invitation_id(self.bid_name)
 
     def get_recommendation_id(self, number = None):
-        recommendation_id = self.id
-        if number:
-            recommendation_id = recommendation_id + '/Paper' + str(number)
-
-        recommendation_id = recommendation_id + '/-/' + self.recommendation_name
-        return recommendation_id   
+        return self.get_invitation_id(self.recommendation_name, number)
 
     def get_registration_id(self):
-        return self.id + '/-/' + self.registration_name        
+        return self.get_invitation_id(self.registration_name)
+
+    def get_invitation_id(self, name, number = None):
+        invitation_id = self.id
+        if number:
+            if self.legacy_invitation_id:
+                invitation_id = invitation_id + '/-/Paper' + str(number) + '/'
+            else:
+                invitation_id = invitation_id + '/Paper' + str(number) + '/-/'
+        else:
+            invitation_id = invitation_id + '/-/'
+
+        invitation_id =  invitation_id + name
+        return invitation_id
 
     def set_conference_groups(self, groups):
         self.groups = groups
@@ -197,7 +215,7 @@ class Conference(object):
         return self.groups
 
     def get_paper_assignment_id (self):
-        return self.id + '/-/' + 'Paper_Assignment'
+        return self.get_invitation_id('Paper_Assignment')
 
     def set_homepage_header(self, header):
         self.homepage_header = header
@@ -379,58 +397,71 @@ class Conference(object):
     def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
         assignment_notes_iterator = None
-        
+
         if reviewer_assingment_title:
-            assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.id + '/-/Paper_Assignment', content = { 'title': reviewer_assingment_title })
-        
+            assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.get_paper_assignment_id(), content = { 'title': reviewer_assingment_title })
+
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
     def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
         return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
 
-    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False):
+    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
         ## Create comment invitations per paper
         notes_iterator = self.get_submissions()
         if public:
-            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous)
+            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous, reader_selection, email_pcs)
         else:
-            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous)
+            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
 
     def close_comments(self, name):
         return self.__expire_invitations(name)
 
-    def open_reviews(self, name = 'Official_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, additional_fields = {}):
+    def open_reviews(self, start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         """
         Create review invitations for all the available submissions.
 
         :arg name: name of the official invitation, default = 'Official_Review'.
         :arg start_date: when the review period starts. default = now.
         :arg due_date: expected date to finish the review.
+        :arg allow_de_anonymization: indicates if the review can be signed with a real identity or not.
         :arg public: set the readership of the review to the general public.
         :arg release_to_authors: allow the author to read the review once is posted, default = False.
-        :arg release_to_reviewers: allow the paper reviewers to read the review once is potest, default = False => only reviewers with submitted reviews can see other reviews.
+        :arg release_to_reviewers: allow the paper reviewers to read the review once it is posted, default = False => only reviewers with submitted reviews can see other reviews.
         :arg additional_fields: field to add/overwrite to the review invitation
         """
         notes = list(self.get_submissions())
-        invitations = self.invitation_builder.set_review_invitation(self, notes, name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields)
+        invitations = self.invitation_builder.set_review_invitation(self, notes, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
         ## Create submitted groups if they don't exist
         for n in notes:
-            self.__create_group(self.get_reviewers_id( number = n.number) + '/Submitted', self.get_program_chairs_id())
+            self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
         return invitations
 
-    def open_meta_reviews(self, name = 'Meta_Review', start_date = None, due_date = None, public = False):
+    def close_reviews(self):
+        return self.__expire_invitations(self.review_name)
+
+    def open_meta_reviews(self, start_date = None, due_date = None, public = False):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, name, start_date, due_date, public)
+        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, start_date, due_date, public)
+
+    def open_decisions(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        notes_iterator = self.get_submissions()
+        return self.invitation_builder.set_decision_invitation(self, notes_iterator, options, start_date, due_date, public, release_to_authors, release_to_reviewers)
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         invitation = self.client.get_invitation(self.get_submission_id())
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
+    def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+
+        invitation = self.get_invitation_id(self.review_name, '.*')
+        review_iterator = tools.iterget_notes(self.client, invitation = invitation)
+        return self.invitation_builder.set_revise_review_invitation(self, review_iterator, name, start_date, due_date, additional_fields, remove_fields)
+
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)
-
 
     def set_program_chairs(self, emails):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
@@ -497,7 +528,7 @@ class Conference(object):
                     self.get_program_chairs_id(),
                     self.get_area_chairs_id(number = number)
                 ]
-            })
+            }, use_profile = True)
 
     def set_assignments(self, assingment_title):
         conference_matching = matching.Matching(self)
@@ -524,7 +555,7 @@ class Conference(object):
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed
         }
-        invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self.id, options)
+        invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
         recruit_message = '''Dear {name},
 
@@ -588,6 +619,21 @@ class Conference(object):
 
         return self.client.get_group(id = reviewers_invited_id)
 
+    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
+        home_group = self.client.get_group(self.id)
+        options = self.get_homepage_options()
+        options['blind_submission_id'] = self.get_blind_submission_id()
+        options['decision_invitation_regex'] = self.id + '/-/Paper.*/' + invitation_name
+        if not decision_heading_map:
+            decision_heading_map = {}
+            invitations = self.client.get_invitations(regex = self.id + '/-/Paper.*/' + invitation_name, limit = 1)
+            if invitations:
+                for option in invitations[0].reply['content']['decision']['value-radio']:
+                    decision_heading_map[option] = option + ' Papers'
+        options['decision_heading_map'] = decision_heading_map
+
+        self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
+
 
 class ConferenceBuilder(object):
 
@@ -613,8 +659,10 @@ class ConferenceBuilder(object):
                     writers = [p],
                     signatories = [p],
                     signatures = ['~Super_User1'],
-                    members = [])
+                    members = [],
+                    details = { 'writable': True })
                 )
+                self.conference.new = True
 
             groups.append(group)
 
@@ -681,20 +729,39 @@ class ConferenceBuilder(object):
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
+    def set_review_name(self, review_name):
+        self.conference.review_name = review_name
+
+    def set_meta_review_name(self, meta_review_name):
+        self.conference.meta_review_name = meta_review_name
+
+    def set_decision_name(self, decision_name):
+        self.conference.decision_name = decision_name
+
+    def use_legacy_invitation_id(self, legacy_invitation_id):
+        self.conference.legacy_invitation_id = legacy_invitation_id
+
     def get_result(self):
 
         id = self.conference.get_id()
         groups = self.__build_groups(id)
         for g in groups[:-1]:
-            self.webfield_builder.set_landing_page(g)
+            # set a landing page only where there is not special webfield
+            writable = g.details.get('writable') if g.details else True
+            if writable and (not g.web or 'VENUE_LINKS' in g.web):
+                self.webfield_builder.set_landing_page(g)
+
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id
         if root_id == root_id.lower():
             root_id = groups[1].id
-        self.client.add_members_to_group(host, root_id)
+        writable = host.details.get('writable') if host.details else True
+        if writable:
+            self.client.add_members_to_group(host, root_id)
 
         home_group = groups[-1]
-        if not home_group.web or self.override_homepage:
+        writable = home_group.details.get('writable') if home_group.details else True
+        if writable and (not home_group.web or self.override_homepage):
             options = self.conference.get_homepage_options()
             options['reviewers_name'] = self.conference.reviewers_name
             options['area_chairs_name'] = self.conference.area_chairs_name
