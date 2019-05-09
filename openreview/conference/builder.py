@@ -662,7 +662,7 @@ class ConferenceBuilder(object):
                     id = p,
                     readers = ['everyone'],
                     nonreaders = [],
-                    writers = ['~Super_User1'],
+                    writers = [p],
                     signatories = [p],
                     signatures = ['~Super_User1'],
                     members = [],
