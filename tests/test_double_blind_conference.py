@@ -201,7 +201,6 @@ class TestDoubleBlindConference():
 
     def test_enable_submissions(self, client, selenium, request_page):
 
-
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -403,7 +402,6 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
         assert len(papers.find_elements_by_class_name('note')) == 1
-
 
     def test_recruit_reviewers(self, client, selenium, request_page):
 
@@ -651,7 +649,6 @@ class TestDoubleBlindConference():
         assert blind_submissions[0].id == blind_submissions_3[0].id
         assert blind_submissions_3[0].readers == ['everyone']
 
-
     def test_open_comments(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -729,7 +726,6 @@ class TestDoubleBlindConference():
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
@@ -929,6 +925,53 @@ class TestDoubleBlindConference():
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
 
+    def test_open_meta_reviews_additional_options(self, client, test_client, selenium, request_page, helpers):
+
+        ac_client = helpers.create_user('meta_additional@mail.com', 'TestMetaAdditional', 'User')
+        assert ac_client is not None, "Client is none"
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.has_area_chairs(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+
+        conference.open_meta_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+            'best paper' : {
+                'description' : 'Nominate as best paper?',
+                'value-radio' : ['Yes', 'No'],
+                'required' : True
+            }
+        })
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        conference.set_assignment('meta_additional@mail.com', submission.number, is_area_chair = True)
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            content = {
+                'title': 'Meta review title',
+                'metareview': 'Excellent Paper!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain'
+            }
+        )
+        with pytest.raises(openreview.OpenReviewException, match=r'missing'):
+            meta_review_note = ac_client.post_note(note)
+        note.content['best paper'] = 'Yes'
+        meta_review_note = ac_client.post_note(note)
+        assert meta_review_note
+        assert meta_review_note.content['best paper'] == 'Yes', 'Additional field not initialized'
+
     def test_open_decisions(self, client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1000,8 +1043,6 @@ class TestDoubleBlindConference():
 
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
-
-
 
     def test_consoles(self, client, test_client, selenium, request_page):
 

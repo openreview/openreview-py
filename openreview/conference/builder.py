@@ -441,9 +441,9 @@ class Conference(object):
     def close_reviews(self):
         return self.__expire_invitations(self.review_name)
 
-    def open_meta_reviews(self, start_date = None, due_date = None, public = False):
+    def open_meta_reviews(self, start_date = None, due_date = None, public = False, additional_fields = {}):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, start_date, due_date, public)
+        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, start_date, due_date, public, additional_fields)
 
     def open_decisions(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
         notes_iterator = self.get_submissions()
