@@ -476,6 +476,31 @@ class Conference(object):
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
+    def set_area_chair_recruitment_groups(self):
+        if self.use_area_chairs:
+            parent_group_id = self.get_area_chairs_id()
+            parent_group_declined_id = parent_group_id + '/Declined'
+            parent_group_invited_id = parent_group_id + '/Invited'
+            parent_group_accepted_id = parent_group_id
+
+            pcs_id = self.get_program_chairs_id()
+            parent_group_accepted_group = self.__create_group(parent_group_accepted_id, pcs_id)
+            parent_group_declined_group = self.__create_group(parent_group_declined_id, pcs_id)
+            parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
+
+    def set_reviewer_recruitment_groups(self):
+        parent_group_id = self.get_reviewers_id()
+        parent_group_declined_id = parent_group_id + '/Declined'
+        parent_group_invited_id = parent_group_id + '/Invited'
+        parent_group_accepted_id = parent_group_id
+
+        pcs_id = self.get_program_chairs_id()
+        parent_group_accepted_group = self.__create_group(parent_group_accepted_id, pcs_id)
+        parent_group_declined_group = self.__create_group(parent_group_declined_id, pcs_id)
+        parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
+
     def set_reviewers(self, emails):
         self.__create_group(self.get_reviewers_id(), self.id, emails)
         return self.__set_reviewer_page()
@@ -774,4 +799,7 @@ class ConferenceBuilder(object):
             self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)
+        if self.conference.use_area_chairs:
+            self.conference.set_area_chair_recruitment_groups()
+        self.conference.set_reviewer_recruitment_groups()
         return self.conference
