@@ -12,7 +12,7 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 11, 'groups is empty'
+        assert len(groups) == 14, 'groups is empty'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -22,6 +22,7 @@ class TestClient():
         assert 'openreview.net' in group_names
         assert 'active_venues' in group_names
         assert 'host' in group_names
+        assert 'test.org/2019/Conference/Reviewers/Declined' in group_names
 
     def test_get_invitations(self, client):
         invitations = client.get_invitations()
