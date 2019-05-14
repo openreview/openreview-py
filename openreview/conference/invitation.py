@@ -484,13 +484,13 @@ class DecisionInvitation(openreview.Invitation):
             'title': {
                 'order': 1,
                 'required': True,
-                'value': 'Acceptance Decision'
+                'value': 'Paper Decision'
             },
             'decision': {
                 'order': 2,
                 'required': True,
                 'value-radio': options,
-                'description': 'Acceptance decision'
+                'description': 'Decision'
             },
             'comment': {
                 'order': 3,
