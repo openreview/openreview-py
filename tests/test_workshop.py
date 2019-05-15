@@ -561,7 +561,7 @@ class TestWorkshop():
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'this is a comment'
             }

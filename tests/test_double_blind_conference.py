@@ -998,7 +998,7 @@ class TestDoubleBlindConference():
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'Great!',
             }
@@ -1016,7 +1016,7 @@ class TestDoubleBlindConference():
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'Great!',
             }
@@ -1035,7 +1035,7 @@ class TestDoubleBlindConference():
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'Great!',
             }
