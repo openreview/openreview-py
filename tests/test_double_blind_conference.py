@@ -729,6 +729,7 @@ class TestDoubleBlindConference():
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -738,6 +739,7 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
@@ -748,8 +750,6 @@ class TestDoubleBlindConference():
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)
-        now = datetime.datetime.utcnow()
-        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -813,6 +813,7 @@ class TestDoubleBlindConference():
 
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -822,6 +823,7 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
