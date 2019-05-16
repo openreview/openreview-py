@@ -417,6 +417,7 @@ class TestWorkshop():
 
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -434,6 +435,7 @@ class TestWorkshop():
         builder.set_double_blind(True)
         builder.set_submission_public(False)
         builder.has_area_chairs(False)
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
         conference = builder.get_result()
         assert conference
 
@@ -444,7 +446,6 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
-        now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review/AnonReviewer1/Revision',

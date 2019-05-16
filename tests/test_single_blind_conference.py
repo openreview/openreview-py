@@ -469,6 +469,19 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
+        builder.set_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+            'rating': {
+                'order': 3,
+                'value-dropdown': [
+                    '5',
+                    '4',
+                    '3',
+                    '2',
+                    '1'
+                ],
+                'required': True
+            }
+        })
         conference = builder.get_result()
 
         # Author user
