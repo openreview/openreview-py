@@ -14,7 +14,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestCommentNotification():
 
-    def test_notify_all(self, client, test_client):
+    def test_notify_all(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
 
@@ -70,6 +70,7 @@ class TestCommentNotification():
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
+        reviewer_client = helpers.create_user('reviewer@midl.io', 'Reviewer', 'MIDL')
         openreview.tools.add_assignment(client, note.number, conference.id, 'reviewer@midl.io')
         openreview.tools.add_assignment(client, note.number, conference.id, 'areachair@midl.io', individual_label='Area_Chair', parent_label='Area_Chairs')
 
@@ -84,7 +85,10 @@ class TestCommentNotification():
                 'comment': 'This is an comment'
             }
         )
-        comment_note = client.post_note(comment_note)
+        comment_note = reviewer_client.post_note(comment_note)
+        logs = client.get_process_logs(id = comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         assert comment_note
         assert comment_note.forum == note.id
@@ -110,8 +114,9 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
-        assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
@@ -161,8 +166,9 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
-        assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
@@ -187,7 +193,7 @@ class TestCommentNotification():
             }
         )
 
-        reply2_comment_note = client.post_note(reply2_comment_note)
+        reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -213,9 +219,10 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
-        assert len(messages) == 2
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 3
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
@@ -284,10 +291,11 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
-        assert len(messages) == 3
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 4
+        assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[MIDL 2019] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
@@ -363,6 +371,10 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
+        logs = client.get_process_logs(id = note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
         conference.close_submissions()
         blinded_notes = conference.create_blind_submissions()
         paper_note = blinded_notes[0]
@@ -396,6 +408,10 @@ class TestCommentNotification():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
+        logs = client.get_process_logs(id = review_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, email_pcs=True)
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
@@ -416,6 +432,10 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        logs = client.get_process_logs(id = comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*')
         assert messages
@@ -458,6 +478,10 @@ class TestCommentNotification():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
+        logs = client.get_process_logs(id = review_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
         comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = review_note.forum,
             replyto = review_note.id,
@@ -470,6 +494,10 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        logs = client.get_process_logs(id = comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*')
         assert messages
@@ -527,7 +555,7 @@ class TestCommentNotification():
         with pytest.raises(openreview.OpenReviewException, match=r"[{'type': 'forbidden', 'path': 'id', 'value': 'auai.org/UAI/2020/Conference/Program_Committee', 'user': 'areachair@auai.org'}]"):
             ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
 
-    def test_notify_all_mandatory_readers(self, client, test_client):
+    def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
 
@@ -566,6 +594,10 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
+        logs = client.get_process_logs(id = note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
         conference.close_submissions()
 
         conference.set_authors()
@@ -578,6 +610,7 @@ class TestCommentNotification():
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
+        reviewer_client = helpers.create_user('reviewer@colt.io', 'Reviewer', 'COLT')
         openreview.tools.add_assignment(client, note.number, conference.id, 'reviewer@colt.io')
         openreview.tools.add_assignment(client, note.number, conference.id, 'areachair@colt.io', individual_label='Area_Chair', parent_label='Area_Chairs')
 
@@ -592,7 +625,11 @@ class TestCommentNotification():
                 'comment': 'This is an comment'
             }
         )
-        comment_note = client.post_note(comment_note)
+        comment_note = reviewer_client.post_note(comment_note)
+
+        logs = client.get_process_logs(id = comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         assert comment_note
         assert comment_note.forum == note.id
@@ -617,8 +654,8 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@colt.io')
         assert messages
-        assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 2
+        assert messages[1]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
@@ -642,6 +679,10 @@ class TestCommentNotification():
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
 
+        logs = client.get_process_logs(id = reply_comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
         messages = client.get_messages(to = 'author@colt.io')
         assert messages
         assert len(messages) == 3
@@ -658,9 +699,9 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@colt.io')
         assert messages
-        assert len(messages) == 2
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 3
+        assert messages[1]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
@@ -690,7 +731,11 @@ class TestCommentNotification():
             }
         )
 
-        reply2_comment_note = client.post_note(reply2_comment_note)
+        reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
+
+        logs = client.get_process_logs(id = reply2_comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         messages = client.get_messages(to = 'author@colt.io')
         assert messages
@@ -718,10 +763,10 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@colt.io')
         assert messages
-        assert len(messages) == 3
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 4
+        assert messages[1]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
@@ -737,22 +782,7 @@ class TestCommentNotification():
         assert messages[1]['content']['subject'] == '[COLT 2018] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
 
-        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
-        assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'programchair@colt.io', first = 'Program', last = 'Chair', password = '1234')
-        assert res, "Res i none"
-        res = pc_client.activate_user('programchair@colt.io', {
-            'names': [
-                    {
-                        'first': 'Program',
-                        'last': 'Chair',
-                        'username': '~Program_Chair2'
-                    }
-                ],
-            'emails': ['programchair@colt.io'],
-            'preferredEmail': 'programchair@colt.io'
-            })
-        assert res
+        pc_client = helpers.create_user('programchair@colt.io', 'ProgramChair', 'COLT')
 
         reply3_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
@@ -767,6 +797,10 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        logs = client.get_process_logs(id = reply3_comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         messages = client.get_messages(to = 'author@colt.io')
         assert messages
@@ -797,11 +831,11 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@colt.io')
         assert messages
-        assert len(messages) == 4
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 5
+        assert messages[1]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[3]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[4]['content']['subject'] == '[COLT 2018] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
@@ -821,7 +855,7 @@ class TestCommentNotification():
         assert messages[4]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
 
-    def test_notify_except_program_chairs(self, client, test_client):
+    def test_notify_except_program_chairs(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
 
@@ -860,6 +894,10 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
+        logs = client.get_process_logs(id = note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
         conference.close_submissions()
 
         conference.set_authors()
@@ -872,6 +910,7 @@ class TestCommentNotification():
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
+        reviewer_client = helpers.create_user('reviewer@colt17.io', 'Reviewer', 'COLTIO')
         openreview.tools.add_assignment(client, note.number, conference.id, 'reviewer@colt17.io')
         openreview.tools.add_assignment(client, note.number, conference.id, 'areachair@colt17.io', individual_label='Area_Chair', parent_label='Area_Chairs')
 
@@ -886,7 +925,11 @@ class TestCommentNotification():
                 'comment': 'This is an comment'
             }
         )
-        comment_note = client.post_note(comment_note)
+        comment_note = reviewer_client.post_note(comment_note)
+
+        logs = client.get_process_logs(id = comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         assert comment_note
         assert comment_note.forum == note.id
@@ -911,8 +954,8 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@colt17.io')
         assert messages
-        assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 2
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
@@ -934,6 +977,10 @@ class TestCommentNotification():
             }
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
+
+        logs = client.get_process_logs(id = reply_comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         messages = client.get_messages(to = 'author@colt17.io')
         assert messages
@@ -958,9 +1005,9 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@colt17.io')
         assert messages
-        assert len(messages) == 2
-        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 3
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
@@ -970,22 +1017,7 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'programchair@colt17.io')
         assert len(messages) == 0
 
-        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
-        assert pc_client is not None, "Client is none"
-        res = pc_client.register_user(email = 'programchair@colt17.io', first = 'Program', last = 'Chair', password = '1234')
-        assert res, "Res i none"
-        res = pc_client.activate_user('programchair@colt17.io', {
-            'names': [
-                    {
-                        'first': 'Program',
-                        'last': 'Chair',
-                        'username': '~Program_Chair3'
-                    }
-                ],
-            'emails': ['programchair@colt17.io'],
-            'preferredEmail': 'programchair@colt17.io'
-            })
-        assert res
+        pc_client = helpers.create_user('programchair@colt17.io', 'Program', 'COLTIO')
 
         reply3_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
@@ -1000,6 +1032,10 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        logs = client.get_process_logs(id = reply3_comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         messages = client.get_messages(to = 'author@colt17.io')
         assert messages
@@ -1027,10 +1063,10 @@ class TestCommentNotification():
 
         messages = client.get_messages(to = 'reviewer@colt17.io')
         assert messages
-        assert len(messages) == 3
-        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert len(messages) == 4
+        assert messages[1]['content']['subject'] == '[COLT 2017] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[COLT 2017] Comment posted to a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
@@ -1079,6 +1115,7 @@ class TestCommentNotification():
         anon_reviewers_group_id = '{conference_id}/Paper{number}/AnonReviewer1'.format(conference_id = conference.id, number = note.number)
         acs_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = conference.id, number = note.number)
 
+        reviewer_client = openreview.Client(username='reviewer@colt17.io', password='1234')
         openreview.tools.add_assignment(client, note.number, conference.id, 'reviewer@colt17.io')
         openreview.tools.add_assignment(client, note.number, conference.id, 'areachair@colt17.io', individual_label='Area_Chair', parent_label='Area_Chairs')
 
@@ -1094,7 +1131,11 @@ class TestCommentNotification():
                 'comment': 'This is an comment'
             }
         )
-        comment_note = client.post_note(comment_note)
+        comment_note = reviewer_client.post_note(comment_note)
+
+        logs = client.get_process_logs(id = comment_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
 
         assert comment_note
         assert comment_note.forum == note.id
