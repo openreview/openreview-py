@@ -424,8 +424,8 @@ class ReviewRevisionInvitation(openreview.Invitation):
                     'replyto': None,
                     'referent': review.id
                 },
-                writers = [ review.invitation.split('/-/')[0] ],
-                signatures = [ review.invitation.split('/-/')[0] ],
+                writers = [conference.id],
+                signatures = [conference.id],
                 process_string = file_content
             )
 
