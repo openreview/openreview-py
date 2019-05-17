@@ -431,8 +431,11 @@ class ReviewRevisionInvitation(openreview.Invitation):
 
 class MetaReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, start_date, due_date, public):
+    def __init__(self, conference, note, start_date, due_date, public, additional_fields):
         content = invitations.meta_review.copy()
+
+        for key in additional_fields:
+            content[key] = additional_fields[key]
 
         readers = ['everyone']
         regex = conference.get_program_chairs_id()
@@ -481,13 +484,13 @@ class DecisionInvitation(openreview.Invitation):
             'title': {
                 'order': 1,
                 'required': True,
-                'value': 'Acceptance Decision'
+                'value': 'Paper Decision'
             },
             'decision': {
                 'order': 2,
                 'required': True,
                 'value-radio': options,
-                'description': 'Acceptance decision'
+                'description': 'Decision'
             },
             'comment': {
                 'order': 3,
@@ -627,11 +630,10 @@ class InvitationBuilder(object):
 
         return invitations
 
-
-    def set_meta_review_invitation(self, conference, notes, start_date, due_date, public):
+    def set_meta_review_invitation(self, conference, notes, start_date, due_date, public, additional_fields):
 
         for note in notes:
-            self.client.post_invitation(MetaReviewInvitation(conference, note, start_date, due_date, public))
+            self.client.post_invitation(MetaReviewInvitation(conference, note, start_date, due_date, public, additional_fields))
 
     def set_decision_invitation(self, conference, notes, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
 

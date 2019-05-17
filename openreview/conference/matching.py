@@ -353,6 +353,7 @@ class Matching(object):
                         'order': 15
                     },
                     'status': {
+                        'default': 'Initialized',
                         'value-dropdown': ['Initialized', 'Running', 'Error', 'No Solution', 'Complete', 'Deployed']
                     }
                 }

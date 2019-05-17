@@ -375,17 +375,17 @@ class TestWorkshop():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Your submission has received a comment. Paper Title')
+        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Your submission has received a comment. Paper Number: 1, Paper Title')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper you are reviewing. Paper Number')
+        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper you are reviewing. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper in your area. Paper Number')
+        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper in your area. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
         messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*A comment was posted. Paper Number')
@@ -561,7 +561,7 @@ class TestWorkshop():
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'this is a comment'
             }
