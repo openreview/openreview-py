@@ -371,7 +371,7 @@ class ReviewInvitation(openreview.Invitation):
                 file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id(number = note.number) + "';")
 
             if email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id(number = note.number) + "';")
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
             super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(conference.review_name, note.number),
                 cdate = tools.datetime_millis(start_date),
