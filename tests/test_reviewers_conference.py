@@ -98,7 +98,7 @@ class TestReviewersConference():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'author@mail.com', 'author2@mail.com'],
+            writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',

@@ -547,34 +547,40 @@ class Conference(object):
 
     def set_assignment(self, user, number, is_area_chair = False):
 
-        parent_label = self.reviewers_name
-        individual_label = 'Anon' + self.reviewers_name[:-1]
 
         if is_area_chair:
-            parent_label = self.area_chairs_name
-            individual_label = self.area_chairs_name[:-1]
             return tools.add_assignment(self.client,
             number,
             self.get_id(),
             user,
-            parent_label = parent_label,
-            individual_label = individual_label)
+            parent_label = 'Area_Chairs',
+            individual_label = 'Area_Chair')
         else:
             return tools.add_assignment(self.client,
             number,
             self.get_id(),
             user,
-            parent_label = parent_label,
-            individual_label = individual_label,
+            parent_label = 'Reviewers',
+            individual_label = 'AnonReviewer',
             individual_group_params = {
                 'readers': [
                     self.get_id(),
                     self.get_program_chairs_id(),
                     self.get_area_chairs_id(number = number)
                 ],
+                'writers': [
+                    self.get_id(),
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = number)
+                ]
             },
             parent_group_params = {
                 'readers': [
+                    self.get_id(),
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = number)
+                ],
+                'writers': [
                     self.get_id(),
                     self.get_program_chairs_id(),
                     self.get_area_chairs_id(number = number)
