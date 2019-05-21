@@ -3,8 +3,9 @@ function(){
 
     var CONFERENCE_ID = '';
     var SHORT_PHRASE = '';
-    var AUTHORS_NAME = '';
-    var PROGRAM_CHAIRS_NAME = '';
+    var AUTHORS_ID = '';
+    var AREA_CHAIRS_ID = '';
+    var PROGRAM_CHAIRS_ID = '';
 
     var forumNote = or3client.or3request(or3client.notesUrl+'?id='+note.forum, {}, 'GET', token);
 
@@ -15,14 +16,12 @@ function(){
 
       PAPER_REVIEWERS = CONFERENCE_ID + '/Paper' + note_number + '/Reviewers';
       PAPER_AREACHAIRS = CONFERENCE_ID + '/Paper' + note_number + '/Area_Chairs';
-      PAPER_AUTHORS = CONFERENCE_ID + '/Paper' + note_number + '/' + AUTHORS_NAME;
+      PAPER_AUTHORS = CONFERENCE_ID + '/Paper' + note_number + '/' + AUTHORS_ID;
       REVIEWERS_SUBMITTED = PAPER_REVIEWERS + '/Submitted';
 
-      if (PROGRAM_CHAIRS_NAME){
-        console.log('sending email to pc boss!');
-        console.log(CONFERENCE_ID + '/' + PROGRAM_CHAIRS_NAME);
+      if (PROGRAM_CHAIRS_ID){
         var program_chair_mail = {
-          groups: [CONFERENCE_ID + '/' + PROGRAM_CHAIRS_NAME],
+          groups: [CONFERENCE_ID + '/' + PROGRAM_CHAIRS_ID],
           subject: '[' + SHORT_PHRASE + '] A review has been received on paper: "' + forum.content.title + '"',
           message: 'We have received a review on a submission to ' + SHORT_PHRASE + '.\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
         };
@@ -36,7 +35,7 @@ function(){
       };
       promises.push(or3client.or3request( or3client.mailUrl, review_writer_mail, 'POST', token ));
 
-      if (note.readers.includes('everyone') || note.readers.includes(PAPER_AREACHAIRS)) {
+      if (AREA_CHAIRS_ID && (note.readers.includes('everyone') || note.readers.includes(PAPER_AREACHAIRS))) {
         var areachair_mail = {
           groups: [PAPER_AREACHAIRS],
           subject : '[' + SHORT_PHRASE + '] Review posted to your assigned paper: "' + forum.content.title + '"',
