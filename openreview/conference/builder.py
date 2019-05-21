@@ -112,6 +112,17 @@ class Conference(object):
 
         return len(invitations)
 
+    def _create_review_stage(self):
+
+        self.set_authors()
+        self.set_reviewers()
+        notes = list(self.get_submissions())
+        invitations = self.invitation_builder.set_review_invitation(self, notes)
+        ## Create submitted groups if they don't exist
+        for n in notes:
+            self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
+        return invitations
+
     def set_id(self, id):
         self.id = id
 
@@ -138,6 +149,7 @@ class Conference(object):
 
     def set_review_stage(self, stage):
         self.review_stage = stage
+        return self._create_review_stage()
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -435,7 +447,7 @@ class Conference(object):
         :arg release_to_reviewers: allow the paper reviewers to read the review once it is posted, default = False => only reviewers with submitted reviews can see other reviews.
         :arg additional_fields: field to add/overwrite to the review invitation
         """
-        self.review_stage = ReviewStage(start_date = start_date,
+        return self.set_review_stage(ReviewStage(start_date = start_date,
             due_date = due_date,
             allow_de_anonymization = allow_de_anonymization,
             public = public,
@@ -443,20 +455,7 @@ class Conference(object):
             release_to_reviewers = release_to_reviewers,
             email_pcs = email_pcs,
             additional_fields = additional_fields
-        )
-        return self.create_review_stage()
-
-    def create_review_stage(self):
-
-        self.set_authors()
-        self.set_reviewers()
-        notes = list(self.get_submissions())
-        print('REVIEW STAGE', self.review_stage)
-        invitations = self.invitation_builder.set_review_invitation(self, notes)
-        ## Create submitted groups if they don't exist
-        for n in notes:
-            self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
-        return invitations
+        ))
 
     def close_reviews(self):
         return self.__expire_invitations(self.review_stage.name)
@@ -715,6 +714,7 @@ class ConferenceBuilder(object):
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
+        self.review_stage = None
 
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
@@ -802,7 +802,7 @@ class ConferenceBuilder(object):
         self.conference.has_area_chairs(has_area_chairs)
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
-        self.conference.set_review_stage(ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields))
+        self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
 
     def set_meta_review_name(self, meta_review_name):
         self.conference.meta_review_name = meta_review_name
@@ -850,6 +850,7 @@ class ConferenceBuilder(object):
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
 
-        self.conference.create_review_stage()
+        if self.review_stage:
+            self.conference.set_review_stage(self.review_stage)
 
         return self.conference

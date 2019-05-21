@@ -823,7 +823,6 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])

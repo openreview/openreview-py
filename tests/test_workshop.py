@@ -435,7 +435,6 @@ class TestWorkshop():
         builder.set_double_blind(True)
         builder.set_submission_public(False)
         builder.has_area_chairs(False)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
         conference = builder.get_result()
         assert conference
 
