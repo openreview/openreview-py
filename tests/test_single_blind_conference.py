@@ -409,15 +409,15 @@ class TestSingleBlindConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission: "New paper title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission - Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac2@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[MLITS 2018] Your review has been received on your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Your review has been received on your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer@mail.com' in recipients
@@ -456,7 +456,7 @@ class TestSingleBlindConference():
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 2
         recipients = [m['content']['to'] for m in messages]
         assert 'ac2@mail.com' in recipients
