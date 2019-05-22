@@ -488,7 +488,7 @@ class TestCommentNotification():
             writers = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer2'],
             signatures = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer2'],
             content = {
-                'title': 'Review title',
+                'title': 'Review title 2',
                 'review': 'Paper is very good!',
                 'rating': '9: Top 15% of accepted papers, strong accept',
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
@@ -501,6 +501,29 @@ class TestCommentNotification():
         logs = client.get_process_logs(id = review_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject='.*UAI.*A review has been received on Paper number: 1.*', to='programchair@auai.org')
+        assert len(messages) == 0
+
+        messages = client.get_messages(subject='.*UAI.*Review posted to your assigned Paper number: 1.*', to='reviewer@auai.org')
+        assert messages
+        assert len(messages) == 1
+
+        messages = client.get_messages(subject='.*UAI.*Review posted to your assigned Paper number: 1.*', to='areachair@auai.org')
+        assert messages
+        assert len(messages) == 2
+
+        messages = client.get_messages(subject='.*UAI.*Your review has been received on your assigned Paper number: 1, Paper title: .*', to='reviewer2@auai.org')
+        assert messages
+        assert len(messages) == 1
+
+        messages = client.get_messages(subject='.*UAI.*Review posted to your submission - Paper number: 1, Paper title: .*')
+        assert messages
+        assert len(messages) == 6
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author2@mail.com' in recipients
+        assert 'author@mail.com' in recipients
+        assert 'test@mail.com' in recipients
 
         comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = review_note.forum,
@@ -519,23 +542,17 @@ class TestCommentNotification():
         assert logs
         assert logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*')
+        messages = client.get_messages(subject='.*UAI.*A comment was posted. Paper Number: 1.*', to='programchair@auai.org')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['to'] == 'programchair@auai.org'
-        assert messages[1]['content']['to'] == 'programchair@auai.org'
 
-        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper in your area. Paper Number: 1.*')
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper in your area. Paper Number: 1.*', to='areachair@auai.org')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['to'] == 'areachair@auai.org'
-        assert messages[1]['content']['to'] == 'areachair@auai.org'
 
-        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper you are reviewing. Paper Number: 1.*')
+        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper you are reviewing. Paper Number: 1.*', to='reviewer2@auai.org')
         assert messages
         assert len(messages) == 1
-        assert messages[0]['content']['to'] == 'reviewer2@auai.org'
-
 
         messages = client.get_messages(subject='.*UAI.*Your submission has received a comment. Paper Number: 1, Paper Title: .*')
         assert messages
