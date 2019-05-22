@@ -457,9 +457,10 @@ class TestSingleBlindConference():
         assert len(notes) == 0
 
         messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned Paper number: 1, Paper title: "New paper title"')
-        assert len(messages) == 2
+        assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'ac2@mail.com' in recipients
+        assert 'reviewer@mail.com' in recipients
 
     def test_consoles(self, client, test_client, selenium, request_page, helpers):
 

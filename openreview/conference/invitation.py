@@ -358,7 +358,6 @@ class ReviewInvitation(openreview.Invitation):
             readers.append(conference.get_authors_id(number = note.number))
             nonreaders = []
 
-
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
             file_content = f.read()
 

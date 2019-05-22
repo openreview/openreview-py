@@ -14,8 +14,6 @@ function(){
       var forum = result.notes[0];
       var promises = [];
 
-      REVIEWERS_SUBMITTED = REVIEWERS_ID + '/Submitted';
-
       if (PROGRAM_CHAIRS_ID){
         var program_chair_mail = {
           groups: [PROGRAM_CHAIRS_ID],
@@ -41,9 +39,18 @@ function(){
         promises.push(or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token ));
       }
 
-      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)) {
+      var reviewers_submitted = REVIEWERS_ID + '/Submitted';
+      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)){
         var reviewer_mail = {
           groups: [REVIEWERS_ID],
+          ignoreGroups: [note.tauthor],
+          subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        };
+        promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
+      } else if (note.readers.includes(reviewers_submitted)) {
+        var reviewer_mail = {
+          groups: [reviewers_submitted],
           ignoreGroups: [note.tauthor],
           subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
@@ -62,7 +69,7 @@ function(){
 
       return Promise.all(promises)
       .then(function(result){
-        return or3client.addGroupMember(REVIEWERS_SUBMITTED, note.signatures[0], token);
+        return or3client.addGroupMember(reviewers_submitted, note.signatures[0], token);
       })
     })
     .then(result => done())
