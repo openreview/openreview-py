@@ -312,7 +312,6 @@ class TestCommentNotification():
         assert messages[2]['content']['subject'] == 'OpenReview signup confirmation'
         assert messages[3]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
-
     def test_notify_submitted_reviewers(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -411,6 +410,27 @@ class TestCommentNotification():
         logs = client.get_process_logs(id = review_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject='.*UAI.*A review has been received on Paper number: 1.*')
+        assert len(messages) == 0
+
+        messages = client.get_messages(subject='.*UAI.*Review posted to your assigned Paper number: 1.*')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'areachair@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Your review has been received on your assigned Paper number: 1, Paper title: .*')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'reviewer@auai.org'
+
+        messages = client.get_messages(subject='.*UAI.*Review posted to your submission - Paper number: 1, Paper title: .*')
+        assert messages
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author2@mail.com' in recipients
+        assert 'author@mail.com' in recipients
+        assert 'test@mail.com' in recipients
 
         conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, email_pcs=True)
 
@@ -854,7 +874,6 @@ class TestCommentNotification():
         assert messages[3]['content']['subject'] == 'OpenReview signup confirmation'
         assert messages[4]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
-
     def test_notify_except_program_chairs(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1080,7 +1099,6 @@ class TestCommentNotification():
         assert len(messages) == 2
         assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
         assert messages[1]['content']['subject'] == '[COLT 2017] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
-
 
     def test_notify_except_authors_are_program_chairs(self, client, test_client):
 

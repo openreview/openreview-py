@@ -739,7 +739,7 @@ class TestDoubleBlindConference():
         builder.set_double_blind(True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True, email_pcs = True)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
@@ -787,22 +787,28 @@ class TestDoubleBlindConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your submission: "New paper title"')
+        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your submission - Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[AKBC 2019] Your review has been received on your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[AKBC 2019] Your review has been received on your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer2@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[AKBC 2019] A review has been received on Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'pc@mail.com' in recipients
+        assert 'pc2@mail.com' in recipients
 
         ## Check review visibility
         notes = reviewer_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Official_Review')
