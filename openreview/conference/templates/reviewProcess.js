@@ -7,14 +7,13 @@ function(){
     var REVIEWERS_ID = '';
     var AREA_CHAIRS_ID = '';
     var PROGRAM_CHAIRS_ID = '';
+    var REVIEWERS_SUBMITTED = '';
 
     var forumNote = or3client.or3request(or3client.notesUrl+'?id='+note.forum, {}, 'GET', token);
 
     forumNote.then(function(result) {
       var forum = result.notes[0];
       var promises = [];
-
-      REVIEWERS_SUBMITTED = REVIEWERS_ID + '/Submitted';
 
       if (PROGRAM_CHAIRS_ID){
         var program_chair_mail = {
@@ -41,9 +40,17 @@ function(){
         promises.push(or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token ));
       }
 
-      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)) {
+      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)){
         var reviewer_mail = {
           groups: [REVIEWERS_ID],
+          ignoreGroups: [note.tauthor],
+          subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        };
+        promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
+      } else if (note.readers.includes(REVIEWERS_SUBMITTED)) {
+        var reviewer_mail = {
+          groups: [REVIEWERS_SUBMITTED],
           ignoreGroups: [note.tauthor],
           subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
@@ -62,6 +69,9 @@ function(){
 
       return Promise.all(promises)
       .then(function(result){
+        if (REVIEWERS_SUBMITTED === '') {
+          REVIEWERS_SUBMITTED = REVIEWERS_ID + '/Submitted'
+        }
         return or3client.addGroupMember(REVIEWERS_SUBMITTED, note.signatures[0], token);
       })
     })
