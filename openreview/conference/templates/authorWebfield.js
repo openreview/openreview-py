@@ -83,6 +83,11 @@ function load() {
 function renderConferenceTabs() {
   var sections = [
     {
+      heading: 'Your Submissions',
+      id: 'your-submissions',
+      active: true
+    },
+    {
       heading: 'Author Schedule',
       id: 'author-schedule',
       content: HEADER.schedule
@@ -90,10 +95,6 @@ function renderConferenceTabs() {
     {
       heading: 'Author Tasks',
       id: 'author-tasks'
-    },
-    {
-      heading: 'Your Submissions',
-      id: 'your-submissions',
     }
   ];
 
