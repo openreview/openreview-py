@@ -10,8 +10,6 @@ var SUBMISSION_ID = '';
 var BID_ID = '';
 var SUBJECT_AREAS = '';
 
-var USER_SCORES_INVITATION_ID = CONFERENCE_ID + '/-/User_Scores';
-
 // Main is the entry point to the webfield code and runs everything
 function main() {
   Webfield.ui.setup('#invitation-container', CONFERENCE_ID);  // required
@@ -26,45 +24,40 @@ function main() {
 
 // Perform all the required API calls
 function load() {
-  var notesP = Webfield.getAll('/notes', {invitation: BLIND_SUBMISSION_ID, details: 'tags'}).then(function(allNotes) {
-    return allNotes.map(function(note) {
-      note.details.tags = note.details.tags.filter(function(tag) {
-        return tag.tauthor;
-      });
-      return note;
-    });
+  var notesP = Webfield.getAll('/notes', {
+    invitation: BLIND_SUBMISSION_ID,
+    noDetails: true
   });
 
-  var authoredNotesP = Webfield.getAll('/notes', {'content.authorids': user.profile.id, invitation: SUBMISSION_ID});
-
-  var tagInvitationsP = Webfield.getAll('/invitations', {id: BID_ID}).then(function(invitations) {
-    return invitations.filter(function(invitation) {
-      return invitation.invitees.length;
-    });
+  var authoredNotesP = Webfield.getAll('/notes', {
+    'content.authorids': user.profile.id,
+    invitation: SUBMISSION_ID,
+    noDetails: true
   });
 
-  var userScoresP = Webfield.getAll('/notes', {invitation: USER_SCORES_INVITATION_ID}).then(function(scoreNotes) {
-    // Build mapping from forum id to an object with the user's scores
-    // (tpms and conflict if available)
-    var metadataNotesMap = {};
-    var userScores = _.find(scoreNotes, ['content.user', user.profile.id]);
-    if (!userScores) {
-      return metadataNotesMap;
+  var edgesMapP = Webfield.getAll('/edges', {
+    invitation: BID_ID
+  })
+  .then(function(edges) {
+    if (!edges || !edges.length) {
+      return {}
     }
 
-    userScores = userScores.content.scores;
-    for (var i = 0; i < userScores.length; i++) {
-      metadataNotesMap[userScores[i].forum] = _.omit(userScores[i], ['forum']);
-    }
-    return metadataNotesMap;
+    return edges.reduce(function(noteMap, edge) {
+      // Only include the users bids in the map
+      if (edge.head === user.profile.id) {
+        noteMap[edge.tail] = edge;
+      }
+      return noteMap;
+    }, {});
   });
 
-  return $.when(notesP, authoredNotesP, tagInvitationsP, userScoresP);
+  return $.when(notesP, authoredNotesP, edgesMapP);
 }
 
 
 // Display the bid interface populated with loaded data
-function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesMap) {
+function renderContent(validNotes, authoredNotes, edgesMap) {
   var authoredNoteIds = _.map(authoredNotes, function(note){
     return note.id;
   });
@@ -72,7 +65,7 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
   validNotes = _.filter(validNotes, function(note){
     return !_.includes(authoredNoteIds, note.original || note.id);
   })
-  validNotes = addMetadataToNotes(validNotes, metadataNotesMap);
+  addEdgesToNotes(validNotes, edgesMap);
 
   var activeTab = 0;
   var sections;
@@ -82,8 +75,9 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
     pdfLink: true,
     replyCount: true,
     showContents: true,
-    showTags: true,
-    tagInvitations: tagInvitations
+    showTags: false,
+    showEdges: true,
+    edgeInvitations: [invitation] // Bid invitation automatically available
   };
 
   $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
@@ -98,7 +92,6 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
           search: { enabled: false },
           displayOptions: paperDisplayOptions,
           fadeIn: false
-          //pageSize: 50
         });
       }, 100);
     }
@@ -111,19 +104,22 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
     }
   });
 
-  $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, tagObj) {
-    var updatedNote = _.find(validNotes, ['id', tagObj.forum]);
+  $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edgeObj) {
+    var updatedNote = _.find(validNotes, ['id', edgeObj.tail]);
     if (!updatedNote) {
       return;
     }
-    var prevVal = _.has(updatedNote.details, 'tags[0].tag') ? updatedNote.details.tags[0].tag : 'No Bid';
+    var prevEdgeIndex = _.findIndex(updatedNote.details.edges, ['invitation', BID_ID]);
+    var prevVal = prevEdgeIndex !== -1 ?
+      updatedNote.details.edges[prevEdgeIndex].label :
+      'No Bid';
 
-    if (tagObj.ddate) {
-      tagObj.tag = 'No Bid';
+    if (edgeObj.ddate) {
+      edgeObj.label = 'No Bid';
     }
-    updatedNote.details.tags[0] = tagObj;
+    updatedNote.details.edges[prevEdgeIndex] = edgeObj;
 
-    var tagToContainerId = {
+    var labelToContainerId = {
       'Very High': 'veryHigh',
       'High': 'high',
       'Neutral': 'neutral',
@@ -132,13 +128,13 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
       'No Bid': 'noBid'
     };
 
-    var previousNoteList = binnedNotes[tagToContainerId[prevVal]];
-    var currentNoteList = binnedNotes[tagToContainerId[tagObj.tag]];
+    var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
+    var currentNoteList = binnedNotes[labelToContainerId[edgeObj.label]];
 
-    var currentIndex = _.findIndex(previousNoteList, ['id', tagObj.forum]);
+    var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.tail]);
     if (currentIndex !== -1) {
       var currentNote = previousNoteList[currentIndex];
-      currentNote.details.tags[0] = tagObj;
+      currentNote.details.edges = [edgeObj]; // Assumes notes will have only 1 type of edge
       previousNoteList.splice(currentIndex, 1);
       currentNoteList.push(currentNote);
     } else {
@@ -146,13 +142,13 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
     }
 
     // If the current tab is not the All Papers tab remove the note from the DOM and
-    // update the state of tag widget in the All Papers tab
+    // update the state of edge widget in the All Papers tab
     if (activeTab) {
       var $elem = $(e.target).closest('.note');
       $elem.fadeOut('normal', function() {
         $elem.remove();
 
-        var $container = $('#' + tagToContainerId[prevVal] + ' .submissions-list');
+        var $container = $('#' + labelToContainerId[prevVal] + ' .submissions-list');
         if (!$container.children().length) {
           $container.append('<li><p class="empty-message">No papers to display at this time</p></li>');
         }
@@ -161,7 +157,7 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
       var $noteToChange = $('#allPapers .submissions-list .note[data-id="' + updatedNote.id + '"]');
       $noteToChange.find('label[data-value="' + prevVal + '"]').removeClass('active')
         .children('input').prop('checked', false);
-      $noteToChange.find('label[data-value="' + tagObj.tag + '"]').button('toggle');
+      $noteToChange.find('label[data-value="' + edgeObj.label + '"]').button('toggle');
     }
 
     updateCounts();
@@ -181,20 +177,20 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
     var bids, n;
     for (var i = 0; i < notes.length; i++) {
       n = notes[i];
-      bids = _.filter(n.details.tags, function(t) {
+      bids = _.filter(n.details.edges, function(t) {
         return t.invitation === BID_ID;
       });
 
       if (bids.length) {
-        if (bids[0].tag === 'Very High') {
+        if (bids[0].label === 'Very High') {
           binnedNotes.veryHigh.push(n);
-        } else if (bids[0].tag === 'High') {
+        } else if (bids[0].label === 'High') {
           binnedNotes.high.push(n);
-        } else if (bids[0].tag === 'Neutral') {
+        } else if (bids[0].label === 'Neutral') {
           binnedNotes.neutral.push(n);
-        } else if (bids[0].tag === 'Low') {
+        } else if (bids[0].label === 'Low') {
           binnedNotes.low.push(n);
-        } else if (bids[0].tag === 'Very Low') {
+        } else if (bids[0].label === 'Very Low') {
           binnedNotes.veryLow.push(n);
         } else {
           binnedNotes.noBid.push(n);
@@ -288,8 +284,6 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
 
     $('#notes > .spinner-container').remove();
     $('#notes .tabs-container').show();
-
-    Webfield.ui.done();
   }
 
   function updateCounts() {
@@ -324,22 +318,15 @@ function renderContent(validNotes, authoredNotes, tagInvitations, metadataNotesM
   updateNotes(validNotes);
 }
 
-
-// Add affinity data from metadata notes to note objects
-function addMetadataToNotes(validNotes, metadataNotesMap) {
+function addEdgesToNotes(validNotes, edgesMap) {
   for (var i = 0; i < validNotes.length; i++) {
-    var note = validNotes[i];
-    var paperMetadataObj = metadataNotesMap.hasOwnProperty(note.id) ? metadataNotesMap[note.id] : {};
-
-    note.metadata = {
-      tfidfScore: paperMetadataObj.hasOwnProperty('tfidfScore') ? paperMetadataObj['tfidfScore'] : 0,
-      conflict: paperMetadataObj.hasOwnProperty('conflict')
-    };
-
-    note.content['TFIDF Score'] = note.metadata.tfidfScore.toFixed(3);
+    var noteId = validNotes[i].id;
+    if (edgesMap.hasOwnProperty(noteId)) {
+      validNotes[i].details.edges = [edgesMap[noteId]];
+    } else {
+      validNotes[i].details.edges = [];
+    }
   }
-
-  return _.orderBy(validNotes, ['metadata.tfidfScore'], ['desc']);
 }
 
 // Go!
