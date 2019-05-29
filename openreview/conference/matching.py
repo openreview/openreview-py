@@ -353,6 +353,7 @@ class Matching(object):
                         'order': 15
                     },
                     'status': {
+                        'default': 'Initialized',
                         'value-dropdown': ['Initialized', 'Running', 'Error', 'No Solution', 'Complete', 'Deployed']
                     }
                 }
@@ -484,9 +485,19 @@ class Matching(object):
                             self.conference.get_program_chairs_id(),
                             self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
                         ],
+                        'writers': [
+                            self.conference.get_id(),
+                            self.conference.get_program_chairs_id(),
+                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
+                        ]
                     }
                     parent_group_params = {
                        'readers': [
+                            self.conference.get_id(),
+                            self.conference.get_program_chairs_id(),
+                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
+                        ],
+                        'writers': [
                             self.conference.get_id(),
                             self.conference.get_program_chairs_id(),
                             self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)

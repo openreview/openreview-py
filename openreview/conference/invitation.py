@@ -358,17 +358,19 @@ class ReviewInvitation(openreview.Invitation):
             readers.append(conference.get_authors_id(number = note.number))
             nonreaders = []
 
-
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
             file_content = f.read()
 
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
-            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+            file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id(number = note.number) + "';")
+            file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id(number = note.number) + "';")
+
+            if conference.use_area_chairs:
+                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id(number = note.number) + "';")
+
             if email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
             super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(conference.review_name, note.number),
                 cdate = tools.datetime_millis(start_date),
@@ -424,15 +426,18 @@ class ReviewRevisionInvitation(openreview.Invitation):
                     'replyto': None,
                     'referent': review.id
                 },
-                writers = [ review.invitation.split('/-/')[0] ],
-                signatures = [ review.invitation.split('/-/')[0] ],
+                writers = [conference.id],
+                signatures = [conference.id],
                 process_string = file_content
             )
 
 class MetaReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, start_date, due_date, public):
+    def __init__(self, conference, note, start_date, due_date, public, additional_fields):
         content = invitations.meta_review.copy()
+
+        for key in additional_fields:
+            content[key] = additional_fields[key]
 
         readers = ['everyone']
         regex = conference.get_program_chairs_id()
@@ -481,13 +486,13 @@ class DecisionInvitation(openreview.Invitation):
             'title': {
                 'order': 1,
                 'required': True,
-                'value': 'Acceptance Decision'
+                'value': 'Paper Decision'
             },
             'decision': {
                 'order': 2,
                 'required': True,
                 'value-radio': options,
-                'description': 'Acceptance decision'
+                'description': 'Decision'
             },
             'comment': {
                 'order': 3,
@@ -627,11 +632,10 @@ class InvitationBuilder(object):
 
         return invitations
 
-
-    def set_meta_review_invitation(self, conference, notes, start_date, due_date, public):
+    def set_meta_review_invitation(self, conference, notes, start_date, due_date, public, additional_fields):
 
         for note in notes:
-            self.client.post_invitation(MetaReviewInvitation(conference, note, start_date, due_date, public))
+            self.client.post_invitation(MetaReviewInvitation(conference, note, start_date, due_date, public, additional_fields))
 
     def set_decision_invitation(self, conference, notes, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
 

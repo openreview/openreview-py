@@ -201,7 +201,6 @@ class TestDoubleBlindConference():
 
     def test_enable_submissions(self, client, selenium, request_page):
 
-
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -317,7 +316,7 @@ class TestDoubleBlindConference():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
@@ -403,7 +402,6 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
         assert len(papers.find_elements_by_class_name('note')) == 1
-
 
     def test_recruit_reviewers(self, client, selenium, request_page):
 
@@ -607,7 +605,7 @@ class TestDoubleBlindConference():
         conference.close_submissions()
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         submission = notes[0]
-        assert ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
+        assert [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
 
@@ -650,7 +648,6 @@ class TestDoubleBlindConference():
         assert len(blind_submissions_3) == 1
         assert blind_submissions[0].id == blind_submissions_3[0].id
         assert blind_submissions_3[0].readers == ['everyone']
-
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
@@ -730,7 +727,6 @@ class TestDoubleBlindConference():
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
 
-
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
@@ -753,7 +749,7 @@ class TestDoubleBlindConference():
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)
         now = datetime.datetime.utcnow()
-        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True)
+        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True, email_pcs = True)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -791,22 +787,28 @@ class TestDoubleBlindConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your submission: "New paper title"')
+        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your submission - Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[AKBC 2019] Review posted to your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[AKBC 2019] Your review has been received on your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[AKBC 2019] Your review has been received on your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer2@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[AKBC 2019] A review has been received on Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'pc@mail.com' in recipients
+        assert 'pc2@mail.com' in recipients
 
         ## Check review visibility
         notes = reviewer_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Official_Review')
@@ -929,6 +931,53 @@ class TestDoubleBlindConference():
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
 
+    def test_open_meta_reviews_additional_options(self, client, test_client, selenium, request_page, helpers):
+
+        ac_client = helpers.create_user('meta_additional@mail.com', 'TestMetaAdditional', 'User')
+        assert ac_client is not None, "Client is none"
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_double_blind(True)
+        builder.has_area_chairs(True)
+        builder.set_conference_short_name('AKBC 2019')
+        conference = builder.get_result()
+
+        conference.open_meta_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+            'best paper' : {
+                'description' : 'Nominate as best paper?',
+                'value-radio' : ['Yes', 'No'],
+                'required' : True
+            }
+        })
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        conference.set_assignment('meta_additional@mail.com', submission.number, is_area_chair = True)
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            content = {
+                'title': 'Meta review title',
+                'metareview': 'Excellent Paper!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain'
+            }
+        )
+        with pytest.raises(openreview.OpenReviewException, match=r'missing'):
+            meta_review_note = ac_client.post_note(note)
+        note.content['best paper'] = 'Yes'
+        meta_review_note = ac_client.post_note(note)
+        assert meta_review_note
+        assert meta_review_note.content['best paper'] == 'Yes', 'Additional field not initialized'
+
     def test_open_decisions(self, client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -955,7 +1004,7 @@ class TestDoubleBlindConference():
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'Great!',
             }
@@ -973,7 +1022,7 @@ class TestDoubleBlindConference():
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'Great!',
             }
@@ -992,7 +1041,7 @@ class TestDoubleBlindConference():
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'Great!',
             }
@@ -1000,8 +1049,6 @@ class TestDoubleBlindConference():
 
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
-
-
 
     def test_consoles(self, client, test_client, selenium, request_page):
 

@@ -61,12 +61,12 @@ class TestMatching():
 
         ## Open submissions
         now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))        
+        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
 
         ## Paper 1
         note_1 = openreview.Note(invitation = invitation.id,
             readers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            writers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
+            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title 1',
@@ -81,12 +81,12 @@ class TestMatching():
         )
         url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
         note_1.content['pdf'] = url
-        note_1 = test_client.post_note(note_1)        
+        note_1 = test_client.post_note(note_1)
 
         ## Paper 2
         note_2 = openreview.Note(invitation = invitation.id,
             readers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            writers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
+            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a2@mit.edu'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title 2',
@@ -106,7 +106,7 @@ class TestMatching():
         ## Paper 3
         note_3 = openreview.Note(invitation = invitation.id,
             readers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
-            writers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
+            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title 3',
@@ -125,7 +125,7 @@ class TestMatching():
 
         ## Create blind submissions
         blinded_notes = conference.create_blind_submissions()
-        conference.set_authors()        
+        conference.set_authors()
 
         ## Open Bidding
         conference.open_bids(due_date = now + datetime.timedelta(minutes = 40), request_count = 50, with_area_chairs = True)
@@ -211,7 +211,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[0].id
@@ -233,7 +233,7 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][4].get('conflicts') is None
 
 
-    def test_setup_matching_with_tpms(self, client, test_client, helpers): 
+    def test_setup_matching_with_tpms(self, client, test_client, helpers):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -315,7 +315,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[2].id
@@ -337,7 +337,7 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][4].get('conflicts') is None
 
 
-    def test_setup_matching_with_recommendations(self, client, test_client, helpers): 
+    def test_setup_matching_with_recommendations(self, client, test_client, helpers):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -444,7 +444,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[2].id
@@ -463,10 +463,10 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][3].get('conflicts') is None
         assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
-        assert metadata_notes[2].content['entries'][4].get('conflicts') is None  
+        assert metadata_notes[2].content['entries'][4].get('conflicts') is None
 
 
-    def test_setup_matching_with_subject_areas(self, client, test_client, helpers): 
+    def test_setup_matching_with_subject_areas(self, client, test_client, helpers):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -567,7 +567,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[2].id
@@ -586,4 +586,4 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][3].get('conflicts') is None
         assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
-        assert metadata_notes[2].content['entries'][4].get('conflicts') is None  
+        assert metadata_notes[2].content['entries'][4].get('conflicts') is None

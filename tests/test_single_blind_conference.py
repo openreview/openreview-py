@@ -162,7 +162,7 @@ class TestSingleBlindConference():
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['everyone'],
-            writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
@@ -278,7 +278,7 @@ class TestSingleBlindConference():
         conference.close_submissions()
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
-        assert ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
+        assert [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, test_client.token)
 
@@ -409,15 +409,15 @@ class TestSingleBlindConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission: "New paper title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your submission - Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac2@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[MLITS 2018] Your review has been received on your assigned paper: "New paper title"')
+        messages = client.get_messages(subject = '[MLITS 2018] Your review has been received on your assigned Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer@mail.com' in recipients
@@ -456,10 +456,11 @@ class TestSingleBlindConference():
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
-        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned paper: "New paper title"')
-        assert len(messages) == 2
+        messages = client.get_messages(subject = '[MLITS 2018] Review posted to your assigned Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'ac2@mail.com' in recipients
+        assert 'reviewer@mail.com' in recipients
 
     def test_consoles(self, client, test_client, selenium, request_page, helpers):
 

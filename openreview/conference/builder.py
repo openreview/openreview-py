@@ -441,9 +441,9 @@ class Conference(object):
     def close_reviews(self):
         return self.__expire_invitations(self.review_name)
 
-    def open_meta_reviews(self, start_date = None, due_date = None, public = False):
+    def open_meta_reviews(self, start_date = None, due_date = None, public = False, additional_fields = {}):
         notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, start_date, due_date, public)
+        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, start_date, due_date, public, additional_fields)
 
     def open_decisions(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
         notes_iterator = self.get_submissions()
@@ -476,6 +476,31 @@ class Conference(object):
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
+    def set_area_chair_recruitment_groups(self):
+        if self.use_area_chairs:
+            parent_group_id = self.get_area_chairs_id()
+            parent_group_declined_id = parent_group_id + '/Declined'
+            parent_group_invited_id = parent_group_id + '/Invited'
+            parent_group_accepted_id = parent_group_id
+
+            pcs_id = self.get_program_chairs_id()
+            parent_group_accepted_group = self.__create_group(parent_group_accepted_id, pcs_id)
+            parent_group_declined_group = self.__create_group(parent_group_declined_id, pcs_id)
+            parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
+        else:
+            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
+
+    def set_reviewer_recruitment_groups(self):
+        parent_group_id = self.get_reviewers_id()
+        parent_group_declined_id = parent_group_id + '/Declined'
+        parent_group_invited_id = parent_group_id + '/Invited'
+        parent_group_accepted_id = parent_group_id
+
+        pcs_id = self.get_program_chairs_id()
+        parent_group_accepted_group = self.__create_group(parent_group_accepted_id, pcs_id)
+        parent_group_declined_group = self.__create_group(parent_group_declined_id, pcs_id)
+        parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
+
     def set_reviewers(self, emails):
         self.__create_group(self.get_reviewers_id(), self.id, emails)
         return self.__set_reviewer_page()
@@ -496,34 +521,40 @@ class Conference(object):
 
     def set_assignment(self, user, number, is_area_chair = False):
 
-        parent_label = self.reviewers_name
-        individual_label = 'Anon' + self.reviewers_name[:-1]
 
         if is_area_chair:
-            parent_label = self.area_chairs_name
-            individual_label = self.area_chairs_name[:-1]
             return tools.add_assignment(self.client,
             number,
             self.get_id(),
             user,
-            parent_label = parent_label,
-            individual_label = individual_label)
+            parent_label = 'Area_Chairs',
+            individual_label = 'Area_Chair')
         else:
             return tools.add_assignment(self.client,
             number,
             self.get_id(),
             user,
-            parent_label = parent_label,
-            individual_label = individual_label,
+            parent_label = 'Reviewers',
+            individual_label = 'AnonReviewer',
             individual_group_params = {
                 'readers': [
                     self.get_id(),
                     self.get_program_chairs_id(),
                     self.get_area_chairs_id(number = number)
                 ],
+                'writers': [
+                    self.get_id(),
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = number)
+                ]
             },
             parent_group_params = {
                 'readers': [
+                    self.get_id(),
+                    self.get_program_chairs_id(),
+                    self.get_area_chairs_id(number = number)
+                ],
+                'writers': [
                     self.get_id(),
                     self.get_program_chairs_id(),
                     self.get_area_chairs_id(number = number)
@@ -774,4 +805,7 @@ class ConferenceBuilder(object):
             self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)
+        if self.conference.use_area_chairs:
+            self.conference.set_area_chair_recruitment_groups()
+        self.conference.set_reviewer_recruitment_groups()
         return self.conference
