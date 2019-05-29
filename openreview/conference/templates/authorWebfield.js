@@ -40,7 +40,7 @@ function load() {
   var invitationsP;
   var tagInvitationsP;
 
-  if (!user) {
+  if (!user || _.startsWith(user.id, 'guest_')) {
     authorNotesP = $.Deferred().resolve([]);
     invitationsP = $.Deferred().resolve([]);
     tagInvitationsP = $.Deferred().resolve([]);
@@ -83,11 +83,6 @@ function load() {
 function renderConferenceTabs() {
   var sections = [
     {
-      heading: 'Your Submissions',
-      id: 'your-submissions',
-      active: true
-    },
-    {
       heading: 'Author Schedule',
       id: 'author-schedule',
       content: HEADER.schedule
@@ -95,6 +90,11 @@ function renderConferenceTabs() {
     {
       heading: 'Author Tasks',
       id: 'author-tasks'
+    },
+    {
+      heading: 'Your Submissions',
+      id: 'your-submissions',
+      active: true
     }
   ];
 
@@ -114,21 +114,14 @@ function renderContent(authorNotes, invitations, tagInvitations) {
   $(tasksOptions.container).empty();
 
   Webfield.ui.newTaskList(invitations, tagInvitations, tasksOptions);
-  $('.tabs-container a[href="#author-tasks"]').parent().show();
 
   // Your Private Versions and Your Anonymous Versions tabs
-  if (authorNotes.length) {
-    Webfield.ui.submissionList(authorNotes, {
-      heading: null,
-      container: '#your-submissions',
-      search: { enabled: false },
-      displayOptions: paperDisplayOptions
-    });
-
-    $('.tabs-container a[href="#your-submissions"]').parent().show();
-  } else {
-    $('.tabs-container a[href="#your-submissions"]').parent().hide();
-  }
+  Webfield.ui.submissionList(authorNotes, {
+    heading: null,
+    container: '#your-submissions',
+    search: { enabled: false },
+    displayOptions: paperDisplayOptions
+  });
 
   // Remove spinner and show content
   $('#notes .spinner-container').remove();
