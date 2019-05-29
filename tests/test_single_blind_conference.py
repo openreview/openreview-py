@@ -58,7 +58,7 @@ class TestSingleBlindConference():
         assert groups[3].signatures == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatories == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].members == []
-        webfieldHeaderString = groups[3].web[400:1230]
+        webfieldHeaderString = groups[3].web[550:1430]
         assert '"title": "2018 NIPS MLITS Workshop"' in webfieldHeaderString
         assert '"subtitle": "Machine Learning for Intelligent Transportation Systems"' in webfieldHeaderString
         assert '"location": "Montreal, Canada"' in webfieldHeaderString
