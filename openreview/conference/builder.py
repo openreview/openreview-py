@@ -510,11 +510,11 @@ class Conference(object):
         notes_iterator = self.get_submissions(details='original')
 
         for n in notes_iterator:
-            group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
+            group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id, is_signatory = False)
             authorids = n.content.get('authorids')
             if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']
-            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids, False)
+            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
 
     def setup_matching(self, affinity_score_file = None, tpms_score_file = None):
         conference_matching = matching.Matching(self)
