@@ -7,7 +7,7 @@ class TestEdges:
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
-        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_conference_id('NIPS.cc/2020/Workshop/MLITS')
         conference = builder.get_result()
 
         # Edge invitation

@@ -58,13 +58,12 @@ class TestSingleBlindConference():
         assert groups[3].signatures == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatories == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].members == []
-        webfieldHeaderString = groups[3].web[750:1408]
-        assert '"title": "2018 NIPS MLITS Workshop"' in webfieldHeaderString
-        assert '"subtitle": "Machine Learning for Intelligent Transportation Systems"' in webfieldHeaderString
-        assert '"location": "Montreal, Canada"' in webfieldHeaderString
-        assert '"date": "December 3-8, 2018"' in webfieldHeaderString
-        assert '"website": "https://sites.google.com/site/nips2018mlits/home"' in webfieldHeaderString
-        assert '"deadline": "October 12, 2018, 11:59 pm UTC"' in webfieldHeaderString
+        assert '"title": "2018 NIPS MLITS Workshop"' in groups[3].web
+        assert '"subtitle": "Machine Learning for Intelligent Transportation Systems"' in groups[3].web
+        assert '"location": "Montreal, Canada"' in groups[3].web
+        assert '"date": "December 3-8, 2018"' in groups[3].web
+        assert '"website": "https://sites.google.com/site/nips2018mlits/home"' in groups[3].web
+        assert '"deadline": "October 12, 2018, 11:59 pm UTC"' in groups[3].web
 
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS")
 
