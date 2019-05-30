@@ -172,9 +172,17 @@ class BidInvitation(openreview.Invitation):
                     'values-regex': '~.*'
                 },
                 'content': {
-                    'tag': {
+                    'edge': {
                         'required': True,
-                        'value-radio': [ 'Very High', 'High', 'Neutral', 'Low', 'Very Low']
+                        'head': 'profile',
+                        'tail': 'note',
+                        'value-radio': [
+                            ['Very High', 1],
+                            ['High', 0.5],
+                            ['Neutral', 0],
+                            ['Low', -0.5],
+                            ['Very Low', -1]
+                        ]
                     }
                 }
             }
