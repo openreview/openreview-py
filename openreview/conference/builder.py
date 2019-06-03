@@ -43,7 +43,7 @@ class Conference(object):
         self.decision_name = 'Decision'
         self.layout = 'tabs'
 
-    def __create_group(self, group_id, group_owner_id, members = []):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True):
 
         group = tools.get_group(self.client, id = group_id)
         if group is None:
@@ -51,7 +51,7 @@ class Conference(object):
                 readers = [self.id, group_owner_id, group_id],
                 writers = [self.id],
                 signatures = [self.id],
-                signatories = [group_id],
+                signatories = [group_id] if is_signatory else [self.id],
                 members = members))
         else:
             return self.client.add_members_to_group(group, members)
@@ -435,6 +435,7 @@ class Conference(object):
         invitations = self.invitation_builder.set_review_invitation(self, notes, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
         ## Create submitted groups if they don't exist
         for n in notes:
+            self.__create_group(self.get_id() + '/Paper{}/Reviewers'.format(n.number), self.get_program_chairs_id())
             self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
         return invitations
 
@@ -509,7 +510,7 @@ class Conference(object):
         notes_iterator = self.get_submissions(details='original')
 
         for n in notes_iterator:
-            group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id)
+            group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id, is_signatory = False)
             authorids = n.content.get('authorids')
             if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']
