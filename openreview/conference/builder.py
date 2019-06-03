@@ -659,10 +659,10 @@ class Conference(object):
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
         options['blind_submission_id'] = self.get_blind_submission_id()
-        options['decision_invitation_regex'] = self.id + '/-/Paper.*/' + invitation_name
+        options['decision_invitation_regex'] = self.get_invitation_id(invitation_name, '.*')
         if not decision_heading_map:
             decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.id + '/-/Paper.*/' + invitation_name, limit = 1)
+            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), limit = 1)
             if invitations:
                 for option in invitations[0].reply['content']['decision']['value-radio']:
                     decision_heading_map[option] = option + ' Papers'
