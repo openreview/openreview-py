@@ -986,6 +986,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         conference.set_program_chairs(emails = ['akbc_pc@mail.com'])
@@ -999,7 +1000,7 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             nonreaders = ['AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
@@ -1036,7 +1037,7 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs',
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
             'AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
@@ -1058,6 +1059,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         #Program chair user
