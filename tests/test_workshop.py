@@ -614,3 +614,26 @@ class TestWorkshop():
         accepted_notes = accepted_panel.find_elements_by_class_name('note')
         assert accepted_notes
         assert len(accepted_notes) == 1
+
+    def test_pc_console(self, client, selenium, request_page):
+
+        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
+
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs", pc_client.token)
+        assert "ICAPS 2019 Workshop HSDIP Program Chairs | OpenReview" in selenium.title
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('reviewer-status')
+        with pytest.raises(NoSuchElementException):
+            assert tabs.find_element_by_id('areachair-status')
+
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-0').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+
+        with pytest.raises(NoSuchElementException):
+            assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4')

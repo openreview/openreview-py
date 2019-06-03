@@ -986,6 +986,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         conference.set_program_chairs(emails = ['akbc_pc@mail.com'])
@@ -999,7 +1000,7 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs'],
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             nonreaders = ['AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
@@ -1036,7 +1037,7 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs',
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
             'AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
@@ -1058,6 +1059,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         #Program chair user
@@ -1073,3 +1075,19 @@ class TestDoubleBlindConference():
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
+
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Program_Chairs", pc_client.token)
+        assert "AKBC 2019 Conference Program Chairs | OpenReview" in selenium.title
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('reviewer-status')
+        assert tabs.find_element_by_id('areachair-status')
+
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-0').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
