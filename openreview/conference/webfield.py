@@ -67,7 +67,6 @@ class WebfieldBuilder(object):
 
         if layout == 'decisions':
             template_name = 'tabsConferenceDecisionsWebfield.js'
-        print('MAP', json.dumps(options.get('decision_heading_map', '{}')))
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/' + template_name)) as f:
             content = f.read()
