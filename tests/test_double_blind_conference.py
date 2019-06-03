@@ -1073,3 +1073,19 @@ class TestDoubleBlindConference():
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
+
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Program_Chairs", pc_client.token)
+        assert "AKBC 2019 Conference Program Chairs | OpenReview" in selenium.title
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('reviewer-status')
+        assert tabs.find_element_by_id('areachair-status')
+
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-0').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
