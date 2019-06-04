@@ -39,6 +39,7 @@ class Conference(object):
         self.recommendation_name = 'Recommendation'
         self.registration_name = 'Registration'
         self.review_stage = ReviewStage()
+        self.comment_stage = CommentStage()
         self.meta_review_name = 'Meta_Review'
         self.decision_name = 'Decision'
         self.layout = 'tabs'
@@ -124,6 +125,12 @@ class Conference(object):
             self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
         return invitations
 
+    def _create_comment_stage(self):
+
+        ## Create comment invitations per paper
+        notes_iterator = self.get_submissions()
+        return self.invitation_builder.set_comment_invitation(self, notes_iterator)
+
     def set_id(self, id):
         self.id = id
 
@@ -151,6 +158,10 @@ class Conference(object):
     def set_review_stage(self, stage):
         self.review_stage = stage
         return self._create_review_stage()
+
+    def set_comment_stage(self, stage):
+        self.comment_stage = stage
+        return self._create_comment_stage()
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -192,6 +203,21 @@ class Conference(object):
         else:
             area_chairs_id = area_chairs_id + self.area_chairs_name
         return area_chairs_id
+
+    def get_committee(self, number = None, submitted_reviewers = False):
+        committee = []
+        committee.append(self.get_authors_id(number))
+
+        if submitted_reviewers:
+            committee.append(self.get_reviewers_id(number) + '/Submitted')
+        else:
+            committee.append(self.get_reviewers_id(number))
+
+        if self.use_area_chairs:
+            committee.append(self.get_area_chairs_id(number))
+        committee.append(self.get_program_chairs_id())
+
+        return committee
 
     def get_submission_id(self):
         return self.get_invitation_id(self.submission_name)
@@ -423,13 +449,8 @@ class Conference(object):
     def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
         return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
 
-    def open_comments(self, name = 'Comment', start_date = None, public = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
-        ## Create comment invitations per paper
-        notes_iterator = self.get_submissions()
-        if public:
-            self.invitation_builder.set_public_comment_invitation(self, notes_iterator, name, start_date, anonymous, reader_selection, email_pcs)
-        else:
-            self.invitation_builder.set_private_comment_invitation(self, notes_iterator, name, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
+    def open_comments(self):
+        self._create_comment_stage()
 
     def close_comments(self, name):
         return self.__expire_invitations(name)
@@ -711,6 +732,16 @@ class ReviewStage(object):
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
 
+class CommentStage(object):
+
+    def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
+        self.start_date = start_date
+        self.allow_public_comments = allow_public_comments
+        self.anonymous = anonymous
+        self.unsubmitted_reviewers = unsubmitted_reviewers
+        self.reader_selection = reader_selection
+        self.email_pcs = email_pcs
+
 
 class ConferenceBuilder(object):
 
@@ -720,6 +751,7 @@ class ConferenceBuilder(object):
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
         self.review_stage = None
+        self.comment_stage = None
 
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
@@ -809,6 +841,9 @@ class ConferenceBuilder(object):
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
 
+    def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
+        self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
+
     def set_meta_review_name(self, meta_review_name):
         self.conference.meta_review_name = meta_review_name
 
@@ -857,5 +892,8 @@ class ConferenceBuilder(object):
 
         if self.review_stage:
             self.conference.set_review_stage(self.review_stage)
+
+        if self.comment_stage:
+            self.conference.set_comment_stage(self.comment_stage)
 
         return self.conference
