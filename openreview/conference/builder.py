@@ -439,9 +439,8 @@ class Conference(object):
         return blinded_notes
 
     ## Deprecated
-    def open_bids(self, start_date = None, due_date = None, request_count = 50, with_area_chairs = False):
-        self.invitation_builder.set_bid_invitation(self, start_date, due_date, request_count, with_area_chairs)
-        return self.__set_bid_page()
+    def open_bids(self):
+        return self._create_bid_stage()
 
     def close_bids(self):
         return self.__expire_invitation(self.get_bid_id())
