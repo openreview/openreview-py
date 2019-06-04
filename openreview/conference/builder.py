@@ -35,9 +35,9 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.submission_name = 'Submission'
-        self.bid_name = 'Bid'
         self.recommendation_name = 'Recommendation'
         self.registration_name = 'Registration'
+        self.bid_stage = BidStage()
         self.review_stage = ReviewStage()
         self.comment_stage = CommentStage()
         self.meta_review_name = 'Meta_Review'
@@ -113,6 +113,11 @@ class Conference(object):
 
         return len(invitations)
 
+    def _create_bid_stage(self):
+
+        self.invitation_builder.set_bid_invitation(self)
+        return self.__set_bid_page()
+
     def _create_review_stage(self):
 
         self.set_authors()
@@ -154,6 +159,10 @@ class Conference(object):
 
     def set_reviewers_name(self, name):
         self.reviewers_name = name
+
+    def set_bid_stage(self, stage):
+        self.bid_stage = stage
+        return self._create_bid_stage()
 
     def set_review_stage(self, stage):
         self.review_stage = stage
@@ -229,7 +238,7 @@ class Conference(object):
         return self.get_invitation_id(name)
 
     def get_bid_id(self):
-        return self.get_invitation_id(self.bid_name)
+        return self.get_invitation_id(self.bid_stage.name)
 
     def get_recommendation_id(self, number = None):
         return self.get_invitation_id(self.recommendation_name, number)
@@ -429,6 +438,7 @@ class Conference(object):
         self.__set_program_chair_page()
         return blinded_notes
 
+    ## Deprecated
     def open_bids(self, start_date = None, due_date = None, request_count = 50, with_area_chairs = False):
         self.invitation_builder.set_bid_invitation(self, start_date, due_date, request_count, with_area_chairs)
         return self.__set_bid_page()
@@ -717,6 +727,14 @@ class Conference(object):
         self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
 
 
+class BidStage(object):
+
+    def __init__(self, start_date = None, due_date = None, request_count = 50):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = 'Bid'
+        self.request_count = request_count
+
 class ReviewStage(object):
 
     def __init__(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
@@ -750,6 +768,7 @@ class ConferenceBuilder(object):
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
+        self.bid_stage = None
         self.review_stage = None
         self.comment_stage = None
 
@@ -838,6 +857,9 @@ class ConferenceBuilder(object):
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
+    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50):
+        self.bid_stage = BidStage(start_date, due_date, request_count)
+
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
 
@@ -889,6 +911,9 @@ class ConferenceBuilder(object):
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
+
+        if self.bid_stage:
+            self.conference.set_bid_stage(self.bid_stage)
 
         if self.review_stage:
             self.conference.set_review_stage(self.review_stage)

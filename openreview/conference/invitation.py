@@ -138,7 +138,9 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference, start_date, due_date, request_count, with_area_chairs):
+    def __init__(self, conference):
+
+        bid_stage = conference.bid_stage
 
         readers = [
             conference.get_id(),
@@ -147,20 +149,20 @@ class BidInvitation(openreview.Invitation):
         ]
 
         invitees = [ conference.get_reviewers_id() ]
-        if with_area_chairs:
+        if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id())
             invitees.append(conference.get_area_chairs_id())
 
         super(BidInvitation, self).__init__(id = conference.get_bid_id(),
-            cdate = tools.datetime_millis(start_date),
-            duedate = tools.datetime_millis(due_date),
-            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
+            cdate = tools.datetime_millis(bid_stage.start_date),
+            duedate = tools.datetime_millis(bid_stage.due_date),
+            expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
             multiReply = True,
-            taskCompletionCount = request_count,
+            taskCompletionCount = bid_stage.request_count,
             reply = {
                 'forum': None,
                 'replyto': None,
@@ -585,9 +587,9 @@ class InvitationBuilder(object):
 
         return  self.client.post_invitation(invitation)
 
-    def set_bid_invitation(self, conference, start_date, due_date, request_count, with_area_chairs):
+    def set_bid_invitation(self, conference):
 
-        invitation = BidInvitation(conference, start_date, due_date, request_count, with_area_chairs)
+        invitation = BidInvitation(conference)
 
         return self.client.post_invitation(invitation)
 

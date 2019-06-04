@@ -715,13 +715,12 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_double_blind(True)
         builder.has_area_chairs(True)
+        now = datetime.datetime.utcnow()
+        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 50)
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_bids(due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, with_area_chairs = False)
-        assert invitation
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')

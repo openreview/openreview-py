@@ -51,6 +51,8 @@ class TestMatching():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+        now = datetime.datetime.utcnow()
+        builder.set_bid_stage(due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -60,7 +62,6 @@ class TestMatching():
         conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com'])
 
         ## Open submissions
-        now = datetime.datetime.utcnow()
         invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
 
         ## Paper 1
@@ -126,9 +127,6 @@ class TestMatching():
         ## Create blind submissions
         blinded_notes = conference.create_blind_submissions()
         conference.set_authors()
-
-        ## Open Bidding
-        conference.open_bids(due_date = now + datetime.timedelta(minutes = 40), request_count = 50, with_area_chairs = True)
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
         ac1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
