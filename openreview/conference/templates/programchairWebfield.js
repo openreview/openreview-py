@@ -338,11 +338,26 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
       var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
-      return [number, summaryHtml, reviewHtml, areachairHtml, decisionHtml];
+      var rows = [];
+      rows.push(number);
+      rows.push(summaryHtml);
+      rows.push(reviewHtml);
+      if (SHOW_AC_TAB) {
+        rows.push(areachairHtml);
+      }
+      rows.push(decisionHtml);
+      return rows;
     });
 
+    var headings = ['#', 'Paper Summary', 'Review Progress'];
+    if (SHOW_AC_TAB) {
+      headings.push('Status');
+    }
+    headings.push('Decision');
+
+
     var tableHTML = Handlebars.templates['components/table']({
-      headings: ['#', 'Paper Summary', 'Review Progress', 'Status', 'Decision'],
+      headings: headings,
       rows: rowData,
       extraClasses: 'console-table paper-table'
     });
@@ -351,9 +366,14 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
     $(container).append(tableHTML);
     $('.console-table th').eq(0).css('width', '4%');
     $('.console-table th').eq(1).css('width', '26%');
-    $('.console-table th').eq(2).css('width', '30%');
-    $('.console-table th').eq(3).css('width', '25%');
-    $('.console-table th').eq(4).css('width', '15%');
+    if (SHOW_AC_TAB) {
+      $('.console-table th').eq(2).css('width', '30%');
+      $('.console-table th').eq(3).css('width', '25%');
+      $('.console-table th').eq(4).css('width', '15%');
+    } else {
+      $('.console-table th').eq(2).css('width', '45%');
+      $('.console-table th').eq(3).css('width', '25%');
+    }
   }
 
   if (rowData.length) {
