@@ -341,6 +341,7 @@ class TestWorkshop():
         builder.set_double_blind(True)
         builder.set_submission_public(False)
         builder.has_area_chairs(False)
+        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, allow_public_comments = True)
         conference = builder.get_result()
         assert conference
 
@@ -350,8 +351,6 @@ class TestWorkshop():
         reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert reviews
         review = reviews[0]
-
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, email_pcs = True)
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Comment',
             forum = submission.id,
@@ -392,8 +391,6 @@ class TestWorkshop():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
-
-        conference.open_comments(name = 'Public_Comment', public = True, anonymous = False)
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Public_Comment',
             forum = submission.id,

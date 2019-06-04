@@ -128,8 +128,8 @@ class Conference(object):
     def _create_comment_stage(self):
 
         ## Create comment invitations per paper
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_comment_invitation(self, notes_iterator)
+        notes = list(self.get_submissions())
+        return self.invitation_builder.set_comment_invitation(self, notes)
 
     def set_id(self, id):
         self.id = id

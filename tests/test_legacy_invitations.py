@@ -53,7 +53,7 @@ class TestLegacyInvitations():
         conference.set_assignment('reviewer_legacy@mail.com', 1)
         conference.set_assignment('ac_legacy@mail.com', 1, True)
 
-        conference.open_comments('Official_Comment', public = False, anonymous = True)
+        conference.open_comments()
         conference.open_reviews(due_date = now + datetime.timedelta(minutes = 40))
         conference.open_meta_reviews(due_date = now + datetime.timedelta(minutes = 40))
         conference.open_decisions(due_date = now + datetime.timedelta(minutes = 40))

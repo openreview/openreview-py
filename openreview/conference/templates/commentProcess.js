@@ -7,6 +7,7 @@ function(){
     var REVIEWERS_NAME = '';
     var AREA_CHAIRS_NAME = '';
     var PROGRAM_CHAIRS_ID = '';
+    var USE_AREA_CHAIRS = false;
 
     or3client.or3request(or3client.notesUrl + '?id=' + note.forum, {}, 'GET', token)
     .then(function(result) {
@@ -66,7 +67,7 @@ function(){
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       }
 
-      if(AREA_CHAIRS_ID && (note.readers.includes(AREA_CHAIRS_ID) || note.readers.includes('everyone'))){
+      if(USE_AREA_CHAIRS && (note.readers.includes(AREA_CHAIRS_ID) || note.readers.includes('everyone'))){
         promises.push(or3client.or3request(or3client.mailUrl, ac_mail, 'POST', token));
       }
 

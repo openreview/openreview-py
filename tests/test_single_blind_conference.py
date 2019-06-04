@@ -294,7 +294,7 @@ class TestSingleBlindConference():
         conference = builder.get_result()
         conference.set_authors()
 
-        conference.open_comments('Official_Comment', public = False, anonymous = True)
+        conference.open_comments()
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
