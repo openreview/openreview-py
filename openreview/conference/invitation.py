@@ -857,7 +857,7 @@ class InvitationBuilder(object):
                         'order': 1
                     },
                     'subject_areas': {
-                        'values-dropdown': conference.get_subject_areas(),
+                        'values-dropdown': conference.submission_stage.subject_areas,
                         'required': True,
                         'order': 2
                     },
