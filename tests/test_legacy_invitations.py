@@ -53,9 +53,9 @@ class TestLegacyInvitations():
         conference.set_assignment('ac_legacy@mail.com', 1, True)
 
         conference.open_comments()
-        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 40))
-        conference.open_meta_reviews(due_date = now + datetime.timedelta(minutes = 40))
-        conference.open_decisions(due_date = now + datetime.timedelta(minutes = 40))
+        conference.open_reviews()
+        conference.open_meta_reviews()
+        conference.open_decisions()
 
         assert client.get_invitations(regex = 'NIPS.cc/2019/Workshop/MLITS/-/Paper.*/Official_Comment')
         assert client.get_invitations(regex = 'NIPS.cc/2019/Workshop/MLITS/-/Paper.*/Official_Review')

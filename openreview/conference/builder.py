@@ -36,8 +36,8 @@ class Conference(object):
         self.bid_stage = BidStage()
         self.review_stage = ReviewStage()
         self.comment_stage = CommentStage()
-        self.meta_review_name = 'Meta_Review'
-        self.decision_name = 'Decision'
+        self.meta_review_stage = MetaReviewStage()
+        self.decision_stage = DecisionStage()
         self.layout = 'tabs'
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True):
@@ -136,6 +136,16 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_comment_invitation(self, notes)
 
+    def __create_meta_review_stage(self):
+
+        notes = list(self.get_submissions())
+        return self.invitation_builder.set_meta_review_invitation(self, notes)
+
+    def __create_decision_stage(self):
+
+        notes = list(self.get_submissions())
+        return self.invitation_builder.set_decision_invitation(self, notes)
+
     def set_id(self, id):
         self.id = id
 
@@ -175,6 +185,14 @@ class Conference(object):
     def set_comment_stage(self, stage):
         self.comment_stage = stage
         return self.__create_comment_stage()
+
+    def set_meta_review_stage(self, stage):
+        self.meta_review_stage = stage
+        return self.__create_meta_review_stage()
+
+    def set_decision_stage(self, stage):
+        self.decision_stage = stage
+        return self.__create_decision_stage()
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -412,39 +430,19 @@ class Conference(object):
         return self.__expire_invitations(name)
 
     ## Deprecated
-    def open_reviews(self, start_date = None, due_date = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
-        """
-        Create review invitations for all the available submissions.
-
-        :arg name: name of the official invitation, default = 'Official_Review'.
-        :arg start_date: when the review period starts. default = now.
-        :arg due_date: expected date to finish the review.
-        :arg allow_de_anonymization: indicates if the review can be signed with a real identity or not.
-        :arg public: set the readership of the review to the general public.
-        :arg release_to_authors: allow the author to read the review once is posted, default = False.
-        :arg release_to_reviewers: allow the paper reviewers to read the review once it is posted, default = False => only reviewers with submitted reviews can see other reviews.
-        :arg additional_fields: field to add/overwrite to the review invitation
-        """
-        return self.set_review_stage(ReviewStage(start_date = start_date,
-            due_date = due_date,
-            allow_de_anonymization = allow_de_anonymization,
-            public = public,
-            release_to_authors = release_to_authors,
-            release_to_reviewers = release_to_reviewers,
-            email_pcs = email_pcs,
-            additional_fields = additional_fields
-        ))
+    def open_reviews(self):
+        return self.__create_review_stage()
 
     def close_reviews(self):
         return self.__expire_invitations(self.review_stage.name)
 
-    def open_meta_reviews(self, start_date = None, due_date = None, public = False, additional_fields = {}):
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_meta_review_invitation(self, notes_iterator, start_date, due_date, public, additional_fields)
+    ## Deprecated
+    def open_meta_reviews(self):
+        return self.__create_meta_review_stage()
 
-    def open_decisions(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_decision_invitation(self, notes_iterator, options, start_date, due_date, public, release_to_authors, release_to_reviewers)
+    ## Deprecated
+    def open_decisions(self):
+        return self.__create_decision_stage()
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         invitation = self.client.get_invitation(self.get_submission_id())
@@ -759,6 +757,53 @@ class CommentStage(object):
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
 
+class MetaReviewStage(object):
+
+    def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = 'Meta_Review'
+        self.public = public
+        self.additional_fields = additional_fields
+
+    def get_readers(self, conference, number):
+
+        if self.public:
+            return ['everyone']
+
+        readers = [conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(number = number))
+
+        return readers
+
+
+class DecisionStage(object):
+
+    def __init__(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = 'Decision'
+        self.public = public
+        self.release_to_authors = release_to_authors
+        self.release_to_reviewers = release_to_reviewers
+
+    def get_readers(self, conference, number):
+
+        if self.public:
+            return ['everyone']
+
+        readers = [ conference.get_program_chairs_id()]
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(number = number))
+
+        if self.release_to_reviewers:
+            readers.append(conference.get_reviewers_id(number = number))
+
+        if self.release_to_authors:
+            readers.append(conference.get_authors_id(number = number))
+
 
 class ConferenceBuilder(object):
 
@@ -771,6 +816,8 @@ class ConferenceBuilder(object):
         self.bid_stage = None
         self.review_stage = None
         self.comment_stage = None
+        self.meta_review_stage = None
+        self.decision_stage = None
 
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
@@ -850,11 +897,11 @@ class ConferenceBuilder(object):
     def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
         self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
 
-    def set_meta_review_name(self, meta_review_name):
-        self.conference.meta_review_name = meta_review_name
+    def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}):
+        self.metareview_stage = MetaReviewStage(start_date, due_date, public, additional_fields)
 
-    def set_decision_name(self, decision_name):
-        self.conference.decision_name = decision_name
+    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers)
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
@@ -888,6 +935,12 @@ class ConferenceBuilder(object):
 
         if self.comment_stage:
             self.conference.set_comment_stage(self.comment_stage)
+
+        if self.meta_review_stage:
+            self.conference.set_meta_review_stage(self.meta_review_stage)
+
+        if self.decision_stage:
+            self.conference.set_decision_stage(self.decision_stage)
 
         home_group = groups[-1]
         writable = home_group.details.get('writable') if home_group.details else True

@@ -906,9 +906,8 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        conference = builder.get_result()
-
-        conference.open_meta_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        builder.set_meta_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
@@ -941,15 +940,14 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        conference = builder.get_result()
-
-        conference.open_meta_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        builder.set_meta_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
                 'required' : True
             }
         })
+        conference = builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
@@ -988,7 +986,6 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
 
         conference.set_program_chairs(emails = ['akbc_pc@mail.com'])
-        conference.open_decisions()
 
         pc_client = helpers.create_user('akbc_pc@mail.com', 'AKBC', 'Pc')
 
@@ -1012,7 +1009,8 @@ class TestDoubleBlindConference():
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
 
-        conference.open_decisions(public=True)
+        builder.set_decision_stage(public=True)
+        conference = builder.get_result()
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
@@ -1030,7 +1028,8 @@ class TestDoubleBlindConference():
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
 
-        conference.open_decisions(release_to_authors=True)
+        builder.set_decision_stage(release_to_authors=True)
+        conference = builder.get_result()
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,

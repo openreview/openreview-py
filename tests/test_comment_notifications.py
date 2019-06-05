@@ -344,6 +344,7 @@ class TestCommentNotification():
         ])
         builder.set_override_homepage(True)
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False)
+        builder.set_review_stage(release_to_authors=True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -381,7 +382,7 @@ class TestCommentNotification():
         conference.set_assignment('reviewer2@auai.org', 1)
         conference.set_assignment('areachair@auai.org', 1, True)
 
-        conference.open_reviews(release_to_authors=True)
+        conference.open_reviews()
 
         note = openreview.Note(invitation = 'auai.org/UAI/2020/Conference/Paper1/-/Official_Review',
             forum = paper_note.id,
