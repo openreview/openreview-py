@@ -630,17 +630,10 @@ class Conference(object):
         if message:
             recruit_message = message
 
-        map_email_to_names = {email: None for email in emails}
-        if invitee_names:
-            for (email, name) in zip(emails, invitee_names):
-                map_email_to_names[email] = name
-
         if remind:
             remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
             for reviewer in remind_reviewers:
-                name = map_email_to_names.get(reviewer)
-                if not name:
-                    name =  re.sub('[0-9]+', '', reviewer.replace('~', '').replace('_', ' ')) if reviewer.startswith('~') else 'invitee'
+                name =  re.sub('[0-9]+', '', reviewer.replace('~', '').replace('_', ' ')) if reviewer.startswith('~') else 'invitee'
                 tools.recruit_reviewer(self.client, reviewer, name,
                     hash_seed,
                     invitation.id,
@@ -649,20 +642,18 @@ class Conference(object):
                     reviewers_invited_id,
                     verbose = False)
 
-        for member in set(reviewers_invited_group.members):
-            map_email_to_names.pop(member, None)
-
-        for email in map_email_to_names:
-            name = map_email_to_names[email]
-            if not name:
-                name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-            tools.recruit_reviewer(self.client, email, name,
-                hash_seed,
-                invitation.id,
-                recruit_message,
-                recruit_message_subj,
-                reviewers_invited_id,
-                verbose = False)
+        for index, email in enumerate(emails):
+            if email not in set(reviewers_invited_group.members):
+                name = invitee_names[index] if invitee_names else None
+                if not name:
+                    name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
+                tools.recruit_reviewer(self.client, email, name,
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
