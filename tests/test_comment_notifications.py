@@ -30,16 +30,13 @@ class TestCommentNotification():
         'location': 'London',
         'instructions': 'Full papers contain well-validated applications or methodological developments of deep learning algorithms in medical imaging. There is no strict limit on paper length. However, we strongly recommend keeping full papers at 8 pages (excluding references and acknowledgements). An appendix section can be added if needed with additional details but must be compiled into a single pdf. The appropriateness of using pages over the recommended page length will be judged by reviewers. All accepted papers will be presented as posters with a selection of these papers will also be invited for oral presentation.<br/><br/> <p><strong>Questions or Concerns</strong></p><p>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any questions or concerns about the OpenReview platform.<br/>    Please contact the MIDL 2019 Program Chairs at <a href=\"mailto:program-chairs@midl.io\">program-chairs@midl.io</a> with any questions or concerns about conference administration or policy.</p><p>We are aware that some email providers inadequately filter emails coming from openreview.net as spam so please check your spam folder regularly.</p>'
         })
-        builder.set_conference_submission_name('Full_Submission')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True)
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = [conference.get_id(), '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
@@ -338,21 +335,18 @@ class TestCommentNotification():
         })
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
-        builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, due_date = now + datetime.timedelta(minutes = 10), subject_areas= [
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+        builder.set_override_homepage(True)
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False)
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
@@ -609,16 +603,13 @@ class TestCommentNotification():
         'website': 'http://learningtheory.org/colt2019/',
         'location': 'Phoenix, Arizona, United States'
         })
-        builder.set_conference_submission_name('Full_Submission')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True)
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = [conference.get_id(), '~Test_User1', 'author@colt.io', 'author2@colt.io'],
             signatures = ['~Test_User1'],
@@ -909,16 +900,13 @@ class TestCommentNotification():
         'website': 'http://learningtheory.org/colt2017/',
         'location': 'Phoenix, Arizona, United States'
         })
-        builder.set_conference_submission_name('Full_Submission')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True)
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = [conference.id, '~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
             signatures = ['~Test_User1'],
@@ -1136,8 +1124,8 @@ class TestCommentNotification():
         'website': 'http://learningtheory.org/colt2017/',
         'location': 'Phoenix, Arizona, United States'
         })
-        builder.set_conference_submission_name('Full_Submission')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True)
         conference = builder.get_result()

@@ -20,7 +20,6 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -70,7 +69,6 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_name('Automated Knowledge Base Construction')
         builder.set_override_homepage(True)
-        builder.set_double_blind(True)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -143,7 +141,6 @@ class TestDoubleBlindConference():
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
         builder.set_override_homepage(True)
-        builder.set_double_blind(True)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -178,7 +175,7 @@ class TestDoubleBlindConference():
         assert '"website": "http://www.akbc.ws/2019/"' in groups[2].web
         assert 'Important Information' in groups[2].web
         assert '"deadline": "Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018"' in groups[2].web
-        assert "var BLIND_SUBMISSION_ID = 'AKBC.ws/2019/Conference/-/Blind_Submission';" in groups[2].web
+        #assert "var BLIND_SUBMISSION_ID = 'AKBC.ws/2019/Conference/-/Blind_Submission';" in groups[2].web
 
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
@@ -227,11 +224,11 @@ class TestDoubleBlindConference():
                 </ul></p>',
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
-        builder.set_double_blind(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
         assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
@@ -276,8 +273,8 @@ class TestDoubleBlindConference():
             'instructions': 'Instructions for author console',
             'schedule': 'This is the author schedule'
         })
-        builder.set_double_blind(True)
-        builder.set_subject_areas(['Machine Learning',
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, due_date = now + datetime.timedelta(minutes = 10), subject_areas = ['Machine Learning',
             'Natural Language Processing',
             'Information Extraction',
             'Question Answering',
@@ -294,11 +291,7 @@ class TestDoubleBlindConference():
             'Fairness',
             'Human computation',
             'Crowd-sourcing',
-            'Other'])
-        conference = builder.get_result()
-
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10), additional_fields = {
+            'Other'], additional_fields = {
                 'archival_status': {
                     'description': 'Authors can change the archival/non-archival status up until the decision deadline',
                     'value-radio': [
@@ -308,6 +301,10 @@ class TestDoubleBlindConference():
                     'required': True
                 }
             })
+
+        conference = builder.get_result()
+
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert 'subject_areas' in invitation.reply['content']
         assert 'Question Answering' in invitation.reply['content']['subject_areas']['values-dropdown']
@@ -410,7 +407,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         conference = builder.get_result()
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
@@ -530,7 +527,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
@@ -583,7 +580,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         conference = builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
@@ -618,14 +615,14 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_public(False)
+        builder.set_submission_stage(double_blind = False)
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
         with pytest.raises(openreview.OpenReviewException, match=r'Conference is not double blind'):
             conference.create_blind_submissions()
 
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         conference = builder.get_result()
 
         blind_submissions = conference.create_blind_submissions()
@@ -636,12 +633,13 @@ class TestDoubleBlindConference():
         assert blind_submissions_2
         assert len(blind_submissions_2) == 1
         assert blind_submissions[0].id == blind_submissions_2[0].id
-        assert blind_submissions_2[0].readers == ['AKBC.ws/2019/Conference/Program_Chairs',
-         'AKBC.ws/2019/Conference/Area_Chairs',
-         'AKBC.ws/2019/Conference/Reviewers',
-         'AKBC.ws/2019/Conference/Paper1/Authors']
+        assert blind_submissions_2[0].readers == [
+            'AKBC.ws/2019/Conference/Paper1/Authors',
+            'AKBC.ws/2019/Conference/Reviewers',
+            'AKBC.ws/2019/Conference/Area_Chairs',
+            'AKBC.ws/2019/Conference/Program_Chairs']
 
-        builder.set_submission_public(True)
+        builder.set_submission_stage(public = True, double_blind= True)
         conference = builder.get_result()
         blind_submissions_3 = conference.create_blind_submissions()
         assert blind_submissions_3
@@ -655,7 +653,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         conference = builder.get_result()
         conference.set_authors()
 
@@ -675,7 +673,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         conference = builder.get_result()
 
         conference.close_comments('Official_Comment')
@@ -713,7 +711,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         now = datetime.datetime.utcnow()
         builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 50)
@@ -735,7 +733,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True, email_pcs = True)
@@ -825,7 +823,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
@@ -905,7 +903,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
@@ -940,7 +938,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
@@ -984,7 +982,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -1057,7 +1055,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_double_blind(True)
+        builder.set_submission_stage(double_blind = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()

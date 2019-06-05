@@ -14,12 +14,8 @@ class Conference(object):
     def __init__(self, client):
         self.client = client
         self.new = False
-        self.double_blind = False
-        self.submission_public = False
         self.use_area_chairs = False
         self.legacy_invitation_id = False
-        self.original_readers = []
-        self.subject_areas = []
         self.groups = []
         self.name = ''
         self.short_name = ''
@@ -34,9 +30,9 @@ class Conference(object):
         self.reviewers_name = 'Reviewers'
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
-        self.submission_name = 'Submission'
         self.recommendation_name = 'Recommendation'
         self.registration_name = 'Registration'
+        self.submission_stage = SubmissionStage()
         self.bid_stage = BidStage()
         self.review_stage = ReviewStage()
         self.comment_stage = CommentStage()
@@ -113,12 +109,16 @@ class Conference(object):
 
         return len(invitations)
 
-    def _create_bid_stage(self):
+    def __create_submission_stage(self):
+
+        return self.invitation_builder.set_submission_invitation(self)
+
+    def __create_bid_stage(self):
 
         self.invitation_builder.set_bid_invitation(self)
         return self.__set_bid_page()
 
-    def _create_review_stage(self):
+    def __create_review_stage(self):
 
         self.set_authors()
         self.set_reviewers()
@@ -130,7 +130,7 @@ class Conference(object):
             self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
         return invitations
 
-    def _create_comment_stage(self):
+    def __create_comment_stage(self):
 
         ## Create comment invitations per paper
         notes = list(self.get_submissions())
@@ -160,17 +160,21 @@ class Conference(object):
     def set_reviewers_name(self, name):
         self.reviewers_name = name
 
+    def set_submission_stage(self, stage):
+        self.submission_stage = stage
+        return self.__create_submission_stage()
+
     def set_bid_stage(self, stage):
         self.bid_stage = stage
-        return self._create_bid_stage()
+        return self.__create_bid_stage()
 
     def set_review_stage(self, stage):
         self.review_stage = stage
-        return self._create_review_stage()
+        return self.__create_review_stage()
 
     def set_comment_stage(self, stage):
         self.comment_stage = stage
-        return self._create_comment_stage()
+        return self.__create_comment_stage()
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -180,9 +184,6 @@ class Conference(object):
 
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
-
-    def set_submission_name(self, name):
-        self.submission_name = name
 
     def get_program_chairs_id(self):
         return self.id + '/' + self.program_chairs_name
@@ -213,9 +214,11 @@ class Conference(object):
             area_chairs_id = area_chairs_id + self.area_chairs_name
         return area_chairs_id
 
-    def get_committee(self, number = None, submitted_reviewers = False):
+    def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
         committee = []
-        committee.append(self.get_authors_id(number))
+
+        if with_authors:
+            committee.append(self.get_authors_id(number))
 
         if submitted_reviewers:
             committee.append(self.get_reviewers_id(number) + '/Submitted')
@@ -224,18 +227,16 @@ class Conference(object):
 
         if self.use_area_chairs:
             committee.append(self.get_area_chairs_id(number))
+
         committee.append(self.get_program_chairs_id())
 
         return committee
 
     def get_submission_id(self):
-        return self.get_invitation_id(self.submission_name)
+        return self.submission_stage.get_submission_id(self)
 
     def get_blind_submission_id(self):
-        name = self.submission_name
-        if self.double_blind:
-            name = 'Blind_' + self.submission_name
-        return self.get_invitation_id(name)
+        return self.submission_stage.get_blind_submission_id(self)
 
     def get_bid_id(self):
         return self.get_invitation_id(self.bid_stage.name)
@@ -305,36 +306,8 @@ class Conference(object):
     def set_homepage_layout(self, layout):
         self.layout = layout
 
-    def set_double_blind(self, double_blind):
-        self.double_blind = double_blind
-
-    def set_submission_public(self, submission_public):
-        self.submission_public = submission_public
-
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
-
-    def get_submission_readers(self):
-        readers = [self.get_program_chairs_id()]
-
-        if self.use_area_chairs:
-            readers.append(self.get_area_chairs_id())
-
-        readers.append(self.get_reviewers_id())
-
-        return readers
-
-    def set_original_readers(self, additional_readers):
-        self.original_readers = additional_readers
-
-    def get_original_readers(self):
-        return self.original_readers
-
-    def set_subject_areas(self, subject_areas):
-        self.subject_areas = subject_areas
-
-    def get_subject_areas(self):
-        return self.subject_areas
 
     def get_homepage_options(self):
         options = {}
@@ -354,30 +327,9 @@ class Conference(object):
         invitation = self.get_blind_submission_id()
         return tools.iterget_notes(self.client, invitation = invitation, details = details)
 
-    def open_submissions(self, start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
-        '''
-        Creates submission invitation and set the author console.
-
-        :arg start_date: when the invitation start to be active to the general public.
-
-        :arg due_date: paper submission deadline, we will set the exp_date 30 min after this value.
-
-        :arg additional_fields: dictionary of fields to add to the submission form.
-
-        :arg remove_fields: predefined field to remove from the original form: ['title', 'abstract', 'authors', 'authorids', 'keywords', 'TL;DR', 'pdf']
-        '''
-
-        ## Author console
-        authors_group = openreview.Group(id = self.get_authors_id(),
-            readers = ['everyone'],
-            signatories = [self.id],
-            signatures = [self.id],
-            writers = [self.id]
-        )
-        self.webfield_builder.set_author_page(self, authors_group)
-
-        ## Submission invitation
-        return self.invitation_builder.set_submission_invitation(self, start_date, due_date, additional_fields, remove_fields)
+    ## Deprecated
+    def open_submissions(self):
+        return self.__create_submission_stage()
 
     def close_submissions(self):
 
@@ -392,7 +344,7 @@ class Conference(object):
 
     def create_blind_submissions(self):
 
-        if not self.double_blind:
+        if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
 
         submissions_by_original = { note.original: note.id for note in self.get_submissions() }
@@ -418,12 +370,7 @@ class Conference(object):
 
             posted_blind_note = self.client.post_note(blind_note)
 
-            if self.submission_public:
-                posted_blind_note.readers = ['everyone']
-            else:
-                posted_blind_note.readers = self.get_submission_readers() + [
-                    self.get_authors_id(number = posted_blind_note.number)
-                ]
+            posted_blind_note.readers = self.submission_stage.get_blind_readers(self, posted_blind_note.number)
 
             posted_blind_note.content = {
                 'authorids': [self.get_authors_id(number = posted_blind_note.number)],
@@ -440,7 +387,7 @@ class Conference(object):
 
     ## Deprecated
     def open_bids(self):
-        return self._create_bid_stage()
+        return self.__create_bid_stage()
 
     def close_bids(self):
         return self.__expire_invitation(self.get_bid_id())
@@ -459,7 +406,7 @@ class Conference(object):
         return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
 
     def open_comments(self):
-        self._create_comment_stage()
+        self.__create_comment_stage()
 
     def close_comments(self, name):
         return self.__expire_invitations(name)
@@ -725,6 +672,59 @@ class Conference(object):
 
         self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
 
+class SubmissionStage(object):
+
+    def __init__(self, name = 'Submission', start_date = None, due_date = None, public = False, double_blind = False, additional_fields = {}, remove_fields = [], subject_areas = []):
+
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name
+        self.public = public
+        self.double_blind = double_blind
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
+        self.subject_areas = subject_areas
+
+    def get_readers(self, conference):
+
+        if self.double_blind:
+            return {
+                'values-copied': [
+                    conference.get_id(),
+                    '{content.authorids}',
+                    '{signatures}'
+                ]
+            }
+
+        if self.public:
+            return {
+                'values': ['everyone']
+            }
+
+        return {
+            'values-copied': [
+                conference.get_id(),
+                '{content.authorids}',
+                '{signatures}'
+            ] + conference.get_committee()
+        }
+
+    def get_blind_readers(self, conference, number):
+        if self.public:
+            return ['everyone']
+        else:
+            readers = conference.get_committee()
+            readers.insert(0, conference.get_authors_id(number = number))
+            return readers
+
+    def get_submission_id(self, conference):
+        return conference.get_invitation_id(self.name)
+
+    def get_blind_submission_id(self, conference):
+        name = self.name
+        if self.double_blind:
+            name = 'Blind_' + name
+        return conference.get_invitation_id(name)
 
 class BidStage(object):
 
@@ -767,6 +767,7 @@ class ConferenceBuilder(object):
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
+        self.submission_stage = None
         self.bid_stage = None
         self.review_stage = None
         self.comment_stage = None
@@ -815,9 +816,6 @@ class ConferenceBuilder(object):
     def set_conference_program_chairs_name(self, name):
         self.conference.set_program_chairs_name(name)
 
-    def set_conference_submission_name(self, name):
-        self.conference.set_submission_name(name)
-
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
 
@@ -837,24 +835,11 @@ class ConferenceBuilder(object):
     def set_override_homepage(self, override):
         self.override_homepage = override
 
-    def set_double_blind(self, double_blind = True, reviewers_read_original = False, area_chairs_read_original = False):
-        self.conference.set_double_blind(double_blind)
-
-        additional_readers = [self.conference.get_program_chairs_id()]
-        if reviewers_read_original:
-            additional_readers.append(self.conference.get_reviewers_id())
-        if area_chairs_read_original:
-            additional_readers.append(self.conference.get_area_chairs_id())
-        self.conference.set_original_readers(additional_readers)
-
-    def set_submission_public(self, submission_public):
-        self.conference.set_submission_public(submission_public)
-
-    def set_subject_areas(self, subject_areas):
-        self.conference.set_subject_areas(subject_areas)
-
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
+
+    def set_submission_stage(self, name = 'Submission', start_date = None, due_date = None, public = False, double_blind = False, additional_fields = {}, remove_fields = [], subject_areas = []):
+        self.submission_stage = SubmissionStage(name, start_date, due_date, public, double_blind, additional_fields, remove_fields, subject_areas)
 
     def set_bid_stage(self, start_date = None, due_date = None, request_count = 50):
         self.bid_stage = BidStage(start_date, due_date, request_count)
@@ -892,6 +877,18 @@ class ConferenceBuilder(object):
         if writable:
             self.client.add_members_to_group(host, root_id)
 
+        if self.submission_stage:
+            self.conference.set_submission_stage(self.submission_stage)
+
+        if self.bid_stage:
+            self.conference.set_bid_stage(self.bid_stage)
+
+        if self.review_stage:
+            self.conference.set_review_stage(self.review_stage)
+
+        if self.comment_stage:
+            self.conference.set_comment_stage(self.comment_stage)
+
         home_group = groups[-1]
         writable = home_group.details.get('writable') if home_group.details else True
         if writable and (not home_group.web or self.override_homepage):
@@ -911,13 +908,13 @@ class ConferenceBuilder(object):
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
 
-        if self.bid_stage:
-            self.conference.set_bid_stage(self.bid_stage)
-
-        if self.review_stage:
-            self.conference.set_review_stage(self.review_stage)
-
-        if self.comment_stage:
-            self.conference.set_comment_stage(self.comment_stage)
+        ## Author console
+        authors_group = openreview.Group(id = self.conference.get_authors_id(),
+            readers = ['everyone'],
+            signatories = [id],
+            signatures = [id],
+            writers = [id]
+        )
+        self.webfield_builder.set_author_page(self.conference, authors_group)
 
         return self.conference

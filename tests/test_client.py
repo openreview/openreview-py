@@ -129,7 +129,7 @@ class TestClient():
         assert group
         assert group.members == ['~Melisa_Bok1']
 
-    def test_get_invitations(self, client):
+    def test_get_invitations_by_invitee(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
         assert len(invitations) == 0
 
@@ -148,13 +148,12 @@ class TestClient():
         assert builder, 'builder is None'
 
         builder.set_conference_id('Test.ws/2019/Conference')
+        builder.set_submission_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['mbok@mail.com', 'andrew@mail.com'],
             writers = ['mbok@mail.com', 'andrew@mail.com'],
             signatures = ['~Super_User1'],

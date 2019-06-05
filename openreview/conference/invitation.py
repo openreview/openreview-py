@@ -12,19 +12,26 @@ LONG_BUFFER_DAYS = 10
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, start_date, due_date, readers, additional_fields, remove_fields):
+    def __init__(self, conference):
+
+        readers = {}
+        submission_stage = conference.submission_stage
+        additional_fields = submission_stage.additional_fields
+        start_date = submission_stage.start_date
+        due_date = submission_stage.due_date
+        readers = submission_stage.get_readers(conference)
 
         content = invitations.submission.copy()
 
-        if conference.get_subject_areas():
+        if submission_stage.subject_areas:
             content['subject_areas'] = {
                 'order' : 5,
                 'description' : "Select or type subject area",
-                'values-dropdown': conference.get_subject_areas(),
+                'values-dropdown': submission_stage.subject_areas,
                 'required': True
             }
 
-        for field in remove_fields:
+        for field in submission_stage.remove_fields:
             del content[field]
 
         for order, key in enumerate(additional_fields, start=10):
@@ -98,7 +105,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
     def __init__(self, conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields):
 
         content = submission_content.copy()
-        referent = note.original if conference.double_blind else note.id
+        referent = note.original if conference.submission_stage.double_blind else note.id
 
         for field in remove_fields:
             del content[field]
@@ -224,7 +231,7 @@ class PublicCommentInvitation(openreview.Invitation):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = ['everyone'],
-            noninvitees = conference.get_committee(note.number),
+            noninvitees = conference.get_committee(number = note.number, with_authors = True),
             reply = {
                 'forum': note.id,
                 'replyto': None,
@@ -253,7 +260,7 @@ class OfficialCommentInvitation(openreview.Invitation):
 
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
 
-        committee = conference.get_committee(note.number, not comment_stage.unsubmitted_reviewers)
+        committee = conference.get_committee(number = note.number, submitted_reviewers = not comment_stage.unsubmitted_reviewers, with_authors = True)
 
         if comment_stage.reader_selection:
             reply_readers = {
@@ -545,41 +552,9 @@ class InvitationBuilder(object):
 
         return merged_options
 
-    def set_submission_invitation(self, conference, start_date, due_date, additional_fields, remove_fields):
+    def set_submission_invitation(self, conference):
 
-        readers = {}
-
-        ## TODO: move this to an object
-        if conference.double_blind:
-            readers = {
-                'values-copied': [
-                    conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
-                ] + conference.get_original_readers()
-            }
-        else:
-            if conference.submission_public:
-                readers = {
-                    'values': ['everyone']
-                }
-            else:
-                readers = {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{content.authorids}',
-                        '{signatures}'
-                    ] + conference.get_submission_readers()
-                }
-
-        invitation = SubmissionInvitation(conference = conference,
-            start_date = start_date,
-            due_date = due_date,
-            readers = readers,
-            additional_fields = additional_fields,
-            remove_fields = remove_fields)
-
-        return self.client.post_invitation(invitation)
+        return self.client.post_invitation(SubmissionInvitation(conference))
 
     def set_blind_submission_invitation(self, conference):
 
