@@ -88,13 +88,13 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(start_date = now + datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40), public=True)
+
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        now = datetime.datetime.utcnow()
-
-        invitation = conference.open_submissions(start_date = now + datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40))
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert invitation.cdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
@@ -113,7 +113,9 @@ class TestSingleBlindConference():
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
 
-        invitation = conference.open_submissions(start_date = now - datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_submission_stage(start_date = now - datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40), public=True)
+        conference = builder.get_result()
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert invitation.cdate == openreview.tools.datetime_millis(now - datetime.timedelta(minutes = 10))
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
@@ -141,14 +143,11 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
-
-
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert invitation.id == 'NIPS.cc/2018/Workshop/MLITS/-/Submission'
         assert invitation.reply['content']

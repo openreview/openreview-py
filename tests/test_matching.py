@@ -43,15 +43,15 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
-        now = datetime.datetime.utcnow()
+
         builder.set_bid_stage(due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -61,11 +61,8 @@ class TestMatching():
         conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
         conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com'])
 
-        ## Open submissions
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
-
         ## Paper 1
-        note_1 = openreview.Note(invitation = invitation.id,
+        note_1 = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
             writers = [conference.id, '~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
             signatures = ['~Test_User1'],
@@ -85,7 +82,7 @@ class TestMatching():
         note_1 = test_client.post_note(note_1)
 
         ## Paper 2
-        note_2 = openreview.Note(invitation = invitation.id,
+        note_2 = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
             writers = [conference.id, '~Test_User1', 'test@mail.com', 'a2@mit.edu'],
             signatures = ['~Test_User1'],
@@ -105,7 +102,7 @@ class TestMatching():
         note_2 = test_client.post_note(note_2)
 
         ## Paper 3
-        note_3 = openreview.Note(invitation = invitation.id,
+        note_3 = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
             writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu'],
             signatures = ['~Test_User1'],
@@ -256,17 +253,17 @@ class TestMatching():
             <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
             </p>'''
         })
-        print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -363,9 +360,9 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
@@ -492,9 +489,9 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",

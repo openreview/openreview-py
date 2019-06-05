@@ -26,12 +26,11 @@ class TestLegacyInvitations():
         })
         builder.has_area_chairs(True)
         builder.use_legacy_invitation_id(True)
-        conference = builder.get_result()
         now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40))
+        conference = builder.get_result()
 
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
