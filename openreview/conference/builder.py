@@ -649,8 +649,6 @@ class Conference(object):
                     reviewers_invited_id,
                     verbose = False)
 
-
-
         for member in set(reviewers_invited_group.members):
             map_email_to_names.pop(member, None)
 
