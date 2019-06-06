@@ -456,6 +456,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
             invitees = [conference.get_area_chairs_id(number = note.number)]
 
         super(PaperMetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name, note.number),
+            super = conference.get_invitation_id(meta_review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees,
@@ -533,6 +534,7 @@ class PaperDecisionInvitation(openreview.Invitation):
         nonreaders = [conference.get_authors_id(number = note.number)] if conference.get_authors_id(number = note.number) not in readers else []
 
         super(PaperDecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name, note.number),
+            super = conference.get_invitation_id(decision_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             reply = {
