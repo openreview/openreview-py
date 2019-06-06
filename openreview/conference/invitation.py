@@ -531,7 +531,8 @@ class PaperDecisionInvitation(openreview.Invitation):
         decision_stage = conference.decision_stage
 
         readers = decision_stage.get_readers(conference, note.number)
-        nonreaders = [conference.get_authors_id(number = note.number)] if conference.get_authors_id(number = note.number) not in readers else []
+        authors = conference.get_authors_id(number = note.number)
+        nonreaders = [authors] if authors not in readers else []
 
         super(PaperDecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name, note.number),
             super = conference.get_invitation_id(decision_stage.name),

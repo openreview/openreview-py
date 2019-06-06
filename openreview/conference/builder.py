@@ -771,10 +771,12 @@ class MetaReviewStage(object):
         if self.public:
             return ['everyone']
 
-        readers = [conference.get_program_chairs_id()]
+        readers = []
 
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
+
+        readers.append(conference.get_program_chairs_id())
 
         return readers
 
@@ -782,6 +784,7 @@ class MetaReviewStage(object):
 class DecisionStage(object):
 
     def __init__(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        self.options = options
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Decision'
@@ -803,6 +806,8 @@ class DecisionStage(object):
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
+
+        return readers
 
 
 class ConferenceBuilder(object):
