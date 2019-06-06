@@ -747,6 +747,45 @@ class ReviewStage(object):
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
 
+    def get_readers(self, conference, number):
+
+        if self.public:
+            return ['everyone']
+
+        readers = [ conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(number = number))
+
+        if self.release_to_reviewers:
+            readers.append(conference.get_reviewers_id(number = number))
+        else:
+            readers.append(conference.get_reviewers_id(number = number) + '/Submitted')
+
+        if self.release_to_authors:
+            readers.append(conference.get_authors_id(number = number))
+
+        return readers
+
+    def get_nonreaders(self, conference, number):
+
+        if self.public:
+            return []
+
+        if self.release_to_authors:
+            return []
+
+        return [conference.get_authors_id(number = number)]
+
+    def get_signatures(self, conference, number):
+        signature_regex = conference.get_id() + '/Paper' + str(number) + '/AnonReviewer[0-9]+'
+
+        if self.allow_de_anonymization:
+            signature_regex = signature_regex + '|~.*'
+
+        return signature_regex
+
+
 class CommentStage(object):
 
     def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):

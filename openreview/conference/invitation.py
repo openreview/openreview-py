@@ -338,30 +338,9 @@ class PaperReviewInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         review_stage = conference.review_stage
-        signature_regex = conference.get_id() + '/Paper' + str(note.number) + '/AnonReviewer[0-9]+'
-
-        if review_stage.allow_de_anonymization:
-            signature_regex = signature_regex + '|~.*'
-
-        readers = []
-        nonreaders = [conference.get_authors_id(number = note.number)]
-
-        if review_stage.public:
-            readers = ['everyone']
-            nonreaders = []
-        else:
-            readers = [ conference.get_program_chairs_id()]
-            if conference.use_area_chairs:
-                readers.append(conference.get_area_chairs_id(number = note.number))
-
-        if review_stage.release_to_reviewers:
-            readers.append(conference.get_reviewers_id(number = note.number))
-        else:
-            readers.append(conference.get_reviewers_id(number = note.number) + '/Submitted')
-
-        if review_stage.release_to_authors:
-            readers.append(conference.get_authors_id(number = note.number))
-            nonreaders = []
+        signature_regex = review_stage.get_signatures(conference, note.number)
+        readers = review_stage.get_readers(conference, note.number)
+        nonreaders = review_stage.get_nonreaders(conference, note.number)
 
         super(PaperReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name, note.number),
             super = conference.get_invitation_id(review_stage.name),
