@@ -428,7 +428,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        result = conference.recruit_reviewers(['michael@mail.com'])
+        result = conference.recruit_reviewers(emails = ['michael@mail.com'], invitee_names = ['Michael Spector'])
         assert result
         assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
         assert 'mbok@mail.com' in result.members
@@ -451,6 +451,11 @@ class TestDoubleBlindConference():
         assert invitation
         assert invitation.process
         assert invitation.web
+
+        messages = client.get_messages(to = 'michael@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        text = messages[0]['content']['text']
+        assert 'Dear Michael Spector,' in text
+        assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
         assert messages
@@ -495,14 +500,20 @@ class TestDoubleBlindConference():
         assert 'other@mail.com' in result.members
 
         # Don't send the invitation twice
-        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'michael@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
         assert messages
         assert len(messages) == 1
 
         # Remind reviewers
-        invited = result = conference.recruit_reviewers(emails = ['another@mail.com'], remind = True)
+        invited = conference.recruit_reviewers(emails = ['another@mail.com'], invitee_names = ['Mister Another'], remind = True)
         assert invited
         assert len(invited.members) == 5
+
+        messages = client.get_messages(to = 'another@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        assert messages
+        assert len(messages) == 1
+        text = messages[0]['content']['text']
+        assert 'Dear Mister Another,' in text
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group

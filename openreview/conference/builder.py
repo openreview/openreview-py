@@ -570,7 +570,7 @@ class Conference(object):
         conference_matching = matching.Matching(self)
         return conference_matching.deploy(assingment_title)
 
-    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False):
+    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -642,16 +642,18 @@ class Conference(object):
                     reviewers_invited_id,
                     verbose = False)
 
-        invite_emails = list(set(emails) - set(reviewers_invited_group.members))
-        for email in invite_emails:
-            name =  re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-            tools.recruit_reviewer(self.client, email, name,
-                hash_seed,
-                invitation.id,
-                recruit_message,
-                recruit_message_subj,
-                reviewers_invited_id,
-                verbose = False)
+        for index, email in enumerate(emails):
+            if email not in set(reviewers_invited_group.members):
+                name = invitee_names[index] if invitee_names else None
+                if not name:
+                    name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
+                tools.recruit_reviewer(self.client, email, name,
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
