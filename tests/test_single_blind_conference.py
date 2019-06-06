@@ -625,4 +625,75 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('areachair-status')
         assert tabs.find_element_by_id('reviewer-status')
 
+    def test_papers_authored_by_pcs(self, client, request_page, selenium):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_submission_stage()
+        builder.set_review_stage(public=True)
+        conference = builder.get_result()
+
+        pc_client = openreview.Client(username = 'pc2@mail.com', password='1234')
+
+        note = openreview.Note(invitation = conference.get_submission_id(),
+            readers = ['everyone'],
+            writers = [conference.id, '~Test_User1', 'pc2@mail.com'],
+            signatures = ['~ProgramChair_Test1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'This is an abstract 2',
+                'authorids': ['test@mail.com', 'pc2@mail.com'],
+                'authors': ['Test User', 'Program Chair Test']
+            }
+        )
+        url = pc_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        posted_note = pc_client.post_note(note)
+
+        conference.set_authors()
+
+        conference.set_assignment('ac2@mail.com', posted_note.number, is_area_chair = True)
+        conference.set_assignment('reviewer@mail.com', posted_note.number)
+        conference.set_assignment('reviewer3@mail.com', posted_note.number)
+
+        conference.open_reviews()
+
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper2/-/Official_Review',
+            forum = posted_note.id,
+            replyto = posted_note.id,
+            readers = ['everyone'],
+            nonreaders = [],
+            writers = ['NIPS.cc/2018/Workshop/MLITS/Paper2/AnonReviewer1'],
+            signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper2/AnonReviewer1'],
+            content = {
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '4: Ok but not good enough - rejection',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        )
+        reviewer_client = openreview.Client(username='reviewer@mail.com', password='1234')
+        review_note = reviewer_client.post_note(note)
+        assert review_note
+
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Program_Chairs", pc_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('areachair-status')
+        assert tabs.find_element_by_id('reviewer-status')
+
+        reviews = tabs.find_element_by_id('paper-status').find_elements_by_class_name('reviewer-progress')
+        assert reviews
+        assert len(reviews) == 2
+        headers = reviews[0].find_elements_by_tag_name('h4')
+        assert headers
+        assert headers[0].text == '1 of 1 Reviews Submitted'
+
+        headers = reviews[1].find_elements_by_tag_name('h4')
+        assert headers
+        assert headers[0].text == '2 of 2 Reviews Submitted'
+
 

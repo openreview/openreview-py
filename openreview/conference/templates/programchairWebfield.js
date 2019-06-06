@@ -603,6 +603,23 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
       });
     }
   }
+  //Check the reviews with not reviewerIds
+  for(var reviewerNum in completedReviews) {
+    if (!(reviewerNum in combinedObj)) {
+      reviewObj = completedReviews[reviewerNum];
+      combinedObj[reviewerNum] = _.assign({}, {name: 'AnonReviewer' + reviewerNum, email: 'hidden'}, {
+        completedReview: true,
+        forum: reviewObj.forum,
+        note: reviewObj.id,
+        rating: reviewObj.rating,
+        confidence: reviewObj.confidence,
+        reviewLength: reviewObj.content.review.length
+      });
+      ratings.push(reviewObj.rating);
+      confidences.push(reviewObj.confidence);
+    }
+  }
+
   var averageRating = 'N/A';
   var minRating = 'N/A';
   var maxRating = 'N/A';
@@ -623,7 +640,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
 
   var reviewProgressData = {
     numSubmittedReviews: Object.keys(completedReviews).length,
-    numReviewers: Object.keys(reviewerIds).length,
+    numReviewers: _.max([Object.keys(reviewerIds).length, Object.keys(completedReviews).length]),
     reviewers: combinedObj,
     averageRating: averageRating,
     maxRating: maxRating,
