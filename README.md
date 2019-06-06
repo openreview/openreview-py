@@ -6,14 +6,14 @@ OpenReview Python library
 
 Prerequisites
 -------------
-You need to have Python 3.6+ installed.
+You need to have Python 2.xx or 3.xx installed. Preferably use versions 3.xx, as we will stop giving support to Python 2.xx.
 
 Installation
 ------------
 There are two ways to install the OpenReview library.
 Using ```pip```
 ```
-$ pip install openreview
+$ pip install openreview-py
 ```
 From the repository.
 ```
