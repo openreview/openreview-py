@@ -1,9 +1,26 @@
 OpenReview Python library
 =========================
 
-
 [![CircleCI](https://circleci.com/gh/iesl/openreview-py.svg?style=svg)](https://circleci.com/gh/iesl/openreview-py)
 [![Documentation Status](https://readthedocs.org/projects/openreview-py/badge/?version=latest)](https://openreview-py.readthedocs.io/en/latest/?badge=latest)
+
+Prerequisites
+-------------
+You need to have Python 3.6+ installed.
+
+Installation
+------------
+There are two ways to install the OpenReview library.
+Using ```pip```
+```
+$ pip install openreview
+```
+From the repository.
+```
+$ git clone https://github.com/iesl/openreview-py.git
+$ cd openreview-py
+$ pip install -e .
+```
 
 Classes:
 
@@ -60,10 +77,17 @@ remove_members_from_group(self, group, members):
 Run tests
 ----------
 
-To run the tests of the library you need to have the OpenReview backend running in your localhost.
+Before you can run the tests you have to have ```pytest``` installed.
+```
+$ pip install pytest
+```
 
-Checkout the code and run
+To run the tests of the library you need to have the OpenReview backend running in your localhost by running the following command.
 
 ```bash
 NODE_ENV=test node scripts/clean_start_app.js
+```
+Inside the openreview-py folder run
+```
+$ pytest
 ```
