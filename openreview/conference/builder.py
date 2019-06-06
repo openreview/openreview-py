@@ -809,6 +809,16 @@ class DecisionStage(object):
 
         return readers
 
+    def get_nonreaders(self, conference, number):
+
+        if self.public:
+            return []
+
+        if self.release_to_authors:
+            return []
+
+        return [conference.get_authors_id(number = number)]
+
 
 class ConferenceBuilder(object):
 
