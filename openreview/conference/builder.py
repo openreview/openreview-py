@@ -898,7 +898,7 @@ class ConferenceBuilder(object):
         self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
 
     def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}):
-        self.metareview_stage = MetaReviewStage(start_date, due_date, public, additional_fields)
+        self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields)
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers)
