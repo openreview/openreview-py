@@ -256,7 +256,7 @@ class TestWorkshop():
         })
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
         builder.has_area_chairs(False)
         conference = builder.get_result()
         conference.set_authors()
@@ -269,8 +269,6 @@ class TestWorkshop():
         reviewer_client = helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
 
         conference.set_assignment('reviewer4@mail.com', submission.number)
-        now = datetime.datetime.utcnow()
-        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
         reply_row = selenium.find_element_by_class_name('reply_row')

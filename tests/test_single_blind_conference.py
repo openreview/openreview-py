@@ -351,16 +351,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        conference = builder.get_result()
-        conference.set_authors()
-        conference.set_program_chairs(emails = ['pc2@mail.com'])
-        conference.set_area_chairs(emails = ['ac2@mail.com'])
-        conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
-
-        conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
-        conference.set_assignment('reviewer@mail.com', submission.number)
-        conference.set_assignment('reviewer3@mail.com', submission.number)
-        conference.open_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        builder.set_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -373,6 +364,15 @@ class TestSingleBlindConference():
                 'required': True
             }
         })
+        conference = builder.get_result()
+        conference.set_authors()
+        conference.set_program_chairs(emails = ['pc2@mail.com'])
+        conference.set_area_chairs(emails = ['ac2@mail.com'])
+        conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
+
+        conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
+        conference.set_assignment('reviewer@mail.com', submission.number)
+        conference.set_assignment('reviewer3@mail.com', submission.number)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)

@@ -90,6 +90,7 @@ class TestReviewersConference():
         })
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
         builder.set_override_homepage(True)
         conference = builder.get_result()
 
@@ -115,7 +116,7 @@ class TestReviewersConference():
         conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')
         conference.set_assignment(number = 1, user = 'reviewer_kgb2@mail.com')
 
-        invitations = conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
+        invitations = conference.open_reviews()
         assert invitations
 
         request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)
