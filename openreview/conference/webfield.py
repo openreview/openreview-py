@@ -285,7 +285,7 @@ class WebfieldBuilder(object):
         header = self.__build_options(default_header, {})
 
         submission_id = conference.get_submission_id()
-        if next(conference.get_submissions(), None):
+        if conference.get_submissions():
             submission_id = conference.get_blind_submission_id()
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f:

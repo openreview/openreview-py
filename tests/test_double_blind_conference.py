@@ -1060,6 +1060,9 @@ class TestDoubleBlindConference():
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
 
+        notes = conference.get_submissions(accepted=True)
+        assert notes
+
     def test_consoles(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)

@@ -341,9 +341,15 @@ class Conference(object):
             options['deadline'] = self.homepage_header.get('deadline')
         return options
 
-    def get_submissions(self, details = None):
+    def get_submissions(self, accepted = False, details = None):
         invitation = self.get_blind_submission_id()
-        return tools.iterget_notes(self.client, invitation = invitation, details = details)
+        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details))
+        if accepted:
+            decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_name, '.*'))
+            accepted_forums = [d.forum for d in decisions if d.content['decision'].startswith('Accept')]
+            accepted_notes = [n for n in notes if n.id in accepted_forums]
+            return accepted_notes
+        return notes
 
     ## Deprecated
     def open_submissions(self):
@@ -444,10 +450,10 @@ class Conference(object):
     def open_decisions(self):
         return self.__create_decision_stage()
 
-    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
         invitation = self.client.get_invitation(self.get_submission_id())
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        notes = self.get_submissions(accepted=only_accepted)
+        return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
 
