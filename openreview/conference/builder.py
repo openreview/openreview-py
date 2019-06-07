@@ -458,7 +458,7 @@ class Conference(object):
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
         invitation = self.client.get_invitation(self.get_submission_id())
-        notes = list(self.get_submissions(accepted=only_accepted))
+        notes = self.get_submissions(accepted=only_accepted)
         return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
