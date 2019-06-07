@@ -82,7 +82,7 @@ class WebfieldBuilder(object):
             content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + options.get('reviewers_id', '') + "';")
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + options.get('program_chairs_id', '') + "';")
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id', '') + "';")
-            content = content.replace("var DECISION_HEADING_MAP = {};", "var DECISION_HEADING_MAP = " + json.dumps(options.get('decision_heading_map', '{}')) + ";")
+            content = content.replace("var DECISION_HEADING_MAP = {};", "var DECISION_HEADING_MAP = " + json.dumps(options.get('decision_heading_map', '{}'), sort_keys=True) + ";")
 
             group.web = content
             group.signatures = [group.id]
@@ -285,7 +285,7 @@ class WebfieldBuilder(object):
         header = self.__build_options(default_header, {})
 
         submission_id = conference.get_submission_id()
-        if next(conference.get_submissions(), None):
+        if conference.get_submissions():
             submission_id = conference.get_blind_submission_id()
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f:
