@@ -299,9 +299,15 @@ class Conference(object):
             options['deadline'] = self.homepage_header.get('deadline')
         return options
 
-    def get_submissions(self, details = None):
+    def get_submissions(self, accepted = False, details = None):
         invitation = self.get_blind_submission_id()
-        return tools.iterget_notes(self.client, invitation = invitation, details = details)
+        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details))
+        if accepted:
+            decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_name, '.*'))
+            accepted_forums = [d.forum for d in decisions if d.content['decision'].startswith('Accept')]
+            accepted_notes = [n for n in notes if n.id in accepted_forums]
+            return accepted_notes
+        return notes
 
     def open_submissions(self, start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         '''
@@ -450,10 +456,10 @@ class Conference(object):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_decision_invitation(self, notes_iterator, options, start_date, due_date, public, release_to_authors, release_to_reviewers)
 
-    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
         invitation = self.client.get_invitation(self.get_submission_id())
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        notes = self.get_submissions(accepted=only_accepted)
+        return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
 
@@ -508,13 +514,17 @@ class Conference(object):
 
     def set_authors(self):
         notes_iterator = self.get_submissions(details='original')
+        author_group_ids = []
 
         for n in notes_iterator:
             group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id, is_signatory = False)
             authorids = n.content.get('authorids')
             if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']
-            self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
+            group = self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
+            author_group_ids.append(group.id)
+
+        self.__create_group(self.get_authors_id(), self.id, author_group_ids)
 
     def setup_matching(self, affinity_score_file = None, tpms_score_file = None):
         conference_matching = matching.Matching(self)
@@ -566,7 +576,7 @@ class Conference(object):
         conference_matching = matching.Matching(self)
         return conference_matching.deploy(assingment_title)
 
-    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False):
+    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -638,16 +648,18 @@ class Conference(object):
                     reviewers_invited_id,
                     verbose = False)
 
-        invite_emails = list(set(emails) - set(reviewers_invited_group.members))
-        for email in invite_emails:
-            name =  re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-            tools.recruit_reviewer(self.client, email, name,
-                hash_seed,
-                invitation.id,
-                recruit_message,
-                recruit_message_subj,
-                reviewers_invited_id,
-                verbose = False)
+        for index, email in enumerate(emails):
+            if email not in set(reviewers_invited_group.members):
+                name = invitee_names[index] if invitee_names else None
+                if not name:
+                    name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
+                tools.recruit_reviewer(self.client, email, name,
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
@@ -655,10 +667,10 @@ class Conference(object):
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
         options['blind_submission_id'] = self.get_blind_submission_id()
-        options['decision_invitation_regex'] = self.id + '/-/Paper.*/' + invitation_name
+        options['decision_invitation_regex'] = self.get_invitation_id(invitation_name, '.*')
         if not decision_heading_map:
             decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.id + '/-/Paper.*/' + invitation_name, limit = 1)
+            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), limit = 1)
             if invitations:
                 for option in invitations[0].reply['content']['decision']['value-radio']:
                     decision_heading_map[option] = option + ' Papers'
