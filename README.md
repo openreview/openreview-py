@@ -22,19 +22,30 @@ $ cd openreview-py
 $ pip install -e .
 ```
 
-Run tests
+Run Tests
 ----------
 
-Before you can run the tests you have to have ```pytest``` installed.
+Before you can run the tests you have to have ```pytest``` along with ```pytest-selenium``` installed.
 ```
 $ pip install pytest
+$ pip install-selenium
 ```
 
-To run the tests of the library you need to have the OpenReview backend running in your localhost by running the following command.
+Download the corresponding Firefox Selenium driver for your OS from this [link](https://github.com/mozilla/geckodriver/releases). Under ```openreview-py/tests/``` create a ```drivers``` directory and place the ```geckodriver``` inside that folder. Your folder structure should look like this:
 
+```bash
+├── openreview-py
+│   ├── tests
+│   │   ├── data
+│   │   ├── drivers
+│   │   │    └── geckodriver
+```
+
+You are now all set to run the tests of the library. To do so, *you need to have the OpenReview backend running in your localhost* by running the following command.
 ```bash
 NODE_ENV=test node scripts/clean_start_app.js
 ```
+
 Inside the openreview-py folder run
 ```
 $ pytest
