@@ -476,6 +476,23 @@ Conferences as large as ICLR 2019 will often have a number of reviews that excee
 	>>> for review in review_iterator:
 	>>>     #do something
 
+Retrieving all accepted Submissions for a conference
+----------------------------------------------------
+Since the Submissions do not contain the decisions, we first need to retrieve all the Decision notes, filter the accepted notes and use their forum ID to locate its corresponding Submission. We break down these steps below.
+
+Retrieve Submissions and Decisions.
+
+	>>> id_to_submission = {
+        	note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Full_Submission')
+		}
+
+	>>> all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Paper.*/Decision')
+
+It is convenient to place all the submissions in a dictionary with their id as the key so that we can retrieve an accepted submission using its id.
+
+We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
+
+	>>> accepted_submissions = [id_to_submission[note.forum] for note in all_decision_notes if note.content['decision'] == 'Accept']
 
 Retrieving comments made on a forum
 ----------------------------------------
