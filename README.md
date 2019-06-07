@@ -28,7 +28,7 @@ Run Tests
 Before you can run the tests you have to have ```pytest``` along with ```pytest-selenium``` installed.
 ```
 $ pip install pytest
-$ pip install-selenium
+$ pip install pytest-selenium
 ```
 
 Download the corresponding Firefox Selenium driver for your OS from this [link](https://github.com/mozilla/geckodriver/releases). Under ```openreview-py/tests/``` create a ```drivers``` directory and place the ```geckodriver``` inside that folder. Your folder structure should look like this:
