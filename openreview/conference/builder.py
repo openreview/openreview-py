@@ -345,7 +345,7 @@ class Conference(object):
         invitation = self.get_blind_submission_id()
         notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details))
         if accepted:
-            decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_name, '.*'))
+            decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*'))
             accepted_forums = [d.forum for d in decisions if d.content['decision'].startswith('Accept')]
             accepted_notes = [n for n in notes if n.id in accepted_forums]
             return accepted_notes

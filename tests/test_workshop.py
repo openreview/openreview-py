@@ -654,9 +654,8 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
         builder.has_area_chairs(False)
+        builder.set_submission_stage(double_blind=True)
         conference = builder.get_result()
 
         accepted_notes = conference.get_submissions(accepted=True)
