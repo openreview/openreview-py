@@ -450,10 +450,16 @@ class Conference(object):
         notes_iterator = self.get_submissions()
         return self.invitation_builder.set_decision_invitation(self, notes_iterator, options, start_date, due_date, public, release_to_authors, release_to_reviewers)
 
-    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
         invitation = self.client.get_invitation(self.get_submission_id())
-        notes_iterator = self.get_submissions()
-        return self.invitation_builder.set_revise_submission_invitation(self, notes_iterator, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        notes = list(self.get_submissions())
+        if only_accepted:
+            decisions = self.client.get_notes(invitation = self.get_invitation_id(self.decision_name, '.*'))
+            accepted_forums = [d.forum for d in decisions if d.content['decision'] == 'Accept']
+            accepted_notes = [n for n in notes if n.id in accepted_forums]
+            return self.invitation_builder.set_revise_submission_invitation(self, accepted_notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        else:
+            return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
 
