@@ -30,8 +30,6 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -55,13 +53,12 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['program_chairs@hsdip.org'])
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
+        invitation = client.get_invitation(id = conference.get_submission_id())
         assert invitation
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
         assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
@@ -110,15 +107,11 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
-        assert invitation
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
@@ -217,8 +210,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
@@ -230,11 +224,12 @@ class TestWorkshop():
         assert blind_submissions_2
         assert len(blind_submissions_2) == 1
         assert blind_submissions[0].id == blind_submissions_2[0].id
-        assert blind_submissions_2[0].readers == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
+        assert blind_submissions_2[0].readers == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
          'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
-         'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors']
+         'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs']
 
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
         blind_submissions_3 = conference.create_blind_submissions()
         assert blind_submissions_3
@@ -259,8 +254,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
         builder.has_area_chairs(False)
         conference = builder.get_result()
         conference.set_authors()
@@ -273,8 +269,6 @@ class TestWorkshop():
         reviewer_client = helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
 
         conference.set_assignment('reviewer4@mail.com', submission.number)
-        now = datetime.datetime.utcnow()
-        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
         reply_row = selenium.find_element_by_class_name('reply_row')
@@ -338,9 +332,11 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
+        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, allow_public_comments = True)
         conference = builder.get_result()
         assert conference
 
@@ -350,8 +346,6 @@ class TestWorkshop():
         reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert reviews
         review = reviews[0]
-
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, email_pcs = True)
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Comment',
             forum = submission.id,
@@ -393,8 +387,6 @@ class TestWorkshop():
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
 
-        conference.open_comments(name = 'Public_Comment', public = True, anonymous = False)
-
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Public_Comment',
             forum = submission.id,
             replyto = review.id,
@@ -417,6 +409,7 @@ class TestWorkshop():
 
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -431,8 +424,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
         assert conference
@@ -444,7 +438,6 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
-        now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review/AnonReviewer1/Revision',
@@ -499,8 +492,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
         conference.open_meta_reviews()
@@ -541,8 +535,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
@@ -588,8 +583,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
@@ -658,9 +654,8 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
         builder.has_area_chairs(False)
+        builder.set_submission_stage(double_blind=True)
         conference = builder.get_result()
 
         accepted_notes = conference.get_submissions(accepted=True)

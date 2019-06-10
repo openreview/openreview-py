@@ -88,13 +88,13 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(start_date = now + datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40), public=True)
+
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        now = datetime.datetime.utcnow()
-
-        invitation = conference.open_submissions(start_date = now + datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40))
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert invitation.cdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
@@ -113,7 +113,9 @@ class TestSingleBlindConference():
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
 
-        invitation = conference.open_submissions(start_date = now - datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_submission_stage(start_date = now - datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40), public=True)
+        conference = builder.get_result()
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert invitation.cdate == openreview.tools.datetime_millis(now - datetime.timedelta(minutes = 10))
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
@@ -141,14 +143,11 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
-
-
+        invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
         assert invitation.id == 'NIPS.cc/2018/Workshop/MLITS/-/Submission'
         assert invitation.reply['content']
@@ -294,7 +293,7 @@ class TestSingleBlindConference():
         conference = builder.get_result()
         conference.set_authors()
 
-        conference.open_comments('Official_Comment', public = False, anonymous = True)
+        conference.open_comments()
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -352,16 +351,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        conference = builder.get_result()
-        conference.set_authors()
-        conference.set_program_chairs(emails = ['pc2@mail.com'])
-        conference.set_area_chairs(emails = ['ac2@mail.com'])
-        conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
-
-        conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
-        conference.set_assignment('reviewer@mail.com', submission.number)
-        conference.set_assignment('reviewer3@mail.com', submission.number)
-        conference.open_reviews(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        builder.set_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -374,6 +364,15 @@ class TestSingleBlindConference():
                 'required': True
             }
         })
+        conference = builder.get_result()
+        conference.set_authors()
+        conference.set_program_chairs(emails = ['pc2@mail.com'])
+        conference.set_area_chairs(emails = ['ac2@mail.com'])
+        conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
+
+        conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
+        conference.set_assignment('reviewer@mail.com', submission.number)
+        conference.set_assignment('reviewer3@mail.com', submission.number)
 
         # Reviewer
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
@@ -470,6 +469,19 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
+        builder.set_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+            'rating': {
+                'order': 3,
+                'value-dropdown': [
+                    '5',
+                    '4',
+                    '3',
+                    '2',
+                    '1'
+                ],
+                'required': True
+            }
+        })
         conference = builder.get_result()
 
         # Author user

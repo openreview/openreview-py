@@ -59,21 +59,22 @@ def get_conference(client, request_form_id):
     if 'Yes, our conference has Area Chairs' == note.content.get('Area Chairs (Metareviewers)', ''):
         builder.has_area_chairs(True)
 
+    double_blind = False
     if 'Double-blind' == note.content.get('Author and Reviewer Anonymity', ''):
-        builder.set_double_blind(True)
+        double_blind = True
 
+    public = False
     if 'Submissions and reviews should both be public.' == note.content.get('Open Reviewing Policy', '') or \
         'Submissions should be public, but reviews should be private.' == note.content.get('Open Reviewing Policy', '') :
-        builder.set_submission_public(True)
-
+        public = True
 
     builder.set_override_homepage(True)
-    conference = builder.get_result()
 
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if submission_additional_options:
             submission_additional_options = json.loads(submission_additional_options)
 
-    conference.open_submissions(start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
+    builder.set_submission_stage(double_blind=double_blind, public=public, start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
+    conference = builder.get_result()
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference
