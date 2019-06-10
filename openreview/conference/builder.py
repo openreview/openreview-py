@@ -13,6 +13,7 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.request_form_id = None
         self.new = False
         self.use_area_chairs = False
         self.legacy_invitation_id = False
@@ -967,6 +968,9 @@ class ConferenceBuilder(object):
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
+
+    def set_request_form_id(self, id):
+        self.conference.request_form_id = id
 
     def get_result(self):
 

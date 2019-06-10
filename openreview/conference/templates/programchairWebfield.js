@@ -9,6 +9,11 @@ var LEGACY_INVITATION_ID = false;
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
 var DECISION_NAME = '';
+var AUTHORS_ID = '';
+var REVIEWERS_ID = '';
+var AREA_CHAIRS_ID = '';
+var PROGRAM_CHAIRS_ID = '';
+var REQUEST_FORM_ID = '';
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
@@ -218,6 +223,20 @@ var getDecisionReviews = function() {
   });
 };
 
+var getRequestForm = function() {
+  return Webfield.getAll('/notes', { id: REQUEST_FORM_ID})
+  .then(notes => notes[0]);
+}
+
+var getInvitations = function() {
+  return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION });
+}
+
+var getConfigurationDescription = function(note) {
+  return note.content['Author and Reviewer Anonymity'] + ', ' +
+  note.content['Open Reviewing Policy'] + ', ' + note.content['Public Commentary'] +
+  ', ' + note.content['Other Important Information']
+}
 
 // Render functions
 var displayHeader = function() {
@@ -227,11 +246,17 @@ var displayHeader = function() {
   var loadingMessage = '<p class="empty-message">Loading...</p>';
   var tabs = [
     {
-      heading: 'Paper Status',
-      id: 'paper-status',
+      heading: 'Configuration',
+      id: 'venue-configuration',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll',
       active: true
+    },
+    {
+      heading: 'Paper Status',
+      id: 'paper-status',
+      content: loadingMessage,
+      extraClasses: 'horizontal-scroll'
     }
   ];
 
@@ -252,6 +277,61 @@ var displayHeader = function() {
   });
 
   Webfield.ui.tabPanel(tabs);
+};
+
+var displayConfiguration = function(requestForm, invitations) {
+
+  var formatDate = function(timestamp) {
+    if (timestamp) {
+      var date = new Date(timestamp);
+      return date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+    }
+    return '-';
+   }
+  var invitaitonMap = {};
+
+  invitations.forEach(function(invitation) {
+    invitaitonMap[invitation.id] = invitation;
+  });
+
+  var container = '#venue-configuration';
+  var html = '<div id="container"></br>'
+
+  if (requestForm) {
+    html = html +  '<a href="/forum?id=' + requestForm.id + '">Requested configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></br></br>';
+  }
+
+  html = html + '<span>Official Committee: </span>' +
+    '<a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a>, ';
+
+  if (SHOW_AC_TAB) {
+    html = html + '<a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>), ';
+  }
+
+  html = html + '<a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>), ' +
+    '<a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></br></br>' +
+    '<h3>Timeline:</h3></br>' +
+    '<ul>';
+
+  var invitation = invitaitonMap[SUBMISSION_ID];
+  if (invitation) {
+    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Paper Submission</a> from <i>' + formatDate(invitation.cdate) + '</i> to <i>' + formatDate(invitation.duedate) + '</i></li>';
+  };
+
+  html = html + '<li><a href="/invitation?id=Submission">Bidding</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
+    '<li><a href="/invitation?id=Submission">Review</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
+    '<li><a href="/invitation?id=Submission">Comments</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
+    '<li><a href="/invitation?id=Submission">Meta Review</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
+    '<li><a href="/invitation?id=Submission">Decision</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
+    '<li><a href="/invitation?id=Submission">Paper Revision</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
+    '</ul>' +
+    '</div>'
+  ;
+  $(container).empty().append(html);
 };
 
 var displaySortPanel = function(container, sortOptions, sortResults) {
@@ -806,16 +886,22 @@ controller.addHandler('areachairs', {
         areaChairGroupsP = getAreaChairGroups(noteNumbers);
       }
       var decisionReviewsP = getDecisionReviews();
+      var requestFormP = $.Deferred().resolve();
+      if (REQUEST_FORM_ID) {
+        requestFormP = getRequestForm();
+      }
       return $.when(
         notes,
         getOfficialReviews(noteNumbers),
         metaReviewsP,
         getReviewerGroups(noteNumbers),
         areaChairGroupsP,
-        decisionReviewsP
+        decisionReviewsP,
+        requestFormP,
+        getInvitations()
       );
     })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions) {
+    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations) {
       var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
         return result.concat(_.values(idsObj));
       }, []));
@@ -828,6 +914,7 @@ controller.addHandler('areachairs', {
 
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
+        displayConfiguration(requestForm, invitations),
         displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, decisions, '#paper-status');
         if (SHOW_AC_TAB) {
           displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
