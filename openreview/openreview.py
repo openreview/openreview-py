@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
+from deprecated.sphinx import deprecated
 import sys
 if sys.version_info[0] < 3:
     string_types = [str, unicode]
@@ -20,17 +21,13 @@ class OpenReviewException(Exception):
     pass
 
 class Client(object):
-
+    """
+    :arg string baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name)
+    :arg string username: openreview username
+    :arg string password: openreview password
+    :arg string token:  session token
+    """
     def __init__(self, baseurl = None, username = None, password = None, token= None):
-        """
-        :arg baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name). Mandatory argument.
-
-        :arg username: openreview username. Optional argument.
-
-        :arg password: openreview password. Optional argument.
-
-        :arg token:  session token.  Optional argument.
-        """
         self.baseurl = baseurl
         if not self.baseurl:
             self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
@@ -101,9 +98,14 @@ class Client(object):
     ## PUBLIC FUNCTIONS
 
     def login_user(self,username=None, password=None):
-        '''
-        Logs in a registered user and returns authentication token
-        '''
+        """
+        Logs in a registered user
+
+        :arg string username: OpenReview username
+        :arg string password: OpenReview password
+
+        :return dict: Dictionary containing user information and the authentication token
+        """
         user = { 'id': username, 'password': password }
         header = { 'User-Agent': 'test-create-script' }
         response = requests.post(self.login_url, headers=header, json=user)
@@ -113,9 +115,17 @@ class Client(object):
         return json_response
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
-        '''
+        """
         Registers a new user
-        '''
+
+        :arg string email: email that will be used as id to log in after the user is registered
+        :arg string first: First name of the user
+        :arg string last: Last name of the user
+        :arg string middle: Middle name of the user
+        :arg string password: Password used to log into OpenReview
+
+        :return dict: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
+        """
         register_payload = {
             'email': email,
             'name': {   'first': first, 'last': last, 'middle': middle},
@@ -126,11 +136,13 @@ class Client(object):
         return response.json()
 
     def activate_user(self, token, content):
-        '''
+        """
         Activates a newly registered user
 
-        :arg token: activation token
-        :arg content: content of the profile to activate
+        :arg string token: Activation token. If running in localhost, use email as token
+        :arg dict content: Content of the profile to activate
+
+        :return dict: Dictionary containing user information and the authentication token 
 
         Example Usage:
         >>> res = client.activate_user('new@user.com', {
@@ -144,7 +156,7 @@ class Client(object):
             'emails': ['new@user.com'],
             'preferredEmail': 'new@user.com'
             })
-        '''
+        """
         response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
@@ -153,9 +165,13 @@ class Client(object):
         return json_response
 
     def get_activatable(self, token = None):
-        '''
-        Returns the activation token for a registered user
-        '''
+        """
+        Get the activation of a registered user
+
+        :arg string token: Activation token
+
+        :return string: The activation token for a registered user
+        """
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
@@ -163,7 +179,15 @@ class Client(object):
 
     def get_group(self, id):
         """
-        Returns a single Group by id if available
+        Get a single Group by id if available
+
+        :arg string id: id of the group
+
+        :return dict: Dictionary with the group information
+
+        Example Usage:
+
+        >>> group = client.get_group('your-email@domain.com')
         """
         response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -172,7 +196,11 @@ class Client(object):
 
     def get_invitation(self, id):
         """
-        Returns a single invitation by id if available
+        Get a single invitation by id if available
+
+        :arg string id: id of the invitation
+
+        :return dict: Dictionary with the invitation information
         """
         response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -181,7 +209,11 @@ class Client(object):
 
     def get_note(self, id):
         """
-        Returns a single note by id if available
+        Get a single note by id if available
+
+        :arg string id: id of the note
+
+        :return dict: Dictionary with the note information
         """
         response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -190,7 +222,11 @@ class Client(object):
 
     def get_tag(self, id):
         """
-        Returns a single tag by id if available
+        Get a single tag by id if available
+
+        :arg string id: id of the tag
+
+        :return dict: Dictionary with the tag information
         """
         response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -199,7 +235,11 @@ class Client(object):
 
     def get_profile(self, email_or_id = None):
         """
-        Returns a single profile (a note) by id, if available
+        Get a single profile (a note) by id, if available
+
+        :arg string email_or_id: email or id of the profile
+
+        :return dict: Dictionary with the profile information
         """
         params = {}
         if email_or_id:
@@ -217,11 +257,19 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile not found'])
 
-    ## Deprecated for email_or_id_list, use search_profiles instead
+    @deprecated(version='0.9.20', reason="Use search_profiles instead")
     def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
         """
-        |  If the list is tilde_ids, returns an array of profiles
-        |  If the list is emails, returns an array of dictionaries with 'email' and 'profile'
+        Gets a list of profiles
+
+        :arg list email_or_id_list: List of ids or emails
+        :arg string id: OpenReview username id
+        :arg string email: email registered in OpenReview
+        :arg string first: First name of the user
+        :arg string middle: Middle name of the user
+        :arg string last: Last name of the user
+
+        :return list: List of profiles
         """
 
         ## Deprecated, don't use it
@@ -269,6 +317,15 @@ class Client(object):
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
     def search_profiles(self, emails = None, ids = None, term = None):
+        """
+        Gets a list of profiles using either their ids or corresponding emails
+
+        :arg list emails: List of emails registered in OpenReview
+        :arg list ids: List of OpenReview username ids
+        :arg string term: Term............
+
+        :return list: List of profiles
+        """
 
         if term:
             response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
@@ -289,16 +346,20 @@ class Client(object):
         return []
 
     def get_pdf(self, id):
-        '''
-        Returns the binary content of a pdf using the provided note id
+        """
+        Gets the binary content of a pdf using the provided note id
         If the pdf is not found then this returns an error message with "status":404
+
+        :arg string id: Note id of the pdf
+
+        :return bytes: The binary content of a pdf
 
         Example Usage:
 
         >>> f = get_pdf(id='Place Note-ID here')
         >>> with open('output.pdf','wb') as op: op.write(f)
 
-        '''
+        """
         params = {}
         params['id'] = id
 
@@ -310,11 +371,13 @@ class Client(object):
         return response.content
 
     def put_pdf(self, fname):
-        '''
-        Uploads a pdf to the openreview server and returns a relative url for the uploaded pdf
+        """
+        Uploads a pdf to the openreview server
 
         :arg fname: path to the pdf
-        '''
+
+        :return string: A relative url for the uploaded pdf
+        """
         params = {}
         params['id'] = id
 
@@ -328,9 +391,9 @@ class Client(object):
         return response.json()['url']
 
     def post_profile(self, profile):
-        '''
+        """
         Updates the profile
-        '''
+        """
         response = requests.post(
             self.profiles_url,
             json = profile.to_json(),
@@ -579,19 +642,19 @@ class Client(object):
         return response.json()
 
     def send_mail(self, subject, recipients, message):
-        '''
+        """
         Sends emails to a list of recipients
-        '''
+        """
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
 
     def add_members_to_group(self, group, members):
-        '''
+        """
         |  Adds members to a group
         |  Members should be in a string, unicode or a list format
-        '''
+        """
         def add_member(group, members):
             if members:
                 response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
@@ -608,10 +671,10 @@ class Client(object):
         raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list, but got " + repr(member_type) + " instead")
 
     def remove_members_from_group(self, group, members):
-        '''
+        """
         |  Removes members from a group
         |  Members should be in a string, unicode or a list format
-        '''
+        """
         def remove_member(group,members):
             response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
@@ -624,9 +687,9 @@ class Client(object):
             return remove_member(group.id, members)
 
     def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
-        '''
+        """
         Searches notes based on term, content, group and source as the criteria
-        '''
+        """
         params = {
             'term': term,
             'content': content,
@@ -644,10 +707,10 @@ class Client(object):
         return [Note.from_json(n) for n in response.json()['notes']]
 
     def get_tildeusername(self, first, last, middle = None):
-        '''
+        """
         |  Returns next possible tilde user name corresponding to the specified first, middle and last name
         |  First and last names are required, while middle name is optional
-        '''
+        """
 
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
         response = self.__handle_response(response)
@@ -694,9 +757,9 @@ class Group(object):
 
 
     def to_json(self):
-        '''
+        """
         Returns serialized json string for a given object
-        '''
+        """
         body = {
             'id': self.id,
             'cdate': self.cdate,
@@ -716,11 +779,11 @@ class Group(object):
 
     @classmethod
     def from_json(Group,g):
-        '''
+        """
         Returns a deserialized object from a json string
 
         :arg g: The json string consisting of a serialized object of type "Group"
-        '''
+        """
         group = Group(g['id'],
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
@@ -736,9 +799,9 @@ class Group(object):
         return group
 
     def add_member(self, member):
-        '''
+        """
         Adds a member to the group
-        '''
+        """
         if type(member) is Group:
             self.members.append(member.id)
         else:
@@ -746,9 +809,9 @@ class Group(object):
         return self
 
     def remove_member(self, member):
-        '''
+        """
         Removes a member from the group
-        '''
+        """
         if type(member) is Group:
             try:
                 self.members.remove(member.id)
@@ -762,16 +825,16 @@ class Group(object):
         return self
 
     def add_webfield(self, web):
-        '''
+        """
         Adds a webfield to the group
-        '''
+        """
         with open(web) as f:
             self.web = f.read()
 
     def post(self, client):
-        '''
+        """
         Posts a group
-        '''
+        """
         client.post_group(self)
 
 class Invitation(object):
@@ -843,9 +906,9 @@ class Invitation(object):
         return pp.pformat(vars(self))
 
     def to_json(self):
-        '''
+        """
         Returns serialized json string for a given object
-        '''
+        """
         body = {
             'id': self.id,
             'super': self.super,
@@ -879,11 +942,11 @@ class Invitation(object):
 
     @classmethod
     def from_json(Invitation,i):
-        '''
+        """
         Returns a deserialized object from a json string
 
         :arg i: The json string consisting of a serialized object of type "Invitation"
-        '''
+        """
         invitation = Invitation(i['id'],
             super = i.get('super'),
             cdate = i.get('cdate'),
@@ -963,9 +1026,9 @@ class Note(object):
         return pp.pformat(vars(self))
 
     def to_json(self):
-        '''
+        """
         Returns serialized json string for a given object
-        '''
+        """
         body = {
             'id': self.id,
             'original': self.original,
@@ -992,11 +1055,11 @@ class Note(object):
 
     @classmethod
     def from_json(Note,n):
-        '''
+        """
         Returns a deserialized object from a json string
 
         :arg n: The json string consisting of a serialized object of type "Note"
-        '''
+        """
         note = Note(
         id = n.get('id'),
         original = n.get('original'),
@@ -1034,9 +1097,9 @@ class Tag(object):
         self.signatures = signatures
 
     def to_json(self):
-        '''
+        """
         Returns serialized json string for a given object
-        '''
+        """
         return {
             'id': self.id,
             'cdate': self.cdate,
@@ -1053,11 +1116,11 @@ class Tag(object):
 
     @classmethod
     def from_json(Tag, t):
-        '''
+        """
         Returns a deserialized object from a json string
 
         :arg t: The json string consisting of a serialized object of type "Tag"
-        '''
+        """
         tag = Tag(
             id = t.get('id'),
             cdate = t.get('cdate'),
