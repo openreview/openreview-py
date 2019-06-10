@@ -798,7 +798,7 @@ class ReviewStage(object):
 class CommentStage(object):
 
     def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
-        self.name = 'Official_Comment'
+        self.name = 'Comment'
         self.start_date = start_date
         self.allow_public_comments = allow_public_comments
         self.anonymous = anonymous

@@ -17,7 +17,7 @@ var AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 
@@ -231,7 +231,7 @@ var getRequestForm = function() {
 }
 
 var getInvitations = function() {
-  return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION });
+  return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
 }
 
 var getConfigurationDescription = function(note) {
