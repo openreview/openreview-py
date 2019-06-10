@@ -281,13 +281,33 @@ var displayHeader = function() {
 
 var displayConfiguration = function(requestForm, invitations) {
 
-  var formatDate = function(timestamp) {
-    if (timestamp) {
-      var date = new Date(timestamp);
-      return date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+  var formatPeriod = function(invitation) {
+    var start;
+    var end;
+    var afterStart = true;
+    var beforeEnd = true;
+    var now = Date.now();
+    if (invitation.cdate) {
+      var date = new Date(invitation.cdate);
+      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      afterStart = now > invitation.cdate;
     }
-    return '-';
-   }
+    if (invitation.duedate) {
+      var date = new Date(invitation.duedate);
+      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      beforeEnd = now < invitation.duedate;
+    }
+
+    var currentPeriod = afterStart && beforeEnd;
+    var periodString = start ? 'from <i>' + start + '</i> ' : 'open ';
+    if (end) {
+      periodString = periodString + 'until <i>' + end + '</i>';
+    } else {
+      periodString = periodString + 'no deadline';
+    }
+
+    return periodString;
+  }
   var invitaitonMap = {};
 
   invitations.forEach(function(invitation) {
@@ -319,16 +339,37 @@ var displayConfiguration = function(requestForm, invitations) {
 
   var invitation = invitaitonMap[SUBMISSION_ID];
   if (invitation) {
-    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Paper Submission</a> from <i>' + formatDate(invitation.cdate) + '</i> to <i>' + formatDate(invitation.duedate) + '</i></li>';
+    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Paper Submission</a> ' + formatPeriod(invitation) + '</li>';
   };
 
-  html = html + '<li><a href="/invitation?id=Submission">Bidding</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
-    '<li><a href="/invitation?id=Submission">Review</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
-    '<li><a href="/invitation?id=Submission">Comments</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
-    '<li><a href="/invitation?id=Submission">Meta Review</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
-    '<li><a href="/invitation?id=Submission">Decision</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
-    '<li><a href="/invitation?id=Submission">Paper Revision</a> from 24 April 2019 23:50 to 29 September 2019 17:59</li>' +
-    '</ul>' +
+  var invitation = invitaitonMap[CONFERENCE_ID + '/-/Bid'];
+  if (invitation) {
+    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Bidding</a> ' + formatPeriod(invitation) + '</li>';
+  };
+
+  html = html + '<li><a href="/assignments?venue=' + CONFERENCE_ID + '">Paper Assignment</a> After Bidding is finished</li>';
+
+  var invitation = invitaitonMap[CONFERENCE_ID + '/-/Official_Review'];
+  if (invitation) {
+    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Reviews</a> ' + formatPeriod(invitation) + '</li>';
+  };
+
+  var invitation = invitaitonMap[CONFERENCE_ID + '/-/Official_Comment'];
+  if (invitation) {
+    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Commenting</a> ' + formatPeriod(invitation) + '</li>';
+  };
+
+  var invitation = invitaitonMap[CONFERENCE_ID + '/-/Meta_Review'];
+  if (invitation) {
+    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Meta Reviews</a> ' + formatPeriod(invitation) + '</li>';
+  };
+
+  var invitation = invitaitonMap[CONFERENCE_ID + '/-/Decision'];
+  if (invitation) {
+    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Decisions</a> ' + formatPeriod(invitation) + '</li>';
+  };
+
+  html = html + '</ul>' +
     '</div>'
   ;
   $(container).empty().append(html);
