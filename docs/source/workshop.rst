@@ -528,9 +528,9 @@ We then filter the Decision notes that were accepted and use their forum ID to g
 
 Retrieving all the author names and e-mails from accepted Submissions
 ---------------------------------------------------------------------
-Our goal is to retrieve the information of the authors (e-mails and/or names). This information is stored in the Original Submission, which is a note. However, depending on the venue, this information might not be directly visible and some 'tricks' may be needed. Therefore, the first thing you need to do is determine if the Submissions you are interested in are double blind or not.
+Our goal is to retrieve the information of the authors (e-mails and/or names). This information is stored in the Original Submission, which is a note. However, depending on the venue, this information might not be directly visible and some 'tricks' may be needed. Therefore, the first thing you need to do is determine if the Submissions you are interested in are double blind or not. If the authors' information is not visible to the reviewers and viceversa, then the venue is double blind.
 
-Since we are interested in the Submission whose Decision contains 'Accept', we first get all the Decision notes for the venue we are interested. We first obtain all the Decision notes for a particular venue. This step is the same regardless of the format of the venue.
+Since we are interested in the Submission whose Decision contains 'Accept', we first get all the Decision notes for the venue we are interested in. We first obtain all the Decision notes for a particular venue. This step is the same regardless of the format of the venue.
 
 	>>> all_notes = openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Paper.*/Decision')
 
