@@ -26,12 +26,13 @@ class TestLegacyInvitations():
         })
         builder.has_area_chairs(True)
         builder.use_legacy_invitation_id(True)
-        conference = builder.get_result()
         now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 40))
+        conference = builder.get_result()
 
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
@@ -53,10 +54,10 @@ class TestLegacyInvitations():
         conference.set_assignment('reviewer_legacy@mail.com', 1)
         conference.set_assignment('ac_legacy@mail.com', 1, True)
 
-        conference.open_comments('Official_Comment', public = False, anonymous = True)
-        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 40))
-        conference.open_meta_reviews(due_date = now + datetime.timedelta(minutes = 40))
-        conference.open_decisions(due_date = now + datetime.timedelta(minutes = 40))
+        conference.open_comments()
+        conference.open_reviews()
+        conference.open_meta_reviews()
+        conference.open_decisions()
 
         assert client.get_invitations(regex = 'NIPS.cc/2019/Workshop/MLITS/-/Paper.*/Official_Comment')
         assert client.get_invitations(regex = 'NIPS.cc/2019/Workshop/MLITS/-/Paper.*/Official_Review')

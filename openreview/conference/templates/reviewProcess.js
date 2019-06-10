@@ -3,10 +3,11 @@ function(){
 
     var CONFERENCE_ID = '';
     var SHORT_PHRASE = '';
-    var AUTHORS_ID = '';
-    var REVIEWERS_ID = '';
-    var AREA_CHAIRS_ID = '';
+    var AUTHORS_NAME = '';
+    var REVIEWERS_NAME = '';
+    var AREA_CHAIRS_NAME = '';
     var PROGRAM_CHAIRS_ID = '';
+    var USE_AREA_CHAIRS = false;
 
     var forumNote = or3client.or3request(or3client.notesUrl+'?id='+note.forum, {}, 'GET', token);
 
@@ -14,6 +15,10 @@ function(){
       var forum = result.notes[0];
       var promises = [];
 
+      var AUTHORS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + AUTHORS_NAME;
+      //TODO: use the variable instead, when we have anonymous groups integrated
+      var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Reviewers';
+      var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Area_Chairs';
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 
@@ -34,7 +39,7 @@ function(){
       };
       promises.push(or3client.or3request( or3client.mailUrl, review_writer_mail, 'POST', token ));
 
-      if (AREA_CHAIRS_ID && (note.readers.includes('everyone') || note.readers.includes(AREA_CHAIRS_ID))) {
+      if (USE_AREA_CHAIRS && (note.readers.includes('everyone') || note.readers.includes(AREA_CHAIRS_ID))) {
         var areachair_mail = {
           groups: [AREA_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
