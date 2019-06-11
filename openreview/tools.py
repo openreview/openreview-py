@@ -232,9 +232,9 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     rejected_bibtex = [
         '@misc{',
-        first_author_last_name + year + first_word + ',',
-        'title={' + bibtex_title + '},',
-        'author={' + authors + '},',
+        pylatex.escape_latex(first_author_last_name + year + first_word + ','),
+        'title={' + pylatex.escape_latex(bibtex_title) + '},',
+        'author={' + pylatex.escape_latex(authors) + '},',
         'year={' + year + '},',
         'url={https://openreview.net/forum?id=' + forum + '},',
         '}'
@@ -242,10 +242,10 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     accepted_bibtex = [
         '@inproceedings{',
-        first_author_last_name + year + first_word + ',',
-        'title={' + bibtex_title + '},',
-        'author={' + authors + '},',
-        'booktitle={' + venue_fullname + '},',
+        pylatex.escape_latex(first_author_last_name + year + first_word + ','),
+        'title={' + pylatex.escape_latex(bibtex_title) + '},',
+        'author={' + pylatex.escape_latex(authors) + '},',
+        'booktitle={' + pylatex.escape_latex(venue_fullname) + '},',
         'year={' + year + '},',
         'url={https://openreview.net/forum?id=' + forum + '},',
         '}'
@@ -256,8 +256,7 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
     else:
         bibtex = rejected_bibtex
 
-    text= '\n'.join(bibtex)
-    return pylatex.escape_latex(text)
+    return '\n'.join(bibtex)
 
 def subdomains(domain):
     '''
