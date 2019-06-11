@@ -313,7 +313,7 @@ var displayConfiguration = function(requestForm, invitations) {
   var invitaitonMap = {};
 
   invitations.forEach(function(invitation) {
-    invitaitonMap[invitation.id] = invitation;
+    invitationMap[invitation.id] = invitation;
   });
 
   var container = '#venue-configuration';
@@ -339,34 +339,34 @@ var displayConfiguration = function(requestForm, invitations) {
     '<h3>Timeline:</h3></br>' +
     '<ul>';
 
-  var invitation = invitaitonMap[SUBMISSION_ID];
+  var invitation = invitationMap[SUBMISSION_ID];
   if (invitation) {
     html = html + '<li><a href="/invitation?id=' + invitation.id + '">Paper Submission</a> ' + formatPeriod(invitation) + '</li>';
   };
 
-  var invitation = invitaitonMap[CONFERENCE_ID + '/-/' + BID_NAME];
+  var invitation = invitationMap[CONFERENCE_ID + '/-/' + BID_NAME];
   if (invitation) {
     html = html + '<li><a href="/invitation?id=' + invitation.id + '">Bidding</a> ' + formatPeriod(invitation) + '</li>';
   };
 
   html = html + '<li><a href="/assignments?venue=' + CONFERENCE_ID + '">Paper Assignment</a> After Bidding is finished</li>';
 
-  var invitation = invitaitonMap[CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME];
+  var invitation = invitationMap[CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME];
   if (invitation) {
     html = html + '<li><a href="/invitation?id=' + invitation.id + '">Reviews</a> ' + formatPeriod(invitation) + '</li>';
   };
 
-  var invitation = invitaitonMap[CONFERENCE_ID + '/-/' + COMMENT_NAME];
+  var invitation = invitationMap[CONFERENCE_ID + '/-/' + COMMENT_NAME];
   if (invitation) {
     html = html + '<li><a href="/invitation?id=' + invitation.id + '">Commenting</a> ' + formatPeriod(invitation) + '</li>';
   };
 
-  var invitation = invitaitonMap[CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME];
+  var invitation = invitationMap[CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME];
   if (invitation) {
     html = html + '<li><a href="/invitation?id=' + invitation.id + '">Meta Reviews</a> ' + formatPeriod(invitation) + '</li>';
   };
 
-  var invitation = invitaitonMap[CONFERENCE_ID + '/-/' + DECISION_NAME];
+  var invitation = invitationMap[CONFERENCE_ID + '/-/' + DECISION_NAME];
   if (invitation) {
     html = html + '<li><a href="/invitation?id=' + invitation.id + '">Decisions</a> ' + formatPeriod(invitation) + '</li>';
   };
