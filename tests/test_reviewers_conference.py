@@ -88,17 +88,15 @@ class TestReviewersConference():
         'location': 'Portoroz, Slovenia',
         'instructions': ' '
         })
-        builder.set_conference_submission_name('Submission')
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
         builder.set_override_homepage(True)
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
-            writers = ['~Test_User1', 'author@mail.com', 'author2@mail.com'],
+            writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
@@ -118,7 +116,7 @@ class TestReviewersConference():
         conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')
         conference.set_assignment(number = 1, user = 'reviewer_kgb2@mail.com')
 
-        invitations = conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
+        invitations = conference.open_reviews()
         assert invitations
 
         request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)

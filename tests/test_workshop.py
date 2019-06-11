@@ -30,8 +30,6 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -55,13 +53,12 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['program_chairs@hsdip.org'])
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
+        invitation = client.get_invitation(id = conference.get_submission_id())
         assert invitation
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
         assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
@@ -110,17 +107,13 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
 
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 10))
-        assert invitation
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
@@ -217,8 +210,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
@@ -230,11 +224,12 @@ class TestWorkshop():
         assert blind_submissions_2
         assert len(blind_submissions_2) == 1
         assert blind_submissions[0].id == blind_submissions_2[0].id
-        assert blind_submissions_2[0].readers == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
+        assert blind_submissions_2[0].readers == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
          'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
-         'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors']
+         'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs']
 
-        builder.set_submission_public(True)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
         blind_submissions_3 = conference.create_blind_submissions()
         assert blind_submissions_3
@@ -259,8 +254,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
         builder.has_area_chairs(False)
         conference = builder.get_result()
         conference.set_authors()
@@ -273,8 +269,6 @@ class TestWorkshop():
         reviewer_client = helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
 
         conference.set_assignment('reviewer4@mail.com', submission.number)
-        now = datetime.datetime.utcnow()
-        conference.open_reviews(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
 
         request_page(selenium, "http://localhost:3000/forum?id=" + submission.id, reviewer_client.token)
         reply_row = selenium.find_element_by_class_name('reply_row')
@@ -338,9 +332,11 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
+        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, allow_public_comments = True)
         conference = builder.get_result()
         assert conference
 
@@ -350,8 +346,6 @@ class TestWorkshop():
         reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert reviews
         review = reviews[0]
-
-        conference.open_comments(name = 'Official_Comment', public = False, anonymous = True, unsubmitted_reviewers = True, email_pcs = True)
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Comment',
             forum = submission.id,
@@ -375,25 +369,23 @@ class TestWorkshop():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Your submission has received a comment. Paper Title')
+        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Your submission has received a comment. Paper Number: 1, Paper Title')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper you are reviewing. Paper Number')
+        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper you are reviewing. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper in your area. Paper Number')
+        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper in your area. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
         messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*A comment was posted. Paper Number')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
-
-        conference.open_comments(name = 'Public_Comment', public = True, anonymous = False)
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Public_Comment',
             forum = submission.id,
@@ -417,6 +409,7 @@ class TestWorkshop():
 
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -431,8 +424,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
         assert conference
@@ -444,7 +438,6 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
-        now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review/AnonReviewer1/Revision',
@@ -499,8 +492,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
         conference.open_meta_reviews()
@@ -541,8 +535,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
@@ -561,13 +556,16 @@ class TestWorkshop():
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {
-                'title': 'Acceptance Decision',
+                'title': 'Paper Decision',
                 'decision': 'Accept (Oral)',
                 'comment': 'this is a comment'
             }
         )
         decision_note = pc_client.post_note(note)
         assert decision_note
+
+        notes = conference.get_submissions(accepted=True)
+        assert notes
 
     def test_release_decisions(self, client, selenium, request_page):
 
@@ -585,8 +583,9 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
-        builder.set_double_blind(True)
-        builder.set_submission_public(False)
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
@@ -596,7 +595,7 @@ class TestWorkshop():
             'Reject': 'All Presentations'
         })
 
-        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", client.token)
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -609,3 +608,105 @@ class TestWorkshop():
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
         assert tabs
+        accepted_panel = selenium.find_element_by_id('accept-oral')
+        assert accepted_panel
+        accepted_notes = accepted_panel.find_elements_by_class_name('note')
+        assert accepted_notes
+        assert len(accepted_notes) == 1
+
+    def test_pc_console(self, client, selenium, request_page):
+
+        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
+
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs", pc_client.token)
+        assert "ICAPS 2019 Workshop HSDIP Program Chairs | OpenReview" in selenium.title
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('reviewer-status')
+        with pytest.raises(NoSuchElementException):
+            assert tabs.find_element_by_id('areachair-status')
+
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-0').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+
+        with pytest.raises(NoSuchElementException):
+            assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4')
+
+
+    def test_accepted_papers(self, client, test_client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
+        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
+        builder.set_conference_short_name('ICAPS HSDIP 2019')
+        builder.set_homepage_header({
+        'title': 'Heuristics and Search for Domain-independent Planning',
+        'subtitle': 'ICAPS 2019 Workshop',
+        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
+        'date': 'July 11-15, 2019',
+        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
+        'location': 'Berkeley, CA, USA'
+        })
+        builder.has_area_chairs(False)
+        builder.set_submission_stage(double_blind=True)
+        conference = builder.get_result()
+
+        accepted_notes = conference.get_submissions(accepted=True)
+        assert accepted_notes
+        assert len(accepted_notes) == 1
+
+        note = openreview.Note(invitation = conference.get_submission_id(),
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc']
+            }
+        )
+        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        posted_note = test_client.post_note(note)
+        assert posted_note
+
+        conference.create_blind_submissions()
+        conference.set_authors()
+        conference.open_decisions()
+
+        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
+
+        notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        submission = notes[0]
+
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/-/Decision',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            nonreaders = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors'],
+            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            content = {
+                'title': 'Paper Decision',
+                'decision': 'Reject',
+                'comment': 'this is a comment'
+            }
+        )
+        decision_note = pc_client.post_note(note)
+        assert decision_note
+
+        notes = conference.get_submissions(accepted=True)
+        assert notes
+        assert len(notes) == 1
+
+        notes = conference.get_submissions(accepted=False)
+        assert notes
+        assert len(notes) == 2

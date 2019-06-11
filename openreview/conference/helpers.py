@@ -15,11 +15,12 @@ def get_conference(client, request_form_id):
     builder = openreview.conference.ConferenceBuilder(client)
 
     conference_start_date_str = 'TBD'
-    if note.content.get('Venue Start Date'):
+    start_date = note.content.get('Venue Start Date', note.content.get('Conference Start Date'))
+    if start_date:
         try:
-            conference_start_date = datetime.datetime.strptime(note.content.get('Venue Start Date'), '%Y/%m/%d %H:%M')
+            conference_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
         except ValueError:
-            conference_start_date = datetime.datetime.strptime(note.content.get('Venue Start Date'), '%Y/%m/%d')
+            conference_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d')
         conference_start_date_str = conference_start_date.strftime('%b %d %Y')
 
     submission_start_date_str = ''
@@ -41,11 +42,11 @@ def get_conference(client, request_form_id):
         submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
 
     builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
-    builder.set_conference_name(note.content['Official Venue Name'])
-    builder.set_conference_short_name(note.content['Abbreviated Venue Name'])
+    builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
+    builder.set_conference_short_name(note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')))
     builder.set_homepage_header({
     'title': note.content['title'],
-    'subtitle': note.content['Abbreviated Venue Name'],
+    'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
     'deadline': 'Submission Start: ' + submission_start_date_str + ', End: ' + submission_due_date_str,
     'date': conference_start_date_str,
     'website': note.content['Official Website URL'],
@@ -55,21 +56,25 @@ def get_conference(client, request_form_id):
     if 'Yes, our venue has Area Chairs' == note.content.get('Area Chairs (Metareviewers)', ''):
         builder.has_area_chairs(True)
 
-    if 'Double-blind' == note.content.get('Author and Reviewer Anonymity', ''):
-        builder.set_double_blind(True)
+    if 'Yes, our conference has Area Chairs' == note.content.get('Area Chairs (Metareviewers)', ''):
+        builder.has_area_chairs(True)
 
+    double_blind = False
+    if 'Double-blind' == note.content.get('Author and Reviewer Anonymity', ''):
+        double_blind = True
+
+    public = False
     if 'Submissions and reviews should both be public.' == note.content.get('Open Reviewing Policy', '') or \
         'Submissions should be public, but reviews should be private.' == note.content.get('Open Reviewing Policy', '') :
-        builder.set_submission_public(True)
-
+        public = True
 
     builder.set_override_homepage(True)
-    conference = builder.get_result()
 
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if submission_additional_options:
             submission_additional_options = json.loads(submission_additional_options)
 
-    conference.open_submissions(start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
+    builder.set_submission_stage(double_blind=double_blind, public=public, start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
+    conference = builder.get_result()
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference

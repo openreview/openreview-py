@@ -195,7 +195,7 @@ class Matching(object):
             scores.append('affinity')
         if tpms_score_file:
             scores.append('tpms')
-        if conference.subject_areas:
+        if conference.submission_stage.subject_areas:
             scores.append('subjectArea')
         try:
             client.get_invitation(conference.get_recommendation_id())
@@ -353,6 +353,7 @@ class Matching(object):
                         'order': 15
                     },
                     'status': {
+                        'default': 'Initialized',
                         'value-dropdown': ['Initialized', 'Running', 'Error', 'No Solution', 'Complete', 'Deployed']
                     }
                 }
@@ -419,7 +420,7 @@ class Matching(object):
                     if paper_note_id in scores_by_reviewer_by_paper:
                         scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})
 
-        if conference.subject_areas:
+        if conference.submission_stage.subject_areas:
             user_subject_areas = list(openreview.tools.iterget_notes(client, invitation = conference.get_registration_id()))
             for note in submissions:
                 note_subject_areas = note.content['subject_areas']
@@ -484,9 +485,19 @@ class Matching(object):
                             self.conference.get_program_chairs_id(),
                             self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
                         ],
+                        'writers': [
+                            self.conference.get_id(),
+                            self.conference.get_program_chairs_id(),
+                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
+                        ]
                     }
                     parent_group_params = {
                        'readers': [
+                            self.conference.get_id(),
+                            self.conference.get_program_chairs_id(),
+                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
+                        ],
+                        'writers': [
                             self.conference.get_id(),
                             self.conference.get_program_chairs_id(),
                             self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)

@@ -12,7 +12,7 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 11, 'groups is empty'
+        assert len(groups) == 15, 'groups is empty'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -22,6 +22,7 @@ class TestClient():
         assert 'openreview.net' in group_names
         assert 'active_venues' in group_names
         assert 'host' in group_names
+        assert 'test.org/2019/Conference/Reviewers/Declined' in group_names
 
     def test_get_invitations(self, client):
         invitations = client.get_invitations()
@@ -128,7 +129,7 @@ class TestClient():
         assert group
         assert group.members == ['~Melisa_Bok1']
 
-    def test_get_invitations(self, client):
+    def test_get_invitations_by_invitee(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
         assert len(invitations) == 0
 
@@ -147,13 +148,12 @@ class TestClient():
         assert builder, 'builder is None'
 
         builder.set_conference_id('Test.ws/2019/Conference')
+        builder.set_submission_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00))
 
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 18, 00))
-
-        note = openreview.Note(invitation = invitation.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['mbok@mail.com', 'andrew@mail.com'],
             writers = ['mbok@mail.com', 'andrew@mail.com'],
             signatures = ['~Super_User1'],

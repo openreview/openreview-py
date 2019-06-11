@@ -476,6 +476,47 @@ Conferences as large as ICLR 2019 will often have a number of reviews that excee
 	>>> for review in review_iterator:
 	>>>     #do something
 
+Retrieving all accepted Submissions for a conference (Single-blind)
+-------------------------------------------------------------------
+Since the Submissions do not contain the decisions, we first need to retrieve all the Decision notes, filter the accepted notes and use their forum ID to locate its corresponding Submission. We break down these steps below.
+
+Retrieve Submissions and Decisions.
+
+	>>> id_to_submission = {
+        	note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Full_Submission')
+		}
+
+	>>> all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Paper.*/Decision')
+
+It is convenient to place all the submissions in a dictionary with their id as the key so that we can retrieve an accepted submission using its id.
+
+We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
+
+	>>> accepted_submissions = [id_to_submission[note.forum] for note in all_decision_notes if note.content['decision'] == 'Accept']
+
+Retrieving all accepted Submissions for a conference (Double-blind)
+-------------------------------------------------------------------
+This is very similar to the previous example. The only difference is that we need to get the blind notes with the added details parameter to get the Submission.
+
+Retrieve Submissions and Decisions.
+
+	>>> blind_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Blind_Submission', details='original')}
+
+	>>> all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Paper.*/Decision')
+
+We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
+
+	>>> accepted_submissions = [blind_notes[decision_note.forum].details['original'] for decision_note in all_decision_notes if 'Accept' in decision_note.content['decision']]
+
+Retrieving all the author names and e-mails from accepted Submissions
+---------------------------------------------------------------------
+First we need to retrieve the Accepted Submissions. Please refer to 'Retrieving all accepted Submissions for a conference'. Once we get the Accepted Submissions we can easily extract the author's information from them.
+
+	>>> author_emails = []
+	>>> author_names = []
+	>>> for submission in accepted_submissions:
+	... 	author_emails += submission['content']['authorids']
+	... 	author_names += submission['content']['authors']
 
 Retrieving comments made on a forum
 ----------------------------------------

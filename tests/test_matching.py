@@ -43,14 +43,16 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+
+        builder.set_bid_stage(due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -59,14 +61,10 @@ class TestMatching():
         conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
         conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com'])
 
-        ## Open submissions
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_submissions(due_date = now + datetime.timedelta(minutes = 40))        
-
         ## Paper 1
-        note_1 = openreview.Note(invitation = invitation.id,
+        note_1 = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            writers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
+            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title 1',
@@ -81,12 +79,12 @@ class TestMatching():
         )
         url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
         note_1.content['pdf'] = url
-        note_1 = test_client.post_note(note_1)        
+        note_1 = test_client.post_note(note_1)
 
         ## Paper 2
-        note_2 = openreview.Note(invitation = invitation.id,
+        note_2 = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            writers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
+            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a2@mit.edu'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title 2',
@@ -104,9 +102,9 @@ class TestMatching():
         note_2 = test_client.post_note(note_2)
 
         ## Paper 3
-        note_3 = openreview.Note(invitation = invitation.id,
+        note_3 = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
-            writers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
+            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title 3',
@@ -125,10 +123,7 @@ class TestMatching():
 
         ## Create blind submissions
         blinded_notes = conference.create_blind_submissions()
-        conference.set_authors()        
-
-        ## Open Bidding
-        conference.open_bids(due_date = now + datetime.timedelta(minutes = 40), request_count = 50, with_area_chairs = True)
+        conference.set_authors()
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
         ac1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
@@ -211,7 +206,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[0].id
@@ -233,7 +228,7 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][4].get('conflicts') is None
 
 
-    def test_setup_matching_with_tpms(self, client, test_client, helpers): 
+    def test_setup_matching_with_tpms(self, client, test_client, helpers):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -258,17 +253,17 @@ class TestMatching():
             <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
             </p>'''
         })
-        print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+
         conference = builder.get_result()
         assert conference, 'conference is None'
 
@@ -315,7 +310,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[2].id
@@ -337,7 +332,7 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][4].get('conflicts') is None
 
 
-    def test_setup_matching_with_recommendations(self, client, test_client, helpers): 
+    def test_setup_matching_with_recommendations(self, client, test_client, helpers):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -365,9 +360,9 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
@@ -444,7 +439,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[2].id
@@ -463,10 +458,10 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][3].get('conflicts') is None
         assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
-        assert metadata_notes[2].content['entries'][4].get('conflicts') is None  
+        assert metadata_notes[2].content['entries'][4].get('conflicts') is None
 
 
-    def test_setup_matching_with_subject_areas(self, client, test_client, helpers): 
+    def test_setup_matching_with_subject_areas(self, client, test_client, helpers):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -494,9 +489,9 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_double_blind(True)
         builder.set_override_homepage(True)
-        builder.set_subject_areas([
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
@@ -567,7 +562,7 @@ class TestMatching():
         assert metadata_notes[1].content['entries'][3].get('conflicts') is None
         assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        assert metadata_notes[1].content['entries'][4].get('conflicts') is None 
+        assert metadata_notes[1].content['entries'][4].get('conflicts') is None
 
         ## Assert Paper 3 scores
         assert metadata_notes[2].forum == blinded_notes[2].id
@@ -586,4 +581,4 @@ class TestMatching():
         assert metadata_notes[2].content['entries'][3].get('conflicts') is None
         assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
         assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
-        assert metadata_notes[2].content['entries'][4].get('conflicts') is None  
+        assert metadata_notes[2].content['entries'][4].get('conflicts') is None
