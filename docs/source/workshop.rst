@@ -494,6 +494,20 @@ We then filter the Decision notes that were accepted and use their forum ID to g
 
 	>>> accepted_submissions = [id_to_submission[note.forum] for note in all_decision_notes if note.content['decision'] == 'Accept']
 
+Retrieving all accepted Submissions for a conference (Double-blind)
+-------------------------------------------------------------------
+This is very similar to the previous example. The only difference is that we need to get the blind notes with the added details parameter to get the Submission.
+
+Retrieve Submissions and Decisions.
+
+	>>> blind_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Blind_Submission', details='original')}
+
+	>>> all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Paper.*/Decision')
+
+We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
+
+	>>> accepted_submissions = [blind_notes[decision_note.forum].details['original'] for decision_note in all_decision_notes if 'Accept' in decision_note.content['decision']]
+
 Retrieving all the author names and e-mails from accepted Submissions
 ---------------------------------------------------------------------
 Our goal is to retrieve the information of the authors (e-mails and/or names). This information is stored in the Original Submission, which is a note. However, depending on the venue, this information might not be directly visible and some 'tricks' may be needed. Therefore, the first thing you need to do is determine if the Submissions you are interested in are double blind or not. If the authors' information is not visible to the reviewers and viceversa, then the venue is double blind.
