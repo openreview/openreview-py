@@ -195,7 +195,7 @@ class Matching(object):
             scores.append('affinity')
         if tpms_score_file:
             scores.append('tpms')
-        if conference.subject_areas:
+        if conference.submission_stage.subject_areas:
             scores.append('subjectArea')
         try:
             client.get_invitation(conference.get_recommendation_id())
@@ -420,7 +420,7 @@ class Matching(object):
                     if paper_note_id in scores_by_reviewer_by_paper:
                         scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})
 
-        if conference.subject_areas:
+        if conference.submission_stage.subject_areas:
             user_subject_areas = list(openreview.tools.iterget_notes(client, invitation = conference.get_registration_id()))
             for note in submissions:
                 note_subject_areas = note.content['subject_areas']
