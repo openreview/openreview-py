@@ -476,8 +476,8 @@ Conferences as large as ICLR 2019 will often have a number of reviews that excee
 	>>> for review in review_iterator:
 	>>>     #do something
 
-Retrieving all accepted Submissions for a conference
-----------------------------------------------------
+Retrieving all accepted Submissions for a conference (Single-blind)
+-------------------------------------------------------------------
 Since the Submissions do not contain the decisions, we first need to retrieve all the Decision notes, filter the accepted notes and use their forum ID to locate its corresponding Submission. We break down these steps below.
 
 Retrieve Submissions and Decisions.
