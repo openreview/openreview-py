@@ -22,10 +22,10 @@ class OpenReviewException(Exception):
 
 class Client(object):
     """
-    :arg string baseurl: url to the host, example: https://openreview.net (should be replaced by 'host' name)
-    :arg string username: openreview username
-    :arg string password: openreview password
-    :arg string token:  session token
+    :arg str baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name)
+    :arg str username: OpenReview username
+    :arg str password: OpenReview password
+    :arg str token: Session token
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None):
         self.baseurl = baseurl
@@ -101,8 +101,8 @@ class Client(object):
         """
         Logs in a registered user
 
-        :arg string username: OpenReview username
-        :arg string password: OpenReview password
+        :arg str username: OpenReview username
+        :arg str password: OpenReview password
 
         :return dict: Dictionary containing user information and the authentication token
         """
@@ -118,11 +118,11 @@ class Client(object):
         """
         Registers a new user
 
-        :arg string email: email that will be used as id to log in after the user is registered
-        :arg string first: First name of the user
-        :arg string last: Last name of the user
-        :arg string middle: Middle name of the user
-        :arg string password: Password used to log into OpenReview
+        :arg str email: email that will be used as id to log in after the user is registered
+        :arg str first: First name of the user
+        :arg str last: Last name of the user
+        :arg str middle: Middle name of the user
+        :arg str password: Password used to log into OpenReview
 
         :return dict: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
         """
@@ -139,12 +139,13 @@ class Client(object):
         """
         Activates a newly registered user
 
-        :arg string token: Activation token. If running in localhost, use email as token
+        :arg str token: Activation token. If running in localhost, use email as token
         :arg dict content: Content of the profile to activate
 
         :return dict: Dictionary containing user information and the authentication token 
 
         Example Usage:
+
         >>> res = client.activate_user('new@user.com', {
             'names': [
                     {
@@ -168,7 +169,7 @@ class Client(object):
         """
         Get the activation of a registered user
 
-        :arg string token: Activation token
+        :arg str token: Activation token
 
         :return string: The activation token for a registered user
         """
@@ -181,7 +182,7 @@ class Client(object):
         """
         Get a single Group by id if available
 
-        :arg string id: id of the group
+        :arg str id: id of the group
 
         :return dict: Dictionary with the group information
 
@@ -198,7 +199,7 @@ class Client(object):
         """
         Get a single invitation by id if available
 
-        :arg string id: id of the invitation
+        :arg str id: id of the invitation
 
         :return dict: Dictionary with the invitation information
         """
@@ -211,7 +212,7 @@ class Client(object):
         """
         Get a single note by id if available
 
-        :arg string id: id of the note
+        :arg str id: id of the note
 
         :return dict: Dictionary with the note information
         """
@@ -224,7 +225,7 @@ class Client(object):
         """
         Get a single tag by id if available
 
-        :arg string id: id of the tag
+        :arg str id: id of the tag
 
         :return dict: Dictionary with the tag information
         """
@@ -237,7 +238,7 @@ class Client(object):
         """
         Get a single profile (a note) by id, if available
 
-        :arg string email_or_id: email or id of the profile
+        :arg str email_or_id: e-mail or id of the profile
 
         :return dict: Dictionary with the profile information
         """
@@ -263,13 +264,13 @@ class Client(object):
         Gets a list of profiles
 
         :arg list email_or_id_list: List of ids or emails
-        :arg string id: OpenReview username id
-        :arg string email: email registered in OpenReview
-        :arg string first: First name of the user
-        :arg string middle: Middle name of the user
-        :arg string last: Last name of the user
+        :arg str id: OpenReview username id
+        :arg str email: e-mail registered in OpenReview
+        :arg str first: First name of the user
+        :arg str middle: Middle name of the user
+        :arg str last: Last name of the user
 
-        :return list: List of profiles
+        :return list<Profile>: List of profiles
         """
 
         ## Deprecated, don't use it
@@ -322,9 +323,9 @@ class Client(object):
 
         :arg list emails: List of emails registered in OpenReview
         :arg list ids: List of OpenReview username ids
-        :arg string term: Term............
+        :arg str term: Term............
 
-        :return list: List of profiles
+        :return list<Profile>: List of profiles
         """
 
         if term:
@@ -350,7 +351,7 @@ class Client(object):
         Gets the binary content of a pdf using the provided note id
         If the pdf is not found then this returns an error message with "status":404
 
-        :arg string id: Note id of the pdf
+        :arg str id: Note id of the pdf
 
         :return bytes: The binary content of a pdf
 
@@ -374,9 +375,9 @@ class Client(object):
         """
         Uploads a pdf to the openreview server
 
-        :arg fname: path to the pdf
+        :arg str fname: Path to the pdf
 
-        :return string: A relative url for the uploaded pdf
+        :return string: A relative URL for the uploaded pdf
         """
         params = {}
         params['id'] = id
@@ -393,6 +394,10 @@ class Client(object):
     def post_profile(self, profile):
         """
         Updates the profile
+
+        :arg Profile profile: Profile object
+
+        :return Profile: The new updated Profile
         """
         response = requests.post(
             self.profiles_url,
@@ -404,7 +409,17 @@ class Client(object):
 
     def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None, limit = None, offset = None):
         """
-        Returns a list of Group objects based on the filters provided.
+        Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
+
+        :arg str id: id of the Group
+        :arg str regex: Regex that matches several Group ids
+        :arg str member: Groups that contain this member
+        :arg host: ............
+        :arg str signatory: Groups that contain this signatory
+        :arg int limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
+        :arg int offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
+
+        :return list<Groups>: List of Groups
         """
         params = {}
         if id != None: params['id'] = id
@@ -422,7 +437,24 @@ class Client(object):
 
     def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None, expired = None):
         """
-        Returns a list of Invitation objects based on the filters provided.
+        Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
+
+        :arg str id: id of the Invitation
+        :arg str invitee: Invitations that contain this invitee
+        :arg str replytoNote: Invitations that contain this replytoNote
+        :arg str replyForum: Invitations that contain this replyForum
+        :arg signature: Invitations that contain this signature
+        :arg str note: Invitations that contain this note
+        :arg str regex: Invitation ids that match this regex
+        :arg Tag tags: Invitations that contain these tags
+        :arg int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
+        :arg int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
+        :arg minduedate: .............
+        :arg duedate: Invitations that contain this due date
+        :arg pastdue: Invitaions that are past due
+        :arg replyto: Invitations that contain this replyto
+        :arg details: TODO: What is a valid value for this field?
+        :arg expired: .............
         """
         params = {}
         if id!=None:
@@ -474,26 +506,29 @@ class Client(object):
             details = None,
             sort = None):
         """
-        Returns a list of Note objects based on the filters provided.
+        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
-        :arg id: a Note ID. If provided, returns Notes whose ID matches the given ID.
-        :arg paperhash: a "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
+        :arg str id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+        :arg str paperhash: A "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
             (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
             identify the Note)
-        :arg forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
-        :arg replyto: a Note ID. If provided, returns Notes whose replyto field matches the given ID.
-        :arg tauthor: a Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID,
+        :arg str forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
+        :arg str invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+        :arg str replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
+        :arg str tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID,
             or is a transitive member of the Group represented by the given ID.
-        :arg signature: a Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
-        :arg writer: a Group ID. If provided, returns Notes whose writers field contains the given Group ID.
-        :arg trash: a Boolean. If True, includes Notes that have been deleted (i.e. the ddate field is less than the
+        :arg str signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+        :arg str writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+        :arg bool trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
             current date)
-        :arg number: an integer. If present, includes Notes whose number field equals the given integer.
-        :arg content: a dictionary. If present, includes Notes whose each key is present in the content field and it is equals the given value.
-        :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
+        :arg int number: If present, includes Notes whose number field equals the given integer.
+        :arg dict content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
+        :arg int limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
+        :arg int offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
+        :arg int mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :arg details: TODO: What is a valid value for this field?
+        :arg sort:
         """
         params = {}
         if id != None:
@@ -536,13 +571,15 @@ class Client(object):
 
     def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
         """
-        Returns a list of revisions for a note.
+        Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
-        :arg referent: a Note ID. If provided, returns references whose "referent" value is this Note ID.
-        :arg invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
-        :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
+        :arg str referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
+        :arg str invitation: An Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
+        :arg int mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns references
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
-        :arg original: a boolean. If True then get_references will additionally return the references to the original note.
+        :arg bool original: If True then get_references will additionally return the references to the original note.
+
+        :return list<Note>: List of revisions
         """
         params = {}
         if referent != None:
@@ -565,12 +602,13 @@ class Client(object):
 
     def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
         """
-        Returns a list of Tag objects based on the filters provided.
+        Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
-        :arg id: a Tag ID. If provided, returns Tags whose ID matches the given ID.
-        :arg forum: a Note ID. If provided, returns Tags whose forum matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+        :arg str id: A Tag ID. If provided, returns Tags whose ID matches the given ID.
+        :arg str forum: A Note ID. If provided, returns Tags whose forum matches the given ID.
+        :arg str invitation: An Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
 
+        :return list<Tag>: List of tags
         """
         params = {}
 
@@ -592,8 +630,12 @@ class Client(object):
 
     def post_group(self, group, overwrite = True):
         """
-        |  Posts the group. Upon success, returns the posted Group object.
-        |  If the group is unsigned, signs it using the client's default signature.
+        Posts the group. If the group is unsigned, signs it using the client's default signature.
+
+        :arg Group group: Group to be posted
+        :arg bool overwrite: Determines whether to overwrite an existing group or not
+
+        :return Group: The posted Group
         """
         if overwrite or not self.exists(group.id):
             if not group.signatures: group.signatures = [self.profile.id]
@@ -605,8 +647,11 @@ class Client(object):
 
     def post_invitation(self, invitation):
         """
-        |  Posts the invitation. Upon success, returns the posted Invitation object.
-        |  If the invitation is unsigned, signs it using the client's default signature.
+        Posts the invitation. If the invitation is unsigned, signs it using the client's default signature.
+
+        :arg Invitation invitation: Invitation to be posted
+
+        :return Invitation: The posted Invitation
         """
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
@@ -615,8 +660,11 @@ class Client(object):
 
     def post_note(self, note):
         """
-        |  Posts the note. Upon success, returns the posted Note object.
-        |  If the note is unsigned, signs it using the client's default signature
+        Posts the note. If the note is unsigned, signs it using the client's default signature.
+
+        :arg Note note: Note to be posted
+
+        :return Note: The posted Note
         """
         if not note.signatures: note.signatures = [self.profile.id]
         response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
@@ -626,7 +674,11 @@ class Client(object):
 
     def post_tag(self, tag):
         """
-        Posts the tag. Upon success, returns the posted Tag object.
+        Posts the tag. If the tag is unsigned, signs it using the client's default signature.
+
+        :arg Tag tag: Tag to be posted
+
+        :return Tag: The posted Tag
         """
         response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
         response = self.__handle_response(response)
@@ -635,7 +687,11 @@ class Client(object):
 
     def delete_note(self, note):
         """
-        Deletes the note and returns a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise.
+        Deletes the note
+
+        :arg Note note: Note to be deleted
+
+        :return dict: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         """
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
@@ -644,6 +700,12 @@ class Client(object):
     def send_mail(self, subject, recipients, message):
         """
         Sends emails to a list of recipients
+
+        :arg str subject: Subject of the e-mail
+        :arg str recipients: Recipients of the e-mail
+        :arg str message: Message in the e-mail
+
+        :return dict:
         """
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
         response = self.__handle_response(response)
@@ -652,8 +714,12 @@ class Client(object):
 
     def add_members_to_group(self, group, members):
         """
-        |  Adds members to a group
-        |  Members should be in a string, unicode or a list format
+        Adds members to a group
+
+        :arg Group group: Group to which the members will be added
+        :arg str members: Members that will be added to the group. Members should be in a string, unicode or a list format
+        
+        :return Group: Group with the members added
         """
         def add_member(group, members):
             if members:
@@ -672,8 +738,12 @@ class Client(object):
 
     def remove_members_from_group(self, group, members):
         """
-        |  Removes members from a group
-        |  Members should be in a string, unicode or a list format
+        Removes members from a group
+
+        :arg Group group: Group from which the members will be removed
+        :arg str members: Members that will be removed. Members should be in a string, unicode or a list format
+
+        :return Group: Group without the members that were removed
         """
         def remove_member(group,members):
             response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
@@ -689,6 +759,15 @@ class Client(object):
     def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
         """
         Searches notes based on term, content, group and source as the criteria
+
+        :arg term:
+        :arg content:
+        :arg group:
+        :arg source:
+        :arg limit:
+        :arg offset:
+
+        :return list<Note>: List of notes
         """
         params = {
             'term': term,
@@ -708,8 +787,13 @@ class Client(object):
 
     def get_tildeusername(self, first, last, middle = None):
         """
-        |  Returns next possible tilde user name corresponding to the specified first, middle and last name
-        |  First and last names are required, while middle name is optional
+        Gets next possible tilde user name corresponding to the specified first, middle and last name
+
+        :arg str first: First name of the user
+        :arg str last: Last name of the user
+        :arg str middle: Middle name of the user
+
+        :return dict: next possible tilde user name corresponding to the specified first, middle and last name
         """
 
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
@@ -717,12 +801,28 @@ class Client(object):
         return response.json()
 
     def get_messages(self, to = None, subject = None):
+        """
+        Description
+
+        :arg str to:
+        :arg str subject:
+
+        :return dict:
+        """
 
         response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 
     def get_process_logs(self, id = None, invitation = None):
+        """
+        Description
+
+        :arg str id:
+        :arg str invitation:
+
+        :return dict:
+        """
 
         response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
         response = self.__handle_response(response)
