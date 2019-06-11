@@ -183,6 +183,8 @@ class BidInvitation(openreview.Invitation):
                 'content': {
                     'edge': {
                         'required': True,
+                        'head': 'profile',
+                        'tail': 'note',
                         'value-radio': [
                             ['Very High', 1],
                             ['High', 0.5],

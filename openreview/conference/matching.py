@@ -328,17 +328,11 @@ class Matching(object):
                         'description': 'Invitation to get the configuration note',
                         'order': 11
                     },
-                    'scores_names': {
-                        'values-dropdown': scores,
+                    'scores_specification': {
+                        'value-dict': {},
                         'required': True,
-                        'description': 'List of scores names',
+                        'description': 'Manually entered JSON score specification',
                         'order': 12
-                    },
-                    'scores_weights': {
-                        'values-regex': '\\d*\\.?\\d*', # decimal number allowed
-                        'required': True,
-                        'description': 'Comma separated values of scores weights, should follow the same order than scores_names',
-                        'order': 13
                     },
                     'constraints': {
                         'value-dict': {}, # Add some json validation schema
