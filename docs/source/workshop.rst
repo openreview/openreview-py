@@ -478,53 +478,21 @@ Conferences as large as ICLR 2019 will often have a number of reviews that excee
 
 Retrieving all accepted Submissions for a conference
 ----------------------------------------------------
-In this case we want to retrieve the Original Submission. Depending on the venue, this information might not be directly visible and some 'tricks' may be needed. Therefore, the first thing you need to do is determine if the Submissions you are interested in are double blind or not. If the authors' information is not visible to the reviewers and viceversa, then the venue is double blind.
+Since the Submissions do not contain the decisions, we first need to retrieve all the Decision notes, filter the accepted notes and use their forum ID to locate its corresponding Submission. We break down these steps below.
 
-* Authors' information is not visible (double blind)
+Retrieve Submissions and Decisions.
 
-Since we are interested in the Submission whose Decision contains 'Accept', we first get all the Decision notes for the venue we are interested in. We first obtain all the Decision notes for a particular venue. This step is the same regardless of the format of the venue.
+	>>> id_to_submission = {
+        	note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Full_Submission')
+		}
 
-	>>> all_notes = openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Paper.*/Decision')
+	>>> all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Paper.*/Decision')
 
-In some cases, however, the invitation may have a different format (note the position of the dash '-'):
-
-	>>> all_notes = openreview.tools.iterget_notes(client, invitation = 'roboticsfoundation.org/RSS/2019/Workshop/Robust_Autonomy/Paper.*/-/Decision')
-
-We then obtain the Blind Submissions for the same venue. In this case, we are placing the Blind Submissions in a dictionary (blind_notes), each key is the id of a Blind Submission. This way it will be easy to retrieve a note (Blind Submission) from a Decision note that contains 'Accept'.
-
-	>>> blind_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Blind_Submission')}
-
-We now obtain the Original Submissions. In this case, we also place the Original Submissions in a dictionary (original_notes) where the key is the id of the Submission.
-
-	>>> original_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Submission')}
-
-Finally, we iterate over all the Decision notes from the venue and filter by decision. Each Decision note contains a forum id that points to the Blind Submission. Similarly the Blind Submission will point to the Original Submission.
-
-	>>> accepted_submissions = []
-	>>> for decision_note in all_notes:
-	...	if 'Accept' in decision_note.content['decision']:
-	...		# Get Blind Submission using the forum id
-	...		blind_note = blind_notes[decision_note.forum]
-	...		# Get the Original Submission using the blind_note 'original' field
-	...		accepted_submissions.append(original_notes[blind_note.original])
-
-* Reviewers' information is visible
-
-Since we are interested in the Submission whose Decision contains 'Accept', we first get all the Decision notes for the venue we are interested in. We first obtain all the Decision notes for a particular venue. This step is the same regardless of the format of the venue.
-
-	>>> all_notes = openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Paper.*/Decision')
-
-In some cases, however, the invitation may have a different format (note the position of the dash '-'):
-
-	>>> all_notes = openreview.tools.iterget_notes(client, invitation = 'roboticsfoundation.org/RSS/2019/Workshop/Robust_Autonomy/Paper.*/-/Decision')
-
-We now obtain the Original Submissions. In this case, we also place the Original Submissions in a dictionary (original_notes) where the key is the id of the Submission.
-
-	>>> original_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Full_Submission')}
+It is convenient to place all the submissions in a dictionary with their id as the key so that we can retrieve an accepted submission using its id.
 
 We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
 
-	>>> accepted_submissions = [original_notes[note.forum] for note in all_notes if note.content['decision'] == 'Accept']
+	>>> accepted_submissions = [id_to_submission[note.forum] for note in all_decision_notes if note.content['decision'] == 'Accept']
 
 Retrieving all the author names and e-mails from accepted Submissions
 ---------------------------------------------------------------------
