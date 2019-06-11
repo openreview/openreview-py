@@ -310,7 +310,7 @@ var displayConfiguration = function(requestForm, invitations) {
 
     return periodString;
   }
-  var invitaitonMap = {};
+  var invitationMap = {};
 
   invitations.forEach(function(invitation) {
     invitationMap[invitation.id] = invitation;
