@@ -968,24 +968,26 @@ class Client(object):
 
 class Group(object):
     """
-    :param id: 
+    When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
+
+    :param id: id of the Group
     :type id: str
-    :param readers:
-    :type readers:
-    :param writers:
-    :type writers:
-    :param signatories:
-    :type signatories:
-    :param signatures:
-    :type signatures:
-    :param cdate:
-    :type cdate: optional
-    :param ddate:
-    :type ddate: optional
-    :param members:
-    :type members: optional
-    :param nonreaders:
-    :type nonreaders: optional
+    :param readers: List of readers in the Group, each reader is a Group id
+    :type readers: list<str>
+    :param writers: List of writers in the Group, each writer is a Group id
+    :type writers: list<str>
+    :param signatories: List of signatories in the Group, each writer is a Group id
+    :type signatories: list<str>
+    :param signatures: List of signatures in the Group, each signature is a Group id
+    :type signatures: list<str>
+    :param cdate: Creation date of the Group
+    :type cdate: int, optional
+    :param ddate: Deletion date of the Group
+    :type ddate: int, optional
+    :param members: List of members in the Group, each member is a Group id
+    :type members: list<str>, optional
+    :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
+    :type nonreaders: list<str>, optional
     :param web:
     :type web: optional
     :param details:
@@ -1110,8 +1112,6 @@ class Group(object):
 
         :param web:
         :type web:
-
-        :rtype: None
         """
         with open(web) as f:
             self.web = f.read()
@@ -1122,51 +1122,49 @@ class Group(object):
 
         :param client: Client that will post the Group
         :type client: Client
-
-        :rtype: None
         """
         client.post_group(self)
 
 class Invitation(object):
     """
-    :param id:
+    :param id: Invitation id
     :type id: str
-    :param readers:
-    :type readers: str, optional
-    :param writers:
-    :type writers: str, optional
-    :param invitees:
-    :type invitees: str, optional
-    :param signatures:
-    :type signatures: str, optional
+    :param readers: List of readers in the Invitation, each reader is a Group id
+    :type readers: list<str>, optional
+    :param writers: List of writers in the Invitation, each writer is a Group id
+    :type writers: list<str>, optional
+    :param invitees: List of invitees in the Invitation, each invitee is a Group id
+    :type invitees: list<str>, optional
+    :param signatures: List of signatures in the Invitation, each signature is a Group id
+    :type signatures: list<str>, optional
     :param reply:
     :type reply: str, optional
     :param super:
     :type super: str, optional
-    :param noninvitees:
-    :type noninvitees: str, optional
-    :param nonreaders:
-    :type nonreaders: str, optional
+    :param noninvitees: List of noninvitees in the Invitation, each noninvitee is a Group id
+    :type noninvitees: list<str>, optional
+    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
+    :type nonreaders: list<str>, optional
     :param web:
     :type web: str, optional
     :param process:
     :type process: str, optional
     :param process_string:
     :type process_string: str, optional
-    :param duedate:
-    :type duedate: str, optional
-    :param expdate:
-    :type expdate: str, optional
-    :param cdate:
-    :type cdate: str, optional
+    :param duedate: Due date
+    :type duedate: int, optional
+    :param expdate: Expiration date
+    :type expdate: int, optional
+    :param cdate: Creation date
+    :type cdate: int, optional
     :param rdate:
-    :type rdate: str, optional
-    :param ddate:
-    :type ddate: str, optional
-    :param tcdate:
-    :type tcdate: str, optional
+    :type rdate: int, optional
+    :param ddate: Deletion date
+    :type ddate: int, optional
+    :param tcdate: True creation date
+    :type tcdate: int, optional
     :param tmdate:
-    :type tmdate: str, optional
+    :type tmdate: int, optional
     :param multiReply:
     :type multiReply: str, optional
     :param taskCompletionCount:
@@ -1322,38 +1320,38 @@ class Invitation(object):
 
 class Note(object):
     """
-    :param invitation:
+    :param invitation: Invitation id
     :type invitation: str
-    :param readers:
-    :type readers: str
-    :param writers:
-    :type writers: str
-    :param signatures:
-    :type signatures: str
+    :param readers: List of readers in the Invitation, each reader is a Group id
+    :type readers: list<str>
+    :param writers: List of writers in the Invitation, each writer is a Group id
+    :type writers: list<str>
+    :param signatures: List of signatures in the Invitation, each signature is a Group id
+    :type signatures: list<str>
     :param content:
     :type content: str
-    :param id:
+    :param id: Note id
     :type id: str, optional
-    :param original:
+    :param original: If this Note is a blind copy of a Note, then this contains the id of that Note
     :type original: str, optional
     :param number:
     :type number: str, optional
-    :param cdate:
+    :param cdate: Creation date
     :type cdate: str, optional
-    :param tcdate:
+    :param tcdate: True creation date
     :type tcdate: str, optional
     :param tmdate:
     :type tmdate: str, optional
-    :param ddate:
+    :param ddate: Deletion date
     :type ddate: str, optional
-    :param forum:
+    :param forum: Forum id
     :type forum: str, optional
     :param referent:
     :type referent: str, optional
     :param replyto:
     :type replyto: str, optional
-    :param nonreaders:
-    :type nonreaders: str, optional
+    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
+    :type nonreaders: list<str>, optional
     :param details:
     :type details: str, optional
     :param tauthor:
@@ -1474,28 +1472,28 @@ class Note(object):
 
 class Tag(object):
     """
-    :param tag:
+    :param tag: Tag id
     :type tag: str
     :param invitation:
     :type invitation: str
-    :param readers:
-    :type readers: str
-    :param signatures:
-    :type signatures: str
+    :param readers: List of readers in the Invitation, each reader is a Group id
+    :type readers: list<str>
+    :param signatures: List of signatures in the Invitation, each signature is a Group id
+    :type signatures: list<str>
     :param id:
     :type id: str, optional
-    :param cdate:
+    :param cdate: Creation date
     :type cdate: str, optional
-    :param tcdate:
+    :param tcdate: True creation date
     :type tcdate: str, optional
-    :param ddate:
+    :param ddate: Deletion date
     :type ddate: str, optional
     :param forum:
     :type forum: str, optional
     :param replyto:
     :type replyto: str, optional
-    :param nonreaders:
-    :type nonreaders: str, optional
+    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
+    :type nonreaders: list<str>, optional
     """
     def __init__(self, tag, invitation, readers, signatures, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
         self.id = id
@@ -1568,34 +1566,34 @@ class Tag(object):
 
 class Profile(object):
     """
-    :param id:
+    :param id: Profile id
     :type id: str, optional
-    :param number:
+    :param number: 
     :type number: str, optional
-    :param tcdate:
-    :type tcdate: str, optional
+    :param tcdate: True creation date 
+    :type tcdate: int, optional
     :param tmdate:
-    :type tmdate: str, optional
+    :type tmdate: int, optional
     :param referent:
     :type referent: str, optional
     :param packaging:
     :type packaging: str, optional
     :param invitation:
     :type invitation: str, optional
-    :param readers:
+    :param readers: List of readers in the Invitation, each reader is a Group id
     :type readers: str, optional
-    :param nonreaders:
+    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: str, optional
-    :param signatures:
+    :param signatures: List of signatures in the Invitation, each signature is a Group id
     :type signatures: str, optional
-    :param writers:
+    :param writers: List of writers in the Invitation, each writer is a Group id
     :type writers: str, optional
-    :param content:
-    :type content: str, optional
+    :param content: Dictionary containing the information of the Profile
+    :type content: dict, optional
     :param metaContent:
     :type metaContent: str, optional
     :param active:
-    :type active: str, optional
+    :type active: bool, optional
     :param password:
     :type password: str, optional
     :param tauthor:
