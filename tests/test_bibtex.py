@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
 import os
@@ -5,7 +6,7 @@ import os
 class TestBibtex():
 
 
-    def test_regular_names(self, client, test_client):
+    def test_regular_names(self, client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -16,31 +17,30 @@ class TestBibtex():
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            writers = [conference.id, '~Bibtex_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Bibtex_User1'],
             content = {
                 'title': 'Paper title has an Ô',
                 'abstract': 'This is an abstract with #s galore',
-                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter Teët', 'Andrew McC']
+                'authorids': ['bibtex@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Bibtex User', 'Peter Teët', 'Andrew McC']
             }
         )
+        test_client = helpers.create_user('bibtex@mail.com', 'Bibtex', 'User')
         url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
         note.content['pdf'] = url
         posted_note = test_client.post_note(note)
 
         bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2019', accepted=True, anonymous=False, baseurl=client.baseurl )
-        print(bibtex)
         valid_bibtex = '''@inproceedings{
 user2019paper,
 title={Paper title has an {\^O}},
-author={Test User and Peter Te{\\"e}t and Andrew McC},
+author={Bibtex User and Peter Te{\\"e}t and Andrew McC},
 booktitle={NIPS.cc/2019/Workshop/MLITS},
 year={2019},
 url={'''
         valid_bibtex = valid_bibtex+client.baseurl+'/forum?id='+posted_note.forum+'''},
 }'''
-        print("Test bibtex: "+valid_bibtex)
         assert bibtex == valid_bibtex
 
 
