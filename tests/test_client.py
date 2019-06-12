@@ -6,10 +6,6 @@ import pytest
 
 class TestClient():
 
-    def test_get_notes(self, client):
-        notes = client.get_notes()
-        assert len(notes) == 0, 'notes is not empty'
-
     def test_get_groups(self, client):
         groups = client.get_groups()
         assert len(groups) == 15, 'groups is empty'
