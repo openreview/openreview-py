@@ -10,7 +10,7 @@ import openreview
 import re
 import datetime
 import time
-import pylatex
+from pylatexenc.latexencode import utf8tolatex
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -184,7 +184,7 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
-def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False):
+def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
     '''
     Generates a bibtex field for a given Note.
 
@@ -232,22 +232,22 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     rejected_bibtex = [
         '@misc{',
-        pylatex.escape_latex(first_author_last_name + year + first_word + ','),
-        'title={' + pylatex.escape_latex(bibtex_title) + '},',
-        'author={' + pylatex.escape_latex(authors) + '},',
+        utf8tolatex(first_author_last_name + year + first_word + ','),
+        'title={' + utf8tolatex(bibtex_title) + '},',
+        'author={' + utf8tolatex(authors) + '},',
         'year={' + year + '},',
-        'url={https://openreview.net/forum?id=' + forum + '},',
+        'url={'+baseurl+'/forum?id=' + forum + '},',
         '}'
     ]
 
     accepted_bibtex = [
         '@inproceedings{',
-        pylatex.escape_latex(first_author_last_name + year + first_word + ','),
-        'title={' + pylatex.escape_latex(bibtex_title) + '},',
-        'author={' + pylatex.escape_latex(authors) + '},',
-        'booktitle={' + pylatex.escape_latex(venue_fullname) + '},',
+        utf8tolatex(first_author_last_name + year + first_word + ','),
+        'title={' + utf8tolatex(bibtex_title) + '},',
+        'author={' + utf8tolatex(authors) + '},',
+        'booktitle={' + utf8tolatex(venue_fullname) + '},',
         'year={' + year + '},',
-        'url={https://openreview.net/forum?id=' + forum + '},',
+        'url={'+baseurl+'/forum?id=' + forum + '},',
         '}'
     ]
 
