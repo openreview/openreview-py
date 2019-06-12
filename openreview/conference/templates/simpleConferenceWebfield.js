@@ -16,7 +16,8 @@ var PAGE_SIZE = 50;
 var paperDisplayOptions = {
   pdfLink: true,
   replyCount: true,
-  showContents: true
+  showContents: true,
+  showTags: true
 };
 
 
@@ -94,20 +95,16 @@ function renderContent(notesResponse, tagInvitations) {
   var noteCount = notesResponse.count || 0;
 
   // All Submitted Papers tab
-  var submissionListOptions = _.assign({}, paperDisplayOptions, {
-    showTags: true,
-    tagInvitations: tagInvitations,
-  });
-  var searchResultOptions = _.assign({}, paperDisplayOptions, {
-    showTags: true,
-    tagInvitations: tagInvitations,
-    container: '#all-submissions',
-    autoLoad: false
-  });
-
-  $(submissionListOptions.container).empty();
+  $('#all-submissions').empty();
 
   if (noteCount) {
+    var searchResultOptions = _.assign({}, paperDisplayOptions, {
+      showTags: true,
+      tagInvitations: tagInvitations,
+      container: '#all-submissions',
+      autoLoad: false
+    });
+
     Webfield.ui.submissionList(notes, {
       heading: null,
       container: '#all-submissions',
@@ -122,9 +119,10 @@ function renderContent(notesResponse, tagInvitations) {
         },
         onReset: function() {
           Webfield.ui.searchResults(notes, searchResultOptions);
+          $('#all-submissions').append(view.paginationLinks(noteCount, PAGE_SIZE, 1));
         },
       },
-      displayOptions: submissionListOptions,
+      displayOptions: _.assign({}, paperDisplayOptions, { tagInvitations: tagInvitations }),
       autoLoad: false,
       noteCount: noteCount,
       pageSize: PAGE_SIZE,
