@@ -12,19 +12,26 @@ LONG_BUFFER_DAYS = 10
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, start_date, due_date, readers, additional_fields, remove_fields):
+    def __init__(self, conference):
+
+        readers = {}
+        submission_stage = conference.submission_stage
+        additional_fields = submission_stage.additional_fields
+        start_date = submission_stage.start_date
+        due_date = submission_stage.due_date
+        readers = submission_stage.get_readers(conference)
 
         content = invitations.submission.copy()
 
-        if conference.get_subject_areas():
+        if submission_stage.subject_areas:
             content['subject_areas'] = {
                 'order' : 5,
                 'description' : "Select or type subject area",
-                'values-dropdown': conference.get_subject_areas(),
+                'values-dropdown': submission_stage.subject_areas,
                 'required': True
             }
 
-        for field in remove_fields:
+        for field in submission_stage.remove_fields:
             del content[field]
 
         for order, key in enumerate(additional_fields, start=10):
@@ -98,7 +105,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
     def __init__(self, conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields):
 
         content = submission_content.copy()
-        referent = note.original if conference.double_blind else note.id
+        referent = note.original if conference.submission_stage.double_blind else note.id
 
         for field in remove_fields:
             del content[field]
@@ -138,7 +145,9 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference, start_date, due_date, request_count, with_area_chairs):
+    def __init__(self, conference):
+
+        bid_stage = conference.bid_stage
 
         readers = [
             conference.get_id(),
@@ -147,20 +156,20 @@ class BidInvitation(openreview.Invitation):
         ]
 
         invitees = [ conference.get_reviewers_id() ]
-        if with_area_chairs:
+        if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id())
             invitees.append(conference.get_area_chairs_id())
 
         super(BidInvitation, self).__init__(id = conference.get_bid_id(),
-            cdate = tools.datetime_millis(start_date),
-            duedate = tools.datetime_millis(due_date),
-            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
+            cdate = tools.datetime_millis(bid_stage.start_date),
+            duedate = tools.datetime_millis(bid_stage.due_date),
+            expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
             multiReply = True,
-            taskCompletionCount = request_count,
+            taskCompletionCount = bid_stage.request_count,
             reply = {
                 'forum': None,
                 'replyto': None,
@@ -180,228 +189,184 @@ class BidInvitation(openreview.Invitation):
             }
         )
 
-class PublicCommentInvitation(openreview.Invitation):
+class CommentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, anonymous = False, reader_selection = False, email_pcs = False):
+    def __init__(self, conference):
 
         content = invitations.comment.copy()
 
-        authors_id = conference.get_authors_id(number = note.number)
-        reviewers_id = conference.get_reviewers_id(number = note.number)
-        area_chairs_id = conference.get_area_chairs_id(number = note.number)
-        program_chairs_id = conference.get_program_chairs_id()
-
-        committee = []
-        committee.append(authors_id)
-        committee.append(reviewers_id)
-        if conference.use_area_chairs:
-            committee.append(area_chairs_id)
-        committee.append(program_chairs_id)
-
-        signatures_regex = '~.*'
-
-        if anonymous:
-            signatures_regex = '~.*|\\(anonymous\\)'
-
         with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
             file_content = f.read()
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id(number = note.number) + "';")
-            file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id(number = note.number) + "';")
-            if email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
 
             if conference.use_area_chairs:
-                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
+                file_content = file_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
 
-            if reader_selection:
-                reply_readers = {
-                    "description": "Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response",
-                    "values-dropdown": ["everyone"] + committee
-                }
-            else:
-                reply_readers = {
-                    "description": "User groups that will be able to read this comment.",
-                    "values": ["everyone"]
-                }
+            if conference.comment_stage.email_pcs:
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
-            super(PublicCommentInvitation, self).__init__(id = conference.get_invitation_id(name, note.number),
-                cdate = tools.datetime_millis(start_date),
+            super(CommentInvitation, self).__init__(id = conference.get_invitation_id('Comment'),
+                cdate = tools.datetime_millis(conference.comment_stage.start_date),
                 readers = ['everyone'],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
-                invitees = ['~'],
-                noninvitees = committee,
                 reply = {
-                    'forum': note.id,
-                    'replyto': None,
-                    'readers': reply_readers,
-                    'writers': {
-                        'values-copied': [
-                            conference.get_id(),
-                            '{signatures}'
-                        ]
-                    },
-                    'signatures': {
-                        'values-regex': signatures_regex,
-                        'description': 'How your identity will be displayed.'
-                    },
                     'content': content
                 },
                 process_string = file_content
             )
+
+class PublicCommentInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        comment_stage = conference.comment_stage
+
+        super(PublicCommentInvitation, self).__init__(id = conference.get_invitation_id('Public_Comment', note.number),
+            super = conference.get_invitation_id('Comment'),
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = ['everyone'],
+            noninvitees = conference.get_committee(number = note.number, with_authors = True),
+            reply = {
+                'forum': note.id,
+                'replyto': None,
+                'readers': {
+                    "description": "User groups that will be able to read this comment.",
+                    "values": ["everyone"]
+                },
+                'writers': {
+                    'values-copied': [
+                        conference.get_id(),
+                        '{signatures}'
+                    ]
+                },
+                'signatures': {
+                    'values-regex': '~.*|\\(anonymous\\)' if comment_stage.anonymous else '~.*',
+                    'description': 'How your identity will be displayed.'
+                }
+            }
+        )
 
 class OfficialCommentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, name, note, start_date, anonymous, unsubmitted_reviewers, reader_selection = False, email_pcs = False):
+    def __init__(self, conference, note):
 
-        content = invitations.comment.copy()
-        authors_id = conference.get_authors_id(number = note.number)
-        reviewers_id = conference.get_reviewers_id(number = note.number) + '/Submitted'
-        if unsubmitted_reviewers:
-            reviewers_id = conference.get_reviewers_id(number = note.number)
-        area_chairs_id = conference.get_area_chairs_id(number = note.number)
-        program_chairs_id = conference.get_program_chairs_id()
-
-        committee = []
-        committee.append(authors_id)
-        committee.append(reviewers_id)
-        if conference.use_area_chairs:
-            committee.append(area_chairs_id)
-        committee.append(program_chairs_id)
+        comment_stage = conference.comment_stage
 
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
-        signatures_regex = '~.*'
 
-        if anonymous:
-            signatures_regex = '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name)
+        committee = conference.get_committee(number = note.number, submitted_reviewers = not comment_stage.unsubmitted_reviewers, with_authors = True)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
-            file_content = f.read()
+        if comment_stage.reader_selection:
+            reply_readers = {
+                "description": "Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response",
+                "values-dropdown": committee
+            }
+        else:
+            reply_readers = {
+                "description": "User groups that will be able to read this comment.",
+                "values": committee
+            }
 
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + authors_id + "';")
-            file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + reviewers_id + "';")
-            if email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + program_chairs_id + "';")
-
-            if conference.use_area_chairs:
-                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + area_chairs_id + "';")
-
-            if reader_selection:
-                reply_readers = {
-                    "description": "Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response",
-                    "values-dropdown": committee
-                }
-            else:
-                reply_readers = {
-                    "description": "User groups that will be able to read this comment.",
-                    "values": committee
-                }
-
-
-            super(OfficialCommentInvitation, self).__init__(id = conference.get_invitation_id(name, note.number),
-                cdate = tools.datetime_millis(start_date),
-                readers = ['everyone'],
-                writers = [conference.id],
-                signatures = [conference.id],
-                invitees = committee,
-                reply = {
-                    'forum': note.id,
-                    'replyto': None,
-                    'readers': reply_readers,
-                    'writers': {
-                        'values-copied': [
-                            conference.id,
-                            '{signatures}'
-                        ]
-                    },
-                    'signatures': {
-                        'values-regex': signatures_regex,
-                        'description': 'How your identity will be displayed.'
-                    },
-                    'content': content
+        super(OfficialCommentInvitation, self).__init__(id = conference.get_invitation_id('Official_Comment', note.number),
+            super = conference.get_invitation_id('Comment'),
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = committee,
+            reply = {
+                'forum': note.id,
+                'replyto': None,
+                'readers': reply_readers,
+                'writers': {
+                    'values-copied': [
+                        conference.id,
+                        '{signatures}'
+                    ]
                 },
-                process_string = file_content
-            )
+                'signatures': {
+                    'values-regex': '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name),
+                    'description': 'How your identity will be displayed.'
+                }
+            }
+        )
 
 class ReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
+    def __init__(self, conference):
+        review_stage = conference.review_stage
         content = invitations.review.copy()
 
-        for key in additional_fields:
-            content[key] = additional_fields[key]
-
-        signature_regex = conference.get_id() + '/Paper' + str(note.number) + '/AnonReviewer[0-9]+'
-
-        if allow_de_anonymization:
-            signature_regex = signature_regex + '|~.*'
-
-        readers = []
-        nonreaders = [conference.get_authors_id(number = note.number)]
-
-        if public:
-            readers = ['everyone']
-            nonreaders = []
-        else:
-            readers = [ conference.get_program_chairs_id()]
-            if conference.use_area_chairs:
-                readers.append(conference.get_area_chairs_id(number = note.number))
-
-        if release_to_reviewers:
-            readers.append(conference.get_reviewers_id(number = note.number))
-        else:
-            readers.append(conference.get_reviewers_id(number = note.number) + '/Submitted')
-
-        if release_to_authors:
-            readers.append(conference.get_authors_id(number = note.number))
-            nonreaders = []
+        for key in review_stage.additional_fields:
+            content[key] = review_stage.additional_fields[key]
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
             file_content = f.read()
 
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id(number = note.number) + "';")
-            file_content = file_content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id(number = note.number) + "';")
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
 
             if conference.use_area_chairs:
-                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id(number = note.number) + "';")
+                file_content = file_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
 
-            if email_pcs:
+            if review_stage.email_pcs:
                 file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
-            super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(conference.review_name, note.number),
-                cdate = tools.datetime_millis(start_date),
-                duedate = tools.datetime_millis(due_date),
-                expdate = tools.datetime_millis(due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if due_date else None,
+
+            super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name),
+                cdate = tools.datetime_millis(review_stage.start_date),
+                duedate = tools.datetime_millis(review_stage.due_date),
+                expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if review_stage.due_date else None,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
-                invitees = [conference.get_reviewers_id(number = note.number)],
                 reply = {
-                    'forum': note.id,
-                    'replyto': note.id,
-                    'readers': {
-                        "description": "Select all user groups that should be able to read this comment.",
-                        "values": readers
-                    },
-                    'nonreaders': {
-                        "values": nonreaders
-                    },
-                    'writers': {
-                        'values-regex': signature_regex,
-                        'description': 'How your identity will be displayed.'
-                    },
-                    'signatures': {
-                        'values-regex': signature_regex,
-                        'description': 'How your identity will be displayed.'
-                    },
                     'content': content
                 },
                 process_string = file_content
             )
+
+class PaperReviewInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        review_stage = conference.review_stage
+        signature_regex = review_stage.get_signatures(conference, note.number)
+        readers = review_stage.get_readers(conference, note.number)
+        nonreaders = review_stage.get_nonreaders(conference, note.number)
+
+        super(PaperReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name, note.number),
+            super = conference.get_invitation_id(review_stage.name),
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = [conference.get_reviewers_id(number = note.number)],
+            reply = {
+                'forum': note.id,
+                'replyto': note.id,
+                'readers': {
+                    "description": "Select all user groups that should be able to read this comment.",
+                    "values": readers
+                },
+                'nonreaders': {
+                    "values": nonreaders
+                },
+                'writers': {
+                    'values-regex': signature_regex,
+                    'description': 'How your identity will be displayed.'
+                },
+                'signatures': {
+                    'values-regex': signature_regex,
+                    'description': 'How your identity will be displayed.'
+                }
+            }
+        )
 
 class ReviewRevisionInvitation(openreview.Invitation):
 
@@ -433,30 +398,44 @@ class ReviewRevisionInvitation(openreview.Invitation):
 
 class MetaReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, start_date, due_date, public, additional_fields):
+    def __init__(self, conference):
         content = invitations.meta_review.copy()
+        meta_review_stage = conference.meta_review_stage
+        additional_fields = meta_review_stage.additional_fields
+        start_date = meta_review_stage.start_date
+        due_date = meta_review_stage.due_date
 
         for key in additional_fields:
             content[key] = additional_fields[key]
 
-        readers = ['everyone']
-        regex = conference.get_program_chairs_id()
-        invitees = [conference.get_program_chairs_id()]
-        private_readers = [conference.get_program_chairs_id()]
-
-        if conference.use_area_chairs:
-            regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
-            invitees = [conference.get_area_chairs_id(number = note.number)]
-            private_readers = [conference.get_area_chairs_id(number = note.number), conference.get_program_chairs_id()]
-
-        if not public:
-            readers = private_readers
-
-        super(MetaReviewInvitation, self).__init__(id = conference.get_invitation_id(conference.meta_review_name, note.number),
+        super(MetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
             expdate = tools.datetime_millis(due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if due_date else None,
             readers = ['everyone'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            reply = {
+                'content': content
+            }
+        )
+
+
+class PaperMetaReviewInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        meta_review_stage = conference.meta_review_stage
+        readers = meta_review_stage.get_readers(conference, note.number)
+        regex = conference.get_program_chairs_id()
+        invitees = [conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
+            invitees = [conference.get_area_chairs_id(number = note.number)]
+
+        super(PaperMetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name, note.number),
+            super = conference.get_invitation_id(meta_review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees,
@@ -474,14 +453,16 @@ class MetaReviewInvitation(openreview.Invitation):
                 'signatures': {
                     'values-regex': regex,
                     'description': 'How your identity will be displayed.'
-                },
-                'content': content
+                }
             }
         )
 
 class DecisionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
+    def __init__(self, conference):
+        decision_stage = conference.decision_stage
+        start_date = decision_stage.start_date
+        due_date = decision_stage.due_date
         content = {
             'title': {
                 'order': 1,
@@ -491,7 +472,7 @@ class DecisionInvitation(openreview.Invitation):
             'decision': {
                 'order': 2,
                 'required': True,
-                'value-radio': options,
+                'value-radio': decision_stage.options,
                 'description': 'Decision'
             },
             'comment': {
@@ -502,25 +483,7 @@ class DecisionInvitation(openreview.Invitation):
             }
         }
 
-        readers = []
-        nonreaders = [conference.get_authors_id(number = note.number)]
-
-        if public:
-            readers = ['everyone']
-            nonreaders = []
-        else:
-            readers = [ conference.get_program_chairs_id()]
-            if conference.use_area_chairs:
-                readers.append(conference.get_area_chairs_id(number = note.number))
-
-        if release_to_reviewers:
-            readers.append(conference.get_reviewers_id(number = note.number))
-
-        if release_to_authors:
-            readers.append(conference.get_authors_id(number = note.number))
-            nonreaders = []
-
-        super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(conference.decision_name, note.number),
+        super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
             expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = LONG_BUFFER_DAYS)) if due_date else None,
@@ -529,15 +492,6 @@ class DecisionInvitation(openreview.Invitation):
             signatures = [conference.id],
             invitees = [conference.get_program_chairs_id()],
             reply = {
-                'forum': note.id,
-                'replyto': note.id,
-                'readers': {
-                    "description": "Select all user groups that should be able to read this comment.",
-                    "values": readers
-                },
-                'nonreaders': {
-                    "values": nonreaders
-                },
                 'writers': {
                     'values-regex': [conference.get_program_chairs_id()],
                     'description': 'How your identity will be displayed.'
@@ -547,6 +501,31 @@ class DecisionInvitation(openreview.Invitation):
                     'description': 'How your identity will be displayed.'
                 },
                 'content': content
+            }
+        )
+
+class PaperDecisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+        decision_stage = conference.decision_stage
+
+        readers = decision_stage.get_readers(conference, note.number)
+        nonreaders = decision_stage.get_nonreaders(conference, note.number)
+
+        super(PaperDecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name, note.number),
+            super = conference.get_invitation_id(decision_stage.name),
+            writers = [conference.id],
+            signatures = [conference.id],
+            reply = {
+                'forum': note.id,
+                'replyto': note.id,
+                'readers': {
+                    "description": "Select all user groups that should be able to read this comment.",
+                    "values": readers
+                },
+                'nonreaders': {
+                    'values': nonreaders
+                }
             }
         )
 
@@ -566,41 +545,9 @@ class InvitationBuilder(object):
 
         return merged_options
 
-    def set_submission_invitation(self, conference, start_date, due_date, additional_fields, remove_fields):
+    def set_submission_invitation(self, conference):
 
-        readers = {}
-
-        ## TODO: move this to an object
-        if conference.double_blind:
-            readers = {
-                'values-copied': [
-                    conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
-                ] + conference.get_original_readers()
-            }
-        else:
-            if conference.submission_public:
-                readers = {
-                    'values': ['everyone']
-                }
-            else:
-                readers = {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{content.authorids}',
-                        '{signatures}'
-                    ] + conference.get_submission_readers()
-                }
-
-        invitation = SubmissionInvitation(conference = conference,
-            start_date = start_date,
-            due_date = due_date,
-            readers = readers,
-            additional_fields = additional_fields,
-            remove_fields = remove_fields)
-
-        return self.client.post_invitation(invitation)
+        return self.client.post_invitation(SubmissionInvitation(conference))
 
     def set_blind_submission_invitation(self, conference):
 
@@ -608,39 +555,51 @@ class InvitationBuilder(object):
 
         return  self.client.post_invitation(invitation)
 
-    def set_bid_invitation(self, conference, start_date, due_date, request_count, with_area_chairs):
+    def set_bid_invitation(self, conference):
 
-        invitation = BidInvitation(conference, start_date, due_date, request_count, with_area_chairs)
+        invitation = BidInvitation(conference)
 
         return self.client.post_invitation(invitation)
 
-    def set_public_comment_invitation(self, conference, notes, name, start_date, anonymous, reader_selection, email_pcs):
-
-        for note in notes:
-            self.client.post_invitation(PublicCommentInvitation(conference, name, note, start_date, anonymous, reader_selection, email_pcs))
-
-    def set_private_comment_invitation(self, conference, notes, name, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs):
-
-        for note in notes:
-            self.client.post_invitation(OfficialCommentInvitation(conference, name, note, start_date, anonymous, unsubmitted_reviewers, reader_selection, email_pcs))
-
-    def set_review_invitation(self, conference, notes, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields):
+    def set_comment_invitation(self, conference, notes):
 
         invitations = []
+        self.client.post_invitation(CommentInvitation(conference))
         for note in notes:
-            invitations.append(self.client.post_invitation(ReviewInvitation(conference, note, start_date, due_date, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)))
+            invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
+
+        if conference.comment_stage.allow_public_comments:
+            for note in notes:
+                invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
 
         return invitations
 
-    def set_meta_review_invitation(self, conference, notes, start_date, due_date, public, additional_fields):
+    def set_review_invitation(self, conference, notes):
 
+        invitations = []
+        self.client.post_invitation(ReviewInvitation(conference))
         for note in notes:
-            self.client.post_invitation(MetaReviewInvitation(conference, note, start_date, due_date, public, additional_fields))
+            invitations.append(self.client.post_invitation(PaperReviewInvitation(conference, note)))
 
-    def set_decision_invitation(self, conference, notes, options, start_date, due_date, public, release_to_authors, release_to_reviewers):
+        return invitations
 
+    def set_meta_review_invitation(self, conference, notes):
+
+        invitations = []
+        self.client.post_invitation(MetaReviewInvitation(conference))
         for note in notes:
-            self.client.post_invitation(DecisionInvitation(conference, note, options, start_date, due_date, public, release_to_authors, release_to_reviewers))
+            invitations.append(self.client.post_invitation(PaperMetaReviewInvitation(conference, note)))
+
+        return invitations
+
+    def set_decision_invitation(self, conference, notes):
+
+        invitations = []
+        self.client.post_invitation(DecisionInvitation(conference))
+        for note in notes:
+            invitations.append(self.client.post_invitation(PaperDecisionInvitation(conference, note)))
+
+        return invitations
 
     def set_revise_submission_invitation(self, conference, notes, name, start_date, due_date, submission_content, additional_fields, remove_fields):
 
@@ -899,7 +858,7 @@ class InvitationBuilder(object):
                         'order': 1
                     },
                     'subject_areas': {
-                        'values-dropdown': conference.get_subject_areas(),
+                        'values-dropdown': conference.submission_stage.subject_areas,
                         'required': True,
                         'order': 2
                     },
