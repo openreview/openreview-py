@@ -10,7 +10,6 @@ import openreview
 import re
 import datetime
 import time
-import pylatexenc
 from pylatexenc.latexencode import utf8tolatex
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool
