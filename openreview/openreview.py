@@ -22,10 +22,14 @@ class OpenReviewException(Exception):
 
 class Client(object):
     """
-    :arg str baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name)
-    :arg str username: OpenReview username
-    :arg str password: OpenReview password
-    :arg str token: Session token
+    :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name)
+    :type baseurl: str, optional
+    :param username: OpenReview username
+    :type username: str, optional
+    :param password: OpenReview password
+    :type password: str, optional
+    :param token: Session token
+    :type token: str, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None):
         self.baseurl = baseurl
@@ -101,10 +105,13 @@ class Client(object):
         """
         Logs in a registered user
 
-        :arg str username: OpenReview username
-        :arg str password: OpenReview password
+        :param username: OpenReview username
+        :type username: str, optional
+        :param password: OpenReview password
+        :type password: str, optional
 
-        :return dict: Dictionary containing user information and the authentication token
+        :return: Dictionary containing user information and the authentication token
+        :rtype: dict
         """
         user = { 'id': username, 'password': password }
         header = { 'User-Agent': 'test-create-script' }
@@ -118,13 +125,19 @@ class Client(object):
         """
         Registers a new user
 
-        :arg str email: email that will be used as id to log in after the user is registered
-        :arg str first: First name of the user
-        :arg str last: Last name of the user
-        :arg str middle: Middle name of the user
-        :arg str password: Password used to log into OpenReview
+        :param email: email that will be used as id to log in after the user is registered
+        :type email: str, optional
+        :param first: First name of the user
+        :type first: str, optional
+        :param last: Last name of the user
+        :type last: str, optional
+        :param middle: Middle name of the user
+        :type middle: str, optional
+        :param password: Password used to log into OpenReview
+        :type password: str, optional
 
-        :return dict: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
+        :return: Dictionary containing the new user information including his id, username, email(s), readers, writers, etc.
+        :rtype: dict
         """
         register_payload = {
             'email': email,
@@ -139,10 +152,13 @@ class Client(object):
         """
         Activates a newly registered user
 
-        :arg str token: Activation token. If running in localhost, use email as token
-        :arg dict content: Content of the profile to activate
+        :param token: Activation token. If running in localhost, use email as token
+        :type token: str
+        :param content: Content of the profile to activate
+        :type content: dict
 
-        :return dict: Dictionary containing user information and the authentication token 
+        :return: Dictionary containing user information and the authentication token
+        :rtype: dict
 
         Example Usage:
 
@@ -169,9 +185,11 @@ class Client(object):
         """
         Get the activation of a registered user
 
-        :arg str token: Activation token
+        :param token: Activation token
+        :type token: str, optional
 
-        :return string: The activation token for a registered user
+        :return: The activation token for a registered user
+        :rtype: str
         """
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
@@ -182,9 +200,11 @@ class Client(object):
         """
         Get a single Group by id if available
 
-        :arg str id: id of the group
+        :param id: id of the group
+        :type id: str
 
-        :return dict: Dictionary with the group information
+        :return: Dictionary with the group information
+        :rtype: dict
 
         Example Usage:
 
@@ -199,9 +219,11 @@ class Client(object):
         """
         Get a single invitation by id if available
 
-        :arg str id: id of the invitation
+        :param id: id of the invitation
+        :type id: str
 
-        :return dict: Dictionary with the invitation information
+        :return: Dictionary with the invitation information
+        :rtype: dict
         """
         response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -212,9 +234,11 @@ class Client(object):
         """
         Get a single note by id if available
 
-        :arg str id: id of the note
+        :param id: id of the note
+        :type id: str
 
-        :return dict: Dictionary with the note information
+        :return: Dictionary with the note information
+        :rtype: dict
         """
         response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -225,9 +249,11 @@ class Client(object):
         """
         Get a single tag by id if available
 
-        :arg str id: id of the tag
+        :param id: id of the tag
+        :type id: str
 
-        :return dict: Dictionary with the tag information
+        :return: Dictionary with the tag information
+        :rtype: dict
         """
         response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -238,9 +264,11 @@ class Client(object):
         """
         Get a single profile (a note) by id, if available
 
-        :arg str email_or_id: e-mail or id of the profile
+        :param email_or_id: e-mail or id of the profile
+        :type email_or_id: str, optional
 
-        :return dict: Dictionary with the profile information
+        :return: Dictionary with the profile information
+        :rtype: dict
         """
         params = {}
         if email_or_id:
@@ -263,14 +291,21 @@ class Client(object):
         """
         Gets a list of profiles
 
-        :arg list email_or_id_list: List of ids or emails
-        :arg str id: OpenReview username id
-        :arg str email: e-mail registered in OpenReview
-        :arg str first: First name of the user
-        :arg str middle: Middle name of the user
-        :arg str last: Last name of the user
+        :param email_or_id_list: List of ids or emails
+        :type email_or_id_list: list, optional
+        :param id: OpenReview username id
+        :type id: str, optional
+        :param email: e-mail registered in OpenReview
+        :type email: str, optional
+        :param first: First name of the user
+        :type first: str, optional
+        :param middle: Middle name of the user
+        :type middle: str, optional
+        :param last: Last name of the user
+        :type last: str, optional
 
-        :return list<Profile>: List of profiles
+        :return: List of profiles
+        :rtype: list<Profile>
         """
 
         ## Deprecated, don't use it
@@ -321,11 +356,15 @@ class Client(object):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
-        :arg list emails: List of emails registered in OpenReview
-        :arg list ids: List of OpenReview username ids
-        :arg str term: Term............
+        :param emails: List of emails registered in OpenReview
+        :type emails: list, optional
+        :param ids: List of OpenReview username ids
+        :type ids: list, optional
+        :param term: Term............
+        :type term: str, optional
 
-        :return list<Profile>: List of profiles
+        :return: List of profiles
+        :rtype: list<Profile>
         """
 
         if term:
@@ -351,9 +390,11 @@ class Client(object):
         Gets the binary content of a pdf using the provided note id
         If the pdf is not found then this returns an error message with "status":404
 
-        :arg str id: Note id of the pdf
+        :param id: Note id of the pdf
+        :type id: str
 
-        :return bytes: The binary content of a pdf
+        :return: The binary content of a pdf
+        :rtype: bytes
 
         Example Usage:
 
@@ -375,9 +416,11 @@ class Client(object):
         """
         Uploads a pdf to the openreview server
 
-        :arg str fname: Path to the pdf
+        :param fname: Path to the pdf
+        :type fname: str
 
-        :return string: A relative URL for the uploaded pdf
+        :return: A relative URL for the uploaded pdf
+        :rtype: str
         """
         params = {}
         params['id'] = id
@@ -395,9 +438,11 @@ class Client(object):
         """
         Updates the profile
 
-        :arg Profile profile: Profile object
+        :param profile: Profile object
+        :type profile: Profile
 
-        :return Profile: The new updated Profile
+        :return: The new updated Profile
+        :rtype: Profile
         """
         response = requests.post(
             self.profiles_url,
@@ -411,15 +456,23 @@ class Client(object):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
-        :arg str id: id of the Group
-        :arg str regex: Regex that matches several Group ids
-        :arg str member: Groups that contain this member
-        :arg host: ............
-        :arg str signatory: Groups that contain this signatory
-        :arg int limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
-        :arg int offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
+        :param id: id of the Group
+        :type id: str, optional
+        :param regex: Regex that matches several Group ids
+        :type regex: str, optional
+        :param member: Groups that contain this member
+        :type member: str, optional
+        :param host: ............
+        :type host: optional
+        :param signatory: Groups that contain this signatory
+        :type signatory: str, optional
+        :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
+        :type limit: int, optional
+        :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
 
-        :return list<Groups>: List of Groups
+        :return: List of Groups
+        :rtype: list<Group>
         """
         params = {}
         if id != None: params['id'] = id
@@ -439,22 +492,41 @@ class Client(object):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
-        :arg str id: id of the Invitation
-        :arg str invitee: Invitations that contain this invitee
-        :arg str replytoNote: Invitations that contain this replytoNote
-        :arg str replyForum: Invitations that contain this replyForum
-        :arg signature: Invitations that contain this signature
-        :arg str note: Invitations that contain this note
-        :arg str regex: Invitation ids that match this regex
-        :arg Tag tags: Invitations that contain these tags
-        :arg int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
-        :arg int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
-        :arg minduedate: .............
-        :arg duedate: Invitations that contain this due date
-        :arg pastdue: Invitaions that are past due
-        :arg replyto: Invitations that contain this replyto
-        :arg details: TODO: What is a valid value for this field?
-        :arg expired: .............
+        :param id: id of the Invitation
+        :type id: str, optional
+        :param invitee: Invitations that contain this invitee
+        :type invitee: str, optional
+        :param replytoNote: Invitations that contain this replytoNote
+        :type replytoNote: str, optional
+        :param replyForum: Invitations that contain this replyForum
+        :type replyForum: str, optional
+        :param signature: Invitations that contain this signature
+        :type signature: optional
+        :param note: Invitations that contain this note
+        :type note: str, optional
+        :param regex: Invitation ids that match this regex
+        :type regex: str, optional
+        :param tags: Invitations that contain these tags
+        :type tags: Tag, optional
+        :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
+        :type limit: int, optional
+        :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+        :param minduedate: .............
+        :type minduedate: optional
+        :param duedate: Invitations that contain this due date
+        :type duedate: optional
+        :param pastdue: Invitaions that are past due
+        :type pastdue: optional
+        :param replyto: Invitations that contain this replyto
+        :type replyto: optional
+        :param details: TODO: What is a valid value for this field?
+        :type details: optional
+        :param expired: .............
+        :type expired: optional
+
+        :return: List of Invitations
+        :rtype: list<Invitation>
         """
         params = {}
         if id!=None:
@@ -508,27 +580,45 @@ class Client(object):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
-        :arg str id: a Note ID. If provided, returns Notes whose ID matches the given ID.
-        :arg str paperhash: A "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
+        :param id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+        :type id: str, optional
+        :param paperhash: A "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
             (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
             identify the Note)
-        :arg str forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
-        :arg str invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
-        :arg str replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
-        :arg str tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID,
-            or is a transitive member of the Group represented by the given ID.
-        :arg str signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
-        :arg str writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
-        :arg bool trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
+        :type paperhash: str, optional
+        :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
+        :type forum: str, optional
+        :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+        :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
+        :type replyto: str, optional
+        :param tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
+        :type tauthor: str, optional
+        :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+        :type signature: str, optional
+        :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+        :type writer: str, optional
+        :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
             current date)
-        :arg int number: If present, includes Notes whose number field equals the given integer.
-        :arg dict content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
-        :arg int limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
-        :arg int offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
-        :arg int mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
+        :type trash: bool, optional
+        :param number: If present, includes Notes whose number field equals the given integer.
+        :type number: int, optional
+        :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
+        :type content: dict, optional
+        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
+        :type limit: int, optional
+        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+        :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
-        :arg details: TODO: What is a valid value for this field?
-        :arg sort:
+        :type mintcdate: int, optional
+        :param details: TODO: What is a valid value for this field?
+        :type details: optional
+        :param sort:
+        :type sort: optional
+
+        :return: List of Notes
+        :rtype: list<Note>
         """
         params = {}
         if id != None:
@@ -573,13 +663,19 @@ class Client(object):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
-        :arg str referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
-        :arg str invitation: An Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
-        :arg int mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns references
+        :param referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
+        :type referent: str, optional
+        :param invitation: An Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+        :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns references
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
-        :arg bool original: If True then get_references will additionally return the references to the original note.
+        :type mintcdate: int, optional
+        :param bool original: If True then get_references will additionally return the references to the original note.
+        :type offset: int, optional
+        :type original: bool, optional
 
-        :return list<Note>: List of revisions
+        :return: List of revisions
+        :rtype: list<Note>
         """
         params = {}
         if referent != None:
@@ -604,11 +700,15 @@ class Client(object):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
-        :arg str id: A Tag ID. If provided, returns Tags whose ID matches the given ID.
-        :arg str forum: A Note ID. If provided, returns Tags whose forum matches the given ID.
-        :arg str invitation: An Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+        :param id: A Tag ID. If provided, returns Tags whose ID matches the given ID.
+        :type id: str, optional
+        :param forum: A Note ID. If provided, returns Tags whose forum matches the given ID.
+        :type forum: str, optional
+        :param invitation: An Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
 
-        :return list<Tag>: List of tags
+        :return: List of tags
+        :rtype: list<Tag>
         """
         params = {}
 
@@ -632,10 +732,13 @@ class Client(object):
         """
         Posts the group. If the group is unsigned, signs it using the client's default signature.
 
-        :arg Group group: Group to be posted
-        :arg bool overwrite: Determines whether to overwrite an existing group or not
+        :param group: Group to be posted
+        :type group: Group
+        :param overwrite: Determines whether to overwrite an existing group or not
+        :type overwrite: bool, optional
 
-        :return Group: The posted Group
+        :return: The posted Group
+        :rtype: Group
         """
         if overwrite or not self.exists(group.id):
             if not group.signatures: group.signatures = [self.profile.id]
@@ -649,9 +752,11 @@ class Client(object):
         """
         Posts the invitation. If the invitation is unsigned, signs it using the client's default signature.
 
-        :arg Invitation invitation: Invitation to be posted
+        :param invitation: Invitation to be posted
+        :type invitation: Invitation
 
-        :return Invitation: The posted Invitation
+        :return: The posted Invitation
+        :rtype: Invitation
         """
         response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
         response = self.__handle_response(response)
@@ -662,9 +767,11 @@ class Client(object):
         """
         Posts the note. If the note is unsigned, signs it using the client's default signature.
 
-        :arg Note note: Note to be posted
+        :param note: Note to be posted
+        :type note: Note
 
-        :return Note: The posted Note
+        :return: The posted Note
+        :rtype: Note
         """
         if not note.signatures: note.signatures = [self.profile.id]
         response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
@@ -676,7 +783,8 @@ class Client(object):
         """
         Posts the tag. If the tag is unsigned, signs it using the client's default signature.
 
-        :arg Tag tag: Tag to be posted
+        :param tag: Tag to be posted
+        :type tag: Tag
 
         :return Tag: The posted Tag
         """
@@ -689,9 +797,11 @@ class Client(object):
         """
         Deletes the note
 
-        :arg Note note: Note to be deleted
+        :param note: Note to be deleted
+        :type note: Note
 
-        :return dict: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
         """
         response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
         response = self.__handle_response(response)
@@ -701,11 +811,15 @@ class Client(object):
         """
         Sends emails to a list of recipients
 
-        :arg str subject: Subject of the e-mail
-        :arg str recipients: Recipients of the e-mail
-        :arg str message: Message in the e-mail
+        :param subject: Subject of the e-mail
+        :type subject: str
+        :param recipients: Recipients of the e-mail
+        :type recipients: str
+        :param message: Message in the e-mail
+        :type message: str
 
-        :return dict:
+        :return:
+        :rtype: dict
         """
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
         response = self.__handle_response(response)
@@ -716,10 +830,13 @@ class Client(object):
         """
         Adds members to a group
 
-        :arg Group group: Group to which the members will be added
-        :arg str members: Members that will be added to the group. Members should be in a string, unicode or a list format
+        :param group: Group to which the members will be added
+        :type group: Group
+        :param members: Members that will be added to the group. Members should be in a string, unicode or a list format
+        :type members: str, list, unicode
         
-        :return Group: Group with the members added
+        :return: Group with the members added
+        :rtype: Group
         """
         def add_member(group, members):
             if members:
@@ -740,10 +857,13 @@ class Client(object):
         """
         Removes members from a group
 
-        :arg Group group: Group from which the members will be removed
-        :arg str members: Members that will be removed. Members should be in a string, unicode or a list format
+        :param group: Group from which the members will be removed
+        :type group: Group
+        :param members: Members that will be removed. Members should be in a string, unicode or a list format
+        :type members: str, list, unicode
 
-        :return Group: Group without the members that were removed
+        :return: Group without the members that were removed
+        :type: Group
         """
         def remove_member(group,members):
             response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
@@ -760,14 +880,21 @@ class Client(object):
         """
         Searches notes based on term, content, group and source as the criteria
 
-        :arg term:
-        :arg content:
-        :arg group:
-        :arg source:
-        :arg limit:
-        :arg offset:
+        :param term:
+        :type term:
+        :param content:
+        :type content: optional
+        :param group:
+        :type group: optional
+        :param source:
+        :type source: optional
+        :param limit:
+        :type limit: optional
+        :param offset:
+        :type offset: optional
 
-        :return list<Note>: List of notes
+        :return: List of notes
+        :rtype: list<Note>
         """
         params = {
             'term': term,
@@ -789,11 +916,15 @@ class Client(object):
         """
         Gets next possible tilde user name corresponding to the specified first, middle and last name
 
-        :arg str first: First name of the user
-        :arg str last: Last name of the user
-        :arg str middle: Middle name of the user
+        :param first: First name of the user
+        :type first: str
+        :param last: Last name of the user
+        :type last: str
+        :param middle: Middle name of the user
+        :type middle: str, optional
 
-        :return dict: next possible tilde user name corresponding to the specified first, middle and last name
+        :return: next possible tilde user name corresponding to the specified first, middle and last name
+        :rtype: dict
         """
 
         response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
@@ -804,10 +935,13 @@ class Client(object):
         """
         Description
 
-        :arg str to:
-        :arg str subject:
+        :param to:
+        :type to: str, optional
+        :param subject:
+        :type subject: str, optional
 
-        :return dict:
+        :return:
+        :rtype: dict
         """
 
         response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
@@ -818,10 +952,13 @@ class Client(object):
         """
         Description
 
-        :arg str id:
-        :arg str invitation:
+        :param id:
+        :type id: str, optional
+        :param invitation:
+        :type invitation: str, optional
 
-        :return dict:
+        :return:
+        :rtype: dict
         """
 
         response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
@@ -830,6 +967,30 @@ class Client(object):
 
 
 class Group(object):
+    """
+    :param id: 
+    :type id: str
+    :param readers:
+    :type readers:
+    :param writers:
+    :type writers:
+    :param signatories:
+    :type signatories:
+    :param signatures:
+    :type signatures:
+    :param cdate:
+    :type cdate: optional
+    :param ddate:
+    :type ddate: optional
+    :param members:
+    :type members: optional
+    :param nonreaders:
+    :type nonreaders: optional
+    :param web:
+    :type web: optional
+    :param details:
+    :type details: optional
+    """
     def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
         # post attributes
         self.id=id
@@ -858,7 +1019,10 @@ class Group(object):
 
     def to_json(self):
         """
-        Returns serialized json string for a given object
+        Converts Group instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Group instance
+        :rtype: dict
         """
         body = {
             'id': self.id,
@@ -880,9 +1044,13 @@ class Group(object):
     @classmethod
     def from_json(Group,g):
         """
-        Returns a deserialized object from a json string
+        Creates a Group object from a dictionary that contains keys values equivalent to the name of the instance variables of the Group class
 
-        :arg g: The json string consisting of a serialized object of type "Group"
+        :param g: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Group class
+        :type g: dict
+
+        :return: Group whose instance variables contain the values from the dictionary
+        :rtype: Group
         """
         group = Group(g['id'],
             cdate = g.get('cdate'),
@@ -901,6 +1069,12 @@ class Group(object):
     def add_member(self, member):
         """
         Adds a member to the group
+
+        :param member: Member to add to the group
+        :type member: str
+
+        :return: Group with the new member added
+        :rtype: Group
         """
         if type(member) is Group:
             self.members.append(member.id)
@@ -911,6 +1085,12 @@ class Group(object):
     def remove_member(self, member):
         """
         Removes a member from the group
+
+        :param member: Member to remove from the group
+        :type member: str
+
+        :return: Group after the member was removed
+        :rtype: Group
         """
         if type(member) is Group:
             try:
@@ -927,6 +1107,11 @@ class Group(object):
     def add_webfield(self, web):
         """
         Adds a webfield to the group
+
+        :param web:
+        :type web:
+
+        :rtype: None
         """
         with open(web) as f:
             self.web = f.read()
@@ -934,10 +1119,63 @@ class Group(object):
     def post(self, client):
         """
         Posts a group
+
+        :param client: Client that will post the Group
+        :type client: Client
+
+        :rtype: None
         """
         client.post_group(self)
 
 class Invitation(object):
+    """
+    :param id:
+    :type id: str
+    :param readers:
+    :type readers: str, optional
+    :param writers:
+    :type writers: str, optional
+    :param invitees:
+    :type invitees: str, optional
+    :param signatures:
+    :type signatures: str, optional
+    :param reply:
+    :type reply: str, optional
+    :param super:
+    :type super: str, optional
+    :param noninvitees:
+    :type noninvitees: str, optional
+    :param nonreaders:
+    :type nonreaders: str, optional
+    :param web:
+    :type web: str, optional
+    :param process:
+    :type process: str, optional
+    :param process_string:
+    :type process_string: str, optional
+    :param duedate:
+    :type duedate: str, optional
+    :param expdate:
+    :type expdate: str, optional
+    :param cdate:
+    :type cdate: str, optional
+    :param rdate:
+    :type rdate: str, optional
+    :param ddate:
+    :type ddate: str, optional
+    :param tcdate:
+    :type tcdate: str, optional
+    :param tmdate:
+    :type tmdate: str, optional
+    :param multiReply:
+    :type multiReply: str, optional
+    :param taskCompletionCount:
+    :type taskCompletionCount: str, optional
+    :param transform:
+    :type transform: str, optional
+    :param details:
+    :type details: str, optional
+    """
     def __init__(self,
         id,
         readers = None,
@@ -1007,7 +1245,10 @@ class Invitation(object):
 
     def to_json(self):
         """
-        Returns serialized json string for a given object
+        Converts Invitation instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Invitation instance
+        :rtype: dict
         """
         body = {
             'id': self.id,
@@ -1043,9 +1284,13 @@ class Invitation(object):
     @classmethod
     def from_json(Invitation,i):
         """
-        Returns a deserialized object from a json string
+        Creates an Invitation object from a dictionary that contains keys values equivalent to the name of the instance variables of the Invitation class
 
-        :arg i: The json string consisting of a serialized object of type "Invitation"
+        :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Invitation class
+        :type i: dict
+
+        :return: Invitation whose instance variables contain the values from the dictionary
+        :rtype: Invitation
         """
         invitation = Invitation(i['id'],
             super = i.get('super'),
@@ -1076,6 +1321,44 @@ class Invitation(object):
         return invitation
 
 class Note(object):
+    """
+    :param invitation:
+    :type invitation: str
+    :param readers:
+    :type readers: str
+    :param writers:
+    :type writers: str
+    :param signatures:
+    :type signatures: str
+    :param content:
+    :type content: str
+    :param id:
+    :type id: str, optional
+    :param original:
+    :type original: str, optional
+    :param number:
+    :type number: str, optional
+    :param cdate:
+    :type cdate: str, optional
+    :param tcdate:
+    :type tcdate: str, optional
+    :param tmdate:
+    :type tmdate: str, optional
+    :param ddate:
+    :type ddate: str, optional
+    :param forum:
+    :type forum: str, optional
+    :param referent:
+    :type referent: str, optional
+    :param replyto:
+    :type replyto: str, optional
+    :param nonreaders:
+    :type nonreaders: str, optional
+    :param details:
+    :type details: str, optional
+    :param tauthor:
+    :type tauthor: str, optional
+    """
     def __init__(self,
         invitation,
         readers,
@@ -1127,7 +1410,10 @@ class Note(object):
 
     def to_json(self):
         """
-        Returns serialized json string for a given object
+        Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Note instance
+        :rtype: dict
         """
         body = {
             'id': self.id,
@@ -1156,9 +1442,13 @@ class Note(object):
     @classmethod
     def from_json(Note,n):
         """
-        Returns a deserialized object from a json string
+        Creates a Note object from a dictionary that contains keys values equivalent to the name of the instance variables of the Note class
 
-        :arg n: The json string consisting of a serialized object of type "Note"
+        :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Note class
+        :type n: dict
+
+        :return: Note whose instance variables contain the values from the dictionary
+        :rtype: Note
         """
         note = Note(
         id = n.get('id'),
@@ -1183,6 +1473,30 @@ class Note(object):
         return note
 
 class Tag(object):
+    """
+    :param tag:
+    :type tag: str
+    :param invitation:
+    :type invitation: str
+    :param readers:
+    :type readers: str
+    :param signatures:
+    :type signatures: str
+    :param id:
+    :type id: str, optional
+    :param cdate:
+    :type cdate: str, optional
+    :param tcdate:
+    :type tcdate: str, optional
+    :param ddate:
+    :type ddate: str, optional
+    :param forum:
+    :type forum: str, optional
+    :param replyto:
+    :type replyto: str, optional
+    :param nonreaders:
+    :type nonreaders: str, optional
+    """
     def __init__(self, tag, invitation, readers, signatures, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
         self.id = id
         self.cdate = cdate
@@ -1198,7 +1512,10 @@ class Tag(object):
 
     def to_json(self):
         """
-        Returns serialized json string for a given object
+        Converts Tag instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Tag instance
+        :rtype: dict
         """
         return {
             'id': self.id,
@@ -1217,9 +1534,13 @@ class Tag(object):
     @classmethod
     def from_json(Tag, t):
         """
-        Returns a deserialized object from a json string
+        Creates a Tag object from a dictionary that contains keys values equivalent to the name of the instance variables of the Tag class
 
-        :arg t: The json string consisting of a serialized object of type "Tag"
+        :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Tag class
+        :type n: dict
+
+        :return: Tag whose instance variables contain the values from the dictionary
+        :rtype: Tag
         """
         tag = Tag(
             id = t.get('id'),
@@ -1246,6 +1567,40 @@ class Tag(object):
 
 
 class Profile(object):
+    """
+    :param id:
+    :type id: str, optional
+    :param number:
+    :type number: str, optional
+    :param tcdate:
+    :type tcdate: str, optional
+    :param tmdate:
+    :type tmdate: str, optional
+    :param referent:
+    :type referent: str, optional
+    :param packaging:
+    :type packaging: str, optional
+    :param invitation:
+    :type invitation: str, optional
+    :param readers:
+    :type readers: str, optional
+    :param nonreaders:
+    :type nonreaders: str, optional
+    :param signatures:
+    :type signatures: str, optional
+    :param writers:
+    :type writers: str, optional
+    :param content:
+    :type content: str, optional
+    :param metaContent:
+    :type metaContent: str, optional
+    :param active:
+    :type active: str, optional
+    :param password:
+    :type password: str, optional
+    :param tauthor:
+    :type tauthor: str, optional
+    """
     def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
         self.id = id
         self.number = number
@@ -1274,6 +1629,12 @@ class Profile(object):
         return pp.pformat(vars(self))
 
     def to_json(self):
+        """
+        Converts Profile instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Profile instance
+        :rtype: dict
+        """
         body = {
             'id': self.id,
             'number': self.number,
@@ -1297,6 +1658,15 @@ class Profile(object):
 
     @classmethod
     def from_json(Profile,n):
+        """
+        Creates a Profile object from a dictionary that contains keys values equivalent to the name of the instance variables of the Profile class
+
+        :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Profile class
+        :type i: dict
+
+        :return: Profile whose instance variables contain the values from the dictionary
+        :rtype: Profile
+        """
         profile = Profile(
         id = n.get('id'),
         active = n.get('active'),
