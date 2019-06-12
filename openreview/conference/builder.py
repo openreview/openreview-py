@@ -650,7 +650,7 @@ class Conference(object):
 
         for index, email in enumerate(emails):
             if email not in set(reviewers_invited_group.members):
-                name = invitee_names[index] if invitee_names else None
+                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
                 tools.recruit_reviewer(self.client, email, name,
