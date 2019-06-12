@@ -38,7 +38,7 @@ function main() {
 function load() {
   var notesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
-    details: 'replyCount,tags'
+    includeCount: true
   });
   var tagInvitationsP;
 
@@ -89,17 +89,25 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(notes, tagInvitations) {
+function renderContent(notesResponse, tagInvitations) {
+  var notes = notesResponse.notes || [];
+  var noteCount = notesResponse.count || 0;
+
   // All Submitted Papers tab
   var submissionListOptions = _.assign({}, paperDisplayOptions, {
     showTags: true,
     tagInvitations: tagInvitations,
-    container: '#all-submissions'
+  });
+  var searchResultOptions = _.assign({}, paperDisplayOptions, {
+    showTags: true,
+    tagInvitations: tagInvitations,
+    container: '#all-submissions',
+    autoLoad: false
   });
 
   $(submissionListOptions.container).empty();
 
-  if (notes.length){
+  if (noteCount) {
     Webfield.ui.submissionList(notes, {
       heading: null,
       container: '#all-submissions',
@@ -110,23 +118,25 @@ function renderContent(notes, tagInvitations) {
           var originalSearchResults = searchResults.filter(function(note) {
             return note.invitation === SUBMISSION_ID;
           });
-          Webfield.ui.searchResults(originalSearchResults, submissionListOptions);
-          Webfield.disableAutoLoading();
+          Webfield.ui.searchResults(originalSearchResults, searchResultOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(notes, submissionListOptions);
-          if (notes.length === PAGE_SIZE) {
-            Webfield.setupAutoLoading(SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
-          }
-        }
+          Webfield.ui.searchResults(notes, searchResultOptions);
+        },
       },
       displayOptions: submissionListOptions,
+      autoLoad: false,
+      noteCount: noteCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(SUBMISSION_ID, {
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
       fadeIn: false
     });
 
-    if (notes.length === PAGE_SIZE) {
-      Webfield.setupAutoLoading(SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
-    }
     $('.tabs-container a[href="#all-submissions"]').parent().show();
   } else {
     $('.tabs-container a[href="#all-submissions"]').parent().hide();
