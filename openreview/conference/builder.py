@@ -830,7 +830,9 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        if not options:
+            options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
         self.start_date = start_date
         self.due_date = due_date
