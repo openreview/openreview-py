@@ -160,7 +160,7 @@ class Client(object):
         :return: Dictionary containing user information and the authentication token
         :rtype: dict
 
-        Example Usage:
+        Example:
 
         >>> res = client.activate_user('new@user.com', {
             'names': [
@@ -204,9 +204,9 @@ class Client(object):
         :type id: str
 
         :return: Dictionary with the group information
-        :rtype: dict
+        :rtype: Group
 
-        Example Usage:
+        Example:
 
         >>> group = client.get_group('your-email@domain.com')
         """
@@ -222,8 +222,8 @@ class Client(object):
         :param id: id of the invitation
         :type id: str
 
-        :return: Dictionary with the invitation information
-        :rtype: dict
+        :return: Invitation matching the passed id
+        :rtype: Invitation
         """
         response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -237,8 +237,8 @@ class Client(object):
         :param id: id of the note
         :type id: str
 
-        :return: Dictionary with the note information
-        :rtype: dict
+        :return: Note matching the passed id
+        :rtype: Note
         """
         response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -252,8 +252,8 @@ class Client(object):
         :param id: id of the tag
         :type id: str
 
-        :return: Dictionary with the tag information
-        :rtype: dict
+        :return: Tag with the tag information
+        :rtype: Tag
         """
         response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -267,8 +267,8 @@ class Client(object):
         :param email_or_id: e-mail or id of the profile
         :type email_or_id: str, optional
 
-        :return: Dictionary with the profile information
-        :rtype: dict
+        :return: Profile object with its information
+        :rtype: Profile
         """
         params = {}
         if email_or_id:
@@ -305,7 +305,7 @@ class Client(object):
         :type last: str, optional
 
         :return: List of profiles
-        :rtype: list<Profile>
+        :rtype: list[Profile]
         """
 
         ## Deprecated, don't use it
@@ -364,7 +364,7 @@ class Client(object):
         :type term: str, optional
 
         :return: List of profiles
-        :rtype: list<Profile>
+        :rtype: list[Profile]
         """
 
         if term:
@@ -396,7 +396,7 @@ class Client(object):
         :return: The binary content of a pdf
         :rtype: bytes
 
-        Example Usage:
+        Example:
 
         >>> f = get_pdf(id='Place Note-ID here')
         >>> with open('output.pdf','wb') as op: op.write(f)
@@ -472,7 +472,7 @@ class Client(object):
         :type offset: int, optional
 
         :return: List of Groups
-        :rtype: list<Group>
+        :rtype: list[Group]
         """
         params = {}
         if id != None: params['id'] = id
@@ -526,7 +526,7 @@ class Client(object):
         :type expired: optional
 
         :return: List of Invitations
-        :rtype: list<Invitation>
+        :rtype: list[Invitation]
         """
         params = {}
         if id!=None:
@@ -618,7 +618,7 @@ class Client(object):
         :type sort: optional
 
         :return: List of Notes
-        :rtype: list<Note>
+        :rtype: list[Note]
         """
         params = {}
         if id != None:
@@ -675,7 +675,7 @@ class Client(object):
         :type original: bool, optional
 
         :return: List of revisions
-        :rtype: list<Note>
+        :rtype: list[Note]
         """
         params = {}
         if referent != None:
@@ -708,7 +708,7 @@ class Client(object):
         :type invitation: str, optional
 
         :return: List of tags
-        :rtype: list<Tag>
+        :rtype: list[Tag]
         """
         params = {}
 
@@ -894,7 +894,7 @@ class Client(object):
         :type offset: optional
 
         :return: List of notes
-        :rtype: list<Note>
+        :rtype: list[Note]
         """
         params = {
             'term': term,
@@ -973,21 +973,21 @@ class Group(object):
     :param id: id of the Group
     :type id: str
     :param readers: List of readers in the Group, each reader is a Group id
-    :type readers: list<str>
+    :type readers: list[str]
     :param writers: List of writers in the Group, each writer is a Group id
-    :type writers: list<str>
+    :type writers: list[str]
     :param signatories: List of signatories in the Group, each writer is a Group id
-    :type signatories: list<str>
+    :type signatories: list[str]
     :param signatures: List of signatures in the Group, each signature is a Group id
-    :type signatures: list<str>
+    :type signatures: list[str]
     :param cdate: Creation date of the Group
     :type cdate: int, optional
     :param ddate: Deletion date of the Group
     :type ddate: int, optional
     :param members: List of members in the Group, each member is a Group id
-    :type members: list<str>, optional
+    :type members: list[str], optional
     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
-    :type nonreaders: list<str>, optional
+    :type nonreaders: list[str], optional
     :param web:
     :type web: optional
     :param details:
@@ -1130,21 +1130,21 @@ class Invitation(object):
     :param id: Invitation id
     :type id: str
     :param readers: List of readers in the Invitation, each reader is a Group id
-    :type readers: list<str>, optional
+    :type readers: list[str], optional
     :param writers: List of writers in the Invitation, each writer is a Group id
-    :type writers: list<str>, optional
+    :type writers: list[str], optional
     :param invitees: List of invitees in the Invitation, each invitee is a Group id
-    :type invitees: list<str>, optional
+    :type invitees: list[str], optional
     :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: list<str>, optional
+    :type signatures: list[str], optional
     :param reply:
     :type reply: str, optional
     :param super:
     :type super: str, optional
     :param noninvitees: List of noninvitees in the Invitation, each noninvitee is a Group id
-    :type noninvitees: list<str>, optional
+    :type noninvitees: list[str], optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-    :type nonreaders: list<str>, optional
+    :type nonreaders: list[str], optional
     :param web:
     :type web: str, optional
     :param process:
@@ -1323,11 +1323,11 @@ class Note(object):
     :param invitation: Invitation id
     :type invitation: str
     :param readers: List of readers in the Invitation, each reader is a Group id
-    :type readers: list<str>
+    :type readers: list[str]
     :param writers: List of writers in the Invitation, each writer is a Group id
-    :type writers: list<str>
+    :type writers: list[str]
     :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: list<str>
+    :type signatures: list[str]
     :param content:
     :type content: str
     :param id: Note id
@@ -1351,7 +1351,7 @@ class Note(object):
     :param replyto:
     :type replyto: str, optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-    :type nonreaders: list<str>, optional
+    :type nonreaders: list[str], optional
     :param details:
     :type details: str, optional
     :param tauthor:
@@ -1477,9 +1477,9 @@ class Tag(object):
     :param invitation:
     :type invitation: str
     :param readers: List of readers in the Invitation, each reader is a Group id
-    :type readers: list<str>
+    :type readers: list[str]
     :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: list<str>
+    :type signatures: list[str]
     :param id:
     :type id: str, optional
     :param cdate: Creation date
@@ -1493,7 +1493,7 @@ class Tag(object):
     :param replyto:
     :type replyto: str, optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-    :type nonreaders: list<str>, optional
+    :type nonreaders: list[str], optional
     """
     def __init__(self, tag, invitation, readers, signatures, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
         self.id = id
