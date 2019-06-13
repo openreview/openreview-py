@@ -181,86 +181,97 @@ class Matching(object):
 
     def setup(self, affinity_score_file = None, tpms_score_file = None):
 
-        conference = self.conference
-        client = conference.client
-        CONFERENCE_ID = conference.get_id()
-        PROGRAM_CHAIRS_ID = conference.get_program_chairs_id()
-        SUBMISSION_ID = conference.get_blind_submission_id()
-        METADATA_INV_ID = CONFERENCE_ID + '/-/Paper_Metadata'
-        REVIEWERS_ID = conference.get_reviewers_id()
-        AREA_CHAIRS_ID = conference.get_area_chairs_id()
-        ASSIGNMENT_INV_ID = self.conference.get_paper_assignment_id()
-        scores = ['bid']
-        if affinity_score_file:
-            scores.append('affinity')
-        if tpms_score_file:
-            scores.append('tpms')
-        if conference.submission_stage.subject_areas:
-            scores.append('subjectArea')
-        try:
-            client.get_invitation(conference.get_recommendation_id())
-            scores.append('recommendation')
-        except openreview.OpenReviewException:
-            print('Recommendation invitation not found')
+        score_spec = {}
+        score_spec[self.conference.get_bid_id()] = {
+            'weight': 1,
+            'default': 0,
+            'translate_map' : {
+                'Very High': 1.0,
+                'High': 0.5,
+                'Neutral': 0.0,
+                'Low': -0.5,
+                'Very Low': -1.0
+            }
+        }
 
-        metadata_inv = openreview.Invitation.from_json({
-            'id': METADATA_INV_ID,
-            'readers': [
-                CONFERENCE_ID,
-                PROGRAM_CHAIRS_ID
-            ],
-            'writers': [CONFERENCE_ID],
-            'signatures': [CONFERENCE_ID],
-            'reply': {
-                'forum': None,
-                'replyto': None,
-                'invitation': SUBMISSION_ID,
+        assignment_inv = openreview.Invitation(
+            id = self.conference.get_paper_assignment_id(),
+            invitees = [self.conference.get_id()],
+            readers = [self.conference.get_id()],
+            writers = [self.conference.get_id()],
+            signatures = [self.conference.get_id()],
+            reply = {
                 'readers': {
-                    'values': [
-                        CONFERENCE_ID,
-                    ]
+                    'values': [self.conference.get_id()]
                 },
                 'writers': {
-                    'values': [CONFERENCE_ID]
+                    'values': [self.conference.get_id()]
                 },
                 'signatures': {
-                    'values': [CONFERENCE_ID]},
-                'content': {}
-            }
-        })
+                    'values': [self.conference.get_id()]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note'
+                    },
+                    'tail': {
+                        'type': 'Group'
+                    },
+                    'weight': {
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    },
+                    'label': {
+                        'value-regex': '.*'
+                    }
+                }
+            })
+
+        aggregated_score_inv = openreview.Invitation(
+            id = self.conference.get_invitation_id('Aggregated_Score'),
+            invitees = [self.conference.get_id()],
+            readers = [self.conference.get_id()],
+            writers = [self.conference.get_id()],
+            signatures = [self.conference.get_id()],
+            reply = {
+                'readers': {
+                    'values': [self.conference.get_id()]
+                },
+                'writers': {
+                    'values': [self.conference.get_id()]
+                },
+                'signatures': {
+                    'values': [self.conference.get_id()]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note'
+                    },
+                    'tail': {
+                        'type': 'Group'
+                    },
+                    'weight': {
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    },
+                    'label': {
+                        'value-regex': '.*'
+                    }
+                }
+            })
 
 
-        assignment_inv = openreview.Invitation.from_json({
-            'id': ASSIGNMENT_INV_ID,
-            'readers': [CONFERENCE_ID],
-            'writers': [CONFERENCE_ID],
-            'signatures': [CONFERENCE_ID],
-            'reply': {
-                'forum': None,
-                'replyto': None,
-                'invitation': SUBMISSION_ID,
-                'readers': {'values': [CONFERENCE_ID, PROGRAM_CHAIRS_ID]},
-                'writers': {'values': [CONFERENCE_ID]},
-                'signatures': {'values': [CONFERENCE_ID]},
-                'content': {}
-            }
-        })
-
-
-        CONFIG_INV_ID = CONFERENCE_ID + '/-/Assignment_Configuration'
-
-        config_inv = openreview.Invitation.from_json({
-            'id': CONFIG_INV_ID,
-            'readers': [CONFERENCE_ID, PROGRAM_CHAIRS_ID],
-            'writers': [CONFERENCE_ID],
-            'signatures': [PROGRAM_CHAIRS_ID],
-            'reply': {
+        config_inv = openreview.Invitation(
+            id = self.conference.get_invitation_id('Assignment_Configuration'),
+            invitees = [self.conference.get_id()],
+            readers = [self.conference.get_id()],
+            writers = [self.conference.get_id()],
+            signatures = [self.conference.get_id()],
+            reply = {
                 'forum': None,
                 'replyto': None,
                 'invitation': None,
-                'readers': {'values': [CONFERENCE_ID, PROGRAM_CHAIRS_ID]},
-                'writers': {'values': [CONFERENCE_ID, PROGRAM_CHAIRS_ID]},
-                'signatures': {'values': [PROGRAM_CHAIRS_ID]},
+                'readers': {'values': [self.conference.get_id()]},
+                'writers': {'values': [self.conference.get_id()]},
+                'signatures': {'values': [self.conference.get_id()]},
                 'content': {
                     'title': {
                         'value-regex': '.{1,250}',
@@ -292,154 +303,140 @@ class Matching(object):
                         'description': 'Min number of reviews a person should do',
                         'order': 5
                     },
-                    'alternates': {
-                        'value-regex': '[0-9]+',
+                    'paper_invitation': {
+                        'value': self.conference.get_submission_id(),
                         'required': True,
-                        'description': 'Number of alternate reviewers for a paper',
+                        'description': 'Invitation to get the configuration note',
                         'order': 6
                     },
-                    'config_invitation': {
-                        'value': CONFERENCE_ID,
+                    'match_group': {
+                        'value-radio': [self.conference.get_area_chairs_id(), self.conference.get_reviewers_id()] if self.conference.use_area_chairs else [self.conference.get_reviewers_id()],
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 7
-                    },
-                    'paper_invitation': {
-                        'value': SUBMISSION_ID,
-                        'required': True,
-                        'description': 'Invitation to get the configuration note',
-                        'order': 8
-                    },
-                    'metadata_invitation': {
-                        'value': METADATA_INV_ID,
-                        'required': True,
-                        'description': 'Invitation to get the configuration note',
-                        'order': 9
-                    },
-                    'assignment_invitation': {
-                        'value': ASSIGNMENT_INV_ID,
-                        'required': True,
-                        'description': 'Invitation to get the configuration note',
-                        'order': 10
-                    },
-                    'match_group': {
-                        'value-radio': [AREA_CHAIRS_ID, REVIEWERS_ID],
-                        'required': True,
-                        'description': 'Invitation to get the configuration note',
-                        'order': 11
                     },
                     'scores_specification': {
                         'value-dict': {},
                         'required': True,
                         'description': 'Manually entered JSON score specification',
+                        'order': 8,
+                        'default': score_spec
+                    },
+                    'aggregate_score_invitation': {
+                        'value': self.conference.get_invitation_id('Aggregated_Score'),
+                        'required': True,
+                        'description': 'Invitation to store aggregated scores',
+                        'order': 9
+                    },
+                    'conflicts_invitation': {
+                        'value': self.conference.get_invitation_id('Paper_Conflict'),
+                        'required': True,
+                        'description': 'Invitation to store aggregated scores',
+                        'order': 10
+                    },
+                    'custom_load_invitation': {
+                        'value': self.conference.get_invitation_id('Review_Load'),
+                        'required': True,
+                        'description': 'Invitation to store aggregated scores',
+                        'order': 11
+                    },
+                    'assignment_invitation': {
+                        'value': self.conference.get_invitation_id('Paper_Assignment'),
+                        'required': True,
+                        'description': 'Invitation to store paper user assignments',
                         'order': 12
                     },
-                    'constraints': {
-                        'value-dict': {}, # Add some json validation schema
-                        'required': False,
-                        'description': 'Manually entered user/papers constraints',
-                        'order': 14
-                    },
-                    'custom_loads': {
-                        'value-dict': {},
-                        'required': False,
-                        'description': 'Manually entered custom user maximun loads',
-                        'order': 15
+                    'config_invitation': {
+                        'value': self.conference.get_invitation_id('Assignment_Configuration')
                     },
                     'status': {
                         'default': 'Initialized',
                         'value-dropdown': ['Initialized', 'Running', 'Error', 'No Solution', 'Complete', 'Deployed']
                     }
                 }
-            }
-
-        })
+            })
 
 
-        print('clearing previous metadata, assignments, and configs...')
-        self.clear(client, METADATA_INV_ID)
-        self.clear(client, ASSIGNMENT_INV_ID)
-        self.clear(client, CONFIG_INV_ID)
-
-        reviewers_group = client.get_group(REVIEWERS_ID)
+        reviewers_group = self.conference.client.get_group(self.conference.get_reviewers_id())
         # The reviewers are all emails so convert to tilde ids
-        reviewers_group = openreview.tools.replace_members_with_ids(client,reviewers_group)
+        reviewers_group = openreview.tools.replace_members_with_ids(self.conference.client, reviewers_group)
         if not all(['~' in member for member in reviewers_group.members]):
             print('WARNING: not all reviewers have been converted to profile IDs. Members without profiles will not have metadata created.')
 
 
-        if conference.use_area_chairs:
-            areachairs_group = client.get_group(AREA_CHAIRS_ID)
+        if self.conference.use_area_chairs:
+            areachairs_group = self.conference.client.get_group(self.conference.get_area_chairs_id())
             # The areachairs are all emails so convert to tilde ids
-            areachairs_group = openreview.tools.replace_members_with_ids(client,areachairs_group)
+            areachairs_group = openreview.tools.replace_members_with_ids(self.conference.client, areachairs_group)
             if not all(['~' in member for member in areachairs_group.members]):
                 print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
 
-            user_profiles = self._get_profiles(client, reviewers_group.members + areachairs_group.members)
+            user_profiles = self._get_profiles(self.conference.client, reviewers_group.members + areachairs_group.members)
         else:
-            user_profiles = self._get_profiles(client, reviewers_group.members)
+            user_profiles = self._get_profiles(self.conference.client, reviewers_group.members)
 
         # create metadata
-        metadata_inv = client.post_invitation(metadata_inv)
-        config_inv = client.post_invitation(config_inv)
-        assignment_inv = client.post_invitation(assignment_inv)
+        # metadata_inv = client.post_invitation(metadata_inv)
+        self.conference.client.post_invitation(config_inv)
+        self.conference.client.post_invitation(assignment_inv)
+        self.conference.client.post_invitation(aggregated_score_inv)
 
-        # Get the submissions.
-        submissions = list(openreview.tools.iterget_notes(
-            client, invitation = conference.get_blind_submission_id(), details='original,tags'))
+        # # Get the submissions.
+        # submissions = list(openreview.tools.iterget_notes(
+        #     client, invitation = conference.get_blind_submission_id(), details='original,tags'))
 
-        submissions_per_number = { note.number: note for note in submissions }
-        profiles_by_email = {}
-        for profile in user_profiles:
-            for email in profile.content['emails']:
-                profiles_by_email[email] = profile
+        # submissions_per_number = { note.number: note for note in submissions }
+        # profiles_by_email = {}
+        # for profile in user_profiles:
+        #     for email in profile.content['emails']:
+        #         profiles_by_email[email] = profile
 
-        scores_by_reviewer_by_paper = {note.forum: defaultdict(dict) for note in submissions}
+        # scores_by_reviewer_by_paper = {note.forum: defaultdict(dict) for note in submissions}
 
-        if affinity_score_file:
-            with open(affinity_score_file) as f:
-                for row in csv.reader(f):
-                    paper_note_id = row[0]
-                    profile_id = row[1]
-                    score = row[2]
-                    if paper_note_id in scores_by_reviewer_by_paper:
-                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'affinity': float(score)})
+        # if affinity_score_file:
+        #     with open(affinity_score_file) as f:
+        #         for row in csv.reader(f):
+        #             paper_note_id = row[0]
+        #             profile_id = row[1]
+        #             score = row[2]
+        #             if paper_note_id in scores_by_reviewer_by_paper:
+        #                 scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'affinity': float(score)})
 
-        if tpms_score_file:
-            with open(tpms_score_file) as f:
-                for row in csv.reader(f):
-                    paper_note_id = submissions_per_number[int(row[0])].id
-                    profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
-                    score = row[2]
-                    if paper_note_id in scores_by_reviewer_by_paper:
-                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})
+        # if tpms_score_file:
+        #     with open(tpms_score_file) as f:
+        #         for row in csv.reader(f):
+        #             paper_note_id = submissions_per_number[int(row[0])].id
+        #             profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
+        #             score = row[2]
+        #             if paper_note_id in scores_by_reviewer_by_paper:
+        #                 scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'tpms': float(score)})
 
-        if conference.submission_stage.subject_areas:
-            user_subject_areas = list(openreview.tools.iterget_notes(client, invitation = conference.get_registration_id()))
-            for note in submissions:
-                note_subject_areas = note.content['subject_areas']
-                paper_note_id = note.id
-                for subject_area_note in user_subject_areas:
-                    profile_id = subject_area_note.signatures[0]
-                    subject_areas = subject_area_note.content['subject_areas']
-                    score = self._jaccard_similarity(note_subject_areas, subject_areas)
-                    if paper_note_id in scores_by_reviewer_by_paper:
-                        scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'subjectArea': float(score)})
+        # if conference.submission_stage.subject_areas:
+        #     user_subject_areas = list(openreview.tools.iterget_notes(client, invitation = conference.get_registration_id()))
+        #     for note in submissions:
+        #         note_subject_areas = note.content['subject_areas']
+        #         paper_note_id = note.id
+        #         for subject_area_note in user_subject_areas:
+        #             profile_id = subject_area_note.signatures[0]
+        #             subject_areas = subject_area_note.content['subject_areas']
+        #             score = self._jaccard_similarity(note_subject_areas, subject_areas)
+        #             if paper_note_id in scores_by_reviewer_by_paper:
+        #                 scores_by_reviewer_by_paper[paper_note_id][profile_id].update({'subjectArea': float(score)})
 
-        metadata_notes = []
-        for note in submissions:
-            scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
-            metadata_notes.append(self.post_metadata_note(client,
-                note,
-                user_profiles,
-                metadata_inv,
-                scores_by_reviewer,
-                {},
-                conference.get_bid_id(),
-                conference.get_recommendation_id(note.number))
-            )
+        # metadata_notes = []
+        # for note in submissions:
+        #     scores_by_reviewer = scores_by_reviewer_by_paper[note.id]
+        #     metadata_notes.append(self.post_metadata_note(client,
+        #         note,
+        #         user_profiles,
+        #         metadata_inv,
+        #         scores_by_reviewer,
+        #         {},
+        #         conference.get_bid_id(),
+        #         conference.get_recommendation_id(note.number))
+        #     )
 
-        return metadata_notes
+        # return metadata_notes
 
 
     def get_assignment_notes (self):

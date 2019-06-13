@@ -626,6 +626,7 @@ class Client(object):
         '''
         send_json = [edge.to_json() for edge in edges]
         response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
+        response = self.__handle_response(response)
         received_json_array = response.json()
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects

@@ -126,43 +126,55 @@ class TestMatching():
         conference.set_authors()
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
-        ac1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
-            forum = blinded_notes[0].id,
-            tag = 'High'
+            head = blinded_notes[0].id,
+            tail = '~AreaChair_One1',
+            label = 'High'
         ))
-        ac1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
-            forum = blinded_notes[1].id,
-            tag = 'Low'
+            head = blinded_notes[1].id,
+            tail = '~AreaChair_One1',
+            label = 'Low'
         ))
-        ac1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
-            forum = blinded_notes[2].id,
-            tag = 'Very Low'
+            head = blinded_notes[2].id,
+            tail = '~AreaChair_One1',
+            label = 'Very Low'
         ))
 
         r1_client = helpers.create_user('r1@mit.edu', 'Reviewer', 'One')
-        r1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
             readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
+            writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             signatures = ['~Reviewer_One1'],
-            forum = blinded_notes[0].id,
-            tag = 'Neutral'
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_One1',
+            label = 'Neutral'
         ))
-        r1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
             readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
+            writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             signatures = ['~Reviewer_One1'],
-            forum = blinded_notes[1].id,
-            tag = 'Very High'
+            head = blinded_notes[1].id,
+            tail = '~Reviewer_One1',
+            label = 'Very High'
         ))
-        r1_client.post_tag(openreview.Tag(invitation = conference.get_bid_id(),
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
             readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
+            writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             signatures = ['~Reviewer_One1'],
-            forum = blinded_notes[2].id,
-            tag = 'Low'
+            head = blinded_notes[2].id,
+            tail = '~Reviewer_One1',
+            label = 'Low'
         ))
 
         ## Set up matching

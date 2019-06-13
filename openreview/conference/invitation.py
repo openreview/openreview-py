@@ -171,27 +171,25 @@ class BidInvitation(openreview.Invitation):
             multiReply = True,
             taskCompletionCount = bid_stage.request_count,
             reply = {
-                'forum': None,
-                'replyto': None,
-                'invitation': conference.get_blind_submission_id(),
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']
                 },
                 'signatures': {
                     'values-regex': '~.*'
                 },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
                 'content': {
-                    'edge': {
-                        'required': True,
-                        'head': 'profile',
-                        'tail': 'note',
-                        'value-radio': [
-                            ['Very High', 1],
-                            ['High', 0.5],
-                            ['Neutral', 0],
-                            ['Low', -0.5],
-                            ['Very Low', -1]
-                        ]
+                    'head': {
+                        'type': 'Note'
+                    },
+                    'tail': {
+                        'type': 'Group'
+                    },
+                    'label': {
+                        'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'required': True
                     }
                 }
             }
