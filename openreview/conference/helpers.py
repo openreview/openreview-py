@@ -9,13 +9,13 @@ def get_conference(client, request_form_id):
     if note.invitation not in 'OpenReview.net/Support/-/Request_Form':
         raise openreview.OpenReviewException('Invalid request form invitation')
 
-    if not note.content.get('venue_id', None) and not note.content.get('conference_id', None):
+    if not note.content.get('venue_id') and not note.content.get('conference_id'):
         raise openreview.OpenReviewException('venue_id is not set')
 
     builder = openreview.conference.ConferenceBuilder(client)
 
     conference_start_date_str = 'TBD'
-    start_date = note.content.get('Venue Start Date', note.content.get('Conference Start Date', None))
+    start_date = note.content.get('Venue Start Date', note.content.get('Conference Start Date'))
     if start_date:
         try:
             conference_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
