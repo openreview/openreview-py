@@ -1384,7 +1384,7 @@ def _fill_str_or_list(template_str_or_list, paper):
 
 def fill_template(template, paper):
     """
-    Fills an openreview "template" with the corresponding values from an openreview.Note object.
+    Fills an openreview "template" with the corresponding values from an :class:`~openreview.Note` object.
     Templates are dicts that match the schema of any OpenReview object class .
 
     Example:
