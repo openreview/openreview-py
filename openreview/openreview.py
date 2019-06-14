@@ -182,15 +182,6 @@ class Client(object):
         return json_response
 
     def get_activatable(self, token = None):
-        """
-        Get the activation of a registered user
-
-        :param token: Activation token
-        :type token: str, optional
-
-        :return: The activation token for a registered user
-        :rtype: str
-        """
         response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
@@ -360,7 +351,7 @@ class Client(object):
         :type emails: list, optional
         :param ids: List of OpenReview username ids
         :type ids: list, optional
-        :param term: Term............
+        :param term: Substring in the username or e-mail to be searched
         :type term: str, optional
 
         :return: List of profiles
@@ -452,7 +443,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def get_groups(self, id = None, regex = None, member = None, host = None, signatory = None, limit = None, offset = None):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, limit = None, offset = None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -462,8 +453,6 @@ class Client(object):
         :type regex: str, optional
         :param member: Groups that contain this member
         :type member: str, optional
-        :param host: ............
-        :type host: optional
         :param signatory: Groups that contain this signatory
         :type signatory: str, optional
         :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
@@ -478,7 +467,6 @@ class Client(object):
         if id != None: params['id'] = id
         if regex != None: params['regex'] = regex
         if member != None: params['member'] = member
-        if host != None: params['host'] = host
         if signatory != None: params['signatory'] = signatory
         params['limit'] = limit
         params['offset'] = offset
@@ -512,18 +500,18 @@ class Client(object):
         :type limit: int, optional
         :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
-        :param minduedate: .............
-        :type minduedate: optional
+        :param minduedate: Invitations that have at least this value as due date
+        :type minduedate: int, optional
         :param duedate: Invitations that contain this due date
-        :type duedate: optional
+        :type duedate: int, optional
         :param pastdue: Invitaions that are past due
-        :type pastdue: optional
+        :type pastdue: bool, optional
         :param replyto: Invitations that contain this replyto
         :type replyto: optional
         :param details: TODO: What is a valid value for this field?
-        :type details: optional
-        :param expired: .............
-        :type expired: optional
+        :type details: dict, optional
+        :param expired: If true, retrieves the Invitations that have expired, otherwise, the ones that have not expired
+        :type expired: bool, optional
 
         :return: List of Invitations
         :rtype: list[Invitation]
@@ -614,8 +602,8 @@ class Client(object):
         :type mintcdate: int, optional
         :param details: TODO: What is a valid value for this field?
         :type details: optional
-        :param sort:
-        :type sort: optional
+        :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
+        :type sort: str, optional
 
         :return: List of Notes
         :rtype: list[Note]
@@ -809,16 +797,16 @@ class Client(object):
 
     def send_mail(self, subject, recipients, message):
         """
-        Sends emails to a list of recipients
+        Posts a message to the recipients and consequently sends them emails as well
 
         :param subject: Subject of the e-mail
         :type subject: str
-        :param recipients: Recipients of the e-mail
-        :type recipients: str
+        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
+        :type recipients: list[str]
         :param message: Message in the e-mail
         :type message: str
 
-        :return:
+        :return: Contains the message that was sent to each Group
         :rtype: dict
         """
         response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
@@ -878,20 +866,20 @@ class Client(object):
 
     def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
         """
-        Searches notes based on term, content, group and source as the criteria
+        Searches notes based on term, content, group and source as the criteria. Unlike :meth:`~openreview.Client.get_notes`, this method uses Elasticsearch to retrieve the Notes
 
-        :param term:
-        :type term:
-        :param content:
-        :type content: optional
-        :param group:
-        :type group: optional
-        :param source:
-        :type source: optional
-        :param limit:
-        :type limit: optional
-        :param offset:
-        :type offset: optional
+        :param term: Term used to look for the Notes
+        :type term: str
+        :param content: Specifies whether to look in all the content, authors, or keywords. Valid inputs: 'all', 'authors', 'keywords'
+        :type content: str, optional
+        :param group: Specifies under which Group to look. E.g. 'all', 'ICLR', 'UAI', etc.
+        :type group: str, optional
+        :param source: Whether to look in papers, replies or all
+        :type source: str, optional
+        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
+        :type limit: int, optional
+        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
 
         :return: List of notes
         :rtype: list[Note]
@@ -933,14 +921,14 @@ class Client(object):
 
     def get_messages(self, to = None, subject = None):
         """
-        Description
+        **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
-        :param to:
-        :type to: str, optional
-        :param subject:
+        :param to: Tilde user names or emails
+        :type to: list[str], optional
+        :param subject: Subject of the e-mail
         :type subject: str, optional
 
-        :return:
+        :return: Messages that match the passed parameters
         :rtype: dict
         """
 
@@ -950,14 +938,14 @@ class Client(object):
 
     def get_process_logs(self, id = None, invitation = None):
         """
-        Description
+        **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
 
-        :param id:
+        :param id: Note id
         :type id: str, optional
-        :param invitation:
+        :param invitation: Invitation id that executed the process function that produced the logs
         :type invitation: str, optional
 
-        :return:
+        :return: Logs of the process
         :rtype: dict
         """
 
@@ -988,7 +976,7 @@ class Group(object):
     :type members: list[str], optional
     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
     :type nonreaders: list[str], optional
-    :param web:
+    :param web: Path to a file that contains the webfield
     :type web: optional
     :param details:
     :type details: optional
@@ -1070,7 +1058,7 @@ class Group(object):
 
     def add_member(self, member):
         """
-        Adds a member to the group
+        Adds a member to the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
 
         :param member: Member to add to the group
         :type member: str
@@ -1086,7 +1074,7 @@ class Group(object):
 
     def remove_member(self, member):
         """
-        Removes a member from the group
+        Removes a member from the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
 
         :param member: Member to remove from the group
         :type member: str
@@ -1110,15 +1098,15 @@ class Group(object):
         """
         Adds a webfield to the group
 
-        :param web:
-        :type web:
+        :param web: Path to the file that contains the webfield
+        :type web: str
         """
         with open(web) as f:
             self.web = f.read()
 
     def post(self, client):
         """
-        Posts a group
+        Posts a group to OpenReview
 
         :param client: Client that will post the Group
         :type client: Client
@@ -1137,19 +1125,19 @@ class Invitation(object):
     :type invitees: list[str], optional
     :param signatures: List of signatures in the Invitation, each signature is a Group id
     :type signatures: list[str], optional
-    :param reply:
-    :type reply: str, optional
-    :param super:
+    :param reply: Template of the Note that will be created
+    :type reply: dict, optional
+    :param super: Parent Invitation id
     :type super: str, optional
     :param noninvitees: List of noninvitees in the Invitation, each noninvitee is a Group id
     :type noninvitees: list[str], optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
-    :param web:
+    :param web: Path to a file containing a webfield
     :type web: str, optional
-    :param process:
+    :param process: Path to a file containing the process function
     :type process: str, optional
-    :param process_string:
+    :param process_string: String containin the process function
     :type process_string: str, optional
     :param duedate: Due date
     :type duedate: int, optional
@@ -1157,22 +1145,22 @@ class Invitation(object):
     :type expdate: int, optional
     :param cdate: Creation date
     :type cdate: int, optional
-    :param rdate:
+    :param rdate: This field is never used
     :type rdate: int, optional
     :param ddate: Deletion date
     :type ddate: int, optional
     :param tcdate: True creation date
     :type tcdate: int, optional
-    :param tmdate:
+    :param tmdate: Modification date
     :type tmdate: int, optional
-    :param multiReply:
-    :type multiReply: str, optional
-    :param taskCompletionCount:
-    :type taskCompletionCount: str, optional
-    :param transform:
+    :param multiReply: If true, allows for multiple Notes created from this Invitation (e.g. comments in a forum), otherwise, only one Note may be created (e.g. paper submission)
+    :type multiReply: bool, optional
+    :param taskCompletionCount: Keeps count of the number of times the Invitation has been used
+    :type taskCompletionCount: int, optional
+    :param transform: Path to a file that contains the transform function
     :type transform: str, optional
     :param details:
-    :type details: str, optional
+    :type details: dict, optional
     """
     def __init__(self,
         id,
@@ -1328,33 +1316,33 @@ class Note(object):
     :type writers: list[str]
     :param signatures: List of signatures in the Invitation, each signature is a Group id
     :type signatures: list[str]
-    :param content:
-    :type content: str
+    :param content: Content of the Note
+    :type content: dict
     :param id: Note id
     :type id: str, optional
     :param original: If this Note is a blind copy of a Note, then this contains the id of that Note
     :type original: str, optional
-    :param number:
-    :type number: str, optional
+    :param number: Note number. E.g. when the Note is a paper submission, this value is the paper number
+    :type number: int, optional
     :param cdate: Creation date
-    :type cdate: str, optional
+    :type cdate: int, optional
     :param tcdate: True creation date
-    :type tcdate: str, optional
-    :param tmdate:
-    :type tmdate: str, optional
+    :type tcdate: int, optional
+    :param tmdate: Modification date
+    :type tmdate: int, optional
     :param ddate: Deletion date
-    :type ddate: str, optional
+    :type ddate: int, optional
     :param forum: Forum id
     :type forum: str, optional
-    :param referent:
+    :param referent: If this Note is used as a ref, this field points to the Profile
     :type referent: str, optional
-    :param replyto:
+    :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID
     :type replyto: str, optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     :param details:
-    :type details: str, optional
-    :param tauthor:
+    :type details: dict, optional
+    :param tauthor: True author
     :type tauthor: str, optional
     """
     def __init__(self,
@@ -1472,26 +1460,26 @@ class Note(object):
 
 class Tag(object):
     """
-    :param tag: Tag id
+    :param tag: Content of the tag
     :type tag: str
-    :param invitation:
+    :param invitation: Invitation id
     :type invitation: str
     :param readers: List of readers in the Invitation, each reader is a Group id
     :type readers: list[str]
     :param signatures: List of signatures in the Invitation, each signature is a Group id
     :type signatures: list[str]
-    :param id:
+    :param id: Tag id
     :type id: str, optional
     :param cdate: Creation date
-    :type cdate: str, optional
+    :type cdate: int, optional
     :param tcdate: True creation date
-    :type tcdate: str, optional
+    :type tcdate: int, optional
     :param ddate: Deletion date
-    :type ddate: str, optional
-    :param forum:
+    :type ddate: int, optional
+    :param forum: Forum id
     :type forum: str, optional
-    :param replyto:
-    :type replyto: str, optional
+    :param replyto: Note id
+    :type replyto: list[str], optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
@@ -1568,17 +1556,15 @@ class Profile(object):
     """
     :param id: Profile id
     :type id: str, optional
-    :param number: 
-    :type number: str, optional
     :param tcdate: True creation date 
     :type tcdate: int, optional
-    :param tmdate:
+    :param tmdate: Modification date
     :type tmdate: int, optional
-    :param referent:
+    :param referent: If this is a ref, it contains the Profile id that it points to
     :type referent: str, optional
-    :param packaging:
-    :type packaging: str, optional
-    :param invitation:
+    :param packaging: Contains previous versions of this Profile
+    :type packaging: dict, optional
+    :param invitation: Invitation id
     :type invitation: str, optional
     :param readers: List of readers in the Invitation, each reader is a Group id
     :type readers: str, optional
@@ -1590,13 +1576,13 @@ class Profile(object):
     :type writers: str, optional
     :param content: Dictionary containing the information of the Profile
     :type content: dict, optional
-    :param metaContent:
-    :type metaContent: str, optional
-    :param active:
+    :param metaContent: Contains information of the entities that have changed the Profile
+    :type metaContent: dict, optional
+    :param active: If true, the Profile is active in OpenReview
     :type active: bool, optional
-    :param password:
-    :type password: str, optional
-    :param tauthor:
+    :param password: If true, the Profile has a password, otherwise, it was automatically created and the person that it belongs to has not set a password yet
+    :type password: bool, optional
+    :param tauthor: True author
     :type tauthor: str, optional
     """
     def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
