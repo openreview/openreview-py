@@ -9,9 +9,7 @@ class Matching(object):
         self.conference = conference
 
     def clear(self, client, invitation):
-        note_list = list(openreview.tools.iterget_notes(client, invitation = invitation))
-        for note in note_list:
-            client.delete_note(note)
+        return client.delete_edges(invitation)
 
     def _build_conflicts(self, client, papers, user_profiles):
         edges = []
@@ -465,6 +463,12 @@ class Matching(object):
         self.conference.client.post_invitation(aggregated_score_inv)
         self.conference.client.post_invitation(custom_load_inv)
         self.conference.client.post_invitation(conflicts_inv)
+
+        self.clear(self.conference.client, self.conference.get_paper_assignment_id())
+        self.clear(self.conference.client, self.conference.get_invitation_id('Conflicts'))
+        self.clear(self.conference.client, self.conference.get_invitation_id('Custom_Load'))
+        self.clear(self.conference.client, self.conference.get_invitation_id('Aggregate_Score'))
+
 
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client, invitation = self.conference.get_blind_submission_id(), details='original'))

@@ -244,11 +244,30 @@ class TestMatching():
         assert conference, 'conference is None'
 
         ## Set up matching
-        metadata_notes = conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
-        # assert metadata_notes
-        # assert len(metadata_notes) == 3
+        conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
 
-        # blinded_notes = list(conference.get_submissions())
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Assignment_Configuration')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Custom_Load')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Conflicts')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Aggregate_Score')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Paper_Assignment')
+
+        bids = client.get_edges(invitation = conference.get_bid_id())
+        assert bids
+        assert 6 == len(bids)
+
+        custom_loads = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Custom_Load')
+        assert not custom_loads
+
+        conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
+        assert conflicts
+        assert 3 == len(conflicts)
+        assert conflicts[0].label == 'cmu.edu'
+        assert conflicts[0].tail == '~AreaChair_One1'
+        assert conflicts[1].label == 'mit.edu'
+        assert conflicts[1].tail == '~Reviewer_One1'
+        assert conflicts[2].label == 'umass.edu'
+        assert conflicts[2].tail == 'ac2@umass.edu'
 
         # ## Assert Paper 1 scores
         # assert metadata_notes[0].forum == blinded_notes[0].id

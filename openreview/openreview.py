@@ -631,6 +631,14 @@ class Client(object):
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
 
+    def delete_edges(self, invitation):
+        """
+        Deletes edges by invitation.
+        """
+        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def delete_note(self, note):
         """
         Deletes the note and returns a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise.
