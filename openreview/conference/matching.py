@@ -7,8 +7,9 @@ class Matching(object):
 
     def __init__(self, conference):
         self.conference = conference
+        self.client = conference.client
 
-    def _create_edge_invitation(self, client, id):
+    def _create_edge_invitation(self, id):
         invitation = openreview.Invitation(
             id = id,
             invitees = [self.conference.get_id()],
@@ -40,11 +41,11 @@ class Matching(object):
                     }
                 }
             })
-        invitation = client.post_invitation(invitation)
-        client.delete_edges(invitation.id)
+        invitation = self.client.post_invitation(invitation)
+        self.client.delete_edges(invitation.id)
         return invitation
 
-    def _build_conflicts(self, client, submissions, user_profiles):
+    def _build_conflicts(self, submissions, user_profiles):
         conflict_invitation_id = self.conference.get_invitation_id('Conflicts')
         edges = []
         for submission in submissions:
@@ -52,7 +53,7 @@ class Matching(object):
                 authorids = submission.content['authorids']
                 if submission.details and submission.details.get('original'):
                     authorids = submission.details['original']['content']['authorids']
-                author_profiles = self._get_profiles(client, authorids)
+                author_profiles = self._get_profiles(authorids)
                 conflicts = openreview.tools.get_conflicts(author_profiles, profile)
                 if conflicts:
                     edges.append(openreview.Edge(
@@ -65,11 +66,11 @@ class Matching(object):
                         writers = [self.conference.id],
                         signatures = [self.conference.id]
                     ))
-        openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
+        openreview.tools.post_bulk_edges(client = self.client, edges = edges)
 
-    def _build_tpms_scores(self, client, tpms_score_file, submissions, user_profiles):
+    def _build_tpms_scores(self, tpms_score_file, submissions, user_profiles):
         invitation_id = self.conference.get_invitation_id('TPMS')
-        self._create_edge_invitation(self.conference.client, invitation_id)
+        self._create_edge_invitation(invitation_id)
 
         submissions_per_number = { note.number: note for note in submissions }
         profiles_by_email = {}
@@ -84,7 +85,54 @@ class Matching(object):
                 profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
                 score = row[2]
                 edges.append(openreview.Edge(
-                    invitation = self.conference.get_invitation_id('TPMS'),
+                    invitation = invitation_id,
+                    head = paper_note_id,
+                    tail = profile_id,
+                    weight = float(score),
+                    readers = [self.conference.id],
+                    writers = [self.conference.id],
+                    signatures = [self.conference.id]
+                ))
+
+        openreview.tools.post_bulk_edges(client = self.client, edges = edges)
+
+    def _build_affinity_scores(self, affinity_score_file):
+        invitation_id = self.conference.get_invitation_id('Affinity')
+        self._create_edge_invitation(invitation_id)
+
+        edges = []
+        with open(affinity_score_file) as f:
+            for row in csv.reader(f):
+                paper_note_id = row[0]
+                profile_id = row[1]
+                score = row[2]
+                edges.append(openreview.Edge(
+                    invitation = invitation_id,
+                    head = paper_note_id,
+                    tail = profile_id,
+                    weight = float(score),
+                    readers = [self.conference.id],
+                    writers = [self.conference.id],
+                    signatures = [self.conference.id]
+                ))
+
+        openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
+
+    def _build_subject_area_scores(self, submissions):
+        invitation_id = self.conference.get_invitation_id('Subject_Areas')
+        self._create_edge_invitation(invitation_id)
+
+        edges = []
+        user_subject_areas = list(openreview.tools.iterget_notes(self.client, invitation = self.conference.get_registration_id()))
+        for note in submissions:
+            note_subject_areas = note.content['subject_areas']
+            paper_note_id = note.id
+            for subject_area_note in user_subject_areas:
+                profile_id = subject_area_note.signatures[0]
+                subject_areas = subject_area_note.content['subject_areas']
+                score = self._jaccard_similarity(note_subject_areas, subject_areas)
+                edges.append(openreview.Edge(
+                    invitation = invitation_id,
                     head = paper_note_id,
                     tail = profile_id,
                     weight = float(score),
@@ -102,69 +150,7 @@ class Matching(object):
         union = set1.union(set2)
         return len(intersection) / len(union)
 
-
-
-    def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, scores_by_reviewer, manual_conflicts_by_id):
-        entries = []
-        bid_count = 0
-        for profile in reviewer_profiles:
-            bid_score_map = {
-                'Very High': 1.0,
-                'High': 0.5,
-                'Neutral': 0.0,
-                'Low': -0.5,
-                'Very Low': -1.0
-            }
-            try:
-                reviewer_bids = sorted([t for t in paper_bid_jsons if profile.id in t['signatures']], key=lambda t: t.get('tmdate',0), reverse=True)
-            except TypeError as e:
-                raise e
-            reviewer_scores = scores_by_reviewer.get(profile.id, {})
-
-            # find conflicts between the reviewer's profile and the paper's authors' profiles
-            user_entry = {
-                'userid': profile.id,
-                'scores': reviewer_scores
-            }
-
-            # Bid can contain a 'Conflict of Interest' selection, so install in the entry if bid is set to that
-            if reviewer_bids:
-                tag = reviewer_bids[0]['tag']
-                if tag == 'Conflict of Interest':
-                    print('Conflict of Interest for', profile.id)
-                    user_entry['conflicts'] = ['self-declared COI']
-                else:
-                    bid_score = bid_score_map.get(tag, 0.0)
-                    bid_count += 1
-                    if bid_score != 0.0:
-                        user_entry['scores']['bid'] = bid_score
-
-            reviewer_recommendations = [ t['tag'] for t in sorted(paper_recommendation_jsons, key=lambda x: x['cdate'])]
-            if reviewer_recommendations:
-                ## Set value between High(0.5) and Very High(1)
-                count = len(reviewer_recommendations)
-                if profile.id in reviewer_recommendations:
-                    index = reviewer_recommendations.index(profile.id)
-                    score = 0.5 + (0.5 * ((count - index) / count))
-                    user_entry['scores']['recommendation'] = score
-
-            manual_user_conflicts = manual_conflicts_by_id.get(profile.id, [])
-            if manual_user_conflicts:
-                profile = self._append_manual_conflicts(profile, manual_user_conflicts)
-            conflicts = openreview.tools.get_conflicts(author_profiles, profile)
-
-            if conflicts:
-                user_entry['conflicts'] = conflicts + user_entry.get('conflicts', [])
-
-            entries.append(user_entry)
-
-        ## Assert amount of bids and tags
-        difference = list(set([tag['signatures'][0] for tag in paper_bid_jsons]) - set([profile.id for profile in reviewer_profiles]))
-        assert len(difference) == 0, 'There is a difference in forum: ' + paper_bid_jsons[0]['forum'] + ' for tags with no profile found: ' + ','.join(difference)
-        assert bid_count == len(paper_bid_jsons), 'Incorrect number(score_count: '+ str(bid_count) + ' tag_count:' + str(len(paper_bid_jsons)) +') of bid scores in the metadata for paper: ' + paper_bid_jsons[0]['forum']
-        return entries
-
-    def _get_profiles(self, client, ids_or_emails):
+    def _get_profiles(self, ids_or_emails):
         ids = []
         emails = []
         for member in ids_or_emails:
@@ -173,9 +159,9 @@ class Matching(object):
             else:
                 emails.append(member)
 
-        profiles = client.search_profiles(ids = ids)
+        profiles = self.client.search_profiles(ids = ids)
 
-        profile_by_email = client.search_profiles(emails = emails)
+        profile_by_email = self.client.search_profiles(emails = emails)
         for email in emails:
             profiles.append(profile_by_email.get(email, openreview.Profile(id = email,
             content = {
@@ -184,38 +170,6 @@ class Matching(object):
             })))
 
         return profiles
-
-    def post_metadata_note(self,
-        client,
-        note,
-        reviewer_profiles,
-        metadata_inv,
-        paper_scores,
-        manual_conflicts_by_id,
-        bid_invitation,
-        recommendation_invitation):
-
-        authorids = note.content['authorids']
-        if note.details.get('original'):
-            authorids = note.details['original']['content']['authorids']
-        paper_bid_jsons = list(filter(lambda t: t['invitation'] == bid_invitation, note.details['tags']))
-        paper_recommendation_jsons = list(filter(lambda t: t['invitation'] == recommendation_invitation, note.details['tags']))
-        paper_author_profiles = self._get_profiles(client, authorids)
-        entries = self._build_entries(paper_author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, paper_scores, manual_conflicts_by_id)
-
-        new_metadata_note = openreview.Note(**{
-            'forum': note.id,
-            'invitation': metadata_inv.id,
-            'readers': metadata_inv.reply['readers']['values'],
-            'writers': metadata_inv.reply['writers']['values'],
-            'signatures': metadata_inv.reply['signatures']['values'],
-            'content': {
-                'title': 'Paper Metadata',
-                'entries': entries
-            }
-        })
-
-        return client.post_note(new_metadata_note)
 
     def get_assignments(self, config_note, submissions, assignment_notes):
         assignments = []
@@ -363,7 +317,7 @@ class Matching(object):
 
         reviewers_group = self.conference.client.get_group(self.conference.get_reviewers_id())
         # The reviewers are all emails so convert to tilde ids
-        reviewers_group = openreview.tools.replace_members_with_ids(self.conference.client, reviewers_group)
+        reviewers_group = openreview.tools.replace_members_with_ids(self.client, reviewers_group)
         if not all(['~' in member for member in reviewers_group.members]):
             print('WARNING: not all reviewers have been converted to profile IDs. Members without profiles will not have metadata created.')
 
@@ -371,25 +325,32 @@ class Matching(object):
         if self.conference.use_area_chairs:
             areachairs_group = self.conference.client.get_group(self.conference.get_area_chairs_id())
             # The areachairs are all emails so convert to tilde ids
-            areachairs_group = openreview.tools.replace_members_with_ids(self.conference.client, areachairs_group)
+            areachairs_group = openreview.tools.replace_members_with_ids(self.client, areachairs_group)
             if not all(['~' in member for member in areachairs_group.members]):
                 print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
-            user_profiles = self._get_profiles(self.conference.client, reviewers_group.members + areachairs_group.members)
+            user_profiles = self._get_profiles(reviewers_group.members + areachairs_group.members)
         else:
-            user_profiles = self._get_profiles(self.conference.client, reviewers_group.members)
+            user_profiles = self._get_profiles(reviewers_group.members)
 
         self.conference.client.post_invitation(config_inv)
-        self._create_edge_invitation(self.conference.client, self.conference.get_paper_assignment_id())
-        self._create_edge_invitation(self.conference.client, self.conference.get_invitation_id('Aggregate_Score'))
-        self._create_edge_invitation(self.conference.client, self.conference.get_invitation_id('Custom_Load'))
-        self._create_edge_invitation(self.conference.client, self.conference.get_invitation_id('Conflicts'))
+        self._create_edge_invitation(self.conference.get_paper_assignment_id())
+        self._create_edge_invitation(self.conference.get_invitation_id('Aggregate_Score'))
+        self._create_edge_invitation(self.conference.get_invitation_id('Custom_Load'))
+        self._create_edge_invitation(self.conference.get_invitation_id('Conflicts'))
 
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client, invitation = self.conference.get_blind_submission_id(), details='original'))
 
-        self._build_conflicts(self.conference.client, submissions, user_profiles)
+        self._build_conflicts(submissions, user_profiles)
+
         if tpms_score_file:
-            self._build_tpms_scores(self.conference.client, tpms_score_file, submissions, user_profiles)
+            self._build_tpms_scores(tpms_score_file, submissions, user_profiles)
+
+        if affinity_score_file:
+            self._build_affinity_scores(affinity_score_file)
+
+        if self.conference.submission_stage.subject_areas:
+            self._build_subject_area_scores(submissions)
 
 
     def get_assignment_notes (self):

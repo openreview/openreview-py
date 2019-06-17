@@ -336,86 +336,73 @@ class TestMatching():
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
-        ac1_client.post_tag(openreview.Tag(invitation = conference.get_recommendation_id(blinded_notes[0].number),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
-            forum = blinded_notes[0].id,
-            tag = '~Reviewer_One1'
+            writers = ['~AreaChair_One1'],
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_One1',
+            weight = 1
         ))
-        ac1_client.post_tag(openreview.Tag(invitation = conference.get_recommendation_id(blinded_notes[1].number),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
-            forum = blinded_notes[1].id,
-            tag = 'r2@google.com'
+            writers = ['~AreaChair_One1'],
+            head = blinded_notes[1].id,
+            tail = 'r2@google.com',
+            weight = 2
         ))
-        ac1_client.post_tag(openreview.Tag(invitation = conference.get_recommendation_id(blinded_notes[1].number),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
-            forum = blinded_notes[1].id,
-            tag = 'r3@fb.com'
+            writers = ['~AreaChair_One1'],
+            head = blinded_notes[1].id,
+            tail = 'r3@fb.com',
+            weight = 3
         ))
 
         ## Set up matching
-        metadata_notes = conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
-        # assert metadata_notes
-        # assert len(metadata_notes) == 3
+        conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
 
-        # ## Assert Paper 1 scores
-        # assert metadata_notes[0].forum == blinded_notes[0].id
-        # assert len(metadata_notes[0].content['entries']) == 5
-        # assert metadata_notes[0].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[0].content['entries'][0]['scores'] == { 'bid': -1, 'tpms': 0.3 }
-        # assert metadata_notes[0].content['entries'][0].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[0].content['entries'][1]['scores'] == { 'bid': -0.5, 'tpms': 0.8, 'recommendation': 1 }
-        # assert metadata_notes[0].content['entries'][1].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[0].content['entries'][2]['scores'] == {'tpms': 0.77}
-        # assert metadata_notes[0].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[0].content['entries'][3]['scores'] == {'tpms': 0.21}
-        # assert metadata_notes[0].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[0].content['entries'][4]['scores'] == {'tpms': 0.6}
-        # assert metadata_notes[0].content['entries'][4]['conflicts'] == [ 'umass.edu' ]
+        bids = client.get_edges(invitation = conference.get_bid_id())
+        assert bids
+        assert 6 == len(bids)
 
-        # ## Assert Paper 2 scores
-        # assert metadata_notes[1].forum == blinded_notes[1].id
-        # assert len(metadata_notes[0].content['entries']) == 5
-        # assert metadata_notes[1].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[1].content['entries'][0]['scores'] == { 'bid': -0.5, 'tpms': 0.2  }
-        # assert metadata_notes[1].content['entries'][0].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[1].content['entries'][1]['scores'] == { 'bid': 1, 'tpms': 0.8  }
-        # assert metadata_notes[1].content['entries'][1]['conflicts'] == [ 'mit.edu' ]
-        # assert metadata_notes[1].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[1].content['entries'][2]['scores'] == {'tpms': 0.66, 'recommendation': 1}
-        # assert metadata_notes[1].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[1].content['entries'][3]['scores'] == {'tpms': 0.31, 'recommendation': 0.75}
-        # assert metadata_notes[1].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        # assert metadata_notes[1].content['entries'][4].get('conflicts') is None
+        recommendations = client.get_edges(invitation = conference.get_recommendation_id())
+        assert recommendations
+        assert 3 == len(recommendations)
 
-        # ## Assert Paper 3 scores
-        # assert metadata_notes[2].forum == blinded_notes[2].id
-        # assert len(metadata_notes[2].content['entries']) == 5
-        # assert metadata_notes[2].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[2].content['entries'][0]['scores'] == { 'bid': 0.5, 'tpms': 0.1 }
-        # assert metadata_notes[2].content['entries'][0]['conflicts'] == [ 'cmu.edu' ]
-        # assert metadata_notes[2].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[2].content['entries'][1]['scores'] == {'tpms': 0.8}
-        # assert metadata_notes[2].content['entries'][1].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[2].content['entries'][2]['scores'] == {'tpms': 0.55}
-        # assert metadata_notes[2].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[2].content['entries'][3]['scores'] == {'tpms': 0.51}
-        # assert metadata_notes[2].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
-        # assert metadata_notes[2].content['entries'][4].get('conflicts') is None
+        custom_loads = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Custom_Load')
+        assert not custom_loads
+
+        conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
+        assert conflicts
+        assert 3 == len(conflicts)
+        assert conflicts[0].label == 'cmu.edu'
+        assert conflicts[0].tail == '~AreaChair_One1'
+        assert conflicts[1].label == 'mit.edu'
+        assert conflicts[1].tail == '~Reviewer_One1'
+        assert conflicts[2].label == 'umass.edu'
+        assert conflicts[2].tail == 'ac2@umass.edu'
+
+        submissions = conference.get_submissions()
+        assert submissions
+        assert 3 == len(submissions)
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS')
+        assert tpms_scores
+        assert 15 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.21
+        assert tpms_scores[0].tail == 'r3@fb.com'
+        assert tpms_scores[0].head == submissions[0].id
+        assert tpms_scores[1].weight == 0.31
+        assert tpms_scores[1].tail == 'r3@fb.com'
+        assert tpms_scores[1].head == submissions[1].id
+        assert tpms_scores[2].weight == 0.51
+        assert tpms_scores[2].tail == 'r3@fb.com'
+        assert tpms_scores[2].head == submissions[2].id
+        assert tpms_scores[3].weight == 0.77
+        assert tpms_scores[3].tail == 'r2@google.com'
 
 
     def test_setup_matching_with_subject_areas(self, client, test_client, helpers):
@@ -479,63 +466,54 @@ class TestMatching():
         ))
 
         ## Set up matching
-        metadata_notes = conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
-        # assert metadata_notes
-        # assert len(metadata_notes) == 3
+        conference.setup_matching(tpms_score_file= os.path.join(os.path.dirname(__file__), 'data/tpms_scores.csv'))
 
-        # ## Assert Paper 1 scores
-        # assert metadata_notes[0].forum == blinded_notes[0].id
-        # assert len(metadata_notes[0].content['entries']) == 5
-        # assert metadata_notes[0].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[0].content['entries'][0]['scores'] == { 'bid': -1, 'tpms': 0.3, 'subjectArea': 0.3333333333333333 }
-        # assert metadata_notes[0].content['entries'][0].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[0].content['entries'][1]['scores'] == { 'bid': -0.5, 'tpms': 0.8, 'recommendation': 1 }
-        # assert metadata_notes[0].content['entries'][1].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[0].content['entries'][2]['scores'] == {'tpms': 0.77}
-        # assert metadata_notes[0].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[0].content['entries'][3]['scores'] == {'tpms': 0.21}
-        # assert metadata_notes[0].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[0].content['entries'][4]['scores'] == {'tpms': 0.6}
-        # assert metadata_notes[0].content['entries'][4]['conflicts'] == [ 'umass.edu' ]
+        bids = client.get_edges(invitation = conference.get_bid_id())
+        assert bids
+        assert 6 == len(bids)
 
-        # ## Assert Paper 2 scores
-        # assert metadata_notes[1].forum == blinded_notes[1].id
-        # assert len(metadata_notes[0].content['entries']) == 5
-        # assert metadata_notes[1].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[1].content['entries'][0]['scores'] == { 'bid': -0.5, 'tpms': 0.2, 'subjectArea': 1  }
-        # assert metadata_notes[1].content['entries'][0].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[1].content['entries'][1]['scores'] == { 'bid': 1, 'tpms': 0.8  }
-        # assert metadata_notes[1].content['entries'][1]['conflicts'] == [ 'mit.edu' ]
-        # assert metadata_notes[1].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[1].content['entries'][2]['scores'] == {'tpms': 0.66, 'recommendation': 1}
-        # assert metadata_notes[1].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[1].content['entries'][3]['scores'] == {'tpms': 0.31, 'recommendation': 0.75}
-        # assert metadata_notes[1].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[1].content['entries'][4]['scores'] == {'tpms': 0.5}
-        # assert metadata_notes[1].content['entries'][4].get('conflicts') is None
+        recommendations = client.get_edges(invitation = conference.get_recommendation_id())
+        assert recommendations
+        assert 3 == len(recommendations)
 
-        # ## Assert Paper 3 scores
-        # assert metadata_notes[2].forum == blinded_notes[2].id
-        # assert len(metadata_notes[2].content['entries']) == 5
-        # assert metadata_notes[2].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[2].content['entries'][0]['scores'] == { 'bid': 0.5, 'tpms': 0.1 , 'subjectArea': 0.3333333333333333}
-        # assert metadata_notes[2].content['entries'][0]['conflicts'] == [ 'cmu.edu' ]
-        # assert metadata_notes[2].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[2].content['entries'][1]['scores'] == {'tpms': 0.8}
-        # assert metadata_notes[2].content['entries'][1].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[2].content['entries'][2]['scores'] == {'tpms': 0.55}
-        # assert metadata_notes[2].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[2].content['entries'][3]['scores'] == {'tpms': 0.51}
-        # assert metadata_notes[2].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[2].content['entries'][4]['scores'] == {'tpms': 0.4}
-        # assert metadata_notes[2].content['entries'][4].get('conflicts') is None
+        custom_loads = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Custom_Load')
+        assert not custom_loads
+
+        conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
+        assert conflicts
+        assert 3 == len(conflicts)
+        assert conflicts[0].label == 'cmu.edu'
+        assert conflicts[0].tail == '~AreaChair_One1'
+        assert conflicts[1].label == 'mit.edu'
+        assert conflicts[1].tail == '~Reviewer_One1'
+        assert conflicts[2].label == 'umass.edu'
+        assert conflicts[2].tail == 'ac2@umass.edu'
+
+        submissions = conference.get_submissions()
+        assert submissions
+        assert 3 == len(submissions)
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS')
+        assert tpms_scores
+        assert 15 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.21
+        assert tpms_scores[0].tail == 'r3@fb.com'
+        assert tpms_scores[0].head == submissions[0].id
+        assert tpms_scores[1].weight == 0.31
+        assert tpms_scores[1].tail == 'r3@fb.com'
+        assert tpms_scores[1].head == submissions[1].id
+        assert tpms_scores[2].weight == 0.51
+        assert tpms_scores[2].tail == 'r3@fb.com'
+        assert tpms_scores[2].head == submissions[2].id
+        assert tpms_scores[3].weight == 0.77
+        assert tpms_scores[3].tail == 'r2@google.com'
+
+        subject_areas_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Subject_Areas')
+        assert subject_areas_scores
+        assert 3 == len(subject_areas_scores)
+        assert subject_areas_scores[0].tail == '~AreaChair_One1'
+        assert subject_areas_scores[0].weight == 0.3333333333333333
+        assert subject_areas_scores[1].tail == '~AreaChair_One1'
+        assert subject_areas_scores[1].weight == 1
+        assert subject_areas_scores[2].tail == '~AreaChair_One1'
+        assert subject_areas_scores[2].weight == 0.3333333333333333
