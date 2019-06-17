@@ -178,66 +178,30 @@ class TestMatching():
         ))
 
         ## Set up matching
-        metadata_notes = conference.setup_matching()
-        # assert metadata_notes
-        # assert len(metadata_notes) == 3
+        conference.setup_matching()
 
-        # ## Assert Paper 1 scores
-        # assert metadata_notes[0].forum == blinded_notes[2].id
-        # assert len(metadata_notes[0].content['entries']) == 5
-        # assert metadata_notes[0].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[0].content['entries'][0]['scores'] == { 'bid': -1 }
-        # assert metadata_notes[0].content['entries'][0].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[0].content['entries'][1]['scores'] == { 'bid': -0.5 }
-        # assert metadata_notes[0].content['entries'][1].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[0].content['entries'][2]['scores'] == {}
-        # assert metadata_notes[0].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[0].content['entries'][3]['scores'] == {}
-        # assert metadata_notes[0].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[0].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[0].content['entries'][4]['scores'] == {}
-        # assert metadata_notes[0].content['entries'][4]['conflicts'] == [ 'umass.edu' ]
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Assignment_Configuration')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Custom_Load')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Conflicts')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Aggregate_Score')
+        assert client.get_invitation(id = 'auai.org/UAI/2019/Conference/-/Paper_Assignment')
 
-        # ## Assert Paper 2 scores
-        # assert metadata_notes[1].forum == blinded_notes[1].id
-        # assert len(metadata_notes[0].content['entries']) == 5
-        # assert metadata_notes[1].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[1].content['entries'][0]['scores'] == { 'bid': -0.5 }
-        # assert metadata_notes[1].content['entries'][0].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[1].content['entries'][1]['scores'] == { 'bid': 1 }
-        # assert metadata_notes[1].content['entries'][1]['conflicts'] == [ 'mit.edu' ]
-        # assert metadata_notes[1].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[1].content['entries'][2]['scores'] == {}
-        # assert metadata_notes[1].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[1].content['entries'][3]['scores'] == {}
-        # assert metadata_notes[1].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[1].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[1].content['entries'][4]['scores'] == {}
-        # assert metadata_notes[1].content['entries'][4].get('conflicts') is None
+        bids = client.get_edges(invitation = conference.get_bid_id())
+        assert bids
+        assert 6 == len(bids)
 
-        # ## Assert Paper 3 scores
-        # assert metadata_notes[2].forum == blinded_notes[0].id
-        # assert len(metadata_notes[2].content['entries']) == 5
-        # assert metadata_notes[2].content['entries'][0]['userid'] == '~AreaChair_One1'
-        # assert metadata_notes[2].content['entries'][0]['scores'] == { 'bid': 0.5 }
-        # assert metadata_notes[2].content['entries'][0]['conflicts'] == [ 'cmu.edu' ]
-        # assert metadata_notes[2].content['entries'][1]['userid'] == '~Reviewer_One1'
-        # assert metadata_notes[2].content['entries'][1]['scores'] == {}
-        # assert metadata_notes[2].content['entries'][1].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][2]['userid'] == 'r2@google.com'
-        # assert metadata_notes[2].content['entries'][2]['scores'] == {}
-        # assert metadata_notes[2].content['entries'][2].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][3]['userid'] == 'r3@fb.com'
-        # assert metadata_notes[2].content['entries'][3]['scores'] == {}
-        # assert metadata_notes[2].content['entries'][3].get('conflicts') is None
-        # assert metadata_notes[2].content['entries'][4]['userid'] == 'ac2@umass.edu'
-        # assert metadata_notes[2].content['entries'][4]['scores'] == {}
-        # assert metadata_notes[2].content['entries'][4].get('conflicts') is None
+        custom_loads = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Custom_Load')
+        assert not custom_loads
+
+        conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
+        assert conflicts
+        assert 3 == len(conflicts)
+        assert conflicts[0].label == 'cmu.edu'
+        assert conflicts[0].tail == '~AreaChair_One1'
+        assert conflicts[1].label == 'mit.edu'
+        assert conflicts[1].tail == '~Reviewer_One1'
+        assert conflicts[2].label == 'umass.edu'
+        assert conflicts[2].tail == 'ac2@umass.edu'
 
 
     def test_setup_matching_with_tpms(self, client, test_client, helpers):

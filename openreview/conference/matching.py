@@ -13,6 +13,28 @@ class Matching(object):
         for note in note_list:
             client.delete_note(note)
 
+    def _build_conflicts(self, client, papers, user_profiles):
+        edges = []
+        for paper in papers:
+            for profile in user_profiles:
+                authorids = paper.content['authorids']
+                if paper.details and paper.details.get('original'):
+                    authorids = paper.details['original']['content']['authorids']
+                author_profiles = self._get_profiles(client, authorids)
+                conflicts = openreview.tools.get_conflicts(author_profiles, profile)
+                if conflicts:
+                    edges.append(openreview.Edge(
+                        invitation = self.conference.get_invitation_id('Conflicts'),
+                        head = paper.id,
+                        tail = profile.id,
+                        weight = 1,
+                        label = ','.join(conflicts),
+                        readers = [self.conference.id],
+                        writers = [self.conference.id],
+                        signatures = [self.conference.id]
+                    ))
+        return edges
+
     def _jaccard_similarity(self, list1, list2):
         set1 = set(list1)
         set2 = set(list2)
@@ -304,7 +326,7 @@ class Matching(object):
                     'values': [self.conference.get_id()]
                 },
                 'signatures': {
-                    'values-regex': ['~.*|.*@.*']
+                    'values': [self.conference.get_id()]
                 },
                 'content': {
                     'head': {
@@ -434,12 +456,21 @@ class Matching(object):
             areachairs_group = openreview.tools.replace_members_with_ids(self.conference.client, areachairs_group)
             if not all(['~' in member for member in areachairs_group.members]):
                 print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
+            user_profiles = self._get_profiles(self.conference.client, reviewers_group.members + areachairs_group.members)
+        else:
+            user_profiles = self._get_profiles(self.conference.client, reviewers_group.members)
 
         self.conference.client.post_invitation(config_inv)
         self.conference.client.post_invitation(assignment_inv)
         self.conference.client.post_invitation(aggregated_score_inv)
         self.conference.client.post_invitation(custom_load_inv)
         self.conference.client.post_invitation(conflicts_inv)
+
+        submissions = list(openreview.tools.iterget_notes(
+            self.conference.client, invitation = self.conference.get_blind_submission_id(), details='original'))
+
+        edges = self._build_conflicts(self.conference.client, submissions, user_profiles)
+        openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
 
 
     def get_assignment_notes (self):
