@@ -277,37 +277,6 @@ class Matching(object):
 
         return profiles
 
-    def get_assignments(self, config_note, submissions, assignment_notes):
-        assignments = []
-
-        paper_by_forum = { n.forum: n for n in submissions }
-
-        added_constraints = config_note.content.get('constraints', {})
-
-        for assignment in assignment_notes:
-            assigned_groups = assignment.content['assignedGroups']
-            paper_constraints = added_constraints.get(assignment.forum, {})
-            paper_assigned = []
-            for assignment_entry in assigned_groups:
-                score = assignment_entry.get('finalScore', 0)
-                user_id = assignment_entry['userId']
-                paper_assigned.append(user_id)
-
-                paper = paper_by_forum.get(assignment.forum)
-
-                if paper and paper_constraints.get(user_id) != '-inf':
-                    current_row = [paper.number, paper.forum, user_id, score]
-                    assignments.append(current_row)
-
-            for user, constraint in paper_constraints.items():
-                print('user, constraint', user, constraint)
-                if user not in paper_assigned and constraint == '+inf':
-                    current_row = [paper.number, paper.forum, user, constraint]
-                    assignments.append(current_row)
-
-
-        return sorted(assignments, key=lambda x: x[0])
-
     def setup(self, affinity_score_file = None, tpms_score_file = None):
 
         score_spec = {}
@@ -380,9 +349,6 @@ class Matching(object):
         self._build_config_invitation(score_spec)
 
 
-    def get_assignment_notes (self):
-        return self.conference.client.get_notes(invitation = self.conference.get_paper_assignment_id())
-
     def deploy(self, assingment_title):
 
         # Get the configuration note to check the group to assign
@@ -394,14 +360,13 @@ class Matching(object):
             match_group = configuration_note.content['match_group']
             is_area_chair = self.conference.get_area_chairs_id() == match_group
             submissions = openreview.tools.iterget_notes(client, invitation = self.conference.get_blind_submission_id())
-            assignment_notes = openreview.tools.iterget_notes(client, invitation = self.conference.get_id() + '/-/Paper_Assignment', content = { 'title': assingment_title })
+            assignment_edges = openreview.tools.iterget_edges(client, invitation = self.conference.get_paper_assignment_id(), label = assingment_title)
 
+            paper_by_forum = { n.forum: n for n in submissions }
 
-            assignments = self.get_assignments(configuration_note, submissions, assignment_notes)
-
-            for a in assignments:
-                paper_number = a[0]
-                user = a[2]
+            for edge in assignment_edges:
+                paper_number = paper_by_forum.get(edge.head).number
+                user = edge.tail
 
                 if is_area_chair:
                     parent_label = 'Area_Chairs'
