@@ -46,7 +46,9 @@ class Matching(object):
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles):
-        conflict_invitation_id = self.conference.get_invitation_id('Conflicts')
+
+        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Conflicts'))
+
         edges = []
         for submission in submissions:
             for profile in user_profiles:
@@ -57,7 +59,7 @@ class Matching(object):
                 conflicts = openreview.tools.get_conflicts(author_profiles, profile)
                 if conflicts:
                     edges.append(openreview.Edge(
-                        invitation = conflict_invitation_id,
+                        invitation = invitation.id,
                         head = submission.id,
                         tail = profile.id,
                         weight = 1,
@@ -67,10 +69,11 @@ class Matching(object):
                         signatures = [self.conference.id]
                     ))
         openreview.tools.post_bulk_edges(client = self.client, edges = edges)
+        return invitation
 
     def _build_tpms_scores(self, tpms_score_file, submissions, user_profiles):
-        invitation_id = self.conference.get_invitation_id('TPMS')
-        self._create_edge_invitation(invitation_id)
+
+        invitation = self._create_edge_invitation(self.conference.get_invitation_id('TPMS'))
 
         submissions_per_number = { note.number: note for note in submissions }
         profiles_by_email = {}
@@ -85,7 +88,7 @@ class Matching(object):
                 profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
                 score = row[2]
                 edges.append(openreview.Edge(
-                    invitation = invitation_id,
+                    invitation = invitation.id,
                     head = paper_note_id,
                     tail = profile_id,
                     weight = float(score),
@@ -95,10 +98,11 @@ class Matching(object):
                 ))
 
         openreview.tools.post_bulk_edges(client = self.client, edges = edges)
+        return invitation
 
     def _build_affinity_scores(self, affinity_score_file):
-        invitation_id = self.conference.get_invitation_id('Affinity')
-        self._create_edge_invitation(invitation_id)
+
+        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Affinity'))
 
         edges = []
         with open(affinity_score_file) as f:
@@ -107,7 +111,7 @@ class Matching(object):
                 profile_id = row[1]
                 score = row[2]
                 edges.append(openreview.Edge(
-                    invitation = invitation_id,
+                    invitation = invitation.id,
                     head = paper_note_id,
                     tail = profile_id,
                     weight = float(score),
@@ -117,10 +121,11 @@ class Matching(object):
                 ))
 
         openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
+        return invitation
 
     def _build_subject_area_scores(self, submissions):
-        invitation_id = self.conference.get_invitation_id('Subject_Areas')
-        self._create_edge_invitation(invitation_id)
+
+        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Subject_Areas'))
 
         edges = []
         user_subject_areas = list(openreview.tools.iterget_notes(self.client, invitation = self.conference.get_registration_id()))
@@ -132,7 +137,7 @@ class Matching(object):
                 subject_areas = subject_area_note.content['subject_areas']
                 score = self._jaccard_similarity(note_subject_areas, subject_areas)
                 edges.append(openreview.Edge(
-                    invitation = invitation_id,
+                    invitation = invitation.id,
                     head = paper_note_id,
                     tail = profile_id,
                     weight = float(score),
@@ -142,6 +147,107 @@ class Matching(object):
                 ))
 
         openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
+        return invitation
+
+    def _build_config_invitation(self, scores_specification):
+
+        config_inv = openreview.Invitation(
+            id = self.conference.get_invitation_id('Assignment_Configuration'),
+            invitees = [self.conference.get_id()],
+            readers = [self.conference.get_id()],
+            writers = [self.conference.get_id()],
+            signatures = [self.conference.get_id()],
+            reply = {
+                'forum': None,
+                'replyto': None,
+                'invitation': None,
+                'readers': {'values': [self.conference.get_id()]},
+                'writers': {'values': [self.conference.get_id()]},
+                'signatures': {'values': [self.conference.get_id()]},
+                'content': {
+                    'title': {
+                        'value-regex': '.{1,250}',
+                        'required': True,
+                        'description': 'Title of the configuration.',
+                        'order': 1
+                    },
+                    'max_users': {
+                        'value-regex': '[0-9]+',
+                        'required': True,
+                        'description': 'Max number of reviewers that can review a paper',
+                        'order': 2
+                    },
+                    'min_users': {
+                        'value-regex': '[0-9]+',
+                        'required': True,
+                        'description': 'Min number of reviewers required to review a paper',
+                        'order': 3
+                    },
+                    'max_papers': {
+                        'value-regex': '[0-9]+',
+                        'required': True,
+                        'description': 'Max number of reviews a person has to do',
+                        'order': 4
+                    },
+                    'min_papers': {
+                        'value-regex': '[0-9]+',
+                        'required': True,
+                        'description': 'Min number of reviews a person should do',
+                        'order': 5
+                    },
+                    'paper_invitation': {
+                        'value': self.conference.get_blind_submission_id(),
+                        'required': True,
+                        'description': 'Invitation to get the configuration note',
+                        'order': 6
+                    },
+                    'match_group': {
+                        'value-radio': [self.conference.get_area_chairs_id(), self.conference.get_reviewers_id()] if self.conference.use_area_chairs else [self.conference.get_reviewers_id()],
+                        'required': True,
+                        'description': 'Invitation to get the configuration note',
+                        'order': 7
+                    },
+                    'scores_specification': {
+                        'value-dict': {},
+                        'required': True,
+                        'description': 'Manually entered JSON score specification',
+                        'order': 8,
+                        'default': scores_specification
+                    },
+                    'aggregate_score_invitation': {
+                        'value': self.conference.get_invitation_id('Aggregate_Score'),
+                        'required': True,
+                        'description': 'Invitation to store aggregated scores',
+                        'order': 9
+                    },
+                    'conflicts_invitation': {
+                        'value': self.conference.get_invitation_id('Conflicts'),
+                        'required': True,
+                        'description': 'Invitation to store aggregated scores',
+                        'order': 10
+                    },
+                    'custom_load_invitation': {
+                        'value': self.conference.get_invitation_id('Custom_Load'),
+                        'required': True,
+                        'description': 'Invitation to store aggregated scores',
+                        'order': 11
+                    },
+                    'assignment_invitation': {
+                        'value': self.conference.get_invitation_id('Paper_Assignment'),
+                        'required': True,
+                        'description': 'Invitation to store paper user assignments',
+                        'order': 12
+                    },
+                    'config_invitation': {
+                        'value': self.conference.get_invitation_id('Assignment_Configuration')
+                    },
+                    'status': {
+                        'default': 'Initialized',
+                        'value-dropdown': ['Initialized', 'Running', 'Error', 'No Solution', 'Complete', 'Deployed']
+                    }
+                }
+            })
+        self.client.post_invitation(config_inv)
 
     def _jaccard_similarity(self, list1, list2):
         set1 = set(list1)
@@ -205,6 +311,7 @@ class Matching(object):
     def setup(self, affinity_score_file = None, tpms_score_file = None):
 
         score_spec = {}
+
         score_spec[self.conference.get_bid_id()] = {
             'weight': 1,
             'default': 0,
@@ -217,103 +324,10 @@ class Matching(object):
             }
         }
 
-        config_inv = openreview.Invitation(
-            id = self.conference.get_invitation_id('Assignment_Configuration'),
-            invitees = [self.conference.get_id()],
-            readers = [self.conference.get_id()],
-            writers = [self.conference.get_id()],
-            signatures = [self.conference.get_id()],
-            reply = {
-                'forum': None,
-                'replyto': None,
-                'invitation': None,
-                'readers': {'values': [self.conference.get_id()]},
-                'writers': {'values': [self.conference.get_id()]},
-                'signatures': {'values': [self.conference.get_id()]},
-                'content': {
-                    'title': {
-                        'value-regex': '.{1,250}',
-                        'required': True,
-                        'description': 'Title of the configuration.',
-                        'order': 1
-                    },
-                    'max_users': {
-                        'value-regex': '[0-9]+',
-                        'required': True,
-                        'description': 'Max number of reviewers that can review a paper',
-                        'order': 2
-                    },
-                    'min_users': {
-                        'value-regex': '[0-9]+',
-                        'required': True,
-                        'description': 'Min number of reviewers required to review a paper',
-                        'order': 3
-                    },
-                    'max_papers': {
-                        'value-regex': '[0-9]+',
-                        'required': True,
-                        'description': 'Max number of reviews a person has to do',
-                        'order': 4
-                    },
-                    'min_papers': {
-                        'value-regex': '[0-9]+',
-                        'required': True,
-                        'description': 'Min number of reviews a person should do',
-                        'order': 5
-                    },
-                    'paper_invitation': {
-                        'value': self.conference.get_blind_submission_id(),
-                        'required': True,
-                        'description': 'Invitation to get the configuration note',
-                        'order': 6
-                    },
-                    'match_group': {
-                        'value-radio': [self.conference.get_area_chairs_id(), self.conference.get_reviewers_id()] if self.conference.use_area_chairs else [self.conference.get_reviewers_id()],
-                        'required': True,
-                        'description': 'Invitation to get the configuration note',
-                        'order': 7
-                    },
-                    'scores_specification': {
-                        'value-dict': {},
-                        'required': True,
-                        'description': 'Manually entered JSON score specification',
-                        'order': 8,
-                        'default': score_spec
-                    },
-                    'aggregate_score_invitation': {
-                        'value': self.conference.get_invitation_id('Aggregate_Score'),
-                        'required': True,
-                        'description': 'Invitation to store aggregated scores',
-                        'order': 9
-                    },
-                    'conflicts_invitation': {
-                        'value': self.conference.get_invitation_id('Conflicts'),
-                        'required': True,
-                        'description': 'Invitation to store aggregated scores',
-                        'order': 10
-                    },
-                    'custom_load_invitation': {
-                        'value': self.conference.get_invitation_id('Custom_Load'),
-                        'required': True,
-                        'description': 'Invitation to store aggregated scores',
-                        'order': 11
-                    },
-                    'assignment_invitation': {
-                        'value': self.conference.get_invitation_id('Paper_Assignment'),
-                        'required': True,
-                        'description': 'Invitation to store paper user assignments',
-                        'order': 12
-                    },
-                    'config_invitation': {
-                        'value': self.conference.get_invitation_id('Assignment_Configuration')
-                    },
-                    'status': {
-                        'default': 'Initialized',
-                        'value-dropdown': ['Initialized', 'Running', 'Error', 'No Solution', 'Complete', 'Deployed']
-                    }
-                }
-            })
-
+        score_spec[self.conference.get_recommendation_id()] = {
+            'weight': 1,
+            'default': 0
+        }
 
         reviewers_group = self.conference.client.get_group(self.conference.get_reviewers_id())
         # The reviewers are all emails so convert to tilde ids
@@ -332,7 +346,6 @@ class Matching(object):
         else:
             user_profiles = self._get_profiles(reviewers_group.members)
 
-        self.conference.client.post_invitation(config_inv)
         self._create_edge_invitation(self.conference.get_paper_assignment_id())
         self._create_edge_invitation(self.conference.get_invitation_id('Aggregate_Score'))
         self._create_edge_invitation(self.conference.get_invitation_id('Custom_Load'))
@@ -344,13 +357,27 @@ class Matching(object):
         self._build_conflicts(submissions, user_profiles)
 
         if tpms_score_file:
-            self._build_tpms_scores(tpms_score_file, submissions, user_profiles)
+            invitation = self._build_tpms_scores(tpms_score_file, submissions, user_profiles)
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
 
         if affinity_score_file:
-            self._build_affinity_scores(affinity_score_file)
+            invitation = self._build_affinity_scores(affinity_score_file)
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
 
         if self.conference.submission_stage.subject_areas:
-            self._build_subject_area_scores(submissions)
+            invitation = self._build_subject_area_scores(submissions)
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
+
+        self._build_config_invitation(score_spec)
 
 
     def get_assignment_notes (self):
