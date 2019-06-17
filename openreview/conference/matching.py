@@ -8,22 +8,56 @@ class Matching(object):
     def __init__(self, conference):
         self.conference = conference
 
-    def clear(self, client, invitation):
-        return client.delete_edges(invitation)
+    def _create_edge_invitation(self, client, id):
+        invitation = openreview.Invitation(
+            id = id,
+            invitees = [self.conference.get_id()],
+            readers = [self.conference.get_id()],
+            writers = [self.conference.get_id()],
+            signatures = [self.conference.get_id()],
+            reply = {
+                'readers': {
+                    'values': [self.conference.get_id()]
+                },
+                'writers': {
+                    'values': [self.conference.get_id()]
+                },
+                'signatures': {
+                    'values': [self.conference.get_id()]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note'
+                    },
+                    'tail': {
+                        'type': 'Group'
+                    },
+                    'weight': {
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    },
+                    'label': {
+                        'value-regex': '.*'
+                    }
+                }
+            })
+        invitation = client.post_invitation(invitation)
+        client.delete_edges(invitation.id)
+        return invitation
 
-    def _build_conflicts(self, client, papers, user_profiles):
+    def _build_conflicts(self, client, submissions, user_profiles):
+        conflict_invitation_id = self.conference.get_invitation_id('Conflicts')
         edges = []
-        for paper in papers:
+        for submission in submissions:
             for profile in user_profiles:
-                authorids = paper.content['authorids']
-                if paper.details and paper.details.get('original'):
-                    authorids = paper.details['original']['content']['authorids']
+                authorids = submission.content['authorids']
+                if submission.details and submission.details.get('original'):
+                    authorids = submission.details['original']['content']['authorids']
                 author_profiles = self._get_profiles(client, authorids)
                 conflicts = openreview.tools.get_conflicts(author_profiles, profile)
                 if conflicts:
                     edges.append(openreview.Edge(
-                        invitation = self.conference.get_invitation_id('Conflicts'),
-                        head = paper.id,
+                        invitation = conflict_invitation_id,
+                        head = submission.id,
                         tail = profile.id,
                         weight = 1,
                         label = ','.join(conflicts),
@@ -31,7 +65,35 @@ class Matching(object):
                         writers = [self.conference.id],
                         signatures = [self.conference.id]
                     ))
-        return edges
+        openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
+
+    def _build_tpms_scores(self, client, tpms_score_file, submissions, user_profiles):
+        invitation_id = self.conference.get_invitation_id('TPMS')
+        self._create_edge_invitation(self.conference.client, invitation_id)
+
+        submissions_per_number = { note.number: note for note in submissions }
+        profiles_by_email = {}
+        for profile in user_profiles:
+            for email in profile.content['emails']:
+                profiles_by_email[email] = profile
+
+        edges = []
+        with open(tpms_score_file) as f:
+            for row in csv.reader(f):
+                paper_note_id = submissions_per_number[int(row[0])].id
+                profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
+                score = row[2]
+                edges.append(openreview.Edge(
+                    invitation = self.conference.get_invitation_id('TPMS'),
+                    head = paper_note_id,
+                    tail = profile_id,
+                    weight = float(score),
+                    readers = [self.conference.id],
+                    writers = [self.conference.id],
+                    signatures = [self.conference.id]
+                ))
+
+        openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
 
     def _jaccard_similarity(self, list1, list2):
         set1 = set(list1)
@@ -40,19 +102,6 @@ class Matching(object):
         union = set1.union(set2)
         return len(intersection) / len(union)
 
-    def _append_manual_conflicts(self, profile, manual_user_conflicts):
-        for conflict_domain in manual_user_conflicts:
-            manual_entry = {
-                'end': None,
-                'start': None,
-                'position': 'Manual Entry',
-                'institution': {
-                    'name': 'Manual Entry',
-                    'domain': conflict_domain
-                }
-            }
-            profile.content['history'].append(manual_entry)
-        return profile
 
 
     def _build_entries(self, author_profiles, reviewer_profiles, paper_bid_jsons, paper_recommendation_jsons, scores_by_reviewer, manual_conflicts_by_id):
@@ -214,135 +263,6 @@ class Matching(object):
             }
         }
 
-        assignment_inv = openreview.Invitation(
-            id = self.conference.get_paper_assignment_id(),
-            invitees = [self.conference.get_id()],
-            readers = [self.conference.get_id()],
-            writers = [self.conference.get_id()],
-            signatures = [self.conference.get_id()],
-            reply = {
-                'readers': {
-                    'values': [self.conference.get_id()]
-                },
-                'writers': {
-                    'values': [self.conference.get_id()]
-                },
-                'signatures': {
-                    'values': [self.conference.get_id()]
-                },
-                'content': {
-                    'head': {
-                        'type': 'Note'
-                    },
-                    'tail': {
-                        'type': 'Group'
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*'
-                    }
-                }
-            })
-
-        aggregated_score_inv = openreview.Invitation(
-            id = self.conference.get_invitation_id('Aggregate_Score'),
-            invitees = [self.conference.get_id()],
-            readers = [self.conference.get_id()],
-            writers = [self.conference.get_id()],
-            signatures = [self.conference.get_id()],
-            reply = {
-                'readers': {
-                    'values': [self.conference.get_id()]
-                },
-                'writers': {
-                    'values': [self.conference.get_id()]
-                },
-                'signatures': {
-                    'values': [self.conference.get_id()]
-                },
-                'content': {
-                    'head': {
-                        'type': 'Note'
-                    },
-                    'tail': {
-                        'type': 'Group'
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*'
-                    }
-                }
-            })
-
-        custom_load_inv = openreview.Invitation(
-            id = self.conference.get_invitation_id('Custom_Load'),
-            invitees = [self.conference.get_id()],
-            readers = [self.conference.get_id()],
-            writers = [self.conference.get_id()],
-            signatures = [self.conference.get_id()],
-            reply = {
-                'readers': {
-                    'values': [self.conference.get_id()]
-                },
-                'writers': {
-                    'values': [self.conference.get_id()]
-                },
-                'signatures': {
-                    'values-regex': ['~.*|.*@.*']
-                },
-                'content': {
-                    'head': {
-                        'type': 'Note'
-                    },
-                    'tail': {
-                        'type': 'Group'
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*'
-                    }
-                }
-            })
-
-        conflicts_inv = openreview.Invitation(
-            id = self.conference.get_invitation_id('Conflicts'),
-            invitees = [self.conference.get_id()],
-            readers = [self.conference.get_id()],
-            writers = [self.conference.get_id()],
-            signatures = [self.conference.get_id()],
-            reply = {
-                'readers': {
-                    'values': [self.conference.get_id()]
-                },
-                'writers': {
-                    'values': [self.conference.get_id()]
-                },
-                'signatures': {
-                    'values': [self.conference.get_id()]
-                },
-                'content': {
-                    'head': {
-                        'type': 'Note'
-                    },
-                    'tail': {
-                        'type': 'Group'
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*'
-                    }
-                }
-            })
-
-
         config_inv = openreview.Invitation(
             id = self.conference.get_invitation_id('Assignment_Configuration'),
             invitees = [self.conference.get_id()],
@@ -459,22 +379,17 @@ class Matching(object):
             user_profiles = self._get_profiles(self.conference.client, reviewers_group.members)
 
         self.conference.client.post_invitation(config_inv)
-        self.conference.client.post_invitation(assignment_inv)
-        self.conference.client.post_invitation(aggregated_score_inv)
-        self.conference.client.post_invitation(custom_load_inv)
-        self.conference.client.post_invitation(conflicts_inv)
-
-        self.clear(self.conference.client, self.conference.get_paper_assignment_id())
-        self.clear(self.conference.client, self.conference.get_invitation_id('Conflicts'))
-        self.clear(self.conference.client, self.conference.get_invitation_id('Custom_Load'))
-        self.clear(self.conference.client, self.conference.get_invitation_id('Aggregate_Score'))
-
+        self._create_edge_invitation(self.conference.client, self.conference.get_paper_assignment_id())
+        self._create_edge_invitation(self.conference.client, self.conference.get_invitation_id('Aggregate_Score'))
+        self._create_edge_invitation(self.conference.client, self.conference.get_invitation_id('Custom_Load'))
+        self._create_edge_invitation(self.conference.client, self.conference.get_invitation_id('Conflicts'))
 
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client, invitation = self.conference.get_blind_submission_id(), details='original'))
 
-        edges = self._build_conflicts(self.conference.client, submissions, user_profiles)
-        openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
+        self._build_conflicts(self.conference.client, submissions, user_profiles)
+        if tpms_score_file:
+            self._build_tpms_scores(self.conference.client, tpms_score_file, submissions, user_profiles)
 
 
     def get_assignment_notes (self):
