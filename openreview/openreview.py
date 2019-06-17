@@ -22,13 +22,13 @@ class OpenReviewException(Exception):
 
 class Client(object):
     """
-    :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name)
+    :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
     :type baseurl: str, optional
-    :param username: OpenReview username
-    :type username: str, optional
+    :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
+    :type username: str, optional. If none is provided, it defaults to the environment variable `OPENREVIEW_PASSWORD`
     :param password: OpenReview password
     :type password: str, optional
-    :param token: Session token
+    :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None):
@@ -223,7 +223,7 @@ class Client(object):
 
     def get_note(self, id):
         """
-        Get a single note by id if available
+        Get a single Note by id if available
 
         :param id: id of the note
         :type id: str
@@ -238,12 +238,12 @@ class Client(object):
 
     def get_tag(self, id):
         """
-        Get a single tag by id if available
+        Get a single Tag by id if available
 
-        :param id: id of the tag
+        :param id: id of the Tag
         :type id: str
 
-        :return: Tag with the tag information
+        :return: Tag with the Tag information
         :rtype: Tag
         """
         response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
@@ -253,7 +253,7 @@ class Client(object):
 
     def get_profile(self, email_or_id = None):
         """
-        Get a single profile (a note) by id, if available
+        Get a single Profile by id, if available
 
         :param email_or_id: e-mail or id of the profile
         :type email_or_id: str, optional
@@ -427,7 +427,7 @@ class Client(object):
 
     def post_profile(self, profile):
         """
-        Updates the profile
+        Updates a Profile
 
         :param profile: Profile object
         :type profile: Profile
