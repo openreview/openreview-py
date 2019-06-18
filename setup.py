@@ -17,7 +17,8 @@ setup(name='openreview-py',
           'requests>=2.18.4',
           'future',
           'nbsphinx',
-          'tqdm'
+          'tqdm',
+          'pylatexenc'
       ],
       extras_require={
           'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
