@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+from deprecated.sphinx import deprecated
 import sys
 if sys.version_info[0] < 3:
     string_types = [str, unicode]
@@ -18,6 +19,17 @@ from tqdm import tqdm
 super_user_id = 'OpenReview.net'
 
 def get_profile(client, value):
+    """
+    Get a single profile (a note) by id, if available
+
+    :param client: User that will retrieve the profile
+    :type client: Client
+    :param value: e-mail or id of the profile
+    :type value: str
+
+    :return: Profile with that matches the value passed as parameter
+    :rtype: Profile
+    """
     profile = None
     try:
         profile = client.get_profile(value)
@@ -28,6 +40,17 @@ def get_profile(client, value):
     return profile
 
 def get_group(client, id):
+    """
+    Get a single Group by id if available
+
+    :param client: User that will retrieve the group
+    :type client: Client
+    :param id: id of the group
+    :type id: str
+
+    :return: Group that matches the passed id
+    :rtype: Group
+    """
     group = None
     try:
         group = client.get_group(id = id)
@@ -40,15 +63,25 @@ def get_group(client, id):
 
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
 
-    '''
-    Given email, first name, last name, and middle name (optional), creates and returns
-    a user profile.
+    """
+    Given email, first name, last name, and middle name (optional), creates a new profile.
 
-    If a profile with the same name exists, and allow_duplicates is False, an exception is raised.
+    :param client: User that will create the Profile
+    :type client: Client
+    :param email: Preferred e-mail in the Profile
+    :type email: str
+    :param first: First name of the user
+    :type first: str
+    :param last: Last name of the user
+    :type last: str
+    :param middle: Middle name of the user
+    :type middle: str, optional
+    :param allow_duplicates: If a profile with the same name exists, and allow_duplicates is False, an exception is raised. If a profile with the same name exists and allow_duplicates is True, a profile is created with the next largest number (e.g. if ~Michael_Spector1 exists, ~Michael_Spector2 will be created)
+    :type allow_duplicates: bool, optional
 
-    If a profile with the same name exists and allow_duplicates is True, a profile is created with
-    the next largest number (e.g. if ~Michael_Spector1 exists, ~Michael_Spector2 will be created)
-    '''
+    :return: The created Profile
+    :rtype: Profile
+    """
 
     profile = get_profile(client, email)
 
@@ -113,12 +146,15 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
 def get_preferred_name(profile):
-    '''
-    Returns a string representing the user's preferred name, if available,
-    or the first listed name if not available.
-
+    """
     Accepts openreview.Profile object
-    '''
+
+    :param profile: Profile from which the preferred name will be retrieved
+    :type profile: Profile
+
+    :return: User's preferred name, if available, or the first listed name if not available.
+    :rtype: str
+    """
 
     names = profile.content['names']
     preferred_names = [n for n in names if n.get('preferred', False)]
@@ -138,14 +174,24 @@ def get_preferred_name(profile):
     return ' '.join(name_parts)
 
 def build_groups(conference_group_id, default_params=None):
-    '''
+    """
     Given a group ID, returns a list of empty groups that correspond to the given group's subpaths
 
     (e.g. Test.com, Test.com/TestConference, Test.com/TestConference/2018)
 
+    :param conference_group_id: Conference Group id (e.g. Test.com/TestConference/2018)
+    :type conference_group_id: str
+    :param default_params: Dictionary that contains the values of the instance variables of each of the Groups
+    :type default_params: dict, optional
+
+    :return: List of the created Groups sorted from general to particular
+    :rtype: list[Group]
+
+    Example:
+
     >>> [group.id for group in build_groups('ICML.cc/2019/Conference')]
     [u'ICML.cc', u'ICML.cc/2019', u'ICML.cc/2019/Conference']
-    '''
+    """
 
     path_components = conference_group_id.split('/')
     paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
@@ -164,12 +210,21 @@ def build_groups(conference_group_id, default_params=None):
 
     return sorted(groups.values(), key=lambda x: len(x.id))
 
+@deprecated(version='0.9.20')
 def post_group_parents(client, group, overwrite_parents=False):
-    '''
-    Helper function for posting groups created by build_groups function.
+    """
+    This function calls :func:`tools.build_groups` using the id of the group parameter. Each group generated from group.id is posted by calling :meth:`openreview.Client.post_group`
 
-    Recommended that this function be deprecated.
-    '''
+    :param client: User that will post the Groups
+    :type client: Client
+    :param group: Group from which the id will be extracted to create empty Groups
+    :type group: Group
+    :param overwrite_parents:
+    :type overwrite_parents: bool, optional
+
+    :return: List of posted Groups
+    :rtype: list[Group]
+    """
     groups = build_groups(group.id)
 
     posted_groups = []
@@ -185,17 +240,29 @@ def post_group_parents(client, group, overwrite_parents=False):
     return posted_groups
 
 def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
-    '''
+    """
     Generates a bibtex field for a given Note.
 
-    The "accepted" argument is used to indicate whether or not the paper was ultimately accepted.
-    (OpenReview generates bibtex fields for rejected papers)
+    :param note: Note from which the bibtex is generated
+    :type note: Note
+    :param venue_fullname: Full name of the venue to be placed in the book title field
+    :type venue_fullname: str
+    :param year: Note year
+    :type year: str
+    :param url_forum: Forum id, if none is provided, it is obtained from the note parameter: note.forum
+    :type url_forum: str, optional
+    :param accepted: Used to indicate whether or not the paper was ultimately accepted
+    :type accepted: bool, optional
+    :param anonymous: Used to indicate whether or not the paper's authors should be revealed
+    :type anonymous: bool, optional
+    :param names_reversed: If true, it indicates that the last name is written before the first name
+    :type names_reversed: bool, optional
+    :param baseurl: Base url where the bibtex is from. Default https://openreview.net
+    :type baseurl: str, optional
 
-    The "anonymous" argument is used to indicate whether or not the paper's authors should be
-    revealed.
-
-    Warning: this function is a work-in-progress.
-    '''
+    :return: Note bibtex
+    :rtype: str
+    """
 
     def capitalize_title(title):
         capitalization_regex = re.compile('[A-Z]{2,}')
@@ -259,12 +326,20 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
     return '\n'.join(bibtex)
 
 def subdomains(domain):
-    '''
+    """
     Given an email address, returns a list with the domains and subdomains.
+
+    :param domain: e-mail address or domain of the e-mail address
+    :type domain: str
+
+    :return: List of domains and subdomains
+    :rtype: list[str]
+
+    Example:
 
     >>> subdomains('johnsmith@iesl.cs.umass.edu')
     [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
-    '''
+    """
 
     if '@' in domain:
         full_domain = domain.split('@')[1]
@@ -276,18 +351,21 @@ def subdomains(domain):
     return valid_domains
 
 def profile_conflicts(profile):
-    '''
-    Given a profile, returns a tuple containing two sets: domain_conflicts and
-    relation_conflicts.
+    """
+    Given a profile, returns a tuple containing two sets: domain_conflicts and relation_conflicts.
 
-    domain_conflicts is a set of domains/subdomains that may have a conflict of
-    interest with the given profile.
+    domain_conflicts is a set of domains/subdomains that may have a conflict of interest with the given profile.
 
-    relation_conflicts is a set of group IDs (email addresses or profiles) that
-    may have a conflict of interest with the given profile.
+    relation_conflicts is a set of group IDs (email addresses or profiles) that may have a conflict of interest with the given profile.
+
+    :param profile: Profile for which conflict of interests will be generated
+    :type profile: Profile
+
+    :return: Tuple containing two sets: domain_conflicts and relation_conflicts
+    :rtype: tuple(set(str), set(str))
 
     .. todo:: Update this function after the migration to non-Note Profile objects.
-    '''
+    """
     domain_conflicts = set()
     relation_conflicts = set()
 
@@ -309,12 +387,17 @@ def profile_conflicts(profile):
     return (domain_conflicts, relation_conflicts)
 
 def get_profile_conflicts(client, reviewer_to_add):
-    '''
-    Helper function for profile_conflicts function. Given a reviewer ID or email
-    address, requests the server for that reviewer's profile, and checks it for
-    conflicts using profile_conflicts.
+    """
+    Helper function for :func:`tools.profile_conflicts` function. Given a reviewer ID or email address, requests the server for that reviewer's profile using :meth:`openreview.Client.get_profile`, and checks it for conflicts using :func:`tools.profile_conflicts`.
 
-    '''
+    :param client: Client that will be used to obtain the reviewer profile
+    :type client: Client
+    :param reviewer_to_add: Group id or email address of the reviewer
+    :type reviewer_to_add: str
+
+    :return: Tuple containing two sets: user_domain_conflicts and user_relation_conflicts
+    :rtype: tuple(set(str), set(str))
+    """
     try:
         profile = client.get_profile(reviewer_to_add)
         user_domain_conflicts, user_relation_conflicts = profile_conflicts(profile)
@@ -325,21 +408,26 @@ def get_profile_conflicts(client, reviewer_to_add):
     return user_domain_conflicts, user_relation_conflicts
 
 def get_paper_conflicts(client, paper):
-    '''
-    Given a Note object representing a submitted paper, returns a tuple containing
-    two sets: domain_conflicts and relation_conflicts.
+    """
+    Given a Note object representing a submitted paper, returns a tuple containing two sets: domain_conflicts and relation_conflicts. The conflicts are obtained from authors of the paper.
 
-    domain_conflicts is a set of domains/subdomains that may have a conflict of
-    interest with the given paper.
+    domain_conflicts is a set of domains/subdomains that may have a conflict of interest with the given paper.
 
-    relation_conflicts is a set of group IDs (email addresses or profiles) that
-    may have a conflict of interest with the given paper.
+    relation_conflicts is a set of group IDs (email addresses or profiles) that may have a conflict of interest with the given paper.
 
     Automatically ignores domain conflicts with "gmail.com".
 
+    :param client: Client that will be used to obtain the paper
+    :type client: Client
+    :param paper: Note representing a submitted paper
+    :type paper: Note
+
+    :return: Tuple containing two sets: user_domain_conflicts and user_relation_conflicts
+    :rtype: tuple(set(str), set(str))
+
     .. todo:: Update this function after the migration to non-Note Profile objects.
 
-    '''
+    """
     authorids = paper.content['authorids']
     domain_conflicts = set()
     relation_conflicts = set()
@@ -361,13 +449,23 @@ def get_paper_conflicts(client, paper):
     return (domain_conflicts, relation_conflicts)
 
 def get_paperhash(first_author, title):
-    '''
+    """
     Returns the paperhash of a paper, given the title and first author.
+
+    :param first_author: First author that appears on the paper
+    :type first_author: str
+    :param title: Title of the paper
+    :type title: str
+
+    :return: paperhash, see example
+    :rtype: str
+
+    Example:
 
     >>> get_paperhash('David Soergel', 'Open Scholarship and Peer Review: a Time for Experimentation')
     u'soergel|open_scholarship_and_peer_review_a_time_for_experimentation'
 
-    '''
+    """
 
     title = title.strip()
     strip_punctuation = '[^A-zÀ-ÿ\d\s]'
@@ -381,13 +479,17 @@ def get_paperhash(first_author, title):
     return (first_author + '|' + title).lower()
 
 def replace_members_with_ids(client, group):
-    '''
-    Given a Group object, iterates through the Group's members and, for any member
-    represented by an email address, attempts to find a profile associated with
-    that email address. If a profile is found, replaces the email with the profile ID.
+    """
+    Given a Group object, iterates through the Group's members and, for any member represented by an email address, attempts to find a profile associated with that email address. If a profile is found, replaces the email with the profile id.
 
-    Returns None.
-    '''
+    :param client: Client used to get the Profiles and to post the new Group
+    :type client: Client
+    :param group: Group for which the profiles will be updated
+    :type group: Group
+
+    :return: Group with the emails replaced by Profile ids
+    :rtype: Group
+    """
     ids = []
     emails = []
     for member in group.members:
@@ -407,6 +509,24 @@ def replace_members_with_ids(client, group):
     return client.post_group(group)
 
 class iterget:
+    """
+    This class can create an iterator from a getter method that returns a list. Below all the iterators that can be created from a getter method:
+
+    :meth:`openreview.Client.get_tags` --> :func:`tools.iterget_tags`
+
+    :meth:`openreview.Client.get_notes` --> :func:`tools.iterget_notes`
+
+    :meth:`openreview.Client.get_references` --> :func:`tools.iterget_references`
+
+    :meth:`openreview.Client.get_invitations` --> :func:`tools.iterget_invitations`
+
+    :meth:`openreview.Client.get_groups` --> :func:`tools.iterget_groups`
+
+    :param get_function: Any of the aforementioned methods
+    :type get_function: function
+    :param params: Dictionary containing parameters for the corresponding method. Refer to the passed method documentation for details
+    :type params: dict
+    """
     def __init__(self, get_function, **params):
         self.offset = 0
 
@@ -450,16 +570,25 @@ class iterget:
     next = __next__
 
 def iterget_tags(client, id = None, invitation = None, forum = None):
-    '''
-    Returns an iterator over Tags, filtered by the provided parameters, ignoring API limit.
+    """
+    Returns an iterator over Tags ignoring API limit.
 
-    Example: iterget_tags(client, invitation='MyConference.org/-/Bid_Tags')
+    Example: 
+    
+    >>> iterget_tags(client, invitation='MyConference.org/-/Bid_Tags')
 
-    :arg id: a Tag ID. If provided, returns Tags whose ID matches the given ID.
-    :arg forum: a Note ID. If provided, returns Tags whose forum matches the given ID.
-    :arg invitation: an Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+    :param client: Client used to get the Tags
+    :type client: Client
+    :param id: a Tag ID. If provided, returns Tags whose ID matches the given ID.
+    :type id: str, optional
+    :param forum: a Note ID. If provided, returns Tags whose forum matches the given ID.
+    :type forum: str, optional
+    :param invitation: an Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+    :type invitation: str, optional
 
-    '''
+    :return: Iterator over Tags filtered by the provided parameters
+    :rtype: iterget
+    """
     params = {}
 
     if id != None:
@@ -486,29 +615,41 @@ def iterget_notes(client,
         content = None,
         details = None,
         sort = None):
-    '''
-    Returns an iterator over Notes, filtered by the provided parameters, ignoring API limit.
+    """
+    Returns an iterator over Notes filtered by the provided parameters ignoring API limit.
 
-    :arg client: an openreview.Client object.
-    :arg id: a Note ID. If provided, returns Notes whose ID matches the given ID.
-    :arg paperhash: a "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
-        (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
-        identify the Note)
-    :arg forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
-    :arg invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
-    :arg replyto: a Note ID. If provided, returns Notes whose replyto field matches the given ID.
-    :arg tauthor: a Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID,
-        or is a transitive member of the Group represented by the given ID.
-    :arg signature: a Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
-    :arg writer: a Group ID. If provided, returns Notes whose writers field contains the given Group ID.
-    :arg trash: a Boolean. If True, includes Notes that have been deleted (i.e. the ddate field is less than the
-        current date)
-    :arg number: an integer. If present, includes Notes whose number field equals the given integer.
-    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns Notes
-        whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
-    :arg content: a dictionary. If present, includes Notes whose each key is present in the content field and it is equals the given value.
-    :arg details: TODO: What is a valid value for this field?
-    '''
+    :param client: Client used to get the Notes
+    :type client: Client
+    :param id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+    :type id: str, optional
+    :param paperhash: a "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument. (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely identify the Note)
+    :type paperhash: str, optional
+    :param forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
+    :type forum: str, optional
+    :param invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+    :type invitation: str, optional
+    :param replyto: a Note ID. If provided, returns Notes whose replyto field matches the given ID.
+    :type replyto: str, optional
+    :param tauthor: a Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
+    :type tauthor: str, optional
+    :param signature: a Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+    :type signature: str, optional
+    :param writer: a Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+    :type writer: str, optional
+    :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the current date)
+    :type trash: bool, optional
+    :param number: If present, includes Notes whose number field equals the given integer.
+    :type number: int, optional
+    :param mintcdate: Represents an Epoch time timestamp in milliseconds. If provided, returns Notes whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    :type mintcdate: int, optional
+    :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
+    :type content: dict, optional
+    :param details: TODO: What is a valid value for this field?
+    :type details: str, optional
+
+    :return: Iterator over Notes filtered by the provided parameters
+    :rtype: iterget
+    """
     params = {}
     if id != None:
         params['id'] = id
@@ -541,15 +682,21 @@ def iterget_notes(client,
     return iterget(client.get_notes, **params)
 
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
-    '''
-    Returns an iterator over references, filtered by the provided parameters, ignoring API limit.
+    """
+    Returns an iterator over references filtered by the provided parameters ignoring API limit.
 
-    :arg client: an openreview.Client object.
-    :arg referent: a Note ID. If provided, returns references whose "referent" value is this Note ID.
-    :arg invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
-    :arg mintcdate: an integer representing an Epoch time timestamp, in milliseconds. If provided, returns references
-        whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
-    '''
+    :param client: Client used to get the references
+    :type client: Client
+    :param referent: a Note ID. If provided, returns references whose "referent" value is this Note ID.
+    :type referent: str, optional
+    :param invitation: an Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
+    :type invitation: str, optional
+    :param mintcdate: Represents an Epoch time timestamp in milliseconds. If provided, returns references whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+    :type mintcdate: int, optional
+
+    :return: Iterator over references filtered by the provided parameters
+    :rtype: iterget
+    """
 
     params = {}
     if referent != None:
@@ -562,14 +709,41 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
     return iterget(client.get_references, **params)
 
 def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None):
-    '''
+    """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
-    :arg client: an openreview.Client object.
-    :arg id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
-    :arg invitee: a string. Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
-    :arg regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
-    '''
+    :param client: Client used to get the Invitations
+    :type client: Client
+    :param id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
+    :type id: str, optional
+    :param invitee: Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
+    :type invitee: str, optional
+    :param regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
+    :type regex: str, optional
+    :param tags: If provided, returns Invitations whose Tags field contains the given Tag IDs.
+    :type tags: list[str], optional
+    :param minduedate: Represents an Epoch time timestamp in milliseconds. If provided, returns Invitations whose duedate is at least equal to the value of minduedate.
+    :type minduedate: int, optional
+    :param duedate: Represents an Epoch time timestamp in milliseconds. If provided, returns Invitations whose duedate field matches the given duedate.
+    :type duedate: int, optional
+    :param pastdue: 
+    :type pastdue: bool, optional
+    :param replytoNote: a Note ID. If provided, returns Invitations whose replytoNote field contains the given Note ID.
+    :type replytoNote: str, optional
+    :param replyForum: a forum ID. If provided, returns Invitations whose forum field contains the given forum ID.
+    :type replyForum: str, optional
+    :param signature: a Group ID. If provided, returns Invitations whose signature field contains the given Group ID.
+    :type signature: str, optional
+    :param note: a Note ID. If provided, returns Invitations whose note field contains the given Note ID.
+    :type note: str, optional
+    :param replyto: a Note ID. If provided, returns Invitations whose replyto field matches the given Note ID.
+    :type replyto: str, optional
+    :param details:
+    :type details: str, optional
+
+    :return: Iterator over Invitations filtered by the provided parameters
+    :rtype: iterget
+    """
 
     params = {}
     if id != None:
@@ -602,14 +776,25 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     return iterget(client.get_invitations, **params)
 
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
-    '''
-    Returns an iterator over groups, filtered by the provided parameters, ignoring API limit.
+    """
+    Returns an iterator over groups filtered by the provided parameters ignoring API limit.
 
-    :arg client: an openreview.Client object.
-    :arg id: a Note ID. If provided, returns groups whose "id" value is this Group ID.
-    :arg regex: a regular expression string to match Group IDs. If provided, returns groups whose "id" value matches the given regex.
-    :arg member: a string. Essentially, members field contains Group Ids that are members of this Group object. If provided, returns groups whose "members" field contains the given string.
-    '''
+    :param client: Client used to get the Groups
+    :type client: Client
+    :param id: a Note ID. If provided, returns groups whose "id" value is this Group ID.
+    :type id: str, optional
+    :param regex: a regular expression string to match Group IDs. If provided, returns groups whose "id" value matches the given regex.
+    :type regex: str, optional
+    :param member: Essentially, members field contains Group Ids that are members of this Group object. If provided, returns groups whose "members" field contains the given string.
+    :type member: str, optional
+    :param host:
+    :type host: str, optional
+    :param signatory: a Group ID. If provided, returns Groups whose signatory field contains the given Group ID.
+    :type signatory: str, optional
+
+    :return: Iterator over Groups filtered by the provided parameters
+    :rtype: iterget
+    """
 
     params = {}
     if id != None:
@@ -625,33 +810,39 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
 
     return iterget(client.get_groups, **params)
 
-    '''
+def parallel_exec(values, func, processes = None):
+    """
     Returns a list of results given for each func value execution. It shows a progress bar to know the progress of the task.
 
-    :arg values: a list of values.
-    :arg func: a function to execute for each value of the list.
-    :arg processes: number of procecces to use in the multiprocessing tool, default value is the number of CPUs available.
-    '''
+    :param values: a list of values.
+    :type values: list
+    :param func: a function to execute for each value of the list.
+    :type func: function
+    :param processes: number of procecces to use in the multiprocessing tool, default value is the number of CPUs available.
+    :type processes: int
 
-def parallel_exec(values, func, processes = None):
+    :return: A list of results given for each func value execution
+    :rtype: list
+    """
     pool = Pool(processes = processes)
     results = pool.map(func, tqdm(values))
     pool.close()
     return results
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
-    '''
-    |  "individual groups" are groups with a single member;
-    |  e.g. conference.org/Paper1/AnonReviewer1
+    """
+    Gets an individual group's suffix (e.g. AnonReviewer1). The suffix will be the next available empty group or will be the suffix of the largest indexed group +1
 
-    :arg unassigned_individual_groups: a list of individual groups with no members
-    :arg individual_groups: the full list of individual groups, empty or not
-    :arg individual_label: the "label" of the group: e.g. "AnonReviewer"
+    :param unassigned_individual_groups: a list of individual groups with no members
+    :type unassigned_individual_groups: list[Group]
+    :param individual_groups: the full list of individual groups (groups with a single member: e.g. conference.org/Paper1/AnonReviewer1), empty or not
+    :type individual_groups: list[Group]
+    :param individual_label: the "label" of the group: e.g. "AnonReviewer"
+    :type individual_label: str
 
-    :return: an individual group's suffix (e.g. AnonReviewer1)\n
-        The suffix will be the next available empty group,\n
-        or will be the suffix of the largest indexed group +1
-    '''
+    :return: An individual group's suffix (e.g. AnonReviewer1)
+    :rtype: str
+    """
 
     if len(unassigned_individual_groups) > 0:
         anonreviewer_group = unassigned_individual_groups[0]
@@ -672,13 +863,25 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
 
 def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
 
-    '''
-    This is only intended to be used as a local helper function
+    """
+    This is only intended to be used as a local helper function for :func:`tools.add_assignment`
 
-    :arg paper_number: the number of the paper to assign
-    :arg conference: the ID of the conference being assigned
-    :arg group_params: optional parameter that overrides the default
-    '''
+    :param client: Client used to get the Groups
+    :type client: Client
+    :param paper_number: the number of the paper to assign
+    :type paper_number: int
+    :param conference: the ID of the conference being assigned
+    :type conference: str
+    :param group_params: optional parameter that overrides the default
+    :type group_params: dict
+    :param parent_label: String assgined to identify the parent Group
+    :type parent_label: str
+    :param individual_label: String assigned to identify a individual Group
+    :type individual_label: str
+
+    :return: List containing the parent Group, list of individual groups, and list of unassigned individual groups
+    :rtype: list[Group, list[Group], list[Group]]
+    """
 
     # get the parent group if it already exists, and create it if it doesn't.
     try:
@@ -703,7 +906,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
         else:
             raise e
 
-    '''
+    """
     get the existing individual groups, while making sure that the parent group isn't included.
     This can happen if the parent group and the individual groups are named similarly.
 
@@ -713,7 +916,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
 
         Then the call for individual groups by wildcard will pick up all the
         individual groups AND the parent group.
-    '''
+    """
 
     individual_groups = client.get_groups(regex = '{}/Paper{}/{}[0-9]+$'.format(conference, paper_number, individual_label))
     individual_groups = [g for g in individual_groups if g.id != parent_group.id]
@@ -729,29 +932,45 @@ def add_assignment(client, paper_number, conference, reviewer,
                     individual_label = 'AnonReviewer',
                     use_profile = True):
 
-    '''
-    |  Assigns a reviewer to a paper.
-    |  Also adds the given user to the parent and individual groups defined by the paper number, conference, and labels
-    |  "individual groups" are groups with a single member;
-    |      e.g. conference.org/Paper1/AnonReviewer1
-    |  "parent group" is the group that contains the individual groups;
-    |      e.g. conference.org/Paper1/Reviewers
+    """
+    Assigns a reviewer to a paper.
+    Also adds the given user to the parent and individual groups defined by the paper number, conference, and labels
+    "individual groups" are groups with a single member;
+        e.g. conference.org/Paper1/AnonReviewer1
+    "parent group" is the group that contains the individual groups;
+        e.g. conference.org/Paper1/Reviewers
 
-    :arg paper_number: the number of the paper to assign
-    :arg conference: the ID of the conference being assigned
-    :arg reviewer: may be an email address or a tilde ID;
-    :arg parent_group_params: optional parameter that overrides the default
-    :arg individual_group_params: optional parameter that overrides the default
-    '''
+    :param client: Client used to add the assignment
+    :type client: Client
+    :param paper_number: the number of the paper to assign
+    :type paper_number: int
+    :param conference: the ID of the conference being assigned
+    :type conference: str
+    :param reviewer: may be an email address or a tilde ID that wants to be assigned to the paper
+    :type reviewer: str
+    :param parent_group_params: optional parameter that overrides the default
+    :type parent_group_params: dict, optional
+    :param individual_group_params: optional parameter that overrides the default
+    :type individual_group_params: dict, optional
+    :param parent_label: String used to identify the parent Group
+    :type parent_label: str, optional
+    :param individual_label: String assigned to identify an individual Group
+    :type individual_label: str, optional
+    :param use_profile: If true, retrieves the profile of the reviewer, otherwise, uses the passed reviewer
+    :type use_profile: bool, optional
+
+    :return: Tuple containing the passed reviewer in the zeroth position and a list of Group ids in the first position
+    :rtype: tuple(str, list(str))
+    """
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
     parent_group = result[0]
     individual_groups = result[1]
     unassigned_individual_groups = result[2]
 
-    '''
+    """
     Adds the given user to the parent group, and to the next empty individual group.
     Prints the results to the console.
-    '''
+    """
     if use_profile:
         profile = get_profile(client, reviewer)
         user = profile.id if profile else reviewer
@@ -817,7 +1036,7 @@ def remove_assignment(client, paper_number, conference, reviewer,
     parent_label = 'Reviewers',
     individual_label = 'AnonReviewer'):
 
-    '''
+    """
     |  Un-assigns a reviewer from a paper.
     |  Removes the given user from the parent group, and any assigned individual groups.
 
@@ -826,12 +1045,26 @@ def remove_assignment(client, paper_number, conference, reviewer,
     |  "parent group" is the group that contains the individual groups;
     |      e.g. conference.org/Paper1/Reviewers
 
-    :arg paper_number: the number of the paper to assign
-    :arg conference: the ID of the conference being assigned
-    :arg reviewer: same as @reviewer_to_add, but removes the user
-    :arg parent_group_params: optional parameter that overrides the default
-    :arg individual_group_params: optional parameter that overrides the default
-    '''
+    :param client: Client used to remove the assignment
+    :type client: Client
+    :param paper_number: the number of the paper to assign
+    :type paper_number: int
+    :param conference: the ID of the conference being assigned
+    :type conference: str
+    :param reviewer: same as @reviewer_to_add, but removes the user
+    :type reviewer: str
+    :param parent_group_params: optional parameter that overrides the default
+    :type parent_group_params: dict, optional
+    :param parent_label: String used to identify the parent Group
+    :type parent_label: str, optional
+    :param individual_label: String assigned to identify an individual Group
+    :type individual_label: str, optional
+    :param use_profile: If true, retrieves the profile of the reviewer, otherwise, uses the passed reviewer
+    :type use_profile: bool, optional
+
+    :return: Tuple containing the passed reviewer in the zeroth position and a list of Group ids in the first position
+    :rtype: tuple(str, list(str))
+    """
 
     result = get_reviewer_groups(client, paper_number, conference, parent_group_params, parent_label, individual_label)
     parent_group = result[0]
@@ -840,10 +1073,10 @@ def remove_assignment(client, paper_number, conference, reviewer,
     profile = get_profile(client, reviewer)
     user = profile.id if profile else reviewer
 
-    '''
+    """
     Removes the given user from the parent group,
         and any assigned individual groups.
-    '''
+    """
 
     #TODO: Need to refactor this function's code
 
@@ -865,7 +1098,7 @@ def remove_assignment(client, paper_number, conference, reviewer,
             client.remove_members_from_group(individual_group, user_entity)
     return (user, list(affected_groups))
 
-
+@deprecated(version='0.9.5')
 def assign(client, paper_number, conference,
     parent_group_params = {},
     individual_group_params = {},
@@ -875,8 +1108,7 @@ def assign(client, paper_number, conference,
     individual_label = 'AnonReviewer',
     use_profile = True):
 
-    '''
-    DEPRECATED as of openreview-py revision 0.9.5
+    """
 
     Either assigns or unassigns a reviewer to a paper.
     TODO: Is this function really necessary?
@@ -886,17 +1118,34 @@ def assign(client, paper_number, conference,
     "parent group" is the group that contains the individual groups;
     e.g. conference.org/Paper1/Reviewers
 
-    :arg paper_number: the number of the paper to assign
-    :arg conference: the ID of the conference being assigned
-    :arg parent_group_params: optional parameter that overrides the default
-    :arg individual_group_params: optional parameter that overrides the default
-    :arg reviewer_to_add: may be an email address or a tilde ID; adds the given user to the parent and individual groups defined by the paper number, conference, and labels
-    :arg reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    :param client: Client used to assign or unassign a reviewer to a paper
+    :type client: Client
+    :param paper_number: the number of the paper to assign
+    :type paper_number: int
+    :param conference: the ID of the conference being assigned
+    :type conference: str
+    :param parent_group_params: optional parameter that overrides the default
+    :type parent_group_params: dict, optional
+    :param individual_group_params: optional parameter that overrides the default
+    :type individual_group_params: dict, optional
+    :param reviewer_to_add: may be an email address or a tilde ID; adds the given user to the parent and individual groups defined by the paper number, conference, and labels
+    :type reviewer_to_add: str, optional
+    :param reviewer_to_remove: same as @reviewer_to_add, but removes the user
+    :type reviewer_to_remove: str, optional
+    :param parent_label: String used to identify the parent Group
+    :type parent_label: str, optional
+    :param individual_label: String assigned to identify an individual Group
+    :type individual_label: str, optional
+    :param use_profile: If true, retrieves the profile of the reviewer, otherwise, uses the passed reviewer
+    :type use_profile: bool, optional
+
+    :return: Tuple containing the passed reviewer in the zeroth position and a list of Group ids in the first position
+    :rtype: tuple(str, list(str))
 
     It's important to remove any users first, so that we can do direct replacement of one user with another.
 
     For example: passing in a reviewer to remove AND a reviewer to add should replace the first user with the second.
-    '''
+    """
     changed_groups = []
     user = ""
 
@@ -915,21 +1164,42 @@ def assign(client, paper_number, conference,
     return (user, changed_groups)
 
 def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
-    '''
+    """
     Given year, month, day, and (optionally) hour, minute, second in GMT time zone:
-    returns the number of milliseconds between this day and Epoch Time (Jan 1, 1970).
+    returns the number of milliseconds between this date and Epoch Time (Jan 1, 1970).
+
+    :param year: year >= 1970
+    :type year: int
+    :param month: value from 1 to 12
+    :type month: int
+    :param day: value from 1 to 28, 29, 30, or 31; depending on the month value.
+    :type day: int
+    :param hour: value from 0 to 23
+    :type hour: int, optional
+    :param minute: value from 0 to 59
+    :type minute: int, optional
+    :param second: value from 0 to 59
+    :type second: int, optional
+
+    :return: Number of milliseconds between the passed date and Epoch Time (Jan 1, 1970)
+    :rtype: int
 
     >>> timestamp_GMT(1990, 12, 20, hour=12, minute=30, second=24)
     661696224000
 
-    '''
+    """
     return datetime_millis(datetime.datetime(year, month, day, hour, minute, second))
 
 def datetime_millis(dt):
-    '''
+    """
     Converts a datetime to milliseconds.
 
-    '''
+    :param dt: A date that want to be converted to milliseconds
+    :type dt: datetime
+
+    :return: The time from Jan 1, 1970 to the passed date in milliseconds
+    :rtype: int
+    """
     if isinstance(dt, datetime.datetime):
         epoch = datetime.datetime.utcfromtimestamp(0)
         return int((dt - epoch).total_seconds() * 1000)
@@ -943,15 +1213,27 @@ def recruit_reviewer(client, user, first,
     recruit_message_subj,
     reviewers_invited_id,
     verbose=True):
-    '''
+    """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
 
-    :arg hash_seed: a random number for seeding the hash.
-    :arg recruit_message: a formattable string containing the following string variables: (name, accept_url, decline_url)
-    :arg recruit_message_subj: subject line for the recruitment email
-    :arg reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed.
-    '''
+    :param client: Client used to send the e-mail
+    :type client: Client
+    :param user: User to whom the e-mail will be sent
+    :type user: str
+    :param first: First name of the person to whom e-mail will be sent
+    :type first: str
+    :param hash_seed: a random number for seeding the hash.
+    :type hash_seed: int
+    :param recruit_message: a formattable string containing the following string variables: (name, accept_url, decline_url)
+    :type recruit_message: str
+    :param recruit_message_subj: subject line for the recruitment email
+    :type recruit_message_subj: str
+    :param reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed. str
+    :type reviewers_invited_id: str
+    :param verbose: Shows response of :meth:`openreview.Client.send_mail` and shows the body of the message sent
+    :type verbose: bool, optional
+    """
 
     # the HMAC.new() function only accepts bytestrings, not unicode.
     # In Python 3, all strings are treated as unicode by default, so we must call encode on
@@ -986,10 +1268,19 @@ def recruit_reviewer(client, user, first,
         print(personalized_message)
 
 def post_submission_groups(client, conference_id, submission_invite, chairs):
-    '''
+    """
     Create paper group, authors group, reviewers group, review non-readers group
     for all notes returned by the submission_invite.
-    '''
+
+    :param client: client that will post the Groups
+    :type client: Client
+    :param conference_id: Conference which the Groups belong to
+    :type conference_id: str
+    :param submission_invite: Invitation id to get all the Notes that are paper submissions
+    :type submission_invite: str
+    :param chairs: Chairs of the conference
+    :type chairs: str
+    """
     submissions = client.get_notes(invitation=submission_invite)
     for paper in submissions:
         paper_num = str(paper.number)
@@ -1038,17 +1329,22 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
             signatories=[]))
 
 def get_submission_invitations(client, open_only=False):
-    '''
+    """
     Returns a list of invitation ids visible to the client according to the value of parameter "open_only".
 
-    :arg client: Object of :class:`~openreview.Client` class
-    :arg open_only: Default value is False. This is a boolean param with value True implying that the results would be invitations having a future due date.
+    :param client: Client used to get the Invitations
+    :type client: Client
+    :param open_only: If True, the results will be invitations having a future due date.
+    :type open_only: bool, optional
+
+    :return: List of Invitation ids
+    :rtype: list[str]
 
     Example Usage:
 
     >>> get_submission_invitations(c,True)
     [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
-    '''
+    """
 
     #Calculate the epoch for current timestamp
     now = int(time.time()*1000)
@@ -1061,18 +1357,21 @@ def get_submission_invitations(client, open_only=False):
     return invitation_ids
 
 def get_all_venues(client):
-    '''
+    """
     Returns a list of all the venues
 
-    :arg client: Object of :class:`~openreview.Client` class
-    '''
+    :param client: Client used to get all the venues
+    :type client: Client
+
+    :return: List of all the venues represented by a their corresponding Group id
+    :rtype: list[str]
+    """
     return client.get_group("host").members
 
 def _fill_str(template_str, paper):
-    '''
+    """
     Fills a "template string" with the corresponding values from an openreview.Note object.
-
-    '''
+    """
     paper_params = paper.to_json()
     pattern = '|'.join(['<{}>'.format(field) for field, value in paper_params.items()])
     matches = re.findall(pattern, template_str)
@@ -1082,10 +1381,10 @@ def _fill_str(template_str, paper):
     return template_str
 
 def _fill_str_or_list(template_str_or_list, paper):
-    '''
+    """
     Fills a "template string", or a list of template strings, with the corresponding values
     from an openreview.Note object.
-    '''
+    """
     if type(template_str_or_list) == list:
         return [_fill_str(v, paper) for v in template_str_or_list]
     elif any([type(template_str_or_list) == t for t in string_types]):
@@ -1096,22 +1395,25 @@ def _fill_str_or_list(template_str_or_list, paper):
         raise ValueError('first argument must be list or string: ', template_str_or_list)
 
 def fill_template(template, paper):
-    '''
-    Fills an openreview "template" with the corresponding values from an openreview.Note object.
+    """
+    Fills an openreview "template" with the corresponding values from an :class:`~openreview.Note` object.
     Templates are dicts that match the schema of any OpenReview object class .
 
     Example:
-    group_template = {
+
+    >>> group_template = {
         'id': 'Conf.org/2019/Paper<number>',
         'members': ['Conf.org/2019/Paper<number>/Reviewers']
     }
 
-    :arg template: a dict that matches the schema of an OpenReview :class:`~openreview.Group`
-    or :class:`~openreview.Invitation` with any number of wildcards in the form of "<attr>",
-    where "attr" is an attribute in
-    the :class:`~openreview.Note` class.
-    :arg paper: an instance of :class:`~openreview.Note` class, to fill the template values.
-    '''
+    :param template: a dict that matches the schema of an OpenReview :class:`~openreview.Group` or :class:`~openreview.Invitation` with any number of wildcards in the form of "<attr>" where "attr" is an attribute in the :class:`~openreview.Note` class.
+    :type template: dict
+    :param paper: an instance of :class:`~openreview.Note` class, to fill the template values.
+    :type paper: Note
+
+    :return: The openreview "template" with the corresponding values from the paper passed as parameter
+    :rtype: dict
+    """
     new_template = {}
     for field, value in template.items():
         if type(value) != dict:
@@ -1124,6 +1426,17 @@ def fill_template(template, paper):
 
 
 def get_conflicts(author_profiles, user_profile):
+    """
+    Finds conflicts between the passed user Profile and the author Profiles passed as arguments
+
+    :param author_profiles: List of Profiles for which an association is to be found
+    :type author_profiles: list[Profile]
+    :param user_profile: Profile for which the conflicts will be found
+    :type user_profile: Profile
+
+    :return: List containing all the conflicts between the user Profile and the author Profiles
+    :rtype: list[str]
+    """
     author_domains = set()
     author_emails = set()
     author_relations = set()
@@ -1146,6 +1459,15 @@ def get_conflicts(author_profiles, user_profile):
     return list(conflicts)
 
 def get_profile_info(profile):
+    """
+    Gets all the domains, emails, relations associated with a Profile
+
+    :param profile: Profile from which all the relations will be obtained
+    :type profile: Profile
+
+    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :rtype: dict
+    """
     domains = set()
     emails = set()
     relations = set()
