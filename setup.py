@@ -18,7 +18,7 @@ setup(name='openreview-py',
           'future',
           'nbsphinx',
           'tqdm',
-          "Deprecated"
+          "Deprecated",
           'pylatexenc'
       ],
       extras_require={
