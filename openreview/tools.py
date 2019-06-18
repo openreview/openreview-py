@@ -10,6 +10,7 @@ import openreview
 import re
 import datetime
 import time
+from pylatexenc.latexencode import utf8tolatex
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -183,7 +184,7 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
-def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True):
+def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
     '''
     Generates a bibtex field for a given Note.
 
@@ -216,28 +217,37 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         authors = 'Anonymous'
     else:
         first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
-        authors = ' and '.join(note.content['authors'])
+        if names_reversed:
+            # last, first
+            author_list = []
+            for name in note.content['authors']:
+                last = name.split(' ')[-1]
+                rest = (' ').join(name.split(' ')[:-1])
+                author_list.append(last+', '+rest)
+            authors = ' and '.join(author_list)
+        else:
+            authors = ' and '.join(note.content['authors'])
 
     bibtex_title = capitalize_title(note.content['title'])
 
     rejected_bibtex = [
         '@misc{',
-        first_author_last_name + year + first_word + ',',
-        'title={' + bibtex_title + '},',
-        'author={' + authors + '},',
+        utf8tolatex(first_author_last_name + year + first_word + ','),
+        'title={' + utf8tolatex(bibtex_title) + '},',
+        'author={' + utf8tolatex(authors) + '},',
         'year={' + year + '},',
-        'url={https://openreview.net/forum?id=' + forum + '},',
+        'url={'+baseurl+'/forum?id=' + forum + '},',
         '}'
     ]
 
     accepted_bibtex = [
         '@inproceedings{',
-        first_author_last_name + '2018' + first_word + ',',
-        'title={' + bibtex_title + '},',
-        'author={' + authors + '},',
-        'booktitle={' + venue_fullname + '},',
+        utf8tolatex(first_author_last_name + year + first_word + ','),
+        'title={' + utf8tolatex(bibtex_title) + '},',
+        'author={' + utf8tolatex(authors) + '},',
+        'booktitle={' + utf8tolatex(venue_fullname) + '},',
         'year={' + year + '},',
-        'url={https://openreview.net/forum?id=' + forum + '},',
+        'url={'+baseurl+'/forum?id=' + forum + '},',
         '}'
     ]
 
