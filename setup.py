@@ -19,6 +19,7 @@ setup(name='openreview-py',
           'nbsphinx',
           'tqdm',
           "Deprecated"
+          'pylatexenc'
       ],
       extras_require={
           'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
