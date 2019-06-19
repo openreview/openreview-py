@@ -10,7 +10,7 @@ class TestTools():
 
     def test_get_submission_invitations(self, client):
         invitations = openreview.tools.get_submission_invitations(client)
-        assert len(invitations) == 9, "Invitations could not be retrieved"
+        assert len(invitations) == 8, "Invitations could not be retrieved"
 
     def test_get_all_venues(self, client):
         venues = openreview.tools.get_all_venues(client)
