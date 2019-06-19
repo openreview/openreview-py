@@ -196,12 +196,21 @@ class TestMatching():
         conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
         assert conflicts
         assert 3 == len(conflicts)
-        assert conflicts[0].label == 'cmu.edu'
-        assert conflicts[0].tail == '~AreaChair_One1'
-        assert conflicts[1].label == 'mit.edu'
-        assert conflicts[1].tail == '~Reviewer_One1'
-        assert conflicts[2].label == 'umass.edu'
-        assert conflicts[2].tail == 'ac2@umass.edu'
+
+        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~AreaChair_One1')
+        assert ac1_conflicts
+        assert len(ac1_conflicts)
+        assert ac1_conflicts[0].label == 'cmu.edu'
+
+        r1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~Reviewer_One1')
+        assert r1_conflicts
+        assert len(r1_conflicts)
+        assert r1_conflicts[0].label == 'mit.edu'
+
+        ac2_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = 'ac2@umass.edu')
+        assert ac2_conflicts
+        assert len(ac2_conflicts)
+        assert ac2_conflicts[0].label == 'umass.edu'
 
 
     def test_setup_matching_with_tpms(self, client, test_client, helpers):
@@ -262,12 +271,21 @@ class TestMatching():
         conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
         assert conflicts
         assert 3 == len(conflicts)
-        assert conflicts[0].label == 'cmu.edu'
-        assert conflicts[0].tail == '~AreaChair_One1'
-        assert conflicts[1].label == 'mit.edu'
-        assert conflicts[1].tail == '~Reviewer_One1'
-        assert conflicts[2].label == 'umass.edu'
-        assert conflicts[2].tail == 'ac2@umass.edu'
+
+        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~AreaChair_One1')
+        assert ac1_conflicts
+        assert len(ac1_conflicts)
+        assert ac1_conflicts[0].label == 'cmu.edu'
+
+        r1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~Reviewer_One1')
+        assert r1_conflicts
+        assert len(r1_conflicts)
+        assert r1_conflicts[0].label == 'mit.edu'
+
+        ac2_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = 'ac2@umass.edu')
+        assert ac2_conflicts
+        assert len(ac2_conflicts)
+        assert ac2_conflicts[0].label == 'umass.edu'
 
         submissions = conference.get_submissions()
         assert submissions
@@ -377,13 +395,21 @@ class TestMatching():
 
         conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
         assert conflicts
-        assert 3 == len(conflicts)
-        assert conflicts[0].label == 'cmu.edu'
-        assert conflicts[0].tail == '~AreaChair_One1'
-        assert conflicts[1].label == 'mit.edu'
-        assert conflicts[1].tail == '~Reviewer_One1'
-        assert conflicts[2].label == 'umass.edu'
-        assert conflicts[2].tail == 'ac2@umass.edu'
+
+        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~AreaChair_One1')
+        assert ac1_conflicts
+        assert len(ac1_conflicts)
+        assert ac1_conflicts[0].label == 'cmu.edu'
+
+        r1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~Reviewer_One1')
+        assert r1_conflicts
+        assert len(r1_conflicts)
+        assert r1_conflicts[0].label == 'mit.edu'
+
+        ac2_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = 'ac2@umass.edu')
+        assert ac2_conflicts
+        assert len(ac2_conflicts)
+        assert ac2_conflicts[0].label == 'umass.edu'
 
         submissions = conference.get_submissions()
         assert submissions
@@ -482,12 +508,21 @@ class TestMatching():
         conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
         assert conflicts
         assert 3 == len(conflicts)
-        assert conflicts[0].label == 'cmu.edu'
-        assert conflicts[0].tail == '~AreaChair_One1'
-        assert conflicts[1].label == 'mit.edu'
-        assert conflicts[1].tail == '~Reviewer_One1'
-        assert conflicts[2].label == 'umass.edu'
-        assert conflicts[2].tail == 'ac2@umass.edu'
+
+        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~AreaChair_One1')
+        assert ac1_conflicts
+        assert len(ac1_conflicts)
+        assert ac1_conflicts[0].label == 'cmu.edu'
+
+        r1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~Reviewer_One1')
+        assert r1_conflicts
+        assert len(r1_conflicts)
+        assert r1_conflicts[0].label == 'mit.edu'
+
+        ac2_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = 'ac2@umass.edu')
+        assert ac2_conflicts
+        assert len(ac2_conflicts)
+        assert ac2_conflicts[0].label == 'umass.edu'
 
         submissions = conference.get_submissions()
         assert submissions
