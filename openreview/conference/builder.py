@@ -650,7 +650,7 @@ class Conference(object):
 
         for index, email in enumerate(emails):
             if email not in set(reviewers_invited_group.members):
-                name = invitee_names[index] if invitee_names else None
+                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
                 tools.recruit_reviewer(self.client, email, name,
@@ -830,7 +830,9 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+        if not options:
+            options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
         self.start_date = start_date
         self.due_date = due_date
