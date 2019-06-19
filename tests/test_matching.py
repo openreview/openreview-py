@@ -294,17 +294,21 @@ class TestMatching():
         tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS')
         assert tpms_scores
         assert 15 == len(tpms_scores)
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[0].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
         assert tpms_scores[0].weight == 0.21
-        assert tpms_scores[0].tail == 'r3@fb.com'
-        assert tpms_scores[0].head == submissions[0].id
-        assert tpms_scores[1].weight == 0.31
-        assert tpms_scores[1].tail == 'r3@fb.com'
-        assert tpms_scores[1].head == submissions[1].id
-        assert tpms_scores[2].weight == 0.51
-        assert tpms_scores[2].tail == 'r3@fb.com'
-        assert tpms_scores[2].head == submissions[2].id
-        assert tpms_scores[3].weight == 0.77
-        assert tpms_scores[3].tail == 'r2@google.com'
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[1].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.31
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[2].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.51
 
 
     def test_setup_matching_with_recommendations(self, client, test_client, helpers):
@@ -418,17 +422,21 @@ class TestMatching():
         tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS')
         assert tpms_scores
         assert 15 == len(tpms_scores)
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[0].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
         assert tpms_scores[0].weight == 0.21
-        assert tpms_scores[0].tail == 'r3@fb.com'
-        assert tpms_scores[0].head == submissions[0].id
-        assert tpms_scores[1].weight == 0.31
-        assert tpms_scores[1].tail == 'r3@fb.com'
-        assert tpms_scores[1].head == submissions[1].id
-        assert tpms_scores[2].weight == 0.51
-        assert tpms_scores[2].tail == 'r3@fb.com'
-        assert tpms_scores[2].head == submissions[2].id
-        assert tpms_scores[3].weight == 0.77
-        assert tpms_scores[3].tail == 'r2@google.com'
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[1].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.31
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[2].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.51
 
 
     def test_setup_matching_with_subject_areas(self, client, test_client, helpers):
@@ -531,24 +539,37 @@ class TestMatching():
         tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS')
         assert tpms_scores
         assert 15 == len(tpms_scores)
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[0].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
         assert tpms_scores[0].weight == 0.21
-        assert tpms_scores[0].tail == 'r3@fb.com'
-        assert tpms_scores[0].head == submissions[0].id
-        assert tpms_scores[1].weight == 0.31
-        assert tpms_scores[1].tail == 'r3@fb.com'
-        assert tpms_scores[1].head == submissions[1].id
-        assert tpms_scores[2].weight == 0.51
-        assert tpms_scores[2].tail == 'r3@fb.com'
-        assert tpms_scores[2].head == submissions[2].id
-        assert tpms_scores[3].weight == 0.77
-        assert tpms_scores[3].tail == 'r2@google.com'
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[1].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.31
+
+        tpms_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/TPMS', tail = 'r3@fb.com', head = submissions[2].id)
+        assert tpms_scores
+        assert 1 == len(tpms_scores)
+        assert tpms_scores[0].weight == 0.51
 
         subject_areas_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Subject_Areas')
         assert subject_areas_scores
         assert 3 == len(subject_areas_scores)
-        assert subject_areas_scores[0].tail == '~AreaChair_One1'
-        assert subject_areas_scores[0].weight == 0.3333333333333333
-        assert subject_areas_scores[1].tail == '~AreaChair_One1'
-        assert subject_areas_scores[1].weight == 1
-        assert subject_areas_scores[2].tail == '~AreaChair_One1'
-        assert subject_areas_scores[2].weight == 0.3333333333333333
+
+        subject_areas_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Subject_Areas', tail = '~AreaChair_One1', head = submissions[0].id)
+        assert subject_areas_scores
+        assert 1 == len(subject_areas_scores)
+        assert subject_areas_scores[0].weight ==  0.3333333333333333
+
+        subject_areas_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Subject_Areas', tail = '~AreaChair_One1', head = submissions[1].id)
+        assert subject_areas_scores
+        assert 1 == len(subject_areas_scores)
+        assert subject_areas_scores[0].weight ==  1
+
+        subject_areas_scores = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Subject_Areas', tail = '~AreaChair_One1', head = submissions[2].id)
+        assert subject_areas_scores
+        assert 1 == len(subject_areas_scores)
+        assert subject_areas_scores[0].weight ==  0.3333333333333333
