@@ -606,7 +606,7 @@ class InvitationBuilder(object):
         readers = {}
 
         ## TODO: move this to an object
-        if conference.double_blind:
+        if conference.submission_stage.double_blind:
             readers = {
                 'values-copied': [
                     conference.get_id(),
@@ -615,7 +615,7 @@ class InvitationBuilder(object):
                 ] + conference.get_original_readers()
             }
         else:
-            if conference.submission_public:
+            if conference.submission_stage.public:
                 readers = {
                     'values': ['everyone']
                 }
@@ -625,7 +625,7 @@ class InvitationBuilder(object):
                         conference.get_id(),
                         '{content.authorids}',
                         '{signatures}'
-                    ] + conference.get_submission_readers()
+                    ] + conference.submission_stage.get_readers()
                 }
 
         for note in notes:
