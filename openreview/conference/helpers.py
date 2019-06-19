@@ -54,20 +54,12 @@ def get_conference(client, request_form_id):
     'location': note.content.get('Location')
     })
 
-    if 'Yes, our venue has Area Chairs' == note.content.get('Area Chairs (Metareviewers)', ''):
+    if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
         builder.has_area_chairs(True)
 
-    if 'Yes, our conference has Area Chairs' == note.content.get('Area Chairs (Metareviewers)', ''):
-        builder.has_area_chairs(True)
+    double_blind = (note.content.get('Author and Reviewer Anonymity', None) == 'Double-blind')
 
-    double_blind = False
-    if 'Double-blind' == note.content.get('Author and Reviewer Anonymity', ''):
-        double_blind = True
-
-    public = False
-    if 'Submissions and reviews should both be public.' == note.content.get('Open Reviewing Policy', '') or \
-        'Submissions should be public, but reviews should be private.' == note.content.get('Open Reviewing Policy', '') :
-        public = True
+    public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
 
     builder.set_override_homepage(True)
 
@@ -76,6 +68,7 @@ def get_conference(client, request_form_id):
             submission_additional_options = json.loads(submission_additional_options)
 
     builder.set_submission_stage(double_blind=double_blind, public=public, start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
+
     conference = builder.get_result()
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference

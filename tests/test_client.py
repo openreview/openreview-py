@@ -6,13 +6,9 @@ import pytest
 
 class TestClient():
 
-    def test_get_notes(self, client):
-        notes = client.get_notes()
-        assert len(notes) == 0, 'notes is not empty'
-
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 15, 'groups is empty'
+        assert len(groups) == 25, 'groups is empty'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -23,11 +19,6 @@ class TestClient():
         assert 'active_venues' in group_names
         assert 'host' in group_names
         assert 'test.org/2019/Conference/Reviewers/Declined' in group_names
-
-    def test_get_invitations(self, client):
-        invitations = client.get_invitations()
-        assert len(invitations) == 1, 'invitations is not empty'
-        assert invitations[0].id == '~/-/profiles'
 
     def test_login_user(self):
         try:
@@ -49,13 +40,6 @@ class TestClient():
         response = guest.login_user(username = "openreview.net", password = "1234")
         assert response
         print(response)
-
-    def test_guest_user(self):
-        guest = openreview.Client()
-        invitations = openreview.tools.get_submission_invitations(guest)
-        assert len(invitations) == 0, "Invitations could not be retrieved for guest user"
-        venues = openreview.tools.get_all_venues(guest)
-        assert len(venues) == 1, "Venues could not be retrieved for guest user"
 
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
