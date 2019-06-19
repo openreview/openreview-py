@@ -1182,3 +1182,12 @@ def get_profile_info(profile):
         'emails': emails,
         'relations': relations
     }
+
+def post_bulk_edges (client, edges, batch_size = 50000):
+    num_edges = len(edges)
+    result = []
+    for i in range(0, num_edges, batch_size):
+        end = min(i + batch_size, num_edges)
+        batch = client.post_edges(edges[i:end])
+        result += batch
+    return result

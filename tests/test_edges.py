@@ -13,13 +13,17 @@ class TestEdges:
         # Edge invitation
         inv1 = openreview.Invitation(id=conference.id + '/-/affinity', reply={
             'content': {
-                'edge': {
-                    'head': 'note',
-                    'tail': 'profile',
-                    'value-radio': [
-                        ['Very High', 1], ['High', 0.5], ['Neutral', 0],
-                        ['Low', -0.5], ['Very Low', -1]
-                    ]
+                'head': {
+                    'type': 'Note'
+                },
+                'tail': {
+                    'type': 'Profile',
+                },
+                'label': {
+                    'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+                },
+                'weight': {
+                    'value-regex': r'[0-9]+\.[0-9]'
                 }
             }
         })
@@ -51,6 +55,6 @@ class TestEdges:
                 signatures=['~Super_User1'])
             edges.append(edge)
 
-        client.post_bulk_edges(edges)
+        openreview.tools.post_bulk_edges(client, edges)
         them = list(openreview.tools.iterget_edges(client, invitation=inv1.id))
         assert len(edges) == len(them)
