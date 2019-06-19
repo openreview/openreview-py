@@ -374,40 +374,41 @@ class Conference(object):
         submissions_by_original = { note.original: note.id for note in self.get_submissions() }
 
         self.invitation_builder.set_blind_submission_invitation(self)
-        blinded_notes = []
+        new_blinded_notes = []
 
         for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
             note_id = submissions_by_original.get(note.id)
-            blind_note = openreview.Note(
-                id = note_id,
-                original= note.id,
-                invitation= self.get_blind_submission_id(),
-                forum=None,
-                signatures= [self.id],
-                writers= [self.id],
-                readers= [self.id],
-                content= {
-                    "authors": ['Anonymous'],
-                    "authorids": [self.id],
-                    "_bibtex": None
-                })
+            if not note_id:
+                blind_note = openreview.Note(
+                    id = None,
+                    original= note.id,
+                    invitation= self.get_blind_submission_id(),
+                    forum=None,
+                    signatures= [self.id],
+                    writers= [self.id],
+                    readers= [self.id],
+                    content= {
+                        "authors": ['Anonymous'],
+                        "authorids": [self.id],
+                        "_bibtex": None
+                    })
 
-            posted_blind_note = self.client.post_note(blind_note)
+                posted_blind_note = self.client.post_note(blind_note)
 
-            posted_blind_note.readers = self.submission_stage.get_blind_readers(self, posted_blind_note.number)
+                posted_blind_note.readers = self.submission_stage.get_blind_readers(self, posted_blind_note.number)
 
-            posted_blind_note.content = {
-                'authorids': [self.get_authors_id(number = posted_blind_note.number)],
-                'authors': ['Anonymous'],
-                '_bibtex': None #Create bibtext automatically
-            }
+                posted_blind_note.content = {
+                    'authorids': [self.get_authors_id(number = posted_blind_note.number)],
+                    'authors': ['Anonymous'],
+                    '_bibtex': None #Create bibtext automatically
+                }
 
-            posted_blind_note = self.client.post_note(posted_blind_note)
-            blinded_notes.append(posted_blind_note)
+                posted_blind_note = self.client.post_note(posted_blind_note)
+                new_blinded_notes.append(posted_blind_note)
 
         # Update page with double blind submissions
         self.__set_program_chair_page()
-        return blinded_notes
+        return new_blinded_notes
 
     ## Deprecated
     def open_bids(self):
