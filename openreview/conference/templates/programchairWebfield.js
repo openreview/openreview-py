@@ -283,33 +283,44 @@ var displayHeader = function() {
 
 var displayConfiguration = function(requestForm, invitations) {
 
-  var formatPeriod = function(invitation) {
-    var start;
-    var end;
-    var afterStart = true;
-    var beforeEnd = true;
-    var now = Date.now();
-    if (invitation.cdate) {
-      var date = new Date(invitation.cdate);
-      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
-      afterStart = now > invitation.cdate;
-    }
-    if (invitation.duedate) {
-      var date = new Date(invitation.duedate);
-      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
-      beforeEnd = now < invitation.duedate;
+  var renderInvitation = function(invitationMap, id, name) {
+
+    var formatPeriod = function(invitation) {
+      var start;
+      var end;
+      var afterStart = true;
+      var beforeEnd = true;
+      var now = Date.now();
+      if (invitation.cdate) {
+        var date = new Date(invitation.cdate);
+        start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+        afterStart = now > invitation.cdate;
+      }
+      if (invitation.duedate) {
+        var date = new Date(invitation.duedate);
+        end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+        beforeEnd = now < invitation.duedate;
+      }
+
+      var currentPeriod = afterStart && beforeEnd;
+      var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
+      if (end) {
+        periodString = periodString + 'until <em>' + end + '</em>';
+      } else {
+        periodString = periodString + 'no deadline';
+      }
+
+      return periodString;
     }
 
-    var currentPeriod = afterStart && beforeEnd;
-    var periodString = start ? 'from <i>' + start + '</i> ' : 'open ';
-    if (end) {
-      periodString = periodString + 'until <i>' + end + '</i>';
-    } else {
-      periodString = periodString + 'no deadline';
-    }
+    var invitation = invitationMap[id];
+    if (invitation) {
+      return '<li><a href="/invitation?id=' + invitation.id + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
+    };
 
-    return periodString;
+    return '';
   }
+
   var invitationMap = {};
 
   invitations.forEach(function(invitation) {
@@ -317,63 +328,37 @@ var displayConfiguration = function(requestForm, invitations) {
   });
 
   var container = '#venue-configuration';
-  var html = '<div id="container"></br>'
+  var html = '<div></br>'
 
   if (requestForm) {
     html = html +  '<a href="/forum?id=' + requestForm.id + '">Requested configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></br></br>';
   }
 
-  html = html + '<span>Official Committee: </span>' +
-    '<a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a>, ';
+  html = html + '<h3>Official Committee:</h3></br>' +
+    '<a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></br>';
 
   if (SHOW_AC_TAB) {
     html = html + '<a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>), ';
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</br>';
   }
 
   html = html + '<a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>), ' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</br>' +
     '<a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></br></br>' +
     '<h3>Timeline:</h3></br>' +
     '<ul>';
 
-  var invitation = invitationMap[SUBMISSION_ID];
-  if (invitation) {
-    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Paper Submission</a> ' + formatPeriod(invitation) + '</li>';
-  };
-
-  var invitation = invitationMap[CONFERENCE_ID + '/-/' + BID_NAME];
-  if (invitation) {
-    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Bidding</a> ' + formatPeriod(invitation) + '</li>';
-  };
-
+  html = html + renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
+  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
   html = html + '<li><a href="/assignments?venue=' + CONFERENCE_ID + '">Paper Assignment</a> After Bidding is finished</li>';
+  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
+  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
+  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
+  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
 
-  var invitation = invitationMap[CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME];
-  if (invitation) {
-    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Reviews</a> ' + formatPeriod(invitation) + '</li>';
-  };
-
-  var invitation = invitationMap[CONFERENCE_ID + '/-/' + COMMENT_NAME];
-  if (invitation) {
-    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Commenting</a> ' + formatPeriod(invitation) + '</li>';
-  };
-
-  var invitation = invitationMap[CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME];
-  if (invitation) {
-    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Meta Reviews</a> ' + formatPeriod(invitation) + '</li>';
-  };
-
-  var invitation = invitationMap[CONFERENCE_ID + '/-/' + DECISION_NAME];
-  if (invitation) {
-    html = html + '<li><a href="/invitation?id=' + invitation.id + '">Decisions</a> ' + formatPeriod(invitation) + '</li>';
-  };
-
-  html = html + '</ul>' +
-    '</div>'
-  ;
+  html = html + '</ul></div>';
   $(container).empty().append(html);
 };
 
