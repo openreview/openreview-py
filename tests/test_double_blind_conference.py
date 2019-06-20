@@ -664,7 +664,33 @@ class TestDoubleBlindConference():
         client.post_note(note)
 
         blind_submissions_2 = conference.create_blind_submissions()
-        assert len(blind_submissions_2) == 0
+        assert blind_submissions_2
+        assert len(blind_submissions_2) == 2
+        assert blind_submissions[0].id == blind_submissions_2[0].id
+        assert blind_submissions_2[1].readers == [
+            'AKBC.ws/2019/Conference/Paper2/Authors',
+            'AKBC.ws/2019/Conference/Reviewers',
+            'AKBC.ws/2019/Conference/Area_Chairs',
+            'AKBC.ws/2019/Conference/Program_Chairs']
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Test Paper title 2',
+                'abstract': 'This is a test abstract 2',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'archival_status': 'Archival',
+                'subject_areas': [
+                    'Information Integration'
+                ]
+            }
+        )
+        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        client.post_note(note)
 
         note = openreview.Note(invitation = invitation.id,
             readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
@@ -688,7 +714,10 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(public = True, double_blind= True)
         conference = builder.get_result()
         blind_submissions_3 = conference.create_blind_submissions()
-        assert len(blind_submissions_3) == 0
+        assert blind_submissions_3
+        assert len(blind_submissions_3) == 3
+        assert blind_submissions[0].id == blind_submissions_3[0].id
+        assert blind_submissions_3[2].readers == ['everyone']
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
