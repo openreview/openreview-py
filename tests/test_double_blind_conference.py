@@ -641,22 +641,12 @@ class TestDoubleBlindConference():
         assert len(blind_submissions) == 1
 
         blind_submissions_2 = conference.create_blind_submissions()
-        assert blind_submissions_2
-        assert len(blind_submissions_2) == 1
-        assert blind_submissions[0].id == blind_submissions_2[0].id
-        assert blind_submissions_2[0].readers == [
-            'AKBC.ws/2019/Conference/Paper1/Authors',
-            'AKBC.ws/2019/Conference/Reviewers',
-            'AKBC.ws/2019/Conference/Area_Chairs',
-            'AKBC.ws/2019/Conference/Program_Chairs']
+        assert len(blind_submissions_2) == 0
 
         builder.set_submission_stage(public = True, double_blind= True)
         conference = builder.get_result()
         blind_submissions_3 = conference.create_blind_submissions()
-        assert blind_submissions_3
-        assert len(blind_submissions_3) == 1
-        assert blind_submissions[0].id == blind_submissions_3[0].id
-        assert blind_submissions_3[0].readers == ['everyone']
+        assert len(blind_submissions_3) == 0
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
