@@ -235,9 +235,13 @@ var getInvitations = function() {
 }
 
 var getConfigurationDescription = function(note) {
-  return note.content['Author and Reviewer Anonymity'] + ', ' +
+  var description = note.content['Author and Reviewer Anonymity'] + ', ' +
   note.content['Open Reviewing Policy'] + ', ' + note.content['Public Commentary'] +
-  ', ' + note.content['Other Important Information']
+  '</br>' + note.content['Paper Matching'].join(', ') + '.</br>';
+  if (note.content['Other Important Information']) {
+    description += note.content['Other Important Information'] + '</br>';
+  }
+  return description;
 }
 
 // Render functions
@@ -331,34 +335,35 @@ var displayConfiguration = function(requestForm, invitations) {
   var html = '<div></br>'
 
   if (requestForm) {
-    html = html +  '<a href="/forum?id=' + requestForm.id + '">Requested configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></br></br>';
+    html += '<h3>Description:</h3></br>';
+    html += '<p><a href="/forum?id=' + requestForm.id + '">Requested configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></p></br>';
   }
 
-  html = html + '<h3>Official Committee:</h3></br>' +
-    '<a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></br>';
+  html += '<h3>Official Committee:</h3></br><ul>' +
+    '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
 
   if (SHOW_AC_TAB) {
-    html = html + '<a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
+    html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</br>';
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
   }
 
-  html = html + '<a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
+  html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</br>' +
-    '<a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></br></br>' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
+    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul>' +
     '<h3>Timeline:</h3></br>' +
     '<ul>';
 
-  html = html + renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
-  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
-  html = html + '<li><a href="/assignments?venue=' + CONFERENCE_ID + '">Paper Assignment</a> After Bidding is finished</li>';
-  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
-  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
-  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
-  html = html + renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
+  html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
+  html += '<li><a href="/assignments?venue=' + CONFERENCE_ID + '">Paper Assignment</a> After Bidding is finished</li>';
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
 
-  html = html + '</ul></div>';
+  html += '</ul></div>';
   $(container).empty().append(html);
 };
 
