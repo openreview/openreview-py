@@ -13,6 +13,7 @@ class Conference(object):
 
     def __init__(self, client):
         self.client = client
+        self.request_form_id = None
         self.new = False
         self.use_area_chairs = False
         self.legacy_invitation_id = False
@@ -797,6 +798,7 @@ class ReviewStage(object):
 class CommentStage(object):
 
     def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
+        self.name = 'Comment'
         self.start_date = start_date
         self.allow_public_comments = allow_public_comments
         self.anonymous = anonymous
@@ -969,6 +971,9 @@ class ConferenceBuilder(object):
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
+
+    def set_request_form_id(self, id):
+        self.conference.request_form_id = id
 
     def get_result(self):
 
