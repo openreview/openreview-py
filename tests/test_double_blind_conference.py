@@ -1129,12 +1129,13 @@ class TestDoubleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
 
-        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Program_Chairs", pc_client.token)
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Program_Chairs#paper-status", pc_client.token)
         assert "AKBC 2019 Conference Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
         assert tabs
+        assert tabs.find_element_by_id('venue-configuration')
         assert tabs.find_element_by_id('paper-status')
         assert tabs.find_element_by_id('reviewer-status')
         assert tabs.find_element_by_id('areachair-status')

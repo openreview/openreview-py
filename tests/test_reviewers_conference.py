@@ -119,7 +119,7 @@ class TestReviewersConference():
         invitations = conference.open_reviews()
         assert invitations
 
-        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)
+        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token)
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
         assert len(reviews) == 5
@@ -145,7 +145,7 @@ class TestReviewersConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs", client.token)
+        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token)
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
         assert len(reviews) == 5

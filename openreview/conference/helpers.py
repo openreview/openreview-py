@@ -13,6 +13,7 @@ def get_conference(client, request_form_id):
         raise openreview.OpenReviewException('venue_id is not set')
 
     builder = openreview.conference.ConferenceBuilder(client)
+    builder.set_request_form_id(request_form_id)
 
     conference_start_date_str = 'TBD'
     start_date = note.content.get('Venue Start Date', note.content.get('Conference Start Date'))

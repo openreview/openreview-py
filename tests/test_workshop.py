@@ -647,7 +647,7 @@ class TestWorkshop():
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
-        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs", pc_client.token)
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs#paper-status", pc_client.token)
         assert "ICAPS 2019 Workshop HSDIP Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
