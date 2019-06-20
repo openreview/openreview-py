@@ -73,9 +73,9 @@ function load() {
     });
 
     userGroupsP = Webfield.getAll('/groups', { member: user.id, web: true })
-      .then(function(result) {
+      .then(function(groups) {
         return _.filter(
-          _.map(result.groups, function(g) { return g.id; }),
+          _.map(groups, function(g) { return g.id; }),
           function(id) { return _.startsWith(id, CONFERENCE_ID); }
         );
       });
