@@ -237,7 +237,7 @@ var getInvitations = function() {
 var getConfigurationDescription = function(note) {
   var description = note.content['Author and Reviewer Anonymity'] + ', ' +
   note.content['Open Reviewing Policy'] + ', ' + note.content['Public Commentary'] +
-  '</br>' + note.content['Paper Matching'].join(', ') + '.</br>';
+  '</br>Paper matching should use ' + note.content['Paper Matching'].join(', ') + '.</br>';
   if (note.content['Other Important Information']) {
     description += note.content['Other Important Information'] + '</br>';
   }
@@ -336,7 +336,7 @@ var displayConfiguration = function(requestForm, invitations) {
 
   if (requestForm) {
     html += '<h3>Description:</h3></br>';
-    html += '<p><a href="/forum?id=' + requestForm.id + '">Requested configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></p></br>';
+    html += '<p><a href="/forum?id=' + requestForm.id + '">Venue Configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></p></br>';
   }
 
   html += '<h3>Official Committee:</h3></br><ul>' +
