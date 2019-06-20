@@ -10,7 +10,7 @@ var CONFERENCE_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 
-var BUFFER = 1000 * 60 * 30;  // 30 minutes
+var BUFFER = 1000 * 60 * 30;  // deprecated
 var PAGE_SIZE = 50;
 
 var paperDisplayOptions = {
@@ -98,8 +98,7 @@ function renderContent(notesResponse, tagInvitations) {
   $('#all-submissions').empty();
 
   if (noteCount) {
-    var searchResultOptions = _.assign({}, paperDisplayOptions, {
-      showTags: true,
+    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
       tagInvitations: tagInvitations,
       container: '#all-submissions',
       autoLoad: false
@@ -111,14 +110,12 @@ function renderContent(notesResponse, tagInvitations) {
       search: {
         enabled: true,
         localSearch: false,
+        invitation: BLIND_SUBMISSION_ID,
         onResults: function(searchResults) {
-          var originalSearchResults = searchResults.filter(function(note) {
-            return note.invitation === BLIND_SUBMISSION_ID;
-          });
-          Webfield.ui.searchResults(originalSearchResults, searchResultOptions);
+          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(notes, searchResultOptions);
+          Webfield.ui.searchResults(notes, searchResultsListOptions);
           $('#all-submissions').append(view.paginationLinks(noteCount, PAGE_SIZE, 1));
         },
       },

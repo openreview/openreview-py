@@ -25,7 +25,8 @@ var PAGE_SIZE = 50;
 var paperDisplayOptions = {
   pdfLink: true,
   replyCount: true,
-  showContents: true
+  showContents: true,
+  showTags: false
 };
 var commentDisplayOptions = {
   pdfLink: false,
@@ -57,7 +58,8 @@ function load() {
 
   var notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
-    details: 'replyCount,original'
+    details: 'replyCount,original',
+    includeCount: true
   });
 
   if (!user || _.startsWith(user.id, 'guest_')) {
@@ -70,12 +72,13 @@ function load() {
       details: 'forumContent,writable'
     });
 
-    userGroupsP = Webfield.get('/groups', { member: user.id, web: true }).then(function(result) {
-      return _.filter(
-        _.map(result.groups, function(g) { return g.id; }),
-        function(id) { return _.startsWith(id, CONFERENCE_ID); }
-      );
-    });
+    userGroupsP = Webfield.getAll('/groups', { member: user.id, web: true })
+      .then(function(result) {
+        return _.filter(
+          _.map(result.groups, function(g) { return g.id; }),
+          function(id) { return _.startsWith(id, CONFERENCE_ID); }
+        );
+      });
 
     authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
       pageSize: PAGE_SIZE,
@@ -133,7 +136,7 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(notes, userGroups, activityNotes, authorNotes) {
+function renderContent(notesResponse, userGroups, activityNotes, authorNotes) {
 
   // Your Consoles tab
   if (userGroups.length || authorNotes.length) {
@@ -184,44 +187,45 @@ function renderContent(notes, userGroups, activityNotes, authorNotes) {
 
 
   // All Submitted Papers tab
-  var submissionListOptions = _.assign({}, paperDisplayOptions, {
-    showTags: false,
-    container: '#all-submissions',
-    queryParams: {
-      details: 'replyCount,original'
-    }
-  });
+  var notes = notesResponse.notes || [];
+  var noteCount = notesResponse.count || 0;
 
-  $(submissionListOptions.container).empty();
+  $('#all-submissions').empty();
 
-  if (notes.length){
+  if (noteCount) {
+    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
+      container: '#all-submissions',
+      autoLoad: false
+    });
+
     Webfield.ui.submissionList(notes, {
       heading: null,
       container: '#all-submissions',
       search: {
         enabled: true,
         localSearch: false,
+        invitation: BLIND_SUBMISSION_ID,
         onResults: function(searchResults) {
-          var blindedSearchResults = searchResults.filter(function(note) {
-            return note.invitation === BLIND_SUBMISSION_ID;
-          });
-          Webfield.ui.searchResults(blindedSearchResults, submissionListOptions);
-          Webfield.disableAutoLoading();
+          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(notes, submissionListOptions);
-          if (notes.length === PAGE_SIZE) {
-            Webfield.setupAutoLoading(BLIND_SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
-          }
+          Webfield.ui.searchResults(notes, searchResultsListOptions);
+          $('#all-submissions').append(view.paginationLinks(noteCount, PAGE_SIZE, 1));
         }
       },
-      displayOptions: submissionListOptions,
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: noteCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+          details: 'replyCount,original',
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
       fadeIn: false
     });
-
-    if (notes.length === PAGE_SIZE) {
-      Webfield.setupAutoLoading(BLIND_SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
-    }
   } else {
     $('.tabs-container a[href="#all-submissions"]').parent().hide();
   }
