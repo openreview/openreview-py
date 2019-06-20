@@ -263,26 +263,12 @@ class WebfieldBuilder(object):
 
         instruction_str = '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>\
-                <ul>'
+            progresses, so please check back frequently for news and other updates.</p>'
 
-        if conference.use_area_chairs:
-            instruction_str =  instruction_str + '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
-                <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
-                <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.area_chairs_name.replace('_', ' '), conference.get_area_chairs_id())
-
-        instruction_str = instruction_str + '<li>{0} Members - <a href=\"/group?id={1}&mode=info\">Accepted</a>, \
-            <a href=\"/group?id={1}/Invited&mode=info\">Invited</a>, \
-            <a href=\"/group?id={1}/Declined&mode=info\">Declined</a></li>'.format(conference.reviewers_name.replace('_', ' '), conference.get_reviewers_id())
-
-        instruction_str = instruction_str + '</ul>'
-
-        default_header = {
+        header = {
             'title': program_chairs_name.replace('_', ' ') + ' Console',
             'instructions': instruction_str
         }
-
-        header = self.__build_options(default_header, {})
 
         submission_id = conference.get_submission_id()
         if conference.get_submissions():
@@ -298,7 +284,16 @@ class WebfieldBuilder(object):
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
             content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
+            content = content.replace("var COMMENT_NAME = '';", "var COMMENT_NAME = '" + conference.comment_stage.name + "';")
+            content = content.replace("var BID_NAME = '';", "var BID_NAME = '" + conference.bid_stage.name + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
+            content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
+            content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
+            if conference.has_area_chairs:
+                content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+            content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+            if conference.request_form_id:
+                content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
             group.web = content
             return self.client.post_group(group)
 

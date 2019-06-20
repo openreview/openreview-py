@@ -9,8 +9,15 @@ var LEGACY_INVITATION_ID = false;
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
 var DECISION_NAME = '';
+var BID_NAME = '';
+var COMMENT_NAME = '';
+var AUTHORS_ID = '';
+var REVIEWERS_ID = '';
+var AREA_CHAIRS_ID = '';
+var PROGRAM_CHAIRS_ID = '';
+var REQUEST_FORM_ID = '';
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 
@@ -218,6 +225,24 @@ var getDecisionReviews = function() {
   });
 };
 
+var getRequestForm = function() {
+  return Webfield.getAll('/notes', { id: REQUEST_FORM_ID})
+  .then(notes => notes[0]);
+}
+
+var getInvitations = function() {
+  return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
+}
+
+var getConfigurationDescription = function(note) {
+  var description = note.content['Author and Reviewer Anonymity'] + ', ' +
+  note.content['Open Reviewing Policy'] + ', ' + note.content['Public Commentary'] +
+  '</br>Paper matching should use ' + note.content['Paper Matching'].join(', ') + '.</br>';
+  if (note.content['Other Important Information']) {
+    description += note.content['Other Important Information'] + '</br>';
+  }
+  return description;
+}
 
 // Render functions
 var displayHeader = function() {
@@ -227,11 +252,17 @@ var displayHeader = function() {
   var loadingMessage = '<p class="empty-message">Loading...</p>';
   var tabs = [
     {
-      heading: 'Paper Status',
-      id: 'paper-status',
+      heading: 'Configuration',
+      id: 'venue-configuration',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll',
       active: true
+    },
+    {
+      heading: 'Paper Status',
+      id: 'paper-status',
+      content: loadingMessage,
+      extraClasses: 'horizontal-scroll'
     }
   ];
 
@@ -252,6 +283,88 @@ var displayHeader = function() {
   });
 
   Webfield.ui.tabPanel(tabs);
+};
+
+var displayConfiguration = function(requestForm, invitations) {
+
+  var renderInvitation = function(invitationMap, id, name) {
+
+    var formatPeriod = function(invitation) {
+      var start;
+      var end;
+      var afterStart = true;
+      var beforeEnd = true;
+      var now = Date.now();
+      if (invitation.cdate) {
+        var date = new Date(invitation.cdate);
+        start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+        afterStart = now > invitation.cdate;
+      }
+      if (invitation.duedate) {
+        var date = new Date(invitation.duedate);
+        end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+        beforeEnd = now < invitation.duedate;
+      }
+
+      var currentPeriod = afterStart && beforeEnd;
+      var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
+      if (end) {
+        periodString = periodString + 'until <em>' + end + '</em>';
+      } else {
+        periodString = periodString + 'no deadline';
+      }
+
+      return periodString;
+    }
+
+    var invitation = invitationMap[id];
+    if (invitation) {
+      return '<li><a href="/invitation?id=' + invitation.id + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
+    };
+
+    return '';
+  }
+
+  var invitationMap = {};
+
+  invitations.forEach(function(invitation) {
+    invitationMap[invitation.id] = invitation;
+  });
+
+  var container = '#venue-configuration';
+  var html = '<div></br>'
+
+  if (requestForm) {
+    html += '<h3>Description:</h3></br>';
+    html += '<p><a href="/forum?id=' + requestForm.id + '">Venue Configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></p></br>';
+  }
+
+  html += '<h3>Official Committee:</h3></br><ul>' +
+    '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
+
+  if (SHOW_AC_TAB) {
+    html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
+  }
+
+  html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
+    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul>' +
+    '<h3>Timeline:</h3></br>' +
+    '<ul>';
+
+  html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
+  html += '<li><a href="/assignments?venue=' + CONFERENCE_ID + '">Paper Assignment</a> After Bidding is finished</li>';
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
+
+  html += '</ul></div>';
+  $(container).empty().append(html);
 };
 
 var displaySortPanel = function(container, sortOptions, sortResults) {
@@ -806,16 +919,22 @@ controller.addHandler('areachairs', {
         areaChairGroupsP = getAreaChairGroups(noteNumbers);
       }
       var decisionReviewsP = getDecisionReviews();
+      var requestFormP = $.Deferred().resolve();
+      if (REQUEST_FORM_ID) {
+        requestFormP = getRequestForm();
+      }
       return $.when(
         notes,
         getOfficialReviews(noteNumbers),
         metaReviewsP,
         getReviewerGroups(noteNumbers),
         areaChairGroupsP,
-        decisionReviewsP
+        decisionReviewsP,
+        requestFormP,
+        getInvitations()
       );
     })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions) {
+    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations) {
       var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
         return result.concat(_.values(idsObj));
       }, []));
@@ -828,6 +947,7 @@ controller.addHandler('areachairs', {
 
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
+        displayConfiguration(requestForm, invitations),
         displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, decisions, '#paper-status');
         if (SHOW_AC_TAB) {
           displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');

@@ -96,6 +96,7 @@ class TestLegacyInvitations():
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2019/Workshop/MLITS/Program_Chairs", pc_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
+        assert tabs.find_element_by_id('venue-configuration')
         assert tabs.find_element_by_id('paper-status')
         assert tabs.find_element_by_id('areachair-status')
         assert tabs.find_element_by_id('reviewer-status')
