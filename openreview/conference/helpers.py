@@ -73,87 +73,83 @@ def get_conference(client, request_form_id):
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference
 
-def get_bid_stage(client, request_form_id):
-    note = client.get_note(request_form_id)
+def get_bid_stage(client, request_forum):
     bid_start_date = None
-    if note.content.get('bid_start_date', None):
+    if request_forum.content.get('bid_start_date', None):
         try:
-            bid_start_date = datetime.datetime.strptime(note.content.get('bid_start_date', None), '%Y/%m/%d %H:%M')
+            bid_start_date = datetime.datetime.strptime(request_forum.content.get('bid_start_date', None), '%Y/%m/%d %H:%M')
         except ValueError:
-            bid_start_date = datetime.datetime.strptime(note.content.get('bid_start_date', None), '%Y/%m/%d')
+            bid_start_date = datetime.datetime.strptime(request_forum.content.get('bid_start_date', None), '%Y/%m/%d')
 
     bid_due_date = None
-    if note.content.get('bid_due_date', None):
+    if request_forum.content.get('bid_due_date', None):
         try:
-            bid_due_date = datetime.datetime.strptime(note.content.get('bid_due_date'), '%Y/%m/%d %H:%M')
+            bid_due_date = datetime.datetime.strptime(request_forum.content.get('bid_due_date'), '%Y/%m/%d %H:%M')
         except ValueError:
-            bid_due_date = datetime.datetime.strptime(note.content.get('bid_due_date'), '%Y/%m/%d')
+            bid_due_date = datetime.datetime.strptime(request_forum.content.get('bid_due_date'), '%Y/%m/%d')
 
-    return openreview.BidStage(start_date = bid_start_date, due_date = bid_due_date, request_count = note.content.get('bid_count', 50))
+    return openreview.BidStage(start_date = bid_start_date, due_date = bid_due_date, request_count = request_forum.content.get('bid_count', 50))
 
-def get_review_stage(client, request_form_id):
-    note = client.get_note(request_form_id)
+def get_review_stage(client, request_forum):
     review_start_date = None
-    if note.content.get('review_start_date', None):
+    if request_forum.content.get('review_start_date', None):
         try:
-            review_start_date = datetime.datetime.strptime(note.content.get('review_start_date', None), '%Y/%m/%d %H:%M')
+            review_start_date = datetime.datetime.strptime(request_forum.content.get('review_start_date', None), '%Y/%m/%d %H:%M')
         except ValueError:
-            review_start_date = datetime.datetime.strptime(note.content.get('review_start_date', None), '%Y/%m/%d')
+            review_start_date = datetime.datetime.strptime(request_forum.content.get('review_start_date', None), '%Y/%m/%d')
 
     review_due_date = None
-    if note.content.get('review_deadline', None):
+    if request_forum.content.get('review_deadline', None):
         try:
-            review_due_date = datetime.datetime.strptime(note.content.get('review_deadline', None), '%Y/%m/%d %H:%M')
+            review_due_date = datetime.datetime.strptime(request_forum.content.get('review_deadline', None), '%Y/%m/%d %H:%M')
         except ValueError:
-            review_due_date = datetime.datetime.strptime(note.content.get('review_deadline', None), '%Y/%m/%d')
+            review_due_date = datetime.datetime.strptime(request_forum.content.get('review_deadline', None), '%Y/%m/%d')
 
-    review_additional_fields = note.content.get('additional_review_options', {})
+    review_additional_fields = request_forum.content.get('additional_review_options', {})
     if review_additional_fields:
         review_additional_fields = json.loads(review_additional_fields)
 
-    return openreview.ReviewStage(start_date = review_start_date, due_date = review_due_date, allow_de_anonymization = (note.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'), public = (note.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'), release_to_authors = (note.content.get('release_reviews_to_authors', False) == 'Yes'), release_to_reviewers = (note.content.get('release_reviews_to_reviewers', False) == 'Yes'), email_pcs = (note.content.get('email_program_Chairs_about_reviews', False) == 'Yes'), additional_fields = review_additional_fields)
+    return openreview.ReviewStage(start_date = review_start_date, due_date = review_due_date, allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'), public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'), release_to_authors = (request_forum.content.get('release_reviews_to_authors', False) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers', False) == 'Yes'), email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', False) == 'Yes'), additional_fields = review_additional_fields)
 
-def get_meta_review_stage(client, request_form_id):
-    note = client.get_note(request_form_id)
+def get_meta_review_stage(client, request_forum):
     meta_review_start_date = None
-    if note.content.get('meta_review_start_date', None):
+    if request_forum.content.get('meta_review_start_date', None):
         try:
-            meta_review_start_date = datetime.datetime.strptime(note.content.get('meta_review_start_date', None), '%Y/%m/%d %H:%M')
+            meta_review_start_date = datetime.datetime.strptime(request_forum.content.get('meta_review_start_date', None), '%Y/%m/%d %H:%M')
         except ValueError:
-            meta_review_start_date = datetime.datetime.strptime(note.content.get('meta_review_start_date', None), '%Y/%m/%d')
+            meta_review_start_date = datetime.datetime.strptime(request_forum.content.get('meta_review_start_date', None), '%Y/%m/%d')
 
     meta_review_due_date = None
-    if note.content.get('meta_review_deadline', None):
+    if request_forum.content.get('meta_review_deadline', None):
         try:
-            meta_review_due_date = datetime.datetime.strptime(note.content.get('meta_review_deadline', None), '%Y/%m/%d %H:%M')
+            meta_review_due_date = datetime.datetime.strptime(request_forum.content.get('meta_review_deadline', None), '%Y/%m/%d %H:%M')
         except ValueError:
-            meta_review_due_date = datetime.datetime.strptime(note.content.get('meta_review_deadline', None), '%Y/%m/%d')
+            meta_review_due_date = datetime.datetime.strptime(request_forum.content.get('meta_review_deadline', None), '%Y/%m/%d')
 
-    meta_review_additional_fields = note.content.get('additional_meta_review_options', {})
+    meta_review_additional_fields = request_forum.content.get('additional_meta_review_options', {})
     if meta_review_additional_fields:
         meta_review_additional_fields = json.loads(meta_review_additional_fields)
 
-    return openreview.MetaReviewStage(start_date = meta_review_start_date, due_date = meta_review_due_date, public = (note.content.get('make_meta_reviews_public', None) == 'Yes'), additional_fields = meta_review_additional_fields)
+    return openreview.MetaReviewStage(start_date = meta_review_start_date, due_date = meta_review_due_date, public = (request_forum.content.get('make_meta_reviews_public', None) == 'Yes'), additional_fields = meta_review_additional_fields)
 
-def get_decision_stage(client, request_form_id):
-    note = client.get_note(request_form_id)
+def get_decision_stage(client, request_forum):
     decision_start_date = None
-    if note.content.get('decision_start_date', None):
+    if request_forum.content.get('decision_start_date', None):
         try:
-            decision_start_date = datetime.datetime.strptime(note.content.get('decision_start_date', None), '%Y/%m/%d %H:%M')
+            decision_start_date = datetime.datetime.strptime(request_forum.content.get('decision_start_date', None), '%Y/%m/%d %H:%M')
         except ValueError:
-            decision_start_date = datetime.datetime.strptime(note.content.get('decision_start_date', None), '%Y/%m/%d')
+            decision_start_date = datetime.datetime.strptime(request_forum.content.get('decision_start_date', None), '%Y/%m/%d')
 
     decision_due_date = None
-    if note.content.get('decision_deadline', None):
+    if request_forum.content.get('decision_deadline', None):
         try:
-            decision_due_date = datetime.datetime.strptime(note.content.get('decision_deadline', None), '%Y/%m/%d %H:%M')
+            decision_due_date = datetime.datetime.strptime(request_forum.content.get('decision_deadline', None), '%Y/%m/%d %H:%M')
         except ValueError:
-            decision_due_date = datetime.datetime.strptime(note.content.get('decision_deadline', None), '%Y/%m/%d')
+            decision_due_date = datetime.datetime.strptime(request_forum.content.get('decision_deadline', None), '%Y/%m/%d')
 
-    decision_options = note.content.get('decision_options', None)
+    decision_options = request_forum.content.get('decision_options', None)
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
-        return openreview.DecisionStage(options = decision_options, start_date = decision_start_date, due_date = decision_due_date, public = (note.content.get('make_decisions_public', None) == 'Yes'), release_to_authors = (note.content.get('release_decisions_to_authors', None) == 'Yes'), release_to_reviewers = (note.content.get('release_decisions_to_reviewers', None) == 'Yes'))
+        return openreview.DecisionStage(options = decision_options, start_date = decision_start_date, due_date = decision_due_date, public = (request_forum.content.get('make_decisions_public', None) == 'Yes'), release_to_authors = (request_forum.content.get('release_decisions_to_authors', None) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_decisions_to_reviewers', None) == 'Yes'))
     else:
-        return openreview.DecisionStage(start_date = decision_start_date, due_date = decision_due_date, public = (note.content.get('make_decisions_public', None) == 'Yes'))
+        return openreview.DecisionStage(start_date = decision_start_date, due_date = decision_due_date, public = (request_forum.content.get('make_decisions_public', None) == 'Yes'), release_to_authors = (request_forum.content.get('release_decisions_to_authors', None) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_decisions_to_reviewers', None) == 'Yes'))
