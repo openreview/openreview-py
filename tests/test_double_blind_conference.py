@@ -640,13 +640,65 @@ class TestDoubleBlindConference():
         assert blind_submissions
         assert len(blind_submissions) == 1
 
+        invitation = client.get_invitation(conference.get_submission_id())
+        assert invitation
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Test Paper title',
+                'abstract': 'This is a test abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'archival_status': 'Archival',
+                'subject_areas': [
+                    'Databases',
+                    'Information Integration'
+                ]
+            }
+        )
+        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        client.post_note(note)
+
         blind_submissions_2 = conference.create_blind_submissions()
-        assert len(blind_submissions_2) == 0
+        assert blind_submissions_2
+        assert len(blind_submissions_2) == 2
+        assert blind_submissions[0].id == blind_submissions_2[0].id
+        assert blind_submissions_2[1].readers == [
+            'AKBC.ws/2019/Conference/Paper2/Authors',
+            'AKBC.ws/2019/Conference/Reviewers',
+            'AKBC.ws/2019/Conference/Area_Chairs',
+            'AKBC.ws/2019/Conference/Program_Chairs']
+
+        note = openreview.Note(invitation = invitation.id,
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Test Paper title 2',
+                'abstract': 'This is a test abstract 2',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'archival_status': 'Archival',
+                'subject_areas': [
+                    'Information Integration'
+                ]
+            }
+        )
+        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        client.post_note(note)
 
         builder.set_submission_stage(public = True, double_blind= True)
         conference = builder.get_result()
         blind_submissions_3 = conference.create_blind_submissions()
-        assert len(blind_submissions_3) == 0
+        assert blind_submissions_3
+        assert len(blind_submissions_3) == 3
+        assert blind_submissions[0].id == blind_submissions_3[0].id
+        assert blind_submissions_3[2].readers == ['everyone']
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
@@ -744,7 +796,7 @@ class TestDoubleBlindConference():
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)
@@ -833,7 +885,7 @@ class TestDoubleBlindConference():
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         reviews = test_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
         assert reviews
@@ -911,7 +963,7 @@ class TestDoubleBlindConference():
         builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
             forum = submission.id,
@@ -951,7 +1003,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         conference.set_assignment('meta_additional@mail.com', submission.number, is_area_chair = True)
 
@@ -992,7 +1044,7 @@ class TestDoubleBlindConference():
         pc_client = helpers.create_user('akbc_pc@mail.com', 'AKBC', 'Pc')
 
         notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
@@ -1066,7 +1118,6 @@ class TestDoubleBlindConference():
 
         #Program chair user
         pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
-
 
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference", pc_client.token)
         notes_panel = selenium.find_element_by_id('notes')
