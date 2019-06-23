@@ -64,6 +64,13 @@ var getInvitationId = function(name, number) {
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
 }
 
+var getInvitationRegex = function(name, numberStr) {
+  if (LEGACY_INVITATION_ID) {
+    return '^' + CONFERENCE_ID + '/-/Paper(' + numberStr + ')/' + name;
+  }
+  return '^' + CONFERENCE_ID + '/Paper(' + numberStr + ')/-/' + name;
+}
+
 // Ajax functions
 var loadData = function(result) {
   var noteNumbers = getPaperNumbersfromGroups(result.groups);
@@ -77,8 +84,9 @@ var loadData = function(result) {
       invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr, noDetails: true
     });
 
+    var noteNumberRegex = noteNumbers.join('|');
     metaReviewsP = Webfield.getAll('/notes', {
-      invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*'), noDetails: true
+      invitation: getInvitationRegex(OFFICIAL_META_REVIEW_NAME, noteNumberRegex), noDetails: true
     });
   } else {
     blindedNotesP = $.Deferred().resolve([]);
@@ -116,7 +124,7 @@ var getOfficialReviews = function(noteNumbers) {
   var noteMap = buildNoteMap(noteNumbers);
 
   return Webfield.getAll('/notes', {
-    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), noDetails: true
+    invitation: getInvitationRegex(OFFICIAL_REVIEW_NAME, noteNumbers.join('|')), noDetails: true
   })
   .then(function(notes) {
     var ratingExp = /^(\d+): .*/;
@@ -148,7 +156,7 @@ var getReviewerGroups = function(noteNumbers) {
 
   var noteMap = buildNoteMap(noteNumbers);
 
-  return Webfield.getAll('/groups', { id: ANONREVIEWER_WILDCARD })
+  return Webfield.getAll('/groups', { regex: ANONREVIEWER_WILDCARD })
   .then(function(groups) {
     _.forEach(groups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
