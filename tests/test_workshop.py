@@ -193,7 +193,6 @@ class TestWorkshop():
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
         assert len(papers.find_elements_by_class_name('note')) == 1
 
-
     def test_create_blind_submissions(self, client):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -220,23 +219,55 @@ class TestWorkshop():
         assert blind_submissions
         assert len(blind_submissions) == 1
 
+        note = openreview.Note(invitation = conference.get_submission_id(),
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc']
+            }
+        )
+        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        client.post_note(note)
+
         blind_submissions_2 = conference.create_blind_submissions()
         assert blind_submissions_2
-        assert len(blind_submissions_2) == 1
+        assert len(blind_submissions_2) == 2
         assert blind_submissions[0].id == blind_submissions_2[0].id
-        assert blind_submissions_2[0].readers == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
-         'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
-         'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs']
+        assert blind_submissions_2[1].readers == [
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors',
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'
+        ]
 
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
         conference = builder.get_result()
+
+        note = openreview.Note(invitation = conference.get_submission_id(),
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc']
+            }
+        )
+        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        note.content['pdf'] = url
+        client.post_note(note)
+
         blind_submissions_3 = conference.create_blind_submissions()
         assert blind_submissions_3
-        assert len(blind_submissions_3) == 1
+        assert len(blind_submissions_3) == 3
         assert blind_submissions[0].id == blind_submissions_3[0].id
-        assert blind_submissions_3[0].readers == ['everyone']
-
+        assert blind_submissions_3[2].readers == ['everyone']
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
@@ -263,7 +294,7 @@ class TestWorkshop():
         conference.set_reviewers(emails = ['reviewer4@mail.com'])
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         # Reviewer
         reviewer_client = helpers.create_user('reviewer4@mail.com', 'Reviewer', 'Four')
@@ -341,7 +372,7 @@ class TestWorkshop():
         assert conference
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert reviews
@@ -406,7 +437,6 @@ class TestWorkshop():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
@@ -432,7 +462,7 @@ class TestWorkshop():
         assert conference
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert reviews
@@ -475,7 +505,6 @@ class TestWorkshop():
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer4@mail.com' in recipients
 
-
     def test_open_meta_reviews(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -500,7 +529,7 @@ class TestWorkshop():
         conference.open_meta_reviews()
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Meta_Review',
             forum = submission.id,
@@ -546,7 +575,7 @@ class TestWorkshop():
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
         notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Decision',
             forum = submission.id,
@@ -637,7 +666,6 @@ class TestWorkshop():
         with pytest.raises(NoSuchElementException):
             assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4')
 
-
     def test_accepted_papers(self, client, test_client):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -685,7 +713,7 @@ class TestWorkshop():
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
         notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
-        submission = notes[0]
+        submission = notes[2]
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/-/Decision',
             forum = submission.id,
@@ -709,4 +737,4 @@ class TestWorkshop():
 
         notes = conference.get_submissions(accepted=False)
         assert notes
-        assert len(notes) == 2
+        assert len(notes) == 4

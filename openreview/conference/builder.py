@@ -372,39 +372,40 @@ class Conference(object):
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
 
-        submissions_by_original = { note.original: note.id for note in self.get_submissions() }
+        submissions_by_original = { note.original: note for note in self.get_submissions() }
 
         self.invitation_builder.set_blind_submission_invitation(self)
         blinded_notes = []
 
         for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
-            note_id = submissions_by_original.get(note.id)
-            blind_note = openreview.Note(
-                id = note_id,
-                original= note.id,
-                invitation= self.get_blind_submission_id(),
-                forum=None,
-                signatures= [self.id],
-                writers= [self.id],
-                readers= [self.id],
-                content= {
-                    "authors": ['Anonymous'],
-                    "authorids": [self.id],
-                    "_bibtex": None
-                })
+            blind_note = submissions_by_original.get(note.id)
+            if not blind_note:
+                blind_note = openreview.Note(
+                    id = None,
+                    original= note.id,
+                    invitation= self.get_blind_submission_id(),
+                    forum=None,
+                    signatures= [self.id],
+                    writers= [self.id],
+                    readers= [self.id],
+                    content= {
+                        "authors": ['Anonymous'],
+                        "authorids": [self.id],
+                        "_bibtex": None
+                    })
 
-            posted_blind_note = self.client.post_note(blind_note)
+                blind_note = self.client.post_note(blind_note)
 
-            posted_blind_note.readers = self.submission_stage.get_blind_readers(self, posted_blind_note.number)
+                blind_note.readers = self.submission_stage.get_blind_readers(self, blind_note.number)
 
-            posted_blind_note.content = {
-                'authorids': [self.get_authors_id(number = posted_blind_note.number)],
-                'authors': ['Anonymous'],
-                '_bibtex': None #Create bibtext automatically
-            }
+                blind_note.content = {
+                    'authorids': [self.get_authors_id(number = blind_note.number)],
+                    'authors': ['Anonymous'],
+                    '_bibtex': None #Create bibtext automatically
+                }
 
-            posted_blind_note = self.client.post_note(posted_blind_note)
-            blinded_notes.append(posted_blind_note)
+                blind_note = self.client.post_note(blind_note)
+            blinded_notes.append(blind_note)
 
         # Update page with double blind submissions
         self.__set_program_chair_page()
