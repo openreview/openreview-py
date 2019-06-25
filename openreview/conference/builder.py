@@ -472,9 +472,14 @@ class Conference(object):
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails):
+    def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
+
+            notes_iterator = self.get_submissions()
+            for n in notes_iterator:
+                self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
+
             return self.__set_area_chair_page()
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
