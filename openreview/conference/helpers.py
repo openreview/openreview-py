@@ -105,11 +105,7 @@ def get_review_stage(client, request_forum):
         except ValueError:
             review_due_date = datetime.datetime.strptime(request_forum.content.get('review_deadline', None), '%Y/%m/%d')
 
-    review_additional_fields = request_forum.content.get('additional_review_options', {})
-    if review_additional_fields:
-        review_additional_fields = json.loads(review_additional_fields)
-
-    return openreview.ReviewStage(start_date = review_start_date, due_date = review_due_date, allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'), public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'), release_to_authors = (request_forum.content.get('release_reviews_to_authors', False) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers', False) == 'Yes'), email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', False) == 'Yes'), additional_fields = review_additional_fields)
+    return openreview.ReviewStage(start_date = review_start_date, due_date = review_due_date, allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'), public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'), release_to_authors = (request_forum.content.get('release_reviews_to_authors', False) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers', False) == 'Yes'), email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', False) == 'Yes'))
 
 def get_meta_review_stage(client, request_forum):
     meta_review_start_date = None
@@ -126,11 +122,7 @@ def get_meta_review_stage(client, request_forum):
         except ValueError:
             meta_review_due_date = datetime.datetime.strptime(request_forum.content.get('meta_review_deadline', None), '%Y/%m/%d')
 
-    meta_review_additional_fields = request_forum.content.get('additional_meta_review_options', {})
-    if meta_review_additional_fields:
-        meta_review_additional_fields = json.loads(meta_review_additional_fields)
-
-    return openreview.MetaReviewStage(start_date = meta_review_start_date, due_date = meta_review_due_date, public = (request_forum.content.get('make_meta_reviews_public', None) == 'Yes'), additional_fields = meta_review_additional_fields)
+    return openreview.MetaReviewStage(start_date = meta_review_start_date, due_date = meta_review_due_date, public = (request_forum.content.get('make_meta_reviews_public', None) == 'Yes'))
 
 def get_decision_stage(client, request_forum):
     decision_start_date = None
