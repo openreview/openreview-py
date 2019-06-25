@@ -48,14 +48,18 @@ class Matching(object):
     def _build_conflicts(self, submissions, user_profiles):
 
         invitation = self._create_edge_invitation(self.conference.get_invitation_id('Conflicts'))
+        authorids_profiles = {}
 
-        edges = []
         for submission in submissions:
+            edges = []
             for profile in user_profiles:
                 authorids = submission.content['authorids']
                 if submission.details and submission.details.get('original'):
                     authorids = submission.details['original']['content']['authorids']
-                author_profiles = self._get_profiles(authorids)
+                if submission.number not in authorids_profiles:
+                    profiles = self._get_profiles(authorids)
+                    authorids_profiles[submission.number] = profiles
+                author_profiles = authorids_profiles[submission.number]
                 conflicts = openreview.tools.get_conflicts(author_profiles, profile)
                 if conflicts:
                     edges.append(openreview.Edge(
@@ -68,7 +72,7 @@ class Matching(object):
                         writers = [self.conference.id],
                         signatures = [self.conference.id]
                     ))
-        openreview.tools.post_bulk_edges(client = self.client, edges = edges)
+            openreview.tools.post_bulk_edges(client = self.client, edges = edges)
         return invitation
 
     def _build_tpms_scores(self, tpms_score_file, submissions, user_profiles):
@@ -84,18 +88,25 @@ class Matching(object):
         edges = []
         with open(tpms_score_file) as f:
             for row in csv.reader(f):
-                paper_note_id = submissions_per_number[int(row[0])].id
-                profile_id = profiles_by_email.get(row[1], { id: row[1] }).id
-                score = row[2]
-                edges.append(openreview.Edge(
-                    invitation = invitation.id,
-                    head = paper_note_id,
-                    tail = profile_id,
-                    weight = float(score),
-                    readers = [self.conference.id],
-                    writers = [self.conference.id],
-                    signatures = [self.conference.id]
-                ))
+                number = int(row[0])
+                if number in submissions_per_number:
+                    paper_note_id = submissions_per_number[number].id
+                    profile = profiles_by_email.get(row[1])
+                    if profile:
+                        profile_id = profile.id
+                    else:
+                        profile_id = row[1]
+
+                    score = row[2]
+                    edges.append(openreview.Edge(
+                        invitation = invitation.id,
+                        head = paper_note_id,
+                        tail = profile_id,
+                        weight = float(score),
+                        readers = [self.conference.id],
+                        writers = [self.conference.id],
+                        signatures = [self.conference.id]
+                    ))
 
         openreview.tools.post_bulk_edges(client = self.client, edges = edges)
         return invitation
@@ -323,8 +334,6 @@ class Matching(object):
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client, invitation = self.conference.get_blind_submission_id(), details='original'))
 
-        self._build_conflicts(submissions, user_profiles)
-
         if tpms_score_file:
             invitation = self._build_tpms_scores(tpms_score_file, submissions, user_profiles)
             score_spec[invitation.id] = {
@@ -346,6 +355,7 @@ class Matching(object):
                 'default': 0
             }
 
+        self._build_conflicts(submissions, user_profiles)
         self._build_config_invitation(score_spec)
 
 
