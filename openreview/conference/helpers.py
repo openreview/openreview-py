@@ -79,7 +79,7 @@ def get_conference(client, request_form_id):
 
 def get_bid_stage(client, request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
-    if request_forum.content.get('bid_start_date', '').strip():
+    if bid_start_date:
         try:
             bid_start_date = datetime.datetime.strptime(bid_start_date, '%Y/%m/%d %H:%M')
         except ValueError:
@@ -99,12 +99,12 @@ def get_bid_stage(client, request_forum):
     return openreview.BidStage(start_date = bid_start_date, due_date = bid_due_date, request_count = request_forum.content.get('bid_count', 50))
 
 def get_review_stage(client, request_forum):
-    review_start_date = None
-    if request_forum.content.get('review_start_date', '').strip():
+    review_start_date = request_forum.content.get('review_start_date', '').strip()
+    if review_start_date:
         try:
-            review_start_date = datetime.datetime.strptime(request_forum.content.get('review_start_date').strip(), '%Y/%m/%d %H:%M')
+            review_start_date = datetime.datetime.strptime(review_start_date, '%Y/%m/%d %H:%M')
         except ValueError:
-            review_start_date = datetime.datetime.strptime(request_forum.content.get('review_start_date').strip(), '%Y/%m/%d')
+            review_start_date = datetime.datetime.strptime(review_start_date, '%Y/%m/%d')
     else:
         review_start_date = None
 
@@ -120,7 +120,7 @@ def get_review_stage(client, request_forum):
     return openreview.ReviewStage(start_date = review_start_date, due_date = review_due_date, allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'), public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'), release_to_authors = (request_forum.content.get('release_reviews_to_authors', False) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers', False) == 'Yes'), email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', False) == 'Yes'))
 
 def get_meta_review_stage(client, request_forum):
-    meta_review_start_date = None
+    meta_review_start_date = request_forum.content.get('meta_review_start_date', None)
     if meta_review_start_date:
         try:
             meta_review_start_date = datetime.datetime.strptime(meta_review_start_date, '%Y/%m/%d %H:%M')
