@@ -552,6 +552,7 @@ class Client(object):
     def get_notes(self, id = None,
             paperhash = None,
             forum = None,
+            original = None,
             invitation = None,
             replyto = None,
             tauthor = None,
@@ -576,6 +577,8 @@ class Client(object):
         :type paperhash: str, optional
         :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
         :type forum: str, optional
+        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
+        :type original: str, optional
         :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
@@ -641,6 +644,7 @@ class Client(object):
         if details != None:
             params['details'] = details
         params['sort'] = sort
+        params['original'] = original
 
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -822,7 +826,7 @@ class Client(object):
         :type group: Group
         :param members: Members that will be added to the group. Members should be in a string, unicode or a list format
         :type members: str, list, unicode
-        
+
         :return: Group with the members added
         :rtype: Group
         """
@@ -1556,7 +1560,7 @@ class Profile(object):
     """
     :param id: Profile id
     :type id: str, optional
-    :param tcdate: True creation date 
+    :param tcdate: True creation date
     :type tcdate: int, optional
     :param tmdate: Modification date
     :type tmdate: int, optional
