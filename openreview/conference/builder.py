@@ -287,6 +287,9 @@ class Conference(object):
     def get_paper_assignment_id (self):
         return self.get_invitation_id('Paper_Assignment')
 
+    def get_alternate_paper_assignment_id (self):
+        return self.get_invitation_id('Alternate_Paper_Assignment')
+
     def set_homepage_header(self, header):
         self.homepage_header = header
 

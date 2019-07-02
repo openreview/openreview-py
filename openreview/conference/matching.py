@@ -206,6 +206,12 @@ class Matching(object):
                         'description': 'Min number of reviews a person should do',
                         'order': 5
                     },
+                    'alternates': {
+                        'value-regex': '[0-9]+',
+                        'required': True,
+                        'description': 'The number of alternate reviewers to create',
+                        'order': 5
+                    },
                     'paper_invitation': {
                         'value': self.conference.get_blind_submission_id(),
                         'required': True,
@@ -246,8 +252,14 @@ class Matching(object):
                     'assignment_invitation': {
                         'value': self.conference.get_invitation_id('Paper_Assignment'),
                         'required': True,
-                        'description': 'Invitation to store paper user assignments',
+                        'description': 'Invitation to store paper reviewer assignments',
                         'order': 12
+                    },
+                    'alternate_assignment_invitation': {
+                        'value': self.conference.get_invitation_id('Alternate_Paper_Assignment'),
+                        'required': True,
+                        'description': 'Invitation to store paper alternate reviewer assignments',
+                        'order': 13
                     },
                     'config_invitation': {
                         'value': self.conference.get_invitation_id('Assignment_Configuration')
@@ -327,6 +339,7 @@ class Matching(object):
             user_profiles = self._get_profiles(reviewers_group.members)
 
         self._create_edge_invitation(self.conference.get_paper_assignment_id())
+        self._create_edge_invitation(self.conference.get_alternate_paper_assignment_id())
         self._create_edge_invitation(self.conference.get_invitation_id('Aggregate_Score'))
         self._create_edge_invitation(self.conference.get_invitation_id('Custom_Load'))
         self._create_edge_invitation(self.conference.get_invitation_id('Conflicts'))
