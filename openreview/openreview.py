@@ -549,7 +549,7 @@ class Client(object):
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         return invitations
 
-    def get_notes(self, id = None,
+    def get_notes_response(self, id = None,
             paperhash = None,
             forum = None,
             original = None,
@@ -649,7 +649,93 @@ class Client(object):
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Note.from_json(n) for n in response.json()['notes']]
+        response_json = response.json()
+        response_json['notes'] = [Note.from_json(n) for n in response_json['notes']]
+        response_json['count'] = int(response_json['count'])
+
+        return response_json
+
+    def get_notes(self,
+            id = None,
+            paperhash = None,
+            forum = None,
+            invitation = None,
+            replyto = None,
+            tauthor = None,
+            signature = None,
+            writer = None,
+            trash = None,
+            number = None,
+            mintcdate = None,
+            content = None,
+            details = None,
+            sort = None):
+        """
+        Returns an iterator over Notes filtered by the provided parameters ignoring API limit.
+
+        :param client: Client used to get the Notes
+        :type client: Client
+        :param id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+        :type id: str, optional
+        :param paperhash: a "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument. (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely identify the Note)
+        :type paperhash: str, optional
+        :param forum: a Note ID. If provided, returns Notes whose forum matches the given ID.
+        :type forum: str, optional
+        :param invitation: an Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+        :param replyto: a Note ID. If provided, returns Notes whose replyto field matches the given ID.
+        :type replyto: str, optional
+        :param tauthor: a Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
+        :type tauthor: str, optional
+        :param signature: a Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+        :type signature: str, optional
+        :param writer: a Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+        :type writer: str, optional
+        :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the current date)
+        :type trash: bool, optional
+        :param number: If present, includes Notes whose number field equals the given integer.
+        :type number: int, optional
+        :param mintcdate: Represents an Epoch time timestamp in milliseconds. If provided, returns Notes whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+        :type mintcdate: int, optional
+        :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
+        :type content: dict, optional
+        :param details: TODO: What is a valid value for this field?
+        :type details: str, optional
+
+        :return: Iterator over Notes filtered by the provided parameters
+        :rtype: iterget
+        """
+        params = {}
+        if id != None:
+            params['id'] = id
+        if paperhash != None:
+            params['paperhash'] = paperhash
+        if forum != None:
+            params['forum'] = forum
+        if invitation != None:
+            params['invitation'] = invitation
+        if replyto != None:
+            params['replyto'] = replyto
+        if tauthor != None:
+            params['tauthor'] = tauthor
+        if signature != None:
+            params['signature'] = signature
+        if writer != None:
+            params['writer'] = writer
+        if trash == True:
+            params['trash']=True
+        if number != None:
+            params['number'] = number
+        if mintcdate != None:
+            params['mintcdate'] = mintcdate
+        if content != None:
+            params['content'] = content
+        if details != None:
+            params['details'] = details
+        params['sort'] = sort
+
+        return iterget(self.get_notes_response, **params)
+
 
     def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
         """
@@ -1675,3 +1761,74 @@ class Profile(object):
         )
         return profile
 
+class iterget:
+    """
+    This class can create an iterator from a getter method that returns a list. Below all the iterators that can be created from a getter method:
+
+    :meth:`openreview.Client.get_tags` --> :func:`tools.iterget_tags`
+
+    :meth:`openreview.Client.get_notes` --> :func:`tools.iterget_notes`
+
+    :meth:`openreview.Client.get_references` --> :func:`tools.iterget_references`
+
+    :meth:`openreview.Client.get_invitations` --> :func:`tools.iterget_invitations`
+
+    :meth:`openreview.Client.get_groups` --> :func:`tools.iterget_groups`
+
+    :param get_function: Any of the aforementioned methods
+    :type get_function: function
+    :param params: Dictionary containing parameters for the corresponding method. Refer to the passed method documentation for details
+    :type params: dict
+    """
+    def __init__(self, get_function, **params):
+        self.offset = 0
+
+        self.last_batch = False
+        self.batch_finished = False
+        self.obj_index = 0
+        self.all_objects = []
+
+        self.params = params
+        self.params.update({
+            'offset': self.offset,
+            'limit': 1000
+        })
+
+        self.get_function = get_function
+
+        self.update_batch()
+
+    def update_batch(self):
+        self.params['offset'] = self.offset
+
+        response_keys = {
+            'get_notes_response': 'notes'
+        }
+        self.current_response = self.get_function(**self.params)
+        self.response_key = response_keys[self.get_function.__name__]
+
+        self.current_batch = self.current_response['notes']
+        self.all_objects.extend(self.current_batch)
+        self.total_count = self.current_response['count']
+
+        self.offset += self.params['limit']
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.current_batch) == 0:
+            raise StopIteration
+        else:
+            next_obj = self.current_batch[self.obj_index]
+            if (self.obj_index + 1) == len(self.current_batch):
+                self.update_batch()
+                self.obj_index = 0
+            else:
+                self.obj_index += 1
+            return next_obj
+
+    next = __next__
+
+    def __len__(self):
+        return self.total_count
