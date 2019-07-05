@@ -573,8 +573,8 @@ def iterget_tags(client, id = None, invitation = None, forum = None):
     """
     Returns an iterator over Tags ignoring API limit.
 
-    Example: 
-    
+    Example:
+
     >>> iterget_tags(client, invitation='MyConference.org/-/Bid_Tags')
 
     :param client: Client used to get the Tags
@@ -679,7 +679,7 @@ def iterget_notes(client,
         params['details'] = details
     params['sort'] = sort
 
-    return iterget(client.get_notes, **params)
+    return client.get_notes(**params)
 
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
     """
@@ -726,7 +726,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     :type minduedate: int, optional
     :param duedate: Represents an Epoch time timestamp in milliseconds. If provided, returns Invitations whose duedate field matches the given duedate.
     :type duedate: int, optional
-    :param pastdue: 
+    :param pastdue:
     :type pastdue: bool, optional
     :param replytoNote: a Note ID. If provided, returns Invitations whose replytoNote field contains the given Note ID.
     :type replytoNote: str, optional
