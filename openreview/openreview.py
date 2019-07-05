@@ -1817,16 +1817,20 @@ class iterget:
     def __iter__(self):
         return self
 
+    def __getitem__(self, i):
+        while len(self.all_objects) <= i:
+            self.update_batch()
+
+        return self.all_objects[i]
+
     def __next__(self):
         if len(self.current_batch) == 0:
             raise StopIteration
         else:
-            next_obj = self.current_batch[self.obj_index]
-            if (self.obj_index + 1) == len(self.current_batch):
+            next_obj = self.all_objects[self.obj_index]
+            if (self.obj_index + 1) == len(self.all_objects):
                 self.update_batch()
-                self.obj_index = 0
-            else:
-                self.obj_index += 1
+            self.obj_index += 1
             return next_obj
 
     next = __next__
