@@ -1796,18 +1796,19 @@ class iterget:
 
         self.get_function = get_function
 
+        self.response_keys = {
+            'get_notes_response': 'notes'
+        }
+        self.response_key = self.response_keys[self.get_function.__name__]
+
         self.update_batch()
 
     def update_batch(self):
         self.params['offset'] = self.offset
 
-        response_keys = {
-            'get_notes_response': 'notes'
-        }
         self.current_response = self.get_function(**self.params)
-        self.response_key = response_keys[self.get_function.__name__]
 
-        self.current_batch = self.current_response['notes']
+        self.current_batch = self.current_response[self.response_key]
         self.all_objects.extend(self.current_batch)
         self.total_count = self.current_response['count']
 
