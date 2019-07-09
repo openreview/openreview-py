@@ -13,7 +13,7 @@ import os
 import getpass
 import re
 import datetime
-
+from collections import defaultdict
 
 
 class OpenReviewException(Exception):
@@ -565,6 +565,19 @@ class Client(object):
         response = self.__handle_response(response)
 
         return [Edge.from_json(t) for t in response.json()['edges']]
+
+    def get_edges_group (self, invitation, groupby='head', project='tail', limit=1000):
+        params = {}
+        params['id'] = None
+        params['invitation'] = invitation
+        params['groupBy'] = groupby
+        params['project'] = project
+        params['limit'] = limit
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+        json = response.json()
+        return json
+
 
     def post_group(self, group, overwrite = True):
         """

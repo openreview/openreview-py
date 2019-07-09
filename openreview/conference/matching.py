@@ -206,6 +206,12 @@ class Matching(object):
                         'description': 'Min number of reviews a person should do',
                         'order': 5
                     },
+                    'alternates': {
+                        'value-regex': '[0-9]+',
+                        'required': True,
+                        'description': 'The best N percent (expressed as an integer) of scores that result in generating aggregate score edges that can be used for selecting alternates',
+                        'order': 5
+                    },
                     'paper_invitation': {
                         'value': self.conference.get_blind_submission_id(),
                         'required': True,
