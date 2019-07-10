@@ -566,17 +566,30 @@ class Client(object):
 
         return [Edge.from_json(t) for t in response.json()['edges']]
 
-    def get_edges_group (self, invitation, groupby='head', project='tail', limit=1000):
+    def get_edges_group (self, invitation, groupby='head', select='tail', limit=None, offset=None):
+        '''
+        Returns a list of JSON objects where each one represents a group of edges.  For example calling this
+        method with default arguments will give back a list of groups where each group is of the form:
+        {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
+        Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
+        :param invitation:
+        :param groupby:
+        :param select:
+        :param limit:
+        :param offset:
+        :return:
+        '''
         params = {}
         params['id'] = None
         params['invitation'] = invitation
         params['groupBy'] = groupby
-        params['project'] = project
+        params['select'] = select
         params['limit'] = limit
+        params['offset'] = offset
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
-        return json
+        return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
 
     def post_group(self, group, overwrite = True):
