@@ -18,6 +18,8 @@ from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
 
+import ipdb
+
 def get_profile(client, value):
     """
     Get a single profile (a note) by id, if available
@@ -145,18 +147,30 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
+
 def create_authorid_profiles(client, note, print=print):
     # for all submissions get authorids, if in form of email address, try to find associated profile
     # if profile doesn't exist, create one
     created_profiles = []
 
+    def clean_name(name):
+        '''
+        Replaces invalid characters with equivalent valid ones.
+        '''
+
+        return name.replace('’', "'")
+
     def get_names(author_name):
+        '''
+        Splits a string into first and last (and middle, if applicable) names.
+        '''
+
         names = author_name.split(' ')
         if len(names) > 1:
             first = names[0]
             last = names[-1]
             middle = ' '.join(names[1:-1])
-            return [first, last, middle]
+            return [clean_name(n) for n in [first, last, middle]]
         else:
             return []
 
@@ -179,16 +193,17 @@ def create_authorid_profiles(client, note, print=print):
                             try:
                                 profile = create_profile(client = client, email = author_id, first = names[0], last = names[1], middle = names[2])
                                 created_profiles.append(profile)
-                                print(note.id + ': profile created: ' + profile.id)
+                                print('{}: profile created with id {}'.format(note.id, profile.id))
                             except openreview.OpenReviewException as e:
                                 if "There is already a profile with " in "{0}".format(e):
-                                    print(note.id, 'profile for', author_id, 'exists')
+                                    print('{}: {}'.format(note.id, e))
                                 else:
+                                    ipdb.set_trace()
                                     raise e
                         else:
-                            print(note.id, 'invalid author name', author_name)
+                            print('{}: invalid author name {}'.format(note.id, author_name))
                     else:
-                        print(note.id, 'potential author name/email mismatch', author_name, author_id)
+                        print('{}: potential author name/email mismatch: {}/{}'.format(note.id, author_name, author_id))
         else:
             print('{}: length mismatch. authors ({}), authorids ({})'.format(
                 note.id,
