@@ -72,7 +72,7 @@ class TestTools():
             'Ada Lovelace',
             'Alan Turing',
             'Edsger W. Dijkstra',
-            'Grace Hopper',
+            'Grace Hopper'
         ]
 
         authorids = [

@@ -18,9 +18,6 @@ from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
 
-
-super_user_id = 'OpenReview.net'
-
 def get_profile(client, value):
     """
     Get a single profile (a note) by id, if available
@@ -120,8 +117,8 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
         tilde_id = username_response_full['username']
         if (not profile_exists) or allow_duplicates:
 
-            tilde_group = openreview.Group(id = tilde_id, signatures = [super_user_id], signatories = [tilde_id], readers = [tilde_id], writers = [super_user_id], members = [email])
-            email_group = openreview.Group(id = email, signatures = [super_user_id], signatories = [email], readers = [email], writers = [super_user_id], members = [tilde_id])
+            tilde_group = openreview.Group(id = tilde_id, signatures = [client.profile.id], signatories = [tilde_id], readers = [tilde_id], writers = [client.profile.id], members = [email])
+            email_group = openreview.Group(id = email, signatures = [client.profile.id], signatories = [email], readers = [email], writers = [client.profile.id], members = [tilde_id])
             profile_content = {
                 'emails': [email],
                 'preferredEmail': email,
@@ -184,8 +181,10 @@ def create_authorid_profiles(client, note, print=print):
                                 created_profiles.append(profile)
                                 print(note.id + ': profile created: ' + profile.id)
                             except openreview.OpenReviewException as e:
-                                if not "There is already a profile with " in "{0}".format(e):
+                                if "There is already a profile with " in "{0}".format(e):
                                     print(note.id, 'profile for', author_id, 'exists')
+                                else:
+                                    raise e
                         else:
                             print(note.id, 'invalid author name', author_name)
                     else:
