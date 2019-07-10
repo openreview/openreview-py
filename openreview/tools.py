@@ -148,6 +148,57 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
+def create_authorid_profiles(client, note, print=print):
+    # for all submissions get authorids, if in form of email address, try to find associated profile
+    # if profile doesn't exist, create one
+    created_profiles = []
+
+    def get_names(author_name):
+        names = author_name.split(' ')
+        if len(names) > 1:
+            first = names[0]
+            last = names[-1]
+            middle = ' '.join(names[1:-1])
+            return [first, last, middle]
+        else:
+            return []
+
+    if 'authorids' in note.content and 'authors' in note.content:
+        author_names = [a.replace('*', '') for a in note.content['authors']]
+        author_emails = [e for e in note.content['authorids']]
+        if len(author_names) == len(author_emails):
+
+            email_by_authorname = match_authors_to_emails(author_names, author_emails)
+
+            # iterate through authorids and authors at the same time
+            for (author_id, author_name) in zip(author_emails, author_names):
+                author_id = author_id.strip()
+                author_name = author_name.strip()
+
+                if '@' in author_id:
+                    if email_by_authorname.get(author_name) == author_id:
+                        names = get_names(author_name)
+                        if names:
+                            try:
+                                profile = create_profile(client = client, email = author_id, first = names[0], last = names[1], middle = names[2])
+                                created_profiles.append(profile)
+                                print(note.id + ': profile created: ' + profile.id)
+                            except openreview.OpenReviewException as e:
+                                if not "There is already a profile with " in "{0}".format(e):
+                                    print(note.id + ': profile for ' + author_id + ' exists')
+                        else:
+                            print(note.id + ': invalid author name ' + author_name)
+                    else:
+                        print(f'{note.id}: potential author name/email mismatch: {author_name}/{author_id}')
+        else:
+            print('{}: length mismatch. authors ({}), authorids ({})'.format(
+                note.id,
+                len(author_names),
+                len(author_emails)
+                ))
+
+    return created_profiles
+
 def get_preferred_name(profile):
     """
     Accepts openreview.Profile object

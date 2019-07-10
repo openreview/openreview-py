@@ -67,3 +67,36 @@ class TestTools():
         for name, email in correct_pairs:
             assert result[name] == email
 
+    def test_create_authorid_profiles(self, client):
+        authors = [
+            'Ada Lovelace',
+            'Alan Turing',
+            'Edsger W. Dijkstra',
+            'Grace Hopper',
+        ]
+
+        authorids = [
+            'ada@lovelacemanor.org',
+            'turing@princeton.edu',
+            'ed.dijkstra@uva.nl',
+            'ghopper@yale.edu'
+        ]
+
+        note = openreview.Note.from_json({
+            'content': {
+                'authors': authors,
+                'authorids': authorids
+            }
+        })
+
+        profiles_created = openreview.tools.create_authorid_profiles(
+            client, note)
+
+        for author, email in zip(authors, authorids):
+            result = client.search_profiles(term=author)
+            assert any([email in p.content['emails'] for p in result])
+
+
+
+
+
