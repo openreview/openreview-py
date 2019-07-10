@@ -83,6 +83,7 @@ class TestTools():
         ]
 
         note = openreview.Note.from_json({
+            'id': 'MOCK_NOTE',
             'content': {
                 'authors': authors,
                 'authorids': authorids
