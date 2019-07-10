@@ -185,11 +185,11 @@ def create_authorid_profiles(client, note, print=print):
                                 print(note.id + ': profile created: ' + profile.id)
                             except openreview.OpenReviewException as e:
                                 if not "There is already a profile with " in "{0}".format(e):
-                                    print(note.id + ': profile for ' + author_id + ' exists')
+                                    print(note.id, 'profile for', author_id, 'exists')
                         else:
-                            print(note.id + ': invalid author name ' + author_name)
+                            print(note.id, 'invalid author name', author_name)
                     else:
-                        print(f'{note.id}: potential author name/email mismatch: {author_name}/{author_id}')
+                        print(note.id, 'potential author name/email mismatch', author_name, author_id)
         else:
             print('{}: length mismatch. authors ({}), authorids ({})'.format(
                 note.id,
