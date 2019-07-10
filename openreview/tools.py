@@ -18,8 +18,6 @@ from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
 
-import ipdb
-
 def get_profile(client, value):
     """
     Get a single profile (a note) by id, if available
@@ -198,7 +196,6 @@ def create_authorid_profiles(client, note, print=print):
                                 if "There is already a profile with " in "{0}".format(e):
                                     print('{}: {}'.format(note.id, e))
                                 else:
-                                    ipdb.set_trace()
                                     raise e
                         else:
                             print('{}: invalid author name {}'.format(note.id, author_name))
