@@ -613,15 +613,16 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
-  nextAnonNumber = 1;
   paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers);
-  for (var i = 1;; i++) {
-    if (paperReviewerNums.indexOf(i.toString()) === -1) {
-      nextAnonNumber = i;
-      break;
+  for (var i = 1; paperReviewerNums.length + 1; i++) {
+    var searchResult = _.find(paperReviewerNums, function(p){
+      return p === i.toString();
+    });
+    if (!searchResult) {
+      return i;
     }
   }
-  return nextAnonNumber;
+  return paperReviewerNums.length + 1;
 }
 
 // Event Handlers
@@ -681,7 +682,7 @@ var registerEventHandlers = function() {
     }
   });
 
-  $('#group-container').on('click', 'button.btn.assign-reviewer-button', function(e) {
+  $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) {
     var $link = $(this);
     var paperNumber = $link.data('paperNumber');
     var paperForum = $link.data('paperForum');
