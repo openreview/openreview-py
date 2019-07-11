@@ -46,8 +46,8 @@ class Conference(object):
         if group is None:
             return self.client.post_group(openreview.Group(
                 id = group_id,
-                readers = [self.id, group_owner_id, group_id].extend(additional_readers),
-                writers = [self.id].extend(additional_writers),
+                readers = [self.id, group_owner_id, group_id] + additional_readers,
+                writers = [self.id] + additional_writers,
                 signatures = [self.id],
                 signatories = [group_id] if is_signatory else [self.id],
                 members = members))
