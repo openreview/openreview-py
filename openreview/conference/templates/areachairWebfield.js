@@ -649,7 +649,7 @@ var registerEventHandlers = function() {
       $('#message-reviewers-modal').modal('hide');
       // promptMessage('Your reminder email has been sent to ' + view.prettyId(userId));
       postReviewerEmails(postData);
-      $link.after(' (Last sent: ' + (new Date()).toLocaleDateString());
+      $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
       return false;
     };
@@ -674,27 +674,20 @@ var registerEventHandlers = function() {
   });
 
   $('#group-container').on('click', 'a.collapse-btn', function(e) {
-    // $(this).next().slideToggle();
     if ($(this).text() === 'Show reviewers') {
       $(this).text('Hide reviewers');
     } else {
       $(this).text('Show reviewers');
     }
-    // return false;
   });
 
   $('#group-container').on('click', 'button.btn.assign-reviewer-button', function(e) {
     var $link = $(this);
     var paperNumber = $link.data('paperNumber');
     var paperForum = $link.data('paperForum');
-    console.log(paperNumber);
-    console.log(paperForum);
     var $currDiv = $('#' + paperForum + '-add-reviewer');
-    console.log($currDiv);
     userToAdd = $currDiv.find('input').val().trim();
-    console.log(userToAdd);
     nextAnonNumber = findNextAnonGroupNumber(paperNumber);
-    console.log(nextAnonNumber);
     $.when(
       Webfield.put('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
@@ -720,7 +713,7 @@ var registerEventHandlers = function() {
         noteId: paperForum,
         invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
       });
-    var lastReminderSent = localStorage.getItem(forumUrl + '|' + userToAdd);
+    var lastReminderSent = null;
     reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
       id: userToAdd,
       name: '',
