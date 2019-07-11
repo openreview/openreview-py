@@ -1,6 +1,7 @@
 
 // Constants
 var CONFERENCE_ID = '';
+var SHORT_PHRASE = ''
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
@@ -12,6 +13,8 @@ var LEGACY_INVITATION_ID = false;
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair.*';
+
+var reviewerSummaryMap = {};
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -53,6 +56,7 @@ var buildNoteMap = function(noteNumbers) {
   var noteMap = Object.create(null);
   for (var i = 0; i < noteNumbers.length; i++) {
     noteMap[noteNumbers[i]] = Object.create(null);
+    reviewerSummaryMap[noteNumbers[i]] = Object.create(null);
   }
   return noteMap;
 };
@@ -545,19 +549,25 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
         id: reviewer.id,
         name: reviewer.name,
         email: reviewer.email,
+        forum: note.forum,
         forumUrl: forumUrl,
-        lastReminderSent: lastReminderSent ? new Date(parseInt(lastReminderSent)).toLocaleDateString() : lastReminderSent
+        lastReminderSent: lastReminderSent ? new Date(parseInt(lastReminderSent)).toLocaleDateString() : lastReminderSent,
+        paperNumber: note.number,
+        reviewerNumber: reviewerNum
       };
     }
   }
 
   var cell2 = {
     noteId: note.id,
+    paperNumber: note.number,
     numSubmittedReviews: Object.keys(completedReviews).length,
     numReviewers: Object.keys(reviewerIds).length,
     reviewers: combinedObj,
-    sendReminder: true
+    sendReminder: true,
+    expandReviewerList: false
   };
+  reviewerSummaryMap[note.number] = cell2;
 
   // Rating cell
   var cell3 = {
@@ -600,6 +610,17 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
   return [cellCheck, cell0, cell1, cell2, cell3, cell4, cell5];
 };
 
+var findNextAnonGroupNumber = function(paperNumber){
+  nextAnonNumber = 1;
+  paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers);
+  for (var i = 1;; i++) {
+    if (paperReviewerNums.indexOf(i.toString()) === -1) {
+      nextAnonNumber = i;
+      break;
+    }
+  }
+  return nextAnonNumber;
+}
 
 // Event Handlers
 var registerEventHandlers = function() {
@@ -651,12 +672,94 @@ var registerEventHandlers = function() {
   });
 
   $('#group-container').on('click', 'a.collapse-btn', function(e) {
-    $(this).next().slideToggle();
+    // $(this).next().slideToggle();
     if ($(this).text() === 'Show reviewers') {
       $(this).text('Hide reviewers');
     } else {
       $(this).text('Show reviewers');
     }
+    // return false;
+  });
+
+  $('#group-container').on('click', 'button.btn.assign-reviewer-button', function(e) {
+    var $link = $(this);
+    var paperNumber = $link.data('paperNumber');
+    var paperForum = $link.data('paperForum');
+    console.log(paperNumber);
+    console.log(paperForum);
+    var $currDiv = $('#' + paperForum + '-add-reviewer');
+    console.log($currDiv);
+    userToAdd = $currDiv.find('input').val().trim();
+    console.log(userToAdd);
+    nextAnonNumber = findNextAnonGroupNumber(paperNumber);
+    console.log(nextAnonNumber);
+    $.when(
+      Webfield.put('/groups/members', {
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+        members: [userToAdd]
+      }),
+      Webfield.post('/groups', {
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
+        members: [userToAdd],
+        readers: [
+          CONFERENCE_ID + '/Program_Chairs',
+          CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs',
+          CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber],
+        writers: [
+          CONFERENCE_ID + '/Program_Chairs',
+          CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
+        signatures: [CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
+        signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
+      }),
+      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been assigned to paper ' + paperNumber)
+    );
+    var forumUrl = 'https://openreview.net/forum?' + $.param({
+        id: paperForum,
+        noteId: paperForum,
+        invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
+      });
+    var lastReminderSent = localStorage.getItem(forumUrl + '|' + userToAdd);
+    reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
+      id: userToAdd,
+      name: '',
+      email: userToAdd,
+      forum: paperForum,
+      forumUrl: forumUrl,
+      lastReminderSent: lastReminderSent,
+      paperNumber: paperNumber,
+      reviewerNumber: nextAnonNumber
+    };
+    reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
+    reviewerSummaryMap[paperNumber].expandReviewerList = true;
+    var $revProgressDiv = $('#' + paperForum + '-reviewer-progress')
+    $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+    return false;
+  });
+
+   $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
+    var $link = $(this);
+    var userId = $link.data('userId');
+    var paperNumber = $link.data('paperNumber');
+    var paperForum = $link.data('paperForum');
+    var reviewerNumber = $link.data('reviewerNumber');
+
+     var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
+    delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
+    reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
+    reviewerSummaryMap[paperNumber].expandReviewerList = true;
+    $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+
+     $.when(
+      Webfield.delete('/groups/members', {
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+        members: [userId]
+      }),
+      Webfield.delete('/groups/members', {
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
+        members: [userId]
+      }),
+      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber)
+    );
     return false;
   });
 };
