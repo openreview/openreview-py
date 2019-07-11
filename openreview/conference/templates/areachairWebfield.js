@@ -716,9 +716,11 @@ var registerEventHandlers = function() {
           CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
         signatures: [CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
         signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
-      }),
+      })
+    )
+    .then(function(results) {
       promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been assigned to paper ' + paperNumber)
-    );
+    });
     var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: paperForum,
         noteId: paperForum,
@@ -765,9 +767,11 @@ var registerEventHandlers = function() {
       Webfield.delete('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
         members: [userId]
-      }),
+      })
+    )
+    .then(function(results) {
       promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber)
-    );
+    });
     return false;
   });
 };
