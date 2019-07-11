@@ -613,12 +613,9 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
-  paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers);
+  paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; paperReviewerNums.length + 1; i++) {
-    var searchResult = _.find(paperReviewerNums, function(p){
-      return p === i.toString();
-    });
-    if (!searchResult) {
+    if (i.toString() !== paperReviewerNums[i]) {
       return i;
     }
   }
@@ -687,8 +684,21 @@ var registerEventHandlers = function() {
     var paperNumber = $link.data('paperNumber');
     var paperForum = $link.data('paperForum');
     var $currDiv = $('#' + paperForum + '-add-reviewer');
-    userToAdd = $currDiv.find('input').val().trim();
-    nextAnonNumber = findNextAnonGroupNumber(paperNumber);
+    var userToAdd = $currDiv.find('input').val().trim();
+
+    if (!userToAdd) {
+      promptError('Please enter a valid email for assigning a reviewer');
+      return false;
+    }
+    var alreadyAssigned = _.find(reviewerSummaryMap[paperNumber].reviewers, function(rev){
+      return (rev.email === userToAdd) || (rev.id === userToAdd);
+    });
+    if (alreadyAssigned) {
+      promptError('Reviewer ' + userToAdd + ' has already been assigned to Paper ' + paperNumber.toString());
+      return false;
+    }
+
+    var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
     $.when(
       Webfield.put('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
