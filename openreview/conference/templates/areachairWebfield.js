@@ -746,7 +746,7 @@ var registerEventHandlers = function() {
     return false;
   });
 
-   $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
+  $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     var $link = $(this);
     var userId = $link.data('userId');
     var paperNumber = $link.data('paperNumber');
