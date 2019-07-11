@@ -193,10 +193,7 @@ def create_authorid_profiles(client, note, print=print):
                                 created_profiles.append(profile)
                                 print('{}: profile created with id {}'.format(note.id, profile.id))
                             except openreview.OpenReviewException as e:
-                                if "There is already a profile with " in "{0}".format(e):
-                                    print('{}: {}'.format(note.id, e))
-                                else:
-                                    raise e
+                                print('{}: {}'.format(note.id, e))
                         else:
                             print('{}: invalid author name {}'.format(note.id, author_name))
                     else:
