@@ -41,16 +41,13 @@ class Conference(object):
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = None, additional_writers = None):
-        if additional_readers and not type(additional_readers) == list :
-            additional_readers = [additional_readers]
-        if additional_writers and not type(additional_writers) == list :
-            additional_writers = [additional_writers]
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], additional_writers = []):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
-            return self.client.post_group(openreview.Group(id = group_id,
-                readers = [self.id, group_owner_id, group_id].extend(additional_readers if additional_readers else []),
-                writers = [self.id].extend(additional_writers if additional_writers else []),
+            return self.client.post_group(openreview.Group(
+                id = group_id,
+                readers = [self.id, group_owner_id, group_id].extend(additional_readers),
+                writers = [self.id].extend(additional_writers),
                 signatures = [self.id],
                 signatories = [group_id] if is_signatory else [self.id],
                 members = members))
@@ -522,8 +519,8 @@ class Conference(object):
                 self.get_reviewers_id(number = n.number),
                 self.id,
                 is_signatory = True,
-                additional_readers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else None,
-                additional_writers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else None
+                additional_readers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else [],
+                additional_writers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else []
             )
 
         return self.__set_reviewer_page()
@@ -537,8 +534,8 @@ class Conference(object):
                 group_id = '{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number),
                 group_owner_id = self.id,
                 is_signatory = False,
-                additional_readers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else None,
-                additional_writers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else None
+                additional_readers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else [],
+                additional_writers = ['{conference_id}/Paper{number}/Area_Chairs'.format(conference_id = self.id, number = n.number)] if self.use_area_chairs else []
             )
 
             authorids = n.content.get('authorids')
