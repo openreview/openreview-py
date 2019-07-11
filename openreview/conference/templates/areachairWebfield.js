@@ -9,6 +9,7 @@ var AREA_CHAIR_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
 var LEGACY_INVITATION_ID = false;
+var ENABLE_REVIEWER_REASSIGNMENT = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
@@ -565,7 +566,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
     numReviewers: Object.keys(reviewerIds).length,
     reviewers: combinedObj,
     sendReminder: true,
-    expandReviewerList: false
+    expandReviewerList: false,
+    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
   };
   reviewerSummaryMap[note.number] = cell2;
 
@@ -731,7 +733,9 @@ var registerEventHandlers = function() {
     };
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
-    var $revProgressDiv = $('#' + paperForum + '-reviewer-progress')
+    reviewerSummaryMap[paperNumber].sendReminder = true;
+    reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
+    var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     return false;
   });
@@ -743,13 +747,13 @@ var registerEventHandlers = function() {
     var paperForum = $link.data('paperForum');
     var reviewerNumber = $link.data('reviewerNumber');
 
-     var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
+    var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
     delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
 
-     $.when(
+    $.when(
       Webfield.delete('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
         members: [userId]
