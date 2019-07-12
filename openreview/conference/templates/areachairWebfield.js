@@ -615,7 +615,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
 var findNextAnonGroupNumber = function(paperNumber){
   paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; paperReviewerNums.length + 1; i++) {
-    if (i.toString() !== paperReviewerNums[i]) {
+    if (i.toString() !== paperReviewerNums[i-1]) {
       return i;
     }
   }
