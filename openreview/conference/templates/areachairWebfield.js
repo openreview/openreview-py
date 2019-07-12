@@ -36,6 +36,24 @@ var main = function() {
 
 
 // Util functions
+var findProfile = function(profiles, id) {
+  var profile = _.find(profiles, function(p) {
+    return _.find(p.content.names, function(n) { return n.username == id; }) || _.includes(p.content.emails, id);
+  });
+  if (profile) {
+    return profile;
+  } else {
+    return {
+      id: id,
+      name: '',
+      email: id,
+      content: {
+        names: [{ username: id }]
+      }
+    }
+  }
+}
+
 var getNumberfromGroup = function(groupId, name) {
 
   var tokens = groupId.split('/');
@@ -197,18 +215,38 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, noteToRevi
 };
 
 var getUserProfiles = function(userIds) {
-  var profileMap = {};
+  var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
+  var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
 
-  return Webfield.post('/user/profiles', { ids: userIds })
-  .then(function(result) {
-    _.forEach(result.profiles, function(profile) {
+  return $.when(
+    controller.post('/profiles/search', JSON.stringify({ids: ids})),
+    controller.post('/profiles/search', JSON.stringify({emails: emails}))
+  )
+  .then(function(result1, result2) {
+
+    var profileMap = {};
+
+    _.forEach(result1.profiles, function(profile) {
+
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profileMap[profile.id] = profile;
-    });
+    })
+
+    _.forEach(result2.profiles, function(profile) {
+
+      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+      profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profileMap[profile.id] = profile;
+    })
 
     return profileMap;
+  })
+  .fail(function(error) {
+    displayError();
+    return null;
   });
 };
 
@@ -245,7 +283,8 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
       var uId = revIds[revNumber];
-      revIds[revNumber] = _.get(profiles, uId, { id: uId, name: '', email: uId });
+      revIds[revNumber] = findProfile(profiles, uId);
+      // revIds[revNumber] = _.get(profiles, uId, { id: uId, name: '', email: uId });
     }
 
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
@@ -727,7 +766,7 @@ var registerEventHandlers = function() {
       var lastReminderSent = null;
       reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
         id: userToAdd,
-        name: '',
+        name: userToAdd.startsWith('~') ? view.prettyId(userToAdd) : '',
         email: userToAdd,
         forum: paperForum,
         forumUrl: forumUrl,
