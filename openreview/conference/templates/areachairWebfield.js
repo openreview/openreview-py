@@ -699,12 +699,12 @@ var registerEventHandlers = function() {
     }
 
     var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
-    $.when(
-      Webfield.put('/groups/members', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-        members: [userToAdd]
-      }),
-      Webfield.post('/groups', {
+    Webfield.put('/groups/members', {
+      id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+      members: [userToAdd]
+    })
+    .then(function(result) {
+      return Webfield.post('/groups', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
         members: [userToAdd],
         readers: [
@@ -717,32 +717,34 @@ var registerEventHandlers = function() {
         signatures: [CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
         signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
       })
-    )
+    })
     .then(function(results) {
-      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been assigned to paper ' + paperNumber)
-    });
-    var forumUrl = 'https://openreview.net/forum?' + $.param({
+      var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: paperForum,
         noteId: paperForum,
         invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
       });
-    var lastReminderSent = null;
-    reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
-      id: userToAdd,
-      name: '',
-      email: userToAdd,
-      forum: paperForum,
-      forumUrl: forumUrl,
-      lastReminderSent: lastReminderSent,
-      paperNumber: paperNumber,
-      reviewerNumber: nextAnonNumber
-    };
-    reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
-    reviewerSummaryMap[paperNumber].expandReviewerList = true;
-    reviewerSummaryMap[paperNumber].sendReminder = true;
-    reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
-    var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
-    $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+      var lastReminderSent = null;
+      reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
+        id: userToAdd,
+        name: '',
+        email: userToAdd,
+        forum: paperForum,
+        forumUrl: forumUrl,
+        lastReminderSent: lastReminderSent,
+        paperNumber: paperNumber,
+        reviewerNumber: nextAnonNumber
+      };
+      reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
+      reviewerSummaryMap[paperNumber].expandReviewerList = true;
+      reviewerSummaryMap[paperNumber].sendReminder = true;
+      reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
+      var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
+      $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+    })
+    .then(function(results) {
+      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been assigned to paper ' + paperNumber)
+    });
     return false;
   });
 
