@@ -40,6 +40,7 @@ class Conference(object):
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
+        self.enable_reviewer_reassignment = False
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], additional_writers = []):
         group = tools.get_group(self.client, id = group_id)
@@ -67,7 +68,7 @@ class Conference(object):
     def __set_area_chair_page(self):
         area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
         if area_chairs_group:
-            return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
+            return self.webfield_builder.set_area_chair_page(self, area_chairs_group, self.enable_reviewer_reassignment)
 
     def __set_program_chair_page(self):
         program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
@@ -199,7 +200,7 @@ class Conference(object):
         if self.use_area_chairs:
             self.area_chairs_name = name
         else:
-            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
+            raise openreview.OpenReviewException('Venue\'s "has_area_chairs" setting is disabled')
 
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
@@ -472,14 +473,15 @@ class Conference(object):
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails = []):
+    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = False):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
             notes_iterator = self.get_submissions()
             for n in notes_iterator:
                 self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
-
+            if enable_reviewer_reassignment:
+                self.enable_reviewer_reassignment = True
             return self.__set_area_chair_page()
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
