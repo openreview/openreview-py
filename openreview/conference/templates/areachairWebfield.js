@@ -219,8 +219,8 @@ var getUserProfiles = function(userIds) {
   var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
 
   return $.when(
-    controller.post('/profiles/search', JSON.stringify({ids: ids})),
-    controller.post('/profiles/search', JSON.stringify({emails: emails}))
+    controller.post('/profiles/search', {ids: ids}),
+    controller.post('/profiles/search', {emails: emails})
   )
   .then(function(result1, result2) {
 
