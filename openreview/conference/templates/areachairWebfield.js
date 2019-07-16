@@ -14,8 +14,10 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair.*';
+var REVIEWER_GROUP = CONFERENCE_ID + '/Reviewers';
 
 var reviewerSummaryMap = {};
+var allReviewers = [];
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -129,13 +131,19 @@ var loadData = function(result) {
     details:'repliedTags'
   });
 
+  var allReviewersP = Webfield.get('/groups', { id: REVIEWER_GROUP })
+  .then(function(result) {
+    allReviewers = result.groups[0].members;
+  });
+
   return $.when(
     blindedNotesP,
     getOfficialReviews(noteNumbers),
     metaReviewsP,
     getReviewerGroups(noteNumbers),
     invitationsP,
-    tagInvitationsP
+    tagInvitationsP,
+    allReviewersP
   );
 };
 
@@ -195,7 +203,7 @@ var getReviewerGroups = function(noteNumbers) {
   });
 };
 
-var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, tagInvitations) {
+var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, tagInvitations, allReviewers) {
   var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
   }, []));
@@ -468,6 +476,54 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
   }
 };
 
+var updateReviewerContainer = function(paperNumber) {
+  $addReviewerContainer = $('#' + paperNumber + '-add-reviewer');
+  $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
+  paperForum = $reviewerProgressContainer.data('paperForum');
+
+  var dropdownOptions = _.map(allReviewers, function(member) {
+    return {
+      id: member,
+      description: view.prettyId(member)
+    };
+  });
+  var filterOptions = function(options, term) {
+    return _.filter(options, function(p) {
+      return _.includes(p.description.toLowerCase(), term.toLowerCase());
+    });
+  };
+  placeholder = 'reviewer@domain.edu';
+
+  var $dropdown = view.mkDropdown(placeholder, false, null, function(update, term) {
+    update(filterOptions(dropdownOptions, term));
+  }, function(value, id) {
+    var selectedOption = _.find(dropdownOptions, ['id', id]);
+    var $input = $dropdown.find('input');
+
+    if (!(selectedOption && selectedOption.description === value)) {
+      $input.val(value);
+      $input.attr('value_id', value);
+    } else {
+      $input.val(value);
+      $input.attr('value_id', id);
+    }
+  });
+
+  $dropdown.find('input').attr({
+    class: 'form-control dropdown note_content_value input-assign-reviewer',
+    name: placeholder,
+    autocomplete: 'on'
+  });
+  $dropdown.find('div').attr({
+    class: 'dropdown_content dropdown_content_assign_reviewer',
+    name: placeholder,
+    autocomplete: 'on'
+  });
+
+  $addReviewerContainer.append($dropdown);
+  $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber + ' data-paper-forum=' + paperForum +'>Assign</button>');
+}
+
 var renderTableRows = function(rows, container) {
   var templateFuncs = [
     function(data) {
@@ -508,6 +564,10 @@ var renderTableRows = function(rows, container) {
 
   $('.table-container', container).remove();
   $(container).append(tableHtml);
+
+  for(key in reviewerSummaryMap) {
+    updateReviewerContainer(key);
+  }
 }
 
 var renderTasks = function(invitations, tagInvitations) {
@@ -722,8 +782,8 @@ var registerEventHandlers = function() {
     var $link = $(this);
     var paperNumber = $link.data('paperNumber');
     var paperForum = $link.data('paperForum');
-    var $currDiv = $('#' + paperForum + '-add-reviewer');
-    var userToAdd = $currDiv.find('input').val().trim();
+    var $currDiv = $('#' + paperNumber + '-add-reviewer');
+    var userToAdd = $currDiv.find('input').attr('value_id').trim();
 
     if (!userToAdd) {
       promptError('Please enter a valid email for assigning a reviewer');
@@ -733,7 +793,7 @@ var registerEventHandlers = function() {
       return (rev.email === userToAdd) || (rev.id === userToAdd);
     });
     if (alreadyAssigned) {
-      promptError('Reviewer ' + userToAdd + ' has already been assigned to Paper ' + paperNumber.toString());
+      promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
       return false;
     }
 
@@ -760,7 +820,6 @@ var registerEventHandlers = function() {
     .then(function(results) {
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: paperForum,
-        noteId: paperForum,
         invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
       });
       var lastReminderSent = null;
@@ -778,11 +837,25 @@ var registerEventHandlers = function() {
       reviewerSummaryMap[paperNumber].expandReviewerList = true;
       reviewerSummaryMap[paperNumber].sendReminder = true;
       reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
-      var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
+      var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+      updateReviewerContainer(paperNumber);
+    })
+    .then(function(result){
+      var postData = {
+        groups: [userToAdd],
+        subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
+        message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
+        ' for ' + SHORT_PHRASE + '.' +
+        '\n\nTo review this new assignment, please login and click on ' +
+        'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
+        '\n\nTo check all of your assigned papers, please click on https://openreview.net/group?id=' + REVIEWER_GROUP +
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair'
+      };
+      return Webfield.post('/mail', postData);
     })
     .then(function(results) {
-      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been assigned to paper ' + paperNumber)
+      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been notified of their new assignment to paper ' + paperNumber);
     });
     return false;
   });
@@ -794,25 +867,23 @@ var registerEventHandlers = function() {
     var paperForum = $link.data('paperForum');
     var reviewerNumber = $link.data('reviewerNumber');
 
-    var $revProgressDiv = $('#' + paperForum + '-reviewer-progress');
+    var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
     delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
-
-    $.when(
-      Webfield.delete('/groups/members', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-        members: [userId]
-      }),
-      Webfield.delete('/groups/members', {
+    updateReviewerContainer(paperNumber);
+    Webfield.delete('/groups/members', {
+      id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+      members: [userId]
+    })
+    .then(function(result) {
+      return Webfield.delete('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
         members: [userId]
-      })
-    )
-    .then(function(results) {
-      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber)
-    });
+      });
+    })
+    .then(() => promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber));
     return false;
   });
 };
