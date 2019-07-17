@@ -1,6 +1,16 @@
-Add evidence to a profile
+Working with Profiles
 ========================================
 
+Querying profiles
+----------------------------------------
+
+Search profiles by first and last name:
+
+    >>> results = client.search_profiles(first='Andrew', last='McCallum')
+
+
+Add evidence to a profile
+----------------------------------------
 
 Add DBLP link:
 
