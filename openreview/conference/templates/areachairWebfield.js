@@ -6,6 +6,7 @@ var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var AREA_CHAIR_NAME = '';
+var REVIEWER_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
 var LEGACY_INVITATION_ID = false;
@@ -14,7 +15,7 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair.*';
-var REVIEWER_GROUP = CONFERENCE_ID + '/Reviewers';
+var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 
 var reviewerSummaryMap = {};
 var allReviewers = [];
