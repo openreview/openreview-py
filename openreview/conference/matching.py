@@ -11,7 +11,7 @@ class Matching(object):
     def clear(self, client, invitation):
         note_list = list(openreview.tools.iterget_notes(client, invitation = invitation))
         for note in note_list:
-            client.delete_note(note)
+            client.delete_note(note.id)
 
     def _jaccard_similarity(self, list1, list2):
         set1 = set(list1)
