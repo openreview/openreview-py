@@ -190,24 +190,24 @@ class TestMatching():
         assert bids
         assert 6 == len(bids)
 
-        custom_loads = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Custom_Load')
+        custom_loads = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Reviewing/Custom_Load')
         assert not custom_loads
 
-        conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts')
+        conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Reviewing/Conflict')
         assert conflicts
         assert 3 == len(conflicts)
 
-        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~AreaChair_One1')
+        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Reviewing/Conflict', tail = '~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'cmu.edu'
 
-        r1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = '~Reviewer_One1')
+        r1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Reviewing/Conflict', tail = '~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'mit.edu'
 
-        ac2_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Conflicts', tail = 'ac2@umass.edu')
+        ac2_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Reviewing/Conflict', tail = 'ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'umass.edu'
@@ -517,7 +517,7 @@ class TestMatching():
         assert conflicts
         assert 3 == len(conflicts)
 
-        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Reviewing/Conflicts', tail = '~AreaChair_One1')
+        ac1_conflicts = client.get_edges(invitation = 'auai.org/UAI/2019/Conference/-/Reviewing/Conflict', tail = '~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'cmu.edu'
