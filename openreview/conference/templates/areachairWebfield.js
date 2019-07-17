@@ -101,6 +101,7 @@ var loadData = function(result) {
   var noteNumbers = getPaperNumbersfromGroups(result.groups);
   var blindedNotesP;
   var metaReviewsP;
+  var allReviewersP;
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
@@ -131,10 +132,14 @@ var loadData = function(result) {
     details:'repliedTags'
   });
 
-  var allReviewersP = Webfield.get('/groups', { id: REVIEWER_GROUP })
-  .then(function(result) {
-    allReviewers = result.groups[0].members;
-  });
+  if (ENABLE_REVIEWER_REASSIGNMENT) {
+    allReviewersP = Webfield.get('/groups', { id: REVIEWER_GROUP })
+    .then(function(result) {
+      allReviewers = result.groups[0].members;
+    });
+  } else {
+    allReviewersP = $.Deferred().resolve([]);
+  }
 
   return $.when(
     blindedNotesP,
