@@ -353,6 +353,12 @@ class Client(object):
         :type ids: list, optional
         :param term: Substring in the username or e-mail to be searched
         :type term: str, optional
+        :param first: First name of user
+        :type first: str, optional
+        :param middle: Middle name of user
+        :type middle: str, optional
+        :param last: Last name of user
+        :type last: str, optional
 
         :return: List of profiles
         :rtype: list[Profile]
