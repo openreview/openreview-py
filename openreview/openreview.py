@@ -343,7 +343,7 @@ class Client(object):
         response = self.__handle_response(response)
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
-    def search_profiles(self, emails = None, ids = None, term = None):
+    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -373,6 +373,12 @@ class Client(object):
             response = requests.post(self.profiles_search_url, json = {'ids': ids}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
+
+        if first or middle or last:
+            response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
+
 
         return []
 
@@ -785,17 +791,31 @@ class Client(object):
 
         return Tag.from_json(response.json())
 
-    def delete_note(self, note):
+    def delete_note(self, note_id):
         """
         Deletes the note
 
-        :param note: Note to be deleted
-        :type note: Note
+        :param note_id: ID of Note to be deleted
+        :type note_id: str
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
+        response = requests.delete(self.notes_url, json = {'id': note_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_group(self, group_id):
+        """
+        Deletes the group
+
+        :param group_id: ID of Group to be deleted
+        :type group_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = requests.delete(self.groups_url, json = {'id': group_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
