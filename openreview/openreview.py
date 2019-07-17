@@ -8,12 +8,8 @@ else:
 
 import requests
 import pprint
-import json
 import os
-import getpass
 import re
-import datetime
-from collections import defaultdict
 
 
 class OpenReviewException(Exception):
@@ -566,7 +562,7 @@ class Client(object):
 
         return [Edge.from_json(t) for t in response.json()['edges']]
 
-    def get_edges_group (self, invitation, groupby='head', select='tail', limit=None, offset=None):
+    def get_grouped_edges (self, invitation, groupby='head', select='tail', limit=None, offset=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
