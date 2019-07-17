@@ -209,7 +209,7 @@ class Matching(object):
                     'alternates': {
                         'value-regex': '[0-9]+',
                         'required': True,
-                        'description': 'The best N percent (expressed as an integer) of scores that result in generating aggregate score edges that can be used for selecting alternates',
+                        'description': 'The number of alternate reviewers to save (per-paper) aggregate score information for',
                         'order': 5
                     },
                     'paper_invitation': {
