@@ -785,31 +785,31 @@ class Client(object):
 
         return Tag.from_json(response.json())
 
-    def delete_note(self, note):
+    def delete_note(self, note_id):
         """
         Deletes the note
 
-        :param note: Note to be deleted
-        :type note: Note
+        :param note_id: ID of Note to be deleted
+        :type note_id: str
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.notes_url, json = note.to_json(), headers = self.headers)
+        response = requests.delete(self.notes_url, json = {'id': note_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
-    def delete_group(self, group):
+    def delete_group(self, group_id):
         """
         Deletes the group
 
-        :param group: Group to be deleted
-        :type group: Group
+        :param group_id: ID of Group to be deleted
+        :type group_id: str
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.groups_url, json = group.to_json(), headers = self.headers)
+        response = requests.delete(self.groups_url, json = {'id': group_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
