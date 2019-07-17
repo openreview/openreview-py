@@ -44,7 +44,7 @@ Getting coauthorship relations from Notes:
     >>> coauthors = set()
     >>> for note in profile_notes:
     >>>    coauthors.update(note.content['authorids'])
-    >>> coauthors.remove(profile.id) # make sure that the list doesn't include the author themselves
+    >>> coauthors.remove(profile.id) # make sure that the list doesn't include the author themself
     >>> print(sorted(list(coauthors)))
 
 
