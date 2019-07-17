@@ -53,7 +53,13 @@ class Conference(object):
                 signatories = [group_id] if is_signatory else [self.id],
                 members = members))
         else:
-            return self.client.add_members_to_group(group, members)
+            if members or additional_readers or additional_writers:
+                group.readers.extend([reader for reader in additional_readers if reader not in group.readers])
+                group.writers.extend([writer for writer in additional_writers if writer not in group.readers])
+                group.members.extend([member for member in members if member not in group.members])
+                return self.client.post_group(group)
+            else:
+                return self.client.add_members_to_group(group, members)
 
     def __set_author_page(self):
         authors_group = tools.get_group(self.client, self.get_authors_id())
