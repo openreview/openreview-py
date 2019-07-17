@@ -40,7 +40,7 @@ class Conference(object):
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
-        self.enable_reviewer_reassignment = False
+        self.enable_reviewer_reassignment = True
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], additional_writers = []):
         group = tools.get_group(self.client, id = group_id)
@@ -473,15 +473,14 @@ class Conference(object):
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = False):
+    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = True):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
             notes_iterator = self.get_submissions()
             for n in notes_iterator:
                 self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
-            if enable_reviewer_reassignment:
-                self.enable_reviewer_reassignment = True
+            self.enable_reviewer_reassignment = enable_reviewer_reassignment
             return self.__set_area_chair_page()
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
@@ -512,7 +511,12 @@ class Conference(object):
         parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
 
     def set_reviewers(self, emails = []):
-        self.__create_group(self.get_reviewers_id(), self.id, emails)
+        self.__create_group(
+            group_id = self.get_reviewers_id(),
+            group_owner_id = self.id,
+            members = emails,
+            additional_readers = [self.get_area_chairs_id()] if self.use_area_chairs else [],
+            additional_writers = [self.get_area_chairs_id()] if self.use_area_chairs else [])
 
         notes_iterator = self.get_submissions()
 
