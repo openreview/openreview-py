@@ -799,6 +799,20 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_group(self, group):
+        """
+        Deletes the group
+
+        :param group: Group to be deleted
+        :type group: Group
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        response = requests.delete(self.groups_url, json = group.to_json(), headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def send_mail(self, subject, recipients, message):
         """
         Posts a message to the recipients and consequently sends them emails as well
