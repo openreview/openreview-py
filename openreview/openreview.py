@@ -343,7 +343,7 @@ class Client(object):
         response = self.__handle_response(response)
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
-    def search_profiles(self, emails = None, ids = None, term = None):
+    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -373,6 +373,12 @@ class Client(object):
             response = requests.post(self.profiles_search_url, json = {'ids': ids}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
+
+        if first or middle or last:
+            response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = self.__handle_response(response)
+            return [Profile.from_json(p) for p in response.json()['profiles']]
+
 
         return []
 
