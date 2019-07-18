@@ -52,7 +52,7 @@ def get_conference(client, request_form_id):
     builder.set_homepage_header({
     'title': note.content['title'],
     'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
-    'deadline': 'Submission Start: ' + submission_start_date_str + ', End: ' + submission_due_date_str,
+    'deadline': 'Submission Start: ' + submission_start_date_str + ' GMT, End: ' + submission_due_date_str+' GMT',
     'date': conference_start_date_str,
     'website': note.content['Official Website URL'],
     'location': note.content.get('Location')
