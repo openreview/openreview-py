@@ -298,7 +298,6 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     for (var revNumber in revIds) {
       var uId = revIds[revNumber];
       revIds[revNumber] = findProfile(profiles, uId);
-      // revIds[revNumber] = _.get(profiles, uId, { id: uId, name: '', email: uId });
     }
 
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
@@ -875,12 +874,6 @@ var registerEventHandlers = function() {
     var paperForum = $link.data('paperForum');
     var reviewerNumber = $link.data('reviewerNumber');
 
-    var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
-    delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
-    reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
-    reviewerSummaryMap[paperNumber].expandReviewerList = true;
-    $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
-    updateReviewerContainer(paperNumber);
     Webfield.delete('/groups/members', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
       members: [userId]
@@ -891,7 +884,17 @@ var registerEventHandlers = function() {
         members: [userId]
       });
     })
-    .then(() => promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber));
+    .then(function(result) {
+      var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
+      delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
+      reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
+      reviewerSummaryMap[paperNumber].expandReviewerList = true;
+      $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+      updateReviewerContainer(paperNumber);
+    })
+    .then(function(result){
+      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
+    })
     return false;
   });
 };
