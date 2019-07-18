@@ -747,6 +747,13 @@ class SubmissionStage(object):
             name = 'Blind_' + name
         return conference.get_invitation_id(name)
 
+class ExpertiseBidStage(object):
+
+    def __init__(self, start_date = None, due_date = None):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = 'Expertise_Bid'
+
 class BidStage(object):
 
     def __init__(self, start_date = None, due_date = None, request_count = 50):

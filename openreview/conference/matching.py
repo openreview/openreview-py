@@ -275,7 +275,8 @@ class Matching(object):
                         'value-regex': '.*'
                     }
                 }
-            })
+            }
+        })
         invitation = self.client.post_invitation(invitation)
         self.client.delete_edges(invitation.id)
         return invitation
