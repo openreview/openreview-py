@@ -43,7 +43,61 @@ class TestTools():
         assert preferred_name == 'Super User'
 
     def test_parallel_exec(self, client):
-
         values = client.get_groups(limit=10)
         results = openreview.tools.parallel_exec(values, do_work)
         assert len(results) == len(values)
+
+    def test_match_authors_to_emails(self):
+        correct_pairs = [
+            ('Ada Lovelace', 'ada@lovelacemanor.org'),
+            ('Alan Turing', 'turing@princeton.edu'),
+            ('Edsger W. Dijkstra', 'ed.dijkstra@uva.nl'),
+            ('Grace Hopper', 'ghopper@yale.edu')
+        ]
+
+        shuffled_names = random.sample(
+            [p[0] for p in correct_pairs], len(correct_pairs))
+
+        shuffled_emails = random.sample(
+            [p[1] for p in correct_pairs], len(correct_pairs))
+
+        result = openreview.tools.match_authors_to_emails(
+            shuffled_names, shuffled_emails)
+
+        for name, email in correct_pairs:
+            assert result[name] == email
+
+    def test_create_authorid_profiles(self, client):
+        authors = [
+            'Ada Lovelace',
+            'Alan Turing',
+            'Edsger W. Dijkstra',
+            'Grace Hopper'
+        ]
+
+        authorids = [
+            'ada@lovelacemanor.org',
+            'turing@princeton.edu',
+            'ed.dijkstra@uva.nl',
+            'ghopper@yale.edu'
+        ]
+
+        note = openreview.Note.from_json({
+            'id': 'MOCK_NOTE',
+            'content': {
+                'authors': authors,
+                'authorids': authorids
+            }
+        })
+
+        profiles_created = openreview.tools.create_authorid_profiles(
+            client, note)
+
+        for author, email in zip(authors, authorids):
+            result = client.search_profiles(term=author)
+            assert any([email in p.content['emails'] for p in result])
+
+
+
+
+

@@ -7,16 +7,17 @@
 
 // Constants
 var CONFERENCE_ID = '';
-var SUBMISSION_ID = '';
+var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 
-var BUFFER = 1000 * 60 * 30;  // 30 minutes
+var BUFFER = 1000 * 60 * 30;  // deprecated
 var PAGE_SIZE = 50;
 
 var paperDisplayOptions = {
   pdfLink: true,
   replyCount: true,
-  showContents: true
+  showContents: true,
+  showTags: true
 };
 
 
@@ -36,16 +37,16 @@ function main() {
 // Load makes all the API calls needed to get the data to render the page
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
-  var notesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
+  var notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
-    details: 'replyCount,tags'
+    includeCount: true
   });
   var tagInvitationsP;
 
   if (!user || _.startsWith(user.id, 'guest_')) {
     tagInvitationsP = $.Deferred().resolve([]);
   } else {
-    tagInvitationsP = Webfield.get('/invitations', { replyInvitation: SUBMISSION_ID, tags: true })
+    tagInvitationsP = Webfield.get('/invitations', { replyInvitation: BLIND_SUBMISSION_ID, tags: true })
     .then(function(result) {
       return result.invitations;
     });
@@ -63,7 +64,7 @@ function renderConferenceHeader() {
 }
 
 function renderSubmissionButton() {
-  Webfield.api.getSubmissionInvitation(SUBMISSION_ID, {deadlineBuffer: BUFFER})
+  Webfield.api.getSubmissionInvitation(BLIND_SUBMISSION_ID, {deadlineBuffer: BUFFER})
     .then(function(invitation) {
       Webfield.ui.submissionButton(invitation, user, {
         onNoteCreated: function() {
@@ -89,44 +90,48 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(notes, tagInvitations) {
+function renderContent(notesResponse, tagInvitations) {
+  var notes = notesResponse.notes || [];
+  var noteCount = notesResponse.count || 0;
+
   // All Submitted Papers tab
-  var submissionListOptions = _.assign({}, paperDisplayOptions, {
-    showTags: true,
-    tagInvitations: tagInvitations,
-    container: '#all-submissions'
-  });
+  $('#all-submissions').empty();
 
-  $(submissionListOptions.container).empty();
+  if (noteCount) {
+    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
+      tagInvitations: tagInvitations,
+      container: '#all-submissions',
+      autoLoad: false
+    });
 
-  if (notes.length){
     Webfield.ui.submissionList(notes, {
       heading: null,
       container: '#all-submissions',
       search: {
         enabled: true,
         localSearch: false,
+        invitation: BLIND_SUBMISSION_ID,
         onResults: function(searchResults) {
-          var originalSearchResults = searchResults.filter(function(note) {
-            return note.invitation === SUBMISSION_ID;
-          });
-          Webfield.ui.searchResults(originalSearchResults, submissionListOptions);
-          Webfield.disableAutoLoading();
+          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(notes, submissionListOptions);
-          if (notes.length === PAGE_SIZE) {
-            Webfield.setupAutoLoading(SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
-          }
-        }
+          Webfield.ui.searchResults(notes, searchResultsListOptions);
+          $('#all-submissions').append(view.paginationLinks(noteCount, PAGE_SIZE, 1));
+        },
       },
-      displayOptions: submissionListOptions,
+      displayOptions: _.assign({}, paperDisplayOptions, { tagInvitations: tagInvitations }),
+      autoLoad: false,
+      noteCount: noteCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
       fadeIn: false
     });
 
-    if (notes.length === PAGE_SIZE) {
-      Webfield.setupAutoLoading(SUBMISSION_ID, PAGE_SIZE, submissionListOptions);
-    }
     $('.tabs-container a[href="#all-submissions"]').parent().show();
   } else {
     $('.tabs-container a[href="#all-submissions"]').parent().hide();

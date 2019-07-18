@@ -43,8 +43,10 @@ Download the corresponding Firefox Selenium driver for your OS from this [link](
 
 You are now all set to run the tests of the library. To do so, *you need to have the OpenReview backend running in your localhost* by running the following command.
 ```bash
-NODE_ENV=test node scripts/clean_start_app.js
+NODE_ENV=circleci node scripts/clean_start_app.js
 ```
+
+If you have environment variables set with your OpenReview credentials, make sure to clear them before proceeding.
 
 Inside the openreview-py folder run
 ```
