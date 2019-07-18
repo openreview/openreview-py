@@ -217,7 +217,6 @@ class ExpertiseBidInvitation(openreview.Invitation):
             signatures = [conference.get_id()],
             invitees = invitees,
             multiReply = True,
-            taskCompletionCount = expertise_bid_stage.request_count,
             reply = {
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']
@@ -605,6 +604,12 @@ class InvitationBuilder(object):
         invitation = BlindSubmissionsInvitation(conference = conference)
 
         return  self.client.post_invitation(invitation)
+
+    def set_expertise_bid_invitation(self, conference):
+
+        invitation = ExpertiseBidInvitation(conference)
+
+        return self.client.post_invitation(invitation)
 
     def set_bid_invitation(self, conference):
 

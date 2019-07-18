@@ -75,6 +75,11 @@ class Conference(object):
         if program_chairs_group:
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
+    def __set_expertise_bid_page(self):
+        expertise_bid_invitation = self.client.get_invitation(self.get_expertise_bid_id())
+        if expertise_bid_invitation:
+            return self.webfield_builder.set_expertise_bid_page(self, expertise_bid_invitation)
+
     def __set_bid_page(self):
         bid_invitation = self.client.get_invitation(self.get_bid_id())
         if bid_invitation:
@@ -114,6 +119,11 @@ class Conference(object):
     def __create_submission_stage(self):
 
         return self.invitation_builder.set_submission_invitation(self)
+
+    def __create_expertise_bid_stage(self):
+
+        self.invitation_builder.set_expertise_bid_invitation(self)
+        return self.__set_expertise_bid_page()
 
     def __create_bid_stage(self):
 
