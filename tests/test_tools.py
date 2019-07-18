@@ -14,7 +14,7 @@ class TestTools():
 
     def test_get_all_venues(self, client):
         venues = openreview.tools.get_all_venues(client)
-        assert len(venues) == 9, "Venues could not be retrieved"
+        assert len(venues) == 8, "Venues could not be retrieved"
 
     def test_iterget_notes(self, client):
         notes_iterator = openreview.tools.iterget_notes(client)
