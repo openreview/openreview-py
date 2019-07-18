@@ -571,8 +571,10 @@ var renderTableRows = function(rows, container) {
   $('.table-container', container).remove();
   $(container).append(tableHtml);
 
-  for(key in reviewerSummaryMap) {
-    updateReviewerContainer(key);
+  if (ENABLE_REVIEWER_REASSIGNMENT) {
+    for(key in reviewerSummaryMap) {
+      updateReviewerContainer(key);
+    }
   }
 }
 
