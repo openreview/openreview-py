@@ -42,24 +42,18 @@ class Conference(object):
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = True
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], additional_writers = []):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
             return self.client.post_group(openreview.Group(
                 id = group_id,
-                readers = [self.id, group_owner_id, group_id] + additional_readers,
-                writers = [self.id] + additional_writers,
+                readers = [self.id, group_owner_id, group_id],
+                writers = [self.id, group_owner_id],
                 signatures = [self.id],
-                signatories = [group_id] if is_signatory else [self.id],
+                signatories = [group_id] if is_signatory else [self.id, group_owner_id],
                 members = members))
         else:
-            if members or additional_readers or additional_writers:
-                group.readers.extend([reader for reader in additional_readers if reader not in group.readers])
-                group.writers.extend([writer for writer in additional_writers if writer not in group.readers])
-                group.members.extend([member for member in members if member not in group.members])
-                return self.client.post_group(group)
-            else:
-                return self.client.add_members_to_group(group, members)
+            return self.client.add_members_to_group(group, members)
 
     def __set_author_page(self):
         authors_group = tools.get_group(self.client, self.get_authors_id())
@@ -509,31 +503,25 @@ class Conference(object):
         parent_group_id = self.get_reviewers_id()
         parent_group_declined_id = parent_group_id + '/Declined'
         parent_group_invited_id = parent_group_id + '/Invited'
-        parent_group_accepted_id = parent_group_id
 
         pcs_id = self.get_program_chairs_id()
-        parent_group_accepted_group = self.__create_group(parent_group_accepted_id, pcs_id)
-        parent_group_declined_group = self.__create_group(parent_group_declined_id, pcs_id)
-        parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
+        self.__create_group(parent_group_id, self.get_area_chairs_id() if self.use_area_chairs else self.id)
+        self.__create_group(parent_group_declined_id, pcs_id)
+        self.__create_group(parent_group_invited_id, pcs_id)
 
     def set_reviewers(self, emails = []):
         self.__create_group(
             group_id = self.get_reviewers_id(),
-            group_owner_id = self.id,
-            members = emails,
-            additional_readers = [self.get_area_chairs_id()] if self.use_area_chairs else [],
-            additional_writers = [self.get_area_chairs_id()] if self.use_area_chairs else [])
+            group_owner_id = self.get_area_chairs_id() if self.use_area_chairs else self.id,
+            members = emails)
 
         notes_iterator = self.get_submissions()
 
         for n in notes_iterator:
             self.__create_group(
                 self.get_reviewers_id(number = n.number),
-                self.id,
-                is_signatory = True,
-                additional_readers = [self.get_area_chairs_id()] if self.use_area_chairs else [],
-                additional_writers = [self.get_area_chairs_id()] if self.use_area_chairs else []
-            )
+                self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                is_signatory = False)
 
         return self.__set_reviewer_page()
 
@@ -544,10 +532,8 @@ class Conference(object):
         for n in notes_iterator:
             group = self.__create_group(
                 group_id = '{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number),
-                group_owner_id = self.id,
-                is_signatory = False,
-                additional_readers = [self.get_area_chairs_id()] if self.use_area_chairs else [],
-                additional_writers = [self.get_area_chairs_id()] if self.use_area_chairs else []
+                group_owner_id = self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                is_signatory = False
             )
 
             authorids = n.content.get('authorids')
