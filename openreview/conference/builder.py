@@ -40,7 +40,7 @@ class Conference(object):
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
-        self.enable_reviewer_reassignment = True
+        self.enable_reviewer_reassignment = False
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True):
         group = tools.get_group(self.client, id = group_id)
@@ -473,7 +473,7 @@ class Conference(object):
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = True):
+    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = False):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
