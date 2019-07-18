@@ -34,6 +34,7 @@ class Conference(object):
         self.registration_name = 'Registration'
         self.submission_stage = SubmissionStage()
         self.bid_stage = BidStage()
+        self.expertise_bid_stage = ExpertiseBidStage()
         self.review_stage = ReviewStage()
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
@@ -174,6 +175,10 @@ class Conference(object):
         self.submission_stage = stage
         return self.__create_submission_stage()
 
+    def set_expertise_bid_stage(self, stage):
+        self.expertise_bid_stage = stage
+        return self.__create_expertise_bid_stage()
+
     def set_bid_stage(self, stage):
         self.bid_stage = stage
         return self.__create_bid_stage()
@@ -255,6 +260,9 @@ class Conference(object):
 
     def get_blind_submission_id(self):
         return self.submission_stage.get_blind_submission_id(self)
+
+    def get_expertise_bid_id(self):
+        return self.get_invitation_id(self.expertise_bid_stage.name)
 
     def get_bid_id(self):
         return self.get_invitation_id(self.bid_stage.name)
@@ -875,6 +883,7 @@ class ConferenceBuilder(object):
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
         self.submission_stage = None
+        self.expertise_bid_stage = None
         self.bid_stage = None
         self.review_stage = None
         self.comment_stage = None
@@ -950,6 +959,9 @@ class ConferenceBuilder(object):
     def set_submission_stage(self, name = 'Submission', start_date = None, due_date = None, public = False, double_blind = False, additional_fields = {}, remove_fields = [], subject_areas = []):
         self.submission_stage = SubmissionStage(name, start_date, due_date, public, double_blind, additional_fields, remove_fields, subject_areas)
 
+    def set_expertise_bid_stage(self, start_date = None, due_date = None):
+        self.expertise_bid_stage = ExpertiseBidStage(start_date, due_date)
+
     def set_bid_stage(self, start_date = None, due_date = None, request_count = 50):
         self.bid_stage = BidStage(start_date, due_date, request_count)
 
@@ -991,6 +1003,9 @@ class ConferenceBuilder(object):
 
         if self.bid_stage:
             self.conference.set_bid_stage(self.bid_stage)
+
+        if self.expertise_bid_stage:
+            self.conference.set_expertise_bid_stage(self.expertise_bid_stage)
 
         if self.review_stage:
             self.conference.set_review_stage(self.review_stage)

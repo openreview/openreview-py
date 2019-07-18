@@ -177,9 +177,6 @@ class BidInvitation(openreview.Invitation):
                 'signatures': {
                     'values-regex': '~.*'
                 },
-                'signatures': {
-                    'values-regex': '~.*'
-                },
                 'content': {
                     'head': {
                         'type': 'Note'
@@ -189,6 +186,54 @@ class BidInvitation(openreview.Invitation):
                     },
                     'label': {
                         'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'required': True
+                    }
+                }
+            }
+        )
+
+class ExpertiseBidInvitation(openreview.Invitation):
+    def __init__(self, conference):
+
+        expertise_bid_stage = conference.expertise_bid_stage
+
+        readers = [
+            conference.get_id(),
+            conference.get_program_chairs_id(),
+            conference.get_reviewers_id()
+        ]
+
+        invitees = [ conference.get_reviewers_id() ]
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id())
+            invitees.append(conference.get_area_chairs_id())
+
+        super(ExpertiseBidInvitation, self).__init__(id = conference.get_bid_id(),
+            cdate = tools.datetime_millis(expertise_bid_stage.start_date),
+            duedate = tools.datetime_millis(expertise_bid_stage.due_date),
+            expdate = tools.datetime_millis(expertise_bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if expertise_bid_stage.due_date else None,
+            readers = readers,
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            multiReply = True,
+            taskCompletionCount = expertise_bid_stage.request_count,
+            reply = {
+                'readers': {
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note'
+                    },
+                    'tail': {
+                        'type': 'Profile'
+                    },
+                    'label': {
+                        'value-radio': ['Use', 'Don\'t Use'],
                         'required': True
                     }
                 }
