@@ -586,8 +586,7 @@ class TestCommentNotification():
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'):
             ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
 
-        with pytest.raises(openreview.OpenReviewException, match=r"[{'type': 'forbidden', 'path': 'id', 'value': 'auai.org/UAI/2020/Conference/Program_Committee', 'user': 'areachair@auai.org'}]"):
-            ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
+        ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 

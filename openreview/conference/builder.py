@@ -40,16 +40,17 @@ class Conference(object):
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
+        self.enable_reviewer_reassignment = False
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True):
-
         group = tools.get_group(self.client, id = group_id)
         if group is None:
-            return self.client.post_group(openreview.Group(id = group_id,
+            return self.client.post_group(openreview.Group(
+                id = group_id,
                 readers = [self.id, group_owner_id, group_id],
-                writers = [self.id],
+                writers = [self.id, group_owner_id],
                 signatures = [self.id],
-                signatories = [group_id] if is_signatory else [self.id],
+                signatories = [group_id] if is_signatory else [self.id, group_owner_id],
                 members = members))
         else:
             return self.client.add_members_to_group(group, members)
@@ -67,7 +68,7 @@ class Conference(object):
     def __set_area_chair_page(self):
         area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
         if area_chairs_group:
-            return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
+            return self.webfield_builder.set_area_chair_page(self, area_chairs_group, self.enable_reviewer_reassignment)
 
     def __set_program_chair_page(self):
         program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
@@ -199,7 +200,7 @@ class Conference(object):
         if self.use_area_chairs:
             self.area_chairs_name = name
         else:
-            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
+            raise openreview.OpenReviewException('Venue\'s "has_area_chairs" setting is disabled')
 
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
@@ -472,14 +473,14 @@ class Conference(object):
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails = []):
+    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = False):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
             notes_iterator = self.get_submissions()
             for n in notes_iterator:
                 self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
-
+            self.enable_reviewer_reassignment = enable_reviewer_reassignment
             return self.__set_area_chair_page()
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
@@ -502,20 +503,25 @@ class Conference(object):
         parent_group_id = self.get_reviewers_id()
         parent_group_declined_id = parent_group_id + '/Declined'
         parent_group_invited_id = parent_group_id + '/Invited'
-        parent_group_accepted_id = parent_group_id
 
         pcs_id = self.get_program_chairs_id()
-        parent_group_accepted_group = self.__create_group(parent_group_accepted_id, pcs_id)
-        parent_group_declined_group = self.__create_group(parent_group_declined_id, pcs_id)
-        parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
+        self.__create_group(parent_group_id, self.get_area_chairs_id() if self.use_area_chairs else self.id)
+        self.__create_group(parent_group_declined_id, pcs_id)
+        self.__create_group(parent_group_invited_id, pcs_id)
 
     def set_reviewers(self, emails = []):
-        self.__create_group(self.get_reviewers_id(), self.id, emails)
+        self.__create_group(
+            group_id = self.get_reviewers_id(),
+            group_owner_id = self.get_area_chairs_id() if self.use_area_chairs else self.id,
+            members = emails)
 
         notes_iterator = self.get_submissions()
 
         for n in notes_iterator:
-            self.__create_group(self.get_reviewers_id(number = n.number), self.id)
+            self.__create_group(
+                self.get_reviewers_id(number = n.number),
+                self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                is_signatory = False)
 
         return self.__set_reviewer_page()
 
@@ -524,7 +530,12 @@ class Conference(object):
         author_group_ids = []
 
         for n in notes_iterator:
-            group = self.__create_group('{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number), self.id, is_signatory = False)
+            group = self.__create_group(
+                group_id = '{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number),
+                group_owner_id = self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                is_signatory = False
+            )
+
             authorids = n.content.get('authorids')
             if n.details and n.details.get('original'):
                 authorids = n.details['original']['content']['authorids']

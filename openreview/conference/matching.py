@@ -456,6 +456,8 @@ class Matching(object):
         # Get the configuration note to check the group to assign
         client = self.conference.client
         notes = client.get_notes(invitation = self.conference.get_id() + '/-/Assignment_Configuration', content = { 'title': assingment_title })
+        if self.conference.use_area_chairs:
+            self.conference.set_area_chairs(enable_reviewer_reassignment = True)
 
         if notes:
             configuration_note = notes[0]
@@ -463,7 +465,6 @@ class Matching(object):
             is_area_chair = self.conference.get_area_chairs_id() == match_group
             submissions = openreview.tools.iterget_notes(client, invitation = self.conference.get_blind_submission_id())
             assignment_notes = openreview.tools.iterget_notes(client, invitation = self.conference.get_id() + '/-/Paper_Assignment', content = { 'title': assingment_title })
-
 
             assignments = self.get_assignments(configuration_note, submissions, assignment_notes)
 
