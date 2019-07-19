@@ -24,6 +24,7 @@ class Conference(object):
         self.authorpage_header = {}
         self.reviewerpage_header = {}
         self.areachairpage_header = {}
+        self.expertise_bidpage_header = {}
         self.bidpage_header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
@@ -339,6 +340,13 @@ class Conference(object):
 
     def get_bidpage_header(self):
         return self.bidpage_header
+
+    def set_expertise_bidpage_header(self, header):
+        self.expertise_bidpage_header = header
+        return self.__set_expertise_bid_page
+
+    def get_expertise_bidpage_header(self):
+        return self.expertise_bidpage_header
 
     def set_homepage_layout(self, layout):
         self.layout = layout
