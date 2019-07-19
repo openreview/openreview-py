@@ -45,8 +45,8 @@ function load() {
 
     return edges.reduce(function(noteMap, edge) {
       // Only include the users bids in the map
-      if (edge.head === user.profile.id) {
-        noteMap[edge.tail] = edge;
+      if (edge.tail === user.profile.id) {
+        noteMap[edge.head] = edge;
       }
       return noteMap;
     }, {});
@@ -105,7 +105,7 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   });
 
   $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edgeObj) {
-    var updatedNote = _.find(validNotes, ['id', edgeObj.tail]);
+    var updatedNote = _.find(validNotes, ['id', edgeObj.head]);
     if (!updatedNote) {
       return;
     }
@@ -131,7 +131,7 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
     var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
     var currentNoteList = binnedNotes[labelToContainerId[edgeObj.label]];
 
-    var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.tail]);
+    var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.head]);
     if (currentIndex !== -1) {
       var currentNote = previousNoteList[currentIndex];
       currentNote.details.edges = [edgeObj]; // Assumes notes will have only 1 type of edge
