@@ -847,8 +847,7 @@ var registerEventHandlers = function() {
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-    })
-    .then(function(result){
+      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been notified of their new assignment to paper ' + paperNumber);
       var postData = {
         groups: [userToAdd],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
@@ -860,9 +859,6 @@ var registerEventHandlers = function() {
         '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair'
       };
       return Webfield.post('/mail', postData);
-    })
-    .then(function(results) {
-      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been notified of their new assignment to paper ' + paperNumber);
     });
     return false;
   });
@@ -891,8 +887,6 @@ var registerEventHandlers = function() {
       reviewerSummaryMap[paperNumber].expandReviewerList = true;
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-    })
-    .then(function(result){
       promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
     })
     return false;
