@@ -698,7 +698,7 @@ class Client(object):
         response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Profile.from_json(n) if n['id'].startswith('~') \
+        return [Profile.from_json(n) if n['referent'].startswith('~') \
                 else Note.from_json(n) for n in response.json()['references']]
 
     def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
