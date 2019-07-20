@@ -45,8 +45,8 @@ function load() {
 
     return edges.reduce(function(noteMap, edge) {
       // Only include the users bids in the map
-      if (edge.head === user.profile.id) {
-        noteMap[edge.tail] = edge;
+      if (edge.tail === user.profile.id) {
+        noteMap[edge.head] = edge;
       }
       return noteMap;
     }, {});
@@ -105,7 +105,7 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   });
 
   $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edgeObj) {
-    var updatedNote = _.find(validNotes, ['id', edgeObj.tail]);
+    var updatedNote = _.find(validNotes, ['id', edgeObj.head]);
     if (!updatedNote) {
       return;
     }
@@ -120,18 +120,15 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
     updatedNote.details.edges[prevEdgeIndex] = edgeObj;
 
     var labelToContainerId = {
-      'Very High': 'veryHigh',
-      'High': 'high',
-      'Neutral': 'neutral',
-      'Low': 'low',
-      'Very Low': 'veryLow',
+      'Use': 'use',
+      'Do Not Use': 'doNotUse',
       'No Bid': 'noBid'
     };
 
     var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
     var currentNoteList = binnedNotes[labelToContainerId[edgeObj.label]];
 
-    var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.tail]);
+    var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.head]);
     if (currentIndex !== -1) {
       var currentNote = previousNoteList[currentIndex];
       currentNote.details.edges = [edgeObj]; // Assumes notes will have only 1 type of edge
@@ -167,11 +164,8 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
     // Sort notes into bins by bid
     binnedNotes = {
       noBid: [],
-      veryHigh: [],
-      high: [],
-      neutral: [],
-      low: [],
-      veryLow: []
+      use: [],
+      doNotUse: []
     };
 
     var bids, n;
@@ -182,16 +176,10 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
       });
 
       if (bids.length) {
-        if (bids[0].label === 'Very High') {
-          binnedNotes.veryHigh.push(n);
-        } else if (bids[0].label === 'High') {
-          binnedNotes.high.push(n);
-        } else if (bids[0].label === 'Neutral') {
-          binnedNotes.neutral.push(n);
-        } else if (bids[0].label === 'Low') {
-          binnedNotes.low.push(n);
-        } else if (bids[0].label === 'Very Low') {
-          binnedNotes.veryLow.push(n);
+        if (bids[0].label === 'Use') {
+          binnedNotes.use.push(n);
+        } else if (bids[0].label === 'Do Not Use') {
+          binnedNotes.doNotUse.push(n);
         } else {
           binnedNotes.noBid.push(n);
         }
@@ -200,8 +188,7 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
       }
     }
 
-    var bidCount = binnedNotes.veryHigh.length + binnedNotes.high.length +
-      binnedNotes.neutral.length + binnedNotes.low.length + binnedNotes.veryLow.length;
+    var bidCount = binnedNotes.use.length + binnedNotes.doNotUse.length;
 
     $('#bidcount').remove();
     $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
@@ -220,33 +207,15 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
         content: loadingContent
       },
       {
-        heading: 'Very High',
-        headingCount: binnedNotes.veryHigh.length,
-        id: 'veryHigh',
+        heading: 'Use',
+        headingCount: binnedNotes.use.length,
+        id: 'use',
         content: loadingContent
       },
       {
-        heading: 'High',
-        headingCount: binnedNotes.high.length,
-        id: 'high',
-        content: loadingContent
-      },
-      {
-        heading: 'Neutral',
-        headingCount: binnedNotes.neutral.length,
-        id: 'neutral',
-        content: loadingContent
-      },
-      {
-        heading: 'Low',
-        headingCount: binnedNotes.low.length,
-        id: 'low',
-        content: loadingContent
-      },
-      {
-        heading: 'Very Low',
-        headingCount: binnedNotes.veryLow.length,
-        id: 'veryLow',
+        heading: 'Do Not Use',
+        headingCount: binnedNotes.doNotUse.length,
+        id: 'doNotUse',
         content: loadingContent
       }
     ];
@@ -289,11 +258,8 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   function updateCounts() {
     var containers = [
       'noBid',
-      'veryHigh',
-      'high',
-      'neutral',
-      'low',
-      'veryLow'
+      'use',
+      'doNotUse'
     ];
     var totalCount = 0;
 

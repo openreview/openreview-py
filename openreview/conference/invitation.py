@@ -208,7 +208,7 @@ class ExpertiseBidInvitation(openreview.Invitation):
             readers.append(conference.get_area_chairs_id())
             invitees.append(conference.get_area_chairs_id())
 
-        super(ExpertiseBidInvitation, self).__init__(id = conference.get_bid_id(),
+        super(ExpertiseBidInvitation, self).__init__(id = conference.get_expertise_bid_id(),
             cdate = tools.datetime_millis(expertise_bid_stage.start_date),
             duedate = tools.datetime_millis(expertise_bid_stage.due_date),
             expdate = tools.datetime_millis(expertise_bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if expertise_bid_stage.due_date else None,
@@ -229,10 +229,10 @@ class ExpertiseBidInvitation(openreview.Invitation):
                         'type': 'Note'
                     },
                     'tail': {
-                        'type': 'Profile'
+                        'type': 'Group'
                     },
                     'label': {
-                        'value-radio': ['Use', 'Don\'t Use'],
+                        'value-radio': ['Use', 'Do Not Use'],
                         'required': True
                     }
                 }
