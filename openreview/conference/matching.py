@@ -29,14 +29,14 @@ class Matching(object):
                 'content': {
                     'head': {
                         'type': 'Note',
-                        "query" : {
-                            "invitation" : self.conference.get_blind_submission_id()
+                        'query' : {
+                            'invitation' : self.conference.get_blind_submission_id()
                         }
                     },
                     'tail': {
                         'type': 'Profile',
-                        "query" : {
-                            "group" : self.conference.get_reviewers_id()
+                        'query' : {
+                            'group' : self.conference.get_reviewers_id()
                         }
                     },
                     'weight': {
