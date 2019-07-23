@@ -1585,6 +1585,7 @@ def post_bulk_edges (client, edges, batch_size = 50000):
         batch = client.post_edges(edges[i:end])
         result += batch
     return result
+
 def email_distance(email, author):
     """
     Fuzzy matching for calculating string edit distance between two emails.

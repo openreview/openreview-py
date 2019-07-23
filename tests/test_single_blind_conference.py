@@ -24,6 +24,7 @@ class TestSingleBlindConference():
         'location': 'Montreal, Canada',
         'instructions': ''
         })
+        builder.has_area_chairs(True)
 
         conference = builder.get_result()
         assert conference, 'conference is None'
@@ -89,6 +90,7 @@ class TestSingleBlindConference():
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         now = datetime.datetime.utcnow()
+        builder.has_area_chairs(True)
         builder.set_submission_stage(start_date = now + datetime.timedelta(minutes = 10), due_date = now + datetime.timedelta(minutes = 40), public=True)
 
         conference = builder.get_result()
@@ -145,6 +147,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         invitation = client.get_invitation(conference.get_submission_id())
@@ -256,6 +259,7 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
@@ -290,6 +294,7 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
         conference.set_authors()
 
@@ -309,6 +314,7 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
         conference = builder.get_result()
 
         conference.close_comments('Official_Comment')

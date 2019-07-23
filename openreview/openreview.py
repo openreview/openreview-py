@@ -888,7 +888,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def delete_note(self, note):
+    def delete_note(self, note_id):
         """
         Deletes the note
 

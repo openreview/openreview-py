@@ -11,7 +11,7 @@ class TestBibtex():
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
-        builder.set_conference_id('NIPS.cc/2019/Workshop/MLITS')
+        builder.set_conference_id('NIPS.cc/2020/Workshop/MLITS')
         builder.set_submission_stage(public=True)
         conference = builder.get_result()
 
@@ -31,13 +31,13 @@ class TestBibtex():
         note.content['pdf'] = url
         posted_note = test_client.post_note(note)
 
-        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2019', accepted=True, anonymous=False, baseurl=client.baseurl )
+        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=True, anonymous=False, baseurl=client.baseurl )
         valid_bibtex = '''@inproceedings{
-user2019paper,
+user2020paper,
 title={Paper title has an {\^O}},
 author={Bibtex User and Peter Te{\\"e}t and Andrew McC},
-booktitle={NIPS.cc/2019/Workshop/MLITS},
-year={2019},
+booktitle={NIPS.cc/2020/Workshop/MLITS},
+year={2020},
 url={'''
         valid_bibtex = valid_bibtex+client.baseurl+'/forum?id='+posted_note.forum+'''},
 }'''
