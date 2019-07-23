@@ -1,6 +1,56 @@
-Add evidence to a profile
+Working with Profiles
 ========================================
 
+Querying profiles
+----------------------------------------
+
+Get profile directly by user ID or email address:
+
+    >>> profile = client.get_profile('~Michael_Spector1')
+    >>> profile = client.get_profile('michael@openreview.net')
+
+Search profiles by first and last name:
+
+    >>> results = client.search_profiles(first='Andrew', last='McCallum')
+
+Search profile by last name only:
+
+    >>> results = client.search_profiles(last='Bengio')
+
+
+Finding profile relations
+----------------------------------------
+
+Relations can be extracted in two ways: (1) from the Profile object itself, or (2) from coauthored Notes in the system.
+
+Getting stored relations:
+
+    >>> profile = client.get_profile('~Michael_Spector1')
+    >>> profile.content['relations']
+    [{'name': 'Andrew McCallum',
+      'email': ...,
+      'relation': ...,
+      'start': 2016,
+      'end': None},
+     {'name': 'Melisa Bok',
+      'email': ...,
+      'relation': ...,
+      'start': 2016,
+      'end': None}]
+
+Getting coauthorship relations from Notes:
+
+    >>> profile_notes = client.get_notes(content={'authorids': profile.id})
+    >>> coauthors = set()
+    >>> for note in profile_notes:
+    >>>    coauthors.update(note.content['authorids'])
+    >>> coauthors.remove(profile.id) # make sure that the list doesn't include the author themself
+    >>> print(sorted(list(coauthors)))
+
+
+
+Add evidence to a profile
+----------------------------------------
 
 Add DBLP link:
 
