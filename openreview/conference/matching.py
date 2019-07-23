@@ -28,10 +28,16 @@ class Matching(object):
                 },
                 'content': {
                     'head': {
-                        'type': 'Note'
+                        'type': 'Note',
+                        "query" : {
+                            "invitation" : self.conference.get_blind_submission_id()
+                        }
                     },
                     'tail': {
-                        'type': 'Group'
+                        'type': 'Profile',
+                        "query" : {
+                            "group" : self.conference.get_reviewers_id()
+                        }
                     },
                     'weight': {
                         'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
