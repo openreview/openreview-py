@@ -132,8 +132,7 @@ function renderContent(authoredNotes, edgesMap) {
     updatedNote.details.edges[prevEdgeIndex] = edgeObj;
 
     var labelToContainerId = {
-      'Select': 'select',
-      'Do Not Select': 'doNotSelect',
+      'Do not Select': 'doNotSelect',
       'No Selection': 'noSelection'
     };
 
@@ -176,7 +175,6 @@ function renderContent(authoredNotes, edgesMap) {
     // Sort notes into bins by bid
     binnedNotes = {
       noSelection: [],
-      select: [],
       doNotSelect: []
     };
 
@@ -188,9 +186,7 @@ function renderContent(authoredNotes, edgesMap) {
       });
 
       if (bids.length) {
-        if (bids[0].label === 'Select') {
-          binnedNotes.select.push(n);
-        } else if (bids[0].label === 'Do Not Select') {
+        if (bids[0].label === 'Do not Select') {
           binnedNotes.doNotSelect.push(n);
         } else {
           binnedNotes.noSelection.push(n);
@@ -214,13 +210,7 @@ function renderContent(authoredNotes, edgesMap) {
         content: loadingContent
       },
       {
-        heading: 'Select',
-        headingCount: binnedNotes.select.length,
-        id: 'select',
-        content: loadingContent
-      },
-      {
-        heading: 'Do Not Select',
+        heading: 'Do not Select',
         headingCount: binnedNotes.doNotSelect.length,
         id: 'doNotSelect',
         content: loadingContent
@@ -263,7 +253,6 @@ function renderContent(authoredNotes, edgesMap) {
   function updateCounts() {
     var containers = [
       'noSelection',
-      'select',
       'doNotSelect'
     ];
     var totalCount = 0;

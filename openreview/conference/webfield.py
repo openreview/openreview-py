@@ -91,17 +91,17 @@ class WebfieldBuilder(object):
     def set_expertise_selection_page(self, conference, invitation):
 
         default_header = {
-            'title': conference.get_short_name() + ' Expertise Selection Console',
-            'instructions': '<p class="dark">Listed below are the papers we have for you. Please indicate which of these should be selected \
-                to formulate your expertise. This will affect the papers you are assigned in ' + conference.get_short_name() + '</p>\
+            'title': conference.get_short_name() + ' Expertise Selection',
+            'instructions': '<p class="dark">Listed below are the papers we have for you. <b>By default, we consider \
+                all of these papers to formulate your expertise.\
+                <br>Please click on \"Do not Select\" for papers that should NOT be used to represent your expertise.</b><br>\
+                Please note that we assign you papers based on your expertise which is derived from these papers.</p>\
                 <p class="dark"><strong>Note:</strong></p>\
                 <ul>\
-                    <li><b>The default choice on each paper is \"No Selection\" which is the same as \"Select\".</b></li>\
-                    <li>You should also update Conflict of Interest details on your profile page, specifically "Emails", "Education and Career History" & "Advisors and Other Relations" fields.</li>\
-                </ul>\
-                <p class="dark"><strong>A few tips:</strong></p>\
-                <ul>\
-                    <li>Please select on as many papers as possible to ensure that your preferences are taken into account.</li>\
+                    <li><b>By default, each paper is considered, unless you click on \"Do not Select\" for a paper.</b></li>\
+                    <li>In case we are missing any of your papers, <b>you can also upload papers by using the Upload button below</b>.</li>\
+                    <li>You should also <b>update Conflict of Interest details on your profile page</b>, specifically "Emails", \
+                    "Education and Career History" & "Advisors and Other Relations" fields.</li>\
                 </ul>\
                 <br>'
         }
