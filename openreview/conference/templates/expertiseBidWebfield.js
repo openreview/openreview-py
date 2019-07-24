@@ -8,7 +8,9 @@ var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
 var SUBMISSION_ID = '';
 var EXPERTISE_BID_ID = '';
-var EXPERTISE_SUBMISSION_ID = '';
+var EXPERTISE_SUBMISSION_ID = 'OpenReview.net/Archive/-/Direct_Upload';
+
+var BUFFER = 1000 * 60 * 30;  // 30 minutes
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -16,31 +18,27 @@ function main() {
 
   Webfield.ui.header(HEADER.title, HEADER.instructions);
 
-  renderExpertiseSubmissionButton();
+  renderSubmissionButton(EXPERTISE_SUBMISSION_ID);
 
   Webfield.ui.spinner('#notes', { inline: true });
 
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-
 // Perform all the required API calls
-
-function renderExpertiseSubmissionButton() {
-  Webfield.api.get('/invitation', {id: EXPERTISE_SUBMISSION_ID})
-  .then(function(invitation) {
-    Webfield.ui.submissionButton(invitation, user, {
-      onNoteCreated: function() {
-        // Callback funtion to be run when a paper has successfully been submitted (required)
-        promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
-          'A list of all submissions will be available after the deadline');
-
-        load().then(renderContent).then(function() {
-          $('.tabs-container a[href="#your-consoles"]').click();
-        });
-      }
+function renderSubmissionButton(INVITATION_ID) {
+  Webfield.api.getSubmissionInvitation(INVITATION_ID, {deadlineBuffer: BUFFER})
+    .then(function(invitation) {
+      Webfield.ui.submissionButton(invitation, user, {
+        onNoteCreated: function() {
+          // Callback funtion to be run when a paper has successfully been submitted (required)
+          promptMessage('Your submission is complete.');
+          load().then(renderContent).then(function() {
+            $('.tabs-container a[href="#allPapers"]').click();
+          });
+        }
+      });
     });
-  });
 }
 
 function load() {
