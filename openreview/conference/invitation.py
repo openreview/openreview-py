@@ -232,7 +232,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
                         'type': 'Group'
                     },
                     'label': {
-                        'value-radio': ['Do not Select'],
+                        'value-radio': ['Exclude'],
                         'required': True
                     }
                 }

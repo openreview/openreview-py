@@ -94,11 +94,11 @@ class WebfieldBuilder(object):
             'title': conference.get_short_name() + ' Expertise Selection',
             'instructions': '<p class="dark">Listed below are the papers we have for you. <b>By default, we consider \
                 all of these papers to formulate your expertise.\
-                <br>Please click on \"Do not Select\" for papers that should NOT be used to represent your expertise.</b><br>\
+                <br>Please click on \"Exclude\" for papers that should NOT be used to represent your expertise.</b><br>\
                 Please note that we assign you papers based on your expertise which is derived from these papers.</p>\
                 <p class="dark"><strong>Note:</strong></p>\
                 <ul>\
-                    <li><b>By default, each paper is considered, unless you click on \"Do not Select\" for a paper.</b></li>\
+                    <li><b>By default, each paper is considered, unless you click on \"Exclude\" for a paper.</b></li>\
                     <li>In case we are missing any of your papers, <b>you can also upload papers by using the Upload button below</b>.</li>\
                     <li>You should also <b>update Conflict of Interest details on your profile page</b>, specifically "Emails", \
                     "Education and Career History" & "Advisors and Other Relations" fields.</li>\

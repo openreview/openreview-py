@@ -132,7 +132,7 @@ function renderContent(authoredNotes, edgesMap) {
     updatedNote.details.edges[prevEdgeIndex] = edgeObj;
 
     var labelToContainerId = {
-      'Do not Select': 'doNotSelect',
+      'Exclude': 'exclude',
       'No Selection': 'noSelection'
     };
 
@@ -175,7 +175,7 @@ function renderContent(authoredNotes, edgesMap) {
     // Sort notes into bins by bid
     binnedNotes = {
       noSelection: [],
-      doNotSelect: []
+      exclude: []
     };
 
     var bids, n;
@@ -186,8 +186,8 @@ function renderContent(authoredNotes, edgesMap) {
       });
 
       if (bids.length) {
-        if (bids[0].label === 'Do not Select') {
-          binnedNotes.doNotSelect.push(n);
+        if (bids[0].label === 'Exclude') {
+          binnedNotes.exclude.push(n);
         } else {
           binnedNotes.noSelection.push(n);
         }
@@ -210,9 +210,9 @@ function renderContent(authoredNotes, edgesMap) {
         content: loadingContent
       },
       {
-        heading: 'Do not Select',
-        headingCount: binnedNotes.doNotSelect.length,
-        id: 'doNotSelect',
+        heading: 'Exclude',
+        headingCount: binnedNotes.exclude.length,
+        id: 'exclude',
         content: loadingContent
       }
     ];
@@ -253,7 +253,7 @@ function renderContent(authoredNotes, edgesMap) {
   function updateCounts() {
     var containers = [
       'noSelection',
-      'doNotSelect'
+      'exclude'
     ];
     var totalCount = 0;
 
