@@ -192,10 +192,10 @@ class BidInvitation(openreview.Invitation):
             }
         )
 
-class ExpertiseBidInvitation(openreview.Invitation):
+class ExpertiseSelectionInvitation(openreview.Invitation):
     def __init__(self, conference):
 
-        expertise_bid_stage = conference.expertise_bid_stage
+        expertise_selection_stage = conference.expertise_selection_stage
 
         readers = [
             conference.get_id(),
@@ -208,10 +208,10 @@ class ExpertiseBidInvitation(openreview.Invitation):
             readers.append(conference.get_area_chairs_id())
             invitees.append(conference.get_area_chairs_id())
 
-        super(ExpertiseBidInvitation, self).__init__(id = conference.get_expertise_bid_id(),
-            cdate = tools.datetime_millis(expertise_bid_stage.start_date),
-            duedate = tools.datetime_millis(expertise_bid_stage.due_date),
-            expdate = tools.datetime_millis(expertise_bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if expertise_bid_stage.due_date else None,
+        super(ExpertiseSelectionInvitation, self).__init__(id = conference.get_expertise_selection_id(),
+            cdate = tools.datetime_millis(expertise_selection_stage.start_date),
+            duedate = tools.datetime_millis(expertise_selection_stage.due_date),
+            expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if expertise_selection_stage.due_date else None,
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -232,7 +232,7 @@ class ExpertiseBidInvitation(openreview.Invitation):
                         'type': 'Group'
                     },
                     'label': {
-                        'value-radio': ['Use', 'Do Not Use'],
+                        'value-radio': ['Select', 'Do Not Select'],
                         'required': True
                     }
                 }
@@ -605,9 +605,9 @@ class InvitationBuilder(object):
 
         return  self.client.post_invitation(invitation)
 
-    def set_expertise_bid_invitation(self, conference):
+    def set_expertise_selection_invitation(self, conference):
 
-        invitation = ExpertiseBidInvitation(conference)
+        invitation = ExpertiseSelectionInvitation(conference)
 
         return self.client.post_invitation(invitation)
 

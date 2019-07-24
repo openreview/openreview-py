@@ -1,5 +1,5 @@
 // ------------------------------------
-// Add Bid Interface
+// Add EXPERTISE SELECTION Interface
 // ------------------------------------
 
 var CONFERENCE_ID = '';
@@ -7,14 +7,16 @@ var HEADER = {};
 var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
 var SUBMISSION_ID = '';
-var BID_ID = '';
-var SUBJECT_AREAS = '';
+var EXPERTISE_BID_ID = '';
+var EXPERTISE_SUBMISSION_ID = '';
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
   Webfield.ui.setup('#invitation-container', CONFERENCE_ID);  // required
 
   Webfield.ui.header(HEADER.title, HEADER.instructions);
+
+  renderExpertiseSubmissionButton();
 
   Webfield.ui.spinner('#notes', { inline: true });
 
@@ -23,20 +25,39 @@ function main() {
 
 
 // Perform all the required API calls
-function load() {
-  var notesP = Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID,
-    noDetails: true
+
+function renderExpertiseSubmissionButton() {
+  Webfield.api.get('/invitation', {id: EXPERTISE_SUBMISSION_ID})
+  .then(function(invitation) {
+    Webfield.ui.submissionButton(invitation, user, {
+      onNoteCreated: function() {
+        // Callback funtion to be run when a paper has successfully been submitted (required)
+        promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
+          'A list of all submissions will be available after the deadline');
+
+        load().then(renderContent).then(function() {
+          $('.tabs-container a[href="#your-consoles"]').click();
+        });
+      }
+    });
   });
+}
+
+function load() {
 
   var authoredNotesP = Webfield.getAll('/notes', {
     'content.authorids': user.profile.id,
-    invitation: SUBMISSION_ID,
-    noDetails: true
+    noDetails: true,
+    sort: 'cdate'
+  })
+  .then(function(notes){
+    return notes.filter(function(note){
+      return !(note.original);
+    });
   });
 
   var edgesMapP = Webfield.getAll('/edges', {
-    invitation: BID_ID
+    invitation: EXPERTISE_BID_ID
   })
   .then(function(edges) {
     if (!edges || !edges.length) {
@@ -52,20 +73,13 @@ function load() {
     }, {});
   });
 
-  return $.when(notesP, authoredNotesP, edgesMapP);
+  return $.when(authoredNotesP, edgesMapP);
 }
 
 
-// Display the bid interface populated with loaded data
-function renderContent(validNotes, authoredNotes, edgesMap) {
-  var authoredNoteIds = _.map(authoredNotes, function(note){
-    return note.id;
-  });
-
-  validNotes = _.filter(validNotes, function(note){
-    return !_.includes(authoredNoteIds, note.original || note.id);
-  })
-  addEdgesToNotes(validNotes, edgesMap);
+// Display the expertise selection interface populated with loaded data
+function renderContent(authoredNotes, edgesMap) {
+  addEdgesToNotes(authoredNotes, edgesMap);
 
   var activeTab = 0;
   var sections;
@@ -77,7 +91,7 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
     showContents: true,
     showTags: false,
     showEdges: true,
-    edgeInvitations: [invitation] // Bid invitation automatically available
+    edgeInvitations: [invitation] // Expertise Selection invitation automatically available here
   };
 
   $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
@@ -105,24 +119,24 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   });
 
   $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edgeObj) {
-    var updatedNote = _.find(validNotes, ['id', edgeObj.head]);
+    var updatedNote = _.find(authoredNotes, ['id', edgeObj.head]);
     if (!updatedNote) {
       return;
     }
-    var prevEdgeIndex = _.findIndex(updatedNote.details.edges, ['invitation', BID_ID]);
+    var prevEdgeIndex = _.findIndex(updatedNote.details.edges, ['invitation', EXPERTISE_BID_ID]);
     var prevVal = prevEdgeIndex !== -1 ?
       updatedNote.details.edges[prevEdgeIndex].label :
-      'No Bid';
+      'No Selection';
 
     if (edgeObj.ddate) {
-      edgeObj.label = 'No Bid';
+      edgeObj.label = 'No Selection';
     }
     updatedNote.details.edges[prevEdgeIndex] = edgeObj;
 
     var labelToContainerId = {
-      'Use': 'use',
-      'Do Not Use': 'doNotUse',
-      'No Bid': 'noBid'
+      'Select': 'select',
+      'Do Not Select': 'doNotSelect',
+      'No Selection': 'noSelection'
     };
 
     var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
@@ -163,35 +177,30 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   function updateNotes(notes) {
     // Sort notes into bins by bid
     binnedNotes = {
-      noBid: [],
-      use: [],
-      doNotUse: []
+      noSelection: [],
+      select: [],
+      doNotSelect: []
     };
 
     var bids, n;
     for (var i = 0; i < notes.length; i++) {
       n = notes[i];
       bids = _.filter(n.details.edges, function(t) {
-        return t.invitation === BID_ID;
+        return t.invitation === EXPERTISE_BID_ID;
       });
 
       if (bids.length) {
-        if (bids[0].label === 'Use') {
-          binnedNotes.use.push(n);
-        } else if (bids[0].label === 'Do Not Use') {
-          binnedNotes.doNotUse.push(n);
+        if (bids[0].label === 'Select') {
+          binnedNotes.select.push(n);
+        } else if (bids[0].label === 'Do Not Select') {
+          binnedNotes.doNotSelect.push(n);
         } else {
-          binnedNotes.noBid.push(n);
+          binnedNotes.noSelection.push(n);
         }
       } else {
-        binnedNotes.noBid.push(n);
+        binnedNotes.noSelection.push(n);
       }
     }
-
-    var bidCount = binnedNotes.use.length + binnedNotes.doNotUse.length;
-
-    $('#bidcount').remove();
-    $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
 
     var loadingContent = Handlebars.templates.spinner({ extraClasses: 'spinner-inline' });
     sections = [
@@ -201,21 +210,21 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
         content: null
       },
       {
-        heading: 'No Bid',
-        headingCount: binnedNotes.noBid.length,
-        id: 'noBid',
+        heading: 'No Selection',
+        headingCount: binnedNotes.noSelection.length,
+        id: 'noSelection',
         content: loadingContent
       },
       {
-        heading: 'Use',
-        headingCount: binnedNotes.use.length,
-        id: 'use',
+        heading: 'Select',
+        headingCount: binnedNotes.select.length,
+        id: 'select',
         content: loadingContent
       },
       {
-        heading: 'Do Not Use',
-        headingCount: binnedNotes.doNotUse.length,
-        id: 'doNotUse',
+        heading: 'Do Not Select',
+        headingCount: binnedNotes.doNotSelect.length,
+        id: 'doNotSelect',
         content: loadingContent
       }
     ];
@@ -236,8 +245,6 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
       search: {
         enabled: true,
         localSearch: true,
-        subjectAreas: SUBJECT_AREAS,
-        subjectAreaDropdown: 'basic',
         sort: false,
         onResults: function(searchResults) {
           Webfield.ui.searchResults(searchResults, searchResultsOptions);
@@ -257,9 +264,9 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
 
   function updateCounts() {
     var containers = [
-      'noBid',
-      'use',
-      'doNotUse'
+      'noSelection',
+      'select',
+      'doNotSelect'
     ];
     var totalCount = 0;
 
@@ -272,25 +279,21 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
         $tab.append('<span class="badge">' + numPapers + '</span>');
       }
 
-      if (containerId != 'noBid') {
+      if (containerId != 'noSelection') {
         totalCount += numPapers;
       }
     });
-
-    $('#bidcount').remove();
-    $('#header').append('<h4 id="bidcount">You have completed ' + totalCount + ' bids</h4>');
   }
-
-  updateNotes(validNotes);
+  updateNotes(authoredNotes);
 }
 
-function addEdgesToNotes(validNotes, edgesMap) {
-  for (var i = 0; i < validNotes.length; i++) {
-    var noteId = validNotes[i].id;
+function addEdgesToNotes(notesArray, edgesMap) {
+  for (var i = 0; i < notesArray.length; i++) {
+    var noteId = notesArray[i].id;
     if (edgesMap.hasOwnProperty(noteId)) {
-      validNotes[i].details.edges = [edgesMap[noteId]];
+      notesArray[i].details = {edges : [edgesMap[noteId]]};
     } else {
-      validNotes[i].details.edges = [];
+      notesArray[i].details = {edges : []};
     }
   }
 }
