@@ -18,7 +18,7 @@ class Matching(object):
             signatures = [self.conference.get_id()],
             reply = {
                 'readers': {
-                    'values': [self.conference.get_id()]
+                    'values-regex': self.conference.get_id() + '|~.*'
                 },
                 'writers': {
                     'values': [self.conference.get_id()]
@@ -74,7 +74,7 @@ class Matching(object):
                         tail = profile.id,
                         weight = 1,
                         label = ','.join(conflicts),
-                        readers = [self.conference.id],
+                        readers = [self.conference.id, profile.id], # do acs need to read all tpms scores?
                         writers = [self.conference.id],
                         signatures = [self.conference.id]
                     ))
@@ -109,7 +109,7 @@ class Matching(object):
                         head = paper_note_id,
                         tail = profile_id,
                         weight = float(score),
-                        readers = [self.conference.id],
+                        readers = [self.conference.id, profile_id], # do acs need to read all tpms scores?
                         writers = [self.conference.id],
                         signatures = [self.conference.id]
                     ))
@@ -132,7 +132,7 @@ class Matching(object):
                     head = paper_note_id,
                     tail = profile_id,
                     weight = float(score),
-                    readers = [self.conference.id],
+                    readers = [self.conference.id, profile_id], # do acs need to read all tpms scores?
                     writers = [self.conference.id],
                     signatures = [self.conference.id]
                 ))
