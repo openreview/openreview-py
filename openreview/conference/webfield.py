@@ -93,8 +93,7 @@ class WebfieldBuilder(object):
         default_header = {
             'title': conference.get_short_name() + ' Expertise Selection',
             'instructions': '<p class="dark">Listed below are the papers we have for you. <b>By default, we consider \
-                all of these papers to formulate your expertise.\
-                <br>Please click on \"Exclude\" for papers that should NOT be used to represent your expertise.</b><br>\
+                all of these papers to formulate your expertise</b>. Please <b>click on \"Exclude\" for papers that should NOT be used to represent your expertise.</b><br>\
                 Please note that we assign you papers based on your expertise which is derived from these papers.</p>\
                 <p class="dark"><strong>Note:</strong></p>\
                 <ul>\
@@ -102,8 +101,7 @@ class WebfieldBuilder(object):
                     <li>In case we are missing any of your papers, <b>you can also upload papers by using the Upload button below</b>.</li>\
                     <li>You should also <b>update Conflict of Interest details on your profile page</b>, specifically "Emails", \
                     "Education and Career History" & "Advisors and Other Relations" fields.</li>\
-                </ul>\
-                <br>'
+                </ul>'
         }
 
         header = self.__build_options(default_header, conference.get_expertise_selection_page_header())
