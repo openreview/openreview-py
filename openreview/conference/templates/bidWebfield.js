@@ -24,10 +24,12 @@ function main() {
 
 // Perform all the required API calls
 function load() {
-  var notesP = Webfield.getAll('/notes', {
+  var notesP = Webfield.get('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    noDetails: true
-  });
+    noDetails: true,
+    limit: 50,
+    offset: 0
+  }).then(function(result) { return result.notes; });
 
   var authoredNotesP = Webfield.getAll('/notes', {
     'content.authorids': user.profile.id,
@@ -36,18 +38,12 @@ function load() {
   });
 
   var edgesMapP = Webfield.getAll('/edges', {
-    invitation: BID_ID
+    invitation: BID_ID,
+    tail: user.profile.id
   })
   .then(function(edges) {
-    if (!edges || !edges.length) {
-      return {}
-    }
-
     return edges.reduce(function(noteMap, edge) {
-      // Only include the users bids in the map
-      if (edge.tail === user.profile.id) {
-        noteMap[edge.head] = edge;
-      }
+      noteMap[edge.head] = edge;
       return noteMap;
     }, {});
   });
@@ -261,12 +257,12 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
 
     // Render the contents of the All Papers tab
     var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
-    Webfield.ui.submissionList(notes, {
+    var submissionListOptions = {
       heading: null,
       container: '#allPapers',
       search: {
         enabled: true,
-        localSearch: true,
+        localSearch: false,
         subjectAreas: SUBJECT_AREAS,
         subjectAreaDropdown: 'basic',
         sort: false,
@@ -274,13 +270,24 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
           Webfield.ui.searchResults(searchResults, searchResultsOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(notes, searchResultsOptions);
+          Webfield.ui.submissionList(notes, submissionListOptions);
         },
       },
       displayOptions: paperDisplayOptions,
-      //pageSize: 50,
+      autoLoad: false,
+      noteCount: 2000,
+      pageSize: 50,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+          noDetails: true,
+          pageSize: 50,
+          offset: offset
+        });
+      },
       fadeIn: false
-    });
+    };
+
+    Webfield.ui.submissionList(notes, submissionListOptions);
 
     $('#notes > .spinner-container').remove();
     $('#notes .tabs-container').show();
