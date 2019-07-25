@@ -99,7 +99,7 @@ class WebfieldBuilder(object):
                 <ul>\
                     <li><b>By default, each paper is considered, unless you click on \"Exclude\" for a paper.</b></li>\
                     <li>In case we are missing any of your papers, <b>you can also upload papers by using the Upload button below</b>.</li>\
-                    <li>You should also <b>update Conflict of Interest details on your profile page</b>, specifically "Emails", \
+                    <li>You should also <b>update Conflict of Interest details on your <a href=\"/profile?mode=edit\">profile page</a></b>, specifically "Emails", \
                     "Education and Career History" & "Advisors and Other Relations" fields.</li>\
                 </ul>'
         }
