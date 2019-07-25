@@ -92,7 +92,7 @@ class WebfieldBuilder(object):
 
         default_header = {
             'title': conference.get_short_name() + ' Expertise Selection',
-            'instructions': '<p class="dark">Listed below are the papers we have for you. <b>By default, we consider \
+            'instructions': '<p class="dark">Listed below are all the papers you have authored that exist in the OpenReview database. <b>By default, we consider \
                 all of these papers to formulate your expertise</b>. Please <b>click on \"Exclude\" for papers that should NOT be used to represent your expertise.</b><br>\
                 Please note that we assign you papers based on your expertise which is derived from these papers.</p>\
                 <p class="dark"><strong>Note:</strong></p>\
