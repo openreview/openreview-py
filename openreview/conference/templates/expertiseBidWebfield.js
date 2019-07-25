@@ -55,7 +55,8 @@ function load() {
   });
 
   var edgesMapP = Webfield.getAll('/edges', {
-    invitation: EXPERTISE_BID_ID
+    invitation: EXPERTISE_BID_ID,
+    tail : user.profile.id
   })
   .then(function(edges) {
     if (!edges || !edges.length) {
@@ -64,9 +65,7 @@ function load() {
 
     return edges.reduce(function(noteMap, edge) {
       // Only include the users bids in the map
-      if (edge.tail === user.profile.id) {
-        noteMap[edge.head] = edge;
-      }
+      noteMap[edge.head] = edge;
       return noteMap;
     }, {});
   });
