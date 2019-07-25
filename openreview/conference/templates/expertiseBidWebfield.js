@@ -199,18 +199,18 @@ function renderContent(authoredNotes, edgesMap) {
     var loadingContent = Handlebars.templates.spinner({ extraClasses: 'spinner-inline' });
     sections = [
       {
-        heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
+        heading: 'All My Papers  <span class="glyphicon glyphicon-search"></span>',
         id: 'allPapers',
         content: null
       },
       {
-        heading: 'No Selection',
+        heading: 'My Selected Expertise',
         headingCount: binnedNotes.noSelection.length,
         id: 'noSelection',
         content: loadingContent
       },
       {
-        heading: 'Exclude',
+        heading: 'Excluded Papers',
         headingCount: binnedNotes.exclude.length,
         id: 'exclude',
         content: loadingContent
