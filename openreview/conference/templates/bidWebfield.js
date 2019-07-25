@@ -21,51 +21,103 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
+function getPapersSortedByAffinity(offset) {
+  return Webfield.get('/edges', {
+    invitation: CONFERENCE_ID + '/-/Reviewing/Affinity_Score',
+    tail: user.profile.id,
+    offset: offset,
+    limit: 50
+  })
+  .then(function(result) {
+    var noteIds = result.edges.map(function(edge) {
+      return edge.head;
+    });
+
+    return Webfield.post('/notes/search', {
+      ids: noteIds
+    })
+    .then(function(result) {
+      return result.notes;
+    })
+  });
+}
+
+function getPapersByBids(bids, bidsByNote) {
+
+  return Webfield.post('/notes/search', {
+    ids: bids.map(function(bid) { return bid.head; })
+  })
+  .then(function(result) {
+    return addEdgesToNotes(result.notes, bidsByNote);
+  });
+}
+
+function getBidCounts(edgesMap) {
+  var containers = {
+    'No Bid': 0,
+    'Very High': 0,
+    'High': 0,
+    'Neutral': 0,
+    'Low': 0,
+    'Very Low': 0
+  };
+  var totalCount = 0;
+
+  for (key in edgesMap) {
+    var label = edgesMap[key].label;
+    containers[label] += 1;
+  }
+
+  return containers;
+}
+
+
+
 
 // Perform all the required API calls
 function load() {
-  var notesP = Webfield.get('/notes', {
-    invitation: BLIND_SUBMISSION_ID,
-    noDetails: true,
-    limit: 50,
-    offset: 0
-  }).then(function(result) { return result.notes; });
 
-  var authoredNotesP = Webfield.getAll('/notes', {
-    'content.authorids': user.profile.id,
-    invitation: SUBMISSION_ID,
-    noDetails: true
-  });
+  var sortedNotesP = getPapersSortedByAffinity(0);
 
-  var edgesMapP = Webfield.getAll('/edges', {
-    invitation: BID_ID,
+  var conflictIdsP = Webfield.getAll('/edges', {
+    invitation: CONFERENCE_ID + '/-/Reviewing/Conflict',
     tail: user.profile.id
   })
   .then(function(edges) {
-    return edges.reduce(function(noteMap, edge) {
-      noteMap[edge.head] = edge;
-      return noteMap;
-    }, {});
+    return edges.map(function(edge) {
+      return edge.head;
+    });
+ });
+
+  var bidEdgesP = Webfield.getAll('/edges', {
+    invitation: BID_ID,
+    tail: user.profile.id
   });
 
-  return $.when(notesP, authoredNotesP, edgesMapP);
+  return $.when(sortedNotesP, conflictIdsP, bidEdgesP);
 }
 
 
 // Display the bid interface populated with loaded data
-function renderContent(validNotes, authoredNotes, edgesMap) {
-  var authoredNoteIds = _.map(authoredNotes, function(note){
-    return note.id;
-  });
-
-  validNotes = _.filter(validNotes, function(note){
-    return !_.includes(authoredNoteIds, note.original || note.id);
-  })
-  addEdgesToNotes(validNotes, edgesMap);
+function renderContent(notes, conflictIds, bidEdges) {
 
   var activeTab = 0;
   var sections;
-  var binnedNotes;
+  var bidsByNote = {};
+  var bidsById = {
+    'Very High': [],
+    'High': [],
+    'Neutral': [],
+    'Very Low': [],
+    'Low': []
+  };
+
+  bidEdges.forEach(function(edge) {
+    bidsByNote[edge.head] = edge;
+    bidsById[edge.label].push(edge);
+  });
+
+  var validNotes = prepareNotes(notes, conflictIds, bidsByNote);
 
   var paperDisplayOptions = {
     pdfLink: true,
@@ -79,17 +131,20 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
     activeTab = $(e.target).data('tabIndex');
     var containerId = sections[activeTab].id;
+    var bidId = sections[activeTab].heading;
 
     if (containerId !== 'allPapers') {
-      setTimeout(function() {
-        Webfield.ui.submissionList(binnedNotes[containerId], {
+
+      getPapersByBids(bidsById[bidId], bidsByNote)
+      .then(function(notes) {
+        Webfield.ui.submissionList(notes, {
           heading: null,
           container: '#' + containerId,
           search: { enabled: false },
           displayOptions: paperDisplayOptions,
           fadeIn: false
         });
-      }, 100);
+      })
     }
   });
 
@@ -100,105 +155,76 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
     }
   });
 
-  $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edgeObj) {
-    var updatedNote = _.find(validNotes, ['id', edgeObj.head]);
-    if (!updatedNote) {
-      return;
-    }
-    var prevEdgeIndex = _.findIndex(updatedNote.details.edges, ['invitation', BID_ID]);
-    var prevVal = prevEdgeIndex !== -1 ?
-      updatedNote.details.edges[prevEdgeIndex].label :
-      'No Bid';
-
-    if (edgeObj.ddate) {
-      edgeObj.label = 'No Bid';
-    }
-    updatedNote.details.edges[prevEdgeIndex] = edgeObj;
-
-    var labelToContainerId = {
-      'Very High': 'veryHigh',
-      'High': 'high',
-      'Neutral': 'neutral',
-      'Low': 'low',
-      'Very Low': 'veryLow',
-      'No Bid': 'noBid'
-    };
-
-    var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
-    var currentNoteList = binnedNotes[labelToContainerId[edgeObj.label]];
-
-    var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.head]);
-    if (currentIndex !== -1) {
-      var currentNote = previousNoteList[currentIndex];
-      currentNote.details.edges = [edgeObj]; // Assumes notes will have only 1 type of edge
-      previousNoteList.splice(currentIndex, 1);
-      currentNoteList.push(currentNote);
+  $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edge) {
+    if (edge.ddate) {
+      delete bidsByNote[edge.head];
+      bidsById[edge.label] = bidsById[edge.label].filter(function(e) { return edge.id != e.id; });
     } else {
-      console.warn('Note not found!');
+      bidsByNote[edge.head] = edge;
+      bidsById[edge.label].push(edge);
     }
+
+    // var updatedNote = _.find(validNotes, ['id', edgeObj.head]);
+    // if (!updatedNote) {
+    //   return;
+    // }
+    // var prevEdgeIndex = _.findIndex(updatedNote.details.edges, ['invitation', BID_ID]);
+    // var prevVal = prevEdgeIndex !== -1 ?
+    //   updatedNote.details.edges[prevEdgeIndex].label :
+    //   'No Bid';
+
+    // if (edgeObj.ddate) {
+    //   edgeObj.label = 'No Bid';
+    // }
+    // updatedNote.details.edges[prevEdgeIndex] = edgeObj;
+
+    // var labelToContainerId = {
+    //   'Very High': 'veryHigh',
+    //   'High': 'high',
+    //   'Neutral': 'neutral',
+    //   'Low': 'low',
+    //   'Very Low': 'veryLow',
+    //   'No Bid': 'noBid'
+    // };
+
+    // var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
+    // var currentNoteList = binnedNotes[labelToContainerId[edgeObj.label]];
+
+    // var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.head]);
+    // if (currentIndex !== -1) {
+    //   var currentNote = previousNoteList[currentIndex];
+    //   currentNote.details.edges = [edgeObj]; // Assumes notes will have only 1 type of edge
+    //   previousNoteList.splice(currentIndex, 1);
+    //   currentNoteList.push(currentNote);
+    // } else {
+    //   console.warn('Note not found!');
+    // }
 
     // If the current tab is not the All Papers tab remove the note from the DOM and
     // update the state of edge widget in the All Papers tab
-    if (activeTab) {
-      var $elem = $(e.target).closest('.note');
-      $elem.fadeOut('normal', function() {
-        $elem.remove();
+    // if (activeTab) {
+    //   var $elem = $(e.target).closest('.note');
+    //   $elem.fadeOut('normal', function() {
+    //     $elem.remove();
 
-        var $container = $('#' + labelToContainerId[prevVal] + ' .submissions-list');
-        if (!$container.children().length) {
-          $container.append('<li><p class="empty-message">No papers to display at this time</p></li>');
-        }
-      });
+    //     var $container = $('#' + labelToContainerId[prevVal] + ' .submissions-list');
+    //     if (!$container.children().length) {
+    //       $container.append('<li><p class="empty-message">No papers to display at this time</p></li>');
+    //     }
+    //   });
 
-      var $noteToChange = $('#allPapers .submissions-list .note[data-id="' + updatedNote.id + '"]');
-      $noteToChange.find('label[data-value="' + prevVal + '"]').removeClass('active')
-        .children('input').prop('checked', false);
-      $noteToChange.find('label[data-value="' + edgeObj.label + '"]').button('toggle');
-    }
+    //   var $noteToChange = $('#allPapers .submissions-list .note[data-id="' + updatedNote.id + '"]');
+    //   $noteToChange.find('label[data-value="' + prevVal + '"]').removeClass('active')
+    //     .children('input').prop('checked', false);
+    //   $noteToChange.find('label[data-value="' + edgeObj.label + '"]').button('toggle');
+    // }
 
-    updateCounts();
+     updateCounts();
   });
 
   function updateNotes(notes) {
-    // Sort notes into bins by bid
-    binnedNotes = {
-      noBid: [],
-      veryHigh: [],
-      high: [],
-      neutral: [],
-      low: [],
-      veryLow: []
-    };
 
-    var bids, n;
-    for (var i = 0; i < notes.length; i++) {
-      n = notes[i];
-      bids = _.filter(n.details.edges, function(t) {
-        return t.invitation === BID_ID;
-      });
-
-      if (bids.length) {
-        if (bids[0].label === 'Very High') {
-          binnedNotes.veryHigh.push(n);
-        } else if (bids[0].label === 'High') {
-          binnedNotes.high.push(n);
-        } else if (bids[0].label === 'Neutral') {
-          binnedNotes.neutral.push(n);
-        } else if (bids[0].label === 'Low') {
-          binnedNotes.low.push(n);
-        } else if (bids[0].label === 'Very Low') {
-          binnedNotes.veryLow.push(n);
-        } else {
-          binnedNotes.noBid.push(n);
-        }
-      } else {
-        binnedNotes.noBid.push(n);
-      }
-    }
-
-    var bidCount = binnedNotes.veryHigh.length + binnedNotes.high.length +
-      binnedNotes.neutral.length + binnedNotes.low.length + binnedNotes.veryLow.length;
-
+    var bidCount = 0;
     $('#bidcount').remove();
     $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
 
@@ -211,37 +237,37 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
       },
       {
         heading: 'No Bid',
-        headingCount: binnedNotes.noBid.length,
+        headingCount: 0,
         id: 'noBid',
         content: loadingContent
       },
       {
         heading: 'Very High',
-        headingCount: binnedNotes.veryHigh.length,
+        headingCount: bidsById['Very High'].length,
         id: 'veryHigh',
         content: loadingContent
       },
       {
         heading: 'High',
-        headingCount: binnedNotes.high.length,
+        headingCount: bidsById['High'].length,
         id: 'high',
         content: loadingContent
       },
       {
         heading: 'Neutral',
-        headingCount: binnedNotes.neutral.length,
+        headingCount: bidsById['Neutral'].length,
         id: 'neutral',
         content: loadingContent
       },
       {
         heading: 'Low',
-        headingCount: binnedNotes.low.length,
+        headingCount: bidsById['Low'].length,
         id: 'low',
         content: loadingContent
       },
       {
         heading: 'Very Low',
-        headingCount: binnedNotes.veryLow.length,
+        headingCount: bidsById['Very Low'].length,
         id: 'veryLow',
         content: loadingContent
       }
@@ -267,7 +293,7 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
         subjectAreaDropdown: 'basic',
         sort: false,
         onResults: function(searchResults) {
-          Webfield.ui.searchResults(searchResults, searchResultsOptions);
+          Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
         },
         onReset: function() {
           Webfield.ui.submissionList(notes, submissionListOptions);
@@ -275,13 +301,12 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
       },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
-      noteCount: 2000,
+      noteCount: 1600,
       pageSize: 50,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
-          noDetails: true,
-          pageSize: 50,
-          offset: offset
+        return getPapersSortedByAffinity(offset)
+        .then(function(notes) {
+          return prepareNotes(notes, conflictIds, bidsByNote);
         });
       },
       fadeIn: false
@@ -294,29 +319,22 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   }
 
   function updateCounts() {
-    var containers = [
-      'noBid',
-      'veryHigh',
-      'high',
-      'neutral',
-      'low',
-      'veryLow'
-    ];
+
     var totalCount = 0;
 
-    containers.forEach(function(containerId) {
-      var $tab = $('ul.nav-tabs li a[href="#' + containerId + '"]');
-      var numPapers = binnedNotes[containerId].length;
+    for(var i = 2; i < sections.length; i++) {
+      var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
+      var numPapers = bidsById[sections[i].heading].length;
 
       $tab.find('span.badge').remove();
       if (numPapers) {
         $tab.append('<span class="badge">' + numPapers + '</span>');
       }
 
-      if (containerId != 'noBid') {
+      if (sections[i].heading != 'noBid') {
         totalCount += numPapers;
       }
-    });
+    };
 
     $('#bidcount').remove();
     $('#header').append('<h4 id="bidcount">You have completed ' + totalCount + ' bids</h4>');
@@ -325,15 +343,27 @@ function renderContent(validNotes, authoredNotes, edgesMap) {
   updateNotes(validNotes);
 }
 
+function prepareNotes(notes, conflictIds, edgesMap) {
+  var validNotes = _.filter(notes, function(note){
+    return !_.includes(conflictIds, note.original || note.id);
+  })
+  return addEdgesToNotes(validNotes, edgesMap);
+}
+
 function addEdgesToNotes(validNotes, edgesMap) {
   for (var i = 0; i < validNotes.length; i++) {
     var noteId = validNotes[i].id;
     if (edgesMap.hasOwnProperty(noteId)) {
-      validNotes[i].details.edges = [edgesMap[noteId]];
+      validNotes[i].details = {
+        edges: [edgesMap[noteId]]
+      };
     } else {
-      validNotes[i].details.edges = [];
+      validNotes[i].details = {
+        edges: []
+      };
     }
   }
+  return validNotes;
 }
 
 // Go!
