@@ -663,6 +663,21 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
+    def get_reference(self, id):
+        """
+        Get a single reference by id if available
+
+        :param id: id of the reference
+        :type id: str
+
+        :return: reference matching the passed id
+        :rtype: Note
+        """
+        response = requests.get(self.reference_url, params = {'id':id}, headers = self.headers)
+        response = self.__handle_response(response)
+        n = response.json()['references'][0]
+        return Note.from_json(n)
+
     def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
