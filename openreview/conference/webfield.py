@@ -88,6 +88,35 @@ class WebfieldBuilder(object):
             group.signatures = [group.id]
             return self.client.post_group(group)
 
+    def set_expertise_selection_page(self, conference, invitation):
+
+        default_header = {
+            'title': conference.get_short_name() + ' Expertise Selection',
+            'instructions': '<p class="dark">Listed below are all the papers you have authored that exist in the OpenReview database. <b>By default, we consider \
+                all of these papers to formulate your expertise</b>. Please <b>click on \"Exclude\" for papers that should NOT be used to represent your expertise.</b><br>\
+                Please note that we assign you papers based on your expertise which is derived from these papers.</p>\
+                <p class="dark"><strong>Note:</strong></p>\
+                <ul>\
+                    <li><b>By default, each paper is considered, unless you click on \"Exclude\" for a paper.</b></li>\
+                    <li>In case we are missing any of your papers, <b>you can also upload papers by using the Upload button below</b>.</li>\
+                    <li>You should also <b>update Conflict of Interest details on your <a href=\"/profile?mode=edit\" target=\"_blank\">profile page</a></b>, specifically "Emails", \
+                    "Education and Career History" & "Advisors and Other Relations" fields.</li>\
+                </ul>'
+        }
+
+        header = self.__build_options(default_header, conference.get_expertise_selection_page_header())
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/expertiseBidWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var EXPERTISE_BID_ID = '';", "var EXPERTISE_BID_ID = '" + conference.get_expertise_selection_id() + "';")
+
+            invitation.web = content
+            return self.client.post_invitation(invitation)
+
     def set_bid_page(self, conference, invitation):
 
         default_header = {

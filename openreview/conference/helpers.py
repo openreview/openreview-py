@@ -73,6 +73,10 @@ def get_conference(client, request_form_id):
 
     builder.set_submission_stage(double_blind = double_blind, public = public, start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options)
 
+    paper_matching_options = note.content.get('Paper Matching', [])
+    if 'OpenReview Affinity' in paper_matching_options:
+        builder.set_expertise_selection_stage(due_date = submission_due_date)
+
     conference = builder.get_result()
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference
