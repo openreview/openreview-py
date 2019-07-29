@@ -824,7 +824,13 @@ var registerEventHandlers = function() {
         signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
       })
     })
-    .then(function(results) {
+    .then(function(result) {
+      return Webfield.put('/groups/members', {
+        id: REVIEWER_GROUP,
+        members: [userToAdd]
+      })
+    })
+    .then(function(result) {
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: paperForum,
         invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
