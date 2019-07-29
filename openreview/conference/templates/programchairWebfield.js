@@ -20,8 +20,21 @@ var REQUEST_FORM_ID = '';
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
+var ENABLE_REVIEWER_REASSIGNMENT = false;
+
+var reviewerSummaryMap = {};
+var allReviewers = [];
 
 // Ajax functions
+var getAllReviewers = function() {
+  if (ENABLE_REVIEWER_REASSIGNMENT){
+    Webfield.get('/groups', { id: REVIEWER_GROUP })
+    .then(function(result) {
+      allReviewers = result.groups[0].members;
+    });
+  }
+}
+
 var getNumberfromGroup = function(groupId, name) {
 
   var tokens = groupId.split('/');
@@ -477,6 +490,13 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
 
     $(container).find('.table-container').remove();
     $(container).append(tableHTML);
+
+    if (ENABLE_REVIEWER_REASSIGNMENT) {
+      for(key in reviewerSummaryMap) {
+        updateReviewerContainer(key);
+      }
+    }
+
     $('.console-table th').eq(0).css('width', '4%');
     $('.console-table th').eq(1).css('width', '26%');
     if (SHOW_AC_TAB) {
@@ -892,6 +912,7 @@ var buildNoteMap = function(noteNumbers) {
   var noteMap = Object.create(null);
   for (var i = 0; i < noteNumbers.length; i++) {
     noteMap[noteNumbers[i]] = Object.create(null);
+    reviewerSummaryMap[noteNumbers[i]] = Object.create(null);
   }
   return noteMap;
 };
