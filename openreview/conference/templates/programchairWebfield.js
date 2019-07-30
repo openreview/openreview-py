@@ -1,6 +1,7 @@
 
 // Constants
 var CONFERENCE_ID = '';
+var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
