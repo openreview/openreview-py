@@ -28,7 +28,7 @@ var allReviewers = [];
 // Ajax functions
 var getAllReviewers = function() {
   if (ENABLE_REVIEWER_REASSIGNMENT){
-    Webfield.get('/groups', { id: REVIEWER_GROUP })
+    Webfield.get('/groups', { id: REVIEWERS_ID })
     .then(function(result) {
       allReviewers = result.groups[0].members;
     });
@@ -245,6 +245,16 @@ var getRequestForm = function() {
 
 var getInvitations = function() {
   return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
+}
+
+var findNextAnonGroupNumber = function(paperNumber){
+  paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
+  for (var i = 1; i < paperReviewerNums.length + 1; i++) {
+    if (i.toString() !== paperReviewerNums[i-1]) {
+      return i;
+    }
+  }
+  return paperReviewerNums.length + 1;
 }
 
 var getConfigurationDescription = function(note) {
@@ -701,6 +711,53 @@ var displayError = function(message) {
   $('#notes').empty().append('<div class="alert alert-danger"><strong>Error:</strong> ' + message + '</div>');
 };
 
+var updateReviewerContainer = function(paperNumber) {
+  $addReviewerContainer = $('#' + paperNumber + '-add-reviewer');
+  $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
+  paperForum = $reviewerProgressContainer.data('paperForum');
+
+  var dropdownOptions = _.map(allReviewers, function(member) {
+    return {
+      id: member,
+      description: view.prettyId(member)
+    };
+  });
+  var filterOptions = function(options, term) {
+    return _.filter(options, function(p) {
+      return _.includes(p.description.toLowerCase(), term.toLowerCase());
+    });
+  };
+  placeholder = 'reviewer@domain.edu';
+
+  var $dropdown = view.mkDropdown(placeholder, false, null, function(update, term) {
+    update(filterOptions(dropdownOptions, term));
+  }, function(value, id) {
+    var selectedOption = _.find(dropdownOptions, ['id', id]);
+    var $input = $dropdown.find('input');
+
+    if (!(selectedOption && selectedOption.description === value)) {
+      $input.val(value);
+      $input.attr('value_id', value);
+    } else {
+      $input.val(value);
+      $input.attr('value_id', id);
+    }
+  });
+
+  $dropdown.find('input').attr({
+    class: 'form-control dropdown note_content_value input-assign-reviewer',
+    name: placeholder,
+    autocomplete: 'on'
+  });
+  $dropdown.find('div').attr({
+    class: 'dropdown_content dropdown_content_assign_reviewer',
+    name: placeholder,
+    autocomplete: 'on'
+  });
+
+  $addReviewerContainer.append($dropdown);
+  $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber + ' data-paper-forum=' + paperForum +'>Assign</button>');
+}
 
 // Helper functions
 var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
@@ -713,10 +770,13 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var ratings = [];
   var confidences = [];
   for (var reviewerNum in reviewerIds) {
-    var reviewer = reviewerIds[reviewerNum]
+    var reviewer = reviewerIds[reviewerNum];
     if (reviewerNum in completedReviews || reviewer.id in completedReviews) {
       reviewObj = completedReviews[reviewerNum] || completedReviews[reviewer.id];
       combinedObj[reviewerNum] = _.assign({}, reviewer, {
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
         completedReview: true,
         forum: reviewObj.forum,
         note: reviewObj.id,
@@ -728,11 +788,17 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
       confidences.push(reviewObj.confidence);
     } else {
       combinedObj[reviewerNum] = _.assign({}, reviewer, {
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
+        forum: note.forum,
         forumUrl: '/forum?' + $.param({
           id: note.forum,
           noteId: note.id,
           invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
-        })
+        }),
+        paperNumber: note.number,
+        reviewerNumber: reviewerNum
       });
     }
   }
@@ -755,6 +821,8 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   }
 
   var reviewProgressData = {
+    noteId: note.id,
+    paperNumber: note.number,
     numSubmittedReviews: Object.keys(completedReviews).length,
     numReviewers: Object.keys(reviewerIds).length,
     reviewers: combinedObj,
@@ -764,8 +832,11 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     averageConfidence: averageConfidence,
     minConfidence: minConfidence,
     maxConfidence: maxConfidence,
-    sendReminder: false
+    sendReminder: false,
+    expandReviewerList: false,
+    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
   };
+  reviewerSummaryMap[note.number] = reviewProgressData;
 
   var areachairProgressData = {
     numMetaReview: metaReview ? 'One' : 'No',
@@ -930,6 +1001,7 @@ controller.addHandler('areachairs', {
     var pl = model.tokenPayload(token);
     var user = pl.user;
 
+    getAllReviewers();
     getBlindedNotes()
     .then(function(notes) {
       var noteNumbers = _.map(notes, function(note) { return note.number; });
@@ -1017,6 +1089,117 @@ $('#group-container').on('click', 'a.collapse-btn', function(e) {
   } else {
     $(this).text('Show reviewers');
   }
+  return false;
+});
+
+$('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) {
+  var $link = $(this);
+  var paperNumber = $link.data('paperNumber');
+  var paperForum = $link.data('paperForum');
+  var $currDiv = $('#' + paperNumber + '-add-reviewer');
+  var userToAdd = $currDiv.find('input').attr('value_id').trim();
+
+  if (!userToAdd) {
+    promptError('Please enter a valid email for assigning a reviewer');
+    return false;
+  }
+  var alreadyAssigned = _.find(reviewerSummaryMap[paperNumber].reviewers, function(rev){
+    return (rev.email === userToAdd) || (rev.id === userToAdd);
+  });
+  if (alreadyAssigned) {
+    promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
+    return false;
+  }
+
+  var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
+  Webfield.put('/groups/members', {
+    id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+    members: [userToAdd]
+  })
+  .then(function(result) {
+    var commonReaders = [CONFERENCE_ID + '/Program_Chairs'];
+    if (SHOW_AC_TAB){
+      commonReaders.push(CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs');
+    }
+    return Webfield.post('/groups', {
+      id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
+      members: [userToAdd],
+      readers: commonReaders.concat(CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber),
+      writers: commonReaders,
+      signatures: [CONFERENCE_ID + '/Program_Chairs'],
+      signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
+    })
+  })
+  .then(function(result) {
+    return Webfield.put('/groups/members', {
+      id: REVIEWERS_ID,
+      members: [userToAdd]
+    })
+  })
+  .then(function(result) {
+    var forumUrl = 'https://openreview.net/forum?' + $.param({
+      id: paperForum,
+      invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
+    });
+    var lastReminderSent = null;
+    reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
+      id: userToAdd,
+      name: userToAdd.startsWith('~') ? view.prettyId(userToAdd) : '',
+      email: userToAdd,
+      forum: paperForum,
+      forumUrl: forumUrl,
+      lastReminderSent: lastReminderSent,
+      paperNumber: paperNumber,
+      reviewerNumber: nextAnonNumber
+    };
+    reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
+    reviewerSummaryMap[paperNumber].expandReviewerList = true;
+    reviewerSummaryMap[paperNumber].sendReminder = true;
+    reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
+    var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
+    $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+    updateReviewerContainer(paperNumber);
+    promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
+    var postData = {
+      groups: [userToAdd],
+      subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
+      message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
+      ' for ' + SHORT_PHRASE + '.' +
+      '\n\nTo review this new assignment, please login and click on ' +
+      'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
+      '\n\nTo check all of your assigned papers, please click on https://openreview.net/group?id=' + REVIEWERS_ID +
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair'
+    };
+    return Webfield.post('/mail', postData);
+  });
+  return false;
+});
+
+$('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
+  var $link = $(this);
+  var userId = $link.data('userId');
+  var paperNumber = $link.data('paperNumber');
+  var reviewerNumber = $link.data('reviewerNumber');
+
+  Webfield.delete('/groups/members', {
+    id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+    members: [userId]
+  })
+  .then(function(result) {
+    return Webfield.delete('/groups/members', {
+      id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
+      members: [userId]
+    });
+  })
+  .then(function(result) {
+    var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
+    delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
+    reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
+    reviewerSummaryMap[paperNumber].expandReviewerList = true;
+    $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
+    updateReviewerContainer(paperNumber);
+    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
+  })
   return false;
 });
 
