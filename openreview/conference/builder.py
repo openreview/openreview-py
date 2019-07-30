@@ -75,7 +75,7 @@ class Conference(object):
     def __set_program_chair_page(self):
         program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
         if program_chairs_group:
-            return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
+            return self.webfield_builder.set_program_chair_page(self, program_chairs_group, self.enable_reviewer_reassignment)
 
     def __set_expertise_selection_page(self):
         expertise_selection_invitation = self.client.get_invitation(self.get_expertise_selection_id())
@@ -493,13 +493,14 @@ class Conference(object):
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)
 
-    def set_program_chairs(self, emails):
+    def set_program_chairs(self, emails = [], enable_reviewer_reassignment = True):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
         ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
+        self.enable_reviewer_reassignment = enable_reviewer_reassignment
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = False):
+    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = True):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
