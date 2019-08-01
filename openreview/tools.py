@@ -413,7 +413,7 @@ def subdomains(domain):
     valid_domains = [d for d in domains if not tld.is_tld(d)]
     return valid_domains
 
-@deprecated()
+@deprecated(version='0.9.24')
 def profile_conflicts(profile):
     """
     Given a profile, returns a tuple containing two sets: domain_conflicts and relation_conflicts.
@@ -450,7 +450,7 @@ def profile_conflicts(profile):
 
     return (domain_conflicts, relation_conflicts)
 
-@deprecated()
+@deprecated(version='0.9.24')
 def get_profile_conflicts(client, reviewer_to_add):
     """
     Helper function for :func:`tools.profile_conflicts` function. Given a reviewer ID or email address, requests the server for that reviewer's profile using :meth:`openreview.Client.get_profile`, and checks it for conflicts using :func:`tools.profile_conflicts`.
@@ -472,7 +472,7 @@ def get_profile_conflicts(client, reviewer_to_add):
 
     return user_domain_conflicts, user_relation_conflicts
 
-@deprecated()
+@deprecated(version='0.9.24')
 def get_paper_conflicts(client, paper):
     """
     Given a Note object representing a submitted paper, returns a tuple containing two sets: domain_conflicts and relation_conflicts. The conflicts are obtained from authors of the paper.
