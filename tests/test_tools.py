@@ -105,6 +105,6 @@ class TestTools():
         assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'ox.ac.uk']
         assert openreview.tools.subdomains('michael@ground.ai') == ['ground.ai']
         assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
-
+        assert openreview.tools.subdomains('   ') == []
 
 

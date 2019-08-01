@@ -408,7 +408,7 @@ def subdomains(domain):
         full_domain = domain.split('@')[1]
     else:
         full_domain = domain
-    domain_components = full_domain.split('.')
+    domain_components = [c for c in full_domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = [d for d in domains if not tld.is_tld(d)]
     return valid_domains
