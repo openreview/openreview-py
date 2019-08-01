@@ -279,6 +279,23 @@ class Matching(object):
         union = set1.union(set2)
         return len(intersection) / len(union)
 
+    def _search_profiles(self, client, ids, emails):
+        profiles = []
+        profile_by_email = {}
+
+        batch_size = 100
+        for i in range(0, len(ids), batch_size):
+            batch_ids = ids[i:i+batch_size]
+            batch_profiles = client.search_profiles(ids=batch_ids)
+            profiles.extend(batch_profiles)
+
+        for j in range(0, len(emails), batch_size):
+            batch_emails = emails[i:i+batch_size]
+            batch_profile_by_email = client.search_profiles(emails=batch_emails)
+            profile_by_email.update(batch_profile_by_email)
+
+        return profiles, profile_by_email
+
     def _get_profiles(self, ids_or_emails):
         ids = []
         emails = []
@@ -288,9 +305,8 @@ class Matching(object):
             else:
                 emails.append(member)
 
-        profiles = self.client.search_profiles(ids = ids)
+        profiles, profile_by_email = self._search_profiles(self.client, ids, emails)
 
-        profile_by_email = self.client.search_profiles(emails = emails)
         for email in emails:
             profiles.append(profile_by_email.get(email, openreview.Profile(id = email,
             content = {
