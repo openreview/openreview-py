@@ -17,6 +17,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
+import tld
 
 def get_profile(client, value):
     """
@@ -409,9 +410,10 @@ def subdomains(domain):
         full_domain = domain
     domain_components = full_domain.split('.')
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
-    valid_domains = [d for d in domains if '.' in d]
+    valid_domains = [d for d in domains if not tld.is_tld(d)]
     return valid_domains
 
+@deprecated(version='0.9.24')
 def profile_conflicts(profile):
     """
     Given a profile, returns a tuple containing two sets: domain_conflicts and relation_conflicts.
@@ -448,6 +450,7 @@ def profile_conflicts(profile):
 
     return (domain_conflicts, relation_conflicts)
 
+@deprecated(version='0.9.24')
 def get_profile_conflicts(client, reviewer_to_add):
     """
     Helper function for :func:`tools.profile_conflicts` function. Given a reviewer ID or email address, requests the server for that reviewer's profile using :meth:`openreview.Client.get_profile`, and checks it for conflicts using :func:`tools.profile_conflicts`.
@@ -469,6 +472,7 @@ def get_profile_conflicts(client, reviewer_to_add):
 
     return user_domain_conflicts, user_relation_conflicts
 
+@deprecated(version='0.9.24')
 def get_paper_conflicts(client, paper):
     """
     Given a Note object representing a submitted paper, returns a tuple containing two sets: domain_conflicts and relation_conflicts. The conflicts are obtained from authors of the paper.
@@ -683,20 +687,20 @@ def iterget_edges (client,
 
 
 def iterget_notes(client,
-        id = None,
-        paperhash = None,
-        forum = None,
-        invitation = None,
-        replyto = None,
-        tauthor = None,
-        signature = None,
-        writer = None,
-        trash = None,
-        number = None,
-        mintcdate = None,
-        content = None,
-        details = None,
-        sort = None):
+    id = None,
+    paperhash = None,
+    forum = None,
+    invitation = None,
+    replyto = None,
+    tauthor = None,
+    signature = None,
+    writer = None,
+    trash = None,
+    number = None,
+    mintcdate = None,
+    content = None,
+    details = None,
+    sort = None):
     """
     Returns an iterator over Notes filtered by the provided parameters ignoring API limit.
 
@@ -942,7 +946,6 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
     else:
         return '{}1'.format(individual_label)
 
-
 def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
 
     """
@@ -1005,14 +1008,12 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
     unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
     return [parent_group, individual_groups, unassigned_individual_groups]
 
-
-
 def add_assignment(client, paper_number, conference, reviewer,
-                    parent_group_params = {},
-                    individual_group_params = {},
-                    parent_label = 'Reviewers',
-                    individual_label = 'AnonReviewer',
-                    use_profile = True):
+    parent_group_params = {},
+    individual_group_params = {},
+    parent_label = 'Reviewers',
+    individual_label = 'AnonReviewer',
+    use_profile = True):
 
     """
     Assigns a reviewer to a paper.
@@ -1111,7 +1112,6 @@ def add_assignment(client, paper_number, conference, reviewer,
             affected_groups.add(g.id)
 
     return (user,list(affected_groups))
-
 
 def remove_assignment(client, paper_number, conference, reviewer,
     parent_group_params = {},
@@ -1505,7 +1505,6 @@ def fill_template(template, paper):
             new_template[field] = fill_template(value, paper)
 
     return new_template
-
 
 def get_conflicts(author_profiles, user_profile):
     """
