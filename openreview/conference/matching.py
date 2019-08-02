@@ -290,7 +290,7 @@ class Matching(object):
             profiles.extend(batch_profiles)
 
         for j in range(0, len(emails), batch_size):
-            batch_emails = emails[i:i+batch_size]
+            batch_emails = emails[j:j+batch_size]
             batch_profile_by_email = client.search_profiles(emails=batch_emails)
             profile_by_email.update(batch_profile_by_email)
 
