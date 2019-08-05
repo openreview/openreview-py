@@ -225,7 +225,9 @@ class Matching(object):
                 },
                 'signatures': {
                     'values': [CONFERENCE_ID]},
-                'content': {}
+                'content': {
+                    'title': {'required': False, 'value': 'metadata note'}
+                }
             }
         })
 
@@ -242,7 +244,9 @@ class Matching(object):
                 'readers': {'values': [CONFERENCE_ID, PROGRAM_CHAIRS_ID]},
                 'writers': {'values': [CONFERENCE_ID]},
                 'signatures': {'values': [CONFERENCE_ID]},
-                'content': {}
+                'content': {
+                    'title': {'required': False, 'value': 'assignment note'}
+                }
             }
         })
 
