@@ -225,7 +225,17 @@ class Matching(object):
                 },
                 'signatures': {
                     'values': [CONFERENCE_ID]},
-                'content': {}
+                'content': {
+                    'title': {
+                        'value-regex': '.{1,250}',
+                        'required': True,
+                        'description': 'Title of the configuration.',
+                        'order': 1
+                    },
+                    'entries': {
+                        'value-dict': {}
+                    }
+                }
             }
         })
 
@@ -242,7 +252,16 @@ class Matching(object):
                 'readers': {'values': [CONFERENCE_ID, PROGRAM_CHAIRS_ID]},
                 'writers': {'values': [CONFERENCE_ID]},
                 'signatures': {'values': [CONFERENCE_ID]},
-                'content': {}
+                'content': {
+                    'title': {
+                        'value-regex': '.{1,250}',
+                        'required': True,
+                        'description': 'Title of the configuration.',
+                        'order': 1
+                    },
+                    'assigned_groups': {},
+                    'alternate_groups': {}
+                }
             }
         })
 
