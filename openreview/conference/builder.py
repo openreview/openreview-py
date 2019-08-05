@@ -73,7 +73,7 @@ class Conference(object):
     def __set_program_chair_page(self):
         program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
         if program_chairs_group:
-            return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
+            return self.webfield_builder.set_program_chair_page(self, program_chairs_group, self.enable_reviewer_reassignment)
 
     def __set_bid_page(self):
         bid_invitation = self.client.get_invitation(self.get_bid_id())
@@ -329,6 +329,9 @@ class Conference(object):
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
 
+    def set_reviewer_reassignment(self, enabled = True):
+        self.enable_reviewer_reassignment = enabled
+
     def get_homepage_options(self):
         options = {}
         if self.name:
@@ -467,20 +470,19 @@ class Conference(object):
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)
 
-    def set_program_chairs(self, emails):
+    def set_program_chairs(self, emails = []):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
         ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = False):
+    def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
             notes_iterator = self.get_submissions()
             for n in notes_iterator:
                 self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
-            self.enable_reviewer_reassignment = enable_reviewer_reassignment
             return self.__set_area_chair_page()
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
