@@ -410,7 +410,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     var messageCount = localStorage.getItem('messageCount');
     if (!reviewerMessages || !messageCount) {
       $('#message-reviewers-modal').modal('hide');
-      promptError('Could not send reminder emails at this time. Please refresh the page and try again.');
+      promptError('Could not send emails at this time. Please refresh the page and try again.');
     }
     JSON.parse(reviewerMessages).forEach(postReviewerEmails);
 
@@ -418,7 +418,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     localStorage.removeItem('messageCount');
 
     $('#message-reviewers-modal').modal('hide');
-    promptMessage('Successfully sent ' + messageCount + ' reminder emails');
+    promptMessage('Successfully sent ' + messageCount + ' emails');
   };
 
   var sortOptionHtml = Object.keys(sortOptions).map(function(option) {
@@ -432,9 +432,9 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
         '<span class="caret"></span>' +
       '</button>' +
       '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
-        '<li><a id="msg-all-reviewers">All Reviewers</a></li>' +
-        '<li><a id="msg-submitted-reviewers">Reviewers with submitted reviews</a></li>' +
-        '<li><a id="msg-unsubmitted-reviewers">Reviewers with unsubmitted reviews</a></li>' +
+        '<li><a id="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
+        '<li><a id="msg-submitted-reviewers">Reviewers with submitted reviews for selected papers</a></li>' +
+        '<li><a id="msg-unsubmitted-reviewers">Reviewers with unsubmitted reviews for selected papers</a></li>' +
       '</ul>' +
     '</div>' +
     '<div class="pull-right">' +
