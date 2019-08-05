@@ -54,7 +54,6 @@ function getPapersByBids(bids, bidsByNote) {
 
 function getBidCounts(edgesMap) {
   var containers = {
-    'No Bid': 0,
     'Very High': 0,
     'High': 0,
     'Neutral': 0,
@@ -70,9 +69,6 @@ function getBidCounts(edgesMap) {
 
   return containers;
 }
-
-
-
 
 // Perform all the required API calls
 function load() {
@@ -160,64 +156,13 @@ function renderContent(notes, conflictIds, bidEdges) {
       delete bidsByNote[edge.head];
       bidsById[edge.label] = bidsById[edge.label].filter(function(e) { return edge.id != e.id; });
     } else {
+      var previousEdge = bidsByNote[edge.head];
       bidsByNote[edge.head] = edge;
       bidsById[edge.label].push(edge);
+      if (previousEdge) {
+        bidsById[previousEdge.label] = bidsById[previousEdge.label].filter(function(e) { return previousEdge.id != e.id; });
+      }
     }
-
-    // var updatedNote = _.find(validNotes, ['id', edgeObj.head]);
-    // if (!updatedNote) {
-    //   return;
-    // }
-    // var prevEdgeIndex = _.findIndex(updatedNote.details.edges, ['invitation', BID_ID]);
-    // var prevVal = prevEdgeIndex !== -1 ?
-    //   updatedNote.details.edges[prevEdgeIndex].label :
-    //   'No Bid';
-
-    // if (edgeObj.ddate) {
-    //   edgeObj.label = 'No Bid';
-    // }
-    // updatedNote.details.edges[prevEdgeIndex] = edgeObj;
-
-    // var labelToContainerId = {
-    //   'Very High': 'veryHigh',
-    //   'High': 'high',
-    //   'Neutral': 'neutral',
-    //   'Low': 'low',
-    //   'Very Low': 'veryLow',
-    //   'No Bid': 'noBid'
-    // };
-
-    // var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
-    // var currentNoteList = binnedNotes[labelToContainerId[edgeObj.label]];
-
-    // var currentIndex = _.findIndex(previousNoteList, ['id', edgeObj.head]);
-    // if (currentIndex !== -1) {
-    //   var currentNote = previousNoteList[currentIndex];
-    //   currentNote.details.edges = [edgeObj]; // Assumes notes will have only 1 type of edge
-    //   previousNoteList.splice(currentIndex, 1);
-    //   currentNoteList.push(currentNote);
-    // } else {
-    //   console.warn('Note not found!');
-    // }
-
-    // If the current tab is not the All Papers tab remove the note from the DOM and
-    // update the state of edge widget in the All Papers tab
-    // if (activeTab) {
-    //   var $elem = $(e.target).closest('.note');
-    //   $elem.fadeOut('normal', function() {
-    //     $elem.remove();
-
-    //     var $container = $('#' + labelToContainerId[prevVal] + ' .submissions-list');
-    //     if (!$container.children().length) {
-    //       $container.append('<li><p class="empty-message">No papers to display at this time</p></li>');
-    //     }
-    //   });
-
-    //   var $noteToChange = $('#allPapers .submissions-list .note[data-id="' + updatedNote.id + '"]');
-    //   $noteToChange.find('label[data-value="' + prevVal + '"]').removeClass('active')
-    //     .children('input').prop('checked', false);
-    //   $noteToChange.find('label[data-value="' + edgeObj.label + '"]').button('toggle');
-    // }
 
      updateCounts();
   });
@@ -234,12 +179,6 @@ function renderContent(notes, conflictIds, bidEdges) {
         heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
         id: 'allPapers',
         content: null
-      },
-      {
-        heading: 'No Bid',
-        headingCount: 0,
-        id: 'noBid',
-        content: loadingContent
       },
       {
         heading: 'Very High',
@@ -322,7 +261,7 @@ function renderContent(notes, conflictIds, bidEdges) {
 
     var totalCount = 0;
 
-    for(var i = 2; i < sections.length; i++) {
+    for(var i = 1; i < sections.length; i++) {
       var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
       var numPapers = bidsById[sections[i].heading].length;
 
@@ -331,9 +270,7 @@ function renderContent(notes, conflictIds, bidEdges) {
         $tab.append('<span class="badge">' + numPapers + '</span>');
       }
 
-      if (sections[i].heading != 'noBid') {
-        totalCount += numPapers;
-      }
+      totalCount += numPapers;
     };
 
     $('#bidcount').remove();
