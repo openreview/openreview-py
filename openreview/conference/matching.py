@@ -259,10 +259,10 @@ class Matching(object):
                         'description': 'Title of the configuration.',
                         'order': 1
                     },
-                    'assigned_groups': {
+                    'assignedGroups': {
                         'value-dict': {}
                     },
-                    'alternate_groups': {
+                    'alternateGroups': {
                         'value-dict': {}
                     }
                 }
