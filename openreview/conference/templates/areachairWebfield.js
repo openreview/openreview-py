@@ -1,7 +1,7 @@
 
 // Constants
 var CONFERENCE_ID = '';
-var SHORT_PHRASE = ''
+var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
@@ -332,30 +332,27 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
   var sendReviewerReminderEmailsStep1 = function(e) {
     var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
     var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
-    var group   = $('#message-reviewers-modal select[name="group"]').val();
-    var filter  = $('#message-reviewers-modal select[name="filter"]').val();
+    var filter  = $(this)[0].dataset["filter"];
 
     var count = 0;
     var selectedRows = rows;
     var reviewerMessages = [];
     var reviewerCounts = Object.create(null);
-    if (group === 'selected') {
-      selectedIds = _.map(
-        $('.ac-console-table input.select-note-reviewers:checked'),
-        function(checkbox) { return $(checkbox).data('noteId'); }
-      );
-      selectedRows = rows.filter(function(row) {
-        return _.includes(selectedIds, row[2].forum);
-      });
-    }
+    var selectedIds = _.map(
+      $('.ac-console-table input.select-note-reviewers:checked'),
+      function(checkbox) { return $(checkbox).data('noteId'); }
+    );
+    selectedRows = rows.filter(function(row) {
+      return _.includes(selectedIds, row[2].forum);
+    });
 
     selectedRows.forEach(function(row) {
       var users = _.values(row[3].reviewers);
-      if (filter === 'submitted') {
+      if (filter === 'msg-submitted-reviewers') {
         users = users.filter(function(u) {
           return u.completedReview;
         });
-      } else if (filter === 'unsubmitted') {
+      } else if (filter === 'msg-unsubmitted-reviewers') {
         users = users.filter(function(u) {
           return !u.completedReview;
         });
@@ -429,13 +426,23 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
   }).join('\n');
 
   var sortBarHtml = '<form class="form-inline search-form clearfix" role="search">' +
-    '<strong>Sort By:</strong> ' +
-    '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
-    '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
-    '<div class="pull-right">' +
-      '<button id="message-reviewers-btn" class="btn btn-icon"><span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers</button>' +
+    '<div id="div-msg-reviewers" class="btn-group" role="group">' +
+      '<button id="message-reviewers-btn" type="button" class="btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
+        '<li><a id="msg-all-reviewers">All Reviewers</a></li>' +
+        '<li><a id="msg-submitted-reviewers">Reviewers with submitted reviews</a></li>' +
+        '<li><a id="msg-unsubmitted-reviewers">Reviewers with unsubmitted reviews</a></li>' +
+      '</ul>' +
     '</div>' +
-    '</form>';
+    '<div class="pull-right">' +
+      '<strong>Sort By:</strong> ' +
+      '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
+      '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
+    '</div>' +
+  '</form>';
   if (rows.length) {
     $(container).empty().append(sortBarHtml);
   }
@@ -450,14 +457,24 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     return false;
   });
 
-  $('#message-reviewers-btn').on('click', function(e) {
+  $('#div-msg-reviewers').find("a").on('click', function(e) {
+    var filter = $(this)[0].id;
     $('#message-reviewers-modal').remove();
 
+    var defaultBody = "";
+    if (filter === "msg-unsubmitted-reviewers"){
+      defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
+      'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
+    } else {
+      defaultBody = 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
+    }
+
     var modalHtml = Handlebars.templates.messageReviewersModal({
+      filter: filter,
       defaultSubject: SHORT_PHRASE + ' Reminder',
-      defaultBody: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
-        'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
-        '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair',
+      defaultBody: defaultBody,
     });
     $('body').append(modalHtml);
 
@@ -560,7 +577,7 @@ var renderTableRows = function(rows, container) {
 
   var tableHtml = Handlebars.templates['components/table']({
     headings: [
-      '<span class="glyphicon glyphicon-envelope"></span>', '#', 'Paper Summary',
+      '<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
       'Review Progress', 'Rating', 'Confidence', 'Status'
     ],
     rows: rowsHtml,
@@ -867,7 +884,6 @@ var registerEventHandlers = function() {
     var $link = $(this);
     var userId = $link.data('userId');
     var paperNumber = $link.data('paperNumber');
-    var paperForum = $link.data('paperForum');
     var reviewerNumber = $link.data('reviewerNumber');
 
     Webfield.delete('/groups/members', {
@@ -890,6 +906,39 @@ var registerEventHandlers = function() {
       promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
     })
     return false;
+  });
+
+  $('#group-container').on('click', '#select-all-papers', function(e) {
+    var $superCheckBox = $(this);
+    var $allPaperCheckBoxes = $("input.select-note-reviewers");
+    var $msgReviewerButton = $("#message-reviewers-btn");
+    if ($superCheckBox[0].checked === true) {
+      $allPaperCheckBoxes.prop("checked", true);
+      $msgReviewerButton.attr("disabled", false);
+    } else {
+      $allPaperCheckBoxes.prop("checked", false);
+      $msgReviewerButton.attr("disabled", true);
+    }
+  });
+
+  $('#group-container').on('click', 'input.select-note-reviewers', function(e) {
+    var $allPaperCheckBoxes = $("input.select-note-reviewers");
+    var $msgReviewerButton = $("#message-reviewers-btn");
+    var $superCheckBox = $("#select-all-papers");
+    var checkedBoxes = $allPaperCheckBoxes.filter(function(index) {
+      return $allPaperCheckBoxes[index].checked === true;
+    });
+    if (checkedBoxes.length) {
+      $msgReviewerButton.attr("disabled", false);
+      if (checkedBoxes.length === $allPaperCheckBoxes.length) {
+        $superCheckBox.prop("checked", true);
+      } else {
+        $superCheckBox.prop("checked", false);
+      }
+    } else {
+      $msgReviewerButton.attr("disabled", true);
+      $superCheckBox.prop("checked", false);
+    }
   });
 };
 
