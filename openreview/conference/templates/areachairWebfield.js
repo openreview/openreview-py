@@ -433,8 +433,8 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
       '</button>' +
       '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
         '<li><a id="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
-        '<li><a id="msg-submitted-reviewers">Reviewers with submitted reviews for selected papers</a></li>' +
-        '<li><a id="msg-unsubmitted-reviewers">Reviewers with unsubmitted reviews for selected papers</a></li>' +
+        '<li><a id="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
+        '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
     '<div class="pull-right">' +
@@ -471,7 +471,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
       '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
     }
 
-    var modalHtml = Handlebars.templates.messageReviewersModal({
+    var modalHtml = Handlebars.templates.messageReviewersModalNew({
       filter: filter,
       defaultSubject: SHORT_PHRASE + ' Reminder',
       defaultBody: defaultBody,
@@ -775,7 +775,7 @@ var registerEventHandlers = function() {
       return false;
     };
 
-    var modalHtml = Handlebars.templates.messageReviewersModal({
+    var modalHtml = Handlebars.templates.messageReviewersModalNew({
       singleRecipient: true,
       reviewerId: userId,
       forumUrl: forumUrl,
@@ -908,10 +908,10 @@ var registerEventHandlers = function() {
     return false;
   });
 
-  $('#group-container').on('click', '#select-all-papers', function(e) {
+  $('#group-container').on('change', '#select-all-papers', function(e) {
     var $superCheckBox = $(this);
-    var $allPaperCheckBoxes = $("input.select-note-reviewers");
-    var $msgReviewerButton = $("#message-reviewers-btn");
+    var $allPaperCheckBoxes = $('input.select-note-reviewers');
+    var $msgReviewerButton = $('#message-reviewers-btn');
     if ($superCheckBox[0].checked === true) {
       $allPaperCheckBoxes.prop("checked", true);
       $msgReviewerButton.attr("disabled", false);
@@ -921,10 +921,10 @@ var registerEventHandlers = function() {
     }
   });
 
-  $('#group-container').on('click', 'input.select-note-reviewers', function(e) {
-    var $allPaperCheckBoxes = $("input.select-note-reviewers");
-    var $msgReviewerButton = $("#message-reviewers-btn");
-    var $superCheckBox = $("#select-all-papers");
+  $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
+    var $allPaperCheckBoxes = $('input.select-note-reviewers');
+    var $msgReviewerButton = $('#message-reviewers-btn');
+    var $superCheckBox = $('#select-all-papers');
     var checkedBoxes = $allPaperCheckBoxes.filter(function(index) {
       return $allPaperCheckBoxes[index].checked === true;
     });
