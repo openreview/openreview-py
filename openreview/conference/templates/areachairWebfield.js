@@ -841,6 +841,12 @@ var registerEventHandlers = function() {
         signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
       })
     })
+    .then(function(result) {
+      return Webfield.put('/groups/members', {
+        id: REVIEWER_GROUP,
+        members: [userToAdd]
+      })
+    })
     .then(function(results) {
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: paperForum,
@@ -864,7 +870,7 @@ var registerEventHandlers = function() {
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-      promptMessage('Reviewer ' + view.prettyId(userToAdd) + ' has been notified of their new assignment to paper ' + paperNumber);
+      promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
       var postData = {
         groups: [userToAdd],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
