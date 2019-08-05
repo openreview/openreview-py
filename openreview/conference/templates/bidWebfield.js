@@ -29,7 +29,9 @@ function getPapersSortedByAffinity(offset) {
     limit: 50
   })
   .then(function(result) {
+    var edgesByHead = {};
     var noteIds = result.edges.map(function(edge) {
+      edgesByHead[edge.head] = edge;
       return edge.head;
     });
 
@@ -38,6 +40,18 @@ function getPapersSortedByAffinity(offset) {
     })
     .then(function(result) {
       return result.notes;
+    })
+    .then(function(notes) {
+      return notes.map(function(note) {
+        var edge = edgesByHead[note.id];
+        //to render the edge widget correctly
+        edge.invitation = 'Affinity_Score';
+        edge.signatures = [];
+        note.details = {
+          edges: [edge]
+        }
+        return note;
+      })
     })
   });
 }
@@ -289,16 +303,15 @@ function prepareNotes(notes, conflictIds, edgesMap) {
 
 function addEdgesToNotes(validNotes, edgesMap) {
   for (var i = 0; i < validNotes.length; i++) {
-    var noteId = validNotes[i].id;
-    if (edgesMap.hasOwnProperty(noteId)) {
-      validNotes[i].details = {
-        edges: [edgesMap[noteId]]
-      };
-    } else {
-      validNotes[i].details = {
+    var note = validNotes[i];
+    if (!_.has(note, 'details.edges')) {
+      note.details = {
         edges: []
-      };
+      }
     }
+    if (edgesMap.hasOwnProperty(note.id)) {
+      note.details.edges.push(edgesMap[note.id]);
+    };
   }
   return validNotes;
 }
