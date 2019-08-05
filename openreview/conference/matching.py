@@ -226,7 +226,7 @@ class Matching(object):
                 'signatures': {
                     'values': [CONFERENCE_ID]},
                 'content': {
-                    'title': {'required': False, 'value': 'metadata note'}
+                    'title': {'required': False, 'value-regex': '.*'}
                 }
             }
         })
@@ -245,7 +245,7 @@ class Matching(object):
                 'writers': {'values': [CONFERENCE_ID]},
                 'signatures': {'values': [CONFERENCE_ID]},
                 'content': {
-                    'title': {'required': False, 'value': 'assignment note'}
+                    'title': {'required': False, 'value-regex': '.*'}
                 }
             }
         })
