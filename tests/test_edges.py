@@ -8,6 +8,7 @@ class TestEdges:
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2020/Workshop/MLITS')
+        builder.set_submission_stage(public=True)
         conference = builder.get_result()
 
         # Edge invitation
@@ -29,12 +30,8 @@ class TestEdges:
         })
         inv1 = client.post_invitation(inv1)
 
-        # Submission invitation
-        inv2 = openreview.Invitation(id=conference.id + '/-/submission')
-        inv2 = client.post_invitation(inv2)
-
         # Sample note
-        note = openreview.Note(invitation = inv2.id,
+        note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = [conference.id],
             signatures = ['~Super_User1'],
@@ -43,6 +40,7 @@ class TestEdges:
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com'],
                 'authors': ['Test User'],
+                'pdf': '/pdf/link_to_pdf'
             }
         )
         note = client.post_note(note)

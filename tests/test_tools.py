@@ -10,7 +10,7 @@ class TestTools():
 
     def test_get_submission_invitations(self, client):
         invitations = openreview.tools.get_submission_invitations(client)
-        assert len(invitations) == 11, "Invitations could not be retrieved"
+        assert len(invitations) == 10, "Invitations could not be retrieved"
 
     def test_get_all_venues(self, client):
         venues = openreview.tools.get_all_venues(client)
@@ -97,7 +97,14 @@ class TestTools():
             result = client.search_profiles(term=author)
             assert any([email in p.content['emails'] for p in result])
 
-
-
+    def test_subdomains(self):
+        # ensure that two part top-level domains are handled appropriately
+        # e.g. "edu.cn", "ac.uk"
+        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu.cn']
+        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['robots.ox.ac.uk', 'ox.ac.uk']
+        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'ox.ac.uk']
+        assert openreview.tools.subdomains('michael@ground.ai') == ['ground.ai']
+        assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
+        assert openreview.tools.subdomains('   ') == []
 
 

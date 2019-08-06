@@ -177,6 +177,50 @@ class BidInvitation(openreview.Invitation):
                 'signatures': {
                     'values-regex': '~.*'
                 },
+                'content': {
+                    'head': {
+                        'type': 'Note'
+                    },
+                    'tail': {
+                        'type': 'Group'
+                    },
+                    'label': {
+                        'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'required': True
+                    }
+                }
+            }
+        )
+
+class ExpertiseSelectionInvitation(openreview.Invitation):
+    def __init__(self, conference):
+
+        expertise_selection_stage = conference.expertise_selection_stage
+
+        readers = [
+            conference.get_id(),
+            conference.get_program_chairs_id(),
+            conference.get_reviewers_id()
+        ]
+
+        invitees = [ conference.get_reviewers_id() ]
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id())
+            invitees.append(conference.get_area_chairs_id())
+
+        super(ExpertiseSelectionInvitation, self).__init__(id = conference.get_expertise_selection_id(),
+            cdate = tools.datetime_millis(expertise_selection_stage.start_date),
+            duedate = tools.datetime_millis(expertise_selection_stage.due_date),
+            expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if expertise_selection_stage.due_date else None,
+            readers = readers,
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            multiReply = True,
+            reply = {
+                'readers': {
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
                 'signatures': {
                     'values-regex': '~.*'
                 },
@@ -188,7 +232,7 @@ class BidInvitation(openreview.Invitation):
                         'type': 'Group'
                     },
                     'label': {
-                        'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'value-radio': ['Exclude'],
                         'required': True
                     }
                 }
@@ -560,6 +604,12 @@ class InvitationBuilder(object):
         invitation = BlindSubmissionsInvitation(conference = conference)
 
         return  self.client.post_invitation(invitation)
+
+    def set_expertise_selection_invitation(self, conference):
+
+        invitation = ExpertiseSelectionInvitation(conference)
+
+        return self.client.post_invitation(invitation)
 
     def set_bid_invitation(self, conference):
 
