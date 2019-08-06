@@ -10,6 +10,7 @@ var SUBMISSION_ID = '';
 var BID_ID = '';
 var SUBJECT_AREAS = '';
 var AFFINITY_SCORE_ID = '';
+var noteCount = 0;
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -32,6 +33,7 @@ function getPapersSortedByAffinity(offset) {
       limit: 50
     })
     .then(function(result) {
+      noteCount = result.count;
       var edgesByHead = {};
       var noteIds = result.edges.map(function(edge) {
         edgesByHead[edge.head] = edge;
@@ -70,6 +72,7 @@ function getPapersSortedByAffinity(offset) {
       limit: 50
     })
     .then(function(result) {
+      noteCount = result.count;
       return result.notes;
     })
   }
@@ -256,7 +259,7 @@ function renderContent(notes, conflictIds, bidEdges) {
       },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
-      noteCount: 1600,
+      noteCount: noteCount,
       pageSize: 50,
       onPageClick: function(offset) {
         return getPapersSortedByAffinity(offset)
