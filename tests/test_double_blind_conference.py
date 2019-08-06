@@ -1153,7 +1153,7 @@ class TestDoubleBlindConference():
         assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
         assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
 
-    def test_open_revise_submissions(self, client, helpers):
+    def test_open_revise_submissions(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -1171,14 +1171,12 @@ class TestDoubleBlindConference():
 
         assert conference.open_revise_submissions()
 
-        andrew_client = helpers.create_user('andrew@mail.com', 'Andrew', 'Mail')
-
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Revision',
             forum = notes[0].original,
             referent = notes[0].original,
-            readers = ['~Andrew_Mail1', 'peter@mail.com', 'andrew@mail.com'],
-            writers = [conference.id, '~Andrew_Mail1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Andrew_Mail1'],
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title Revision 2',
                 'abstract': 'This is an abstract',
@@ -1195,7 +1193,7 @@ class TestDoubleBlindConference():
             }
         )
 
-        posted_note = andrew_client.post_note(note)
+        posted_note = test_client.post_note(note)
         assert posted_note
 
-        assert len(andrew_client.get_references(referent = notes[0].original)) == 2
+        assert len(test_client.get_references(referent = notes[0].original)) == 2
