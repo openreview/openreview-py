@@ -1198,4 +1198,4 @@ class TestDoubleBlindConference():
         posted_note = andrew_client.post_note(note)
         assert posted_note
 
-        assert len(andrew_client.get_references(referent = notes[0].id)) == 2
+        assert len(andrew_client.get_references(referent = notes[0].original)) == 2
