@@ -97,7 +97,14 @@ class TestTools():
             result = client.search_profiles(term=author)
             assert any([email in p.content['emails'] for p in result])
 
-
-
+    def test_subdomains(self):
+        # ensure that two part top-level domains are handled appropriately
+        # e.g. "edu.cn", "ac.uk"
+        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu.cn']
+        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['robots.ox.ac.uk', 'ox.ac.uk']
+        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'ox.ac.uk']
+        assert openreview.tools.subdomains('michael@ground.ai') == ['ground.ai']
+        assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
+        assert openreview.tools.subdomains('   ') == []
 
 
