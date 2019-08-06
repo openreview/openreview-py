@@ -123,24 +123,12 @@ class WebfieldBuilder(object):
             'title': conference.get_short_name() + ' Bidding Console',
             'instructions': '<p class="dark">Please indicate your level of interest in reviewing \
                 the submitted papers below, on a scale from "Very Low" to "Very High".</p>\
-                <p class="dark"><strong>Please note:</strong></p>\
-                <ul>\
-                    <li>Please update your Conflict of Interest details on your profile page, specifically "Emails", "Education and Career History" & "Advisors and Other Relations" fields.</li>\
-                    <li>The default bid on each paper is \"No Bid\".</li>\
-                </ul>\
                 <p class="dark"><strong>A few tips:</strong></p>\
                 <ul>\
                     <li>Please bid on as many papers as possible to ensure that your preferences are taken into account.</li>\
-                    <li>For the best bidding experience, <strong>it is recommended that you filter papers by Subject Area</strong> and search for key phrases in paper metadata using the search form.</li>\
+                    <li>Papers are filtered out by conflict of interest and sorted by your affinity score. Use the search texbox to filter them by subject areas</li>\
                 </ul>\
-                <p class="dark"><strong>Bid Score Value Mapping:</strong></p>\
-                <ul>\
-                    <li>Very high (+1.0)</li>\
-                    <li>High (+0.5)</li>\
-                    <li>Neutral, No Bid (0.0)</li>\
-                    <li>Low (-0.5) </li>\
-                    <li>Very Low (-1.0)</li>\
-                </ul><br>'
+                <br>'
         }
 
         header = self.__build_options(default_header, conference.get_bidpage_header())
@@ -153,6 +141,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + conference.get_bid_id() + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
+            content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_bid_id() + "';")
 
             invitation.web = content
             return self.client.post_invitation(invitation)
