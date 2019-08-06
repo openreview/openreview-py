@@ -599,7 +599,24 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True)
+        additional_fields = {
+            'archival_status': {
+                'description': 'Archival Status.',
+                'order': 10,
+                'required': False
+            },
+            'paperhash': {
+                'description': 'paperhash.',
+                'order': 11,
+                'required': False
+            },
+            'subject_areas': {
+                'description': 'Subject Areas.',
+                'order': 12,
+                'required': False
+            },
+        }
+        builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
@@ -635,14 +652,26 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = False, public = True)
+        additional_fields = {
+            'archival_status': {
+                'description': 'Archival Status.',
+                'order': 10,
+                'required': False
+            },
+            'subject_areas': {
+                'description': 'Subject Areas.',
+                'order': 11,
+                'required': False
+            },
+        }
+        builder.set_submission_stage(double_blind = False, public = True, additional_fields=additional_fields)
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
         with pytest.raises(openreview.OpenReviewException, match=r'Conference is not double blind'):
             conference.create_blind_submissions()
 
-        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
         conference = builder.get_result()
 
         blind_submissions = conference.create_blind_submissions()
