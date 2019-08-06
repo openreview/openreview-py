@@ -9,6 +9,7 @@ var BLIND_SUBMISSION_ID = '';
 var SUBMISSION_ID = '';
 var BID_ID = '';
 var SUBJECT_AREAS = '';
+var AFFINITY_SCORE_ID = '';
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -22,45 +23,57 @@ function main() {
 }
 
 function getPapersSortedByAffinity(offset) {
-  return Webfield.get('/edges', {
-    invitation: CONFERENCE_ID + '/-/Reviewing/Affinity_Score',
-    tail: user.profile.id,
-    sort: 'weight:desc',
-    offset: offset,
-    limit: 50
-  })
-  .then(function(result) {
-    var edgesByHead = {};
-    var noteIds = result.edges.map(function(edge) {
-      edgesByHead[edge.head] = edge;
-      return edge.head;
-    });
-
-    return Webfield.post('/notes/search', {
-      ids: noteIds
+  if (AFFINITY_SCORE_ID) {
+    return Webfield.get('/edges', {
+      invitation: CONFERENCE_ID + '/-/Reviewing/Affinity_Score',
+      tail: user.profile.id,
+      sort: 'weight:desc',
+      offset: offset,
+      limit: 50
     })
     .then(function(result) {
-      //Keep affinity score order
-      var mapById = result.notes.reduce(function(mapById, note) {
-        mapById[note.id] = note;
-        return mapById;
-      }, {});
-      return noteIds.map(function(id) {
-        return mapById[id];
+      var edgesByHead = {};
+      var noteIds = result.edges.map(function(edge) {
+        edgesByHead[edge.head] = edge;
+        return edge.head;
       });
-    })
-    .then(function(notes) {
-      return notes.map(function(note) {
-        var edge = edgesByHead[note.id];
-        //to render the edge widget correctly
-        edge.signatures = [];
-        note.details = {
-          edges: [edge]
-        }
-        return note;
+
+      return Webfield.post('/notes/search', {
+        ids: noteIds
       })
+      .then(function(result) {
+        //Keep affinity score order
+        var mapById = result.notes.reduce(function(mapById, note) {
+          mapById[note.id] = note;
+          return mapById;
+        }, {});
+        return noteIds.map(function(id) {
+          return mapById[id];
+        });
+      })
+      .then(function(notes) {
+        return notes.map(function(note) {
+          var edge = edgesByHead[note.id];
+          //to render the edge widget correctly
+          edge.signatures = [];
+          note.details = {
+            edges: [edge]
+          }
+          return note;
+        })
+      })
+    });
+  } else {
+    return Webfield.get('/notes', {
+      invitation: BLIND_SUBMISSION_ID,
+      offset: offset,
+      limit: 50
     })
-  });
+    .then(function(result) {
+      return result.notes;
+    })
+  }
+
 }
 
 function getPapersByBids(bids, bidsByNote) {
