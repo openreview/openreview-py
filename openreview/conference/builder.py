@@ -34,6 +34,7 @@ class Conference(object):
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
         self.registration_name = 'Registration'
+        self.affinity_score_name = None
         self.submission_stage = SubmissionStage()
         self.bid_stage = BidStage()
         self.expertise_selection_stage = ExpertiseSelectionStage()
@@ -285,6 +286,9 @@ class Conference(object):
 
     def get_registration_id(self):
         return self.get_invitation_id(self.registration_name)
+
+    def get_affinity_score_id(self):
+        return self.get_invitation_id(self.affinity_score_name)
 
     def get_invitation_id(self, name, number = None):
         invitation_id = self.id
