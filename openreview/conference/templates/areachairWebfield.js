@@ -471,7 +471,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
       '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
     }
 
-    var modalHtml = Handlebars.templates.messageReviewersModalNew({
+    var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
       filter: filter,
       defaultSubject: SHORT_PHRASE + ' Reminder',
       defaultBody: defaultBody,
@@ -775,7 +775,7 @@ var registerEventHandlers = function() {
       return false;
     };
 
-    var modalHtml = Handlebars.templates.messageReviewersModalNew({
+    var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
       singleRecipient: true,
       reviewerId: userId,
       forumUrl: forumUrl,
