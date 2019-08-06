@@ -605,11 +605,6 @@ class TestDoubleBlindConference():
                 'order': 10,
                 'required': False
             },
-            'paperhash': {
-                'description': 'paperhash.',
-                'order': 11,
-                'required': False
-            },
             'subject_areas': {
                 'description': 'Subject Areas.',
                 'order': 12,
