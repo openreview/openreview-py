@@ -17,6 +17,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
+import tld
 
 def get_profile(client, value):
     """
@@ -407,108 +408,10 @@ def subdomains(domain):
         full_domain = domain.split('@')[1]
     else:
         full_domain = domain
-    domain_components = full_domain.split('.')
+    domain_components = [c for c in full_domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
-    valid_domains = [d for d in domains if '.' in d]
+    valid_domains = [d for d in domains if not tld.is_tld(d)]
     return valid_domains
-
-def profile_conflicts(profile):
-    """
-    Given a profile, returns a tuple containing two sets: domain_conflicts and relation_conflicts.
-
-    domain_conflicts is a set of domains/subdomains that may have a conflict of interest with the given profile.
-
-    relation_conflicts is a set of group IDs (email addresses or profiles) that may have a conflict of interest with the given profile.
-
-    :param profile: Profile for which conflict of interests will be generated
-    :type profile: Profile
-
-    :return: Tuple containing two sets: domain_conflicts and relation_conflicts
-    :rtype: tuple(set(str), set(str))
-
-    .. todo:: Update this function after the migration to non-Note Profile objects.
-    """
-    domain_conflicts = set()
-    relation_conflicts = set()
-
-    profile_domains = []
-    for e in profile.content['emails']:
-        profile_domains += subdomains(e)
-
-    domain_conflicts.update(profile_domains)
-
-    institution_domains = [h['institution']['domain'] for h in profile.content['history']]
-    domain_conflicts.update(institution_domains)
-
-    if 'relations' in profile.content:
-        relation_conflicts.update([r['email'] for r in profile.content['relations']])
-
-    if 'gmail.com' in domain_conflicts:
-        domain_conflicts.remove('gmail.com')
-
-    return (domain_conflicts, relation_conflicts)
-
-def get_profile_conflicts(client, reviewer_to_add):
-    """
-    Helper function for :func:`tools.profile_conflicts` function. Given a reviewer ID or email address, requests the server for that reviewer's profile using :meth:`openreview.Client.get_profile`, and checks it for conflicts using :func:`tools.profile_conflicts`.
-
-    :param client: Client that will be used to obtain the reviewer profile
-    :type client: Client
-    :param reviewer_to_add: Group id or email address of the reviewer
-    :type reviewer_to_add: str
-
-    :return: Tuple containing two sets: user_domain_conflicts and user_relation_conflicts
-    :rtype: tuple(set(str), set(str))
-    """
-    try:
-        profile = client.get_profile(reviewer_to_add)
-        user_domain_conflicts, user_relation_conflicts = profile_conflicts(profile)
-        user_relation_conflicts.update([reviewer_to_add])
-    except openreview.OpenReviewException as e:
-        user_domain_conflicts, user_relation_conflicts = (set(), set())
-
-    return user_domain_conflicts, user_relation_conflicts
-
-def get_paper_conflicts(client, paper):
-    """
-    Given a Note object representing a submitted paper, returns a tuple containing two sets: domain_conflicts and relation_conflicts. The conflicts are obtained from authors of the paper.
-
-    domain_conflicts is a set of domains/subdomains that may have a conflict of interest with the given paper.
-
-    relation_conflicts is a set of group IDs (email addresses or profiles) that may have a conflict of interest with the given paper.
-
-    Automatically ignores domain conflicts with "gmail.com".
-
-    :param client: Client that will be used to obtain the paper
-    :type client: Client
-    :param paper: Note representing a submitted paper
-    :type paper: Note
-
-    :return: Tuple containing two sets: user_domain_conflicts and user_relation_conflicts
-    :rtype: tuple(set(str), set(str))
-
-    .. todo:: Update this function after the migration to non-Note Profile objects.
-
-    """
-    authorids = paper.content['authorids']
-    domain_conflicts = set()
-    relation_conflicts = set()
-    for e in authorids:
-        author_domain_conflicts, author_relation_conflicts = get_profile_conflicts(client, e)
-
-        domain_conflicts.update(author_domain_conflicts)
-        relation_conflicts.update(author_relation_conflicts)
-
-        if '@' in e:
-            domain_conflicts.update(subdomains(e))
-
-    relation_conflicts = set([e for e in authorids if '@' in e])
-
-    # remove the domain "gmail.com"
-    if 'gmail.com' in domain_conflicts:
-        domain_conflicts.remove('gmail.com')
-
-    return (domain_conflicts, relation_conflicts)
 
 def get_paperhash(first_author, title):
     """
@@ -683,20 +586,20 @@ def iterget_edges (client,
 
 
 def iterget_notes(client,
-        id = None,
-        paperhash = None,
-        forum = None,
-        invitation = None,
-        replyto = None,
-        tauthor = None,
-        signature = None,
-        writer = None,
-        trash = None,
-        number = None,
-        mintcdate = None,
-        content = None,
-        details = None,
-        sort = None):
+    id = None,
+    paperhash = None,
+    forum = None,
+    invitation = None,
+    replyto = None,
+    tauthor = None,
+    signature = None,
+    writer = None,
+    trash = None,
+    number = None,
+    mintcdate = None,
+    content = None,
+    details = None,
+    sort = None):
     """
     Returns an iterator over Notes filtered by the provided parameters ignoring API limit.
 
@@ -942,7 +845,6 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
     else:
         return '{}1'.format(individual_label)
 
-
 def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
 
     """
@@ -1005,14 +907,12 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
     unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
     return [parent_group, individual_groups, unassigned_individual_groups]
 
-
-
 def add_assignment(client, paper_number, conference, reviewer,
-                    parent_group_params = {},
-                    individual_group_params = {},
-                    parent_label = 'Reviewers',
-                    individual_label = 'AnonReviewer',
-                    use_profile = True):
+    parent_group_params = {},
+    individual_group_params = {},
+    parent_label = 'Reviewers',
+    individual_label = 'AnonReviewer',
+    use_profile = True):
 
     """
     Assigns a reviewer to a paper.
@@ -1111,7 +1011,6 @@ def add_assignment(client, paper_number, conference, reviewer,
             affected_groups.add(g.id)
 
     return (user,list(affected_groups))
-
 
 def remove_assignment(client, paper_number, conference, reviewer,
     parent_group_params = {},
@@ -1505,7 +1404,6 @@ def fill_template(template, paper):
             new_template[field] = fill_template(value, paper)
 
     return new_template
-
 
 def get_conflicts(author_profiles, user_profile):
     """
