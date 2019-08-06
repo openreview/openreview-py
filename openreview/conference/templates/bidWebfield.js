@@ -25,6 +25,7 @@ function getPapersSortedByAffinity(offset) {
   return Webfield.get('/edges', {
     invitation: CONFERENCE_ID + '/-/Reviewing/Affinity_Score',
     tail: user.profile.id,
+    sort: 'weight:desc',
     offset: offset,
     limit: 50
   })
@@ -39,13 +40,19 @@ function getPapersSortedByAffinity(offset) {
       ids: noteIds
     })
     .then(function(result) {
-      return result.notes;
+      //Keep affinity score order
+      var mapById = result.notes.reduce(function(mapById, note) {
+        mapById[note.id] = note;
+        return mapById;
+      }, {});
+      return noteIds.map(function(id) {
+        return mapById[id];
+      });
     })
     .then(function(notes) {
       return notes.map(function(note) {
         var edge = edgesByHead[note.id];
         //to render the edge widget correctly
-        edge.invitation = 'Affinity_Score';
         edge.signatures = [];
         note.details = {
           edges: [edge]
@@ -64,24 +71,6 @@ function getPapersByBids(bids, bidsByNote) {
   .then(function(result) {
     return addEdgesToNotes(result.notes, bidsByNote);
   });
-}
-
-function getBidCounts(edgesMap) {
-  var containers = {
-    'Very High': 0,
-    'High': 0,
-    'Neutral': 0,
-    'Low': 0,
-    'Very Low': 0
-  };
-  var totalCount = 0;
-
-  for (key in edgesMap) {
-    var label = edgesMap[key].label;
-    containers[label] += 1;
-  }
-
-  return containers;
 }
 
 // Perform all the required API calls
