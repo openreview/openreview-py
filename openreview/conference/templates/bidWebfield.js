@@ -26,7 +26,7 @@ function main() {
 function getPapersSortedByAffinity(offset) {
   if (AFFINITY_SCORE_ID) {
     return Webfield.get('/edges', {
-      invitation: CONFERENCE_ID + '/-/Reviewing/Affinity_Score',
+      invitation: AFFINITY_SCORE_ID,
       tail: user.profile.id,
       sort: 'weight:desc',
       offset: offset,
