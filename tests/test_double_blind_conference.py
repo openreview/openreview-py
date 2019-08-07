@@ -1176,8 +1176,6 @@ class TestDoubleBlindConference():
         assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
         assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
         assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
-<<<<<<< HEAD
-=======
 
     def test_open_revise_submissions(self, client, test_client, helpers):
 
@@ -1223,4 +1221,3 @@ class TestDoubleBlindConference():
         assert posted_note
 
         assert len(test_client.get_references(referent = notes[0].original)) == 2
->>>>>>> master
