@@ -42,12 +42,12 @@ class Conference(object):
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
             return self.client.post_group(openreview.Group(
                 id = group_id,
-                readers = [self.id, group_owner_id, group_id],
+                readers = ['everyone'] if public else [self.id, group_owner_id, group_id],
                 writers = [self.id, group_owner_id],
                 signatures = [self.id],
                 signatories = [group_id] if is_signatory else [self.id, group_owner_id],
@@ -112,6 +112,9 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
+
+        authors_group = self.__create_group(self.get_authors_id(), self.id, public = True)
+        self.webfield_builder.set_author_page(self, authors_group)
 
         return self.invitation_builder.set_submission_invitation(self)
 
@@ -1046,14 +1049,5 @@ class ConferenceBuilder(object):
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
-
-        ## Author console
-        authors_group = openreview.Group(id = self.conference.get_authors_id(),
-            readers = ['everyone'],
-            signatories = [id],
-            signatures = [id],
-            writers = [id]
-        )
-        self.webfield_builder.set_author_page(self.conference, authors_group)
 
         return self.conference
