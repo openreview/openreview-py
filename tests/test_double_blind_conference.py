@@ -1152,3 +1152,48 @@ class TestDoubleBlindConference():
         assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
         assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
         assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
+
+    def test_open_revise_submissions(self, client, test_client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_decision_stage()
+        builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 3
+
+        assert conference.open_revise_submissions()
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Revision',
+            forum = notes[0].original,
+            referent = notes[0].original,
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title Revision 2',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'archival_status': 'Archival',
+                'subject_areas': [
+                    'Databases',
+                    'Information Integration',
+                    'Knowledge Representation',
+                    'Semantic Web'
+                ],
+                'pdf': '/pdf/1234.pdf'
+            }
+        )
+
+        posted_note = test_client.post_note(note)
+        assert posted_note
+
+        assert len(test_client.get_references(referent = notes[0].original)) == 2
