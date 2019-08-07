@@ -494,48 +494,8 @@ class Matching(object):
             for a in assignments:
                 paper_number = a[0]
                 user = a[2]
-
-                if is_area_chair:
-                    parent_label = 'Area_Chairs'
-                    individual_label = 'Area_Chair'
-                    individual_group_params = {}
-                    parent_group_params = {}
-                else:
-                    parent_label = 'Reviewers'
-                    individual_label = 'AnonReviewer'
-                    individual_group_params = {
-                        'readers': [
-                            self.conference.get_id(),
-                            self.conference.get_program_chairs_id(),
-                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
-                        ],
-                        'writers': [
-                            self.conference.get_id(),
-                            self.conference.get_program_chairs_id(),
-                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
-                        ]
-                    }
-                    parent_group_params = {
-                       'readers': [
-                            self.conference.get_id(),
-                            self.conference.get_program_chairs_id(),
-                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
-                        ],
-                        'writers': [
-                            self.conference.get_id(),
-                            self.conference.get_program_chairs_id(),
-                            self.conference.get_id() + 'Paper{0}/Area_Chairs'.format(paper_number)
-                        ]
-                    }
-
-                new_assigned_group = openreview.tools.add_assignment(
-                    client, paper_number, self.conference.get_id(), user,
-                    parent_label = parent_label,
-                    individual_label = individual_label,
-                    individual_group_params = individual_group_params,
-                    parent_group_params = parent_group_params)
+                new_assigned_group = self.conference.set_assignment(user, paper_number, is_area_chair)
                 print(new_assigned_group)
-
 
         else:
             raise openreview.OpenReviewException('Configuration not found for ' + assingment_title)
