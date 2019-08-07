@@ -34,7 +34,6 @@ class Conference(object):
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
         self.registration_name = 'Registration'
-        self.affinity_score_name = None
         self.submission_stage = SubmissionStage()
         self.bid_stage = BidStage()
         self.expertise_selection_stage = ExpertiseSelectionStage()
@@ -280,9 +279,6 @@ class Conference(object):
     def get_registration_id(self):
         return self.get_invitation_id(self.registration_name)
 
-    def get_affinity_score_id(self):
-        return self.get_invitation_id(self.affinity_score_name)
-
     def get_invitation_id(self, name, number = None):
         invitation_id = self.id
         if number:
@@ -302,8 +298,11 @@ class Conference(object):
     def get_conference_groups(self):
         return self.groups
 
-    def get_paper_assignment_id (self):
+    def get_paper_assignment_id(self):
         return self.get_invitation_id('Reviewing/Paper_Assignment')
+
+    def get_affinity_score_id(self):
+        return self.get_invitation_id('Reviewing/Affinity_Score')
 
     def set_homepage_header(self, header):
         self.homepage_header = header
@@ -786,11 +785,13 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, start_date = None, due_date = None, request_count = 50):
+    def __init__(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Bid'
         self.request_count = request_count
+        self.use_affinity_score = use_affinity_score
+
 
 class ReviewStage(object):
 

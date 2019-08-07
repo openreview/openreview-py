@@ -119,7 +119,7 @@ class Matching(object):
 
     def _build_affinity_scores(self, affinity_score_file):
 
-        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/Affinity_Score'))
+        invitation = self._create_edge_invitation(self.conference.get_affinity_score_id())
 
         edges = []
         with open(affinity_score_file) as f:

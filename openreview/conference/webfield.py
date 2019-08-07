@@ -119,6 +119,10 @@ class WebfieldBuilder(object):
 
     def set_bid_page(self, conference, invitation):
 
+        sorted_tip = ''
+        if conference.bid_stage.use_affinity_score:
+            sorted_tip = 'and sorted by your affinity score'
+
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
             'instructions': '<p class="dark">Please indicate your level of interest in reviewing \
@@ -126,9 +130,9 @@ class WebfieldBuilder(object):
                 <p class="dark"><strong>A few tips:</strong></p>\
                 <ul>\
                     <li>Please bid on as many papers as possible to ensure that your preferences are taken into account.</li>\
-                    <li>Papers are filtered out by conflict of interest and sorted by your affinity score. Use the search texbox to filter them by subject areas</li>\
+                    <li>Papers are filtered out by conflict of interest {sorted_tip}. Use the search texbox to filter them by subject areas.</li>\
                 </ul>\
-                <br>'
+                <br>'.format(sorted_tip = sorted_tip)
         }
 
         header = self.__build_options(default_header, conference.get_bidpage_header())
@@ -141,7 +145,9 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + conference.get_bid_id() + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
-            content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_bid_id() + "';")
+
+            if conference.bid_stage.use_affinity_score:
+                content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id() + "';")
 
             invitation.web = content
             return self.client.post_invitation(invitation)
