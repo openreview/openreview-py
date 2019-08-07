@@ -121,7 +121,7 @@ class WebfieldBuilder(object):
 
         sorted_tip = ''
         if conference.bid_stage.use_affinity_score:
-            sorted_tip = 'and sorted by your affinity score'
+            sorted_tip = ' and sorted by your affinity score'
 
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
@@ -130,7 +130,7 @@ class WebfieldBuilder(object):
                 <p class="dark"><strong>A few tips:</strong></p>\
                 <ul>\
                     <li>Please bid on as many papers as possible to ensure that your preferences are taken into account.</li>\
-                    <li>Papers are filtered out by conflict of interest {sorted_tip}. Use the search texbox to filter them by subject areas.</li>\
+                    <li>Papers are filtered out by conflict of interest{sorted_tip}. Use the search texbox to filter them by subject areas.</li>\
                 </ul>\
                 <br>'.format(sorted_tip = sorted_tip)
         }

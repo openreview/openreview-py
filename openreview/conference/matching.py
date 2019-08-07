@@ -18,7 +18,7 @@ class Matching(object):
             signatures = [self.conference.get_id()],
             reply = {
                 'readers': {
-                    'values-regex': self.conference.get_id() + '|~.*'
+                    'values-regex': self.conference.get_id() + '|~.*|.*@.*'
                 },
                 'writers': {
                     'values': [self.conference.get_id()]
