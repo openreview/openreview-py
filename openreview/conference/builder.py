@@ -113,9 +113,6 @@ class Conference(object):
 
     def __create_submission_stage(self):
 
-        authors_group = self.__create_group(self.get_authors_id(), self.id, public = True)
-        self.webfield_builder.set_author_page(self, authors_group)
-
         return self.invitation_builder.set_submission_invitation(self)
 
     def __create_bid_stage(self):
@@ -125,15 +122,8 @@ class Conference(object):
 
     def __create_review_stage(self):
 
-        self.set_authors()
-        self.set_reviewers()
         notes = list(self.get_submissions())
-        invitations = self.invitation_builder.set_review_invitation(self, notes)
-        ## Create submitted groups if they don't exist
-        for n in notes:
-            self.__create_group(self.get_id() + '/Paper{}/Reviewers'.format(n.number), self.get_program_chairs_id())
-            self.__create_group(self.get_id() + '/Paper{}/Reviewers/Submitted'.format(n.number), self.get_program_chairs_id())
-        return invitations
+        return self.invitation_builder.set_review_invitation(self, notes)
 
     def __create_comment_stage(self):
 
@@ -545,14 +535,14 @@ class Conference(object):
             group = self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
             author_group_ids.append(group.id)
 
-        self.__create_group(self.get_authors_id(), self.id, author_group_ids)
+        authors_group = self.__create_group(self.get_authors_id(), self.id, author_group_ids, public = True)
+        return self.webfield_builder.set_author_page(self, authors_group)
 
     def setup_matching(self, affinity_score_file = None, tpms_score_file = None):
         conference_matching = matching.Matching(self)
         return conference_matching.setup(affinity_score_file, tpms_score_file)
 
     def set_assignment(self, user, number, is_area_chair = False):
-
 
         if is_area_chair:
             return tools.add_assignment(self.client,
@@ -562,7 +552,7 @@ class Conference(object):
             parent_label = 'Area_Chairs',
             individual_label = 'Area_Chair')
         else:
-            return tools.add_assignment(self.client,
+            result = tools.add_assignment(self.client,
             number,
             self.get_id(),
             user,
@@ -592,6 +582,10 @@ class Conference(object):
                     self.get_area_chairs_id(number = number)
                 ]
             }, use_profile = True)
+
+            self.__create_group(self.get_reviewers_id(number = number) + '/Submitted', self.get_program_chairs_id())
+
+            return result
 
     def set_assignments(self, assingment_title):
         conference_matching = matching.Matching(self)
@@ -1015,6 +1009,9 @@ class ConferenceBuilder(object):
 
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
+
+        ## Create paper and author groups before any other stage that requires paper specific invitations
+        self.conference.set_authors()
 
         if self.bid_stage:
             self.conference.set_bid_stage(self.bid_stage)

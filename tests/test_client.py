@@ -8,7 +8,7 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 24, 'groups is empty'
+        assert len(groups) == 25, 'groups is empty'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
