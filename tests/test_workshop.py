@@ -215,6 +215,13 @@ class TestWorkshop():
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
+        group = client.get_group(id = conference.get_authors_id())
+        assert group
+        assert len(group.members) == 0
+
+        groups = client.get_groups(id = conference.get_authors_id(number = '.*'))
+        assert len(groups) == 0
+
         blind_submissions = conference.create_blind_submissions()
         assert blind_submissions
         assert len(blind_submissions) == 1
