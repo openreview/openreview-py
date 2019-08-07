@@ -1183,7 +1183,19 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True)
+        additional_fields = {
+            'archival_status': {
+                'description': 'Archival Status.',
+                'order': 10,
+                'required': False
+            },
+            'subject_areas': {
+                'description': 'Subject Areas.',
+                'order': 12,
+                'required': False
+            },
+        }
+        builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
         builder.set_decision_stage()
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
