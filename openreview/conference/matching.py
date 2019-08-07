@@ -162,17 +162,18 @@ class Matching(object):
             paper_note_id = note.id
             for subject_area_note in user_subject_areas:
                 profile_id = subject_area_note.signatures[0]
-                subject_areas = subject_area_note.content['subject_areas']
-                score = self._jaccard_similarity(note_subject_areas, subject_areas)
-                edges.append(openreview.Edge(
-                    invitation = invitation.id,
-                    head = paper_note_id,
-                    tail = profile_id,
-                    weight = float(score),
-                    readers = [self.conference.id],
-                    writers = [self.conference.id],
-                    signatures = [self.conference.id]
-                ))
+                if profile_id in self.match_group.members:
+                    subject_areas = subject_area_note.content['subject_areas']
+                    score = self._jaccard_similarity(note_subject_areas, subject_areas)
+                    edges.append(openreview.Edge(
+                        invitation = invitation.id,
+                        head = paper_note_id,
+                        tail = profile_id,
+                        weight = float(score),
+                        readers = [self.conference.id],
+                        writers = [self.conference.id],
+                        signatures = [self.conference.id]
+                    ))
 
         openreview.tools.post_bulk_edges(client = self.conference.client, edges = edges)
         return invitation
