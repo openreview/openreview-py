@@ -659,33 +659,12 @@ class InvitationBuilder(object):
 
     def set_revise_submission_invitation(self, conference, notes, name, start_date, due_date, submission_content, additional_fields, remove_fields):
 
-        readers = {}
-
-        ## TODO: move this to an object
-        if conference.submission_stage.double_blind:
-            readers = {
-                'values-copied': [
-                    conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
-                ] + conference.get_original_readers()
-            }
-        else:
-            if conference.submission_stage.public:
-                readers = {
-                    'values': ['everyone']
-                }
-            else:
-                readers = {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{content.authorids}',
-                        '{signatures}'
-                    ] + conference.submission_stage.get_readers()
-                }
-
+        invitations = []
+        readers  = conference.submission_stage.get_readers(conference)
         for note in notes:
-            self.client.post_invitation(SubmissionRevisionInvitation(conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields))
+            invitations.append(self.client.post_invitation(SubmissionRevisionInvitation(conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields)))
+
+        return invitations
 
     def set_revise_review_invitation(self, conference, reviews, name, start_date, due_date, additional_fields, remove_fields):
 
