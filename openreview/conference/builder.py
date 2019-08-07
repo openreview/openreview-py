@@ -68,12 +68,12 @@ class Conference(object):
     def __set_area_chair_page(self):
         area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
         if area_chairs_group:
-            return self.webfield_builder.set_area_chair_page(self, area_chairs_group, self.enable_reviewer_reassignment)
+            return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
 
     def __set_program_chair_page(self):
         program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
         if program_chairs_group:
-            return self.webfield_builder.set_program_chair_page(self, program_chairs_group, self.enable_reviewer_reassignment)
+            return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
     def __set_bid_page(self):
         bid_invitation = self.client.get_invitation(self.get_bid_id())
@@ -147,6 +147,14 @@ class Conference(object):
 
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
+
+    def __set_reviewer_reassignment(self, enabled = True):
+        self.enable_reviewer_reassignment = enabled
+
+        # Update PC & AC homepages
+        self.__set_program_chair_page()
+        if self.use_area_chairs:
+            self.__set_area_chair_page()
 
     def set_id(self, id):
         self.id = id
@@ -328,9 +336,6 @@ class Conference(object):
 
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
-
-    def set_reviewer_reassignment(self, enabled = True):
-        self.enable_reviewer_reassignment = enabled
 
     def get_homepage_options(self):
         options = {}
