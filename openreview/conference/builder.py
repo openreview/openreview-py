@@ -570,8 +570,8 @@ class Conference(object):
 
         self.__create_group(self.get_authors_id(), self.id, author_group_ids)
 
-    def setup_matching(self, affinity_score_file = None, tpms_score_file = None):
-        conference_matching = matching.Matching(self)
+    def setup_matching(self, match_group, affinity_score_file=None, tpms_score_file=None):
+        conference_matching = matching.Matching(self, match_group)
         return conference_matching.setup(affinity_score_file, tpms_score_file)
 
     def set_assignment(self, user, number, is_area_chair = False):

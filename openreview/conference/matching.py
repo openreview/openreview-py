@@ -4,14 +4,25 @@ import csv
 from collections import defaultdict
 
 class Matching(object):
+    '''
+    Represents a Matching instance.
 
-    def __init__(self, conference):
+    Args:
+        `conference`: an openreview.Conference object
+        `match_group`: an openreview.Group object
+
+    '''
+    def __init__(self, conference, match_group):
         self.conference = conference
         self.client = conference.client
+        self.match_group = match_group
 
-    def _create_edge_invitation(self, id):
+    def _get_edge_invitation_id(self, edge_name):
+        return '{}/-/{}'.format(self.match_group.id, edge_name)
+
+    def _create_edge_invitation(self, edge_name):
         invitation = openreview.Invitation(
-            id = id,
+            id = self._get_edge_invitation_id(edge_name),
             invitees = [self.conference.get_id()],
             readers = [self.conference.get_id()],
             writers = [self.conference.get_id()],
@@ -36,7 +47,7 @@ class Matching(object):
                     'tail': {
                         'type': 'Profile',
                         'query' : {
-                            'group' : self.conference.get_reviewers_id()
+                            'group' : self.match_group.id
                         }
                     },
                     'weight': {
@@ -53,7 +64,7 @@ class Matching(object):
 
     def _build_conflicts(self, submissions, user_profiles):
 
-        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/Conflict'))
+        invitation = self._create_edge_invitation('Reviewing/Conflict')
         authorids_profiles = {}
 
         for submission in submissions:
@@ -83,7 +94,7 @@ class Matching(object):
 
     def _build_tpms_scores(self, tpms_score_file, submissions, user_profiles):
 
-        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/TPMS_Score'))
+        invitation = self._create_edge_invitation('Reviewing/TPMS_Score')
 
         submissions_per_number = { note.number: note for note in submissions }
         profiles_by_email = {}
@@ -119,7 +130,7 @@ class Matching(object):
 
     def _build_affinity_scores(self, affinity_score_file):
 
-        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/Affinity_Score'))
+        invitation = self._create_edge_invitation('Reviewing/Affinity_Score')
 
         edges = []
         with open(affinity_score_file) as f:
@@ -142,7 +153,7 @@ class Matching(object):
 
     def _build_subject_area_scores(self, submissions):
 
-        invitation = self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/Subject_Areas_Score'))
+        invitation = self._create_edge_invitation('Reviewing/Subject_Areas_Score')
 
         edges = []
         user_subject_areas = list(openreview.tools.iterget_notes(self.client, invitation = self.conference.get_registration_id()))
@@ -169,7 +180,7 @@ class Matching(object):
     def _build_config_invitation(self, scores_specification):
 
         config_inv = openreview.Invitation(
-            id = self.conference.get_invitation_id('Reviewing/Assignment_Configuration'),
+            id = '{}/-/{}'.format(self.match_group.id, 'Reviewing/Assignment_Configuration'),
             invitees = [self.conference.get_id()],
             readers = [self.conference.get_id()],
             writers = [self.conference.get_id()],
@@ -225,7 +236,7 @@ class Matching(object):
                         'order': 6
                     },
                     'match_group': {
-                        'value-radio': [self.conference.get_area_chairs_id(), self.conference.get_reviewers_id()] if self.conference.use_area_chairs else [self.conference.get_reviewers_id()],
+                        'value': self.match_group.id,
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 7
@@ -238,31 +249,31 @@ class Matching(object):
                         'default': scores_specification
                     },
                     'aggregate_score_invitation': {
-                        'value': self.conference.get_invitation_id('Reviewing/Aggregate_Score'),
+                        'value': self._get_edge_invitation_id('Reviewing/Aggregate_Score'),
                         'required': True,
                         'description': 'Invitation to store aggregated scores',
                         'order': 9
                     },
                     'conflicts_invitation': {
-                        'value': self.conference.get_invitation_id('Reviewing/Conflict'),
+                        'value': self._get_edge_invitation_id('Reviewing/Conflict'),
                         'required': True,
                         'description': 'Invitation to store aggregated scores',
                         'order': 10
                     },
                     'custom_load_invitation': {
-                        'value': self.conference.get_invitation_id('Reviewing/Custom_Load'),
+                        'value': self._get_edge_invitation_id('Reviewing/Custom_Load'),
                         'required': True,
                         'description': 'Invitation to store aggregated scores',
                         'order': 11
                     },
                     'assignment_invitation': {
-                        'value': self.conference.get_invitation_id('Reviewing/Paper_Assignment'),
+                        'value': self._get_edge_invitation_id('Reviewing/Paper_Assignment'),
                         'required': True,
                         'description': 'Invitation to store paper user assignments',
                         'order': 12
                     },
                     'config_invitation': {
-                        'value': self.conference.get_invitation_id('Reviewing/Assignment_Configuration')
+                        'value': self._get_edge_invitation_id('Reviewing/Assignment_Configuration')
                     },
                     'status': {
                         'default': 'Initialized',
@@ -337,27 +348,17 @@ class Matching(object):
             'default': 0
         }
 
-        reviewers_group = self.conference.client.get_group(self.conference.get_reviewers_id())
         # The reviewers are all emails so convert to tilde ids
-        reviewers_group = openreview.tools.replace_members_with_ids(self.client, reviewers_group)
-        if not all(['~' in member for member in reviewers_group.members]):
+        self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
+        if not all(['~' in member for member in self.match_group.members]):
             print('WARNING: not all reviewers have been converted to profile IDs. Members without profiles will not have metadata created.')
 
+        user_profiles = self._get_profiles(self.match_group.members)
 
-        if self.conference.use_area_chairs:
-            areachairs_group = self.conference.client.get_group(self.conference.get_area_chairs_id())
-            # The areachairs are all emails so convert to tilde ids
-            areachairs_group = openreview.tools.replace_members_with_ids(self.client, areachairs_group)
-            if not all(['~' in member for member in areachairs_group.members]):
-                print('WARNING: not all area chairs have been converted to profile IDs. Members without profiles will not have metadata created.')
-            user_profiles = self._get_profiles(reviewers_group.members + areachairs_group.members)
-        else:
-            user_profiles = self._get_profiles(reviewers_group.members)
-
-        self._create_edge_invitation(self.conference.get_paper_assignment_id())
-        self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/Aggregate_Score'))
-        self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/Custom_Load'))
-        self._create_edge_invitation(self.conference.get_invitation_id('Reviewing/Conflict'))
+        self._create_edge_invitation('Reviewing/Paper_Assignment')
+        self._create_edge_invitation('Reviewing/Aggregate_Score')
+        self._create_edge_invitation('Reviewing/Custom_Load')
+        self._create_edge_invitation('Reviewing/Conflict')
 
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client, invitation = self.conference.get_blind_submission_id(), details='original'))
@@ -388,7 +389,10 @@ class Matching(object):
 
 
     def deploy(self, assingment_title):
+        '''
+        WARNING: This function untested
 
+        '''
         # Get the configuration note to check the group to assign
         client = self.conference.client
         notes = client.get_notes(invitation = self.conference.get_id() + '/-/Reviewing/Assignment_Configuration', content = { 'title': assingment_title })
