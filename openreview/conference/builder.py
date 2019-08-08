@@ -1068,25 +1068,8 @@ class ConferenceBuilder(object):
         ## Create comittee groups before any other stage that requires them to create groups and/or invitations
         self.conference.set_authors()
         self.conference.set_reviewers()
-        self.conference.set_area_chairs()
-
-        if self.bid_stage:
-            self.conference.set_bid_stage(self.bid_stage)
-
-        if self.expertise_selection_stage:
-            self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
-
-        if self.review_stage:
-            self.conference.set_review_stage(self.review_stage)
-
-        if self.comment_stage:
-            self.conference.set_comment_stage(self.comment_stage)
-
-        if self.meta_review_stage:
-            self.conference.set_meta_review_stage(self.meta_review_stage)
-
-        if self.decision_stage:
-            self.conference.set_decision_stage(self.decision_stage)
+        if self.conference.use_area_chairs():
+            self.conference.set_area_chairs()
 
         home_group = groups[-1]
         writable = home_group.details.get('writable') if home_group.details else True
@@ -1106,5 +1089,23 @@ class ConferenceBuilder(object):
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
+
+        if self.bid_stage:
+            self.conference.set_bid_stage(self.bid_stage)
+
+        if self.expertise_selection_stage:
+            self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
+
+        if self.review_stage:
+            self.conference.set_review_stage(self.review_stage)
+
+        if self.comment_stage:
+            self.conference.set_comment_stage(self.comment_stage)
+
+        if self.meta_review_stage:
+            self.conference.set_meta_review_stage(self.meta_review_stage)
+
+        if self.decision_stage:
+            self.conference.set_decision_stage(self.decision_stage)
 
         return self.conference
