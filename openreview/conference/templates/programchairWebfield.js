@@ -23,8 +23,10 @@ var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 
- var reviewerSummaryMap = {};
+var reviewerSummaryMap = {};
 var allReviewers = [];
+var reviewerTableData = {};
+var conferenceStatusData = {};
 
 // Ajax functions
 var getAllReviewers = function() {
@@ -609,7 +611,40 @@ var displaySPCStatusTable = function(profiles, notes, completedReviews, metaRevi
 
 };
 
-var displayPCStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerByNote, reviewerById, container, options) {
+var renderPCTable = function() {
+  var container = reviewerTableData["container"];
+  var data = reviewerTableData["data"];
+  var index = 1;
+  var rowData = _.map(data, function(d) {
+    var number = '<strong class="note-number">' + index++ + '</strong>';
+    var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
+    var progressHtml = Handlebars.templates.notesReviewerProgress(d.reviewProgressData);
+    var statusHtml = Handlebars.templates.notesReviewerStatus(d.reviewStatusData);
+    return [number, summaryHtml, progressHtml, statusHtml];
+  });
+
+  var tableHTML = Handlebars.templates['components/table']({
+    headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
+    rows: rowData,
+    extraClasses: 'console-table'
+  });
+
+  $(container).find('.table-container').remove();
+  $(container).append(tableHTML);
+}
+
+// var displayPCStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerByNote, reviewerById, container, options) {
+var displayPCStatusTable = function() {
+  console.log(conferenceStatusData);
+  var profiles = conferenceStatusData.profiles;
+  var notes = conferenceStatusData.blindedNotes;
+  var completedReviews = conferenceStatusData.officialReviews;
+  var metaReviews = conferenceStatusData.metaReviews;
+  var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes
+  var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
+  var container = '#reviewer-status';
+  // var options;
+
   var rowData = [];
   var index = 1;
   var sortedReviewerIds = _.sortBy(_.keys(reviewerById));
@@ -678,32 +713,15 @@ var displayPCStatusTable = function(profiles, notes, completedReviews, metaRevie
     }
     var selectedOption = newOption;
     rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
-    renderTable(container, rowData);
-  }
-
-  var renderTable = function(container, data) {
-
-    var index = 1;
-    var rowData = _.map(data, function(d) {
-      var number = '<strong class="note-number">' + index++ + '</strong>';
-      var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
-      var progressHtml = Handlebars.templates.notesReviewerProgress(d.reviewProgressData);
-      var statusHtml = Handlebars.templates.notesReviewerStatus(d.reviewStatusData);
-      return [number, summaryHtml, progressHtml, statusHtml];
-    });
-
-    var tableHTML = Handlebars.templates['components/table']({
-      headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
-      rows: rowData,
-      extraClasses: 'console-table'
-    });
-
-    $(container).find('.table-container').remove();
-    $(container).append(tableHTML);
+    reviewerTableData["container"] = container;
+    reviewerTableData["data"] = rowData;
+    renderPCTable();
   }
 
   displaySortPanel(container, sortOptions, sortResults);
-  renderTable(container, rowData);
+  reviewerTableData["container"] = container;
+  reviewerTableData["data"] = rowData;
+  renderPCTable();
 
 };
 
@@ -730,13 +748,13 @@ var updateReviewerContainer = function(paperNumber) {
   };
   placeholder = 'reviewer@domain.edu';
 
-   var $dropdown = view.mkDropdown(placeholder, false, null, function(update, term) {
+  var $dropdown = view.mkDropdown(placeholder, false, null, function(update, term) {
     update(filterOptions(dropdownOptions, term));
   }, function(value, id) {
     var selectedOption = _.find(dropdownOptions, ['id', id]);
     var $input = $dropdown.find('input');
 
-     if (!(selectedOption && selectedOption.description === value)) {
+    if (!(selectedOption && selectedOption.description === value)) {
       $input.val(value);
       $input.attr('value_id', value);
     } else {
@@ -745,7 +763,7 @@ var updateReviewerContainer = function(paperNumber) {
     }
   });
 
-   $dropdown.find('input').attr({
+  $dropdown.find('input').attr({
     class: 'form-control dropdown note_content_value input-assign-reviewer',
     name: placeholder,
     autocomplete: 'on'
@@ -756,7 +774,7 @@ var updateReviewerContainer = function(paperNumber) {
     autocomplete: 'on'
   });
 
-   $addReviewerContainer.append($dropdown);
+  $addReviewerContainer.append($dropdown);
   $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber + ' data-paper-forum=' + paperForum +'>Assign</button>');
 }
 
@@ -1042,11 +1060,22 @@ controller.addHandler('areachairs', {
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
         displayConfiguration(requestForm, invitations),
+        conferenceStatusData = {
+          "profiles": profiles,
+          "blindedNotes" : blindedNotes,
+          "officialReviews": officialReviews,
+          "metaReviews": metaReviews,
+          "reviewerGroups": reviewerGroups,
+          "areaChairGroups": areaChairGroups,
+          "decisions": decisions
+        }
         displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, decisions, '#paper-status');
         if (SHOW_AC_TAB) {
           displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
         }
-        displayPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, reviewerGroups.byReviewers, '#reviewer-status');
+        // displayPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, reviewerGroups.byReviewers, '#reviewer-status');
+        console.log('Setting up Rev tab');
+        displayPCStatusTable();
 
         Webfield.ui.done();
       })
@@ -1068,8 +1097,8 @@ $('#group-container').on('click', 'a.send-reminder-link', function(e) {
   var userId = $(this).data('userId');
   var forumUrl = $(this).data('forumUrl');
   var postData = {
-    subject: 'MIDL 2019 Reminder',
-    message: 'This is a reminder to please submit your official reviews for MIDL 2019. ' +
+    subject: SHORT_PHRASE + 'Reminder',
+    message: 'This is a reminder to please submit your official reviews for ' + SHORT_PHRASE + '.\n\n' +
       'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.',
     groups: [userId]
   };
@@ -1099,8 +1128,9 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   var paperForum = $link.data('paperForum');
   var $currDiv = $('#' + paperNumber + '-add-reviewer');
   var userToAdd = $currDiv.find('input').attr('value_id').trim();
+  // console.log(conferenceStatusData);
 
-   if (!userToAdd) {
+  if (!userToAdd) {
     promptError('Please enter a valid email for assigning a reviewer');
     return false;
   }
@@ -1160,6 +1190,16 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
+
+    currentReviewerIndex = reviewerTableData.data.findIndex(function(row){
+      return (row.summary.id && (row.summary.id === userToAdd)) || (row.summary.email && (row.summary.email === userToAdd))
+    });
+
+    // if (currentReviewerIndex === -1) {
+    // } else {
+    // }
+
+
     promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
     var postData = {
       groups: [userToAdd],
@@ -1176,13 +1216,13 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   return false;
 });
 
- $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
+$('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   var $link = $(this);
   var userId = $link.data('userId');
   var paperNumber = $link.data('paperNumber');
   var reviewerNumber = $link.data('reviewerNumber');
 
-   Webfield.delete('/groups/members', {
+  Webfield.delete('/groups/members', {
     id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
     members: [userId]
   })
@@ -1193,6 +1233,31 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     });
   })
   .then(function(result) {
+    currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
+
+    if (currentReviewerToPapersMap.length === 1) {
+      delete conferenceStatusData.reviewerGroups.byReviewers[userId];
+    } else {
+      conferenceStatusData.reviewerGroups.byReviewers[userId] = conferenceStatusData.reviewerGroups.byReviewers[userId].filter(function(number) {
+        return number !== paperNumber;
+      });
+    }
+
+    currentPaperToReviewersMap = conferenceStatusData.reviewerGroups.byNotes[paperNumber];
+
+    if (currentPaperToReviewersMap.length === 1) {
+      delete conferenceStatusData.reviewerGroups.byNotes[paperNumber];
+    } else {
+      var reviewerIndex;
+      for (key in currentPaperToReviewersMap) {
+        if (currentPaperToReviewersMap[key].id === userId){
+          reviewerIndex = key;
+          break;
+        }
+      }
+      delete currentPaperToReviewersMap[reviewerIndex];
+    }
+
     var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
     delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
@@ -1202,6 +1267,16 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
   })
   return false;
+});
+
+$('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
+  var containerId = $(e.target).attr('href');
+
+  if (containerId === '#reviewer-status') {
+    setTimeout(function() {
+      displayPCStatusTable();
+    }, 100);
+  }
 });
 
 OpenBanner.venueHomepageLink(CONFERENCE_ID);
