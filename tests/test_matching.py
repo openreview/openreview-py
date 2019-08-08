@@ -178,8 +178,7 @@ class TestMatching():
         ))
 
         # Set up reviewer matching
-        conference.setup_matching(
-            conference.client.get_group(conference.get_reviewers_id()))
+        conference.setup_matching()
 
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Assignment_Configuration')
@@ -189,8 +188,7 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Paper_Assignment')
 
         # Set up AC matching
-        conference.setup_matching(
-            conference.client.get_group(conference.get_area_chairs_id()))
+        conference.setup_matching(is_area_chair=True)
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Assignment_Configuration')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
@@ -280,9 +278,7 @@ class TestMatching():
         assert conference, 'conference is None'
 
         # Set up reviewer matching
-        conference.setup_matching(
-            conference.client.get_group(conference.get_reviewers_id()),
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
 
         print(conference.get_reviewers_id())
 
@@ -295,7 +291,7 @@ class TestMatching():
 
         # Set up ac matching
         conference.setup_matching(
-            conference.client.get_group(conference.get_area_chairs_id()),
+            is_area_chair=True,
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'))
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Assignment_Configuration')
@@ -453,9 +449,7 @@ class TestMatching():
         ))
 
        # Set up reviewer matching
-        conference.setup_matching(
-            conference.client.get_group(conference.get_reviewers_id()),
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
 
         print(conference.get_reviewers_id())
 
@@ -464,7 +458,7 @@ class TestMatching():
 
         # Set up ac matching
         conference.setup_matching(
-            conference.client.get_group(conference.get_area_chairs_id()),
+            is_area_chair=True,
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'))
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
@@ -610,8 +604,7 @@ class TestMatching():
         ))
 
         # Set up reviewer matching
-        conference.setup_matching(
-            conference.client.get_group(conference.get_reviewers_id()))
+        conference.setup_matching()
 
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Subject_Areas_Score')
@@ -619,17 +612,11 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Conflict')
 
         # Set up AC matching
-        conference.setup_matching(
-            conference.client.get_group(conference.get_area_chairs_id()))
+        conference.setup_matching(is_area_chair=True)
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Subject_Areas_Score')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Conflict')
-
-        custom_load_id = '{}/-/Reviewing/Custom_Load'.format(conference.get_reviewers_id())
-        conflict_id = '{}/-/Reviewing/Conflict'.format(conference.get_reviewers_id())
-        subject_areas_id = '{}/-/Reviewing/Subject_Areas_Score'.format(conference.get_reviewers_id())
-
 
         bids = client.get_edges(invitation = conference.get_bid_id())
         assert bids
