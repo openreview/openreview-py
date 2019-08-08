@@ -196,11 +196,11 @@ class TestMatching():
         reviewer_matching_ids = _matching_invitation_ids(
             client, conference.get_reviewers_id())
 
-        assert client.get_invitation(id=reviewer_matching_ids['assignment_config'])
-        assert client.get_invitation(id=reviewer_matching_ids['custom_load'])
-        assert client.get_invitation(id=reviewer_matching_ids['conflict'])
-        assert client.get_invitation(id=reviewer_matching_ids['aggregate_score'])
-        assert client.get_invitation(id=reviewer_matching_ids['paper_assignment'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Assignment_Configuration')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Paper_Assignment')
 
         # Set up AC matching
         conference.setup_matching(
@@ -209,11 +209,11 @@ class TestMatching():
         ac_matching_ids = _matching_invitation_ids(
             client, conference.get_area_chairs_id())
 
-        assert client.get_invitation(id=ac_matching_ids['assignment_config'])
-        assert client.get_invitation(id=ac_matching_ids['custom_load'])
-        assert client.get_invitation(id=ac_matching_ids['conflict'])
-        assert client.get_invitation(id=ac_matching_ids['aggregate_score'])
-        assert client.get_invitation(id=ac_matching_ids['paper_assignment'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Assignment_Configuration')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Paper_Assignment')
 
         bids = client.get_edges(invitation = conference.get_bid_id())
         assert bids
@@ -304,12 +304,12 @@ class TestMatching():
         reviewer_matching_ids = _matching_invitation_ids(
             client, conference.get_reviewers_id())
 
-        assert client.get_invitation(id=reviewer_matching_ids['assignment_config'])
-        assert client.get_invitation(id=reviewer_matching_ids['custom_load'])
-        assert client.get_invitation(id=reviewer_matching_ids['conflict'])
-        assert client.get_invitation(id=reviewer_matching_ids['aggregate_score'])
-        assert client.get_invitation(id=reviewer_matching_ids['paper_assignment'])
-        assert client.get_invitation(id=reviewer_matching_ids['tpms'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Assignment_Configuration')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Paper_Assignment')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/TPMS_Score')
 
         # Set up ac matching
         conference.setup_matching(
@@ -319,12 +319,12 @@ class TestMatching():
         ac_matching_ids = _matching_invitation_ids(
             client, conference.get_area_chairs_id())
 
-        assert client.get_invitation(id=ac_matching_ids['assignment_config'])
-        assert client.get_invitation(id=ac_matching_ids['custom_load'])
-        assert client.get_invitation(id=ac_matching_ids['conflict'])
-        assert client.get_invitation(id=ac_matching_ids['aggregate_score'])
-        assert client.get_invitation(id=ac_matching_ids['paper_assignment'])
-        assert client.get_invitation(id=ac_matching_ids['tpms'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Assignment_Configuration')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Paper_Assignment')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/TPMS_Score')
 
         bids = client.get_edges(invitation = conference.get_bid_id())
         assert bids
@@ -477,8 +477,8 @@ class TestMatching():
         reviewer_matching_ids = _matching_invitation_ids(
             client, conference.get_reviewers_id())
 
-        assert client.get_invitation(id=reviewer_matching_ids['custom_load'])
-        assert client.get_invitation(id=reviewer_matching_ids['conflict'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Conflict')
 
         # Set up ac matching
         conference.setup_matching(
@@ -488,8 +488,8 @@ class TestMatching():
         ac_matching_ids = _matching_invitation_ids(
             client, conference.get_area_chairs_id())
 
-        assert client.get_invitation(id=ac_matching_ids['custom_load'])
-        assert client.get_invitation(id=ac_matching_ids['conflict'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Conflict')
 
         bids = client.get_edges(invitation = conference.get_bid_id())
         assert bids
@@ -629,9 +629,9 @@ class TestMatching():
         reviewer_matching_ids = _matching_invitation_ids(
             client, conference.get_reviewers_id())
 
-        assert client.get_invitation(id=reviewer_matching_ids['subject_area'])
-        assert client.get_invitation(id=reviewer_matching_ids['custom_load'])
-        assert client.get_invitation(id=reviewer_matching_ids['conflict'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Subject_Areas_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Conflict')
 
         # Set up AC matching
         conference.setup_matching(
@@ -640,9 +640,9 @@ class TestMatching():
         ac_matching_ids = _matching_invitation_ids(
             client, conference.get_area_chairs_id())
 
-        assert client.get_invitation(id=ac_matching_ids['subject_area'])
-        assert client.get_invitation(id=ac_matching_ids['custom_load'])
-        assert client.get_invitation(id=ac_matching_ids['conflict'])
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Subject_Areas_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Conflict')
 
         custom_load_id = '{}/-/Reviewing/Custom_Load'.format(conference.get_reviewers_id())
         conflict_id = '{}/-/Reviewing/Conflict'.format(conference.get_reviewers_id())
