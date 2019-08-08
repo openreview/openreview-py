@@ -72,7 +72,7 @@ class Matching(object):
         '''
         Returns a correctly formatted edge invitation ID for this Matching's match group
         '''
-        return '{}/-/{}'.format(self.match_group.id, edge_name)
+        return self.conference.get_invitation_id(edge_name, prefix=self.match_group.id)
 
     def _create_edge_invitation(self, edge_name):
         '''
@@ -370,7 +370,7 @@ class Matching(object):
         '''
         score_spec = {}
 
-        score_spec[self.conference.get_bid_id()] = {
+        score_spec[self.conference.get_bid_id(self.match_group.id)] = {
             'weight': 1,
             'default': 0,
             'translate_map' : {

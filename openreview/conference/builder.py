@@ -83,9 +83,14 @@ class Conference(object):
             return self.webfield_builder.set_expertise_selection_page(self, expertise_selection_invitation)
 
     def __set_bid_page(self):
-        bid_invitation = self.client.get_invitation(self.get_bid_id())
+        bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_reviewers_id()))
         if bid_invitation:
-            return self.webfield_builder.set_bid_page(self, bid_invitation)
+            self.webfield_builder.set_bid_page(self, bid_invitation)
+
+        if self.use_area_chairs:
+            bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_area_chairs_id()))
+            if bid_invitation:
+                self.webfield_builder.set_bid_page(self, bid_invitation)
 
     def __set_recommendation_page(self):
         recommendation_invitation = self.client.get_invitation(self.get_recommendation_id())
@@ -270,8 +275,8 @@ class Conference(object):
     def get_expertise_selection_id(self):
         return self.get_invitation_id(self.expertise_selection_stage.name)
 
-    def get_bid_id(self):
-        return self.get_invitation_id(self.bid_stage.name)
+    def get_bid_id(self, group_id):
+        return self.get_invitation_id(self.bid_stage.name, prefix=group_id)
 
     def get_recommendation_id(self, number = None):
         return self.get_invitation_id(self.recommendation_name, number)
@@ -279,8 +284,10 @@ class Conference(object):
     def get_registration_id(self):
         return self.get_invitation_id(self.registration_name)
 
-    def get_invitation_id(self, name, number = None):
+    def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
+        if prefix:
+            invitation_id = prefix
         if number:
             if self.legacy_invitation_id:
                 invitation_id = invitation_id + '/-/Paper' + str(number) + '/'
@@ -439,7 +446,9 @@ class Conference(object):
         return self.__create_bid_stage()
 
     def close_bids(self):
-        return self.__expire_invitation(self.get_bid_id())
+        self.__expire_invitation(self.get_bid_id(self.get_reviewers_id()))
+        if self.use_area_chairs:
+            self.__expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
     def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
@@ -1056,8 +1065,10 @@ class ConferenceBuilder(object):
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
 
-        ## Create paper and author groups before any other stage that requires paper specific invitations
+        ## Create comittee groups before any other stage that requires them to create groups and/or invitations
         self.conference.set_authors()
+        self.conference.set_reviewers()
+        self.conference.set_area_chairs()
 
         if self.bid_stage:
             self.conference.set_bid_stage(self.bid_stage)

@@ -780,7 +780,7 @@ class TestDoubleBlindConference():
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
-        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/-/Bid", reviewer_client.token)
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
 

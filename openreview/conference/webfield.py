@@ -143,7 +143,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
-            content = content.replace("var BID_ID = '';", "var BID_ID = '" + conference.get_bid_id() + "';")
+            content = content.replace("var BID_ID = '';", "var BID_ID = '" + invitation.id + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
 
             if conference.bid_stage.use_affinity_score:

@@ -126,7 +126,7 @@ class TestMatching():
         conference.set_authors()
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
-        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
@@ -134,7 +134,7 @@ class TestMatching():
             tail = '~AreaChair_One1',
             label = 'High'
         ))
-        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
@@ -142,7 +142,7 @@ class TestMatching():
             tail = '~AreaChair_One1',
             label = 'Low'
         ))
-        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
@@ -152,7 +152,7 @@ class TestMatching():
         ))
 
         r1_client = helpers.create_user('r1@mit.edu', 'Reviewer', 'One')
-        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             signatures = ['~Reviewer_One1'],
@@ -160,7 +160,7 @@ class TestMatching():
             tail = '~Reviewer_One1',
             label = 'Neutral'
         ))
-        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             signatures = ['~Reviewer_One1'],
@@ -168,7 +168,7 @@ class TestMatching():
             tail = '~Reviewer_One1',
             label = 'Very High'
         ))
-        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(),
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             signatures = ['~Reviewer_One1'],
@@ -196,9 +196,13 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Aggregate_Score')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Paper_Assignment')
 
-        bids = client.get_edges(invitation = conference.get_bid_id())
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 6 == len(bids)
+        assert 3 == len(bids)
+
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        assert bids
+        assert 3 == len(bids)
 
         reviewer_custom_loads = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Custom_Load')
@@ -301,9 +305,13 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Paper_Assignment')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/TPMS_Score')
 
-        bids = client.get_edges(invitation = conference.get_bid_id())
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 6 == len(bids)
+        assert 3 == len(bids)
+
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        assert bids
+        assert 3 == len(bids)
 
         reviewer_custom_loads = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Reviewing/Custom_Load')
@@ -464,9 +472,13 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Conflict')
 
-        bids = client.get_edges(invitation = conference.get_bid_id())
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 6 == len(bids)
+        assert 3 == len(bids)
+
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        assert bids
+        assert 3 == len(bids)
 
         recommendations = client.get_edges(invitation = conference.get_recommendation_id())
         assert recommendations
@@ -618,9 +630,13 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Reviewing/Conflict')
 
-        bids = client.get_edges(invitation = conference.get_bid_id())
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 6 == len(bids)
+        assert 3 == len(bids)
+
+        bids = client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        assert bids
+        assert 3 == len(bids)
 
         recommendations = client.get_edges(invitation = conference.get_recommendation_id())
         assert recommendations

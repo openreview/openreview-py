@@ -6,10 +6,10 @@ var CONFERENCE_ID = '';
 var HEADER = {};
 var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
-var SUBMISSION_ID = '';
 var BID_ID = '';
 var SUBJECT_AREAS = '';
 var AFFINITY_SCORE_ID = '';
+var CONFLICT_SCORE_ID = '';
 var noteCount = 0;
 
 // Main is the entry point to the webfield code and runs everything
@@ -95,7 +95,7 @@ function load() {
   var sortedNotesP = getPapersSortedByAffinity(0);
 
   var conflictIdsP = Webfield.getAll('/edges', {
-    invitation: CONFERENCE_ID + '/-/Reviewing/Conflict',
+    invitation: CONFLICT_SCORE_ID,
     tail: user.profile.id
   })
   .then(function(edges) {
