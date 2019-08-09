@@ -117,7 +117,7 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_bid_page(self, conference, invitation):
+    def set_bid_page(self, conference, invitation, group_id):
 
         sorted_tip = ''
         if conference.bid_stage.use_affinity_score:
@@ -147,7 +147,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
 
             if conference.bid_stage.use_affinity_score:
-                content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id() + "';")
+                content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id(group_id) + "';")
 
             invitation.web = content
             return self.client.post_invitation(invitation)

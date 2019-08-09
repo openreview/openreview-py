@@ -85,12 +85,12 @@ class Conference(object):
     def __set_bid_page(self):
         bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_reviewers_id()))
         if bid_invitation:
-            self.webfield_builder.set_bid_page(self, bid_invitation)
+            self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id())
 
         if self.use_area_chairs:
             bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_area_chairs_id()))
             if bid_invitation:
-                self.webfield_builder.set_bid_page(self, bid_invitation)
+                self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id())
 
     def __set_recommendation_page(self):
         recommendation_invitation = self.client.get_invitation(self.get_recommendation_id())
@@ -308,8 +308,8 @@ class Conference(object):
     def get_paper_assignment_id(self):
         return self.get_invitation_id('Reviewing/Paper_Assignment')
 
-    def get_affinity_score_id(self):
-        return self.get_invitation_id('Reviewing/Affinity_Score')
+    def get_affinity_score_id(self, group_id):
+        return self.get_invitation_id('Reviewing/Affinity_Score', prefix=group_id)
 
     def set_homepage_header(self, header):
         self.homepage_header = header
@@ -1023,8 +1023,8 @@ class ConferenceBuilder(object):
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
         self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date)
 
-    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50):
-        self.bid_stage = BidStage(start_date, due_date, request_count)
+    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False):
+        self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score)
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
@@ -1068,7 +1068,7 @@ class ConferenceBuilder(object):
         ## Create comittee groups before any other stage that requires them to create groups and/or invitations
         self.conference.set_authors()
         self.conference.set_reviewers()
-        if self.conference.use_area_chairs():
+        if self.conference.use_area_chairs:
             self.conference.set_area_chairs()
 
         home_group = groups[-1]
