@@ -818,7 +818,7 @@ class TestDoubleBlindConference():
         notes = client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
 
-        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w', newline='') as file_handle:
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             writer.writerow([submission.id, '~Reviewer_DoubleBlind1', '0.9'])
 
