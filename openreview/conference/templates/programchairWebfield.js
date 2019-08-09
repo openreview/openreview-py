@@ -1,4 +1,3 @@
-
 // Constants
 var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
@@ -25,7 +24,6 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 
 var reviewerSummaryMap = {};
 var allReviewers = [];
-var reviewerTableData = {};
 var conferenceStatusData = {};
 
 // Ajax functions
@@ -612,8 +610,8 @@ var displaySPCStatusTable = function(profiles, notes, completedReviews, metaRevi
 };
 
 var renderPCTable = function() {
-  var container = reviewerTableData["container"];
-  var data = reviewerTableData["data"];
+  var container = conferenceStatusData.reviewerTabData["container"];
+  var data = conferenceStatusData.reviewerTabData["data"];
   var index = 1;
   var rowData = _.map(data, function(d) {
     var number = '<strong class="note-number">' + index++ + '</strong>';
@@ -633,9 +631,7 @@ var renderPCTable = function() {
   $(container).append(tableHTML);
 }
 
-// var displayPCStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerByNote, reviewerById, container, options) {
 var displayPCStatusTable = function() {
-  console.log(conferenceStatusData);
   var profiles = conferenceStatusData.profiles;
   var notes = conferenceStatusData.blindedNotes;
   var completedReviews = conferenceStatusData.officialReviews;
@@ -643,7 +639,6 @@ var displayPCStatusTable = function() {
   var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
   var container = '#reviewer-status';
-  // var options;
 
   var rowData = [];
   var index = 1;
@@ -692,7 +687,6 @@ var displayPCStatusTable = function() {
       }
 
     });
-
     rowData.push(buildPCTableRow(index, reviewerProfile, papers));
     index++;
   });
@@ -713,14 +707,18 @@ var displayPCStatusTable = function() {
     }
     var selectedOption = newOption;
     rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
-    reviewerTableData["container"] = container;
-    reviewerTableData["data"] = rowData;
+    conferenceStatusData["reviewerTabData"] = {
+      "container": container,
+      "data": rowData
+    };
     renderPCTable();
   }
 
   displaySortPanel(container, sortOptions, sortResults);
-  reviewerTableData["container"] = container;
-  reviewerTableData["data"] = rowData;
+  conferenceStatusData["reviewerTabData"] = {
+    "container": container,
+    "data": rowData
+  };
   renderPCTable();
 
 };
@@ -1073,8 +1071,6 @@ controller.addHandler('areachairs', {
         if (SHOW_AC_TAB) {
           displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
         }
-        // displayPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, reviewerGroups.byReviewers, '#reviewer-status');
-        console.log('Setting up Rev tab');
         displayPCStatusTable();
 
         Webfield.ui.done();
@@ -1128,7 +1124,6 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   var paperForum = $link.data('paperForum');
   var $currDiv = $('#' + paperNumber + '-add-reviewer');
   var userToAdd = $currDiv.find('input').attr('value_id').trim();
-  // console.log(conferenceStatusData);
 
   if (!userToAdd) {
     promptError('Please enter a valid email for assigning a reviewer');
@@ -1168,6 +1163,9 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     })
   })
   .then(function(result) {
+    return getUserProfiles([userToAdd]);
+  })
+  .then(function(userProfile) {
     var forumUrl = 'https://openreview.net/forum?' + $.param({
       id: paperForum,
       invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
@@ -1191,13 +1189,28 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
 
-    currentReviewerIndex = reviewerTableData.data.findIndex(function(row){
-      return (row.summary.id && (row.summary.id === userToAdd)) || (row.summary.email && (row.summary.email === userToAdd))
-    });
+    var reviewerProfile = {
+      "email": userToAdd,
+      "id": userToAdd,
+      "name": "",
+      "content": {"names": [{"username": userToAdd}]}
+    };
 
-    // if (currentReviewerIndex === -1) {
-    // } else {
-    // }
+    if (Object.keys(userProfile).length){
+      reviewerProfile = userProfile[userToAdd];
+    }
+
+    conferenceStatusData.profiles[reviewerProfile.id] = reviewerProfile;
+    if (paperNumber in conferenceStatusData.reviewerGroups.byNotes) {
+      conferenceStatusData.reviewerGroups.byNotes[paperNumber][nextAnonNumber] = reviewerProfile;
+    } else {
+      conferenceStatusData.reviewerGroups.byNotes[paperNumber] = { nextAnonNumber : reviewerProfile };
+    }
+    if (reviewerProfile.id in conferenceStatusData.reviewerGroups.byReviewers) {
+      conferenceStatusData.reviewerGroups.byReviewers[reviewerProfile.id].push(paperNumber);
+    } else {
+      conferenceStatusData.reviewerGroups.byReviewers[reviewerProfile.id] = [paperNumber];
+    }
 
 
     promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
@@ -1271,11 +1284,17 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
 
 $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
   var containerId = $(e.target).attr('href');
-
   if (containerId === '#reviewer-status') {
     setTimeout(function() {
       displayPCStatusTable();
     }, 100);
+  }
+});
+
+$('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
+  var containerId = $(e.target).attr('href');
+  if (containerId === '#venue-configuration') {
+    Webfield.ui.spinner(containerId, {inline: true});
   }
 });
 
