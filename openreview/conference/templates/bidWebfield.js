@@ -34,35 +34,30 @@ function getPapersSortedByAffinity(offset) {
     })
     .then(function(result) {
       noteCount = result.count;
-      var edgesByHead = {};
-      var noteIds = result.edges.map(function(edge) {
-        edgesByHead[edge.head] = edge;
+      var edgesByHead = _.keyBy(result.edges, function(edge) {
         return edge.head;
       });
+      var noteIds = Object.keys(edgesByHead);
 
       return Webfield.post('/notes/search', {
         ids: noteIds
       })
       .then(function(result) {
         //Keep affinity score order
-        var mapById = result.notes.reduce(function(mapById, note) {
-          mapById[note.id] = note;
-          return mapById;
-        }, {});
-        return noteIds.map(function(id) {
-          return mapById[id];
+        var notesById = _.keyBy(result.notes, function(note) {
+          return note.id;
         });
-      })
-      .then(function(notes) {
-        return notes.map(function(note) {
-          var edge = edgesByHead[note.id];
+        notes = noteIds.map(function(id) {
+          var note = notesById[id];
+          var edge = edgesByHead[id];
           //to render the edge widget correctly
           edge.signatures = [];
           note.details = {
             edges: [edge]
           }
           return note;
-        })
+        });
+        return notes;
       })
     });
   } else {
@@ -159,7 +154,7 @@ function renderContent(notes, conflictIds, bidEdges) {
           displayOptions: paperDisplayOptions,
           fadeIn: false
         });
-      })
+      });
     }
   });
 
@@ -173,17 +168,17 @@ function renderContent(notes, conflictIds, bidEdges) {
   $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edge) {
     if (edge.ddate) {
       delete bidsByNote[edge.head];
-      bidsById[edge.label] = bidsById[edge.label].filter(function(e) { return edge.id != e.id; });
+      bidsById[edge.label] = bidsById[edge.label].filter(function(e) { return edge.id !== e.id; });
     } else {
       var previousEdge = bidsByNote[edge.head];
       bidsByNote[edge.head] = edge;
       bidsById[edge.label].push(edge);
       if (previousEdge) {
-        bidsById[previousEdge.label] = bidsById[previousEdge.label].filter(function(e) { return previousEdge.id != e.id; });
+        bidsById[previousEdge.label] = bidsById[previousEdge.label].filter(function(e) { return previousEdge.id !== e.id; });
       }
     }
 
-     updateCounts();
+    updateCounts();
   });
 
   function updateNotes(notes) {
