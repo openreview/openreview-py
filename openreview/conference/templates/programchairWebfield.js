@@ -210,9 +210,6 @@ var getUserProfiles = function(userIds) {
 };
 
 var findProfile = function(profiles, id) {
-  // if (id.hasOwnProperty('id')){
-  //   return id;
-  // }
   var profile = _.find(profiles, function(p) {
     return _.find(p.content.names, function(n) { return n.username == id; }) || _.includes(p.content.emails, id);
   });
@@ -252,7 +249,7 @@ var getInvitations = function() {
 }
 
 var findNextAnonGroupNumber = function(paperNumber){
-  paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
+  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; i < paperReviewerNums.length + 1; i++) {
     if (i.toString() !== paperReviewerNums[i-1]) {
       return i;
@@ -333,7 +330,6 @@ var displayConfiguration = function(requestForm, invitations) {
         beforeEnd = now < invitation.duedate;
       }
 
-      var currentPeriod = afterStart && beforeEnd;
       var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
       if (end) {
         periodString = periodString + 'until <em>' + end + '</em>';
@@ -630,8 +626,8 @@ var displaySPCStatusTable = function() {
 };
 
 var renderPCTable = function() {
-  var container = conferenceStatusData.reviewerTabData["container"];
-  var data = conferenceStatusData.reviewerTabData["data"];
+  var container = conferenceStatusData.reviewerTabData['container'];
+  var data = conferenceStatusData.reviewerTabData['data'];
   var index = 1;
   var rowData = _.map(data, function(d) {
     var number = '<strong class="note-number">' + index++ + '</strong>';
@@ -726,17 +722,17 @@ var displayPCStatusTable = function() {
     }
     var selectedOption = newOption;
     rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
-    conferenceStatusData["reviewerTabData"] = {
-      "container": container,
-      "data": rowData
+    conferenceStatusData['reviewerTabData'] = {
+      'container': container,
+      'data': rowData
     };
     renderPCTable();
   }
 
   displaySortPanel(container, sortOptions, sortResults);
-  conferenceStatusData["reviewerTabData"] = {
-    "container": container,
-    "data": rowData
+  conferenceStatusData['reviewerTabData'] = {
+    'container': container,
+    'data': rowData
   };
   renderPCTable();
 
@@ -792,7 +788,7 @@ var updateReviewerContainer = function(paperNumber) {
   });
 
   $addReviewerContainer.append($dropdown);
-  $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber + ' data-paper-forum=' + paperForum +'>Assign</button>');
+  $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber + ' data-paper-forum=' + paperForum + '>Assign</button>');
 }
 
 // Helper functions
@@ -1076,21 +1072,15 @@ controller.addHandler('areachairs', {
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
         conferenceStatusData = {
-          "profiles": profiles,
-          "blindedNotes" : blindedNotes,
-          "officialReviews": officialReviews,
-          "metaReviews": metaReviews,
-          "reviewerGroups": reviewerGroups,
-          "areaChairGroups": areaChairGroups,
-          "decisions": decisions
+          'profiles' : profiles,
+          'blindedNotes' : blindedNotes,
+          'officialReviews' : officialReviews,
+          'metaReviews' : metaReviews,
+          'reviewerGroups' : reviewerGroups,
+          'areaChairGroups' : areaChairGroups,
+          'decisions' : decisions
         }
         displayConfiguration(requestForm, invitations);
-        // displayPaperStatusTable();
-        // if (SHOW_AC_TAB) {
-        //   displaySPCStatusTable();
-        // }
-        // displayPCStatusTable();
-
         Webfield.ui.done();
       })
     })
@@ -1208,10 +1198,10 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     updateReviewerContainer(paperNumber);
 
     var reviewerProfile = {
-      "email": userToAdd,
-      "id": userToAdd,
-      "name": "",
-      "content": {"names": [{"username": userToAdd}]}
+      'email' : userToAdd,
+      'id' : userToAdd,
+      'name': '',
+      'content': {'names': [{'username': userToAdd}]}
     };
 
     if (Object.keys(userProfile).length){
@@ -1234,7 +1224,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
     var postData = {
       groups: [userToAdd],
-      subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
+      subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
       message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
       ' for ' + SHORT_PHRASE + '.' +
       '\n\nTo review this new assignment, please login and click on ' +
@@ -1264,12 +1254,12 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     });
   })
   .then(function(result) {
-    currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
+    var currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
 
     if (currentReviewerToPapersMap.length === 1) {
       delete conferenceStatusData.reviewerGroups.byReviewers[userId];
     } else {
-      conferenceStatusData.reviewerGroups.byReviewers[userId] = conferenceStatusData.reviewerGroups.byReviewers[userId].filter(function(number) {
+      conferenceStatusData.reviewerGroups.byReviewers[userId] = currentReviewerToPapersMap.filter(function(number) {
         return number !== paperNumber;
       });
     }
