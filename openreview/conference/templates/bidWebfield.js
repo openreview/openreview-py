@@ -47,7 +47,7 @@ function getPapersSortedByAffinity(offset) {
         var notesById = _.keyBy(result.notes, function(note) {
           return note.id;
         });
-        notes = noteIds.map(function(id) {
+        return noteIds.map(function(id) {
           var note = notesById[id];
           var edge = edgesByHead[id];
           //to render the edge widget correctly
@@ -57,7 +57,6 @@ function getPapersSortedByAffinity(offset) {
           }
           return note;
         });
-        return notes;
       })
     });
   } else {
