@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='0.9.24',
+      version='0.9.25',
       description='OpenReview client library',
       url='https://github.com/iesl/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
@@ -21,7 +21,8 @@ setup(name='openreview-py',
           "Deprecated",
           'pylatexenc',
           'ortools',
-          'fuzzywuzzy'
+          'fuzzywuzzy',
+          'tld'
       ],
       extras_require={
           'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
