@@ -83,6 +83,9 @@ class Conference(object):
             return self.webfield_builder.set_expertise_selection_page(self, expertise_selection_invitation)
 
     def __set_bid_page(self):
+        """
+        Set a webfield to each available bid invitation
+        """
         bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_reviewers_id()))
         if bid_invitation:
             self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id())
