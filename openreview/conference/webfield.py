@@ -72,17 +72,62 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + group.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + options.get('reviewers_name', '') + "';")
-            content = content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + options.get('area_chairs_name', '') + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + options.get('submission_id', '') + "';")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + options.get('blind_submission_id') + "';")
-            content = content.replace("var WITHDRAWN_INVITATION = '';", "var WITHDRAWN_INVITATION = '" + options.get('withdrawn_invitation', '') + "';")
-            content = content.replace("var DECISION_INVITATION_REGEX = '';", "var DECISION_INVITATION_REGEX = '" + options.get('decision_invitation_regex', '') + "';")
-            content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + options.get('area_chairs_id', '') + "';")
-            content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + options.get('reviewers_id', '') + "';")
-            content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + options.get('program_chairs_id', '') + "';")
-            content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id', '') + "';")
-            content = content.replace("var DECISION_HEADING_MAP = {};", "var DECISION_HEADING_MAP = " + json.dumps(options.get('decision_heading_map', '{}'), sort_keys=True) + ";")
+
+            if options.get('reviewers_name'):
+                content = content.replace(
+                    "var REVIEWERS_NAME = '';",
+                    "var REVIEWERS_NAME = '" + options['reviewers_name'] + "';")
+
+            if options.get('area_chairs_name'):
+                content = content.replace(
+                    "var AREA_CHAIRS_NAME = '';",
+                    "var AREA_CHAIRS_NAME = '" + options['area_chairs_name'] + "';")
+
+            if options.get('submission_id'):
+                content = content.replace(
+                    "var SUBMISSION_ID = '';",
+                    "var SUBMISSION_ID = '" + options['submission_id'] + "';")
+
+            if options.get('blind_submission_id'):
+                content = content.replace(
+                    "var BLIND_SUBMISSION_ID = '';",
+                    "var BLIND_SUBMISSION_ID = '" + options['blind_submission_id'] + "';")
+
+            if options.get('withdrawn_invitation'):
+                content = content.replace(
+                    "var WITHDRAWN_INVITATION = '';",
+                    "var WITHDRAWN_INVITATION = '" + options['withdrawn_invitation'] + "';")
+
+            if options.get('decision_invitation_regex'):
+                content = content.replace(
+                    "var DECISION_INVITATION_REGEX = '';",
+                    "var DECISION_INVITATION_REGEX = '" + options['decision_invitation_regex'] + "';")
+
+            if options.get('area_chairs_id'):
+                content = content.replace(
+                    "var AREA_CHAIRS_ID = '';",
+                    "var AREA_CHAIRS_ID = '" + options['area_chairs_id'] + "';")
+
+            if options.get('reviewers_id'):
+                content = content.replace(
+                    "var REVIEWERS_ID = '';",
+                    "var REVIEWERS_ID = '" + options['reviewers_id'] + "';")
+
+            if options.get('program_chairs_id'):
+                content = content.replace(
+                    "var PROGRAM_CHAIRS_ID = '';",
+                    "var PROGRAM_CHAIRS_ID = '" + options['program_chairs_id'] + "';")
+
+            if options.get('authors_id'):
+                content = content.replace(
+                    "var AUTHORS_ID = '';",
+                    "var AUTHORS_ID = '" + options['authors_id'] + "';")
+
+            if options.get('decision_heading_map'):
+                content = content.replace(
+                    "var DECISION_HEADING_MAP = {};",
+                    "var DECISION_HEADING_MAP = " + json.dumps(
+                        options['decision_heading_map'], sort_keys=True) + ";")
 
             group.web = content
             group.signatures = [group.id]

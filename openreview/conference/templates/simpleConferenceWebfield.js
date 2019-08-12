@@ -7,7 +7,7 @@
 
 // Constants
 var CONFERENCE_ID = '';
-var BLIND_SUBMISSION_ID = '';
+var SUBMISSION_ID = '';
 var HEADER = {};
 
 var BUFFER = 1000 * 60 * 30;  // deprecated
@@ -37,7 +37,7 @@ function main() {
 // Load makes all the API calls needed to get the data to render the page
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
-  var notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+  var notesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
     includeCount: true
   });
@@ -46,7 +46,7 @@ function load() {
   if (!user || _.startsWith(user.id, 'guest_')) {
     tagInvitationsP = $.Deferred().resolve([]);
   } else {
-    tagInvitationsP = Webfield.get('/invitations', { replyInvitation: BLIND_SUBMISSION_ID, tags: true })
+    tagInvitationsP = Webfield.get('/invitations', { replyInvitation: SUBMISSION_ID, tags: true })
     .then(function(result) {
       return result.invitations;
     });
@@ -64,7 +64,7 @@ function renderConferenceHeader() {
 }
 
 function renderSubmissionButton() {
-  Webfield.api.getSubmissionInvitation(BLIND_SUBMISSION_ID, {deadlineBuffer: BUFFER})
+  Webfield.api.getSubmissionInvitation(SUBMISSION_ID, {deadlineBuffer: BUFFER})
     .then(function(invitation) {
       Webfield.ui.submissionButton(invitation, user, {
         onNoteCreated: function() {
@@ -110,7 +110,7 @@ function renderContent(notesResponse, tagInvitations) {
       search: {
         enabled: true,
         localSearch: false,
-        invitation: BLIND_SUBMISSION_ID,
+        invitation: SUBMISSION_ID,
         onResults: function(searchResults) {
           Webfield.ui.searchResults(searchResults, searchResultsListOptions);
         },
@@ -124,7 +124,7 @@ function renderContent(notesResponse, tagInvitations) {
       noteCount: noteCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+        return Webfield.api.getSubmissions(SUBMISSION_ID, {
           pageSize: PAGE_SIZE,
           offset: offset
         });
