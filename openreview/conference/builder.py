@@ -83,9 +83,17 @@ class Conference(object):
             return self.webfield_builder.set_expertise_selection_page(self, expertise_selection_invitation)
 
     def __set_bid_page(self):
-        bid_invitation = self.client.get_invitation(self.get_bid_id())
+        """
+        Set a webfield to each available bid invitation
+        """
+        bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_reviewers_id()))
         if bid_invitation:
-            return self.webfield_builder.set_bid_page(self, bid_invitation)
+            self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id())
+
+        if self.use_area_chairs:
+            bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_area_chairs_id()))
+            if bid_invitation:
+                self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id())
 
     def __set_recommendation_page(self):
         recommendation_invitation = self.client.get_invitation(self.get_recommendation_id())
@@ -270,8 +278,8 @@ class Conference(object):
     def get_expertise_selection_id(self):
         return self.get_invitation_id(self.expertise_selection_stage.name)
 
-    def get_bid_id(self):
-        return self.get_invitation_id(self.bid_stage.name)
+    def get_bid_id(self, group_id):
+        return self.get_invitation_id(self.bid_stage.name, prefix=group_id)
 
     def get_recommendation_id(self, number = None):
         return self.get_invitation_id(self.recommendation_name, number)
@@ -279,8 +287,10 @@ class Conference(object):
     def get_registration_id(self):
         return self.get_invitation_id(self.registration_name)
 
-    def get_invitation_id(self, name, number = None):
+    def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
+        if prefix:
+            invitation_id = prefix
         if number:
             if self.legacy_invitation_id:
                 invitation_id = invitation_id + '/-/Paper' + str(number) + '/'
@@ -298,8 +308,14 @@ class Conference(object):
     def get_conference_groups(self):
         return self.groups
 
-    def get_paper_assignment_id (self):
-        return self.get_invitation_id('Reviewing/Paper_Assignment')
+    def get_paper_assignment_id(self, group_id):
+        return self.get_invitation_id('Reviewing/Paper_Assignment', prefix=group_id)
+
+    def get_affinity_score_id(self, group_id):
+        return self.get_invitation_id('Reviewing/Affinity_Score', prefix=group_id)
+
+    def get_conflict_score_id(self, group_id):
+        return self.get_invitation_id('Reviewing/Conflict', prefix=group_id)
 
     def set_homepage_header(self, header):
         self.homepage_header = header
@@ -436,7 +452,9 @@ class Conference(object):
         return self.__create_bid_stage()
 
     def close_bids(self):
-        return self.__expire_invitation(self.get_bid_id())
+        self.__expire_invitation(self.get_bid_id(self.get_reviewers_id()))
+        if self.use_area_chairs:
+            self.__expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
     def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
         notes_iterator = self.get_submissions()
@@ -786,11 +804,13 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, start_date = None, due_date = None, request_count = 50):
+    def __init__(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Bid'
         self.request_count = request_count
+        self.use_affinity_score = use_affinity_score
+
 
 class ReviewStage(object):
 
@@ -1009,8 +1029,8 @@ class ConferenceBuilder(object):
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
         self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date)
 
-    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50):
-        self.bid_stage = BidStage(start_date, due_date, request_count)
+    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False):
+        self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score)
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
@@ -1051,26 +1071,11 @@ class ConferenceBuilder(object):
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
 
-        ## Create paper and author groups before any other stage that requires paper specific invitations
+        ## Create comittee groups before any other stage that requires them to create groups and/or invitations
         self.conference.set_authors()
-
-        if self.bid_stage:
-            self.conference.set_bid_stage(self.bid_stage)
-
-        if self.expertise_selection_stage:
-            self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
-
-        if self.review_stage:
-            self.conference.set_review_stage(self.review_stage)
-
-        if self.comment_stage:
-            self.conference.set_comment_stage(self.comment_stage)
-
-        if self.meta_review_stage:
-            self.conference.set_meta_review_stage(self.meta_review_stage)
-
-        if self.decision_stage:
-            self.conference.set_decision_stage(self.decision_stage)
+        self.conference.set_reviewers()
+        if self.conference.use_area_chairs:
+            self.conference.set_area_chairs()
 
         home_group = groups[-1]
         writable = home_group.details.get('writable') if home_group.details else True
@@ -1090,5 +1095,23 @@ class ConferenceBuilder(object):
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
+
+        if self.bid_stage:
+            self.conference.set_bid_stage(self.bid_stage)
+
+        if self.expertise_selection_stage:
+            self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
+
+        if self.review_stage:
+            self.conference.set_review_stage(self.review_stage)
+
+        if self.comment_stage:
+            self.conference.set_comment_stage(self.comment_stage)
+
+        if self.meta_review_stage:
+            self.conference.set_meta_review_stage(self.meta_review_stage)
+
+        if self.decision_stage:
+            self.conference.set_decision_stage(self.decision_stage)
 
         return self.conference
