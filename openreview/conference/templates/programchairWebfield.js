@@ -210,6 +210,9 @@ var getUserProfiles = function(userIds) {
 };
 
 var findProfile = function(profiles, id) {
+  // if (id.hasOwnProperty('id')){
+  //   return id;
+  // }
   var profile = _.find(profiles, function(p) {
     return _.find(p.content.names, function(n) { return n.username == id; }) || _.includes(p.content.emails, id);
   });
@@ -414,14 +417,24 @@ var displaySortPanel = function(container, sortOptions, sortResults) {
   });
 };
 
-var displayPaperStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, areachairIds, decisions, container, options) {
+var displayPaperStatusTable = function() {
+
+  var container = '#paper-status';
+  var profiles = conferenceStatusData.profiles;
+  var notes = conferenceStatusData.blindedNotes;
+  var completedReviews = conferenceStatusData.officialReviews;
+  var metaReviews = conferenceStatusData.metaReviews;
+  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+  var decisions = conferenceStatusData.decisions;
 
   var rowData = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number];
     for (var revNumber in revIds) {
       var id = revIds[revNumber];
-      revIds[revNumber] = findProfile(profiles, id);
-
+      if (!id.hasOwnProperty('id')) {
+        revIds[revNumber] = findProfile(profiles, id);
+      }
     }
 
     var areachairId = areachairIds[note.number][0];
@@ -530,7 +543,14 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
 
 };
 
-var displaySPCStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, areachairIds, container, options) {
+var displaySPCStatusTable = function() {
+  var profiles = conferenceStatusData.profiles;
+  var notes = conferenceStatusData.blindedNotes
+  var completedReviews = conferenceStatusData.officialReviews;
+  var metaReviews = conferenceStatusData.metaReviews;
+  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  var areachairIds = conferenceStatusData.areaChairGroups.byAreaChairs;
+  var container = '#areachair-status';
 
   var rowData = [];
   var index = 1;
@@ -636,10 +656,9 @@ var displayPCStatusTable = function() {
   var notes = conferenceStatusData.blindedNotes;
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
-  var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes
+  var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes;
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
   var container = '#reviewer-status';
-
   var rowData = [];
   var index = 1;
   var sortedReviewerIds = _.sortBy(_.keys(reviewerById));
@@ -1005,7 +1024,6 @@ var buildNoteMap = function(noteNumbers) {
   return noteMap;
 };
 
-
 // Kick the whole thing off
 displayHeader();
 
@@ -1057,7 +1075,6 @@ controller.addHandler('areachairs', {
 
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
-        displayConfiguration(requestForm, invitations),
         conferenceStatusData = {
           "profiles": profiles,
           "blindedNotes" : blindedNotes,
@@ -1067,11 +1084,12 @@ controller.addHandler('areachairs', {
           "areaChairGroups": areaChairGroups,
           "decisions": decisions
         }
-        displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, decisions, '#paper-status');
-        if (SHOW_AC_TAB) {
-          displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
-        }
-        displayPCStatusTable();
+        displayConfiguration(requestForm, invitations);
+        // displayPaperStatusTable();
+        // if (SHOW_AC_TAB) {
+        //   displaySPCStatusTable();
+        // }
+        // displayPCStatusTable();
 
         Webfield.ui.done();
       })
@@ -1259,8 +1277,10 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     currentPaperToReviewersMap = conferenceStatusData.reviewerGroups.byNotes[paperNumber];
 
     if (currentPaperToReviewersMap.length === 1) {
+      // The paper has exactly one reviewer, so we delete the paper itself from the map
       delete conferenceStatusData.reviewerGroups.byNotes[paperNumber];
     } else {
+      // The paper has more than 1 reviewers, so we just remove the reviewer for this paper
       var reviewerIndex;
       for (key in currentPaperToReviewersMap) {
         if (currentPaperToReviewersMap[key].id === userId){
@@ -1284,16 +1304,18 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
 
 $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
   var containerId = $(e.target).attr('href');
-  if (containerId === '#reviewer-status') {
-    setTimeout(function() {
-      displayPCStatusTable();
-    }, 100);
+  if (containerId === '#paper-status') {
+    displayPaperStatusTable();
+  } else if (containerId === '#areachair-status') {
+    displaySPCStatusTable();
+  } else if (containerId === '#reviewer-status') {
+    displayPCStatusTable();
   }
 });
 
 $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
   var containerId = $(e.target).attr('href');
-  if (containerId === '#venue-configuration') {
+  if (containerId !== '#venue-configuration') {
     Webfield.ui.spinner(containerId, {inline: true});
   }
 });
