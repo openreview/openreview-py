@@ -1,45 +1,41 @@
 Getting Data
-===========
+==============
 
 The OpenReview API can be used to retrieve conference data (e.g. papers, comments, decisions, reviews, etc.) for research or other purposes.
 
 Notes
 -------------------------------------------
 
-Most data in OpenReview are represented as "Notes". All Notes respond to an "Invitation", which specifies the possible content and permissions that the Note is required to contain.
+Most data in OpenReview are represented as `Notes`. All `Notes` respond to an `Invitation`, which specifies the possible content and permissions that the `Note` is required to contain.
 
 Users can query for notes using the ID of the Invitation that it responds to.
 
-Consider the following example which gets the public Notes that represent the 11th through 20th submissions to ICLR 2019::
+Consider the following example which gets the public `Notes` that represent the 11th through 20th submissions to ICLR 2019::
 
-.. code-block:: python
 
 	blind_submissions = client.get_notes(
 		invitation='ICLR.cc/2019/Conference/-/Blind_Submission',
 		limit=10,
 		offset=10)
 
-By default, `get_notes` will return up to the first 1000 corresponding Notes (`limit=1000`). To retrieve Notes beyond the first 1000, you can adjust the `offset` parameter, or use the function `tools.iterget_notes` which returns an iterator over all corresponding Notes::
+By default, `get_notes` will return up to the first 1000 corresponding `Notes` (`limit=1000`). To retrieve `Notes` beyond the first 1000, you can adjust the `offset` parameter, or use the function `tools.iterget_notes` which returns an iterator over all corresponding `Notes`::
 
-.. code-block:: python
 
 	blind_submissions_iterator = openreview.tools.iterget_notes(
 		client, invitation='ICLR.cc/2019/Conference/-/Blind_Submission')
 
-It's also possible to query for Notes by Invitation ID using a regex pattern. Consider the following example that gets all "Public_Comments" for the ICLR 2019 conference::
+It's also possible to query for `Notes` by `Invitation` ID using a regex pattern. Consider the following example that gets all `Public_Comments` for the ICLR 2019 conference::
 
-.. code-block:: python
 
 	iclr19_public_comments = client.get_notes(
 		invitation='ICLR.cc/2019/Conference/-/Paper.*/Public_Comment')
 
-This code returns public comments made during the conference "ICLR.cc/2019/Conference" with invitation such as "ICLR.cc/2019/Conference/-/Paper1234/Public_Comment".
+This code returns public comments made during the conference `ICLR.cc/2019/Conference` with invitation such as `ICLR.cc/2019/Conference/-/Paper1234/Public_Comment`.
 
 Invitation IDs follow a loose convention that resembles the one in the example above: the ID of the conference (e.g. `ICLR.cc/2019/Conference`) and an identifying string (e.g. `Blind_Submission`), joined by a dash (`-`). It's important to note, however, that this convention is not strictly enforced, and individual conferences may choose to format their Invitation IDs differently.
 
 Invitations can be queried with the `get_invitations` function to find the Invitation IDs for a particular conference. The following example retrieves the first 10 Invitations for the ICLR 2019 conference::
 
-.. code-block:: python
 
 	iclr19_invitations = client.get_invitations(
 		regex='ICLR.cc/2019/Conference/.*',
@@ -48,7 +44,6 @@ Invitations can be queried with the `get_invitations` function to find the Invit
 
 Like `get_notes`, `get_invitations` will return up to the first 1000 Invitations (`limit=1000`). To retrieve Invitations beyond the first 1000, you can adjust the `offset` parameter, or use the function `tools.iterget_invitations`::
 
-.. code-block:: python
 
 	iclr19_invitations_iterator = openreview.tools.iterget_invitations(
 		client, regex='ICLR.cc/2019/Conference/.*')
@@ -57,7 +52,7 @@ Like `get_notes`, `get_invitations` will return up to the first 1000 Invitations
 Retrieving all Official Reviews for a conference
 -------------------------------------------------
 
-Like comments and submissions, reviews are also usually represented as Notes. Conferences often distinguish reviews written by official conference reviewers with the invitation suffix "Official_Review".
+Like comments and submissions, reviews are also usually represented as Notes. Conferences often distinguish reviews written by official conference reviewers with the invitation suffix `Official_Review`.
 
 For example, the reviews in ICLR 2019 all have invitations with the following pattern::
 
@@ -151,7 +146,6 @@ You can also call this script with the `openreview` package::
 
 	>>> python -m openreview.scripts.download_iclr19 --get_pdfs
 
-.. code-block:: python
 
 	import argparse
 	import json
