@@ -145,6 +145,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + invitation.id + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
+            content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(group_id) + "';")
 
             if conference.bid_stage.use_affinity_score:
                 content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id(group_id) + "';")
