@@ -140,12 +140,7 @@ The data in a comment, or basically Notes objects, can be accessed like this::
 Getting ICLR 2019 data
 --------------------------------
 
-The following example script can be used to retrieve all ICLR 2019 metadata and PDFs.
-
-You can also call this script with the `openreview` package::
-
-	>>> python -m openreview.scripts.download_iclr19 --get_pdfs
-
+The following example script can be used to retrieve all ICLR 2019 metadata and PDFs::
 
 	import argparse
 	import json
@@ -239,3 +234,9 @@ You can also call this script with the `openreview` package::
 	        password=args.password)
 
 	    download_iclr19(client, outdir, get_pdfs=args.get_pdfs)
+
+
+You can also call this script with the `openreview` package::
+
+	>>> python -m openreview.scripts.download_iclr19 --get_pdfs
+
