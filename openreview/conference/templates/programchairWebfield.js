@@ -966,6 +966,12 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
       ratings.push(reviewObj.rating);
       confidences.push(reviewObj.confidence);
     } else {
+      var forumUrl = 'https://openreview.net/forum?' + $.param({
+        id: note.forum,
+        noteId: note.id,
+        invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
+      });
+      var lastReminderSent = localStorage.getItem(forumUrl + '|' + reviewer.id);
       combinedObj[reviewerNum] = _.assign({}, reviewer, {
         id: reviewer.id,
         name: reviewer.name,
@@ -977,7 +983,8 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
           invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
         }),
         paperNumber: note.number,
-        reviewerNumber: reviewerNum
+        reviewerNumber: reviewerNum,
+        lastReminderSent: lastReminderSent ? new Date(parseInt(lastReminderSent)).toLocaleDateString() : lastReminderSent
       });
     }
   }
