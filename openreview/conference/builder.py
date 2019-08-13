@@ -1071,7 +1071,7 @@ class ConferenceBuilder(object):
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
 
-        ## Create comittee groups before any other stage that requires them to create groups and/or invitations
+        ## Create committee groups before any other stage that requires them to create groups and/or invitations
         self.conference.set_authors()
         self.conference.set_reviewers()
         if self.conference.use_area_chairs:
