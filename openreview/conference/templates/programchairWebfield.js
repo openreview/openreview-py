@@ -493,7 +493,7 @@ var displayPaperStatusTable = function() {
   var sendReviewerReminderEmailsStep1 = function(e) {
     var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
     var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
-    var filter  = $(this)[0].dataset["filter"];
+    var filter  = $(this)[0].dataset['filter'];
 
     var count = 0;
     var selectedRows = rowData;
@@ -644,12 +644,12 @@ var displayPaperStatusTable = function() {
       $('.console-table th').eq(4).css('width', '25%');
     }
 
-    $('#div-msg-reviewers').find("a").on('click', function(e) {
+    $('#div-msg-reviewers').find('a').on('click', function(e) {
       var filter = $(this)[0].id;
       $('#message-reviewers-modal').remove();
 
-      var defaultBody = "";
-      if (filter === "msg-unsubmitted-reviewers"){
+      var defaultBody = '';
+      if (filter === 'msg-unsubmitted-reviewers') {
         defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n'
       }
       defaultBody += 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +

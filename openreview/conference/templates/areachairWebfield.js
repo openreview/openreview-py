@@ -332,7 +332,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
   var sendReviewerReminderEmailsStep1 = function(e) {
     var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
     var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
-    var filter  = $(this)[0].dataset["filter"];
+    var filter  = $(this)[0].dataset['filter'];
 
     var count = 0;
     var selectedRows = rows;
@@ -457,12 +457,12 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     return false;
   });
 
-  $('#div-msg-reviewers').find("a").on('click', function(e) {
+  $('#div-msg-reviewers').find('a').on('click', function(e) {
     var filter = $(this)[0].id;
     $('#message-reviewers-modal').remove();
 
-    var defaultBody = "";
-    if (filter === "msg-unsubmitted-reviewers"){
+    var defaultBody = '';
+    if (filter === 'msg-unsubmitted-reviewers'){
       defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n';
     }
     defaultBody += 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
@@ -491,7 +491,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     renderTableRows(rows, container);
   } else {
     $(container).empty().append('<p class="empty-message">No assigned papers. ' +
-      'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
+    'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
   }
 };
 
@@ -870,7 +870,7 @@ var registerEventHandlers = function() {
       promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
       var postData = {
         groups: [userToAdd],
-        subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
+        subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
         message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
         ' for ' + SHORT_PHRASE + '.' +
         '\n\nTo review this new assignment, please login and click on ' +
