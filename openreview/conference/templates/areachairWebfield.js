@@ -463,13 +463,10 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
 
     var defaultBody = "";
     if (filter === "msg-unsubmitted-reviewers"){
-      defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
-      'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
-    } else {
-      defaultBody = 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
+      defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ';
     }
+    defaultBody += '\n\nClick on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+    '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
 
     var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
       filter: filter,
