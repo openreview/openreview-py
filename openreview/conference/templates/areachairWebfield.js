@@ -736,7 +736,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
-  paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
+  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; i < paperReviewerNums.length + 1; i++) {
     if (i.toString() !== paperReviewerNums[i-1]) {
       return i;
@@ -768,7 +768,7 @@ var registerEventHandlers = function() {
       };
 
       $('#message-reviewers-modal').modal('hide');
-      // promptMessage('Your reminder email has been sent to ' + view.prettyId(userId));
+      promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
       postReviewerEmails(postData);
       $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
