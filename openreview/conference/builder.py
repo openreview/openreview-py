@@ -596,6 +596,7 @@ class Conference(object):
 
     def set_assignments(self, assingment_title):
         conference_matching = matching.Matching(self)
+        self.__set_reviewer_reassignment(enabled=True)
         return conference_matching.deploy(assingment_title)
 
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
