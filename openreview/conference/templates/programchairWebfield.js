@@ -496,19 +496,26 @@ var displayPaperStatusTable = function() {
     var filter  = $(this)[0].dataset["filter"];
 
     var count = 0;
-    var selectedRows = rows;
+    var selectedRows = rowData;
     var reviewerMessages = [];
     var reviewerCounts = Object.create(null);
-    var selectedIds = _.map(
-      $('.ac-console-table input.select-note-reviewers:checked'),
+    var selectedNoteIds = _.map(
+      $('.paper-table input.select-note-reviewers:checked'),
       function(checkbox) { return $(checkbox).data('noteId'); }
     );
-    selectedRows = rows.filter(function(row) {
-      return _.includes(selectedIds, row[2].forum);
+    selectedRows = rowData.filter(function(row) {
+      return _.includes(selectedNoteIds, row.note.forum);
     });
 
     selectedRows.forEach(function(row) {
-      var users = _.values(row[3].reviewers);
+      var reviewers = _.map(row.reviewProgressData.reviewers, function(rev){
+        if (rev && rev.hasOwnProperty('note')){
+          rev['completedReview'] = true;
+        }
+        return rev;
+      });
+
+      var users = _.values(reviewers);
       if (filter === 'msg-submitted-reviewers') {
         users = users.filter(function(u) {
           return u.completedReview;
@@ -521,9 +528,9 @@ var displayPaperStatusTable = function() {
 
       if (users.length) {
         var forumUrl = 'https://openreview.net/forum?' + $.param({
-          id: row[2].forum,
-          noteId: row[2].id,
-          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row[2].number)
+          id: row.note.forum,
+          noteId: row.note.id,
+          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row.note.number)
         });
         reviewerMessages.push({
           groups: _.map(users, 'id'),
@@ -585,7 +592,7 @@ var displayPaperStatusTable = function() {
   var renderTable = function(container, data) {
     var rowData = _.map(data, function(d) {
       var checked = '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
-      d.noteId + '" ' + (d.selected ? 'checked="checked"' : '') + '></label>';
+      d.note.id + '" ' + (d.selected ? 'checked="checked"' : '') + '></label>';
       var number = '<strong class="note-number">' + d.note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
@@ -643,9 +650,9 @@ var displayPaperStatusTable = function() {
 
       var defaultBody = "";
       if (filter === "msg-unsubmitted-reviewers"){
-        defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. '
+        defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n'
       }
-      defaultBody += '\n\nClick on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+      defaultBody += 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
       '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair';
 
       var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
