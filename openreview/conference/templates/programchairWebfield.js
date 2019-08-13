@@ -392,16 +392,34 @@ var displayConfiguration = function(requestForm, invitations) {
 
 var displaySortPanel = function(container, sortOptions, sortResults) {
 
-  var allOptions = _.map(_.keys(sortOptions), function(option) {
+  var sortOptionHtml = _.map(_.keys(sortOptions), function(option) {
     return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
   });
+
   var sortBarHTML = '<form class="form-inline search-form" role="search">' +
-    '<strong>Sort By:</strong>' +
-    '<div class="form-group search-content" style="margin-right: 0;">' +
-      '<select id="form-sort" class="form-control" style="width: 330px">' + allOptions.join('') + '</select>' +
+  '<div id="div-msg-reviewers" class="btn-group" role="group">' +
+      '<button id="message-reviewers-btn" type="button" class="btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
+        '<li><a id="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
+        '<li><a id="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
+        '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
+      '</ul>' +
     '</div>' +
-    '<button id="form-order" class="btn" style="min-width:auto;"><span class="glyphicon glyphicon-sort"></span></button>' +
-    '</form>';
+    '<div class="pull-right">' +
+      '<strong>Sort By:</strong> ' +
+      '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
+      '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
+    '</div>' +
+  '</form>';
+    // '<strong>Sort By:</strong>' +
+    // '<div class="form-group search-content" style="margin-right: 0;">' +
+    //   '<select id="form-sort" class="form-control" style="width: 330px">' + allOptions.join('') + '</select>' +
+    // '</div>' +
+    // '<button id="form-order" class="btn" style="min-width:auto;"><span class="glyphicon glyphicon-sort"></span></button>' +
+    // '</form>';
 
   $(container).empty().append(sortBarHTML);
   $(container).on('change', 'select#form-sort', function(event) {
