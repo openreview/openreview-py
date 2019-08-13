@@ -1484,11 +1484,11 @@ $('#group-container').on('change', '#select-all-papers', function(e) {
   var $allPaperCheckBoxes = $('input.select-note-reviewers');
   var $msgReviewerButton = $('#message-reviewers-btn');
   if ($superCheckBox[0].checked === true) {
-    $allPaperCheckBoxes.prop("checked", true);
-    $msgReviewerButton.attr("disabled", false);
+    $allPaperCheckBoxes.prop('checked', true);
+    $msgReviewerButton.attr('disabled', false);
   } else {
-    $allPaperCheckBoxes.prop("checked", false);
-    $msgReviewerButton.attr("disabled", true);
+    $allPaperCheckBoxes.prop('checked', false);
+    $msgReviewerButton.attr('disabled', true);
   }
 });
 
@@ -1500,15 +1500,15 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
     return $allPaperCheckBoxes[index].checked === true;
   });
   if (checkedBoxes.length) {
-    $msgReviewerButton.attr("disabled", false);
+    $msgReviewerButton.attr('disabled', false);
     if (checkedBoxes.length === $allPaperCheckBoxes.length) {
-      $superCheckBox.prop("checked", true);
+      $superCheckBox.prop('checked', true);
     } else {
-      $superCheckBox.prop("checked", false);
+      $superCheckBox.prop('checked', false);
     }
   } else {
-    $msgReviewerButton.attr("disabled", true);
-    $superCheckBox.prop("checked", false);
+    $msgReviewerButton.attr('disabled', true);
+    $superCheckBox.prop('checked', false);
   }
 });
 
