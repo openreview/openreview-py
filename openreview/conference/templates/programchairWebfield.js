@@ -622,30 +622,7 @@ var displaySPCStatusTable = function() {
   displaySortPanel(container, sortOptions, sortResults);
   renderTable(container, rowData);
 
-
 };
-
-var renderPCTable = function() {
-  var container = conferenceStatusData.reviewerTabData['container'];
-  var data = conferenceStatusData.reviewerTabData['data'];
-  var index = 1;
-  var rowData = _.map(data, function(d) {
-    var number = '<strong class="note-number">' + index++ + '</strong>';
-    var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
-    var progressHtml = Handlebars.templates.notesReviewerProgress(d.reviewProgressData);
-    var statusHtml = Handlebars.templates.notesReviewerStatus(d.reviewStatusData);
-    return [number, summaryHtml, progressHtml, statusHtml];
-  });
-
-  var tableHTML = Handlebars.templates['components/table']({
-    headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
-    rows: rowData,
-    extraClasses: 'console-table'
-  });
-
-  $(container).find('.table-container').remove();
-  $(container).append(tableHTML);
-}
 
 var displayPCStatusTable = function() {
   var profiles = conferenceStatusData.profiles;
@@ -716,6 +693,28 @@ var displayPCStatusTable = function() {
     Papers_with_Completed_Reviews: function(row) { return row.reviewStatusData.numCompletedReviews; }
   };
 
+  var renderTable = function() {
+    var container = conferenceStatusData.reviewerTabData['container'];
+    var data = conferenceStatusData.reviewerTabData['data'];
+    var index = 1;
+    var rowData = _.map(data, function(d) {
+      var number = '<strong class="note-number">' + index++ + '</strong>';
+      var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
+      var progressHtml = Handlebars.templates.notesReviewerProgress(d.reviewProgressData);
+      var statusHtml = Handlebars.templates.notesReviewerStatus(d.reviewStatusData);
+      return [number, summaryHtml, progressHtml, statusHtml];
+    });
+
+    var tableHTML = Handlebars.templates['components/table']({
+      headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
+      rows: rowData,
+      extraClasses: 'console-table'
+    });
+
+    $(container).find('.table-container').remove();
+    $(container).append(tableHTML);
+  };
+
   var sortResults = function(newOption, switchOrder) {
     if (switchOrder) {
       order = (order == 'asc' ? 'desc' : 'asc');
@@ -726,16 +725,15 @@ var displayPCStatusTable = function() {
       'container': container,
       'data': rowData
     };
-    renderPCTable();
-  }
+    renderTable();
+  };
 
   displaySortPanel(container, sortOptions, sortResults);
   conferenceStatusData['reviewerTabData'] = {
     'container': container,
     'data': rowData
   };
-  renderPCTable();
-
+  renderTable();
 };
 
 var displayError = function(message) {
