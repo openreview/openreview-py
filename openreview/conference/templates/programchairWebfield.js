@@ -1159,6 +1159,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
       members: [userToAdd],
       readers: commonReaders.concat(CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber),
+      nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
       writers: commonReaders,
       signatures: [CONFERENCE_ID + '/Program_Chairs'],
       signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
