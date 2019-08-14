@@ -47,7 +47,10 @@ function getPapersSortedByAffinity(offset) {
         var notesById = _.keyBy(result.notes, function(note) {
           return note.id;
         });
-        return noteIds.map(function(id) {
+        return noteIds.filter(function(id) {
+          return notesById[id];
+        })
+        .map(function(id) {
           var note = notesById[id];
           var edge = edgesByHead[id];
           //to render the edge widget correctly
@@ -243,6 +246,7 @@ function renderContent(notes, conflictIds, bidEdges) {
         localSearch: false,
         subjectAreas: SUBJECT_AREAS,
         subjectAreaDropdown: 'basic',
+        invitation: BLIND_SUBMISSION_ID,
         sort: false,
         onResults: function(searchResults) {
           Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
@@ -295,7 +299,7 @@ function renderContent(notes, conflictIds, bidEdges) {
 
 function prepareNotes(notes, conflictIds, edgesMap) {
   var validNotes = _.filter(notes, function(note){
-    return !_.includes(conflictIds, note.original || note.id);
+    return !_.includes(conflictIds, note.id);
   })
   return addEdgesToNotes(validNotes, edgesMap);
 }
