@@ -359,6 +359,10 @@ class Matching(object):
                             'Complete',
                             'Deployed'
                         ]
+                    },
+                    'error_message': {
+                        'required': False,
+                        'value-regex': '.*'
                     }
                 }
             })
