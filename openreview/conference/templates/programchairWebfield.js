@@ -188,24 +188,22 @@ var getUserProfiles = function(userIds) {
   return $.when.apply($, profileSearch)
   .then(function(results) {
     var profileMap = {};
+    if (!results) {
+      return profileMap;
+    }
+    var addProfileToMap = function(profile) {
+      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+      profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profileMap[profile.id] = profile;
+    };
     if (results.length) {
       _.forEach(results, function(result) {
-        _.forEach(result.profiles, function(profile) {
-          var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-          profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-          profile.email = profile.content.preferredEmail || profile.content.emails[0];
-          profileMap[profile.id] = profile;
-        });
+        _.forEach(result.profiles, addProfileToMap);
       });
     } else {
-      _.forEach(results.profiles, function(profile) {
-        var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-        profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-        profile.email = profile.content.preferredEmail || profile.content.emails[0];
-        profileMap[profile.id] = profile;
-      });
+      _.forEach(results.profiles, addProfileToMap);
     }
-
     return profileMap;
   })
   .fail(function(error) {
