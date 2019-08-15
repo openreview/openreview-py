@@ -177,29 +177,34 @@ var getUserProfiles = function(userIds) {
   var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
   var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
 
-  return $.when(
-    $.post('/profiles/search', JSON.stringify({ids: ids})),
-    $.post('/profiles/search', JSON.stringify({emails: emails}))
-  )
-  .then(function(result1, result2) {
+  var profileSearch = [];
+  if (ids.length) {
+    profileSearch.push($.post('/profiles/search', JSON.stringify({ids: ids})));
+  }
+  if (emails.length) {
+    profileSearch.push($.post('/profiles/search', JSON.stringify({emails: emails})));
+  }
 
+  return $.when.apply($, profileSearch)
+  .then(function(results) {
     var profileMap = {};
-
-    _.forEach(result1[0].profiles, function(profile) {
-
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail || profile.content.emails[0];
-      profileMap[profile.id] = profile;
-    })
-
-    _.forEach(result2[0].profiles, function(profile) {
-
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail || profile.content.emails[0];
-      profileMap[profile.id] = profile;
-    })
+    if (results.length) {
+      _.forEach(results, function(result) {
+        _.forEach(result.profiles, function(profile) {
+          var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+          profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+          profile.email = profile.content.preferredEmail || profile.content.emails[0];
+          profileMap[profile.id] = profile;
+        });
+      });
+    } else {
+      _.forEach(results.profiles, function(profile) {
+        var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+        profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+        profile.email = profile.content.preferredEmail || profile.content.emails[0];
+        profileMap[profile.id] = profile;
+      });
+    }
 
     return profileMap;
   })
@@ -1144,9 +1149,22 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   }
 
   var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
-  Webfield.put('/groups/members', {
-    id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-    members: [userToAdd]
+  var reviewerProfile = {
+    'email' : userToAdd,
+    'id' : userToAdd,
+    'name': '',
+    'content': {'names': [{'username': userToAdd}]}
+  };
+
+  getUserProfiles([userToAdd])
+  .then(function (userProfile){
+    if (userProfile && Object.keys(userProfile).length){
+      reviewerProfile = userProfile[Object.keys(userProfile)[0]];
+    }
+    return Webfield.put('/groups/members', {
+      id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+      members: [reviewerProfile.id]
+    })
   })
   .then(function(result) {
     var commonReaders = [CONFERENCE_ID + '/Program_Chairs'];
@@ -1155,7 +1173,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     }
     return Webfield.post('/groups', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
-      members: [userToAdd],
+      members: [reviewerProfile.id],
       readers: commonReaders.concat(CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber),
       nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
       writers: commonReaders,
@@ -1166,22 +1184,19 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   .then(function(result) {
     return Webfield.put('/groups/members', {
       id: REVIEWERS_ID,
-      members: [userToAdd]
+      members: [reviewerProfile.id]
     })
   })
   .then(function(result) {
-    return getUserProfiles([userToAdd]);
-  })
-  .then(function(userProfile) {
     var forumUrl = 'https://openreview.net/forum?' + $.param({
       id: paperForum,
       invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
     });
     var lastReminderSent = null;
     reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
-      id: userToAdd,
-      name: userToAdd.startsWith('~') ? view.prettyId(userToAdd) : '',
-      email: userToAdd,
+      id: reviewerProfile.id,
+      name: reviewerProfile.id.startsWith('~') ? view.prettyId(reviewerProfile.id) : '',
+      email: reviewerProfile.id,
       forum: paperForum,
       forumUrl: forumUrl,
       lastReminderSent: lastReminderSent,
@@ -1196,17 +1211,6 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
 
-    var reviewerProfile = {
-      'email' : userToAdd,
-      'id' : userToAdd,
-      'name': '',
-      'content': {'names': [{'username': userToAdd}]}
-    };
-
-    if (Object.keys(userProfile).length){
-      reviewerProfile = userProfile[userToAdd];
-    }
-
     conferenceStatusData.profiles[reviewerProfile.id] = reviewerProfile;
     if (paperNumber in conferenceStatusData.reviewerGroups.byNotes) {
       conferenceStatusData.reviewerGroups.byNotes[paperNumber][nextAnonNumber] = reviewerProfile;
@@ -1219,10 +1223,9 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       conferenceStatusData.reviewerGroups.byReviewers[reviewerProfile.id] = [paperNumber];
     }
 
-
-    promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
+    promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber);
     var postData = {
-      groups: [userToAdd],
+      groups: [reviewerProfile.id],
       subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
       message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
       ' for ' + SHORT_PHRASE + '.' +
