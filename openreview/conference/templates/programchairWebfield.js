@@ -186,9 +186,10 @@ var getUserProfiles = function(userIds) {
   }
 
   return $.when.apply($, profileSearch)
-  .then(function(results) {
+  .then(function() {
+    var searchResults = _.toArray(arguments);
     var profileMap = {};
-    if (!results) {
+    if (!searchResults) {
       return profileMap;
     }
     var addProfileToMap = function(profile) {
@@ -197,12 +198,12 @@ var getUserProfiles = function(userIds) {
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profileMap[profile.id] = profile;
     };
-    if (results.length) {
-      _.forEach(results, function(result) {
+    if (searchResults.length) {
+      _.forEach(searchResults, function(result) {
         _.forEach(result.profiles, addProfileToMap);
       });
     } else {
-      _.forEach(results.profiles, addProfileToMap);
+      _.forEach(searchResults.profiles, addProfileToMap);
     }
     return profileMap;
   })
