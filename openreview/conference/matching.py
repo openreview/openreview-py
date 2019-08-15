@@ -87,7 +87,7 @@ class Matching(object):
         if extendable_readers:
             regex = self.conference.get_id() + '|~.*|.*@.*'
             if self.match_group.id == self.conference.get_reviewers_id() and self.conference.use_area_chairs:
-                regex += self.conference.get_area_chairs_id()
+                regex += '|' + self.conference.get_area_chairs_id()
 
             readers = {
                 'values-regex': regex
