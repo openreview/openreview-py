@@ -1193,8 +1193,8 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     var lastReminderSent = null;
     reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
       id: reviewerProfile.id,
-      name: reviewerProfile.id.startsWith('~') ? view.prettyId(reviewerProfile.id) : '',
-      email: reviewerProfile.id,
+      name: reviewerProfile.name,
+      email: reviewerProfile.email,
       forum: paperForum,
       forumUrl: forumUrl,
       lastReminderSent: lastReminderSent,
