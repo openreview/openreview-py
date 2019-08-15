@@ -232,29 +232,34 @@ var getUserProfiles = function(userIds) {
   var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
   var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
 
-  return $.when(
-    controller.post('/profiles/search', {ids: ids}),
-    controller.post('/profiles/search', {emails: emails})
-  )
-  .then(function(result1, result2) {
+  var profileSearch = [];
+  if (ids.length) {
+    profileSearch.push($.post('/profiles/search', JSON.stringify({ids: ids})));
+  }
+  if (emails.length) {
+    profileSearch.push($.post('/profiles/search', JSON.stringify({emails: emails})));
+  }
 
+  return $.when.apply($, profileSearch)
+  .then(function(results) {
     var profileMap = {};
-
-    _.forEach(result1.profiles, function(profile) {
-
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail || profile.content.emails[0];
-      profileMap[profile.id] = profile;
-    })
-
-    _.forEach(result2.profiles, function(profile) {
-
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail || profile.content.emails[0];
-      profileMap[profile.id] = profile;
-    })
+    if (results.length) {
+      _.forEach(results, function(result) {
+        _.forEach(result.profiles, function(profile) {
+          var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+          profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+          profile.email = profile.content.preferredEmail || profile.content.emails[0];
+          profileMap[profile.id] = profile;
+        });
+      });
+    } else {
+      _.forEach(results.profiles, function(profile) {
+        var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+        profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+        profile.email = profile.content.preferredEmail || profile.content.emails[0];
+        profileMap[profile.id] = profile;
+      });
+    }
 
     return profileMap;
   })
