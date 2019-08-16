@@ -179,10 +179,10 @@ var getUserProfiles = function(userIds) {
 
   var profileSearch = [];
   if (ids.length) {
-    profileSearch.push($.post('/profiles/search', JSON.stringify({ids: ids})));
+    profileSearch.push(Webfield.post('/profiles/search', {ids: ids}));
   }
   if (emails.length) {
-    profileSearch.push($.post('/profiles/search', JSON.stringify({emails: emails})));
+    profileSearch.push(Webfield.post('/profiles/search', {emails: emails}));
   }
 
   return $.when.apply($, profileSearch)

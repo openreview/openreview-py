@@ -239,10 +239,10 @@ var getUserProfiles = function(userIds) {
 
   var profileSearch = [];
   if (ids.length) {
-    profileSearch.push(controller.post('/profiles/search', {ids: ids}),);
+    profileSearch.push(Webfield.post('/profiles/search', {ids: ids}),);
   }
   if (emails.length) {
-    profileSearch.push(controller.post('/profiles/search', {emails: emails}));
+    profileSearch.push(Webfield.post('/profiles/search', {emails: emails}));
   }
 
   return $.when.apply($, profileSearch)
@@ -258,13 +258,9 @@ var getUserProfiles = function(userIds) {
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profileMap[profile.id] = profile;
     };
-    if (searchResults.length) {
-      _.forEach(searchResults, function(result) {
-        _.forEach(result.profiles, addProfileToMap);
-      });
-    } else {
-      _.forEach(searchResults.profiles, addProfileToMap);
-    }
+    _.forEach(searchResults, function(result) {
+      _.forEach(result.profiles, addProfileToMap);
+    });
     return profileMap;
   })
   .fail(function(error) {
