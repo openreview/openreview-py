@@ -847,6 +847,7 @@ var registerEventHandlers = function() {
       return Webfield.post('/groups', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
         members: [reviewerProfile.id],
+        nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
         readers: [
           CONFERENCE_ID + '/Program_Chairs',
           CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs',
