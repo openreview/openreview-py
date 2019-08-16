@@ -911,12 +911,12 @@ var registerEventHandlers = function() {
 
     Webfield.delete('/groups/members', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-      members: [userId]
+      members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
     })
     .then(function(result) {
       return Webfield.delete('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-        members: [userId]
+        members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
       });
     })
     .then(function(result) {
