@@ -364,21 +364,40 @@ class Client(object):
         :rtype: list[Profile]
         """
 
+        def batches(items, batch_size=1000):
+            batch = []
+            for item in items:
+                if len(batch) == batch_size:
+                    yield batch
+                    batch = []
+
+                batch.append(item)
+
+            if batch:
+                yield batch
+
         if term:
             response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
         if emails:
-            response = requests.post(self.profiles_search_url, json = {'emails': emails}, headers = self.headers)
-            response = self.__handle_response(response)
-            return { p['email'] : Profile.from_json(p)
-                for p in response.json()['profiles'] }
+            full_response = []
+            for email_batch in batches(emails):
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            return {p['email']: Profile.from_json(p) for p in full_response}
 
         if ids:
-            response = requests.post(self.profiles_search_url, json = {'ids': ids}, headers = self.headers)
-            response = self.__handle_response(response)
-            return [Profile.from_json(p) for p in response.json()['profiles']]
+            full_response = []
+            for id_batch in batches(ids):
+                response = requests.post(self.profiles_search_url, json = {'ids': id_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
             response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
