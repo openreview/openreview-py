@@ -15,6 +15,8 @@ var AREA_CHAIRS_ID = '';
 var REVIEWERS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var AUTHORS_ID = '';
+var BUDDY_AREA_CHAIRS_NAME = 'Buddy_Area_Chairs';
+var BUDDY_AREA_CHAIRS_ID = CONFERENCE_ID + '/Buddy_Area_Chairs';
 
 var HEADER = {};
 
@@ -157,6 +159,16 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes) {
         '<li class="note invitation-link">',
           '<a href="/group?id=' + AREA_CHAIRS_ID + '" >',
           AREA_CHAIRS_NAME.replace(/_/g, ' ') + ' Console',
+          '</a>',
+        '</li>'
+      ].join(''));
+    }
+
+    if (_.includes(userGroups, BUDDY_AREA_CHAIRS_ID)) {
+      $('#your-consoles .submissions-list').append([
+        '<li class="note invitation-link">',
+          '<a href="/group?id=' + BUDDY_AREA_CHAIRS_ID + '" >',
+          BUDDY_AREA_CHAIRS_NAME.replace(/_/g, ' ') + ' Console',
           '</a>',
         '</li>'
       ].join(''));
