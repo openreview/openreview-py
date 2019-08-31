@@ -21,6 +21,9 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 
+var PC_PAPER_ASSIGNMENT = true;
+var PC_PAPER_TAG_INVITATION = CONFERENCE_ID + '/-/Assigned_to_PC';
+
 // Ajax functions
 var getNumberfromGroup = function(groupId, name) {
 
@@ -47,9 +50,15 @@ var getInvitationId = function(name, number) {
 }
 
 var getBlindedNotes = function() {
-  return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, noDetails: true
-  });
+  if (PC_PAPER_ASSIGNMENT) {
+    return Webfield.getAll('/notes', {
+      invitation: BLIND_SUBMISSION_ID, details: "tags"
+    });
+  } else {
+    return Webfield.getAll('/notes', {
+      invitation: BLIND_SUBMISSION_ID, noDetails: true
+    });
+  }
 };
 
 var getOfficialReviews = function(noteNumbers) {
@@ -448,6 +457,49 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
     var rowData = _.map(data, function(d) {
       var number = '<strong class="note-number">' + d.note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
+      if (PC_PAPER_ASSIGNMENT) {
+
+        Webfield.getAll('/invitations', { id: PC_PAPER_TAG_INVITATION})
+        .then(function(tagInvitations) {
+          if (tagInvitations.length){
+            pc_paper_assignment_tags = _.filter(d.note.details.tags, function(tag) { return tag.invitation === PC_PAPER_TAG_INVITATION;});
+            console.log(pc_paper_assignment_tags);
+
+            tagInvitation = tagInvitations[0];
+            var pl = model.tokenPayload(token);
+            var user = pl.user;
+            console.log('user:', user);
+            // x = view.mkTagInput('tag', tagInvitation && tagInvitation.reply.content.tag, pc_paper_assignment_tags, {
+            //   forum: d.note.id,
+            //   placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
+            //   label: tagInvitation && prettyInvitationId(tagInvitation.id),
+            //   readOnly: false,
+            //   onChange: function(id, value, deleted, done) {
+            //     var body = {
+            //       id: id,
+            //       tag: value,
+            //       signatures: [],
+            //       readers: [PROGRAM_CHAIRS_ID],
+            //       forum: d.note.id,
+            //       invitation: tagInvitation.id,
+            //       ddate: deleted ? Date.now() : null
+            //     };
+            //     body = getCopiedValues(body, tagInvitation.reply);
+
+            //     Webfield.post('/tags', body, function(result) {
+            //       done(result);
+            //       if (params.onTagChanged) {
+            //         params.onTagChanged(result);
+            //       }
+            //     }, function(resp) {
+            //       var error = _.isEmpty(resp.responseJSON.errors) ? null : resp.responseJSON.errors[0];
+            //       promptError(error ? error : 'The specified tag could not be updated');
+            //     });
+            //   }
+            // });
+          }
+        });
+      }
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
       var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
