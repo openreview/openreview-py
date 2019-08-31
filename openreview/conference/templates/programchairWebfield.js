@@ -458,7 +458,6 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
       var number = '<strong class="note-number">' + d.note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       if (PC_PAPER_ASSIGNMENT) {
-
         Webfield.getAll('/invitations', { id: PC_PAPER_TAG_INVITATION})
         .then(function(tagInvitations) {
           if (tagInvitations.length){
@@ -466,37 +465,35 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
             console.log(pc_paper_assignment_tags);
 
             tagInvitation = tagInvitations[0];
-            var pl = model.tokenPayload(token);
-            var user = pl.user;
-            console.log('user:', user);
-            // x = view.mkTagInput('tag', tagInvitation && tagInvitation.reply.content.tag, pc_paper_assignment_tags, {
-            //   forum: d.note.id,
-            //   placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
-            //   label: tagInvitation && prettyInvitationId(tagInvitation.id),
-            //   readOnly: false,
-            //   onChange: function(id, value, deleted, done) {
-            //     var body = {
-            //       id: id,
-            //       tag: value,
-            //       signatures: [],
-            //       readers: [PROGRAM_CHAIRS_ID],
-            //       forum: d.note.id,
-            //       invitation: tagInvitation.id,
-            //       ddate: deleted ? Date.now() : null
-            //     };
-            //     body = getCopiedValues(body, tagInvitation.reply);
+            x = view.mkTagInput('tag', tagInvitation && tagInvitation.reply.content.tag, pc_paper_assignment_tags, {
+              forum: d.note.id,
+              placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
+              label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
+              readOnly: false,
+              onChange: function(id, value, deleted, done) {
+                var body = {
+                  id: id,
+                  tag: value,
+                  signatures: [user.profile.id],
+                  readers: [PROGRAM_CHAIRS_ID],
+                  forum: d.note.id,
+                  invitation: tagInvitation.id,
+                  ddate: deleted ? Date.now() : null
+                };
 
-            //     Webfield.post('/tags', body, function(result) {
-            //       done(result);
-            //       if (params.onTagChanged) {
-            //         params.onTagChanged(result);
-            //       }
-            //     }, function(resp) {
-            //       var error = _.isEmpty(resp.responseJSON.errors) ? null : resp.responseJSON.errors[0];
-            //       promptError(error ? error : 'The specified tag could not be updated');
-            //     });
-            //   }
-            // });
+                Webfield.post('/tags', body, function(result) {
+                  done(result);
+                  // if (params.onTagChanged) {
+                  //   params.onTagChanged(result);
+                  // }
+                }, function(resp) {
+                  var error = _.isEmpty(resp.responseJSON.errors) ? null : resp.responseJSON.errors[0];
+                  promptError(error ? error : 'The specified tag could not be updated');
+                });
+              }
+            });
+            console.log(x);
+            summaryHtml.append(x);
           }
         });
       }
