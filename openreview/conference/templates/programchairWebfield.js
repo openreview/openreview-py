@@ -399,6 +399,49 @@ var displaySortPanel = function(container, sortOptions, sortResults) {
   });
 };
 
+var addTagsToPaperSummaryCell = function(data) {
+
+  Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true})
+  .then(function(tagInvitations){
+    if (tagInvitations.length) {
+      var tagInvitation = tagInvitations[0];
+
+      _.forEach(data, function(d) {
+        $noteSummaryContainer = $('#note-summary-' + d.note.number);
+        var $tagWidget = view.mkTagInput(
+          'tag',
+          tagInvitation && tagInvitation.reply.content.tag,
+          d.note.details.tags,
+          {
+            forum: d.note.id,
+            placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
+            label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
+            readOnly: false,
+            onChange: function(id, value, deleted, done) {
+              var body = {
+                id: id,
+                tag: value,
+                signatures: [user.profile.id],
+                readers: [PROGRAM_CHAIRS_ID],
+                forum: d.note.id,
+                invitation: tagInvitation.id,
+                ddate: deleted ? Date.now() : null
+              };
+
+              Webfield.post('/tags', body, function(result) {
+                done(result);
+              }, function(resp) {
+                var error = _.isEmpty(resp.responseJSON.errors) ? null : resp.responseJSON.errors[0];
+                promptError(error ? error : 'The specified tag could not be updated');
+              });
+            }
+          });
+          $noteSummaryContainer.append($tagWidget);
+      });
+    }
+  });
+}
+
 var displayPaperStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, areachairIds, decisions, container, options) {
 
   var rowData = _.map(notes, function(note) {
@@ -406,7 +449,6 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
     for (var revNumber in revIds) {
       var id = revIds[revNumber];
       revIds[revNumber] = findProfile(profiles, id);
-
     }
 
     var areachairId = areachairIds[note.number][0];
@@ -443,6 +485,18 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
     Meta_Review_Missing: function(row) { return row.areachairProgressData.numMetaReview; }
   };
 
+  if (PC_PAPER_ASSIGNMENT) {
+    sortOptions['Papers_Assigned_to_Me'] = function(row) {
+      tags = row.note.details.tags;
+      if (tags.length){
+        user_name = tags[0].tag;
+        return user_name;
+      } else {
+        return '';
+      }
+    }
+  }
+
   var sortResults = function(newOption, switchOrder) {
     if (switchOrder) {
       order = (order == 'asc' ? 'desc' : 'asc');
@@ -454,54 +508,16 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
   }
 
   var renderTable = function(container, data) {
+    var paperNumbers = [];
     var rowData = _.map(data, function(d) {
-      var number = '<strong class="note-number">' + d.note.number + '</strong>';
+      paperNumbers.push(d.note.number);
+      var numberHtml = '<strong class="note-number">' + d.note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
-      if (PC_PAPER_ASSIGNMENT) {
-        Webfield.getAll('/invitations', { id: PC_PAPER_TAG_INVITATION})
-        .then(function(tagInvitations) {
-          if (tagInvitations.length){
-            pc_paper_assignment_tags = _.filter(d.note.details.tags, function(tag) { return tag.invitation === PC_PAPER_TAG_INVITATION;});
-            console.log(pc_paper_assignment_tags);
-
-            tagInvitation = tagInvitations[0];
-            x = view.mkTagInput('tag', tagInvitation && tagInvitation.reply.content.tag, pc_paper_assignment_tags, {
-              forum: d.note.id,
-              placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
-              label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
-              readOnly: false,
-              onChange: function(id, value, deleted, done) {
-                var body = {
-                  id: id,
-                  tag: value,
-                  signatures: [user.profile.id],
-                  readers: [PROGRAM_CHAIRS_ID],
-                  forum: d.note.id,
-                  invitation: tagInvitation.id,
-                  ddate: deleted ? Date.now() : null
-                };
-
-                Webfield.post('/tags', body, function(result) {
-                  done(result);
-                  // if (params.onTagChanged) {
-                  //   params.onTagChanged(result);
-                  // }
-                }, function(resp) {
-                  var error = _.isEmpty(resp.responseJSON.errors) ? null : resp.responseJSON.errors[0];
-                  promptError(error ? error : 'The specified tag could not be updated');
-                });
-              }
-            });
-            console.log(x);
-            summaryHtml.append(x);
-          }
-        });
-      }
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
       var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
       var rows = [];
-      rows.push(number);
+      rows.push(numberHtml);
       rows.push(summaryHtml);
       rows.push(reviewHtml);
       if (SHOW_AC_TAB) {
@@ -535,6 +551,9 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
     } else {
       $('.console-table th').eq(2).css('width', '45%');
       $('.console-table th').eq(3).css('width', '25%');
+    }
+    if (PC_PAPER_ASSIGNMENT){
+      addTagsToPaperSummaryCell(data);
     }
   }
 
