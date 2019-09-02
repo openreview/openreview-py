@@ -421,17 +421,18 @@ var addTagsToPaperSummaryCell = function(data) {
               var body = {
                 id: id,
                 tag: value,
-                signatures: [user.profile.id],
+                signatures: [PROGRAM_CHAIRS_ID],
                 readers: [PROGRAM_CHAIRS_ID],
                 forum: d.note.id,
                 invitation: tagInvitation.id,
                 ddate: deleted ? Date.now() : null
               };
-
-              Webfield.post('/tags', body, function(result) {
+              body = view.getCopiedValues(body, tagInvitation.reply);
+              Webfield.post('/tags', body)
+              .then(function(result) {
                 done(result);
-              }, function(resp) {
-                var error = _.isEmpty(resp.responseJSON.errors) ? null : resp.responseJSON.errors[0];
+              })
+              .fail(function(error) {
                 promptError(error ? error : 'The specified tag could not be updated');
               });
             }
@@ -488,11 +489,10 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
   if (PC_PAPER_ASSIGNMENT) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       tags = row.note.details.tags;
-      if (tags.length){
-        user_name = tags[0].tag;
-        return user_name;
+      if (tags.length && tags[0].tag === view.prettyId(user.profile.id)){
+        return true;
       } else {
-        return '';
+        return false;
       }
     }
   }
