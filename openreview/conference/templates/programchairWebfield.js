@@ -243,6 +243,14 @@ var getInvitations = function() {
   return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
 }
 
+var getPcAssignmentTagInvitations = function() {
+  if (PC_PAPER_ASSIGNMENT){
+    return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
+  } else {
+    return $.Deferred().resolve();
+  }
+}
+
 var getConfigurationDescription = function(note) {
   var description = note.content['Author and Reviewer Anonymity'] + ', ' +
   note.content['Open Reviewing Policy'] + ', ' + note.content['Public Commentary'] +
@@ -399,51 +407,48 @@ var displaySortPanel = function(container, sortOptions, sortResults) {
   });
 };
 
-var addTagsToPaperSummaryCell = function(data) {
+var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
 
-  Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true})
-  .then(function(tagInvitations){
-    if (tagInvitations.length) {
-      var tagInvitation = tagInvitations[0];
+  if (pcAssignmentTagInvitations.length) {
+    var tagInvitation = pcAssignmentTagInvitations[0];
 
-      _.forEach(data, function(d) {
-        $noteSummaryContainer = $('#note-summary-' + d.note.number);
-        var $tagWidget = view.mkTagInput(
-          'tag',
-          tagInvitation && tagInvitation.reply.content.tag,
-          d.note.details.tags,
-          {
-            forum: d.note.id,
-            placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
-            label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
-            readOnly: false,
-            onChange: function(id, value, deleted, done) {
-              var body = {
-                id: id,
-                tag: value,
-                signatures: [PROGRAM_CHAIRS_ID],
-                readers: [PROGRAM_CHAIRS_ID],
-                forum: d.note.id,
-                invitation: tagInvitation.id,
-                ddate: deleted ? Date.now() : null
-              };
-              body = view.getCopiedValues(body, tagInvitation.reply);
-              Webfield.post('/tags', body)
-              .then(function(result) {
-                done(result);
-              })
-              .fail(function(error) {
-                promptError(error ? error : 'The specified tag could not be updated');
-              });
-            }
-          });
-          $noteSummaryContainer.append($tagWidget);
-      });
-    }
-  });
+    _.forEach(data, function(d) {
+      $noteSummaryContainer = $('#note-summary-' + d.note.number);
+      var $tagWidget = view.mkTagInput(
+        'tag',
+        tagInvitation && tagInvitation.reply.content.tag,
+        d.note.details.tags,
+        {
+          forum: d.note.id,
+          placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
+          label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
+          readOnly: false,
+          onChange: function(id, value, deleted, done) {
+            var body = {
+              id: id,
+              tag: value,
+              signatures: [PROGRAM_CHAIRS_ID],
+              readers: [PROGRAM_CHAIRS_ID],
+              forum: d.note.id,
+              invitation: tagInvitation.id,
+              ddate: deleted ? Date.now() : null
+            };
+            body = view.getCopiedValues(body, tagInvitation.reply);
+            Webfield.post('/tags', body)
+            .then(function(result) {
+              done(result);
+            })
+            .fail(function(error) {
+              promptError(error ? error : 'The specified tag could not be updated');
+            });
+          }
+        });
+        $noteSummaryContainer.append($tagWidget);
+    });
+  }
 }
 
-var displayPaperStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, areachairIds, decisions, container, options) {
+var displayPaperStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, areachairIds, decisions, pcAssignmentTagInvitations, container, options) {
 
   var rowData = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number];
@@ -491,9 +496,8 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
       tags = row.note.details.tags;
       if (tags.length && tags[0].tag === view.prettyId(user.profile.id)){
         return true;
-      } else {
-        return false;
       }
+      return false;
     }
   }
 
@@ -553,7 +557,7 @@ var displayPaperStatusTable = function(profiles, notes, completedReviews, metaRe
       $('.console-table th').eq(3).css('width', '25%');
     }
     if (PC_PAPER_ASSIGNMENT){
-      addTagsToPaperSummaryCell(data);
+      addTagsToPaperSummaryCell(data, pcAssignmentTagInvitations);
     }
   }
 
@@ -999,10 +1003,11 @@ controller.addHandler('areachairs', {
         areaChairGroupsP,
         decisionReviewsP,
         requestFormP,
-        getInvitations()
+        getInvitations(),
+        getPcAssignmentTagInvitations()
       );
     })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations) {
+    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations, pcAssignmentTagInvitations) {
       var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
         return result.concat(_.values(idsObj));
       }, []));
@@ -1016,7 +1021,7 @@ controller.addHandler('areachairs', {
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
         displayConfiguration(requestForm, invitations),
-        displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, decisions, '#paper-status');
+        displayPaperStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byNotes, decisions, pcAssignmentTagInvitations, '#paper-status');
         if (SHOW_AC_TAB) {
           displaySPCStatusTable(profiles, blindedNotes, officialReviews, metaReviews, reviewerGroups.byNotes, areaChairGroups.byAreaChairs, '#areachair-status');
         }
