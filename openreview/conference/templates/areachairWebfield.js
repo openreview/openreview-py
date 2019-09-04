@@ -228,34 +228,39 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, noteToRevi
   });
 };
 
+var displayError = function(message) {
+  message = message || 'The group data could not be loaded.';
+  $('#notes').empty().append('<div class="alert alert-danger"><strong>Error:</strong> ' + message + '</div>');
+};
+
 var getUserProfiles = function(userIds) {
   var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
   var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
 
-  return $.when(
-    controller.post('/profiles/search', {ids: ids}),
-    controller.post('/profiles/search', {emails: emails})
-  )
-  .then(function(result1, result2) {
+  var profileSearch = [];
+  if (ids.length) {
+    profileSearch.push(Webfield.post('/profiles/search', {ids: ids}),);
+  }
+  if (emails.length) {
+    profileSearch.push(Webfield.post('/profiles/search', {emails: emails}));
+  }
 
+  return $.when.apply($, profileSearch)
+  .then(function() {
+    var searchResults = _.toArray(arguments);
     var profileMap = {};
-
-    _.forEach(result1.profiles, function(profile) {
-
+    if (!searchResults) {
+      return profileMap;
+    }
+    var addProfileToMap = function(profile) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profileMap[profile.id] = profile;
-    })
-
-    _.forEach(result2.profiles, function(profile) {
-
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail || profile.content.emails[0];
-      profileMap[profile.id] = profile;
-    })
-
+    };
+    _.forEach(searchResults, function(result) {
+      _.forEach(result.profiles, addProfileToMap);
+    });
     return profileMap;
   })
   .fail(function(error) {
@@ -263,7 +268,6 @@ var getUserProfiles = function(userIds) {
     return null;
   });
 };
-
 
 // Render functions
 var renderHeader = function() {
@@ -822,14 +826,28 @@ var registerEventHandlers = function() {
     }
 
     var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
-    Webfield.put('/groups/members', {
-      id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-      members: [userToAdd]
+    var reviewerProfile = {
+      'email' : userToAdd,
+      'id' : userToAdd,
+      'name': '',
+      'content': {'names': [{'username': userToAdd}]}
+    };
+
+    getUserProfiles([userToAdd])
+    .then(function (userProfile){
+      if (userProfile && Object.keys(userProfile).length){
+        reviewerProfile = userProfile[Object.keys(userProfile)[0]];
+      }
+      Webfield.put('/groups/members', {
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+        members: [reviewerProfile.id]
+      })
     })
     .then(function(result) {
       return Webfield.post('/groups', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
-        members: [userToAdd],
+        members: [reviewerProfile.id],
+        nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
         readers: [
           CONFERENCE_ID + '/Program_Chairs',
           CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs',
@@ -844,7 +862,7 @@ var registerEventHandlers = function() {
     .then(function(result) {
       return Webfield.put('/groups/members', {
         id: REVIEWER_GROUP,
-        members: [userToAdd]
+        members: [reviewerProfile.id]
       })
     })
     .then(function(results) {
@@ -854,9 +872,9 @@ var registerEventHandlers = function() {
       });
       var lastReminderSent = null;
       reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
-        id: userToAdd,
-        name: userToAdd.startsWith('~') ? view.prettyId(userToAdd) : '',
-        email: userToAdd,
+        id: reviewerProfile.id,
+        name: reviewerProfile.name,
+        email: reviewerProfile.email,
         forum: paperForum,
         forumUrl: forumUrl,
         lastReminderSent: lastReminderSent,
@@ -870,9 +888,9 @@ var registerEventHandlers = function() {
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-      promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
+      promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber);
       var postData = {
-        groups: [userToAdd],
+        groups: [reviewerProfile.id],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
         message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
         ' for ' + SHORT_PHRASE + '.' +
@@ -894,12 +912,12 @@ var registerEventHandlers = function() {
 
     Webfield.delete('/groups/members', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-      members: [userId]
+      members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
     })
     .then(function(result) {
       return Webfield.delete('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-        members: [userId]
+        members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
       });
     })
     .then(function(result) {
