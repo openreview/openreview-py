@@ -1171,11 +1171,11 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('reviewer-status')
         assert tabs.find_element_by_id('areachair-status')
 
-        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-0').text
-        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
-        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
-        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
-        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
 
     def test_open_revise_submissions(self, client, test_client, helpers):
 
