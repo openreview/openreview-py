@@ -709,13 +709,13 @@ class TestWorkshop():
         with pytest.raises(NoSuchElementException):
             assert tabs.find_element_by_id('areachair-status')
 
-        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-0').text
-        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
-        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
-        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
 
         with pytest.raises(NoSuchElementException):
-            assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4')
+            assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5')
 
     def test_accepted_papers(self, client, test_client):
 
