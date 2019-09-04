@@ -826,6 +826,21 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
+    def delete_profile_reference(self, reference_id):
+        '''
+        Deletes the Profile Reference specified by `reference_id`.
+
+        :param reference_id: ID of the Profile Reference to be deleted.
+        :type reference_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        '''
+
+        response = requests.delete(self.profiles_url + '/reference', json = {'id': note_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
     def delete_group(self, group_id):
         """
         Deletes the group
