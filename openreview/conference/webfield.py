@@ -22,27 +22,38 @@ class WebfieldBuilder(object):
         return merged_options
 
     def set_landing_page(self, group, options = {}):
-
-        default_header = {
-            'title': group.id,
-            'description': ''
-        }
+        # sets webfield to show links to child groups
 
         children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
 
         links = []
-
         for children in children_groups:
-            links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
+            if not group.web or (group.web and children.id not in group.web):
+                links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
 
-        header = self.__build_options(default_header, options)
+        if not group.web:
+            # create new webfield using template
+            default_header = {
+                'title': group.id,
+                'description': ''
+            }
+            header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-            group.web = content
+            with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
+                content = f.read()
+                content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
+                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+                content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
+                group.web = content
+                return self.client.post_group(group)
+
+        elif links:
+            # parse existing webfield and add new links
+            # get links array without square brackets
+            link_str = json.dumps(links)
+            link_str = link_str[1:-1]
+            start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
+            group.web = group.web[:start_pos] +link_str + ','+ group.web[start_pos:]
             return self.client.post_group(group)
 
 
@@ -252,7 +263,7 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
-    def set_area_chair_page(self, conference, group, reviewer_reassignment_enabled = False):
+    def set_area_chair_page(self, conference, group):
 
         area_chair_name = conference.area_chairs_name
 
@@ -281,7 +292,7 @@ class WebfieldBuilder(object):
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
-            content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if reviewer_reassignment_enabled else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
+            content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
             group.web = content
             return self.client.post_group(group)
 
@@ -305,6 +316,7 @@ class WebfieldBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + submission_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
@@ -317,6 +329,7 @@ class WebfieldBuilder(object):
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
             content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
+            content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
             if conference.has_area_chairs:
                 content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")

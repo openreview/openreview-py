@@ -381,6 +381,7 @@ class ReviewInvitation(openreview.Invitation):
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
+                multiReply = False,
                 reply = {
                     'content': content
                 },
