@@ -374,21 +374,40 @@ class Client(object):
         :rtype: list[Profile]
         """
 
+        def batches(items, batch_size=1000):
+            batch = []
+            for item in items:
+                if len(batch) == batch_size:
+                    yield batch
+                    batch = []
+
+                batch.append(item)
+
+            if batch:
+                yield batch
+
         if term:
             response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
         if emails:
-            response = requests.post(self.profiles_search_url, json = {'emails': emails}, headers = self.headers)
-            response = self.__handle_response(response)
-            return { p['email'] : Profile.from_json(p)
-                for p in response.json()['profiles'] }
+            full_response = []
+            for email_batch in batches(emails):
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            return {p['email']: Profile.from_json(p) for p in full_response}
 
         if ids:
-            response = requests.post(self.profiles_search_url, json = {'ids': ids}, headers = self.headers)
-            response = self.__handle_response(response)
-            return [Profile.from_json(p) for p in response.json()['profiles']]
+            full_response = []
+            for id_batch in batches(ids):
+                response = requests.post(self.profiles_search_url, json = {'ids': id_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
             response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
@@ -914,6 +933,21 @@ class Client(object):
         :rtype: dict
         """
         response = requests.delete(self.notes_url, json = {'id': note_id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def delete_profile_reference(self, reference_id):
+        '''
+        Deletes the Profile Reference specified by `reference_id`.
+
+        :param reference_id: ID of the Profile Reference to be deleted.
+        :type reference_id: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        '''
+
+        response = requests.delete(self.profiles_url + '/reference', json = {'id': reference_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
