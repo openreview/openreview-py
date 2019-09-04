@@ -1269,8 +1269,8 @@ $('#group-container').on('click', 'a.send-reminder-link', function(e) {
     };
 
     $('#message-reviewers-modal').modal('hide');
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
     postReviewerEmails(postData);
+    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
     $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
     return false;
