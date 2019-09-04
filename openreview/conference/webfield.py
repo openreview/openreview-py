@@ -22,27 +22,38 @@ class WebfieldBuilder(object):
         return merged_options
 
     def set_landing_page(self, group, options = {}):
-
-        default_header = {
-            'title': group.id,
-            'description': ''
-        }
+        # sets webfield to show links to child groups
 
         children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
 
         links = []
-
         for children in children_groups:
-            links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
+            if not group.web or (group.web and children.id not in group.web):
+                links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
 
-        header = self.__build_options(default_header, options)
+        if not group.web:
+            # create new webfield using template
+            default_header = {
+                'title': group.id,
+                'description': ''
+            }
+            header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-            group.web = content
+            with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
+                content = f.read()
+                content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
+                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+                content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
+                group.web = content
+                return self.client.post_group(group)
+
+        elif links:
+            # parse existing webfield and add new links
+            # get links array without square brackets
+            link_str = json.dumps(links)
+            link_str = link_str[1:-1]
+            start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
+            group.web = group.web[:start_pos] +link_str + ','+ group.web[start_pos:]
             return self.client.post_group(group)
 
 
