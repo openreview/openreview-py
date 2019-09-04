@@ -837,7 +837,7 @@ class Client(object):
         :rtype: dict
         '''
 
-        response = requests.delete(self.profiles_url + '/reference', json = {'id': note_id}, headers = self.headers)
+        response = requests.delete(self.profiles_url + '/reference', json = {'id': reference_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
