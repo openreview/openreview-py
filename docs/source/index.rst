@@ -18,7 +18,7 @@ Contents
    about
    api
    how_to_setup
-   samples
+   examples
    help
    conference_builder
 
