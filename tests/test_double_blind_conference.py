@@ -773,6 +773,7 @@ class TestDoubleBlindConference():
     def test_open_bids(self, client, test_client, selenium, request_page, helpers):
 
         reviewer_client = helpers.create_user('reviewer2@mail.com', 'Reviewer', 'DoubleBlind')
+        reviewer2_client = helpers.create_user('reviewer@domain.com', 'Reviewer', 'Domain')
         ac_client = helpers.create_user('ac@mail.com', 'AreaChair', 'DoubleBlind')
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -786,7 +787,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
-        conference.set_reviewers(emails = ['reviewer2@mail.com'])
+        conference.set_reviewers(emails = ['reviewer2@mail.com', 'reviewer@domain.com'])
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
@@ -809,6 +810,12 @@ class TestDoubleBlindConference():
         notes = selenium.find_elements_by_class_name('note')
         assert not notes
 
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert not notes
+
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
@@ -821,10 +828,17 @@ class TestDoubleBlindConference():
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             writer.writerow([submission.id, '~Reviewer_DoubleBlind1', '0.9'])
+            writer.writerow([submission.id, '~Reviewer_Domain1', '0.8'])
 
         conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert not notes
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
