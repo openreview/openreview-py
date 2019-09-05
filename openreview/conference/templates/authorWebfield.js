@@ -38,12 +38,12 @@ function load() {
 
   var authorNotesP;
   var invitationsP;
-  var tagInvitationsP;
+  var edgeInvitationsP;
 
   if (!user || _.startsWith(user.id, 'guest_')) {
     authorNotesP = $.Deferred().resolve([]);
     invitationsP = $.Deferred().resolve([]);
-    tagInvitationsP = $.Deferred().resolve([]);
+    edgeInvitationsP = $.Deferred().resolve([]);
 
   } else {
     authorNotesP = Webfield.get('/notes', {
@@ -59,23 +59,23 @@ function load() {
       invitee: true,
       duedate: true,
       replyto: true,
+      type: 'notes',
       details:'replytoNote,repliedNotes'
     }).then(function(result) {
       return result.invitations;
     });
 
-    tagInvitationsP = Webfield.get('/invitations', {
+    edgeInvitationsP = Webfield.get('/invitations', {
       regex: CONFERENCE_ID + '.*',
       invitee: true,
       duedate: true,
-      tags: true,
-      details:'repliedTags'
+      type: 'edges'
     }).then(function(result) {
       return result.invitations;
     });
   }
 
-  return $.when(authorNotesP, invitationsP, tagInvitationsP);
+  return $.when(authorNotesP, invitationsP, edgeInvitationsP);
 }
 
 
@@ -105,7 +105,7 @@ function renderConferenceTabs() {
 }
 
 
-function renderContent(authorNotes, invitations, tagInvitations) {
+function renderContent(authorNotes, invitations, edgeInvitations) {
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',
@@ -113,7 +113,7 @@ function renderContent(authorNotes, invitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  Webfield.ui.newTaskList(invitations, tagInvitations, tasksOptions);
+  Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
 
   // Your Private Versions and Your Anonymous Versions tabs
   Webfield.ui.submissionList(authorNotes, {
