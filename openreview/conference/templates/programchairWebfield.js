@@ -1312,7 +1312,8 @@ controller.addHandler('areachairs', {
           'metaReviews' : metaReviews,
           'reviewerGroups' : reviewerGroups,
           'areaChairGroups' : areaChairGroups,
-          'decisions' : decisions
+          'decisions' : decisions,
+          'pcAssignmentTagInvitations' : pcAssignmentTagInvitations
         }
         displayConfiguration(requestForm, invitations);
         displayPaperStatusTable();
