@@ -396,16 +396,28 @@ var displayConfiguration = function(requestForm, invitations) {
 
 var displaySortPanel = function(container, sortOptions, sortResults) {
 
-  var allOptions = _.map(_.keys(sortOptions), function(option) {
+  var sortOptionHtml = _.map(_.keys(sortOptions), function(option) {
     return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
   });
+
   var sortBarHTML = '<form class="form-inline search-form" role="search">' +
-    '<strong>Sort By:</strong>' +
-    '<div class="form-group search-content" style="margin-right: 0;">' +
-      '<select id="form-sort" class="form-control" style="width: 330px">' + allOptions.join('') + '</select>' +
+  '<div id="div-msg-reviewers" class="btn-group" role="group">' +
+      '<button id="message-reviewers-btn" type="button" class="btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
+        '<li><a id="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
+        '<li><a id="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
+        '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
+      '</ul>' +
     '</div>' +
-    '<button id="form-order" class="btn" style="min-width:auto;"><span class="glyphicon glyphicon-sort"></span></button>' +
-    '</form>';
+    '<div class="pull-right">' +
+      '<strong>Sort By:</strong> ' +
+      '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
+      '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
+    '</div>' +
+  '</form>';
 
   $(container).empty().append(sortBarHTML);
   $(container).on('change', 'select#form-sort', function(event) {
@@ -481,14 +493,117 @@ var displayPaperStatusTable = function() {
     renderTable(container, rowData);
   }
 
+  // Message modal handler
+  var sendReviewerReminderEmailsStep1 = function(e) {
+    var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
+    var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
+    var filter  = $(this)[0].dataset['filter'];
+
+    var count = 0;
+    var selectedRows = rowData;
+    var reviewerMessages = [];
+    var reviewerCounts = Object.create(null);
+    var selectedNoteIds = _.map(
+      $('.paper-table input.select-note-reviewers:checked'),
+      function(checkbox) { return $(checkbox).data('noteId'); }
+    );
+    selectedRows = rowData.filter(function(row) {
+      return _.includes(selectedNoteIds, row.note.forum);
+    });
+
+    selectedRows.forEach(function(row) {
+      var reviewers = _.map(row.reviewProgressData.reviewers, function(rev){
+        if (rev && rev.hasOwnProperty('note')){
+          rev['completedReview'] = true;
+        }
+        return rev;
+      });
+
+      var users = _.values(reviewers);
+      if (filter === 'msg-submitted-reviewers') {
+        users = users.filter(function(u) {
+          return u.completedReview;
+        });
+      } else if (filter === 'msg-unsubmitted-reviewers') {
+        users = users.filter(function(u) {
+          return !u.completedReview;
+        });
+      }
+
+      if (users.length) {
+        var forumUrl = 'https://openreview.net/forum?' + $.param({
+          id: row.note.forum,
+          noteId: row.note.id,
+          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row.note.number)
+        });
+        reviewerMessages.push({
+          groups: _.map(users, 'id'),
+          forumUrl: forumUrl,
+          subject: subject,
+          message: message,
+        });
+
+        users.forEach(function(u) {
+          if (u.id in reviewerCounts) {
+            reviewerCounts[u.id].count++;
+          } else {
+            reviewerCounts[u.id] = {
+              name: u.name,
+              email: u.email,
+              count: 1
+            };
+          }
+        });
+
+        count += users.length;
+      }
+    });
+    localStorage.setItem('reviewerMessages', JSON.stringify(reviewerMessages));
+    localStorage.setItem('messageCount', count);
+
+    // Show step 2
+    var namesHtml = _.flatMap(reviewerCounts, function(obj) {
+      var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
+      if (obj.count > 1) {
+        text += ' (&times;' + obj.count + ')';
+      }
+      return text;
+    }).join(', ');
+    $('#message-reviewers-modal .reviewer-list').html(namesHtml);
+    $('#message-reviewers-modal .num-reviewers').text(count);
+    $('#message-reviewers-modal .step-1').hide();
+    $('#message-reviewers-modal .step-2').show();
+
+    return false;
+  };
+
+  var sendReviewerReminderEmailsStep2 = function(e) {
+    var reviewerMessages = localStorage.getItem('reviewerMessages');
+    var messageCount = localStorage.getItem('messageCount');
+    if (!reviewerMessages || !messageCount) {
+      $('#message-reviewers-modal').modal('hide');
+      promptError('Could not send emails at this time. Please refresh the page and try again.');
+    }
+    JSON.parse(reviewerMessages).forEach(postReviewerEmails);
+
+    localStorage.removeItem('reviewerMessages');
+    localStorage.removeItem('messageCount');
+
+    $('#message-reviewers-modal').modal('hide');
+    promptMessage('Successfully sent ' + messageCount + ' emails');
+  };
+
   var renderTable = function(container, data) {
     var rowData = _.map(data, function(d) {
+      var checked = '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
+      d.note.id + '" ' + (d.selected ? 'checked="checked"' : '') + '></label>';
       var number = '<strong class="note-number">' + d.note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
       var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
       var rows = [];
+      rows.push(checked);
       rows.push(number);
       rows.push(summaryHtml);
       rows.push(reviewHtml);
@@ -499,7 +614,7 @@ var displayPaperStatusTable = function() {
       return rows;
     });
 
-    var headings = ['#', 'Paper Summary', 'Review Progress'];
+    var headings = ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary', 'Review Progress'];
     if (SHOW_AC_TAB) {
       headings.push('Status');
     }
@@ -522,15 +637,46 @@ var displayPaperStatusTable = function() {
     }
 
     $('.console-table th').eq(0).css('width', '4%');
-    $('.console-table th').eq(1).css('width', '26%');
+    $('.console-table th').eq(1).css('width', '4%');
+    $('.console-table th').eq(2).css('width', '22%');
     if (SHOW_AC_TAB) {
-      $('.console-table th').eq(2).css('width', '30%');
-      $('.console-table th').eq(3).css('width', '25%');
-      $('.console-table th').eq(4).css('width', '15%');
+      $('.console-table th').eq(3).css('width', '30%');
+      $('.console-table th').eq(4).css('width', '28%');
+      $('.console-table th').eq(5).css('width', '12%');
     } else {
-      $('.console-table th').eq(2).css('width', '45%');
-      $('.console-table th').eq(3).css('width', '25%');
+      $('.console-table th').eq(3).css('width', '45%');
+      $('.console-table th').eq(4).css('width', '25%');
     }
+
+    $('#div-msg-reviewers').find('a').on('click', function(e) {
+      var filter = $(this)[0].id;
+      $('#message-reviewers-modal').remove();
+
+      var defaultBody = '';
+      if (filter === 'msg-unsubmitted-reviewers') {
+        defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n'
+      }
+      defaultBody += 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair';
+
+      var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+        filter: filter,
+        defaultSubject: SHORT_PHRASE + ' Reminder',
+        defaultBody: defaultBody,
+      });
+      $('body').append(modalHtml);
+
+      $('#message-reviewers-modal .btn-primary.step-1').on('click', sendReviewerReminderEmailsStep1);
+      $('#message-reviewers-modal .btn-primary.step-2').on('click', sendReviewerReminderEmailsStep2);
+      $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmailsStep1);
+
+      $('#message-reviewers-modal').modal();
+
+      if ($('.ac-console-table input.select-note-reviewers:checked').length) {
+        $('#message-reviewers-modal select[name="group"]').val('selected');
+      }
+      return false;
+    });
   }
 
   if (rowData.length) {
@@ -625,7 +771,6 @@ var displaySPCStatusTable = function() {
 
   displaySortPanel(container, sortOptions, sortResults);
   renderTable(container, rowData);
-
 };
 
 var displayPCStatusTable = function() {
@@ -795,6 +940,9 @@ var updateReviewerContainer = function(paperNumber) {
 
 // Helper functions
 var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
+  // Checkbox for selecting each row
+  var cellCheck = { selected: false, noteId: note.id };
+
   // Build Note Summary Cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
 
@@ -816,11 +964,17 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         note: reviewObj.id,
         rating: reviewObj.rating,
         confidence: reviewObj.confidence,
-        reviewLength: reviewObj.content.review.length
+        reviewLength: reviewObj.content.review.length,
       });
       ratings.push(reviewObj.rating);
       confidences.push(reviewObj.confidence);
     } else {
+      var forumUrl = 'https://openreview.net/forum?' + $.param({
+        id: note.forum,
+        noteId: note.id,
+        invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
+      });
+      var lastReminderSent = localStorage.getItem(forumUrl + '|' + reviewer.id);
       combinedObj[reviewerNum] = _.assign({}, reviewer, {
         id: reviewer.id,
         name: reviewer.name,
@@ -832,7 +986,8 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
           invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
         }),
         paperNumber: note.number,
-        reviewerNumber: reviewerNum
+        reviewerNumber: reviewerNum,
+        lastReminderSent: lastReminderSent ? new Date(parseInt(lastReminderSent)).toLocaleDateString() : lastReminderSent
       });
     }
   }
@@ -866,7 +1021,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     averageConfidence: averageConfidence,
     minConfidence: minConfidence,
     maxConfidence: maxConfidence,
-    sendReminder: false,
+    sendReminder: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
   };
@@ -879,6 +1034,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   };
 
   return {
+    cellCheck: cellCheck,
     note: note,
     reviewProgressData: reviewProgressData,
     areachairProgressData: areachairProgressData,
@@ -1100,21 +1256,42 @@ $('#group-container').on('click', 'a.note-contents-toggle', function(e) {
 });
 
 $('#group-container').on('click', 'a.send-reminder-link', function(e) {
-  var userId = $(this).data('userId');
-  var forumUrl = $(this).data('forumUrl');
-  var postData = {
-    subject: SHORT_PHRASE + 'Reminder',
-    message: 'This is a reminder to please submit your official reviews for ' + SHORT_PHRASE + '.\n\n' +
-      'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.',
-    groups: [userId]
+  var $link = $(this);
+  var userId = $link.data('userId');
+  var forumUrl = $link.data('forumUrl');
+
+  var sendReviewerReminderEmails = function(e) {
+    var postData = {
+      groups: [userId],
+      forumUrl: forumUrl,
+      subject: $('#message-reviewers-modal input[name="subject"]').val().trim(),
+      message: $('#message-reviewers-modal textarea[name="message"]').val().trim(),
+    };
+
+    $('#message-reviewers-modal').modal('hide');
+    postReviewerEmails(postData);
+    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
+    $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
+
+    return false;
   };
 
-  $.post('/mail', JSON.stringify(postData), function(result) {
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
-  }, 'json').fail(function(error) {
-    console.log(error);
-    promptError('The reminder email could not be sent at this time');
+  var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+    singleRecipient: true,
+    reviewerId: userId,
+    forumUrl: forumUrl,
+    defaultSubject: SHORT_PHRASE + ' Reminder',
+    defaultBody: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
+      'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair',
   });
+  $('#message-reviewers-modal').remove();
+  $('body').append(modalHtml);
+
+  $('#message-reviewers-modal .btn-primary').on('click', sendReviewerReminderEmails);
+  $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmails);
+
+  $('#message-reviewers-modal').modal();
   return false;
 });
 
@@ -1231,7 +1408,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       '\n\nTo review this new assignment, please login and click on ' +
       'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
       '\n\nTo check all of your assigned papers, please click on https://openreview.net/group?id=' + REVIEWERS_ID +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair'
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
     };
     return Webfield.post('/mail', postData);
   });
@@ -1310,5 +1487,54 @@ $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
     Webfield.ui.spinner(containerId, {inline: true});
   }
 });
+
+$('#group-container').on('change', '#select-all-papers', function(e) {
+  var $superCheckBox = $(this);
+  var $allPaperCheckBoxes = $('input.select-note-reviewers');
+  var $msgReviewerButton = $('#message-reviewers-btn');
+  if ($superCheckBox[0].checked === true) {
+    $allPaperCheckBoxes.prop('checked', true);
+    $msgReviewerButton.attr('disabled', false);
+  } else {
+    $allPaperCheckBoxes.prop('checked', false);
+    $msgReviewerButton.attr('disabled', true);
+  }
+});
+
+$('#group-container').on('change', 'input.select-note-reviewers', function(e) {
+  var $allPaperCheckBoxes = $('input.select-note-reviewers');
+  var $msgReviewerButton = $('#message-reviewers-btn');
+  var $superCheckBox = $('#select-all-papers');
+  var checkedBoxes = $allPaperCheckBoxes.filter(function(index) {
+    return $allPaperCheckBoxes[index].checked === true;
+  });
+  if (checkedBoxes.length) {
+    $msgReviewerButton.attr('disabled', false);
+    if (checkedBoxes.length === $allPaperCheckBoxes.length) {
+      $superCheckBox.prop('checked', true);
+    } else {
+      $superCheckBox.prop('checked', false);
+    }
+  } else {
+    $msgReviewerButton.attr('disabled', true);
+    $superCheckBox.prop('checked', false);
+  }
+});
+
+var postReviewerEmails = function(postData) {
+  postData.message = postData.message.replace(
+    '[[SUBMIT_REVIEW_LINK]]',
+    postData.forumUrl
+  );
+
+  return Webfield.post('/mail', postData)
+    .then(function(response) {
+      // Save the timestamp in the local storage
+      for (var i = 0; i < postData.groups.length; i++) {
+        var userId = postData.groups[i];
+        localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
+      }
+    });
+};
 
 OpenBanner.venueHomepageLink(CONFERENCE_ID);
