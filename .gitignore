@@ -9,3 +9,4 @@ build/
 pytest_report.xml
 *.log
 drivers/
+tests/data/reviewer_affinity_scores.csv
