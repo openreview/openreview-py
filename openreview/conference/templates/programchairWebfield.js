@@ -1343,7 +1343,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     })
   })
   .then(function(result) {
-    var commonReaders = [CONFERENCE_ID + '/Program_Chairs'];
+    var commonReaders = [CONFERENCE_ID, CONFERENCE_ID + '/Program_Chairs'];
     if (SHOW_AC_TAB){
       commonReaders.push(CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs');
     }
