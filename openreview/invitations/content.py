@@ -28,6 +28,23 @@ comment = {
         'required': True
     }
 }
+
+withdraw = {
+    'title': {
+        'value': 'Submission Withdrawn by the Authors',
+        'order': 1
+    },
+    'withdrawal confirmation': {
+        'description':
+        'value-radio': [
+            'I have read and agree with the withdrawal statement on behalf of myself and my co-authors.'
+        ],
+        'order': 2,
+        'required': True
+    }
+}
+
+
 review_rating = {
     'title': {
         'order': 1,

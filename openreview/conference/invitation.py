@@ -220,6 +220,34 @@ class CommentInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
+class WithdrawInvitation(openreview.Invitation):
+
+    def __init__(self, conference):
+
+        content = invitations.withdraw.copy()
+
+        withdraw_process_file = 'templates/{}.py'.format(
+            'withdraw_reveal_process' if conference.reveal_on_withdraw else 'withdraw_process')
+
+        with open(os.path.join(os.path.dirname(__file__), withdraw_process_file)) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace(
+                "WITHDRAWN_SUBMISSION_ID = ''",
+                "WITHDRAWN_SUBMISSION_ID = '" + conference.get_withdrawn_submission_id() + "'")
+
+            super(WithdrawInvitation, self).__init__(
+                id=conference.get_invitation_id('Withdraw'),
+                cdate=tools.datetime_millis(conference.submission_stage.end_date),
+                readers=['everyone'],
+                writers=[conference.get_id()],
+                signatures=[conference.get_id()],
+                reply={
+                    'content': content
+                },
+                process_string=file_content
+            )
+
 class PublicCommentInvitation(openreview.Invitation):
 
     def __init__(self, conference, note):
@@ -572,6 +600,13 @@ class InvitationBuilder(object):
         if conference.comment_stage.allow_public_comments:
             for note in notes:
                 invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
+
+        return invitations
+
+    def set_withdraw_invitation(self, conference, notes):
+        invitations = []
+        for note in notes:
+            invitations.append(self.client.post_invitation(WithdrawInvitation(conference, note)))
 
         return invitations
 

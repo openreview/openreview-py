@@ -99,7 +99,6 @@ class Conference(object):
 
     ## TODO: use a super invitation here
     def __expire_invitations(self, name):
-
         invitations = list(tools.iterget_invitations(self.client, regex = self.get_invitation_id(name, '.*')))
 
         now = round(time.time() * 1000)
@@ -112,7 +111,6 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-
         return self.invitation_builder.set_submission_invitation(self)
 
     def __create_bid_stage(self):
@@ -369,6 +367,18 @@ class Conference(object):
 
         return invitation
 
+    def create_withdraw_invitations(self):
+        if not self.submission_stage.allow_withdraw:
+            raise openreview.OpenReviewException('Conference does not allow withdraw invitations')
+
+        if not self.submission_stage.double_blind:
+            raise openreview.OpenReviewException(
+                'Withdraw invitations are currently only supported for double blind conferences')
+
+        withdraw_invitations = self.invitation_builder.set_withdraw_invitation(
+            self, self.get_submissions())
+
+
     def create_blind_submissions(self):
 
         if not self.submission_stage.double_blind:
@@ -460,7 +470,6 @@ class Conference(object):
         return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
-
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
         review_iterator = tools.iterget_notes(self.client, invitation = invitation)
         return self.invitation_builder.set_revise_review_invitation(self, review_iterator, name, start_date, due_date, additional_fields, remove_fields)
@@ -703,19 +712,31 @@ class Conference(object):
 
 class SubmissionStage(object):
 
-    def __init__(self, name = 'Submission', start_date = None, due_date = None, public = False, double_blind = False, additional_fields = {}, remove_fields = [], subject_areas = []):
+    def __init__(
+            self,
+            name='Submission',
+            start_date=None,
+            due_date=None,
+            public=False,
+            double_blind=False,
+            allow_withdraw=False,
+            reveal_on_withdraw=False,
+            additional_fields={},
+            remove_fields=[],
+            subject_areas=[]
+        ):
 
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.public = public
         self.double_blind = double_blind
+        self.allow_withdraw = allow_withdraw
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
 
     def get_readers(self, conference):
-
         if self.double_blind:
             return {
                 'values-copied': [
@@ -753,6 +774,10 @@ class SubmissionStage(object):
         name = self.name
         if self.double_blind:
             name = 'Blind_' + name
+        return conference.get_invitation_id(name)
+
+    def get_withdrawn_submission_id(self, conference):
+        name = 'Withdrawn {}'.format(self.name)
         return conference.get_invitation_id(name)
 
 class BidStage(object):
@@ -973,8 +998,30 @@ class ConferenceBuilder(object):
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
-    def set_submission_stage(self, name = 'Submission', start_date = None, due_date = None, public = False, double_blind = False, additional_fields = {}, remove_fields = [], subject_areas = []):
-        self.submission_stage = SubmissionStage(name, start_date, due_date, public, double_blind, additional_fields, remove_fields, subject_areas)
+    def set_submission_stage(
+            self,
+            name='Submission',
+            start_date=None,
+            due_date=None,
+            public=False,
+            double_blind=False,
+            allow_withdraw=False,
+            additional_fields={},
+            remove_fields=[],
+            subject_areas=[]
+        ):
+
+        self.submission_stage = SubmissionStage(
+            name,
+            start_date,
+            due_date,
+            public,
+            double_blind,
+            allow_withdraw
+            additional_fields,
+            remove_fields,
+            subject_areas
+        )
 
     def set_bid_stage(self, start_date = None, due_date = None, request_count = 50):
         self.bid_stage = BidStage(start_date, due_date, request_count)
