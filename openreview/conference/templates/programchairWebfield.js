@@ -262,11 +262,7 @@ var getInvitations = function() {
 }
 
 var getPcAssignmentTagInvitations = function() {
-  if (PC_PAPER_ASSIGNMENT){
-    return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
-  } else {
-    return $.Deferred().resolve();
-  }
+  return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
 }
 
 var findNextAnonGroupNumber = function(paperNumber){
@@ -448,43 +444,45 @@ var displaySortPanel = function(container, sortOptions, sortResults) {
 
 var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
 
-  if (pcAssignmentTagInvitations.length) {
-    var tagInvitation = pcAssignmentTagInvitations[0];
-
-    _.forEach(data, function(d) {
-      $noteSummaryContainer = $('#note-summary-' + d.note.number);
-      var $tagWidget = view.mkTagInput(
-        'tag',
-        tagInvitation && tagInvitation.reply.content.tag,
-        d.note.details.tags,
-        {
-          forum: d.note.id,
-          placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
-          label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
-          readOnly: false,
-          onChange: function(id, value, deleted, done) {
-            var body = {
-              id: id,
-              tag: value,
-              signatures: [PROGRAM_CHAIRS_ID],
-              readers: [PROGRAM_CHAIRS_ID],
-              forum: d.note.id,
-              invitation: tagInvitation.id,
-              ddate: deleted ? Date.now() : null
-            };
-            body = view.getCopiedValues(body, tagInvitation.reply);
-            Webfield.post('/tags', body)
-            .then(function(result) {
-              done(result);
-            })
-            .fail(function(error) {
-              promptError(error ? error : 'The specified tag could not be updated');
-            });
-          }
-        });
-        $noteSummaryContainer.append($tagWidget);
-    });
+  if (!(pcAssignmentTagInvitations) || !(pcAssignmentTagInvitations.length)) {
+    return null;
   }
+
+  var tagInvitation = pcAssignmentTagInvitations[0];
+
+  _.forEach(data, function(d) {
+    $noteSummaryContainer = $('#note-summary-' + d.note.number);
+    var $tagWidget = view.mkTagInput(
+      'tag',
+      tagInvitation && tagInvitation.reply.content.tag,
+      d.note.details.tags,
+      {
+        forum: d.note.id,
+        placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
+        label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
+        readOnly: false,
+        onChange: function(id, value, deleted, done) {
+          var body = {
+            id: id,
+            tag: value,
+            signatures: [PROGRAM_CHAIRS_ID],
+            readers: [PROGRAM_CHAIRS_ID],
+            forum: d.note.id,
+            invitation: tagInvitation.id,
+            ddate: deleted ? Date.now() : null
+          };
+          body = view.getCopiedValues(body, tagInvitation.reply);
+          Webfield.post('/tags', body)
+          .then(function(result) {
+            done(result);
+          })
+          .fail(function(error) {
+            promptError(error ? error : 'The specified tag could not be updated');
+          });
+        }
+      });
+      $noteSummaryContainer.append($tagWidget);
+  });
 }
 
 var displayPaperStatusTable = function() {
@@ -542,7 +540,7 @@ var displayPaperStatusTable = function() {
     Meta_Review_Missing: function(row) { return row.areachairProgressData.numMetaReview; }
   };
 
-  if (PC_PAPER_ASSIGNMENT) {
+  if (pcAssignmentTagInvitations) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       tags = row.note.details.tags;
       if (tags.length && tags[0].tag === view.prettyId(user.profile.id)){
@@ -719,9 +717,7 @@ var displayPaperStatusTable = function() {
       $('.console-table th').eq(3).css('width', '45%');
       $('.console-table th').eq(4).css('width', '25%');
     }
-    if (PC_PAPER_ASSIGNMENT){
-      addTagsToPaperSummaryCell(data, pcAssignmentTagInvitations);
-    }
+    addTagsToPaperSummaryCell(data, pcAssignmentTagInvitations);
 
     $('#div-msg-reviewers').find('a').on('click', function(e) {
       var filter = $(this)[0].id;
