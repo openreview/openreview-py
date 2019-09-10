@@ -122,10 +122,15 @@ class TestReviewersConference():
         request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token)
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
-        assert len(reviews) == 5
+        assert len(reviews) == 1
         headers = reviews[0].find_elements_by_tag_name('h4')
         assert headers
         assert headers[0].text == '0 of 2 Reviews Submitted'
+
+        request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#reviewer-status", client.token)
+        reviews = selenium.find_elements_by_class_name('reviewer-progress')
+        assert reviews
+        assert len(reviews) == 4
 
         note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/-/Official_Review',
             forum = note.id,
@@ -148,7 +153,7 @@ class TestReviewersConference():
         request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token)
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
-        assert len(reviews) == 5
+        assert len(reviews) == 1
         headers = reviews[0].find_elements_by_tag_name('h4')
         assert headers
         assert headers[0].text == '1 of 2 Reviews Submitted'

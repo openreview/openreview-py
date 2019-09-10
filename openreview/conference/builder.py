@@ -68,7 +68,7 @@ class Conference(object):
     def __set_area_chair_page(self):
         area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
         if area_chairs_group:
-            return self.webfield_builder.set_area_chair_page(self, area_chairs_group, self.enable_reviewer_reassignment)
+            return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
 
     def __set_program_chair_page(self):
         program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
@@ -140,6 +140,14 @@ class Conference(object):
 
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
+
+    def __set_reviewer_reassignment(self, enabled = True):
+        self.enable_reviewer_reassignment = enabled
+
+        # Update PC & AC homepages
+        self.__set_program_chair_page()
+        if self.use_area_chairs:
+            self.__set_area_chair_page()
 
     def set_id(self, id):
         self.id = id
@@ -460,20 +468,19 @@ class Conference(object):
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)
 
-    def set_program_chairs(self, emails):
+    def set_program_chairs(self, emails = []):
         self.__create_group(self.get_program_chairs_id(), self.id, emails)
         ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return self.__set_program_chair_page()
 
-    def set_area_chairs(self, emails = [], enable_reviewer_reassignment = False):
+    def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
             notes_iterator = self.get_submissions()
             for n in notes_iterator:
                 self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
-            self.enable_reviewer_reassignment = enable_reviewer_reassignment
             return self.__set_area_chair_page()
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
@@ -589,6 +596,7 @@ class Conference(object):
 
     def set_assignments(self, assingment_title):
         conference_matching = matching.Matching(self)
+        self.__set_reviewer_reassignment(enabled=True)
         return conference_matching.deploy(assingment_title)
 
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
