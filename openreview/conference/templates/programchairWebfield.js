@@ -1528,13 +1528,13 @@ var postReviewerEmails = function(postData) {
   );
 
   return Webfield.post('/mail', postData)
-    .then(function(response) {
-      // Save the timestamp in the local storage
-      for (var i = 0; i < postData.groups.length; i++) {
-        var userId = postData.groups[i];
-        localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
-      }
-    });
+  .then(function(response) {
+    // Save the timestamp in the local storage
+    for (var i = 0; i < postData.groups.length; i++) {
+      var userId = postData.groups[i];
+      localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
+    }
+  });
 };
 
 OpenBanner.venueHomepageLink(CONFERENCE_ID);
