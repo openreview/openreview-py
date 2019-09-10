@@ -25,8 +25,8 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 var reviewerSummaryMap = {};
 var allReviewers = [];
 var conferenceStatusData = {};
+var pcTags = {};
 
-var PC_PAPER_ASSIGNMENT = true;
 var PC_PAPER_TAG_INVITATION = CONFERENCE_ID + '/-/Assigned_to_PC';
 
 // Ajax functions
@@ -64,15 +64,9 @@ var getInvitationId = function(name, number) {
 }
 
 var getBlindedNotes = function() {
-  if (PC_PAPER_ASSIGNMENT) {
-    return Webfield.getAll('/notes', {
-      invitation: BLIND_SUBMISSION_ID, details: "tags"
-    });
-  } else {
-    return Webfield.getAll('/notes', {
-      invitation: BLIND_SUBMISSION_ID, noDetails: true
-    });
-  }
+  return Webfield.getAll('/notes', {
+    invitation: BLIND_SUBMISSION_ID, noDetails: true
+  });
 };
 
 var getOfficialReviews = function(noteNumbers) {
@@ -265,6 +259,20 @@ var getPcAssignmentTagInvitations = function() {
   return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
 }
 
+var getPcAssignmentTags = function() {
+  Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION})
+  .then(function(results) {
+    if (results && results.length) {
+      results.forEach(function(tag){
+        if (! (tag.forum in pcTags)) {
+          pcTags[tag.forum] = [];
+        }
+        pcTags[tag.forum].push(tag);
+      });
+    }
+  });
+}
+
 var findNextAnonGroupNumber = function(paperNumber){
   var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; i < paperReviewerNums.length + 1; i++) {
@@ -451,11 +459,16 @@ var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
   var tagInvitation = pcAssignmentTagInvitations[0];
 
   _.forEach(data, function(d) {
+    var paperTags = [];
+    if (d.note.forum in pcTags) {
+      paperTags = pcTags[d.note.forum];
+    }
+
     $noteSummaryContainer = $('#note-summary-' + d.note.number);
     var $tagWidget = view.mkTagInput(
       'tag',
       tagInvitation && tagInvitation.reply.content.tag,
-      d.note.details.tags,
+      paperTags,
       {
         forum: d.note.id,
         placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
@@ -542,7 +555,7 @@ var displayPaperStatusTable = function() {
 
   if (pcAssignmentTagInvitations) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
-      tags = row.note.details.tags;
+      var tags = pcTags[row.note.id];
       if (tags.length && tags[0].tag === view.prettyId(user.profile.id)){
         return true;
       }
@@ -1249,6 +1262,10 @@ var buildNoteMap = function(noteNumbers) {
   return noteMap;
 };
 
+var buildPcTagMap = function(forumNumbers) {
+
+}
+
 // Kick the whole thing off
 displayHeader();
 
@@ -1258,9 +1275,6 @@ $.ajaxSetup({
 
 controller.addHandler('areachairs', {
   token: function(token) {
-    var pl = model.tokenPayload(token);
-    var user = pl.user;
-
     getAllReviewers();
     getBlindedNotes()
     .then(function(notes) {
@@ -1298,6 +1312,10 @@ controller.addHandler('areachairs', {
       }, []));
 
       var uniqueIds = _.union(uniqueReviewerIds, uniqueAreaChairIds);
+
+      if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
+        getPcAssignmentTags();
+      }
 
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
