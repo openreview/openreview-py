@@ -264,7 +264,7 @@ var getPcAssignmentTags = function() {
   .then(function(results) {
     if (results && results.length) {
       results.forEach(function(tag){
-        if (! (tag.forum in pcTags)) {
+        if (!(tag.forum in pcTags)) {
           pcTags[tag.forum] = [];
         }
         pcTags[tag.forum].push(tag);
