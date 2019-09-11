@@ -225,21 +225,21 @@ class TestMatching():
             tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
-        assert ac1_conflicts[0].label == 'cmu.edu'
+        assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict',
             tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
-        assert r1_conflicts[0].label == 'mit.edu'
+        assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
             tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
-        assert ac2_conflicts[0].label == 'umass.edu'
+        assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
 
     def test_setup_matching_with_tpms(self, client, test_client, helpers):
@@ -333,19 +333,19 @@ class TestMatching():
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
-        assert ac1_conflicts[0].label == 'cmu.edu'
+        assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict', tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
-        assert r1_conflicts[0].label == 'mit.edu'
+        assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail = 'ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
-        assert ac2_conflicts[0].label == 'umass.edu'
+        assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
         submissions = conference.get_submissions()
         assert submissions
@@ -504,19 +504,19 @@ class TestMatching():
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
-        assert ac1_conflicts[0].label == 'cmu.edu'
+        assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict', tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
-        assert r1_conflicts[0].label == 'mit.edu'
+        assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
-        assert ac2_conflicts[0].label == 'umass.edu'
+        assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
         submissions = conference.get_submissions()
         assert submissions
@@ -663,21 +663,21 @@ class TestMatching():
             tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
-        assert ac1_conflicts[0].label == 'cmu.edu'
+        assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict',
             tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
-        assert r1_conflicts[0].label == 'mit.edu'
+        assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
             tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
-        assert ac2_conflicts[0].label == 'umass.edu'
+        assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
         submissions = conference.get_submissions()
         assert submissions
