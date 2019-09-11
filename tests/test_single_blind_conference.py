@@ -548,7 +548,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('your-consoles')
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Reviewers Console' == console.find_element_by_tag_name('a').text
+        assert 'Reviewer Console' == console.find_element_by_tag_name('a').text
 
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Reviewers", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
