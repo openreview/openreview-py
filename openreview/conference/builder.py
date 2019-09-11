@@ -317,13 +317,13 @@ class Conference(object):
         return self.groups
 
     def get_paper_assignment_id(self, group_id):
-        return self.get_invitation_id('Reviewing/Paper_Assignment', prefix=group_id)
+        return self.get_invitation_id('Paper_Assignment', prefix=group_id)
 
     def get_affinity_score_id(self, group_id):
-        return self.get_invitation_id('Reviewing/Affinity_Score', prefix=group_id)
+        return self.get_invitation_id('Affinity_Score', prefix=group_id)
 
     def get_conflict_score_id(self, group_id):
-        return self.get_invitation_id('Reviewing/Conflict', prefix=group_id)
+        return self.get_invitation_id('Conflict', prefix=group_id)
 
     def set_homepage_header(self, header):
         self.homepage_header = header
