@@ -139,7 +139,7 @@ class TestWorkshop():
         assert tabs.find_element_by_id('your-consoles')
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Authors Console' == console.find_element_by_tag_name('a').text
+        assert 'Author Console' == console.find_element_by_tag_name('a').text
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 
@@ -180,7 +180,7 @@ class TestWorkshop():
         assert tabs.find_element_by_id('your-consoles')
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Authors Console' == console.find_element_by_tag_name('a').text
+        assert 'Author Console' == console.find_element_by_tag_name('a').text
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 

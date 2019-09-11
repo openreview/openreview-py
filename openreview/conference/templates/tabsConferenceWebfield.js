@@ -138,6 +138,9 @@ function renderConferenceTabs() {
 function createConsoleLinks(allGroups) {
   allGroups.sort().forEach(function(group) {
     var groupName = group.split('/').pop();
+    if (groupName.slice(-1) === 's') {
+      groupName = groupName.slice(0, -1);
+    }
     $('#your-consoles .submissions-list').append(
       [
         '<li class="note invitation-link">',
