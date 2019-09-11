@@ -15,9 +15,6 @@ var AREA_CHAIRS_ID = '';
 var REVIEWERS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var AUTHORS_ID = '';
-var BUDDY_AREA_CHAIRS_NAME = 'Buddy_Area_Chairs';
-var BUDDY_AREA_CHAIRS_ID = CONFERENCE_ID + '/Buddy_Area_Chairs';
-
 var HEADER = {};
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
@@ -74,13 +71,13 @@ function load() {
       details: 'forumContent,writable'
     });
 
-    userGroupsP = Webfield.getAll('/groups', { member: user.id, web: true })
-      .then(function(groups) {
-        return _.filter(
-          _.map(groups, function(g) { return g.id; }),
-          function(id) { return _.startsWith(id, CONFERENCE_ID); }
-        );
-      });
+    userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true })
+    .then(function(groups) {
+      return _.filter(
+        _.map(groups, function(g) { return g.id; }),
+        function(id) { return _.startsWith(id, CONFERENCE_ID); }
+      );
+    });
 
     authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
       pageSize: PAGE_SIZE,
@@ -138,6 +135,19 @@ function renderConferenceTabs() {
   });
 }
 
+function createConsoleLinks(allGroups) {
+  allGroups.sort().forEach(function(group) {
+    var groupName = group.split('/').pop();
+    $('#your-consoles .submissions-list').append(
+      [
+        '<li class="note invitation-link">',
+        '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
+        '</li>'
+      ].join('')
+    );
+  });
+}
+
 function renderContent(notesResponse, userGroups, activityNotes, authorNotes) {
 
   // Your Consoles tab
@@ -146,51 +156,18 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes) {
     var $container = $('#your-consoles').empty();
     $container.append('<ul class="list-unstyled submissions-list">');
 
-    if (_.includes(userGroups, PROGRAM_CHAIRS_ID)) {
-      $('#your-consoles .submissions-list').append([
-        '<li class="note invitation-link">',
-          '<a href="/group?id=' + PROGRAM_CHAIRS_ID + '">Program Chair Console</a>',
-        '</li>'
-      ].join(''));
-    }
-
-    if (_.includes(userGroups, AREA_CHAIRS_ID)) {
-      $('#your-consoles .submissions-list').append([
-        '<li class="note invitation-link">',
-          '<a href="/group?id=' + AREA_CHAIRS_ID + '" >',
-          AREA_CHAIRS_NAME.replace(/_/g, ' ') + ' Console',
-          '</a>',
-        '</li>'
-      ].join(''));
-    }
-
-    if (_.includes(userGroups, BUDDY_AREA_CHAIRS_ID)) {
-      $('#your-consoles .submissions-list').append([
-        '<li class="note invitation-link">',
-          '<a href="/group?id=' + BUDDY_AREA_CHAIRS_ID + '" >',
-          BUDDY_AREA_CHAIRS_NAME.replace(/_/g, ' ') + ' Console',
-          '</a>',
-        '</li>'
-      ].join(''));
-    }
-
-    if (_.includes(userGroups, REVIEWERS_ID)) {
-      $('#your-consoles .submissions-list').append([
-        '<li class="note invitation-link">',
-          '<a href="/group?id=' + REVIEWERS_ID + '" >',
-          REVIEWERS_NAME.replace(/_/g, ' ') + ' Console',
-          '</a>',
-        '</li>'
-      ].join(''));
-    }
-
+    var allConsoles = [];
     if (authorNotes.length) {
-      $('#your-consoles .submissions-list').append([
-        '<li class="note invitation-link">',
-          '<a href="/group?id=' + AUTHORS_ID + '">Author Console</a>',
-        '</li>'
-      ].join(''));
+      allConsoles.push(AUTHORS_ID);
     }
+    userGroups.forEach(function(group) {
+      if (!(allConsoles.includes(group))){
+        allConsoles.push(group);
+      }
+    });
+
+    // Render all console links for the user
+    createConsoleLinks(allConsoles);
 
     $('.tabs-container a[href="#your-consoles"]').parent().show();
   } else {
