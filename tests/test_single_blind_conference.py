@@ -190,7 +190,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('your-consoles')
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Author Console' == console.find_element_by_tag_name('a').text
+        assert 'Authors Console' == console.find_element_by_tag_name('a').text
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
         allsubmissions_tab = tabs.find_element_by_id('all-submissions')
@@ -237,7 +237,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('your-consoles')
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Author Console' == console.find_element_by_tag_name('a').text
+        assert 'Authors Console' == console.find_element_by_tag_name('a').text
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
         allsubmissions_tab = tabs.find_element_by_id('all-submissions')
@@ -499,7 +499,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('your-consoles')
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Author Console' == console.find_element_by_tag_name('a').text
+        assert 'Authors Console' == console.find_element_by_tag_name('a').text
 
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors#author-schedule", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
@@ -514,7 +514,7 @@ class TestSingleBlindConference():
         assert len(papers.find_elements_by_class_name('note')) == 1
 
         conference.set_authorpage_header({
-            'title': 'Author Console',
+            'title': 'Authors Console',
             'instructions': 'Set of instructions',
             'schedule': 'This is a schedule'
         })
@@ -524,7 +524,7 @@ class TestSingleBlindConference():
         header = selenium.find_element_by_id('header')
         assert header
         assert len(header.find_elements_by_tag_name('h1')) == 1
-        assert 'Author Console' == header.find_elements_by_tag_name('h1')[0].text
+        assert 'Authors Console' == header.find_elements_by_tag_name('h1')[0].text
         assert len(header.find_elements_by_class_name('description')) == 1
         assert 'Set of instructions' == header.find_elements_by_class_name('description')[0].text
         tabs = selenium.find_element_by_class_name('tabs-container')
