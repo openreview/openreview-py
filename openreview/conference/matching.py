@@ -6,6 +6,7 @@ from __future__ import division
 import csv
 
 import openreview
+import tld
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -61,7 +62,8 @@ def _conflict_label(conflicts):
     if any([('@' in c or '~' in c) for c in conflicts]):
         return 'Personal'
 
-    return 'Institutional (level {})'.format(max([c.count('.') for c in conflicts]))
+    return 'Institutional (level {})'.format(
+        max([len(openreview.tools.subdomains(c)) for c in conflicts]))
 
 
 class Matching(object):
