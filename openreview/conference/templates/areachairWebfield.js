@@ -228,34 +228,39 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, noteToRevi
   });
 };
 
+var displayError = function(message) {
+  message = message || 'The group data could not be loaded.';
+  $('#notes').empty().append('<div class="alert alert-danger"><strong>Error:</strong> ' + message + '</div>');
+};
+
 var getUserProfiles = function(userIds) {
   var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
   var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
 
-  return $.when(
-    controller.post('/profiles/search', {ids: ids}),
-    controller.post('/profiles/search', {emails: emails})
-  )
-  .then(function(result1, result2) {
+  var profileSearch = [];
+  if (ids.length) {
+    profileSearch.push(Webfield.post('/profiles/search', {ids: ids}),);
+  }
+  if (emails.length) {
+    profileSearch.push(Webfield.post('/profiles/search', {emails: emails}));
+  }
 
+  return $.when.apply($, profileSearch)
+  .then(function() {
+    var searchResults = _.toArray(arguments);
     var profileMap = {};
-
-    _.forEach(result1.profiles, function(profile) {
-
+    if (!searchResults) {
+      return profileMap;
+    }
+    var addProfileToMap = function(profile) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profileMap[profile.id] = profile;
-    })
-
-    _.forEach(result2.profiles, function(profile) {
-
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail || profile.content.emails[0];
-      profileMap[profile.id] = profile;
-    })
-
+    };
+    _.forEach(searchResults, function(result) {
+      _.forEach(result.profiles, addProfileToMap);
+    });
     return profileMap;
   })
   .fail(function(error) {
@@ -263,7 +268,6 @@ var getUserProfiles = function(userIds) {
     return null;
   });
 };
-
 
 // Render functions
 var renderHeader = function() {
@@ -332,7 +336,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
   var sendReviewerReminderEmailsStep1 = function(e) {
     var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
     var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
-    var filter  = $(this)[0].dataset["filter"];
+    var filter  = $(this)[0].dataset['filter'];
 
     var count = 0;
     var selectedRows = rows;
@@ -457,19 +461,16 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     return false;
   });
 
-  $('#div-msg-reviewers').find("a").on('click', function(e) {
+  $('#div-msg-reviewers').find('a').on('click', function(e) {
     var filter = $(this)[0].id;
     $('#message-reviewers-modal').remove();
 
-    var defaultBody = "";
-    if (filter === "msg-unsubmitted-reviewers"){
-      defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
-      'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
-    } else {
-      defaultBody = 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
+    var defaultBody = '';
+    if (filter === 'msg-unsubmitted-reviewers'){
+      defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n';
     }
+    defaultBody += 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+    '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair';
 
     var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
       filter: filter,
@@ -494,7 +495,7 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     renderTableRows(rows, container);
   } else {
     $(container).empty().append('<p class="empty-message">No assigned papers. ' +
-      'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
+    'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
   }
 };
 
@@ -736,7 +737,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
-  paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
+  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; i < paperReviewerNums.length + 1; i++) {
     if (i.toString() !== paperReviewerNums[i-1]) {
       return i;
@@ -768,7 +769,7 @@ var registerEventHandlers = function() {
       };
 
       $('#message-reviewers-modal').modal('hide');
-      // promptMessage('Your reminder email has been sent to ' + view.prettyId(userId));
+      promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
       postReviewerEmails(postData);
       $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
@@ -780,7 +781,7 @@ var registerEventHandlers = function() {
       reviewerId: userId,
       forumUrl: forumUrl,
       defaultSubject: SHORT_PHRASE + ' Reminder',
-      defaultBody: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
+      defaultBody: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair',
     });
@@ -822,14 +823,28 @@ var registerEventHandlers = function() {
     }
 
     var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
-    Webfield.put('/groups/members', {
-      id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-      members: [userToAdd]
+    var reviewerProfile = {
+      'email' : userToAdd,
+      'id' : userToAdd,
+      'name': '',
+      'content': {'names': [{'username': userToAdd}]}
+    };
+
+    getUserProfiles([userToAdd])
+    .then(function (userProfile){
+      if (userProfile && Object.keys(userProfile).length){
+        reviewerProfile = userProfile[Object.keys(userProfile)[0]];
+      }
+      Webfield.put('/groups/members', {
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
+        members: [reviewerProfile.id]
+      })
     })
     .then(function(result) {
       return Webfield.post('/groups', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
-        members: [userToAdd],
+        members: [reviewerProfile.id],
+        nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
         readers: [
           CONFERENCE_ID + '/Program_Chairs',
           CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs',
@@ -844,7 +859,7 @@ var registerEventHandlers = function() {
     .then(function(result) {
       return Webfield.put('/groups/members', {
         id: REVIEWER_GROUP,
-        members: [userToAdd]
+        members: [reviewerProfile.id]
       })
     })
     .then(function(results) {
@@ -854,9 +869,9 @@ var registerEventHandlers = function() {
       });
       var lastReminderSent = null;
       reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
-        id: userToAdd,
-        name: userToAdd.startsWith('~') ? view.prettyId(userToAdd) : '',
-        email: userToAdd,
+        id: reviewerProfile.id,
+        name: reviewerProfile.name,
+        email: reviewerProfile.email,
         forum: paperForum,
         forumUrl: forumUrl,
         lastReminderSent: lastReminderSent,
@@ -870,9 +885,9 @@ var registerEventHandlers = function() {
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-      promptMessage('Email has been sent to ' + view.prettyId(userToAdd) + ' about their new assignment to paper ' + paperNumber);
+      promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber);
       var postData = {
-        groups: [userToAdd],
+        groups: [reviewerProfile.id],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
         message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
         ' for ' + SHORT_PHRASE + '.' +
@@ -894,12 +909,12 @@ var registerEventHandlers = function() {
 
     Webfield.delete('/groups/members', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-      members: [userId]
+      members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
     })
     .then(function(result) {
       return Webfield.delete('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-        members: [userId]
+        members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
       });
     })
     .then(function(result) {
@@ -919,11 +934,11 @@ var registerEventHandlers = function() {
     var $allPaperCheckBoxes = $('input.select-note-reviewers');
     var $msgReviewerButton = $('#message-reviewers-btn');
     if ($superCheckBox[0].checked === true) {
-      $allPaperCheckBoxes.prop("checked", true);
-      $msgReviewerButton.attr("disabled", false);
+      $allPaperCheckBoxes.prop('checked', true);
+      $msgReviewerButton.attr('disabled', false);
     } else {
-      $allPaperCheckBoxes.prop("checked", false);
-      $msgReviewerButton.attr("disabled", true);
+      $allPaperCheckBoxes.prop('checked', false);
+      $msgReviewerButton.attr('disabled', true);
     }
   });
 
@@ -935,15 +950,15 @@ var registerEventHandlers = function() {
       return $allPaperCheckBoxes[index].checked === true;
     });
     if (checkedBoxes.length) {
-      $msgReviewerButton.attr("disabled", false);
+      $msgReviewerButton.attr('disabled', false);
       if (checkedBoxes.length === $allPaperCheckBoxes.length) {
-        $superCheckBox.prop("checked", true);
+        $superCheckBox.prop('checked', true);
       } else {
-        $superCheckBox.prop("checked", false);
+        $superCheckBox.prop('checked', false);
       }
     } else {
-      $msgReviewerButton.attr("disabled", true);
-      $superCheckBox.prop("checked", false);
+      $msgReviewerButton.attr('disabled', true);
+      $superCheckBox.prop('checked', false);
     }
   });
 };
