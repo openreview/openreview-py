@@ -561,7 +561,7 @@ class TestSingleBlindConference():
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
         conference.set_reviewerpage_header({
-            'title': 'Reviewer Console',
+            'title': 'Reviewers Console',
             'instructions': 'Set of instructions',
             'schedule': 'This is a schedule'
         })
@@ -571,7 +571,7 @@ class TestSingleBlindConference():
         header = selenium.find_element_by_id('header')
         assert header
         assert len(header.find_elements_by_tag_name('h1')) == 1
-        assert 'Reviewer Console' == header.find_elements_by_tag_name('h1')[0].text
+        assert 'Reviewers Console' == header.find_elements_by_tag_name('h1')[0].text
         assert len(header.find_elements_by_class_name('description')) == 1
         assert 'Set of instructions' == header.find_elements_by_class_name('description')[0].text
         tabs = selenium.find_element_by_class_name('tabs-container')
@@ -622,7 +622,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('your-consoles')
         assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
-        assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
+        assert 'Program Chairs Console' == console.find_element_by_tag_name('a').text
 
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Program_Chairs", pc_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
