@@ -119,6 +119,12 @@ def get_review_stage(client, request_forum):
 
     review_form_additional_options = request_forum.content.get('additional_review_form_options', {})
 
+    review_form_remove_options = request_forum.content.get('remove_review_form_options', '')
+    if ',' in review_form_remove_options:
+        review_form_remove_options = [field.strip() for field in review_form_remove_options.strip().split(',') if field.strip()]
+    if not isinstance(review_form_remove_options, list):
+        review_form_remove_options = []
+
     return openreview.ReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
@@ -127,7 +133,8 @@ def get_review_stage(client, request_forum):
         release_to_authors = (request_forum.content.get('release_reviews_to_authors', False) == 'Yes'),
         release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers', False) == 'Yes'),
         email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', False) == 'Yes'),
-        additional_fields = review_form_additional_options
+        additional_fields = review_form_additional_options,
+        remove_fields = review_form_remove_options
     )
 
 def get_meta_review_stage(client, request_forum):
