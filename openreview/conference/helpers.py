@@ -138,7 +138,7 @@ def get_review_stage(client, request_forum):
     )
 
 def get_meta_review_stage(client, request_forum):
-    meta_review_start_date = request_forum.content.get('meta_review_start_date', None)
+    meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()
     if meta_review_start_date:
         try:
             meta_review_start_date = datetime.datetime.strptime(meta_review_start_date, '%Y/%m/%d %H:%M')
