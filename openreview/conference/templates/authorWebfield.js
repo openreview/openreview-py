@@ -120,6 +120,7 @@ function renderContent(authorNotes, invitations, tagInvitations) {
     heading: null,
     container: '#your-submissions',
     search: { enabled: false },
+    fadeIn: false,
     displayOptions: paperDisplayOptions
   });
 
