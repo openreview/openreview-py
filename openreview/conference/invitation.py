@@ -470,6 +470,7 @@ class MetaReviewInvitation(openreview.Invitation):
             readers = ['everyone'],
             writers = [conference.id],
             signatures = [conference.id],
+            multiReply = False,
             reply = {
                 'content': content
             }
@@ -546,6 +547,7 @@ class DecisionInvitation(openreview.Invitation):
             writers = [conference.id],
             signatures = [conference.id],
             invitees = [conference.get_program_chairs_id()],
+            multiReply = False,
             reply = {
                 'writers': {
                     'values-regex': [conference.get_program_chairs_id()],

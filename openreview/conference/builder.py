@@ -607,39 +607,31 @@ class Conference(object):
             parent_label = 'Area_Chairs',
             individual_label = 'Area_Chair')
         else:
-            result = tools.add_assignment(self.client,
-            number,
-            self.get_id(),
-            user,
-            parent_label = 'Reviewers',
-            individual_label = 'AnonReviewer',
-            individual_group_params = {
-                'readers': [
-                    self.get_id(),
-                    self.get_program_chairs_id(),
-                    self.get_area_chairs_id(number = number)
-                ],
-                'writers': [
-                    self.get_id(),
-                    self.get_program_chairs_id(),
-                    self.get_area_chairs_id(number = number)
-                ]
-            },
-            parent_group_params = {
-                'readers': [
-                    self.get_id(),
-                    self.get_program_chairs_id(),
-                    self.get_area_chairs_id(number = number)
-                ],
-                'writers': [
-                    self.get_id(),
-                    self.get_program_chairs_id(),
-                    self.get_area_chairs_id(number = number)
-                ]
-            }, use_profile = True)
+            common_readers_writers = [
+                self.get_id(),
+                self.get_program_chairs_id()
+            ]
+            if self.use_area_chairs:
+                common_readers_writers.append(self.get_area_chairs_id(number = number))
 
+            result = tools.add_assignment(
+                self.client,
+                number,
+                self.get_id(),
+                user,
+                parent_label = 'Reviewers',
+                individual_label = 'AnonReviewer',
+                individual_group_params = {
+                    'readers': common_readers_writers,
+                    'writers': common_readers_writers
+                },
+                parent_group_params = {
+                    'readers': common_readers_writers,
+                    'writers': common_readers_writers
+                },
+                use_profile = True
+            )
             self.__create_group(self.get_reviewers_id(number = number) + '/Submitted', self.get_program_chairs_id())
-
             return result
 
     def set_assignments(self, assingment_title):
