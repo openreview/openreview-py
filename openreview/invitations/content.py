@@ -35,9 +35,9 @@ withdraw = {
         'order': 1
     },
     'withdrawal confirmation': {
-        'description':
+        'description': 'Please confirm to withdraw.',
         'value-radio': [
-            'I have read and agree with the withdrawal statement on behalf of myself and my co-authors.'
+            'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
         ],
         'order': 2,
         'required': True

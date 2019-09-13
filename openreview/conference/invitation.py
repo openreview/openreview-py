@@ -226,23 +226,68 @@ class WithdrawInvitation(openreview.Invitation):
 
         content = invitations.withdraw.copy()
 
-        withdraw_process_file = 'templates/{}.py'.format(
-            'withdraw_reveal_process' if conference.reveal_on_withdraw else 'withdraw_process')
+        super(WithdrawInvitation, self).__init__(
+            id=conference.get_invitation_id('Withdrawn_Submission'),
+            cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            readers=['everyone'],
+            writers=[conference.get_id()],
+            signatures=[conference.get_id()],
+            reply={
+                'content': {
+                    'authors': {
+                        'values': ['Anonymous']
+                    },
+                    'authorids': {
+                        'values-regex': '.*'
+                    }
+                }
+            }
+        )
+
+class PaperWithdrawInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        content = invitations.withdraw.copy()
+
+        withdraw_process_file = 'templates/withdraw_process.py'
 
         with open(os.path.join(os.path.dirname(__file__), withdraw_process_file)) as f:
             file_content = f.read()
 
             file_content = file_content.replace(
-                "WITHDRAWN_SUBMISSION_ID = ''",
-                "WITHDRAWN_SUBMISSION_ID = '" + conference.get_withdrawn_submission_id() + "'")
+                'WITHDRAWN_SUBMISSION_ID = \'\'',
+                'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
+            if conference.submission_stage.reveal_authors_on_withdraw:
+                file_content = file_content.replace(
+                    'REVEAL_AUTHORS_ON_WITHDRAW = False',
+                    "REVEAL_AUTHORS_ON_WITHDRAW = True")
 
-            super(WithdrawInvitation, self).__init__(
-                id=conference.get_invitation_id('Withdraw'),
-                cdate=tools.datetime_millis(conference.submission_stage.end_date),
+            super(PaperWithdrawInvitation, self).__init__(
+                id=conference.get_invitation_id('Withdraw', note.number),
+                cdate=tools.datetime_millis(conference.submission_stage.due_date),
+                invitees=[conference.get_authors_id(note.number)],
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=[conference.get_id()],
+                multiReply=False,
                 reply={
+                    'forum': note.id,
+                    'replyto': note.id,
+                    'readers': {
+                        "description": "User groups that will be able to read this withdraw note.",
+                        "values": ["everyone"]
+                    },
+                    'writers': {
+                        'values-copied': [
+                            conference.get_id(),
+                            '{signatures}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': '~.*',
+                        'description': 'How your identity will be displayed.'
+                    },
                     'content': content
                 },
                 process_string=file_content
@@ -576,9 +621,14 @@ class InvitationBuilder(object):
 
     def set_submission_invitation(self, conference):
 
+        if not conference.submission_stage.double_blind:
+            self.set_withdraw_invitation(conference)
         return self.client.post_invitation(SubmissionInvitation(conference))
 
+
     def set_blind_submission_invitation(self, conference):
+
+        self.set_withdraw_invitation(conference)
 
         invitation = BlindSubmissionsInvitation(conference = conference)
 
@@ -603,10 +653,14 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_withdraw_invitation(self, conference, notes):
+    def set_withdraw_invitation(self, conference):
+
         invitations = []
+        self.client.post_invitation(WithdrawInvitation(conference))
+
+        notes = list(conference.get_submissions())
         for note in notes:
-            invitations.append(self.client.post_invitation(WithdrawInvitation(conference, note)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note)))
 
         return invitations
 

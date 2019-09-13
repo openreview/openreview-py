@@ -720,7 +720,7 @@ class SubmissionStage(object):
             public=False,
             double_blind=False,
             allow_withdraw=False,
-            reveal_on_withdraw=False,
+            reveal_authors_on_withdraw=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -732,6 +732,7 @@ class SubmissionStage(object):
         self.public = public
         self.double_blind = double_blind
         self.allow_withdraw = allow_withdraw
+        self.reveal_authors_on_withdraw = reveal_authors_on_withdraw
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
@@ -777,7 +778,7 @@ class SubmissionStage(object):
         return conference.get_invitation_id(name)
 
     def get_withdrawn_submission_id(self, conference):
-        name = 'Withdrawn {}'.format(self.name)
+        name = 'Withdrawn_Submission'
         return conference.get_invitation_id(name)
 
 class BidStage(object):
@@ -1017,7 +1018,7 @@ class ConferenceBuilder(object):
             due_date,
             public,
             double_blind,
-            allow_withdraw
+            allow_withdraw,
             additional_fields,
             remove_fields,
             subject_areas
