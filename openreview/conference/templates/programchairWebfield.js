@@ -1343,7 +1343,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     })
   })
   .then(function(result) {
-    var commonReaders = [CONFERENCE_ID + '/Program_Chairs'];
+    var commonReaders = [CONFERENCE_ID, CONFERENCE_ID + '/Program_Chairs'];
     if (SHOW_AC_TAB){
       commonReaders.push(CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs');
     }
@@ -1528,13 +1528,13 @@ var postReviewerEmails = function(postData) {
   );
 
   return Webfield.post('/mail', postData)
-    .then(function(response) {
-      // Save the timestamp in the local storage
-      for (var i = 0; i < postData.groups.length; i++) {
-        var userId = postData.groups[i];
-        localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
-      }
-    });
+  .then(function(response) {
+    // Save the timestamp in the local storage
+    for (var i = 0; i < postData.groups.length; i++) {
+      var userId = postData.groups[i];
+      localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
+    }
+  });
 };
 
 OpenBanner.venueHomepageLink(CONFERENCE_ID);
