@@ -384,7 +384,10 @@ var displayConfiguration = function(requestForm, invitations) {
 
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
-  html += '<li><a href="/assignments?venue=' + CONFERENCE_ID + '">Paper Assignment</a> After Bidding is finished</li>';
+  if (SHOW_AC_TAB) {
+    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+  }
+  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
