@@ -224,24 +224,22 @@ class WithdrawInvitation(openreview.Invitation):
 
     def __init__(self, conference):
 
-        content = invitations.withdraw.copy()
+        content = invitations.submission.copy()
+        if (conference.double_blind):
+            content['authors'] = {
+                'values': ['Anonymous']
+            }
+            content['authorids'] = {
+                'values-regex': '.*'
+            }
 
         super(WithdrawInvitation, self).__init__(
             id=conference.get_invitation_id('Withdrawn_Submission'),
-            cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            # cdate=tools.datetime_millis(conference.submission_stage.due_date),
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
-            reply={
-                'content': {
-                    'authors': {
-                        'values': ['Anonymous']
-                    },
-                    'authorids': {
-                        'values-regex': '.*'
-                    }
-                }
-            }
+            reply=content
         )
 
 class PaperWithdrawInvitation(openreview.Invitation):
