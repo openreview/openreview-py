@@ -71,13 +71,7 @@ function load() {
       details: 'forumContent,writable'
     });
 
-    userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true })
-    .then(function(groups) {
-      return _.filter(
-        _.map(groups, function(g) { return g.id; }),
-        function(id) { return _.startsWith(id, CONFERENCE_ID); }
-      );
-    });
+    userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true });
 
     authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
       pageSize: PAGE_SIZE,
@@ -136,12 +130,14 @@ function renderConferenceTabs() {
 }
 
 function createConsoleLinks(allGroups) {
-  allGroups.sort().forEach(function(group) {
+  var uniqueGroups = _.sortBy(_.uniq(allGroups));
+  var links = [];
+  uniqueGroups.forEach(function(group) {
     var groupName = group.split('/').pop();
     if (groupName.slice(-1) === 's') {
       groupName = groupName.slice(0, -1);
     }
-    $('#your-consoles .submissions-list').append(
+    links.push(
       [
         '<li class="note invitation-link">',
         '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
@@ -149,6 +145,8 @@ function createConsoleLinks(allGroups) {
       ].join('')
     );
   });
+
+  $('#your-consoles .submissions-list').append(links);
 }
 
 function renderContent(notesResponse, userGroups, activityNotes, authorNotes) {
@@ -164,9 +162,7 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes) {
       allConsoles.push(AUTHORS_ID);
     }
     userGroups.forEach(function(group) {
-      if (!(allConsoles.includes(group))){
-        allConsoles.push(group);
-      }
+      allConsoles.push(group.id);
     });
 
     // Render all console links for the user

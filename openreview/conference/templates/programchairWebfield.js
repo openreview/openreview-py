@@ -149,8 +149,7 @@ var getAreaChairGroups = function(noteNumbers) {
         var num = getNumberfromGroup(g.id, 'Paper');
         var index = getNumberfromGroup(g.id, 'Area_Chair');
         if (num) {
-          var areaChair;
-          areaChair = g.members.find(function(member){
+          var areaChair = _.find(g.members, function(member){
             return (member.includes('~') || member.includes('@'));
           });
           if (areaChair) {
