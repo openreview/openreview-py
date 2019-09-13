@@ -553,13 +553,10 @@ var displayPaperStatusTable = function() {
     Meta_Review_Missing: function(row) { return row.areachairProgressData.numMetaReview; }
   };
 
-  if (pcAssignmentTagInvitations) {
+  if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
-      if (tags.length && tags[0].tag === view.prettyId(user.profile.id)){
-        return true;
-      }
-      return false;
+      return (tags.length && tags[0].tag === view.prettyId(user.profile.id));
     }
   }
 
