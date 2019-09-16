@@ -27,16 +27,18 @@ var allReviewers = [];
 var conferenceStatusData = {};
 var pcTags = {};
 
-var PC_PAPER_TAG_INVITATION = CONFERENCE_ID + '/-/Assigned_to_PC';
+var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 
 // Ajax functions
 var getAllReviewers = function() {
   if (ENABLE_REVIEWER_REASSIGNMENT){
-    Webfield.get('/groups', { id: REVIEWERS_ID })
+    return Webfield.get('/groups', { id: REVIEWERS_ID })
     .then(function(result) {
       allReviewers = result.groups[0].members;
+      return allReviewers;
     });
   }
+  return $.Deferred().resolve([]);
 }
 
 var getNumberfromGroup = function(groupId, name) {
@@ -262,7 +264,7 @@ var getPcAssignmentTagInvitations = function() {
 }
 
 var getPcAssignmentTags = function() {
-  Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION})
+  return Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION})
   .then(function(results) {
     if (results && results.length) {
       results.forEach(function(tag){
@@ -1261,10 +1263,6 @@ var buildNoteMap = function(noteNumbers) {
   return noteMap;
 };
 
-var buildPcTagMap = function(forumNumbers) {
-
-}
-
 // Kick the whole thing off
 displayHeader();
 
@@ -1274,9 +1272,12 @@ $.ajaxSetup({
 
 controller.addHandler('areachairs', {
   token: function(token) {
-    getAllReviewers();
-    getBlindedNotes()
-    .then(function(notes) {
+    $.when(
+      getAllReviewers(),
+      getBlindedNotes(),
+      getPcAssignmentTagInvitations()
+    )
+    .then(function(reviewers, notes, pcAssignmentTagInvitations) {
       var noteNumbers = _.map(notes, function(note) { return note.number; });
       var metaReviewsP = $.Deferred().resolve({ notes: []});
       var areaChairGroupsP = $.Deferred().resolve({ byNotes: buildNoteMap(noteNumbers), byAreaChairs: {}});
@@ -1289,6 +1290,10 @@ controller.addHandler('areachairs', {
       if (REQUEST_FORM_ID) {
         requestFormP = getRequestForm();
       }
+      var assignmentTagsP = $.Deferred().resolve();
+      if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
+        assignmentTagsP = getPcAssignmentTags();
+      }
       return $.when(
         notes,
         getOfficialReviews(noteNumbers),
@@ -1298,7 +1303,8 @@ controller.addHandler('areachairs', {
         decisionReviewsP,
         requestFormP,
         getInvitations(),
-        getPcAssignmentTagInvitations()
+        pcAssignmentTagInvitations,
+        assignmentTagsP
       );
     })
     .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations, pcAssignmentTagInvitations) {
@@ -1311,10 +1317,6 @@ controller.addHandler('areachairs', {
       }, []));
 
       var uniqueIds = _.union(uniqueReviewerIds, uniqueAreaChairIds);
-
-      if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
-        getPcAssignmentTags();
-      }
 
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
