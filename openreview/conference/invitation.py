@@ -304,6 +304,10 @@ class ReviewInvitation(openreview.Invitation):
         for key in review_stage.additional_fields:
             content[key] = review_stage.additional_fields[key]
 
+        for field in review_stage.remove_fields:
+            if field in content:
+                del content[field]
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
             file_content = f.read()
 
