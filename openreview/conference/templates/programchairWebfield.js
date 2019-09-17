@@ -25,15 +25,20 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 var reviewerSummaryMap = {};
 var allReviewers = [];
 var conferenceStatusData = {};
+var pcTags = {};
+
+var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 
 // Ajax functions
 var getAllReviewers = function() {
   if (ENABLE_REVIEWER_REASSIGNMENT){
-    Webfield.get('/groups', { id: REVIEWERS_ID })
+    return Webfield.get('/groups', { id: REVIEWERS_ID })
     .then(function(result) {
       allReviewers = result.groups[0].members;
+      return allReviewers;
     });
   }
+  return $.Deferred().resolve([]);
 }
 
 var getNumberfromGroup = function(groupId, name) {
@@ -254,6 +259,24 @@ var getInvitations = function() {
   return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
 }
 
+var getPcAssignmentTagInvitations = function() {
+  return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
+}
+
+var getPcAssignmentTags = function() {
+  return Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION})
+  .then(function(results) {
+    if (results && results.length) {
+      results.forEach(function(tag){
+        if (!(tag.forum in pcTags)) {
+          pcTags[tag.forum] = [];
+        }
+        pcTags[tag.forum].push(tag);
+      });
+    }
+  });
+}
+
 var findNextAnonGroupNumber = function(paperNumber){
   var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; i < paperReviewerNums.length + 1; i++) {
@@ -431,6 +454,54 @@ var displaySortPanel = function(container, sortOptions, sortResults) {
   });
 };
 
+var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
+
+  if (!(pcAssignmentTagInvitations) || !(pcAssignmentTagInvitations.length)) {
+    return null;
+  }
+
+  var tagInvitation = pcAssignmentTagInvitations[0];
+
+  _.forEach(data, function(d) {
+    var paperTags = [];
+    if (d.note.forum in pcTags) {
+      paperTags = pcTags[d.note.forum];
+    }
+
+    $noteSummaryContainer = $('#note-summary-' + d.note.number);
+    var $tagWidget = view.mkTagInput(
+      'tag',
+      tagInvitation && tagInvitation.reply.content.tag,
+      paperTags,
+      {
+        forum: d.note.id,
+        placeholder: (tagInvitation && tagInvitation.reply.content.tag.description) || (tagInvitation && prettyId(tagInvitation.id)),
+        label: tagInvitation && view.prettyInvitationId(tagInvitation.id),
+        readOnly: false,
+        onChange: function(id, value, deleted, done) {
+          var body = {
+            id: id,
+            tag: value,
+            signatures: [PROGRAM_CHAIRS_ID],
+            readers: [PROGRAM_CHAIRS_ID],
+            forum: d.note.id,
+            invitation: tagInvitation.id,
+            ddate: deleted ? Date.now() : null
+          };
+          body = view.getCopiedValues(body, tagInvitation.reply);
+          Webfield.post('/tags', body)
+          .then(function(result) {
+            done(result);
+          })
+          .fail(function(error) {
+            promptError(error ? error : 'The specified tag could not be updated');
+          });
+        }
+      });
+      $noteSummaryContainer.append($tagWidget);
+  });
+}
+
 var displayPaperStatusTable = function() {
 
   var container = '#paper-status';
@@ -441,6 +512,7 @@ var displayPaperStatusTable = function() {
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
   var decisions = conferenceStatusData.decisions;
+  var pcAssignmentTagInvitations = conferenceStatusData.pcAssignmentTagInvitations;
 
   var rowData = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number];
@@ -484,6 +556,13 @@ var displayPaperStatusTable = function() {
     Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
     Meta_Review_Missing: function(row) { return row.areachairProgressData.numMetaReview; }
   };
+
+  if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
+    sortOptions['Papers_Assigned_to_Me'] = function(row) {
+      var tags = pcTags[row.note.id];
+      return (tags.length && tags[0].tag === view.prettyId(user.profile.id));
+    }
+  }
 
   var sortResults = function(newOption, switchOrder) {
     if (switchOrder) {
@@ -596,17 +675,20 @@ var displayPaperStatusTable = function() {
   };
 
   var renderTable = function(container, data) {
+    var paperNumbers = [];
     var rowData = _.map(data, function(d) {
+      paperNumbers.push(d.note.number);
+      var numberHtml = '<strong class="note-number">' + d.note.number + '</strong>';
       var checked = '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
       d.note.id + '" ' + (d.selected ? 'checked="checked"' : '') + '></label>';
-      var number = '<strong class="note-number">' + d.note.number + '</strong>';
+      var numberHtml = '<strong class="note-number">' + d.note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
       var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
       var rows = [];
       rows.push(checked);
-      rows.push(number);
+      rows.push(numberHtml);
       rows.push(summaryHtml);
       rows.push(reviewHtml);
       if (SHOW_AC_TAB) {
@@ -649,6 +731,7 @@ var displayPaperStatusTable = function() {
       $('.console-table th').eq(3).css('width', '45%');
       $('.console-table th').eq(4).css('width', '25%');
     }
+    addTagsToPaperSummaryCell(data, pcAssignmentTagInvitations);
 
     $('#div-msg-reviewers').find('a').on('click', function(e) {
       var filter = $(this)[0].id;
@@ -1189,12 +1272,12 @@ $.ajaxSetup({
 
 controller.addHandler('areachairs', {
   token: function(token) {
-    var pl = model.tokenPayload(token);
-    var user = pl.user;
-
-    getAllReviewers();
-    getBlindedNotes()
-    .then(function(notes) {
+    $.when(
+      getAllReviewers(),
+      getBlindedNotes(),
+      getPcAssignmentTagInvitations()
+    )
+    .then(function(reviewers, notes, pcAssignmentTagInvitations) {
       var noteNumbers = _.map(notes, function(note) { return note.number; });
       var metaReviewsP = $.Deferred().resolve({ notes: []});
       var areaChairGroupsP = $.Deferred().resolve({ byNotes: buildNoteMap(noteNumbers), byAreaChairs: {}});
@@ -1207,6 +1290,10 @@ controller.addHandler('areachairs', {
       if (REQUEST_FORM_ID) {
         requestFormP = getRequestForm();
       }
+      var assignmentTagsP = $.Deferred().resolve();
+      if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
+        assignmentTagsP = getPcAssignmentTags();
+      }
       return $.when(
         notes,
         getOfficialReviews(noteNumbers),
@@ -1215,10 +1302,12 @@ controller.addHandler('areachairs', {
         areaChairGroupsP,
         decisionReviewsP,
         requestFormP,
-        getInvitations()
+        getInvitations(),
+        pcAssignmentTagInvitations,
+        assignmentTagsP
       );
     })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations) {
+    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations, pcAssignmentTagInvitations) {
       var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
         return result.concat(_.values(idsObj));
       }, []));
@@ -1238,9 +1327,14 @@ controller.addHandler('areachairs', {
           'metaReviews' : metaReviews,
           'reviewerGroups' : reviewerGroups,
           'areaChairGroups' : areaChairGroups,
-          'decisions' : decisions
+          'decisions' : decisions,
+          'pcAssignmentTagInvitations' : pcAssignmentTagInvitations
         }
         displayConfiguration(requestForm, invitations);
+        displayPaperStatusTable();
+        if (SHOW_AC_TAB) {
+          displaySPCStatusTable();
+        }
         Webfield.ui.done();
       })
     })

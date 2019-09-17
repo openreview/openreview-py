@@ -130,7 +130,7 @@ class TestReviewersConference():
         request_page(selenium, "http://localhost:3000/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#reviewer-status", client.token)
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
-        assert len(reviews) == 4
+        assert len(reviews) == 5
 
         note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2019/Workshop/KGB/Paper1/-/Official_Review',
             forum = note.id,
