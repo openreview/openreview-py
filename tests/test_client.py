@@ -52,6 +52,12 @@ class TestClient():
         assert client.profile
         assert '~Test_User1' == client.profile.id
 
+        client = openreview.Client(token='Bearer ' + test_client.token, username='test@mail.com', password='1234')
+        assert client
+        assert client.token
+        assert client.profile
+        assert '~Test_User1' == client.profile.id
+
     def test_login_user(self):
         try:
             guest = openreview.Client()
