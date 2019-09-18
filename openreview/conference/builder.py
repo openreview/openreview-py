@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import time
+import datetime
 import re
 from .. import openreview
 from .. import tools
@@ -20,6 +21,7 @@ class Conference(object):
         self.groups = []
         self.name = ''
         self.short_name = ''
+        self.year = datetime.datetime.now().year
         self.homepage_header = {}
         self.authorpage_header = {}
         self.reviewerpage_header = {}
@@ -403,8 +405,15 @@ class Conference(object):
                 blind_note.content = {
                     'authorids': [self.get_authors_id(number = blind_note.number)],
                     'authors': ['Anonymous'],
-                    '_bibtex': None #Create bibtext automatically
                 }
+
+                if self.submission_stage.public:
+                    print(blind_note)
+                    blind_note.content['_bibtex'] = tools.get_bibtex(note = note,
+                    venue_fullname = self.name,
+                    url_forum=blind_note.id,
+                    year=str(self.year),
+                    baseurl=self.client.baseurl)
 
                 blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
@@ -933,6 +942,9 @@ class ConferenceBuilder(object):
 
     def set_conference_short_name(self, name):
         self.conference.set_short_name(name)
+
+    def set_conference_year(self, year):
+        self.conference.set_year(year)
 
     def set_conference_reviewers_name(self, name):
         self.conference.set_reviewers_name(name)

@@ -647,6 +647,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_conference_name('Automated Knowledge Base Construction')
         additional_fields = {
             'archival_status': {
                 'description': 'Archival Status.',
@@ -672,6 +673,17 @@ class TestDoubleBlindConference():
         blind_submissions = conference.create_blind_submissions()
         assert blind_submissions
         assert len(blind_submissions) == 1
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert blind_submissions[0].content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
+        assert blind_submissions[0].content['_bibtex'] == '''@inproceedings{
+anonymous2019new,
+title={New paper title},
+author={Anonymous},
+booktitle={Submitted to Automated Knowledge Base Construction},
+year={2019},
+url={http://localhost:3000/forum?id=''' + blind_submissions[0].id + '''},
+note={under review}
+}'''
 
         invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
