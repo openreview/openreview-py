@@ -408,12 +408,11 @@ class Conference(object):
                 }
 
                 if self.submission_stage.public:
-                    print(blind_note)
                     blind_note.content['_bibtex'] = tools.get_bibtex(note = note,
-                    venue_fullname = self.name,
-                    url_forum=blind_note.id,
-                    year=str(self.year),
-                    baseurl=self.client.baseurl)
+                        venue_fullname = self.name,
+                        url_forum=blind_note.id,
+                        year=str(self.year),
+                        baseurl=self.client.baseurl)
 
                 blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
