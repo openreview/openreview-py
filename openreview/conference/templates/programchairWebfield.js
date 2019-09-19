@@ -94,9 +94,9 @@ var getOfficialReviews = function(noteNumbers) {
       }
       if (num) {
         if (num in noteMap) {
-          ratingMatch = n.content.rating.match(ratingExp);
+          ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
           n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
-          confidenceMatch = n.content.confidence.match(ratingExp);
+          confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
           n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
 
           noteMap[num][index] = n;
@@ -1049,7 +1049,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         note: reviewObj.id,
         rating: reviewObj.rating,
         confidence: reviewObj.confidence,
-        reviewLength: reviewObj.content.review.length,
+        reviewLength: reviewObj.content.review && reviewObj.content.review.length,
       });
       ratings.push(reviewObj.rating);
       confidences.push(reviewObj.confidence);
