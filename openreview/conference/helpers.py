@@ -117,7 +117,25 @@ def get_review_stage(client, request_forum):
     else:
         review_due_date = None
 
-    return openreview.ReviewStage(start_date = review_start_date, due_date = review_due_date, allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'), public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'), release_to_authors = (request_forum.content.get('release_reviews_to_authors', False) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers', False) == 'Yes'), email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', False) == 'Yes'))
+    review_form_additional_options = request_forum.content.get('additional_review_form_options', {})
+
+    review_form_remove_options = request_forum.content.get('remove_review_form_options', '')
+    if ',' in review_form_remove_options:
+        review_form_remove_options = [field.strip() for field in review_form_remove_options.strip().split(',') if field.strip()]
+    if not isinstance(review_form_remove_options, list):
+        review_form_remove_options = []
+
+    return openreview.ReviewStage(
+        start_date = review_start_date,
+        due_date = review_due_date,
+        allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
+        public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'),
+        release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
+        release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers''').startswith('Yes')),
+        email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),
+        additional_fields = review_form_additional_options,
+        remove_fields = review_form_remove_options
+    )
 
 def get_meta_review_stage(client, request_forum):
     meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()

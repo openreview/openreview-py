@@ -783,7 +783,7 @@ class BidStage(object):
 
 class ReviewStage(object):
 
-    def __init__(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
+    def __init__(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Official_Review'
@@ -795,6 +795,7 @@ class ReviewStage(object):
         self.release_to_reviewers = release_to_reviewers
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
 
     def get_readers(self, conference, number):
 
@@ -1019,8 +1020,8 @@ class ConferenceBuilder(object):
     def set_bid_stage(self, start_date = None, due_date = None, request_count = 50):
         self.bid_stage = BidStage(start_date, due_date, request_count)
 
-    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}):
-        self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields)
+    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
+        self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
 
     def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
         self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
