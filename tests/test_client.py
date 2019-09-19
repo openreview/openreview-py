@@ -8,7 +8,7 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 39, 'missing groups'
+        assert len(groups) == 52, 'missing groups'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -19,6 +19,44 @@ class TestClient():
         assert 'active_venues' in group_names
         assert 'host' in group_names
         assert 'test.org/2019/Conference/Reviewers/Declined' in group_names
+
+    def test_create_client(self, client, test_client):
+
+        client = openreview.Client()
+        assert client
+        assert not client.token
+        assert not client.profile
+
+        os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Password is missing.*'):
+            client = openreview.Client()
+
+        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+
+        client = openreview.Client()
+        assert client
+        assert client.token
+        assert client.profile
+        assert '~Super_User1' == client.profile.id
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
+            client = openreview.Client(username='nouser@mail.com')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
+            client = openreview.Client(username='nouser@mail.com', password='1234')
+
+        client = openreview.Client(token='Bearer ' + test_client.token)
+        assert client
+        assert client.token
+        assert client.profile
+        assert '~Test_User1' == client.profile.id
+
+        client = openreview.Client(token='Bearer ' + test_client.token, username='test@mail.com', password='1234')
+        assert client
+        assert client.token
+        assert client.profile
+        assert '~Test_User1' == client.profile.id
 
     def test_login_user(self):
         try:
@@ -115,7 +153,7 @@ class TestClient():
 
     def test_get_invitations_by_invitee(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
-        assert len(invitations) == 0
+        assert len(invitations) == 1
 
         invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
         assert len(invitations) == 0
@@ -153,13 +191,13 @@ class TestClient():
         assert note
 
         notes = client.get_notes(content = { 'title': 'Paper title'})
-        assert len(notes) == 1
+        assert len(notes) == 3
 
         notes = client.get_notes(content = { 'title': 'Paper title3333'})
         assert len(notes) == 0
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title'}))
-        assert len(notes) == 1
+        assert len(notes) == 3
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
