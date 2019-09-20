@@ -634,8 +634,12 @@ class Conference(object):
             self.__create_group(self.get_reviewers_id(number = number) + '/Submitted', self.get_program_chairs_id())
             return result
 
-    def set_assignments(self, assingment_title):
-        conference_matching = matching.Matching(self)
+    def set_assignments(self, assingment_title, is_area_chair=False):
+        if is_area_chair:
+            match_group = self.client.get_group(self.get_area_chairs_id())
+        else:
+            match_group = self.client.get_group(self.get_reviewers_id())
+        conference_matching = matching.Matching(self, match_group)
         self.__set_reviewer_reassignment(enabled=True)
         return conference_matching.deploy(assingment_title)
 
