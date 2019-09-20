@@ -472,9 +472,6 @@ class Matching(object):
             invitation=self.match_group.id + '/-/Assignment_Configuration',
             content={'title': assingment_title})
 
-        if self.conference.use_area_chairs:
-            self.conference.set_area_chairs(enable_reviewer_reassignment=True)
-
         if notes:
             configuration_note = notes[0]
             match_group = configuration_note.content['match_group']
@@ -486,7 +483,7 @@ class Matching(object):
 
             assignment_edges = openreview.tools.iterget_edges(
                 client,
-                invitation=self.conference.get_paper_assignment_id(),
+                invitation=self.conference.get_paper_assignment_id(self.match_group.id),
                 label=assingment_title)
 
             paper_by_forum = {n.forum: n for n in submissions}
