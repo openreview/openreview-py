@@ -479,8 +479,6 @@ class Matching(object):
         # Get the configuration note to check the group to assign
         client = self.conference.client
         notes = client.get_notes(invitation = self.conference.get_id() + '/-/Assignment_Configuration', content = { 'title': assingment_title })
-        if self.conference.use_area_chairs:
-            self.conference.set_area_chairs(enable_reviewer_reassignment = True)
 
         if notes:
             configuration_note = notes[0]
