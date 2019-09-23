@@ -202,5 +202,29 @@ class TestClient():
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
+    def test_merge_profile(self, client):
+        guest = openreview.Client()
+        from_profile = guest.register_user(email = 'celeste@mail.com', first = 'Celeste', last = 'Bok', password = '1234')
+        assert from_profile
+        to_profile = guest.register_user(email = 'melisab@mail.com', first = 'Melissa', last = 'Bok', password = '5678')
+        assert to_profile
+
+        assert from_profile['id'] == '~Celeste_Bok1'
+        assert to_profile['id'] == '~Melissa_Bok1'
+
+        profile = client.merge_profiles('~Melissa_Bok1', '~Celeste_Bok1')
+
+        assert profile, 'Could not merge the profiles'
+        assert profile.id == '~Melissa_Bok1'
+        usernames = [name['username'] for name in profile.content['names']]
+        assert '~Melissa_Bok1' in usernames
+        assert '~Celeste_Bok1' in usernames
+
+        merged_profile = client.get_profile(email_or_id = '~Celeste_Bok1')
+        merged_profile.id == '~Melissa_Bok1'
+
+
+
+
 
 
