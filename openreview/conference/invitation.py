@@ -772,7 +772,7 @@ class InvitationBuilder(object):
                     },
                     "Instructions": {
                         "order": 1,
-                        "value": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Registration\" button."
+                        "value": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Registration\" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection"
                     }
                 }
             }
@@ -788,7 +788,7 @@ class InvitationBuilder(object):
             replyto = None,
             forum = None,
             content = {
-                "Instructions": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Registration\" button.",
+                "Instructions": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Registration\" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection",
                 "title": "Questionnaire for Reviewers"
             }
         ))
@@ -799,13 +799,13 @@ class InvitationBuilder(object):
                 'order': 1
             },
             'profile confirmed': {
-                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "yes".\n\n',
+                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "yes".\n\n',
                 'value-radio': ['Yes', 'No'],
                 'required': True,
                 'order': 2
             },
             'expertise confirmed': {
-                'description': 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection. Please confirm finishing this step by selecting "yes".\n\n',
+                'description': 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at the Expertise Selection (link in instructions above). Please confirm finishing this step by selecting "yes".\n\n',
                 'value-radio': ['Yes', 'No'],
                 'required': True,
                 'order': 4
