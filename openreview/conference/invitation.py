@@ -753,12 +753,11 @@ class InvitationBuilder(object):
             invitees.append(conference.get_area_chairs_id())
         invitees.append(conference.get_reviewers_id())
 
-        subj_desc = 'To properly assign papers to reviewers, we ask that reviewers provide their areas of expertise from among the provided list of subject areas. Please submit your areas of expertise by selecting the appropriate options from the "Subject Areas" list.\n\n'
+        coi_desc = 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. After you have updated your profile, please confirm that your OpenReview profile is up-to-date by selecting "yes" in the "Profile Confirmed" section.\n\n'
 
-        coi_desc = 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. After you have updated your profile, please confirm that your OpenReview profile is up-to-date by selecting yes in the "Profile Confirmed" section.\n\n'
+        expertise_desc = 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at . After you have done this, please confirm that your TPMS account is up-to-date by selecting "yes" in the "Expertise Confirmed" section.\n\n'
 
-        tpms_desc = 'In addition to subject areas, we will be using the Toronto Paper Matching System (TPMS) to compute paper-reviewer affinity scores. Please take a moment to sign up for TPMS and/or update your TPMS account with your latest papers. Then, please ensure that the email address that is affiliated with your TPMS account is linked to your OpenReview profile. After you have done this, please confirm that your TPMS account is up-to-date by selecting yes in the "TPMS Account Confirmed" section.\n\n'
-
+        reviewer_experience_desc = 'How many times have you been a reviewer for any conference or journal? Please answer by selecting the appropriate choice in the "Reviewing Experience" section.\n\n'
 
         # Create super invitation with a webfield
         registration_parent_invitation = openreview.Invitation(
@@ -774,18 +773,21 @@ class InvitationBuilder(object):
                 'writers': {'values': [conference.get_id()]},
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
-                    'title': {'value': conference.get_short_name() + ' Registration'},
-                    'subject_areas': {
-                        'value': subj_desc,
+                    'title': {
+                        'value': conference.get_short_name() + ' Registration',
                         'order': 1
                     },
                     'profile confirmed': {
                         'value': coi_desc,
                         'order': 2
                     },
-                    'TPMS account confirmed': {
-                        'value': tpms_desc,
+                    'expertise confirmed': {
+                        'value': expertise_desc,
                         'order': 3
+                    },
+                    'reviewing experience': {
+                        'value': reviewer_experience_desc,
+                        'order': 4
                     }
                 }
             }
@@ -802,9 +804,9 @@ class InvitationBuilder(object):
             forum = None,
             content = {
                 'title': registration_parent_invitation.reply['content']['title']['value'],
-                'subject_areas': registration_parent_invitation.reply['content']['subject_areas']['value'],
                 'profile confirmed': registration_parent_invitation.reply['content']['profile confirmed']['value'],
-                'TPMS account confirmed': registration_parent_invitation.reply['content']['TPMS account confirmed']['value'],
+                'expertise confirmed': registration_parent_invitation.reply['content']['expertise confirmed']['value'],
+                'reviewing experience': registration_parent_invitation.reply['content']['reviewing experience']['value']
             }
         ))
 
@@ -843,20 +845,27 @@ class InvitationBuilder(object):
                         'value': conference.get_short_name() + ' Registration',
                         'order': 1
                     },
-                    'subject_areas': {
-                        'values-dropdown': conference.submission_stage.subject_areas,
+                    'profile confirmed': {
+                        'value-radio': ['Yes', 'No'],
                         'required': True,
                         'order': 2
                     },
-                    'profile confirmed': {
+                    'expertise confirmed': {
                         'value-radio': ['Yes', 'No'],
                         'required': True,
                         'order': 3
                     },
-                    'TPMS account confirmed': {
-                        'value-radio': ['Yes', 'No'],
-                        'required': True,
-                        'order': 4
+                    'Reviewing Experience': {
+                        # 'description': 'How many times have you been a reviewer for any conference or journal?',
+                        'value-radio': [
+                            'Never - this is my first time',
+                            '1 time - building my reviewer skills',
+                            '2-4 times  - comfortable with the reviewing process',
+                            '5-10 times  - active community citizen',
+                            '10+ times  - seasoned reviewer'
+                        ],
+                        'order': 4,
+                        'required': True
                     }
                 }
             }
