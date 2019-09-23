@@ -793,6 +793,88 @@ class InvitationBuilder(object):
             }
         ))
 
+        registration_content = {
+            'title': {
+                'value': conference.get_short_name() + ' Registration',
+                'order': 1
+            },
+            'profile confirmed': {
+                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "yes".\n\n',
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+                'order': 2
+            },
+            'expertise confirmed': {
+                'description': 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection. Please confirm finishing this step by selecting "yes".\n\n',
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+                'order': 4
+            },
+            'reviewing experience': {
+                'description': 'How many times have you been a reviewer for any conference or journal?',
+                'value-radio': [
+                    'Never - this is my first time',
+                    '1 time - building my reviewer skills',
+                    '2-4 times  - comfortable with the reviewing process',
+                    '5-10 times  - active community citizen',
+                    '10+ times  - seasoned reviewer'
+                ],
+                'order': 5,
+                'required': True
+            },
+            'previous ICLR author': {
+                'description': 'Have you published at ICLR in the last two years?',
+                'value-radio': [
+                    'Yes',
+                    'No'
+                ],
+                'order': 6,
+                'required': False
+            },
+            'reviewing preferences': {
+                'description': 'What is the most important factor of the reviewing process for you? (Choose one)',
+                'value-radio': [
+                    'Getting papers that best match my area of expertise',
+                    'Having the smallest number of papers to review',
+                    'Having a long-enough reviewing period (6-8 weeks)',
+                    'Having enough time for active discussion about papers.',
+                    'Receiving clear instructions about the expectations of reviews.'
+                ],
+                'order': 7,
+                'required': False
+            },
+            'your recent publication venues': {
+                'description': 'Where have you recently published? Select all that apply.',
+                'values-dropdown': [
+                    'Neural Information Processing Systems (NIPS)',
+                    'International Conference on Machine Learning (ICML)',
+                    'Artificial Intelligence and Statistics (AISTATS)',
+                    'Uncertainty in Artificial Intelligence (UAI)',
+                    'Association for Advances in Artificial Intelligence (AAAI)',
+                    'Computer Vision and Pattern Recognition (CVPR)',
+                    'International Conference on Computer Vision (ICCV)',
+                    'International Joint Conference on Artificial Intelligence (IJCAI)',
+                    'Robotics: Systems and Science (RSS)',
+                    'Conference on Robotics and Learning (CORL)',
+                    'Association for Computational Linguistics or related (ACL/NAACL/EACL)',
+                    'Empirical Methods in Natural Language Processing (EMNLP)',
+                    'Conference on Learning Theory (COLT)',
+                    'Algorithmic Learning Theory (ALT)',
+                    'Knowledge Discovery and Data Mining (KDD)',
+                    'Other'
+                ],
+                'order': 8,
+                'required': False
+            }
+        }
+        if conference.submission_stage.subject_areas:
+            registration_content['subject_areas'] = {
+                'description': 'To properly assign papers to reviewers, we ask that reviewers provide their areas of expertise from among the provided list of subject areas. Please submit your areas of expertise by selecting the appropriate options from the "Subject Areas" list.\n\n',
+                'values-dropdown': conference.submission_stage.subject_areas,
+                'order': 3,
+                'required': False
+            }
+
         registration_invitation = self.client.post_invitation(openreview.Invitation(
             id = conference.get_registration_id(),
             cdate = tools.datetime_millis(start_date) if start_date else None,
@@ -823,80 +905,7 @@ class InvitationBuilder(object):
                     'description': 'How your identity will be displayed.',
                     'values-regex': '~.*'
                 },
-                'content': {
-                    'title': {
-                        'value': conference.get_short_name() + ' Registration',
-                        'order': 1
-                    },
-                    'profile confirmed': {
-                        'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "yes".\n\n',
-                        'value-radio': ['Yes', 'No'],
-                        'required': True,
-                        'order': 2
-                    },
-                    'expertise confirmed': {
-                        'description': 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection. Please confirm finishing this step by selecting "yes".\n\n',
-                        'value-radio': ['Yes', 'No'],
-                        'required': True,
-                        'order': 3
-                    },
-                    'reviewing experience': {
-                        'description': 'How many times have you been a reviewer for any conference or journal?',
-                        'value-radio': [
-                            'Never - this is my first time',
-                            '1 time - building my reviewer skills',
-                            '2-4 times  - comfortable with the reviewing process',
-                            '5-10 times  - active community citizen',
-                            '10+ times  - seasoned reviewer'
-                        ],
-                        'order': 4,
-                        'required': True
-                    },
-                    'previous ICLR author': {
-                        'description': 'Have you published at ICLR in the last two years?',
-                        'value-radio': [
-                            'Yes',
-                            'No'
-                        ],
-                        'order': 5,
-                        'required': False
-                    },
-                    'reviewing preferences': {
-                        'description': 'What is the most important factor of the reviewing process for you? (Choose one)',
-                        'value-radio': [
-                            'Getting papers that best match my area of expertise',
-                            'Having the smallest number of papers to review',
-                            'Having a long-enough reviewing period (6-8 weeks)',
-                            'Having enough time for active discussion about papers.',
-                            'Receiving clear instructions about the expectations of reviews.'
-                        ],
-                        'order': 6,
-                        'required': False
-                    },
-                    'your recent publication venues': {
-                        'description': 'Where have you recently published? Select all that apply.',
-                        'values-dropdown': [
-                            'Neural Information Processing Systems (NIPS)',
-                            'International Conference on Machine Learning (ICML)',
-                            'Artificial Intelligence and Statistics (AISTATS)',
-                            'Uncertainty in Artificial Intelligence (UAI)',
-                            'Association for Advances in Artificial Intelligence (AAAI)',
-                            'Computer Vision and Pattern Recognition (CVPR)',
-                            'International Conference on Computer Vision (ICCV)',
-                            'International Joint Conference on Artificial Intelligence (IJCAI)',
-                            'Robotics: Systems and Science (RSS)',
-                            'Conference on Robotics and Learning (CORL)',
-                            'Association for Computational Linguistics or related (ACL/NAACL/EACL)',
-                            'Empirical Methods in Natural Language Processing (EMNLP)',
-                            'Conference on Learning Theory (COLT)',
-                            'Algorithmic Learning Theory (ALT)',
-                            'Knowledge Discovery and Data Mining (KDD)',
-                            'Other'
-                        ],
-                        'order': 7,
-                        'required': False
-                    }
-                }
+                'content': registration_content
             }
         ))
 
