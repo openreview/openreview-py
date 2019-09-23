@@ -768,7 +768,7 @@ class InvitationBuilder(object):
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     "title": {
-                        "value": "Questionnaire for Reviewers"
+                        "value": "Reviewer Registration Form"
                     },
                     "Instructions": {
                         "order": 1,
@@ -789,7 +789,7 @@ class InvitationBuilder(object):
             forum = None,
             content = {
                 "Instructions": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Registration\" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection",
-                "title": "Questionnaire for Reviewers"
+                "title": "Reviewer Registration Form"
             }
         ))
 
@@ -820,7 +820,7 @@ class InvitationBuilder(object):
                     '10+ times  - seasoned reviewer'
                 ],
                 'order': 5,
-                'required': True
+                'required': False
             },
             'previous ICLR author': {
                 'description': 'Have you published at ICLR in the last two years?',
