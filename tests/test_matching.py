@@ -515,9 +515,9 @@ class TestMatching():
             forum = invitation.reply['forum'],
             content = {
                 'title': 'UAI 2019 Registration',
-                'subject_areas': ['Algorithms: Approximate Inference', 'Algorithms: Exact Inference'],
                 'profile confirmed': 'Yes',
-                'TPMS account confirmed': 'Yes'
+                'expertise confirmed': 'Yes',
+                'reviewing experience': '2-4 times  - comfortable with the reviewing process'
             }
         ))
 

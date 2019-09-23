@@ -746,18 +746,12 @@ class InvitationBuilder(object):
             paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
 
 
-    def set_registration_invitation(self, conference, start_date, due_date, with_area_chairs):
+    def set_registration_invitation(self, conference, start_date = None, due_date = None, with_area_chairs = False):
 
         invitees = []
         if with_area_chairs:
             invitees.append(conference.get_area_chairs_id())
         invitees.append(conference.get_reviewers_id())
-
-        coi_desc = 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. After you have updated your profile, please confirm that your OpenReview profile is up-to-date by selecting "yes" in the "Profile Confirmed" section.\n\n'
-
-        expertise_desc = 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at . After you have done this, please confirm that your TPMS account is up-to-date by selecting "yes" in the "Expertise Confirmed" section.\n\n'
-
-        reviewer_experience_desc = 'How many times have you been a reviewer for any conference or journal? Please answer by selecting the appropriate choice in the "Reviewing Experience" section.\n\n'
 
         # Create super invitation with a webfield
         registration_parent_invitation = openreview.Invitation(
@@ -773,21 +767,12 @@ class InvitationBuilder(object):
                 'writers': {'values': [conference.get_id()]},
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
-                    'title': {
-                        'value': conference.get_short_name() + ' Registration',
-                        'order': 1
+                    "title": {
+                        "value": "Questionnaire for Reviewers"
                     },
-                    'profile confirmed': {
-                        'value': coi_desc,
-                        'order': 2
-                    },
-                    'expertise confirmed': {
-                        'value': expertise_desc,
-                        'order': 3
-                    },
-                    'reviewing experience': {
-                        'value': reviewer_experience_desc,
-                        'order': 4
+                    "Instructions": {
+                        "order": 1,
+                        "value": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Reviewer Questionnaire Response\" button."
                     }
                 }
             }
@@ -803,17 +788,15 @@ class InvitationBuilder(object):
             replyto = None,
             forum = None,
             content = {
-                'title': registration_parent_invitation.reply['content']['title']['value'],
-                'profile confirmed': registration_parent_invitation.reply['content']['profile confirmed']['value'],
-                'expertise confirmed': registration_parent_invitation.reply['content']['expertise confirmed']['value'],
-                'reviewing experience': registration_parent_invitation.reply['content']['reviewing experience']['value']
+                "Instructions": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Reviewer Questionnaire Response\" button.",
+                "title": "Questionnaire for Reviewers"
             }
         ))
 
         registration_invitation = self.client.post_invitation(openreview.Invitation(
             id = conference.get_registration_id(),
-            cdate = tools.datetime_millis(start_date),
-            duedate = tools.datetime_millis(due_date),
+            cdate = tools.datetime_millis(start_date) if start_date else None,
+            duedate = tools.datetime_millis(due_date) if due_date else None,
             expdate = tools.datetime_millis(due_date),
             readers = ['everyone'],
             writers = [conference.get_id()],
@@ -846,17 +829,19 @@ class InvitationBuilder(object):
                         'order': 1
                     },
                     'profile confirmed': {
+                        'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "yes".\n\n',
                         'value-radio': ['Yes', 'No'],
                         'required': True,
                         'order': 2
                     },
                     'expertise confirmed': {
+                        'description': 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection. Please confirm finishing this step by selecting "yes".\n\n',
                         'value-radio': ['Yes', 'No'],
                         'required': True,
                         'order': 3
                     },
-                    'Reviewing Experience': {
-                        # 'description': 'How many times have you been a reviewer for any conference or journal?',
+                    'reviewing experience': {
+                        'description': 'How many times have you been a reviewer for any conference or journal?',
                         'value-radio': [
                             'Never - this is my first time',
                             '1 time - building my reviewer skills',
@@ -866,6 +851,50 @@ class InvitationBuilder(object):
                         ],
                         'order': 4,
                         'required': True
+                    },
+                    'previous ICLR author': {
+                        'description': 'Have you published at ICLR in the last two years?',
+                        'value-radio': [
+                            'Yes',
+                            'No'
+                        ],
+                        'order': 5,
+                        'required': False
+                    },
+                    'reviewing preferences': {
+                        'description': 'What is the most important factor of the reviewing process for you? (Choose one)',
+                        'value-radio': [
+                            'Getting papers that best match my area of expertise',
+                            'Having the smallest number of papers to review',
+                            'Having a long-enough reviewing period (6-8 weeks)',
+                            'Having enough time for active discussion about papers.',
+                            'Receiving clear instructions about the expectations of reviews.'
+                        ],
+                        'order': 6,
+                        'required': False
+                    },
+                    'your recent publication venues': {
+                        'description': 'Where have you recently published? Select all that apply.',
+                        'values-dropdown': [
+                            'Neural Information Processing Systems (NIPS)',
+                            'International Conference on Machine Learning (ICML)',
+                            'Artificial Intelligence and Statistics (AISTATS)',
+                            'Uncertainty in Artificial Intelligence (UAI)',
+                            'Association for Advances in Artificial Intelligence (AAAI)',
+                            'Computer Vision and Pattern Recognition (CVPR)',
+                            'International Conference on Computer Vision (ICCV)',
+                            'International Joint Conference on Artificial Intelligence (IJCAI)',
+                            'Robotics: Systems and Science (RSS)',
+                            'Conference on Robotics and Learning (CORL)',
+                            'Association for Computational Linguistics or related (ACL/NAACL/EACL)',
+                            'Empirical Methods in Natural Language Processing (EMNLP)',
+                            'Conference on Learning Theory (COLT)',
+                            'Algorithmic Learning Theory (ALT)',
+                            'Knowledge Discovery and Data Mining (KDD)',
+                            'Other'
+                        ],
+                        'order': 7,
+                        'required': False
                     }
                 }
             }
