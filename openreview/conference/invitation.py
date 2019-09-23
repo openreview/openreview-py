@@ -746,10 +746,10 @@ class InvitationBuilder(object):
             paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
 
 
-    def set_registration_invitation(self, conference, start_date = None, due_date = None, with_area_chairs = False):
+    def set_registration_invitation(self, conference, start_date = None, due_date = None):
 
         invitees = []
-        if with_area_chairs:
+        if conference.use_area_chairs:
             invitees.append(conference.get_area_chairs_id())
         invitees.append(conference.get_reviewers_id())
 
@@ -772,7 +772,7 @@ class InvitationBuilder(object):
                     },
                     "Instructions": {
                         "order": 1,
-                        "value": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Reviewer Questionnaire Response\" button."
+                        "value": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Registration\" button."
                     }
                 }
             }
@@ -788,7 +788,7 @@ class InvitationBuilder(object):
             replyto = None,
             forum = None,
             content = {
-                "Instructions": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Reviewer Questionnaire Response\" button.",
+                "Instructions": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the questionnaire form below, click on the blue \"Registration\" button.",
                 "title": "Questionnaire for Reviewers"
             }
         ))
