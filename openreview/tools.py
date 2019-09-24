@@ -517,7 +517,7 @@ class iterget:
         self.params = params
         self.params.update({
             'offset': self.offset,
-            'limit': 1000
+            'limit': params.get('limit') or 1000
         })
 
         self.get_function = get_function
@@ -579,6 +579,26 @@ def iterget_tags(client, id = None, invitation = None, forum = None):
         params['invitation'] = invitation
 
     return iterget(client.get_tags, **params)
+
+def iterget_edges (client,
+                   invitation = None,
+                   head = None,
+                   tail = None,
+                   label = None,
+                   limit = None):
+    params = {}
+    if invitation != None:
+        params['invitation'] = invitation
+    if head != None:
+        params['head'] = head
+    if tail != None:
+        params['tail'] = tail
+    if label != None:
+        params['label'] = label
+    if limit != None:
+        params['limit'] = limit
+    return iterget(client.get_edges, **params)
+
 
 def iterget_notes(client,
     id = None,
@@ -1469,6 +1489,15 @@ def get_profile_info(profile):
         'emails': emails,
         'relations': relations
     }
+
+def post_bulk_edges (client, edges, batch_size = 50000):
+    num_edges = len(edges)
+    result = []
+    for i in range(0, num_edges, batch_size):
+        end = min(i + batch_size, num_edges)
+        batch = client.post_edges(edges[i:end])
+        result += batch
+    return result
 
 def email_distance(email, author):
     """

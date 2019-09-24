@@ -6,6 +6,7 @@ import datetime
 import time
 import os
 import re
+import csv
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -781,27 +782,11 @@ note={under review}
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 0
 
-    def test_open_bids(self, client, test_client, selenium, request_page):
+    def test_open_bids(self, client, test_client, selenium, request_page, helpers):
 
-        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
-        assert reviewer_client is not None, "Client is none"
-        res = reviewer_client.register_user(email = 'reviewer2@mail.com', first = 'Reviewer', last = 'DoubleBlind', password = '1234')
-        assert res, "Res i none"
-        res = reviewer_client.activate_user('reviewer2@mail.com', {
-            'names': [
-                    {
-                        'first': 'Reviewer',
-                        'last': 'DoubleBlind',
-                        'username': '~Reviewer_DoubleBlind1'
-                    }
-                ],
-            'emails': ['reviewer2@mail.com'],
-            'preferredEmail': 'reviewer2@mail.com'
-            })
-        assert res, "Res i none"
-        group = reviewer_client.get_group(id = 'reviewer2@mail.com')
-        assert group
-        assert group.members == ['~Reviewer_DoubleBlind1']
+        reviewer_client = helpers.create_user('reviewer2@mail.com', 'Reviewer', 'DoubleBlind')
+        reviewer2_client = helpers.create_user('reviewer@domain.com', 'Reviewer', 'Domain')
+        ac_client = helpers.create_user('ac@mail.com', 'AreaChair', 'DoubleBlind')
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -814,11 +799,68 @@ note={under review}
         conference = builder.get_result()
         conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
-        conference.set_reviewers(emails = ['reviewer2@mail.com'])
+        conference.set_reviewers(emails = ['reviewer2@mail.com', 'reviewer@domain.com'])
 
-        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/-/Bid", reviewer_client.token)
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert len(notes) == 3
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert len(notes) == 3
+
+        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, use_affinity_score = True)
+        conference = builder.get_result()
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert not notes
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert not notes
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert not notes
+
+        notes = client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submission.id, '~Reviewer_DoubleBlind1', '0.9'])
+            writer.writerow([submission.id, '~Reviewer_Domain1', '0.8'])
+
+        conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert not notes
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert len(notes) == 1
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        notes = selenium.find_elements_by_class_name('note')
+        assert not notes
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
@@ -973,27 +1015,10 @@ note={under review}
         assert 'ac@mail.com' in recipients
         assert 'reviewer2@mail.com' in recipients
 
-    def test_open_meta_reviews(self, client, test_client, selenium, request_page):
+    def test_open_meta_reviews(self, client, test_client, selenium, request_page, helpers):
 
-        ac_client = openreview.Client(baseurl = 'http://localhost:3000')
+        ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
         assert ac_client is not None, "Client is none"
-        res = ac_client.register_user(email = 'ac@mail.com', first = 'AreaChair', last = 'DoubleBlind', password = '1234')
-        assert res, "Res i none"
-        res = ac_client.activate_user('ac@mail.com', {
-            'names': [
-                    {
-                        'first': 'AreaChair',
-                        'last': 'DoubleBlind',
-                        'username': '~AreaChair_DoubleBlind1'
-                    }
-                ],
-            'emails': ['ac@mail.com'],
-            'preferredEmail': 'ac@mail.com'
-            })
-        assert res, "Res i none"
-        group = ac_client.get_group(id = 'ac@mail.com')
-        assert group
-        assert group.members == ['~AreaChair_DoubleBlind1']
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
