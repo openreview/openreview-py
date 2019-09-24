@@ -32,18 +32,10 @@ class Client(object):
     :type token: str, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None):
+
         self.baseurl = baseurl
         if not self.baseurl:
-            self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
-
-        if not username:
-            username = os.environ.get('OPENREVIEW_USERNAME')
-
-        if not password:
-            password = os.environ.get('OPENREVIEW_PASSWORD')
-
-        self.token = token
-        self.profile = None
+           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -53,25 +45,35 @@ class Client(object):
         self.tags_url = self.baseurl + '/tags'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
+        self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
         self.messages_url = self.baseurl + '/messages'
         self.process_logs_url = self.baseurl + '/logs/process'
 
+        self.token = token
+        self.profile = None
         self.headers = {
-            'User-Agent': 'test-create-script',
-            'Authorization': self.token
+            'User-Agent': 'test-create-script'
         }
 
-        if username and password:
-            self.login_user(username, password)
-
-        if token:
+        if self.token:
+            self.headers['Authorization'] = self.token
             try:
                 self.profile = self.get_profile()
             except:
                 self.profile = None
+        else:
+            if not username:
+                username = os.environ.get('OPENREVIEW_USERNAME')
+
+            if not password:
+                password = os.environ.get('OPENREVIEW_PASSWORD')
+
+            if username or password:
+                self.login_user(username, password)
+
 
 
     ## PRIVATE FUNCTIONS
@@ -473,6 +475,30 @@ class Client(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def merge_profiles(self, profileTo, profileFrom):
+        """
+        Merges two Profiles
+
+        :param profileTo: Profile object to merge to
+        :type profileTo: Profile
+        :parm profileFrom: Profile object to merge from (this profile will be deleted)
+        :type: profileFrom: Profile
+
+        :return: The new updated Profile
+        :rtype: Profile
+        """
+        response = requests.post(
+            self.profiles_merge_url,
+            json = { 
+                'to': profileTo, 
+                'from': profileFrom
+            },
+            headers = self.headers)        
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())
+        
 
     def get_groups(self, id = None, regex = None, member = None, signatory = None, limit = None, offset = None):
         """

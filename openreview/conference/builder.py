@@ -440,8 +440,8 @@ class Conference(object):
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
-    def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
-        return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
+    def open_registration(self, start_date = None, due_date = None):
+        return self.invitation_builder.set_registration_invitation(self, start_date, due_date)
 
     def open_comments(self):
         self.__create_comment_stage()

@@ -833,19 +833,12 @@ class InvitationBuilder(object):
             paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
 
 
-    def set_registration_invitation(self, conference, start_date, due_date, with_area_chairs):
+    def set_registration_invitation(self, conference, start_date = None, due_date = None):
 
         invitees = []
-        if with_area_chairs:
+        if conference.use_area_chairs:
             invitees.append(conference.get_area_chairs_id())
         invitees.append(conference.get_reviewers_id())
-
-        subj_desc = 'To properly assign papers to reviewers, we ask that reviewers provide their areas of expertise from among the provided list of subject areas. Please submit your areas of expertise by selecting the appropriate options from the "Subject Areas" list.\n\n'
-
-        coi_desc = 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding work history and professional relationships. After you have updated your profile, please confirm that your OpenReview profile is up-to-date by selecting yes in the "Profile Confirmed" section.\n\n'
-
-        tpms_desc = 'In addition to subject areas, we will be using the Toronto Paper Matching System (TPMS) to compute paper-reviewer affinity scores. Please take a moment to sign up for TPMS and/or update your TPMS account with your latest papers. Then, please ensure that the email address that is affiliated with your TPMS account is linked to your OpenReview profile. After you have done this, please confirm that your TPMS account is up-to-date by selecting yes in the "TPMS Account Confirmed" section.\n\n'
-
 
         # Create super invitation with a webfield
         registration_parent_invitation = openreview.Invitation(
@@ -861,18 +854,12 @@ class InvitationBuilder(object):
                 'writers': {'values': [conference.get_id()]},
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
-                    'title': {'value': conference.get_short_name() + ' Registration'},
-                    'subject_areas': {
-                        'value': subj_desc,
-                        'order': 1
+                    "title": {
+                        "value": "Reviewer Registration Form"
                     },
-                    'profile confirmed': {
-                        'value': coi_desc,
-                        'order': 2
-                    },
-                    'TPMS account confirmed': {
-                        'value': tpms_desc,
-                        'order': 3
+                    "Instructions": {
+                        "order": 1,
+                        "value": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the form below, click on the blue \"Registration\" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection"
                     }
                 }
             }
@@ -888,17 +875,97 @@ class InvitationBuilder(object):
             replyto = None,
             forum = None,
             content = {
-                'title': registration_parent_invitation.reply['content']['title']['value'],
-                'subject_areas': registration_parent_invitation.reply['content']['subject_areas']['value'],
-                'profile confirmed': registration_parent_invitation.reply['content']['profile confirmed']['value'],
-                'TPMS account confirmed': registration_parent_invitation.reply['content']['TPMS account confirmed']['value'],
+                "Instructions": "Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don't see the form below, click on the blue \"Registration\" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id=ICLR.cc/2020/Conference/-/Expertise_Selection",
+                "title": "Reviewer Registration Form"
             }
         ))
 
+        registration_content = {
+            'title': {
+                'value': conference.get_short_name() + ' Registration',
+                'order': 1
+            },
+            'profile confirmed': {
+                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "yes".\n\n',
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+                'order': 2
+            },
+            'expertise confirmed': {
+                'description': 'We will be using OpenReview\'s Expertise System to calculate paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at the Expertise Selection (link in instructions above). Please confirm finishing this step by selecting "yes".\n\n',
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+                'order': 4
+            },
+            'reviewing experience': {
+                'description': 'How many times have you been a reviewer for any conference or journal?',
+                'value-radio': [
+                    'Never - this is my first time',
+                    '1 time - building my reviewer skills',
+                    '2-4 times  - comfortable with the reviewing process',
+                    '5-10 times  - active community citizen',
+                    '10+ times  - seasoned reviewer'
+                ],
+                'order': 5,
+                'required': False
+            },
+            'previous ICLR author': {
+                'description': 'Have you published at ICLR in the last two years?',
+                'value-radio': [
+                    'Yes',
+                    'No'
+                ],
+                'order': 6,
+                'required': False
+            },
+            'reviewing preferences': {
+                'description': 'What is the most important factor of the reviewing process for you? (Choose one)',
+                'value-radio': [
+                    'Getting papers that best match my area of expertise',
+                    'Having the smallest number of papers to review',
+                    'Having a long-enough reviewing period (6-8 weeks)',
+                    'Having enough time for active discussion about papers.',
+                    'Receiving clear instructions about the expectations of reviews.'
+                ],
+                'order': 7,
+                'required': False
+            },
+            'your recent publication venues': {
+                'description': 'Where have you recently published? Select all that apply.',
+                'values-dropdown': [
+                    'Neural Information Processing Systems (NIPS)',
+                    'International Conference on Machine Learning (ICML)',
+                    'Artificial Intelligence and Statistics (AISTATS)',
+                    'Uncertainty in Artificial Intelligence (UAI)',
+                    'Association for Advances in Artificial Intelligence (AAAI)',
+                    'Computer Vision and Pattern Recognition (CVPR)',
+                    'International Conference on Computer Vision (ICCV)',
+                    'International Joint Conference on Artificial Intelligence (IJCAI)',
+                    'Robotics: Systems and Science (RSS)',
+                    'Conference on Robotics and Learning (CORL)',
+                    'Association for Computational Linguistics or related (ACL/NAACL/EACL)',
+                    'Empirical Methods in Natural Language Processing (EMNLP)',
+                    'Conference on Learning Theory (COLT)',
+                    'Algorithmic Learning Theory (ALT)',
+                    'Knowledge Discovery and Data Mining (KDD)',
+                    'Other'
+                ],
+                'order': 8,
+                'required': False
+            }
+        }
+        if conference.submission_stage.subject_areas:
+            registration_content['subject_areas'] = {
+                'description': 'To properly assign papers to reviewers, we ask that reviewers provide their areas of expertise from among the provided list of subject areas. Please submit your areas of expertise by selecting the appropriate options from the "Subject Areas" list.\n\n',
+                'values-dropdown': conference.submission_stage.subject_areas,
+                'order': 3,
+                'required': False
+            }
+
         registration_invitation = self.client.post_invitation(openreview.Invitation(
             id = conference.get_registration_id(),
-            cdate = tools.datetime_millis(start_date),
-            duedate = tools.datetime_millis(due_date),
+            cdate = tools.datetime_millis(start_date) if start_date else None,
+            duedate = tools.datetime_millis(due_date) if due_date else None,
             expdate = tools.datetime_millis(due_date),
             readers = ['everyone'],
             writers = [conference.get_id()],
@@ -925,27 +992,7 @@ class InvitationBuilder(object):
                     'description': 'How your identity will be displayed.',
                     'values-regex': '~.*'
                 },
-                'content': {
-                    'title': {
-                        'value': conference.get_short_name() + ' Registration',
-                        'order': 1
-                    },
-                    'subject_areas': {
-                        'values-dropdown': conference.submission_stage.subject_areas,
-                        'required': True,
-                        'order': 2
-                    },
-                    'profile confirmed': {
-                        'value-radio': ['Yes', 'No'],
-                        'required': True,
-                        'order': 3
-                    },
-                    'TPMS account confirmed': {
-                        'value-radio': ['Yes', 'No'],
-                        'required': True,
-                        'order': 4
-                    }
-                }
+                'content': registration_content
             }
         ))
 
