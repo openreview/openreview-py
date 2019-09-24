@@ -122,6 +122,13 @@ class TestMatching():
         note_3 = test_client.post_note(note_3)
 
         ## Create blind submissions
+        builder.set_submission_stage(due_date = now, double_blind= True, subject_areas=[
+            "Algorithms: Approximate Inference",
+            "Algorithms: Belief Propagation",
+            "Algorithms: Distributed and Parallel",
+            "Algorithms: Exact Inference",
+        ])
+        conference = builder.get_result()
         blinded_notes = conference.create_blind_submissions()
         conference.set_authors()
 
@@ -515,9 +522,13 @@ class TestMatching():
             forum = invitation.reply['forum'],
             content = {
                 'title': 'UAI 2019 Registration',
-                'subject_areas': ['Algorithms: Approximate Inference', 'Algorithms: Exact Inference'],
+                'subject_areas': [
+                    'Algorithms: Approximate Inference',
+                    'Algorithms: Belief Propagation'
+                ],
                 'profile confirmed': 'Yes',
-                'TPMS account confirmed': 'Yes'
+                'expertise confirmed': 'Yes',
+                'reviewing experience': '2-4 times  - comfortable with the reviewing process'
             }
         ))
 
@@ -530,7 +541,7 @@ class TestMatching():
         assert metadata_notes[0].forum == blinded_notes[0].id
         assert len(metadata_notes[0].content['entries']) == 5
         assert metadata_notes[0].content['entries'][0]['userid'] == '~AreaChair_One1'
-        assert metadata_notes[0].content['entries'][0]['scores'] == { 'bid': -1, 'tpms': 0.3, 'subjectArea': 0.3333333333333333 }
+        assert metadata_notes[0].content['entries'][0]['scores'] == { 'bid': -1, 'tpms': 0.3, 'subjectArea': 0 }
         assert metadata_notes[0].content['entries'][0].get('conflicts') is None
         assert metadata_notes[0].content['entries'][1]['userid'] == '~Reviewer_One1'
         assert metadata_notes[0].content['entries'][1]['scores'] == { 'bid': -0.5, 'tpms': 0.8, 'recommendation': 1 }
@@ -549,7 +560,7 @@ class TestMatching():
         assert metadata_notes[1].forum == blinded_notes[1].id
         assert len(metadata_notes[0].content['entries']) == 5
         assert metadata_notes[1].content['entries'][0]['userid'] == '~AreaChair_One1'
-        assert metadata_notes[1].content['entries'][0]['scores'] == { 'bid': -0.5, 'tpms': 0.2, 'subjectArea': 1  }
+        assert metadata_notes[1].content['entries'][0]['scores'] == { 'bid': -0.5, 'tpms': 0.2, 'subjectArea': 0.3333333333333333 }
         assert metadata_notes[1].content['entries'][0].get('conflicts') is None
         assert metadata_notes[1].content['entries'][1]['userid'] == '~Reviewer_One1'
         assert metadata_notes[1].content['entries'][1]['scores'] == { 'bid': 1, 'tpms': 0.8  }
@@ -568,7 +579,7 @@ class TestMatching():
         assert metadata_notes[2].forum == blinded_notes[2].id
         assert len(metadata_notes[2].content['entries']) == 5
         assert metadata_notes[2].content['entries'][0]['userid'] == '~AreaChair_One1'
-        assert metadata_notes[2].content['entries'][0]['scores'] == { 'bid': 0.5, 'tpms': 0.1 , 'subjectArea': 0.3333333333333333}
+        assert metadata_notes[2].content['entries'][0]['scores'] == { 'bid': 0.5, 'tpms': 0.1 , 'subjectArea': 1}
         assert metadata_notes[2].content['entries'][0]['conflicts'] == [ 'cmu.edu' ]
         assert metadata_notes[2].content['entries'][1]['userid'] == '~Reviewer_One1'
         assert metadata_notes[2].content['entries'][1]['scores'] == {'tpms': 0.8}
