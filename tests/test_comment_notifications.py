@@ -371,6 +371,14 @@ class TestCommentNotification():
         assert logs
         assert logs[0]['status'] == 'ok'
 
+        builder.set_submission_stage(double_blind = True, due_date = now, subject_areas= [
+            "Algorithms: Approximate Inference",
+            "Algorithms: Belief Propagation",
+            "Algorithms: Distributed and Parallel",
+            "Algorithms: Exact Inference",
+        ])
+        conference = builder.get_result()
+
         conference.close_submissions()
         blinded_notes = conference.create_blind_submissions()
         paper_note = blinded_notes[0]
