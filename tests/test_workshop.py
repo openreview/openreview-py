@@ -302,7 +302,8 @@ class TestWorkshop():
 
         invitation = client.get_invitation('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers/-/Assignment_Configuration')
         assert invitation
-        assert 'scores_specification' not in invitation.reply['content']
+        assert 'scores_specification' in invitation.reply['content']
+        assert not invitation.reply['content']['scores_specification']['default']
 
     def test_set_authors(self, client, test_client, selenium, request_page, helpers):
 
