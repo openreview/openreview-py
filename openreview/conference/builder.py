@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import time
 import re
+import datetime
 from .. import openreview
 from .. import tools
 from . import webfield
@@ -416,6 +417,9 @@ class Conference(object):
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
 
+        if self.submission_stage.due_date and (tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
+            raise openreview.OpenReviewException('Submission invitation is still due. Aborted blind note creation!')
+
         submissions_by_original = { note.original: note for note in self.get_submissions() }
 
         self.invitation_builder.set_blind_submission_invitation(self)
@@ -474,8 +478,8 @@ class Conference(object):
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
-    def open_registration(self, start_date = None, due_date = None, with_area_chairs = False):
-        return self.invitation_builder.set_registration_invitation(self, start_date, due_date, with_area_chairs)
+    def open_registration(self, start_date = None, due_date = None):
+        return self.invitation_builder.set_registration_invitation(self, start_date, due_date)
 
     def open_comments(self):
         self.__create_comment_stage()

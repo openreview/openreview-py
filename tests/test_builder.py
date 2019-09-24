@@ -105,6 +105,12 @@ class TestBuilder():
         assert original_notes
         assert len(original_notes) == 1
 
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Submission invitation is still due. Aborted blind note creation.*'):
+            conference.create_blind_submissions()
+
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now)
+        conference = builder.get_result()
+
         blind_submissions = conference.create_blind_submissions()
         assert blind_submissions
         assert len(blind_submissions) == 1

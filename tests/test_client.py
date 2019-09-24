@@ -153,7 +153,7 @@ class TestClient():
 
     def test_get_invitations_by_invitee(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
-        assert len(invitations) == 1
+        assert len(invitations) == 0
 
         invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
         assert len(invitations) == 0

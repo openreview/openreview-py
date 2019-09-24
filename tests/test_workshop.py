@@ -222,6 +222,9 @@ class TestWorkshop():
         groups = client.get_groups(id = conference.get_authors_id(number = '.*'))
         assert len(groups) == 0
 
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now)
+        conference = builder.get_result()
+
         blind_submissions = conference.create_blind_submissions()
         assert blind_submissions
         assert len(blind_submissions) == 1
@@ -269,6 +272,9 @@ class TestWorkshop():
         url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
         note.content['pdf'] = url
         client.post_note(note)
+
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now)
+        conference = builder.get_result()
 
         blind_submissions_3 = conference.create_blind_submissions()
         assert blind_submissions_3

@@ -122,6 +122,13 @@ class TestMatching():
         note_3 = test_client.post_note(note_3)
 
         ## Create blind submissions
+        builder.set_submission_stage(due_date = now, double_blind= True, subject_areas=[
+            "Algorithms: Approximate Inference",
+            "Algorithms: Belief Propagation",
+            "Algorithms: Distributed and Parallel",
+            "Algorithms: Exact Inference",
+        ])
+        conference = builder.get_result()
         blinded_notes = conference.create_blind_submissions()
         conference.set_authors()
 
@@ -633,9 +640,13 @@ class TestMatching():
             forum = invitation.reply['forum'],
             content = {
                 'title': 'UAI 2019 Registration',
-                'subject_areas': ['Algorithms: Approximate Inference', 'Algorithms: Exact Inference'],
+                'subject_areas': [
+                    'Algorithms: Approximate Inference',
+                    'Algorithms: Belief Propagation'
+                ],
                 'profile confirmed': 'Yes',
-                'TPMS account confirmed': 'Yes'
+                'expertise confirmed': 'Yes',
+                'reviewing experience': '2-4 times  - comfortable with the reviewing process'
             }
         ))
 
@@ -753,7 +764,7 @@ class TestMatching():
             head=submissions[0].id)
         assert ac1_s0_subject_scores
         assert 1 == len(ac1_s0_subject_scores)
-        assert ac1_s0_subject_scores[0].weight ==  0.3333333333333333
+        assert ac1_s0_subject_scores[0].weight ==  0
 
         ac1_s1_subject_scores = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
@@ -761,7 +772,7 @@ class TestMatching():
             head=submissions[1].id)
         assert ac1_s1_subject_scores
         assert 1 == len(ac1_s1_subject_scores)
-        assert ac1_s1_subject_scores[0].weight ==  1
+        assert ac1_s1_subject_scores[0].weight ==  0.3333333333333333
 
         ac1_s2_subject_scores = client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
@@ -769,4 +780,4 @@ class TestMatching():
             head=submissions[2].id)
         assert ac1_s2_subject_scores
         assert 1 == len(ac1_s2_subject_scores)
-        assert ac1_s2_subject_scores[0].weight ==  0.3333333333333333
+        assert ac1_s2_subject_scores[0].weight ==  1
