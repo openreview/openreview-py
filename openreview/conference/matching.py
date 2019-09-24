@@ -342,7 +342,7 @@ class Matching(object):
                     },
                     'scores_specification': {
                         'value-dict': {},
-                        'required': True,
+                        'required': False,
                         'description': 'Manually entered JSON score specification',
                         'order': 8,
                         'default': scores_specification
@@ -399,22 +399,30 @@ class Matching(object):
         '''
         score_spec = {}
 
-        score_spec[self.conference.get_bid_id(self.match_group.id)] = {
-            'weight': 1,
-            'default': 0,
-            'translate_map' : {
-                'Very High': 1.0,
-                'High': 0.5,
-                'Neutral': 0.0,
-                'Low': -0.5,
-                'Very Low': -1.0
+        try:
+            invitation = self.client.get_invitation(self.conference.get_bid_id(self.match_group.id))
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0,
+                'translate_map' : {
+                    'Very High': 1.0,
+                    'High': 0.5,
+                    'Neutral': 0.0,
+                    'Low': -0.5,
+                    'Very Low': -1.0
+                }
             }
-        }
+        except:
+            print('Bid invitation not found')
 
-        score_spec[self.conference.get_recommendation_id()] = {
-            'weight': 1,
-            'default': 0
-        }
+        try:
+            invitation = self.client.get_invitation(self.conference.get_recommendation_id())
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
+        except:
+            print('Recommendation invitation not found')
 
         # The reviewers are all emails so convert to tilde ids
         self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
