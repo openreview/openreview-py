@@ -122,6 +122,13 @@ class TestMatching():
         note_3 = test_client.post_note(note_3)
 
         ## Create blind submissions
+        builder.set_submission_stage(due_date = now, double_blind= True, subject_areas=[
+            "Algorithms: Approximate Inference",
+            "Algorithms: Belief Propagation",
+            "Algorithms: Distributed and Parallel",
+            "Algorithms: Exact Inference",
+        ])
+        conference = builder.get_result()
         blinded_notes = conference.create_blind_submissions()
         conference.set_authors()
 
