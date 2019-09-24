@@ -49,6 +49,7 @@ def get_conference(client, request_form_id):
     builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
     builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
     builder.set_conference_short_name(note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')))
+    builder.set_conference_year(conference_start_date.year)
     builder.set_homepage_header({
     'title': note.content['title'],
     'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),

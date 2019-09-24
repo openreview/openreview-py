@@ -39,7 +39,7 @@ author={Bibtex User and Peter Te{\\"e}t and Andrew McC},
 booktitle={NIPS.cc/2020/Workshop/MLITS},
 year={2020},
 url={'''
-        valid_bibtex = valid_bibtex+client.baseurl+'/forum?id='+posted_note.forum+'''},
+        valid_bibtex = valid_bibtex+client.baseurl+'/forum?id='+posted_note.forum+'''}
 }'''
         assert bibtex == valid_bibtex
 
@@ -52,7 +52,7 @@ title={Paper title has an {\^O}},
 author={User, Bibtex and Te{\\"e}t, Peter and McC, Andrew},
 year={2020},
 url={https://openreview.net/forum?id='''
-        valid_bibtex = valid_bibtex + posted_note.forum + '''},
+        valid_bibtex = valid_bibtex + posted_note.forum + '''}
 }'''
 
         assert bibtex == valid_bibtex

@@ -360,13 +360,25 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     bibtex_title = capitalize_title(note.content['title'])
 
+    under_review_bibtex = [
+        '@inproceedings{',
+        utf8tolatex(first_author_last_name + year + first_word + ','),
+        'title={' + utf8tolatex(bibtex_title) + '},',
+        'author={' + utf8tolatex(authors) + '},',
+        'booktitle={Submitted to ' + utf8tolatex(venue_fullname) + '},',
+        'year={' + year + '},',
+        'url={'+baseurl+'/forum?id=' + forum + '},',
+        'note={under review}',
+        '}'
+    ]
+
     rejected_bibtex = [
         '@misc{',
         utf8tolatex(first_author_last_name + year + first_word + ','),
         'title={' + utf8tolatex(bibtex_title) + '},',
         'author={' + utf8tolatex(authors) + '},',
         'year={' + year + '},',
-        'url={'+baseurl+'/forum?id=' + forum + '},',
+        'url={'+baseurl+'/forum?id=' + forum + '}',
         '}'
     ]
 
@@ -377,14 +389,17 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         'author={' + utf8tolatex(authors) + '},',
         'booktitle={' + utf8tolatex(venue_fullname) + '},',
         'year={' + year + '},',
-        'url={'+baseurl+'/forum?id=' + forum + '},',
+        'url={'+baseurl+'/forum?id=' + forum + '}',
         '}'
     ]
 
+    bibtex = rejected_bibtex
     if accepted:
         bibtex = accepted_bibtex
     else:
-        bibtex = rejected_bibtex
+        if anonymous:
+            # We assume the paper is under review
+            bibtex = under_review_bibtex
 
     return '\n'.join(bibtex)
 
