@@ -193,6 +193,12 @@ class Conference(object):
     def get_short_name(self):
         return self.short_name
 
+    def set_year(self, year):
+        self.year = year
+
+    def get_year(self, year):
+        return self.year
+
     def set_reviewers_name(self, name):
         self.reviewers_name = name
 
