@@ -371,12 +371,7 @@ class Conference(object):
         if not self.submission_stage.allow_withdraw:
             raise openreview.OpenReviewException('Conference does not allow withdraw invitations')
 
-        if not self.submission_stage.double_blind:
-            raise openreview.OpenReviewException(
-                'Withdraw invitations are currently only supported for double blind conferences')
-
-        withdraw_invitations = self.invitation_builder.set_withdraw_invitation(
-            self, self.get_submissions())
+        withdraw_invitations = self.invitation_builder.set_withdraw_invitation(self)
 
 
     def create_blind_submissions(self):

@@ -33,12 +33,15 @@ class SubmissionInvitation(openreview.Invitation):
 
         for field in submission_stage.remove_fields:
             del content[field]
-
+        print ('yahoo from sub stage class!!')
+        print ('got addn fields')
+        print (additional_fields)
+        print ('content before update:', content.keys())
         for order, key in enumerate(additional_fields, start=10):
             value = additional_fields[key]
             value['order'] = order
             content[key] = value
-
+        print ('\n\ncontent after update:', content.keys())
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
@@ -220,26 +223,52 @@ class CommentInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
-class WithdrawInvitation(openreview.Invitation):
+class WithdrawnSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference):
+    def __init__(self, conference, withdrawn_submission_content=None):
 
+        print ('yaaaahoooo!!')
+        print ('with_content:')
+        print (withdrawn_submission_content)
         content = invitations.submission.copy()
-        if (conference.double_blind):
-            content['authors'] = {
-                'values': ['Anonymous']
-            }
-            content['authorids'] = {
-                'values-regex': '.*'
-            }
+        if withdrawn_submission_content:
+            content = withdrawn_submission_content
 
-        super(WithdrawInvitation, self).__init__(
+        # if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_withdraw):
+        content['authors'] = {
+            'values': ['Anonymous']
+        }
+        content['authorids'] = {
+            'values-regex': '.*'
+        }
+
+        super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.get_invitation_id('Withdrawn_Submission'),
             # cdate=tools.datetime_millis(conference.submission_stage.due_date),
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
-            reply=content
+            reply={
+                'forum': None,
+                'replyto': None,
+                'readers': {
+                    "description": "The users who will be allowed to read the reply content.",
+                    "values": [
+                        "everyone"
+                    ]
+                },
+                'writers': {
+                    'values': [
+                        conference.get_id()
+                    ]
+                },
+                'signatures': {
+                    'values': [
+                        conference.get_id()
+                    ]
+                },
+                'content': content
+            }
         )
 
 class PaperWithdrawInvitation(openreview.Invitation):
@@ -263,11 +292,13 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                cdate=tools.datetime_millis(conference.submission_stage.due_date),
+                # cdate=tools.datetime_millis(conference.submission_stage.due_date),
+                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)),
+                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)),
                 invitees=[conference.get_authors_id(note.number)],
                 readers=['everyone'],
                 writers=[conference.get_id()],
-                signatures=[conference.get_id()],
+                signatures=['OpenReview.net'],
                 multiReply=False,
                 reply={
                     'forum': note.id,
@@ -625,8 +656,8 @@ class InvitationBuilder(object):
 
     def set_submission_invitation(self, conference):
 
-        if not conference.submission_stage.double_blind:
-            self.set_withdraw_invitation(conference)
+        # if not conference.submission_stage.double_blind:
+        #     self.set_withdraw_invitation(conference)
         return self.client.post_invitation(SubmissionInvitation(conference))
 
 
@@ -660,7 +691,14 @@ class InvitationBuilder(object):
     def set_withdraw_invitation(self, conference):
 
         invitations = []
-        self.client.post_invitation(WithdrawInvitation(conference))
+
+        submission_invitation = self.client.get_invitation(id = conference.get_submission_id())
+        withdrawn_submission_content = submission_invitation.reply['content']
+
+        print ('before sending!!!')
+        print (withdrawn_submission_content)
+
+        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, withdrawn_submission_content))
 
         notes = list(conference.get_submissions())
         for note in notes:
