@@ -702,15 +702,10 @@ class InvitationBuilder(object):
 
     def set_submission_invitation(self, conference):
 
-        if not conference.submission_stage.double_blind and conference.submission_stage.allow_withdraw:
-            self.set_withdraw_invitation(conference)
         return self.client.post_invitation(SubmissionInvitation(conference))
 
 
     def set_blind_submission_invitation(self, conference):
-
-        if conference.submission_stage.allow_withdraw:
-            self.set_withdraw_invitation(conference)
 
         invitation = BlindSubmissionsInvitation(conference = conference)
 
