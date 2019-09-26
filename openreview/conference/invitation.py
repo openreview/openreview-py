@@ -33,15 +33,10 @@ class SubmissionInvitation(openreview.Invitation):
 
         for field in submission_stage.remove_fields:
             del content[field]
-        print ('yahoo from sub stage class!!')
-        print ('got addn fields')
-        print (additional_fields)
-        print ('content before update:', content.keys())
         for order, key in enumerate(additional_fields, start=10):
             value = additional_fields[key]
             value['order'] = order
             content[key] = value
-        print ('\n\ncontent after update:', content.keys())
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
@@ -281,20 +276,17 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
     def __init__(self, conference, withdrawn_submission_content=None):
 
-        print ('yaaaahoooo!!')
-        print ('with_content:')
-        print (withdrawn_submission_content)
         content = invitations.submission.copy()
         if withdrawn_submission_content:
             content = withdrawn_submission_content
 
-        # if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_withdraw):
-        content['authors'] = {
-            'values': ['Anonymous']
-        }
-        content['authorids'] = {
-            'values-regex': '.*'
-        }
+        if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_withdraw):
+            content['authors'] = {
+                'values': ['Anonymous']
+            }
+            content['authorids'] = {
+                'values-regex': '.*'
+            }
 
         super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.get_invitation_id('Withdrawn_Submission'),
@@ -757,9 +749,6 @@ class InvitationBuilder(object):
 
         submission_invitation = self.client.get_invitation(id = conference.get_submission_id())
         withdrawn_submission_content = submission_invitation.reply['content']
-
-        print ('before sending!!!')
-        print (withdrawn_submission_content)
 
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, withdrawn_submission_content))
 

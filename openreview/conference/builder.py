@@ -1077,6 +1077,7 @@ class ConferenceBuilder(object):
             public=False,
             double_blind=False,
             allow_withdraw=False,
+            reveal_authors_on_withdraw=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -1089,6 +1090,7 @@ class ConferenceBuilder(object):
             public,
             double_blind,
             allow_withdraw,
+            reveal_authors_on_withdraw,
             additional_fields,
             remove_fields,
             subject_areas
