@@ -360,7 +360,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                         ]
                     },
                     'signatures': {
-                        'values-regex': '~.*',
+                        'values-regex': conference.get_authors_id(note.number),
                         'description': 'How your identity will be displayed.'
                     },
                     'content': content
