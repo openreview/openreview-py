@@ -64,6 +64,8 @@ One of the ways that OpenReview computes conflicts-of-interest is by using relat
      'mccallum@cs.umass.edu',
      'cs.umass.edu']
 
+Conflicts of interest are represented by direct relationships or by common domain affiliations.
+
 
 Add evidence to a profile
 ----------------------------------------
