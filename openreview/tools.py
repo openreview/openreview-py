@@ -62,6 +62,25 @@ def get_group(client, id):
             raise e
     return group
 
+def get_invitation(client, id):
+    """
+    Get a single Invitation by id if available
+
+    :param client: User that will retrieve the invitation
+    :type client: Client
+    :param id: id of the invitation
+    :type id: str
+
+    :return: Invitation that matches the passed id or None if it does not exist or it is expired
+    :rtype: Invitation
+    """
+    invitation = None
+    try:
+        invitation = client.get_invitation(id = id)
+    except openreview.OpenReviewException as e:
+        print('Can not retrieve invitation', e)
+    return invitation
+
 def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
 
     """
@@ -1490,7 +1509,7 @@ def get_profile_info(profile):
         'relations': relations
     }
 
-def post_bulk_edges (client, edges, batch_size = 50000):
+def post_bulk_edges (client, edges, batch_size = 10000):
     num_edges = len(edges)
     result = []
     for i in range(0, num_edges, batch_size):
