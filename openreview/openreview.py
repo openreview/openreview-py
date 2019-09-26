@@ -930,8 +930,6 @@ class Client(object):
     def post_edges (self, edges):
         '''
         Posts the list of Edges.   Returns a list Edge objects updated with their ids.
-        :param edges:
-        :return:
         '''
         send_json = [edge.to_json() for edge in edges]
         response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
