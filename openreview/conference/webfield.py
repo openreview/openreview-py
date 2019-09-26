@@ -103,16 +103,27 @@ class WebfieldBuilder(object):
 
         default_header = {
             'title': conference.get_short_name() + ' Expertise Selection',
-            'instructions': '<p class="dark">Listed below are all the papers you have authored that exist in the OpenReview database. <b>By default, we consider \
-                all of these papers to formulate your expertise</b>. Please <b>click on \"Exclude\" for papers that should NOT be used to represent your expertise.</b><br>\
-                Please note that we assign you papers based on your expertise which is derived from these papers.</p>\
-                <p class="dark"><strong>Note:</strong></p>\
-                <ul>\
-                    <li><b>By default, each paper is considered, unless you click on \"Exclude\" for a paper.</b></li>\
-                    <li>In case we are missing any of your papers, <b>you can also upload papers by using the Upload button below</b>.</li>\
-                    <li>You should also <b>update Conflict of Interest details on your <a href=\"/profile?mode=edit\" target=\"_blank\">profile page</a></b>, specifically "Emails", \
-                    "Education and Career History" & "Advisors and Other Relations" fields.</li>\
-                </ul>'
+            'instructions': '''
+                <p class=\"dark\">Listed below are all the papers you have authored that exist in the OpenReview database.
+                        <br>
+                        <br>
+
+                        <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
+                        <br>
+                        <br>
+                        Where possible, your previously authored papers from selected conferences were imported from <a href=https://dblp.org>DBLP.org</a> to populate this list. The keywords in these papers will be used to recommend submissions for you during the bidding process, and to assign submissions to you during the review process.
+                </p>
+                <br>
+                <p class=\"dark\"><strong>Important Notes:</strong></p>
+                <ul>
+                        <li>By default, each paper is considered, unless you click on \"Exclude\" for a paper.</li>
+                        <li>Papers not included as part of this import process can be uploaded by using the Upload button below</b>.</li>
+                        <li>When uploading a paper, <b>the upload will not appear on this page if you do not include your email address in the \"authorids\" field, but it will be included in the recommendations process, even if it does not appear here</b>.
+                </ul>
+                <br>
+
+                <p class=\"dark\"> Please contact <a href=mailto:info@openreview.net>info@openreview.net</a> with any questions or concerns about this interface, or about the expertise scoring process.
+                </p>'''
         }
 
         header = self.__build_options(default_header, conference.get_expertise_selection_page_header())
