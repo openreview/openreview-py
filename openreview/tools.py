@@ -599,6 +599,40 @@ def iterget_edges (client,
         params['limit'] = limit
     return iterget(client.get_edges, **params)
 
+def iterget_grouped_edges(
+        client,
+        invitation,
+        groupby='head',
+        select='id,tail,label,weight',
+        logger=None
+    ):
+    '''Helper function for retrieving and parsing all edges in bulk'''
+
+    edge_invitation = client.get_invitation(invitation)
+
+    grouped_edges_iterator = iterget(
+        client.get_grouped_edges,
+        invitation=invitation,
+        groupby=groupby,
+        select=select
+    )
+
+    for group in grouped_edges_iterator:
+        group_edges = []
+
+        for group_values in group['values']:
+            edge_params = {
+                'readers': [],
+                'writers': [],
+                'signatures': [],
+                'invitation': invitation
+            }
+            edge_params.update(group_values)
+            edge_params.update(group['id'])
+            group_edges.append(openreview.Edge(**edge_params))
+
+        yield group_edges
+
 
 def iterget_notes(client,
     id = None,
