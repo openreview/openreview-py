@@ -289,7 +289,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
             }
 
         super(WithdrawnSubmissionInvitation, self).__init__(
-            id=conference.submission_stage.get_withdrawn_submission_id(),
+            id=conference.submission_stage.get_withdrawn_submission_id(conference),
             cdate=tools.datetime_millis(conference.submission_stage.due_date),
             readers=['everyone'],
             writers=[conference.get_id()],
