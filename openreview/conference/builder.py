@@ -80,7 +80,7 @@ class Conference(object):
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
     def __set_expertise_selection_page(self):
-        expertise_selection_invitation = self.client.get_invitation(self.get_expertise_selection_id())
+        expertise_selection_invitation = tools.get_invitation(self.client, self.get_expertise_selection_id())
         if expertise_selection_invitation:
             return self.webfield_builder.set_expertise_selection_page(self, expertise_selection_invitation)
 
@@ -88,31 +88,32 @@ class Conference(object):
         """
         Set a webfield to each available bid invitation
         """
-        bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_reviewers_id()))
+        bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_reviewers_id()))
         if bid_invitation:
             self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id())
 
         if self.use_area_chairs:
-            bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_area_chairs_id()))
+            bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_area_chairs_id()))
             if bid_invitation:
                 self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id())
 
     def __set_recommendation_page(self):
-        recommendation_invitation = self.client.get_invitation(self.get_recommendation_id())
+        recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
         if recommendation_invitation:
             return self.webfield_builder.set_recommendation_page(self, recommendation_invitation)
 
     def __expire_invitation(self, invitation_id):
         # Get invitation
-        invitation = self.client.get_invitation(id = invitation_id)
+        invitation = tools.get_invitation(self.client, id = invitation_id)
 
-        # Force the expdate
-        now = round(time.time() * 1000)
-        if not invitation.expdate or invitation.expdate > now:
-            invitation.expdate = now
-            invitation = self.client.post_invitation(invitation)
+        if invitation:
+            # Force the expdate
+            now = round(time.time() * 1000)
+            if not invitation.expdate or invitation.expdate > now:
+                invitation.expdate = now
+                invitation = self.client.post_invitation(invitation)
 
-        return invitation
+            return invitation
 
     ## TODO: use a super invitation here
     def __expire_invitations(self, name):
@@ -521,9 +522,10 @@ class Conference(object):
         return self.__create_decision_stage()
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
-        invitation = self.client.get_invitation(self.get_submission_id())
-        notes = self.get_submissions(accepted=only_accepted)
-        return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        invitation = tools.get_invitation(self.client, self.get_submission_id())
+        if invitation:
+            notes = self.get_submissions(accepted=only_accepted)
+            return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
