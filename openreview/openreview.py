@@ -9,12 +9,8 @@ else:
 
 import requests
 import pprint
-import json
 import os
-import getpass
 import re
-import datetime
-
 
 
 class OpenReviewException(Exception):
@@ -43,6 +39,8 @@ class Client(object):
         self.mail_url = self.baseurl + '/mail'
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
+        self.edges_url = self.baseurl + '/edges'
+        self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
@@ -252,6 +250,18 @@ class Client(object):
         response = self.__handle_response(response)
         t = response.json()['tags'][0]
         return Tag.from_json(t)
+
+    def get_edge(self, id):
+        """
+        Returns a single edge by id if available
+        """
+        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = self.__handle_response(response)
+        edges = response.json()['edges']
+        if edges:
+            return Edge.from_json(edges[0])
+        else:
+            raise OpenReviewException('Edge not found')
 
     def get_profile(self, email_or_id = None):
         """
@@ -792,6 +802,57 @@ class Client(object):
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        :arg head
+        :arg tail
+        :arg label
+        """
+        params = {}
+
+        params['id'] = id
+        params['invitation'] = invitation
+        params['head'] = head
+        params['tail'] = tail
+        params['label'] = label
+        params['limit'] = limit
+        params['offset'] = offset
+
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return [Edge.from_json(t) for t in response.json()['edges']]
+
+    def get_grouped_edges (self, invitation, groupby='head', select='tail', limit=None, offset=None):
+        '''
+        Returns a list of JSON objects where each one represents a group of edges.  For example calling this
+        method with default arguments will give back a list of groups where each group is of the form:
+        {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
+        Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
+        :param invitation:
+        :param groupby:
+        :param select:
+        :param limit:
+        :param offset:
+        :return:
+        '''
+        params = {}
+        params['id'] = None
+        params['invitation'] = invitation
+        params['groupBy'] = groupby
+        params['select'] = select
+        params['limit'] = limit
+        params['offset'] = offset
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+        json = response.json()
+        return json['groupedEdges'] # a list of JSON objects holding information about an edge
+
+
     def post_group(self, group, overwrite = True):
         """
         Posts the group. If the group is unsigned, signs it using the client's default signature.
@@ -856,6 +917,36 @@ class Client(object):
         response = self.__handle_response(response)
 
         return Tag.from_json(response.json())
+
+    def post_edge(self, edge):
+        """
+        Posts the edge. Upon success, returns the posted Edge object.
+        """
+        response = requests.post(self.edges_url, json = edge.to_json(), headers = self.headers)
+        response = self.__handle_response(response)
+
+        return Edge.from_json(response.json())
+
+    def post_edges (self, edges):
+        '''
+        Posts the list of Edges.   Returns a list Edge objects updated with their ids.
+        :param edges:
+        :return:
+        '''
+        send_json = [edge.to_json() for edge in edges]
+        response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
+        response = self.__handle_response(response)
+        received_json_array = response.json()
+        edge_objects = [Edge.from_json(edge) for edge in received_json_array]
+        return edge_objects
+
+    def delete_edges(self, invitation):
+        """
+        Deletes edges by invitation.
+        """
+        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def delete_note(self, note_id):
         """
@@ -1651,6 +1742,78 @@ class Tag(object):
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
         return 'Tag(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+class Edge(object):
+    def __init__(self, head, tail, invitation, readers, writers, signatures, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
+        self.id = id
+        self.invitation = invitation
+        self.head = head
+        self.tail = tail
+        self.weight = weight
+        self.label = label
+        self.cdate = cdate
+        self.ddate = ddate
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.writers = writers
+        self.signatures = signatures
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.tddate = tddate
+        self.tauthor = tauthor
+
+    def to_json(self):
+        '''
+        Returns serialized json string for a given object
+        '''
+        return {
+            'id': self.id,
+            'cdate': self.cdate,
+            'ddate': self.ddate,
+            'invitation': self.invitation,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'writers': self.writers,
+            'signatures': self.signatures,
+            'head': self.head,
+            'tail': self.tail,
+            'weight': self.weight,
+            'label': self.label
+        }
+
+    @classmethod
+    def from_json(Edge, e):
+        '''
+        Returns a deserialized object from a json string
+
+        :arg t: The json string consisting of a serialized object of type "Edge"
+        '''
+        edge = Edge(
+            id = e.get('id'),
+            cdate = e.get('cdate'),
+            tcdate = e.get('tcdate'),
+            tmdate = e.get('tmdate'),
+            ddate = e.get('ddate'),
+            tddate = e.get('tddate'),
+            invitation = e.get('invitation'),
+            readers = e.get('readers'),
+            nonreaders = e.get('nonreaders'),
+            writers = e.get('writers'),
+            signatures = e.get('signatures'),
+            head = e.get('head'),
+            tail = e.get('tail'),
+            weight = e.get('weight'),
+            label = e.get('label')
+        )
+        return edge
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Edge(' + content + ')'
 
     def __str__(self):
         pp = pprint.PrettyPrinter()

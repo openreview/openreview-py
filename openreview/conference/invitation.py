@@ -148,9 +148,61 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference):
+    def __init__(self, conference, match_group_id):
 
         bid_stage = conference.bid_stage
+
+        readers = [
+            conference.get_id(),
+            conference.get_program_chairs_id(),
+            match_group_id
+        ]
+
+        invitees = [match_group_id]
+
+        super(BidInvitation, self).__init__(id = conference.get_bid_id(match_group_id),
+            cdate = tools.datetime_millis(bid_stage.start_date),
+            duedate = tools.datetime_millis(bid_stage.due_date),
+            expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
+            readers = readers,
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = invitees,
+            taskCompletionCount = bid_stage.request_count,
+            reply = {
+                'readers': {
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query' : {
+                            'invitation' : conference.get_blind_submission_id()
+                        },
+                        'required': True
+                    },
+                    'tail': {
+                        'type': 'Group',
+                        'query' : {
+                            'group' : match_group_id
+                        },
+                        'required': True
+                    },
+                    'label': {
+                        'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'required': True
+                    }
+                }
+            }
+        )
+
+class ExpertiseSelectionInvitation(openreview.Invitation):
+    def __init__(self, conference):
+
+        expertise_selection_stage = conference.expertise_selection_stage
 
         readers = [
             conference.get_id(),
@@ -163,20 +215,16 @@ class BidInvitation(openreview.Invitation):
             readers.append(conference.get_area_chairs_id())
             invitees.append(conference.get_area_chairs_id())
 
-        super(BidInvitation, self).__init__(id = conference.get_bid_id(),
-            cdate = tools.datetime_millis(bid_stage.start_date),
-            duedate = tools.datetime_millis(bid_stage.due_date),
-            expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
+        super(ExpertiseSelectionInvitation, self).__init__(id = conference.get_expertise_selection_id(),
+            cdate = tools.datetime_millis(expertise_selection_stage.start_date),
+            duedate = tools.datetime_millis(expertise_selection_stage.due_date),
+            expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if expertise_selection_stage.due_date else None,
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
             multiReply = True,
-            taskCompletionCount = bid_stage.request_count,
             reply = {
-                'forum': None,
-                'replyto': None,
-                'invitation': conference.get_blind_submission_id(),
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']
                 },
@@ -184,9 +232,15 @@ class BidInvitation(openreview.Invitation):
                     'values-regex': '~.*'
                 },
                 'content': {
-                    'tag': {
-                        'required': True,
-                        'value-radio': [ 'Very High', 'High', 'Neutral', 'Low', 'Very Low']
+                    'head': {
+                        'type': 'Note'
+                    },
+                    'tail': {
+                        'type': 'Group'
+                    },
+                    'label': {
+                        'value-radio': ['Exclude'],
+                        'required': True
                     }
                 }
             }
@@ -669,11 +723,19 @@ class InvitationBuilder(object):
 
         return  self.client.post_invitation(invitation)
 
-    def set_bid_invitation(self, conference):
+    def set_expertise_selection_invitation(self, conference):
 
-        invitation = BidInvitation(conference)
+        invitation = ExpertiseSelectionInvitation(conference)
 
         return self.client.post_invitation(invitation)
+
+    def set_bid_invitation(self, conference):
+
+        invitations = []
+        invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_reviewers_id())))
+        if conference.use_area_chairs:
+            invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_area_chairs_id())))
+        return invitations
 
     def set_comment_invitation(self, conference, notes):
 
@@ -801,12 +863,11 @@ class InvitationBuilder(object):
             duedate = tools.datetime_millis(due_date),
             expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
             readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
-            invitees = [],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
+            invitees = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             multiReply = True,
             reply = {
-                'invitation': conference.get_blind_submission_id(),
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
                     'values-copied': [conference.get_id(), '{signatures}']
@@ -816,59 +877,28 @@ class InvitationBuilder(object):
                     'values-regex': '~.*'
                 },
                 'content': {
-                    'tag': {
-                        'description': 'Recommend reviewer',
-                        'order': 1,
-                        'required': True,
-                        'values-url': '/groups?id=' + conference.get_reviewers_id()
+                    'head': {
+                        'type': 'Note',
+                        'query': {
+                            'invitation': conference.get_blind_submission_id()
+                        }
+                    },
+                    'tail': {
+                        'type': 'Group',
+                        'query': {
+                            'id': conference.get_reviewers_id()
+                        }
+                    },
+                    'weight': {
+                        'value-regex': '[0-9]+',
+                        'required': True
                     }
                 }
             }
         )
 
         recommendation_invitation = self.client.post_invitation(recommendation_invitation)
-        # Create subinvitation with different list of reviewers, bid, tpms score.
 
-        for note in notes_iterator:
-            reviewers = []
-            assignment_note = assignment_note_by_forum.get(note.id)
-            reply = {
-                'forum': note.id
-            }
-            if assignment_note:
-                for group in assignment_note['assignedGroups']:
-                    reviewers.append('{profileId} (A) - Bid: {bid} - Tpms: {tpms}'.format(
-                        profileId = group.get('userId'),
-                        bid = group.get('scores').get('bid'),
-                        tpms = group.get('scores').get('affinity'))
-                    )
-                for group in assignment_note['alternateGroups']:
-                    reviewers.append('{profileId} - Bid: {bid} - Tpms: {tpms}'.format(
-                        profileId = group.get('userId'),
-                        bid = group.get('scores').get('bid'),
-                        tpms = group.get('scores').get('affinity'))
-                    )
-                reply['content'] = {
-                    'tag': {
-                        'description': 'Recommend reviewer',
-                        'order': 1,
-                        'required': True,
-                        'values-dropdown': reviewers
-                    }
-                }
-            paper_recommendation_invitation = openreview.Invitation(
-                id = conference.get_recommendation_id(number = note.number),
-                cdate = tools.datetime_millis(start_date),
-                duedate = tools.datetime_millis(due_date),
-                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
-                super = recommendation_invitation.id,
-                invitees = [conference.get_program_chairs_id(), conference.get_area_chairs_id(note.number)],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                multiReply = True,
-                reply = reply
-            )
-            paper_recommendation_invitation = self.client.post_invitation(paper_recommendation_invitation)
 
 
     def set_registration_invitation(self, conference, start_date = None, due_date = None):

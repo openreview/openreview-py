@@ -70,7 +70,7 @@ function renderSubmissionButton() {
         onNoteCreated: function() {
           // Callback funtion to be run when a paper has successfully been submitted (required)
           promptMessage('Your artifact submission is complete. Check your inbox for a confirmation email.');
-          load().then(renderContent).then(Webfield.ui.done);
+          load().then(renderContent);
         }
       });
     });
@@ -139,7 +139,6 @@ function renderContent(notesResponse, tagInvitations) {
 
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();
-  Webfield.ui.done();
 }
 
 // Go!

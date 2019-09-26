@@ -249,7 +249,7 @@ var displayStatusTable = function(profiles, notes, completedRatings, officialRev
   }
 };
 
-var displayTasks = function(invitations, tagInvitations){
+var displayTasks = function(invitations, edgeInvitations){
   console.log('displayTasks');
   //  My Tasks tab
   var tasksOptions = {
@@ -263,9 +263,9 @@ var displayTasks = function(invitations, tagInvitations){
     return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) !== -1; });
   };
   var reviewerInvitations = _.filter(invitations, filterFunc);
-  var reviewerTagInvitations = _.filter(tagInvitations, filterFunc);
+  var reviewerEdgeInvitations = _.filter(edgeInvitations, filterFunc);
 
-  Webfield.ui.newTaskList(reviewerInvitations, reviewerTagInvitations, tasksOptions)
+  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations, tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
 }
 
@@ -341,6 +341,7 @@ controller.addHandler('reviewers', {
             invitee: true,
             duedate: true,
             replyto: true,
+            type: 'notes',
             details:'replytoNote,repliedNotes'
           }).then(function(result) {
             return result.invitations;
@@ -349,15 +350,14 @@ controller.addHandler('reviewers', {
             regex: WILDCARD_INVITATION,
             invitee: true,
             duedate: true,
-            tags: true,
-            details:'repliedTags'
+            type: 'edges'
           }).then(function(result) {
             return result.invitations;
           }),
           headerLoaded
         );
       })
-      .then(function(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds, invitations, tagInvitations, loaded) {
+      .then(function(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds, invitations, edgeInvitations, loaded) {
         var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
           return result.concat(_.values(idsObj));
         }, []));
@@ -371,7 +371,7 @@ controller.addHandler('reviewers', {
             officialReviews: officialReviews,
             noteToReviewerIds: noteToReviewerIds,
             invitations: invitations,
-            tagInvitations: tagInvitations
+            edgeInvitations: edgeInvitations
           }
           renderTable();
         });
@@ -393,7 +393,7 @@ var renderTable = function() {
     '#assigned-papers'
   );
 
-  displayTasks(fetchedData.invitations, fetchedData.tagInvitations);
+  displayTasks(fetchedData.invitations, fetchedData.edgeInvitations);
 
   Webfield.ui.done();
 }

@@ -121,16 +121,19 @@ var loadData = function(result) {
   }
 
   var invitationsP = Webfield.getAll('/invitations', {
-    regex: WILDCARD_INVITATION, invitee: true,
-    duedate: true, replyto: true, details: 'replytoNote,repliedNotes'
-  });
-
-  var tagInvitationsP = Webfield.getAll('/invitations', {
     regex: WILDCARD_INVITATION,
     invitee: true,
     duedate: true,
-    tags: true,
-    details:'repliedTags'
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  });
+
+  var edgeInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges'
   });
 
   if (ENABLE_REVIEWER_REASSIGNMENT) {
@@ -148,7 +151,7 @@ var loadData = function(result) {
     metaReviewsP,
     getReviewerGroups(noteNumbers),
     invitationsP,
-    tagInvitationsP,
+    edgeInvitationsP,
     allReviewersP
   );
 };
@@ -209,7 +212,7 @@ var getReviewerGroups = function(noteNumbers) {
   });
 };
 
-var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, tagInvitations, allReviewers) {
+var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, edgeInvitations, allReviewers) {
   var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
   }, []));
@@ -223,7 +226,7 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, noteToRevi
       metaReviews: metaReviews,
       noteToReviewerIds: noteToReviewerIds,
       invitations: invitations,
-      tagInvitations: tagInvitations
+      edgeInvitations: edgeInvitations
     };
   });
 };
@@ -595,7 +598,7 @@ var renderTableRows = function(rows, container) {
   }
 }
 
-var renderTasks = function(invitations, tagInvitations) {
+var renderTasks = function(invitations, edgeInvitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#areachair-tasks',
@@ -608,14 +611,14 @@ var renderTasks = function(invitations, tagInvitations) {
     return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
   };
   var areachairInvitations = _.filter(invitations, filterFunc);
-  var areachairTagInvitations = _.filter(tagInvitations, filterFunc);
+  var areachairEdgeInvitations = _.filter(edgeInvitations, filterFunc);
 
-  Webfield.ui.newTaskList(areachairInvitations, areachairTagInvitations, tasksOptions);
+  Webfield.ui.newTaskList(areachairInvitations, areachairEdgeInvitations, tasksOptions);
   $('.tabs-container a[href="#areachair-tasks"]').parent().show();
 }
 
 var renderTableAndTasks = function(fetchedData) {
-  renderTasks(fetchedData.invitations, fetchedData.tagInvitations);
+  renderTasks(fetchedData.invitations, fetchedData.edgeInvitations);
 
   renderStatusTable(
     fetchedData.profiles,
