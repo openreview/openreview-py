@@ -298,7 +298,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
         super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.get_invitation_id('Withdrawn_Submission'),
-            # cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            cdate=tools.datetime_millis(conference.submission_stage.due_date),
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
@@ -346,7 +346,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                # cdate=tools.datetime_millis(conference.submission_stage.due_date),
+                cdate=tools.datetime_millis(conference.submission_stage.due_date),
                 duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)),
                 expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)),
                 invitees=[conference.get_authors_id(note.number)],
@@ -710,14 +710,15 @@ class InvitationBuilder(object):
 
     def set_submission_invitation(self, conference):
 
-        # if not conference.submission_stage.double_blind:
-        #     self.set_withdraw_invitation(conference)
+        if not conference.submission_stage.double_blind and conference.submission_stage.allow_withdraw:
+            self.set_withdraw_invitation(conference)
         return self.client.post_invitation(SubmissionInvitation(conference))
 
 
     def set_blind_submission_invitation(self, conference):
 
-        self.set_withdraw_invitation(conference)
+        if conference.submission_stage.allow_withdraw:
+            self.set_withdraw_invitation(conference)
 
         invitation = BlindSubmissionsInvitation(conference = conference)
 
