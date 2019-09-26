@@ -835,8 +835,7 @@ class SubmissionStage(object):
             name = 'Blind_' + name
         return conference.get_invitation_id(name)
 
-    def get_withdrawn_submission_id(self, conference):
-        name = 'Withdrawn_Submission'
+    def get_withdrawn_submission_id(self, conference, name = 'Withdrawn_Submission'):
         return conference.get_invitation_id(name)
 
 class ExpertiseSelectionStage(object):
