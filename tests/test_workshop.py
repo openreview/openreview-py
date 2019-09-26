@@ -468,6 +468,7 @@ class TestWorkshop():
             forum = submission.id,
             replyto = review.id,
             readers = [
+                'everyone',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
