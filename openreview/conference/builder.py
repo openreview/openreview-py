@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import time
 import datetime
 import re
-import datetime
 from .. import openreview
 from .. import tools
 from . import webfield
@@ -81,7 +80,7 @@ class Conference(object):
             return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
 
     def __set_expertise_selection_page(self):
-        expertise_selection_invitation = self.client.get_invitation(self.get_expertise_selection_id())
+        expertise_selection_invitation = tools.get_invitation(self.client, self.get_expertise_selection_id())
         if expertise_selection_invitation:
             return self.webfield_builder.set_expertise_selection_page(self, expertise_selection_invitation)
 
@@ -89,35 +88,35 @@ class Conference(object):
         """
         Set a webfield to each available bid invitation
         """
-        bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_reviewers_id()))
+        bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_reviewers_id()))
         if bid_invitation:
             self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id())
 
         if self.use_area_chairs:
-            bid_invitation = self.client.get_invitation(self.get_bid_id(group_id=self.get_area_chairs_id()))
+            bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_area_chairs_id()))
             if bid_invitation:
                 self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id())
 
     def __set_recommendation_page(self):
-        recommendation_invitation = self.client.get_invitation(self.get_recommendation_id())
+        recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
         if recommendation_invitation:
             return self.webfield_builder.set_recommendation_page(self, recommendation_invitation)
 
     def __expire_invitation(self, invitation_id):
         # Get invitation
-        invitation = self.client.get_invitation(id = invitation_id)
+        invitation = tools.get_invitation(self.client, id = invitation_id)
 
-        # Force the expdate
-        now = round(time.time() * 1000)
-        if not invitation.expdate or invitation.expdate > now:
-            invitation.expdate = now
-            invitation = self.client.post_invitation(invitation)
+        if invitation:
+            # Force the expdate
+            now = round(time.time() * 1000)
+            if not invitation.expdate or invitation.expdate > now:
+                invitation.expdate = now
+                invitation = self.client.post_invitation(invitation)
 
-        return invitation
+            return invitation
 
     ## TODO: use a super invitation here
     def __expire_invitations(self, name):
-
         invitations = list(tools.iterget_invitations(self.client, regex = self.get_invitation_id(name, '.*')))
 
         now = round(time.time() * 1000)
@@ -130,7 +129,6 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-
         return self.invitation_builder.set_submission_invitation(self)
 
     def __create_expertise_selection_stage(self):
@@ -420,6 +418,13 @@ class Conference(object):
 
         return invitation
 
+    def create_withdraw_invitations(self):
+        if not self.submission_stage.allow_withdraw:
+            raise openreview.OpenReviewException('Conference does not allow withdraw invitations')
+
+        withdraw_invitations = self.invitation_builder.set_withdraw_invitation(self)
+
+
     def create_blind_submissions(self):
 
         if not self.submission_stage.double_blind:
@@ -517,12 +522,12 @@ class Conference(object):
         return self.__create_decision_stage()
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
-        invitation = self.client.get_invitation(self.get_submission_id())
-        notes = self.get_submissions(accepted=only_accepted)
-        return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        invitation = tools.get_invitation(self.client, self.get_submission_id())
+        if invitation:
+            notes = self.get_submissions(accepted=only_accepted)
+            return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
     def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
-
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
         review_iterator = tools.iterget_notes(self.client, invitation = invitation)
         return self.invitation_builder.set_revise_review_invitation(self, review_iterator, name, start_date, due_date, additional_fields, remove_fields)
@@ -765,19 +770,32 @@ class Conference(object):
 
 class SubmissionStage(object):
 
-    def __init__(self, name = 'Submission', start_date = None, due_date = None, public = False, double_blind = False, additional_fields = {}, remove_fields = [], subject_areas = []):
+    def __init__(
+            self,
+            name='Submission',
+            start_date=None,
+            due_date=None,
+            public=False,
+            double_blind=False,
+            allow_withdraw=False,
+            reveal_authors_on_withdraw=False,
+            additional_fields={},
+            remove_fields=[],
+            subject_areas=[]
+        ):
 
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.public = public
         self.double_blind = double_blind
+        self.allow_withdraw = allow_withdraw
+        self.reveal_authors_on_withdraw = reveal_authors_on_withdraw
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
 
     def get_readers(self, conference):
-
         if self.double_blind:
             return {
                 'values-copied': [
@@ -815,6 +833,9 @@ class SubmissionStage(object):
         name = self.name
         if self.double_blind:
             name = 'Blind_' + name
+        return conference.get_invitation_id(name)
+
+    def get_withdrawn_submission_id(self, conference, name = 'Withdrawn_Submission'):
         return conference.get_invitation_id(name)
 
 class ExpertiseSelectionStage(object):
@@ -1049,8 +1070,32 @@ class ConferenceBuilder(object):
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
-    def set_submission_stage(self, name = 'Submission', start_date = None, due_date = None, public = False, double_blind = False, additional_fields = {}, remove_fields = [], subject_areas = []):
-        self.submission_stage = SubmissionStage(name, start_date, due_date, public, double_blind, additional_fields, remove_fields, subject_areas)
+    def set_submission_stage(
+            self,
+            name='Submission',
+            start_date=None,
+            due_date=None,
+            public=False,
+            double_blind=False,
+            allow_withdraw=False,
+            reveal_authors_on_withdraw=False,
+            additional_fields={},
+            remove_fields=[],
+            subject_areas=[]
+        ):
+
+        self.submission_stage = SubmissionStage(
+            name,
+            start_date,
+            due_date,
+            public,
+            double_blind,
+            allow_withdraw,
+            reveal_authors_on_withdraw,
+            additional_fields,
+            remove_fields,
+            subject_areas
+        )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
         self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date)
