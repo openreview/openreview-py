@@ -174,7 +174,7 @@ class WebfieldBuilder(object):
                     Positive bids ("High" and "Very High") will, in most cases, increase the likelihood that you will be assigned that paper.
                 </li>
                 <li>
-                    Negative bids ("Low" and "Very Low") will, in most cases, decreate the likelihood that you will be assigned that paper.
+                    Negative bids ("Low" and "Very Low") will, in most cases, decrease the likelihood that you will be assigned that paper.
                 </li>
                 {sorted_tip}
             </ul>
