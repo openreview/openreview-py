@@ -820,19 +820,19 @@ note={under review}
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
-        assert not notes
+        assert len(notes) == 3
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
-        assert not notes
+        assert len(notes) == 3
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
-        assert not notes
+        assert len(notes) == 3
 
         notes = client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
@@ -860,7 +860,7 @@ note={under review}
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
-        assert not notes
+        assert len(notes) == 3
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
