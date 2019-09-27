@@ -143,18 +143,46 @@ class WebfieldBuilder(object):
 
         sorted_tip = ''
         if conference.bid_stage.use_affinity_score:
-            sorted_tip = ' and sorted by your affinity score'
+            sorted_tip = '''
+            <li>
+                Papers are sorted based on keyword similarity with the papers
+                that you provided in the Expertise Selection Interface.
+            </li>'''
+
+        instructions_html = '''
+            <p class="dark"><strong>Instructions:</strong></p>
+            <ul>
+                <li>
+                    Please indicate your <strong>level of interest</strong> in
+                    reviewing the submitted papers below,
+                    on a scale from "Very Low" interest to "Very High" interest.
+                </li>
+                <li>
+                    Please bid on as many papers as possible
+                    to ensure that your preferences are taken into account.
+                </li>
+                <li>
+                    Use the search field to filter papers by keyword or subject area.
+                </li>
+            </ul>
+            <p class="dark"><strong>A few tips:</strong></p>
+            <ul>
+                <li>
+                    Papers for which you have a conflict of interest are not shown.
+                </li>
+                <li>
+                    Positive bids ("High" and "Very High") will, in most cases, increase the likelihood that you will be assigned that paper.
+                </li>
+                <li>
+                    Negative bids ("Low" and "Very Low") will, in most cases, decrease the likelihood that you will be assigned that paper.
+                </li>
+                {sorted_tip}
+            </ul>
+            <br>'''.format(sorted_tip=sorted_tip)
 
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
-            'instructions': '<p class="dark">Please indicate your level of interest in reviewing \
-                the submitted papers below, on a scale from "Very Low" to "Very High".</p>\
-                <p class="dark"><strong>A few tips:</strong></p>\
-                <ul>\
-                    <li>Please bid on as many papers as possible to ensure that your preferences are taken into account.</li>\
-                    <li>Papers are filtered out by conflict of interest{sorted_tip}. Use the search texbox to filter them by subject areas.</li>\
-                </ul>\
-                <br>'.format(sorted_tip = sorted_tip)
+            'instructions': instructions_html
         }
 
         header = self.__build_options(default_header, conference.get_bidpage_header())
