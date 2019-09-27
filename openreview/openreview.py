@@ -500,15 +500,15 @@ class Client(object):
         """
         response = requests.post(
             self.profiles_merge_url,
-            json = { 
-                'to': profileTo, 
+            json = {
+                'to': profileTo,
                 'from': profileFrom
             },
-            headers = self.headers)        
+            headers = self.headers)
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
-        
+
 
     def get_groups(self, id = None, regex = None, member = None, signatory = None, limit = None, offset = None):
         """
@@ -827,7 +827,7 @@ class Client(object):
 
         return [Edge.from_json(t) for t in response.json()['edges']]
 
-    def get_grouped_edges (self, invitation, groupby='head', select='tail', limit=None, offset=None):
+    def get_grouped_edges(self, invitation=None, groupby='head', select='tail', limit=None, offset=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:

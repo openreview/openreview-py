@@ -620,7 +620,7 @@ def iterget_edges (client,
 
 def iterget_grouped_edges(
         client,
-        invitation,
+        invitation=None,
         groupby='head',
         select='id,tail,label,weight',
         logger=None
