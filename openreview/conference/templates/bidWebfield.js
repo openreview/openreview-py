@@ -308,6 +308,7 @@ function renderContent(notes, conflictIds, bidEdges) {
   }
 
   updateNotes(validNotes);
+  updateCounts();
 }
 
 function prepareNotes(notes, conflictIds, edgesMap) {
