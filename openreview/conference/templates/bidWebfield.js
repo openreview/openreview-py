@@ -265,7 +265,8 @@ function renderContent(notes, conflictIds, bidEdges) {
           Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
         },
         onReset: function() {
-          Webfield.ui.submissionList(notes, submissionListOptions);
+          Webfield.ui.searchResults(notes, searchResultsOptions);
+          $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
         },
       },
       displayOptions: paperDisplayOptions,
