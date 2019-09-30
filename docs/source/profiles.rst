@@ -102,10 +102,14 @@ Remove email:
     >>>                   }))
 
 Remove name:
+
     >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
     >>>                    invitation = '~/-/invitation',
     >>>                    signatures = ['~Melisa_TestBok1'],
     >>>                    content = {},
     >>>                    metaContent = {
-    >>>                     'names': { 'values': [{ 'first': 'Melissa', 'last': 'Bok', 'username': '~Melissa_Bok1' }], 'weights': [-1] }
+    >>>                     'names': { 'values': [{ 'first': 'Melissa', 
+    >>>                                             'last': 'Bok', 
+    >>>                                             'username': '~Melissa_Bok1' }], 
+    >>>                                'weights': [-1] }
     >>>                   }))
