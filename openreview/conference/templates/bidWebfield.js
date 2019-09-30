@@ -34,33 +34,46 @@ function getPapersSortedByAffinity(offset) {
     })
     .then(function(result) {
       noteCount = result.count;
-      var edgesByHead = _.keyBy(result.edges, function(edge) {
-        return edge.head;
-      });
-      var noteIds = Object.keys(edgesByHead);
 
-      return Webfield.post('/notes/search', {
-        ids: noteIds
-      })
-      .then(function(result) {
-        //Keep affinity score order
-        var notesById = _.keyBy(result.notes, function(note) {
-          return note.id;
+      if (noteCount > 0) {
+        var edgesByHead = _.keyBy(result.edges, function(edge) {
+          return edge.head;
         });
-        return noteIds.filter(function(id) {
-          return notesById[id];
+        var noteIds = Object.keys(edgesByHead);
+
+        return Webfield.post('/notes/search', {
+          ids: noteIds
         })
-        .map(function(id) {
-          var note = notesById[id];
-          var edge = edgesByHead[id];
-          //to render the edge widget correctly
-          edge.signatures = [];
-          note.details = {
-            edges: [edge]
-          }
-          return note;
+        .then(function(result) {
+          //Keep affinity score order
+          var notesById = _.keyBy(result.notes, function(note) {
+            return note.id;
+          });
+          return noteIds.filter(function(id) {
+            return notesById[id];
+          })
+          .map(function(id) {
+            var note = notesById[id];
+            var edge = edgesByHead[id];
+            //to render the edge widget correctly
+            edge.signatures = [];
+            note.details = {
+              edges: [edge]
+            }
+            return note;
+          });
         });
-      })
+      } else {
+        return Webfield.get('/notes', {
+          invitation: BLIND_SUBMISSION_ID,
+          offset: offset,
+          limit: 50
+        })
+        .then(function(result) {
+          noteCount = result.count;
+          return result.notes;
+        });
+      }
     });
   } else {
     return Webfield.get('/notes', {
@@ -252,7 +265,8 @@ function renderContent(notes, conflictIds, bidEdges) {
           Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
         },
         onReset: function() {
-          Webfield.ui.submissionList(notes, submissionListOptions);
+          Webfield.ui.searchResults(notes, searchResultsOptions);
+          $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
         },
       },
       displayOptions: paperDisplayOptions,
@@ -295,6 +309,7 @@ function renderContent(notes, conflictIds, bidEdges) {
   }
 
   updateNotes(validNotes);
+  updateCounts();
 }
 
 function prepareNotes(notes, conflictIds, edgesMap) {
