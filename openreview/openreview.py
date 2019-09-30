@@ -21,8 +21,8 @@ class Client(object):
     :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
-    :type username: str, optional. If none is provided, it defaults to the environment variable `OPENREVIEW_PASSWORD`
-    :param password: OpenReview password
+    :type username: str, optional
+    :param password: OpenReview password. If none is provided, it defaults to the environment variable `OPENREVIEW_PASSWORD`
     :type password: str, optional
     :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
@@ -492,7 +492,7 @@ class Client(object):
 
         :param profileTo: Profile object to merge to
         :type profileTo: Profile
-        :parm profileFrom: Profile object to merge from (this profile will be deleted)
+        :param profileFrom: Profile object to merge from (this profile will be deleted)
         :type: profileFrom: Profile
 
         :return: The new updated Profile
@@ -930,8 +930,6 @@ class Client(object):
     def post_edges (self, edges):
         '''
         Posts the list of Edges.   Returns a list Edge objects updated with their ids.
-        :param edges:
-        :return:
         '''
         send_json = [edge.to_json() for edge in edges]
         response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
