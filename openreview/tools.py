@@ -627,8 +627,6 @@ def iterget_grouped_edges(
     ):
     '''Helper function for retrieving and parsing all edges in bulk'''
 
-    edge_invitation = client.get_invitation(invitation)
-
     grouped_edges_iterator = iterget(
         client.get_grouped_edges,
         invitation=invitation,
