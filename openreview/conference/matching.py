@@ -216,14 +216,14 @@ class Matching(object):
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         return invitation
 
-    def _build_affinity_scores(self, affinity_score_file):
+    def _build_scores(self, score_invitation_id, score_file):
         '''
         Given a csv file with affinity scores, create score edges
         '''
-        invitation = self._create_edge_invitation(self.conference.get_affinity_score_id(self.match_group.id), extendable_readers=True)
+        invitation = self._create_edge_invitation(score_invitation_id, extendable_readers=True)
 
         edges = []
-        with open(affinity_score_file) as file_handle:
+        with open(score_file) as file_handle:
             for row in csv.reader(file_handle):
                 paper_note_id = row[0]
                 profile_id = row[1]
@@ -393,7 +393,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -450,7 +450,20 @@ class Matching(object):
             }
 
         if affinity_score_file:
-            invitation = self._build_affinity_scores(affinity_score_file)
+            invitation = self._build_scores(
+                self.conference.get_affinity_score_id(self.match_group.id),
+                affinity_score_file
+            )
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
+
+        if elmo_score_file:
+            invitation = self._build_scores(
+                self.conference.get_elmo_score_id(self.match_group.id),
+                elmo_score_file
+            )
             score_spec[invitation.id] = {
                 'weight': 1,
                 'default': 0

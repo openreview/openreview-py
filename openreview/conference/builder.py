@@ -329,6 +329,9 @@ class Conference(object):
     def get_affinity_score_id(self, group_id):
         return self.get_invitation_id('Affinity_Score', prefix=group_id)
 
+    def get_elmo_score_id(self, group_id):
+        return self.get_invitation_id('Affinity_Score', prefix=group_id)
+
     def get_conflict_score_id(self, group_id):
         return self.get_invitation_id('Conflict', prefix=group_id)
 
