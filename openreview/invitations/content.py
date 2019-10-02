@@ -44,6 +44,19 @@ withdraw = {
     }
 }
 
+desk_reject = {
+    'title': {
+        'value': 'Submission Desk Rejected by Program Chairs',
+        'order': 1
+    },
+    'desk_reject_comments': {
+        'description': 'Brief summary of reasons for marking this submission as desk rejected',
+        'value-regex': '[\\S\\s]{1,10000}',
+        'order': 2,
+        'required': True
+    }
+}
+
 
 review_rating = {
     'title': {
