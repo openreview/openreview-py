@@ -50,7 +50,9 @@ function getPapersSortedByAffinity(offset) {
             return note.id;
           });
           return noteIds.filter(function(id) {
-            return notesById[id];
+            if (notesById[id] && notesById[id].invitation === BLIND_SUBMISSION_ID) {
+              return notesById[id];
+            }
           })
           .map(function(id) {
             var note = notesById[id];

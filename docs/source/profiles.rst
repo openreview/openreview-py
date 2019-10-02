@@ -48,6 +48,24 @@ Getting coauthorship relations from Notes:
     >>> print(sorted(list(coauthors)))
 
 
+Finding conflicts of interest between users
+----------------------------------------
+
+One of the ways that OpenReview computes conflicts-of-interest is by using relations between profiles. The simplest and fastest way of computing these conflicts is by using the `get_conflicts` function in `openreview.tools`:
+
+    >>> michael = client.get_profile('~Michael_Spector1')
+    >>> melisa = client.get_profile('~Melisa_Bok1')
+    >>> andrew = client.get_profile('~Andrew_McCallum1')
+    >>> authors = [michael, melisa]
+    >>> conflicts = openreview.tools.get_conflicts(authors, andrew)
+    ['melisabok@gmail.com',
+     'iesl.cs.umass.edu',
+     'umass.edu',
+     'mccallum@cs.umass.edu',
+     'cs.umass.edu']
+
+Conflicts of interest are represented by direct relationships or by common domain affiliations.
+
 
 Add evidence to a profile
 ----------------------------------------
@@ -99,4 +117,17 @@ Remove email:
     >>>                    content = {},
     >>>                    metaContent = {
     >>>                     'emails': { 'values': ['test@mail.com'], 'weights': [-1] }
+    >>>                   }))
+
+Remove name:
+
+    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
+    >>>                    invitation = '~/-/invitation',
+    >>>                    signatures = ['~Melisa_TestBok1'],
+    >>>                    content = {},
+    >>>                    metaContent = {
+    >>>                     'names': { 'values': [{ 'first': 'Melissa', 
+    >>>                                             'last': 'Bok', 
+    >>>                                             'username': '~Melissa_Bok1' }], 
+    >>>                                'weights': [-1] }
     >>>                   }))
