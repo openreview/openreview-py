@@ -329,6 +329,9 @@ class Conference(object):
     def get_affinity_score_id(self, group_id):
         return self.get_invitation_id('Affinity_Score', prefix=group_id)
 
+    def get_elmo_score_id(self, group_id):
+        return self.get_invitation_id('ELMo_Score', prefix=group_id)
+
     def get_conflict_score_id(self, group_id):
         return self.get_invitation_id('Conflict', prefix=group_id)
 
@@ -424,6 +427,11 @@ class Conference(object):
 
         withdraw_invitations = self.invitation_builder.set_withdraw_invitation(self)
 
+    def create_desk_reject_invitations(self):
+        if not self.submission_stage.allow_desk_reject:
+            raise openreview.OpenReviewException('Conference does not allow desk rejects')
+
+        desk_reject_invitations = self.invitation_builder.set_desk_reject_invitation(self)
 
     def create_blind_submissions(self):
 
@@ -612,13 +620,13 @@ class Conference(object):
         authors_group = self.__create_group(self.get_authors_id(), self.id, author_group_ids, public = True)
         return self.webfield_builder.set_author_page(self, authors_group)
 
-    def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None):
+    def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None):
         if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.setup(affinity_score_file, tpms_score_file)
+        return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file)
 
     def set_assignment(self, user, number, is_area_chair = False):
 
@@ -779,6 +787,8 @@ class SubmissionStage(object):
             double_blind=False,
             allow_withdraw=False,
             reveal_authors_on_withdraw=False,
+            allow_desk_reject=False,
+            reveal_authors_on_desk_reject=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -791,6 +801,8 @@ class SubmissionStage(object):
         self.double_blind = double_blind
         self.allow_withdraw = allow_withdraw
         self.reveal_authors_on_withdraw = reveal_authors_on_withdraw
+        self.allow_desk_reject = allow_desk_reject
+        self.reveal_authors_on_desk_reject = reveal_authors_on_desk_reject
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
@@ -836,6 +848,9 @@ class SubmissionStage(object):
         return conference.get_invitation_id(name)
 
     def get_withdrawn_submission_id(self, conference, name = 'Withdrawn_Submission'):
+        return conference.get_invitation_id(name)
+
+    def get_desk_rejected_submission_id(self, conference, name = 'Desk_Rejected_Submission'):
         return conference.get_invitation_id(name)
 
 class ExpertiseSelectionStage(object):
@@ -1079,6 +1094,8 @@ class ConferenceBuilder(object):
             double_blind=False,
             allow_withdraw=False,
             reveal_authors_on_withdraw=False,
+            allow_desk_reject=False,
+            reveal_authors_on_desk_reject=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -1092,6 +1109,8 @@ class ConferenceBuilder(object):
             double_blind,
             allow_withdraw,
             reveal_authors_on_withdraw,
+            allow_desk_reject,
+            reveal_authors_on_desk_reject,
             additional_fields,
             remove_fields,
             subject_areas

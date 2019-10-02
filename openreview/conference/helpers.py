@@ -71,7 +71,16 @@ def get_conference(client, request_form_id):
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
-    builder.set_submission_stage(double_blind = double_blind, public = public, start_date = submission_start_date, due_date = submission_due_date, additional_fields = submission_additional_options, allow_withdraw = True, reveal_authors_on_withdraw = True)
+    builder.set_submission_stage(
+        double_blind = double_blind,
+        public = public,
+        start_date = submission_start_date,
+        due_date = submission_due_date,
+        additional_fields = submission_additional_options,
+        allow_withdraw = True,
+        reveal_authors_on_withdraw = True,
+        allow_desk_reject = True,
+        reveal_authors_on_desk_reject = True)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
@@ -160,7 +169,10 @@ def get_meta_review_stage(client, request_forum):
     else:
         meta_review_due_date = None
 
-    return openreview.MetaReviewStage(start_date = meta_review_start_date, due_date = meta_review_due_date, public = (request_forum.content.get('make_meta_reviews_public', None) == 'Yes'))
+    return openreview.MetaReviewStage(
+        start_date = meta_review_start_date,
+        due_date = meta_review_due_date,
+        public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'))
 
 def get_decision_stage(client, request_forum):
     decision_start_date = request_forum.content.get('decision_start_date', '').strip()
@@ -184,6 +196,17 @@ def get_decision_stage(client, request_forum):
     decision_options = request_forum.content.get('decision_options', '').strip()
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
-        return openreview.DecisionStage(options = decision_options, start_date = decision_start_date, due_date = decision_due_date, public = (request_forum.content.get('make_decisions_public', None) == 'Yes'), release_to_authors = (request_forum.content.get('release_decisions_to_authors', None) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_decisions_to_reviewers', None) == 'Yes'))
+        return openreview.DecisionStage(
+            options = decision_options,
+            start_date = decision_start_date,
+            due_date = decision_due_date,
+            public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
+            release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
+            release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))
     else:
-        return openreview.DecisionStage(start_date = decision_start_date, due_date = decision_due_date, public = (request_forum.content.get('make_decisions_public', None) == 'Yes'), release_to_authors = (request_forum.content.get('release_decisions_to_authors', None) == 'Yes'), release_to_reviewers = (request_forum.content.get('release_decisions_to_reviewers', None) == 'Yes'))
+        return openreview.DecisionStage(
+            start_date = decision_start_date,
+            due_date = decision_due_date,
+            public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
+            release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
+            release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))

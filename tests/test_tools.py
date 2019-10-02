@@ -36,6 +36,10 @@ class TestTools():
         group_iterator = openreview.tools.iterget_groups(client)
         assert group_iterator
 
+    def test_get_grouped_edges(self, client):
+        group_iterator = openreview.tools.iterget_grouped_edges(client)
+        assert group_iterator
+
     def test_get_preferred_name(self, client):
         superuser_profile = client.get_profile('openreview.net')
         preferred_name = openreview.tools.get_preferred_name(superuser_profile)

@@ -368,6 +368,102 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 process_string=file_content
             )
 
+class DeskRejectedSubmissionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, desk_rejected_submission_content=None):
+
+        content = invitations.submission.copy()
+        if desk_rejected_submission_content:
+            content = desk_rejected_submission_content
+
+        if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_desk_reject):
+            content['authors'] = {
+                'values': ['Anonymous']
+            }
+            content['authorids'] = {
+                'values-regex': '.*'
+            }
+
+        super(DeskRejectedSubmissionInvitation, self).__init__(
+            id=conference.submission_stage.get_desk_rejected_submission_id(conference),
+            cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            readers=['everyone'],
+            writers=[conference.get_id()],
+            signatures=[conference.get_id()],
+            reply={
+                'forum': None,
+                'replyto': None,
+                'readers': {
+                    "description": "The users who will be allowed to read the reply content.",
+                    "values": [
+                        "everyone"
+                    ]
+                },
+                'writers': {
+                    'values': [
+                        conference.get_id()
+                    ]
+                },
+                'signatures': {
+                    'values': [
+                        conference.get_id()
+                    ]
+                },
+                'content': content
+            }
+        )
+
+class PaperDeskRejectInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        content = invitations.desk_reject.copy()
+
+        desk_reject_process_file = 'templates/desk_reject_process.py'
+
+        with open(os.path.join(os.path.dirname(__file__), desk_reject_process_file)) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace(
+                'DESK_REJECTED_SUBMISSION_ID = \'\'',
+                'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')
+            if conference.submission_stage.reveal_authors_on_desk_reject:
+                file_content = file_content.replace(
+                    'REVEAL_AUTHORS_ON_DESK_REJECT = False',
+                    "REVEAL_AUTHORS_ON_DESK_REJECT = True")
+
+            super(PaperDeskRejectInvitation, self).__init__(
+                id=conference.get_invitation_id('Desk_Reject', note.number),
+                cdate=tools.datetime_millis(conference.submission_stage.due_date),
+                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)),
+                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)),
+                invitees=[conference.get_program_chairs_id()],
+                readers=['everyone'],
+                writers=[conference.get_id()],
+                signatures=['OpenReview.net'],
+                multiReply=False,
+                reply={
+                    'forum': note.id,
+                    'replyto': note.id,
+                    'readers': {
+                        "description": "User groups that will be able to read this desk reject note.",
+                        "values": ["everyone"]
+                    },
+                    'writers': {
+                        'values-copied': [
+                            conference.get_id(),
+                            '{signatures}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': conference.get_program_chairs_id(),
+                        'description': 'How your identity will be displayed.'
+                    },
+                    'content': content
+                },
+                process_string=file_content
+            )
+
 class PublicCommentInvitation(openreview.Invitation):
 
     def __init__(self, conference, note):
@@ -755,6 +851,21 @@ class InvitationBuilder(object):
         notes = list(conference.get_submissions())
         for note in notes:
             invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note)))
+
+        return invitations
+
+    def set_desk_reject_invitation(self, conference):
+
+        invitations = []
+
+        submission_invitation = self.client.get_invitation(id = conference.get_submission_id())
+        desk_rejected_submission_content = submission_invitation.reply['content']
+
+        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, desk_rejected_submission_content))
+
+        notes = list(conference.get_submissions())
+        for note in notes:
+            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note)))
 
         return invitations
 
