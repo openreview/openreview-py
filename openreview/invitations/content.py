@@ -24,7 +24,7 @@ comment = {
     'comment': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Your comment or reply (max 5000 characters). Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
+        'description': 'Your comment or reply (max 5000 characters). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'required': True
     }
 }
@@ -89,7 +89,7 @@ review = {
     'review': {
         'order': 2,
         'value-regex': '[\\S\\s]{1,200000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'required': True
     },
     'rating': {
@@ -131,7 +131,7 @@ meta_review = {
     'metareview': {
         'order': 2,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'required': True
     },
     'recommendation': {
@@ -158,7 +158,7 @@ meta_review = {
 
 submission = {
     'title': {
-        'description': 'Title of paper. Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
+        'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'order': 1,
         'value-regex': '.{1,250}',
         'required':True
@@ -187,7 +187,7 @@ submission = {
         'required':False
     },
     'abstract': {
-        'description': 'Abstract of paper. Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
+        'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'order': 8,
         'value-regex': '[\\S\\s]{1,5000}',
         'required':True
