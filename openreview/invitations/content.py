@@ -202,7 +202,7 @@ submission = {
 
 recruitment = {
     'title': {
-        'description': ',
+        'description': '',
         'order': 1,
         'value': 'Recruit response',
         'required':True
