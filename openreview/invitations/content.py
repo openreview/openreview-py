@@ -158,7 +158,7 @@ meta_review = {
 
 submission = {
     'title': {
-        'description': 'Title of paper. Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$'',
+        'description': 'Title of paper. Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
         'order': 1,
         'value-regex': '.{1,250}',
         'required':True
@@ -202,7 +202,7 @@ submission = {
 
 recruitment = {
     'title': {
-        'description': '',
+        'description': ',
         'order': 1,
         'value': 'Recruit response',
         'required':True
