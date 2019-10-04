@@ -24,7 +24,7 @@ comment = {
     'comment': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Your comment or reply (max 5000 characters).',
+        'description': 'Your comment or reply (max 5000 characters). Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
         'required': True
     }
 }
@@ -158,7 +158,7 @@ meta_review = {
 
 submission = {
     'title': {
-        'description': 'Title of paper.',
+        'description': 'Title of paper. Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$'',
         'order': 1,
         'value-regex': '.{1,250}',
         'required':True
@@ -187,7 +187,7 @@ submission = {
         'required':False
     },
     'abstract': {
-        'description': 'Abstract of paper.',
+        'description': 'Abstract of paper. Add TeX formulas using the following formats: \$In-line Formula\$ or \$\$Block Formula\$\$',
         'order': 8,
         'value-regex': '[\\S\\s]{1,5000}',
         'required':True
