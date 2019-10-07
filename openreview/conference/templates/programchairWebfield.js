@@ -717,7 +717,9 @@ var displayPaperStatusTable = function() {
 
     $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
-      postRenderTable(data, pageNum);
+
+      var newPageNum = parseInt($(this).parent().data('pageNumber'), 10);
+      postRenderTable(data, newPageNum);
       return false;
     });
 
