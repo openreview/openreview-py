@@ -231,7 +231,7 @@ var findProfile = function(profiles, id) {
   } else {
     return {
       id: id,
-      name: '',
+      name: id.indexOf('~') === 0 ? view.prettyId(id) : id,
       email: id,
       content: {
         names: [{ username: id }]
@@ -453,30 +453,28 @@ var displaySortPanel = function(container, sortOptions, sortResults, hideMessage
     '</form>';
 
   $(container).empty().append(sortBarHTML);
-  $(container).on('change', 'select#form-sort', function(event) {
+  $(container + ' select#form-sort').on('change', function(event) {
     sortResults($(event.target).val(), false);
   });
-  $(container).on('click', '#form-order', function(event) {
+  $(container + ' #form-order').on('click', function(event) {
     sortResults($(container).find('#form-sort').val(), true);
     return false;
   });
 };
 
 var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
-
-  if (!(pcAssignmentTagInvitations) || !(pcAssignmentTagInvitations.length)) {
-    return null;
+  if (!pcAssignmentTagInvitations || !pcAssignmentTagInvitations.length) {
+    return;
   }
-
   var tagInvitation = pcAssignmentTagInvitations[0];
 
   _.forEach(data, function(d) {
-    var paperTags = [];
-    if (d.note.forum in pcTags) {
-      paperTags = pcTags[d.note.forum];
+    $noteSummaryContainer = $('#note-summary-' + d.note.number);
+    if (!$noteSummaryContainer.length) {
+      return;
     }
 
-    $noteSummaryContainer = $('#note-summary-' + d.note.number);
+    var paperTags = pcTags[d.note.forum] ? pcTags[d.note.forum] : [];
     var $tagWidget = view.mkTagInput(
       'tag',
       tagInvitation && tagInvitation.reply.content.tag,
@@ -715,10 +713,13 @@ var displayPaperStatusTable = function() {
     };
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
-    postRenderTable(data);
+    postRenderTable(data, pageNum);
 
-    $container.on('click', 'ul.pagination > li > a', function(e) {
-      paginationOnClick($(this).parent(), $container, tableData, postRenderTable);
+    $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
+      paginationOnClick($(this).parent(), $container, tableData);
+
+      var newPageNum = parseInt($(this).parent().data('pageNumber'), 10);
+      postRenderTable(data, newPageNum);
       return false;
     });
 
@@ -753,7 +754,7 @@ var displayPaperStatusTable = function() {
     });
   }
 
-  var postRenderTable = function(data) {
+  var postRenderTable = function(data, pageNum) {
     $('.console-table th').eq(0).css('width', '4%');
     $('.console-table th').eq(1).css('width', '4%');
     $('.console-table th').eq(2).css('width', '22%');
@@ -766,15 +767,16 @@ var displayPaperStatusTable = function() {
       $('.console-table th').eq(4).css('width', '25%');
     }
 
+    var offset = (pageNum - 1) * PAGE_SIZE;
+    var pageData = data.slice(offset, offset + PAGE_SIZE);
+
     if (ENABLE_REVIEWER_REASSIGNMENT) {
-      for (key in reviewerSummaryMap) {
-        if (reviewerSummaryMap.hasOwnProperty(key)) {
-          updateReviewerContainer(key);
-        }
-      }
+      pageData.forEach(function(rowData) {
+        updateReviewerContainer(rowData.note.number);
+      });
     }
 
-    addTagsToPaperSummaryCell(data, pcAssignmentTagInvitations);
+    addTagsToPaperSummaryCell(pageData, pcAssignmentTagInvitations);
 
     $(container + ' .console-table > tbody > tr .select-note-reviewers').each(function() {
       var noteId = $(this).data('noteId');
@@ -821,7 +823,7 @@ var renderPaginatedTable = function($container, tableData, pageNumber) {
   }
 }
 
-var paginationOnClick = function($target, $container, tableData, onRenderComplete) {
+var paginationOnClick = function($target, $container, tableData) {
   if ($target.hasClass('disabled') || $target.hasClass('active')) {
     return;
   }
@@ -832,9 +834,6 @@ var paginationOnClick = function($target, $container, tableData, onRenderComplet
   }
 
   renderPaginatedTable($container, tableData, pageNum);
-  if (_.isFunction(onRenderComplete)) {
-    onRenderComplete();
-  }
 
   var scrollPos = $container.offset().top - 104;
   $('html, body').animate({scrollTop: scrollPos}, 400);
@@ -1097,9 +1096,8 @@ var updateReviewerContainer = function(paperNumber) {
   });
 
   $addReviewerContainer.append($dropdown);
-  $addReviewerContainer.append(
-    '<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber + ' data-paper-forum=' + paperForum + '>Assign</button>'
-  );
+  $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' +
+    paperNumber + ' data-paper-forum=' + paperForum + '>Assign</button>');
 }
 
 // Helper functions
@@ -1151,7 +1149,9 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         }),
         paperNumber: note.number,
         reviewerNumber: reviewerNum,
-        lastReminderSent: lastReminderSent ? new Date(parseInt(lastReminderSent)).toLocaleDateString() : lastReminderSent
+        lastReminderSent: lastReminderSent ?
+          new Date(parseInt(lastReminderSent)).toLocaleDateString() :
+          lastReminderSent
       });
     }
   }
@@ -1407,22 +1407,18 @@ controller.addHandler('areachairs', {
       return getUserProfiles(uniqueIds)
       .then(function(profiles) {
         conferenceStatusData = {
-          'profiles' : profiles,
-          'blindedNotes' : blindedNotes,
-          'officialReviews' : officialReviews,
-          'metaReviews' : metaReviews,
-          'reviewerGroups' : reviewerGroups,
-          'areaChairGroups' : areaChairGroups,
-          'decisions' : decisions,
-          'pcAssignmentTagInvitations' : pcAssignmentTagInvitations
+          profiles: profiles,
+          blindedNotes: blindedNotes,
+          officialReviews: officialReviews,
+          metaReviews: metaReviews,
+          reviewerGroups: reviewerGroups,
+          areaChairGroups: areaChairGroups,
+          decisions: decisions,
+          pcAssignmentTagInvitations: pcAssignmentTagInvitations
         }
         displayConfiguration(requestForm, invitations);
-        displayPaperStatusTable();
-        if (SHOW_AC_TAB) {
-          displaySPCStatusTable();
-        }
         Webfield.ui.done();
-      })
+      });
     })
     .fail(function(error) {
       displayError();
