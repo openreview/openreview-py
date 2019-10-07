@@ -20,16 +20,17 @@ var REQUEST_FORM_ID = '';
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
+var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAGE_SIZE = 25;
 
+// Page State
 var reviewerSummaryMap = {};
 var allReviewers = [];
 var conferenceStatusData = {};
 var pcTags = {};
 var selectedNotesById = {};
-
-var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
+var paperStatusNeedsRerender = false;
 
 // Ajax functions
 var getAllReviewers = function() {
@@ -792,8 +793,9 @@ var displayPaperStatusTable = function() {
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
-      'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
+    'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
   }
+  paperStatusNeedsRerender = false;
 
 };
 
@@ -833,7 +835,14 @@ var paginationOnClick = function($target, $container, tableData) {
     return;
   }
 
-  renderPaginatedTable($container, tableData, pageNum);
+  // Only way to get fresh data after doing reviewer re-assignment is to re-compute
+  // the whole table
+  if (paperStatusNeedsRerender) {
+    $('#paper-status').data('lastPageNum', pageNum);
+    displayPaperStatusTable();
+  } else {
+    renderPaginatedTable($container, tableData, pageNum);
+  }
 
   var scrollPos = $container.offset().top - 104;
   $('html, body').animate({scrollTop: scrollPos}, 400);
@@ -1448,7 +1457,7 @@ $('#group-container').on('click', 'a.send-reminder-link', function(e) {
 
     $('#message-reviewers-modal').modal('hide');
     postReviewerEmails(postData);
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
+    promptMessage('A reminder email has been sent to ' + view.prettyId(userId), { scrollToTop: false });
     $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
     return false;
@@ -1576,8 +1585,9 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     } else {
       conferenceStatusData.reviewerGroups.byReviewers[reviewerProfile.id] = [paperNumber];
     }
+    paperStatusNeedsRerender = true;
 
-    promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber);
+    promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { scrollToTop: false });
     var postData = {
       groups: [reviewerProfile.id],
       subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
@@ -1643,8 +1653,9 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
-    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
-  })
+    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { scrollToTop: false });
+    paperStatusNeedsRerender = true;
+  });
   return false;
 });
 
