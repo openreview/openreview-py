@@ -126,8 +126,8 @@ Remove name:
     >>>                    signatures = ['~Melisa_TestBok1'],
     >>>                    content = {},
     >>>                    metaContent = {
-    >>>                     'names': { 'values': [{ 'first': 'Melissa', 
-    >>>                                             'last': 'Bok', 
-    >>>                                             'username': '~Melissa_Bok1' }], 
+    >>>                     'names': { 'values': [{ 'first': 'Melissa',
+    >>>                                             'last': 'Bok',
+    >>>                                             'username': '~Melissa_Bok1' }],
     >>>                                'weights': [-1] }
     >>>                   }))
