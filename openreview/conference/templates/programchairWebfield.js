@@ -793,7 +793,7 @@ var displayPaperStatusTable = function() {
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
-    'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
+      'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
   }
   paperStatusNeedsRerender = false;
 
@@ -1426,6 +1426,10 @@ controller.addHandler('areachairs', {
           pcAssignmentTagInvitations: pcAssignmentTagInvitations
         }
         displayConfiguration(requestForm, invitations);
+        displayPaperStatusTable();
+        if (SHOW_AC_TAB) {
+          displaySPCStatusTable();
+        }
         Webfield.ui.done();
       });
     })
