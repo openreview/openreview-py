@@ -253,7 +253,13 @@ class Client(object):
 
     def get_edge(self, id):
         """
-        Returns a single edge by id if available
+        Get a single Edge by id if available
+
+        :param id: id of the Edge
+        :type id: str
+
+        return: Edge object with its information
+        :rtype: Edge
         """
         response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
@@ -941,6 +947,12 @@ class Client(object):
     def delete_edges(self, invitation):
         """
         Deletes edges by invitation.
+
+        :param invitation: an invitation ID
+        type invitation: str
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
         """
         response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
         response = self.__handle_response(response)
