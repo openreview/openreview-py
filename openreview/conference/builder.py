@@ -766,6 +766,9 @@ class Conference(object):
         options = self.get_homepage_options()
         options['blind_submission_id'] = self.get_blind_submission_id()
         options['decision_invitation_regex'] = self.get_invitation_id(invitation_name, '.*')
+        options['withdrawn_submission_id'] = self.submission_stage.get_withdrawn_submission_id(self)
+        options['desk_rejected_submission_id'] = self.submission_stage.get_desk_rejected_submission_id(self)
+
         if not decision_heading_map:
             decision_heading_map = {}
             invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), limit = 1)
