@@ -81,19 +81,6 @@ function renderConferenceTabs() {
       id: getElementId(decision)
     });
   }
-  if (WITHDRAWN_SUBMISSION_ID) {
-    sections.push({
-      heading: 'Withdrawn Submissions',
-      id: 'withdrawn-submissions',
-    })
-  }
-  if (DESK_REJECTED_SUBMISSION_ID) {
-    sections.push({
-      heading: 'Desk Rejected Submissions',
-      id: 'desk-rejected-submissions',
-    })
-  }
-
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
     hidden: true
@@ -129,14 +116,7 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
     var containerId = sections[activeTab].id;
 
     setTimeout(function() {
-      additionalTabs = 0;
-      if (WITHDRAWN_SUBMISSION_ID) {
-        additionalTabs++;
-      }
-      if (DESK_REJECTED_SUBMISSION_ID) {
-        additionalTabs++;
-      }
-      if (activeTab >= 0 & activeTab < sections.length - additionalTabs) {
+      if (activeTab < DECISION_HEADING_MAP.length ) {
         Webfield.ui.searchResults(
           papersByDecision[containerId],
           _.assign({}, paperDisplayOptions, {showTags: false, container: '#' + containerId})
@@ -144,6 +124,10 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
       } else {
         var withdrawnNotesCount = withdrawnNotes.count || 0;
         if (withdrawnNotesCount) {
+          sections.push({
+            heading: 'Withdrawn Submissions',
+            id: 'withdrawn-submissions',
+          })
           $('#withdrawn-submissions').empty();
           var withdrawnNotesArray = withdrawnNotes.notes || [];
           Webfield.ui.submissionList(withdrawnNotesArray, {
@@ -171,6 +155,10 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
 
         var deskRejectedNotesCount = deskRejectedNotes.count || 0;
         if (deskRejectedNotesCount) {
+          sections.push({
+            heading: 'Desk Rejected Submissions',
+            id: 'desk-rejected-submissions',
+          })
           $('#desk-rejected-submissions').empty();
 
           var deskRejectedNotesArray = deskRejectedNotes.notes || [];
