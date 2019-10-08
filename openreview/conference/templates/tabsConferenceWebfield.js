@@ -280,6 +280,9 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
     Webfield.ui.submissionList(withdrawnNotesArray, {
       heading: null,
       container: '#withdrawn-submissions',
+      search: {
+        enabled: false
+      },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
       noteCount: withdrawnNotesCount,
@@ -305,6 +308,9 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
     Webfield.ui.submissionList(deskRejectedNotesArray, {
       heading: null,
       container: '#desk-rejected-submissions',
+      search: {
+        enabled: false
+      },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
       noteCount: deskRejectedNotesCount,
