@@ -1461,7 +1461,7 @@ $('#group-container').on('click', 'a.send-reminder-link', function(e) {
 
     $('#message-reviewers-modal').modal('hide');
     postReviewerEmails(postData);
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId), { scrollToTop: false });
+    promptMessage('A reminder email has been sent to ' + view.prettyId(userId), { overlay: true });
     $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
     return false;
@@ -1591,7 +1591,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     }
     paperStatusNeedsRerender = true;
 
-    promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { scrollToTop: false });
+    promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { overlay: true });
     var postData = {
       groups: [reviewerProfile.id],
       subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
@@ -1657,7 +1657,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
-    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { scrollToTop: false });
+    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
     paperStatusNeedsRerender = true;
   });
   return false;
