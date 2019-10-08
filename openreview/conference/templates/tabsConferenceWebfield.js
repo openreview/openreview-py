@@ -272,11 +272,6 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
     $('.tabs-container a[href="#recent-activity"]').parent().hide();
   }
 
-  // console.log('withdrawn notes:');
-  // console.log(withdrawnNotes);
-  // console.log('desk rejected notes:');
-  // console.log(deskRejectedNotes);
-
   var withdrawnNotesCount = withdrawnNotes.count || 0;
   if (withdrawnNotesCount) {
     $('#withdrawn-submissions').empty();
