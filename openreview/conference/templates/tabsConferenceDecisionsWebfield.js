@@ -81,6 +81,18 @@ function renderConferenceTabs() {
       id: getElementId(decision)
     });
   }
+  if (WITHDRAWN_SUBMISSION_ID) {
+    sections.push({
+      heading: 'Withdrawn Submissions',
+      id: 'withdrawn-submissions',
+    });
+  }
+  if (DESK_REJECTED_SUBMISSION_ID) {
+    sections.push({
+      heading: 'Desk Rejected Submissions',
+      id: 'desk-rejected-submissions',
+    });
+  }
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
     hidden: true
@@ -118,72 +130,66 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
           papersByDecision[containerId],
           _.assign({}, paperDisplayOptions, {showTags: false, container: '#' + containerId})
         );
-      } else {
-        var withdrawnNotesCount = withdrawnNotes.count || 0;
-        if (withdrawnNotesCount) {
-          sections.push({
-            heading: 'Withdrawn Submissions',
-            id: 'withdrawn-submissions',
-          });
-          $('#withdrawn-submissions').empty();
-          var withdrawnNotesArray = withdrawnNotes.notes || [];
-          Webfield.ui.submissionList(withdrawnNotesArray, {
-            heading: null,
-            container: '#withdrawn-submissions',
-            search: {
-              enabled: false
-            },
-            displayOptions: paperDisplayOptions,
-            autoLoad: false,
-            noteCount: withdrawnNotesCount,
-            pageSize: PAGE_SIZE,
-            onPageClick: function(offset) {
-              return Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
-                noDetails: true,
-                pageSize: PAGE_SIZE,
-                offset: offset
-              });
-            },
-            fadeIn: false
-          });
-        } else {
-          $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
-        }
-
-        var deskRejectedNotesCount = deskRejectedNotes.count || 0;
-        if (deskRejectedNotesCount) {
-          sections.push({
-            heading: 'Desk Rejected Submissions',
-            id: 'desk-rejected-submissions',
-          });
-          $('#desk-rejected-submissions').empty();
-
-          var deskRejectedNotesArray = deskRejectedNotes.notes || [];
-          Webfield.ui.submissionList(deskRejectedNotesArray, {
-            heading: null,
-            container: '#desk-rejected-submissions',
-            search: {
-              enabled: false
-            },
-            displayOptions: paperDisplayOptions,
-            autoLoad: false,
-            noteCount: deskRejectedNotesCount,
-            pageSize: PAGE_SIZE,
-            onPageClick: function(offset) {
-              return Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
-                noDetails: true,
-                pageSize: PAGE_SIZE,
-                offset: offset
-              });
-            },
-            fadeIn: false
-          });
-        } else {
-          $('.tabs-container a[href="#desk-rejected-submissions"]').parent().hide();
-        }
       }
     }, 100);
   });
+
+  var withdrawnNotesCount = withdrawnNotes.count || 0;
+  if (WITHDRAWN_SUBMISSION_ID && withdrawnNotesCount) {
+
+    $('#withdrawn-submissions').empty();
+    var withdrawnNotesArray = withdrawnNotes.notes || [];
+    Webfield.ui.submissionList(withdrawnNotesArray, {
+      heading: null,
+      container: '#withdrawn-submissions',
+      search: {
+        enabled: false
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: withdrawnNotesCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
+          noDetails: true,
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
+      fadeIn: false
+    });
+  } else {
+    $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
+  }
+
+  var deskRejectedNotesCount = deskRejectedNotes.count || 0;
+  if (DESK_REJECTED_SUBMISSION_ID && deskRejectedNotesCount) {
+
+    $('#desk-rejected-submissions').empty();
+
+    var deskRejectedNotesArray = deskRejectedNotes.notes || [];
+    Webfield.ui.submissionList(deskRejectedNotesArray, {
+      heading: null,
+      container: '#desk-rejected-submissions',
+      search: {
+        enabled: false
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: deskRejectedNotesCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
+          noDetails: true,
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
+      fadeIn: false
+    });
+  } else {
+    $('.tabs-container a[href="#desk-rejected-submissions"]').parent().hide();
+  }
 
   $('#group-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
     var containerId = $(e.target).attr('href');
