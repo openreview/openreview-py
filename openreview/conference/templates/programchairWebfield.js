@@ -425,11 +425,7 @@ var displayConfiguration = function(requestForm, invitations) {
   $(container).empty().append(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, hideMessageButton) {
-
-  var sortOptionHtml = _.map(_.keys(sortOptions), function(option) {
-    return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
-  });
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults, hideMessageButton) {
   var messageReviewersButtonHtml = hideMessageButton ?
     '' :
     '<div id="div-msg-reviewers" class="btn-group" role="group">' +
@@ -443,22 +439,42 @@ var displaySortPanel = function(container, sortOptions, sortResults, hideMessage
         '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>';
+  var searchBarHtml = _.isFunction(searchResults) ?
+    '<strong style="vertical-align: middle;">Search:</strong> ' +
+    '<input type="text" id="form-search" class="form-control" placeholder="Search all submissions..." ' +
+      'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
+    '';
+  var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
+    return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
+  });
+  var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
+    '<strong style="vertical-align: middle;">Sort By:</strong> ' +
+    '<select id="form-sort" class="form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
+    '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
+    '';
 
-  var sortBarHTML = '<form class="form-inline search-form clearfix" role="search">' +
-    messageReviewersButtonHtml +
-    '<div class="pull-right">' +
-      '<strong>Sort By:</strong> ' +
-      '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
-      '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
-    '</div>' +
-    '</form>';
+  $(container).empty().append(
+    '<form class="form-inline search-form clearfix" role="search">' +
+      messageReviewersButtonHtml +
+      '<div class="pull-right">' +
+        searchBarHtml +
+        sortDropdownHtml +
+      '</div>' +
+    '</form>'
+  );
 
-  $(container).empty().append(sortBarHTML);
   $(container + ' select#form-sort').on('change', function(event) {
     sortResults($(event.target).val(), false);
   });
   $(container + ' #form-order').on('click', function(event) {
     sortResults($(container).find('#form-sort').val(), true);
+    return false;
+  });
+  $(container + ' #form-search').on('keyup', _.debounce(function() {
+    var searchText = $(container + ' #form-search').val().toLowerCase().trim();
+    searchResults(searchText);
+  }, 300));
+  $(container + ' form.search-form').on('submit', function() {
     return false;
   });
 };
@@ -580,6 +596,21 @@ var displayPaperStatusTable = function() {
     var selectedOption = newOption;
     rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
     renderTable(container, rowData);
+  }
+
+  var searchResults = function(searchText) {
+    $(container).data('lastPageNum', 1);
+
+    // Currently only searching on note number and note title
+    var filterFunc = function(row) {
+      return (
+        row.note.number + '' === searchText ||
+        row.note.content.title.toLowerCase().indexOf(searchText) !== -1
+      );
+    };
+
+    var filteredRows = searchText ? _.filter(rowData, filterFunc) : rowData;
+    renderTable(container, filteredRows);
   }
 
   // Message modal handler
@@ -789,7 +820,7 @@ var displayPaperStatusTable = function() {
   };
 
   if (rowData.length) {
-    displaySortPanel(container, sortOptions, sortResults);
+    displaySortPanel(container, sortOptions, sortResults, searchResults);
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -934,7 +965,7 @@ var displaySPCStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, true);
+  displaySortPanel(container, sortOptions, sortResults, null, true);
   renderTable(container, rowData);
 };
 
@@ -1047,7 +1078,7 @@ var displayPCStatusTable = function() {
     renderTable();
   };
 
-  displaySortPanel(container, sortOptions, sortResults, true);
+  displaySortPanel(container, sortOptions, sortResults, null, true);
   conferenceStatusData['reviewerTabData'] = {
     'container': container,
     'data': rowData
@@ -1076,7 +1107,7 @@ var updateReviewerContainer = function(paperNumber) {
       return _.includes(p.description.toLowerCase(), term.toLowerCase());
     });
   };
-  placeholder = 'reviewer@domain.edu';
+  var placeholder = 'reviewer@domain.edu';
 
   var $dropdown = view.mkDropdown(placeholder, false, null, function(update, term) {
     update(filterOptions(dropdownOptions, term));
