@@ -1135,6 +1135,7 @@ var updateReviewerContainer = function(paperNumber) {
     autocomplete: 'on'
   });
 
+  $addReviewerContainer.empty()
   $addReviewerContainer.append($dropdown);
   $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' +
     paperNumber + ' data-paper-forum=' + paperForum + '>Assign</button>');
