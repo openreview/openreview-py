@@ -39,11 +39,13 @@ function main() {
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
 
-  var notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
-    pageSize: PAGE_SIZE,
-    details: 'replyCount,original',
-    includeCount: true
-  });
+  var notesP = Webfield.getAll(
+    '/notes',
+    {
+      invitation: BLIND_SUBMISSION_ID,
+      details: 'replyCount,original'
+    }
+  )
 
   var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
@@ -102,7 +104,7 @@ function renderConferenceTabs() {
 function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes) {
 
   var notesDict = {};
-  _.forEach(notes.notes, function(n) {
+  _.forEach(notes, function(n) {
     notesDict[n.id] = n;
   });
   var papersByDecision = {};
