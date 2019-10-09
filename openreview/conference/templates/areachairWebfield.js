@@ -177,7 +177,7 @@ var getOfficialReviews = function(noteNumbers) {
           // Need to parse rating and confidence strings into ints
           ratingMatch = n.content.rating.match(ratingExp);
           n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
-          confidenceMatch = n.content.confidence.match(ratingExp);
+          confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
           n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
 
           noteMap[num][index] = n;
