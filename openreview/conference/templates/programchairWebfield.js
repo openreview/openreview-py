@@ -70,7 +70,7 @@ var getInvitationId = function(name, number) {
 
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, noDetails: true
+    invitation: BLIND_SUBMISSION_ID, noDetails: true, sort:'number:asc'
   });
 };
 
