@@ -206,6 +206,7 @@ var getUserProfiles = function(userIds) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profile.allEmails = profile.content.emails;
       profileMap[profile.id] = profile;
     };
     if (searchResults.length) {
@@ -1645,20 +1646,20 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   var paperNumber = $link.data('paperNumber');
   var reviewerNumber = $link.data('reviewerNumber');
 
+  var membersToDelete = [
+    reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id
+  ];
+  _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allEmails, function(email){
+    membersToDelete.push(email);
+  });
   Webfield.delete('/groups/members', {
     id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-    members: [
-      reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id,
-      reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email
-    ]
+    members: membersToDelete
   })
   .then(function(result) {
     return Webfield.delete('/groups/members', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-      members: [
-        reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id,
-        reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email
-      ]
+      members: membersToDelete
     });
   })
   .then(function(result) {
