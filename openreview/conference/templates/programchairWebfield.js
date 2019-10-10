@@ -1665,7 +1665,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   .then(function(result) {
     var currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
 
-    if (currentReviewerToPapersMap && (currentReviewerToPapersMap.length === 1)) {
+    if (currentReviewerToPapersMap.length === 1) {
       delete conferenceStatusData.reviewerGroups.byReviewers[userId];
     } else {
       conferenceStatusData.reviewerGroups.byReviewers[userId] = currentReviewerToPapersMap.filter(function(number) {
