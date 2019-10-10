@@ -1601,18 +1601,24 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
 
   Webfield.delete('/groups/members', {
     id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-    members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
+    members: [
+      reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id,
+      reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email
+    ]
   })
   .then(function(result) {
     return Webfield.delete('/groups/members', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-      members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
+      members: [
+        reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id,
+        reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email
+      ]
     });
   })
   .then(function(result) {
     var currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
 
-    if (currentReviewerToPapersMap.length === 1) {
+    if (currentReviewerToPapersMap && (currentReviewerToPapersMap.length === 1)) {
       delete conferenceStatusData.reviewerGroups.byReviewers[userId];
     } else {
       conferenceStatusData.reviewerGroups.byReviewers[userId] = currentReviewerToPapersMap.filter(function(number) {
