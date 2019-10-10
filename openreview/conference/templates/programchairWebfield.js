@@ -440,9 +440,10 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
         '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>';
+  var searchType = container.substring(1).split('-')[0] + 's';
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
-    '<input type="text" id="form-search" class="form-control" placeholder="Search all submissions..." ' +
+    '<input type="text" id="form-search" class="form-control" placeholder="Search all ' + searchType + '..." ' +
       'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
     '';
   var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
@@ -586,7 +587,7 @@ var displayPaperStatusTable = function() {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
       return (tags.length && tags[0].tag === view.prettyId(user.profile.id));
-    }
+    };
   }
 
   var sortResults = function(newOption, switchOrder) {
@@ -597,7 +598,7 @@ var displayPaperStatusTable = function() {
     var selectedOption = newOption;
     rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
     renderTable(container, rowData);
-  }
+  };
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
@@ -612,7 +613,7 @@ var displayPaperStatusTable = function() {
 
     var filteredRows = searchText ? _.filter(rowData, filterFunc) : rowData;
     renderTable(container, filteredRows);
-  }
+  };
 
   // Message modal handler
   var sendReviewerReminderEmailsStep1 = function(e) {
@@ -785,7 +786,7 @@ var displayPaperStatusTable = function() {
       }
       return false;
     });
-  }
+  };
 
   var postRenderTable = function(data, pageNum) {
     $('.console-table th').eq(0).css('width', '4%');
@@ -855,7 +856,7 @@ var renderPaginatedTable = function($container, tableData, pageNumber) {
   if (paginationHtml) {
     $('ul.pagination', $container).css({ marginTop: '2.5rem', marginBottom: '0' });
   }
-}
+};
 
 var paginationOnClick = function($target, $container, tableData) {
   if ($target.hasClass('disabled') || $target.hasClass('active')) {
@@ -883,37 +884,35 @@ var paginationOnClick = function($target, $container, tableData) {
 };
 
 var displaySPCStatusTable = function() {
+  var container = '#areachair-status';
   var profiles = conferenceStatusData.profiles;
   var notes = conferenceStatusData.blindedNotes
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
   var areachairIds = conferenceStatusData.areaChairGroups.byAreaChairs;
-  var container = '#areachair-status';
 
   var rowData = [];
   var index = 1;
-  var sortedAreaChairIds = _.sortBy(_.keys(areachairIds));
+  var sortedAreaChairIds = Object.keys(areachairIds).sort();
   _.forEach(sortedAreaChairIds, function(areaChair) {
     var numbers = areachairIds[areaChair];
-
     var papers = [];
     _.forEach(numbers, function(number) {
       var note = _.find(notes, ['number', number]);
-
-      if (note) {
-        var reviewers = reviewerIds[number];
-        var reviews = completedReviews[number];
-        var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
-
-        papers.push({
-          note: note,
-          reviewers: reviewers,
-          reviews: reviews,
-          metaReview: metaReview
-        });
+      if (!note) {
+        return;
       }
 
+      var reviewers = reviewerIds[number];
+      var reviews = completedReviews[number];
+      var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
+      papers.push({
+        note: note,
+        reviewers: reviewers,
+        reviews: reviews,
+        metaReview: metaReview
+      });
     });
 
     var areaChairProfile = findProfile(profiles, areaChair);
@@ -941,6 +940,17 @@ var displaySPCStatusTable = function() {
     renderTable(container, rowData);
   }
 
+  var searchResults = function(searchText) {
+    $(container).data('lastPageNum', 1);
+
+    // Currently only searching on area chair name
+    var filterFunc = function(row) {
+      return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
+    };
+    var filteredRows = searchText ? _.filter(rowData, filterFunc) : rowData;
+    renderTable(container, filteredRows);
+  };
+
   var renderTable = function(container, data) {
     var index = 1;
     var rowData = _.map(data, function(d) {
@@ -966,21 +976,19 @@ var displaySPCStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, null, true);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, true);
   renderTable(container, rowData);
 };
 
 var displayPCStatusTable = function() {
+  var container = '#reviewer-status';
   var profiles = conferenceStatusData.profiles;
   var notes = conferenceStatusData.blindedNotes;
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
   var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes;
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
-  var container = '#reviewer-status';
-  var rowData = [];
-  var index = 1;
-  var sortedReviewerIds = _.sortBy(_.keys(reviewerById));
+
   var findReview = function(reviews, profile) {
     var found;
     profile.content.names.forEach(function(name) {
@@ -991,6 +999,9 @@ var displayPCStatusTable = function() {
     return found;
   }
 
+  var rowData = [];
+  var index = 1;
+  var sortedReviewerIds = Object.keys(reviewerById).sort();
   _.forEach(sortedReviewerIds, function(reviewer) {
     var numbers = reviewerById[reviewer];
     var reviewerProfile = findProfile(profiles, reviewer);
@@ -998,33 +1009,32 @@ var displayPCStatusTable = function() {
     var papers = [];
     _.forEach(numbers, function(number) {
       var note = _.find(notes, ['number', number]);
-
-      if (note) {
-        var reviewerNum = 0;
-        var reviewers = reviewerByNote[number];
-
-
-        for (var revNumber in reviewers) {
-          if (reviewer == reviewers[revNumber].id) {
-            reviewerNum = revNumber;
-            break;
-          }
-        }
-
-        var reviews = completedReviews[number];
-        var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
-        var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
-
-        papers.push({
-          note: note,
-          review: review,
-          reviewers: reviewers,
-          reviews: reviews,
-          metaReview: metaReview
-        });
+      if (!note) {
+        return;
       }
 
+      var reviewerNum = 0;
+      var reviewers = reviewerByNote[number];
+      for (var revNumber in reviewers) {
+        if (reviewer == reviewers[revNumber].id) {
+          reviewerNum = revNumber;
+          break;
+        }
+      }
+
+      var reviews = completedReviews[number];
+      var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
+      var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
+
+      papers.push({
+        note: note,
+        review: review,
+        reviewers: reviewers,
+        reviews: reviews,
+        metaReview: metaReview
+      });
     });
+
     rowData.push(buildPCTableRow(index, reviewerProfile, papers));
     index++;
   });
@@ -1039,9 +1049,27 @@ var displayPCStatusTable = function() {
     Papers_with_Completed_Reviews: function(row) { return row.reviewStatusData.numCompletedReviews; }
   };
 
-  var renderTable = function() {
-    var container = conferenceStatusData.reviewerTabData['container'];
-    var data = conferenceStatusData.reviewerTabData['data'];
+  var sortResults = function(newOption, switchOrder) {
+    if (switchOrder) {
+      order = (order == 'asc' ? 'desc' : 'asc');
+    }
+    var selectedOption = newOption;
+    rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
+    renderTable();
+  };
+
+  var searchResults = function(searchText) {
+    $(container).data('lastPageNum', 1);
+
+    // Currently only searching on reviewer name
+    var filterFunc = function(row) {
+      return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
+    };
+    var filteredRows = searchText ? _.filter(rowData, filterFunc) : rowData;
+    renderTable(container, filteredRows);
+  };
+
+  var renderTable = function(container, data) {
     var index = 1;
     var rowData = _.map(data, function(d) {
       var number = '<strong class="note-number">' + index++ + '</strong>';
@@ -1066,25 +1094,8 @@ var displayPCStatusTable = function() {
     });
   };
 
-  var sortResults = function(newOption, switchOrder) {
-    if (switchOrder) {
-      order = (order == 'asc' ? 'desc' : 'asc');
-    }
-    var selectedOption = newOption;
-    rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
-    conferenceStatusData['reviewerTabData'] = {
-      'container': container,
-      'data': rowData
-    };
-    renderTable();
-  };
-
-  displaySortPanel(container, sortOptions, sortResults, null, true);
-  conferenceStatusData['reviewerTabData'] = {
-    'container': container,
-    'data': rowData
-  };
-  renderTable();
+  displaySortPanel(container, sortOptions, sortResults, searchResults, true);
+  renderTable(container, rowData);
 };
 
 var displayError = function(message) {
@@ -1136,10 +1147,11 @@ var updateReviewerContainer = function(paperNumber) {
     autocomplete: 'on'
   });
 
-  $addReviewerContainer.empty()
-  $addReviewerContainer.append($dropdown);
-  $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' +
-    paperNumber + ' data-paper-forum=' + paperForum + '>Assign</button>');
+  $addReviewerContainer.empty().append(
+    $dropdown,
+    '<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber +
+      ' data-paper-forum=' + paperForum + '>Assign</button>'
+  );
 }
 
 // Helper functions
