@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='1.0.1',
+      version='1.0.2',
       description='OpenReview client library',
       url='https://github.com/iesl/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
@@ -16,7 +16,6 @@ setup(name='openreview-py',
           'pycryptodome',
           'requests>=2.18.4',
           'future',
-          'nbsphinx',
           'tqdm',
           "Deprecated",
           'pylatexenc',
@@ -25,7 +24,7 @@ setup(name='openreview-py',
           'tld'
       ],
       extras_require={
-          'develop': ["sphinx", "sphinx_rtd_theme", "nbformat"]
+          'develop': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
       },
       zip_safe=False,
       include_package_data=True)
