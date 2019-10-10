@@ -94,6 +94,8 @@ class WebfieldBuilder(object):
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + options.get('program_chairs_id', '') + "';")
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id', '') + "';")
             content = content.replace("var DECISION_HEADING_MAP = {};", "var DECISION_HEADING_MAP = " + json.dumps(options.get('decision_heading_map', '{}'), sort_keys=True) + ";")
+            content = content.replace("var WITHDRAWN_SUBMISSION_ID = '';", "var WITHDRAWN_SUBMISSION_ID = '" + options.get('withdrawn_submission_id', '') + "';")
+            content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + options.get('desk_rejected_submission_id', '') + "';")
 
             group.web = content
             group.signatures = [group.id]
