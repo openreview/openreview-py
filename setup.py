@@ -24,7 +24,7 @@ setup(name='openreview-py',
           'tld'
       ],
       extras_require={
-          'develop': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
+          'docs': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
       },
       zip_safe=False,
       include_package_data=True)
