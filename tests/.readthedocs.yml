@@ -1,3 +1,9 @@
+version: 2
 python:
-    extra_requirements:
-        - docs
+    install:
+      - method: pip
+        path: .
+        extra_requirements:
+            - docs
+      - method: setuptools
+        path: package
