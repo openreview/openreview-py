@@ -14,7 +14,7 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
-var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair.*';
+var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]+$';
 var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 
 var reviewerSummaryMap = {};
