@@ -1055,7 +1055,7 @@ var displayPCStatusTable = function() {
     }
     var selectedOption = newOption;
     rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
-    renderTable();
+    renderTable(container, rowData);
   };
 
   var searchResults = function(searchText) {
