@@ -607,7 +607,7 @@ var displayPaperStatusTable = function() {
     // Currently only searching on note number and note title
     var filterFunc = function(row) {
       return (
-        row.note.number + '' === searchText ||
+        (row.note.number + '').indexOf(searchText) === 0 ||
         row.note.content.title.toLowerCase().indexOf(searchText) !== -1
       );
     };
