@@ -564,7 +564,7 @@ var displayPaperStatusTable = function() {
   });
 
   var toNumber = function(value) {
-    return value == 'N/A' ? 0 : value;
+    return value === 'N/A' ? 0 : value;
   }
 
   var order = 'desc';
@@ -591,17 +591,18 @@ var displayPaperStatusTable = function() {
   }
 
   var sortResults = function(newOption, switchOrder) {
-    if (switchOrder) {
-      order = (order == 'asc' ? 'desc' : 'asc');
-    }
+    $(container + ' #form-search').val('');
 
-    var selectedOption = newOption;
-    rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
+    if (switchOrder) {
+      order = order === 'asc' ? 'desc' : 'asc';
+    }
+    rowData = _.orderBy(rowData, sortOptions[newOption], order);
     renderTable(container, rowData);
   };
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
+    $(container + ' #form-sort').val('Paper_Number');
 
     // Currently only searching on note number and note title
     var filterFunc = function(row) {
@@ -611,7 +612,9 @@ var displayPaperStatusTable = function() {
       );
     };
 
-    var filteredRows = searchText ? _.filter(rowData, filterFunc) : rowData;
+    var filteredRows = searchText
+      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc')
+      : rowData;
     renderTable(container, filteredRows);
   };
 
@@ -931,23 +934,26 @@ var displaySPCStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    if (switchOrder) {
-      order = (order == 'asc' ? 'desc' : 'asc');
-    }
+    $(container + ' #form-search').val('');
 
-    var selectedOption = newOption;
-    rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
+    if (switchOrder) {
+      order = order === 'asc' ? 'desc' : 'asc';
+    }
+    rowData = _.orderBy(rowData, sortOptions[newOption], order);
     renderTable(container, rowData);
   }
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
+    $(container + ' #form-sort').val('Area_Chair');
 
     // Currently only searching on area chair name
     var filterFunc = function(row) {
       return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
     };
-    var filteredRows = searchText ? _.filter(rowData, filterFunc) : rowData;
+    var filteredRows = searchText
+      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Area_Chair'], 'asc')
+      : rowData;
     renderTable(container, filteredRows);
   };
 
@@ -1050,22 +1056,26 @@ var displayPCStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
+    $(container + ' #form-search').val('');
+
     if (switchOrder) {
-      order = (order == 'asc' ? 'desc' : 'asc');
+      order = order === 'asc' ? 'desc' : 'asc';
     }
-    var selectedOption = newOption;
-    rowData = _.orderBy(rowData, sortOptions[selectedOption], order);
+    rowData = _.orderBy(rowData, sortOptions[newOption], order);
     renderTable(container, rowData);
   };
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
+    $(container + ' #form-sort').val('Reviewer');
 
     // Currently only searching on reviewer name
     var filterFunc = function(row) {
       return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
     };
-    var filteredRows = searchText ? _.filter(rowData, filterFunc) : rowData;
+    var filteredRows = searchText
+      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Reviewer'], 'asc')
+      : rowData;
     renderTable(container, filteredRows);
   };
 
