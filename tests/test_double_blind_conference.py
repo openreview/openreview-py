@@ -494,6 +494,15 @@ class TestDoubleBlindConference():
         acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 1
 
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 0
+
         # Reject invitation
         reject_url = re.search('http://.*response=No', text).group(0)
         request_page(selenium, reject_url)
@@ -510,7 +519,7 @@ class TestDoubleBlindConference():
         recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
         acceptance_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'Yes']
         decline_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'No']
-        assert len(acceptance_notes) == 0
+        assert len(acceptance_notes) == 1
         assert len(decline_notes) == 1
 
         # Recruit more reviewers
