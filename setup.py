@@ -3,7 +3,7 @@ from setuptools import setup
 setup(name='openreview-py',
       version='1.0.2',
       description='OpenReview client library',
-      url='https://github.com/iesl/openreview-py',
+      url='https://github.com/openreview/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
       author_email='spector@cs.umass.edu, mbok@cs.umass.edu, mandler@cs.umass.edu, muniyal@cs.umass.edu',
       license='MIT',
