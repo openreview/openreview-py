@@ -1,7 +1,7 @@
 OpenReview Python library
 =========================
 
-[![CircleCI](https://circleci.com/gh/iesl/openreview-py.svg?style=svg)](https://circleci.com/gh/iesl/openreview-py)
+[![CircleCI](https://circleci.com/gh/openreview/openreview-py.svg?style=svg)](https://circleci.com/gh/openreview/openreview-py)
 [![Documentation Status](https://readthedocs.org/projects/openreview-py/badge/?version=latest)](https://openreview-py.readthedocs.io/en/latest/?badge=latest)
 
 Prerequisites
@@ -17,7 +17,7 @@ $ pip install openreview-py
 ```
 From the repository.
 ```
-$ git clone https://github.com/iesl/openreview-py.git
+$ git clone https://github.com/openreview/openreview-py.git
 $ cd openreview-py
 $ pip install -e .
 ```
