@@ -489,9 +489,9 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        recruit_invitation = re.search('http://(.*)/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
-        acceptance_notes = pc_client.get_notes(invitation = recruit_invitation, content = {'response':'Yes'})
-        print ('acceptance_notes: ', acceptance_notes)
+        recruit_invitation = re.search('http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 1
 
         # Reject invitation
@@ -507,8 +507,9 @@ class TestDoubleBlindConference():
         assert len(group.members) == 1
         assert 'mbok@mail.com' in group.members
 
-        acceptance_notes = pc_client.get_notes(invitation = recruit_invitation, content = {'response':'Yes'})
-        decline_notes = pc_client.get_notes(invitation = recruit_invitation, content = {'response':'No'})
+        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        acceptance_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'Yes']
+        decline_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'No']
         assert len(acceptance_notes) == 0
         assert len(decline_notes) == 1
 
