@@ -1030,6 +1030,7 @@ note={under review}
 
     def test_open_meta_reviews(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
         assert ac_client is not None, "Client is none"
 
@@ -1040,7 +1041,7 @@ note={under review}
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100))
         builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
@@ -1064,6 +1065,7 @@ note={under review}
 
     def test_open_meta_reviews_additional_options(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         ac_client = helpers.create_user('meta_additional@mail.com', 'TestMetaAdditional', 'User')
         assert ac_client is not None, "Client is none"
 
@@ -1074,7 +1076,7 @@ note={under review}
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
