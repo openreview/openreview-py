@@ -166,11 +166,12 @@ class TestClient():
 
     def test_get_notes_by_content(self, client):
 
+        now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('Test.ws/2019/Conference')
-        builder.set_submission_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00))
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 100))
 
         conference = builder.get_result()
         assert conference, 'conference is None'

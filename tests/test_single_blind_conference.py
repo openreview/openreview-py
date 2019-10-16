@@ -328,6 +328,7 @@ class TestSingleBlindConference():
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert reviewer_client is not None, "Client is none"
         res = reviewer_client.register_user(email = 'reviewer@mail.com', first = 'Reviewer', last = 'Test', password = '1234')
@@ -357,7 +358,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        builder.set_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -469,13 +470,14 @@ class TestSingleBlindConference():
 
     def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
+        now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        builder.set_review_stage(due_date = datetime.datetime(2019, 10, 5, 18, 00), additional_fields = {
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
