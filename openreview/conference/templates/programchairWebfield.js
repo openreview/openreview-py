@@ -1680,6 +1680,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allNames, function(name){
     membersToDelete.push(name.username);
   });
+
   Webfield.delete('/groups/members', {
     id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
     members: membersToDelete
@@ -1691,22 +1692,31 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     });
   })
   .then(function(result) {
-    var currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
 
-    if (currentReviewerToPapersMap) {
-      if (currentReviewerToPapersMap.length === 1) {
-        delete conferenceStatusData.reviewerGroups.byReviewers[userId];
+    if (!(userId in conferenceStatusData.reviewerGroups.byReviewers)) {
+      // This checks for the case when userId is not the actual group id stored in the reviewers and the anonReviewers groups
+      var idInMap = _.find(membersToDelete, function(member){
+        return member in conferenceStatusData.reviewerGroups.byReviewers;
+      });
+      if (idInMap) {
+        userId = idInMap;
       } else {
-        conferenceStatusData.reviewerGroups.byReviewers[userId] = currentReviewerToPapersMap.filter(function(number) {
-          return number !== paperNumber;
-        });
+        promptMessage('Sorry, could not remove the reviewer ' + view.prettyId(userId) + '. Please contact info@openreview.net.', { overlay: true });
+        return false;
       }
-    } else {
-      promptError('Oops! Could not remove this reviewer. Please contact info@openreview.net.');
-      return false;
     }
 
-    currentPaperToReviewersMap = conferenceStatusData.reviewerGroups.byNotes[paperNumber];
+    var currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
+
+    if (currentReviewerToPapersMap.length === 1) {
+      delete conferenceStatusData.reviewerGroups.byReviewers[userId];
+    } else {
+      conferenceStatusData.reviewerGroups.byReviewers[userId] = currentReviewerToPapersMap.filter(function(number) {
+        return number !== paperNumber;
+      });
+    }
+
+    var currentPaperToReviewersMap = conferenceStatusData.reviewerGroups.byNotes[paperNumber];
 
     if (currentPaperToReviewersMap.length === 1) {
       // The paper has exactly one reviewer, so we delete the paper itself from the map
@@ -1729,7 +1739,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
-    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
+    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been removed for paper ' + paperNumber, { overlay: true });
     paperStatusNeedsRerender = true;
   });
   return false;
