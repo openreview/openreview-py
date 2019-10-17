@@ -207,6 +207,9 @@ var getUserProfiles = function(userIds) {
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profile.allEmails = profile.content.emails;
+      profile.allNames = _.filter(profile.content.names, function(name){
+        return !_.isEmpty(name.username);
+      });
       profileMap[profile.id] = profile;
     };
     if (searchResults.length) {
@@ -1674,6 +1677,9 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allEmails, function(email){
     membersToDelete.push(email);
   });
+  _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allNames, function(name){
+    membersToDelete.push(name.username);
+  });
   Webfield.delete('/groups/members', {
     id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
     members: membersToDelete
@@ -1687,12 +1693,17 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   .then(function(result) {
     var currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
 
-    if (currentReviewerToPapersMap.length === 1) {
-      delete conferenceStatusData.reviewerGroups.byReviewers[userId];
+    if (currentReviewerToPapersMap) {
+      if (currentReviewerToPapersMap.length === 1) {
+        delete conferenceStatusData.reviewerGroups.byReviewers[userId];
+      } else {
+        conferenceStatusData.reviewerGroups.byReviewers[userId] = currentReviewerToPapersMap.filter(function(number) {
+          return number !== paperNumber;
+        });
+      }
     } else {
-      conferenceStatusData.reviewerGroups.byReviewers[userId] = currentReviewerToPapersMap.filter(function(number) {
-        return number !== paperNumber;
-      });
+      promptError('Oops! Could not remove this reviewer. Please contact info@openreview.net.');
+      return false;
     }
 
     currentPaperToReviewersMap = conferenceStatusData.reviewerGroups.byNotes[paperNumber];
