@@ -207,6 +207,9 @@ var getUserProfiles = function(userIds) {
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profile.allEmails = profile.content.emails;
+      profile.allNames = _.filter(profile.content.names, function(name){
+        return !_.isEmpty(name.username);
+      });
       profileMap[profile.id] = profile;
     };
     if (searchResults.length) {
@@ -255,17 +258,22 @@ var getDecisionReviews = function() {
 };
 
 var getRequestForm = function() {
-  return Webfield.getAll('/notes', { id: REQUEST_FORM_ID})
-  .then(notes => notes[0]);
-}
+  return controller.get('/notes', { id: REQUEST_FORM_ID }, null, function() {}, true)
+  .then(function(result) {
+    return _.get(result, 'notes[0]', {});
+  }, function(err) {
+    // Do not fail if config note cannot be loaded
+    return $.Deferred().resolve(null);
+  });
+};
 
 var getInvitations = function() {
   return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
-}
+};
 
 var getPcAssignmentTagInvitations = function() {
   return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
-}
+};
 
 var getPcAssignmentTags = function() {
   return Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION})
@@ -279,7 +287,7 @@ var getPcAssignmentTags = function() {
       });
     }
   });
-}
+};
 
 var findNextAnonGroupNumber = function(paperNumber) {
   var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
@@ -289,17 +297,20 @@ var findNextAnonGroupNumber = function(paperNumber) {
     }
   }
   return paperReviewerNums.length + 1;
-}
+};
 
 var getConfigurationDescription = function(note) {
-  var description = note.content['Author and Reviewer Anonymity'] + ', ' +
-  note.content['Open Reviewing Policy'] + ', ' + note.content['Public Commentary'] +
-  '</br>Paper matching should use ' + note.content['Paper Matching'].join(', ') + '.</br>';
+  var description = [
+    'Author And Reviewer Anonymity: ' + note.content['Author and Reviewer Anonymity'],
+    note.content['Open Reviewing Policy'],
+    note.content['Public Commentary'],
+    'Paper matching uses ' + note.content['Paper Matching'].join(', ')
+  ];
   if (note.content['Other Important Information']) {
-    description += note.content['Other Important Information'] + '</br>';
+    description.push(note.content['Other Important Information']);
   }
-  return description;
-}
+  return description.join('<br>').replace(/should be/g, 'are');
+};
 
 // Render functions
 var displayHeader = function() {
@@ -344,73 +355,72 @@ var displayHeader = function() {
 
 var displayConfiguration = function(requestForm, invitations) {
 
-  var renderInvitation = function(invitationMap, id, name) {
-
-    var formatPeriod = function(invitation) {
-      var start;
-      var end;
-      var afterStart = true;
-      var beforeEnd = true;
-      var now = Date.now();
-      if (invitation.cdate) {
-        var date = new Date(invitation.cdate);
-        start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
-        afterStart = now > invitation.cdate;
-      }
-      if (invitation.duedate) {
-        var date = new Date(invitation.duedate);
-        end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
-        beforeEnd = now < invitation.duedate;
-      }
-
-      var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
-      if (end) {
-        periodString = periodString + 'until <em>' + end + '</em>';
-      } else {
-        periodString = periodString + 'no deadline';
-      }
-
-      return periodString;
+  var formatPeriod = function(invitation) {
+    var start;
+    var end;
+    var afterStart = true;
+    var beforeEnd = true;
+    var now = Date.now();
+    if (invitation.cdate) {
+      var date = new Date(invitation.cdate);
+      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      afterStart = now > invitation.cdate;
+    }
+    if (invitation.duedate) {
+      var date = new Date(invitation.duedate);
+      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      beforeEnd = now < invitation.duedate;
     }
 
+    var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
+    if (end) {
+      periodString = periodString + 'until <em>' + end + '</em>';
+    } else {
+      periodString = periodString + 'no deadline';
+    }
+
+    return periodString;
+  };
+
+  var renderInvitation = function(invitationMap, id, name) {
     var invitation = invitationMap[id];
     if (invitation) {
       return '<li><a href="/invitation?id=' + invitation.id + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
     };
-
     return '';
-  }
+  };
 
   var invitationMap = {};
-
   invitations.forEach(function(invitation) {
     invitationMap[invitation.id] = invitation;
   });
 
   var container = '#venue-configuration';
-  var html = '<div></br>'
+  var html = '<div><br>'
 
+  // Config
   if (requestForm) {
-    html += '<h3>Description:</h3></br>';
-    html += '<p><a href="/forum?id=' + requestForm.id + '">Venue Configuration</a><span>: ' + getConfigurationDescription(requestForm) + '</span></p></br>';
+    html += '<h3>Description:</h3><br>';
+    html += '<p style="margin-bottom:2rem"><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
+      '<a href="/forum?id=' + requestForm.id + '"><strong>Full Venue Configuration</strong></a>'
+      '</p>';
   }
 
-  html += '<h3>Official Committee:</h3></br><ul>' +
+  // Official Committee
+  html += '<h3>Venue Roles:</h3><br><ul>' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
-
   if (SHOW_AC_TAB) {
     html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
   }
-
   html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
-    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul>' +
-    '<h3>Timeline:</h3></br>' +
-    '<ul>';
+    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul><br>';
 
+  // Timeline
+  html += '<h3>Timeline:</h3><br><ul>';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
   if (SHOW_AC_TAB) {
@@ -421,8 +431,8 @@ var displayConfiguration = function(requestForm, invitations) {
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
-
   html += '</ul></div>';
+
   $(container).empty().append(html);
 };
 
@@ -1674,6 +1684,10 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allEmails, function(email){
     membersToDelete.push(email);
   });
+  _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allNames, function(name){
+    membersToDelete.push(name.username);
+  });
+
   Webfield.delete('/groups/members', {
     id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
     members: membersToDelete
@@ -1685,6 +1699,21 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     });
   })
   .then(function(result) {
+
+    if (!(conferenceStatusData.reviewerGroups.byReviewers[userId])) {
+      // This checks for the case when userId is not the actual group id stored in the reviewers and the anonReviewers groups
+      var idInMap = _.find(membersToDelete, function(member){
+        return conferenceStatusData.reviewerGroups.byReviewers.hasOwnProperty(member);
+      });
+      if (idInMap) {
+        userId = idInMap;
+      } else {
+        // This means that the delete calls earlier failed as well
+        promptMessage('Sorry, a problem occurred while removing the reviewer ' + view.prettyId(userId) + '. Please contact info@openreview.net.', { overlay: true });
+        return false;
+      }
+    }
+
     var currentReviewerToPapersMap = conferenceStatusData.reviewerGroups.byReviewers[userId];
 
     if (currentReviewerToPapersMap.length === 1) {
@@ -1695,7 +1724,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
       });
     }
 
-    currentPaperToReviewersMap = conferenceStatusData.reviewerGroups.byNotes[paperNumber];
+    var currentPaperToReviewersMap = conferenceStatusData.reviewerGroups.byNotes[paperNumber];
 
     if (currentPaperToReviewersMap.length === 1) {
       // The paper has exactly one reviewer, so we delete the paper itself from the map
@@ -1718,7 +1747,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
-    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
+    promptMessage('Reviewer ' + view.prettyId(userId) + ' has been removed for paper ' + paperNumber, { overlay: true });
     paperStatusNeedsRerender = true;
   });
   return false;
