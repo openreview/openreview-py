@@ -1693,15 +1693,16 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   })
   .then(function(result) {
 
-    if (!(userId in conferenceStatusData.reviewerGroups.byReviewers)) {
+    if (!(conferenceStatusData.reviewerGroups.byReviewers[userId])) {
       // This checks for the case when userId is not the actual group id stored in the reviewers and the anonReviewers groups
       var idInMap = _.find(membersToDelete, function(member){
-        return member in conferenceStatusData.reviewerGroups.byReviewers;
+        return conferenceStatusData.reviewerGroups.byReviewers.hasOwnProperty(member);
       });
       if (idInMap) {
         userId = idInMap;
       } else {
-        promptMessage('Sorry, could not remove the reviewer ' + view.prettyId(userId) + '. Please contact info@openreview.net.', { overlay: true });
+        // This means that the delete calls earlier failed as well
+        promptMessage('Sorry, a problem occurred while removing the reviewer ' + view.prettyId(userId) + '. Please contact info@openreview.net.', { overlay: true });
         return false;
       }
     }
