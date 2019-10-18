@@ -329,6 +329,25 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = f.read()
 
             file_content = file_content.replace(
+                'CONFERENCE_ID = \'\'',
+                'CONFERENCE_ID = \'' + conference.get_id() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_SHORT_NAME = \'\'',
+                'CONFERENCE_SHORT_NAME = \'' + conference.get_short_name() + '\'')
+            file_content = file_content.replace(
+                'PAPER_AUTHORS_ID = \'\'',
+                'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PAPER_REVIEWERS_ID = \'\'',
+                'PAPER_REVIEWERS_ID = \'' + conference.get_reviewers_id(number=note.number) + '\'')
+            if conference.use_area_chairs:
+                file_content = file_content.replace(
+                    'PAPER_AREA_CHAIRS_ID = \'\'',
+                    'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PROGRAM_CHAIRS_ID = \'\'',
+                'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
+            file_content = file_content.replace(
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
             if conference.submission_stage.reveal_authors_on_withdraw:
@@ -424,6 +443,25 @@ class PaperDeskRejectInvitation(openreview.Invitation):
         with open(os.path.join(os.path.dirname(__file__), desk_reject_process_file)) as f:
             file_content = f.read()
 
+            file_content = file_content.replace(
+                'CONFERENCE_ID = \'\'',
+                'CONFERENCE_ID = \'' + conference.get_id() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_SHORT_NAME = \'\'',
+                'CONFERENCE_SHORT_NAME = \'' + conference.get_short_name() + '\'')
+            file_content = file_content.replace(
+                'PAPER_AUTHORS_ID = \'\'',
+                'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PAPER_REVIEWERS_ID = \'\'',
+                'PAPER_REVIEWERS_ID = \'' + conference.get_reviewers_id(number=note.number) + '\'')
+            if conference.use_area_chairs:
+                file_content = file_content.replace(
+                    'PAPER_AREA_CHAIRS_ID = \'\'',
+                    'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PROGRAM_CHAIRS_ID = \'\'',
+                'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
             file_content = file_content.replace(
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')
