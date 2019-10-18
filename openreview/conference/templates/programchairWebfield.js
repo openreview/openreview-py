@@ -298,7 +298,7 @@ var findNextAnonGroupNumber = function(paperNumber) {
 
 var getConfigurationDescription = function(note) {
   var description = [
-    note.content['Author and Reviewer Anonymity'],
+    'Author And Reviewer Anonymity: ' + note.content['Author and Reviewer Anonymity'],
     note.content['Open Reviewing Policy'],
     note.content['Public Commentary'],
     'Paper matching should use ' + note.content['Paper Matching'].join(', ')
@@ -306,7 +306,7 @@ var getConfigurationDescription = function(note) {
   if (note.content['Other Important Information']) {
     description.push(note.content['Other Important Information']);
   }
-  return description.join('<br>');
+  return description.join('<br>').replace(/should be/g, 'are');
 };
 
 // Render functions
@@ -398,13 +398,13 @@ var displayConfiguration = function(requestForm, invitations) {
   // Config
   if (requestForm) {
     html += '<h3>Description:</h3><br>';
-    html += '<p><a href="/forum?id=' + requestForm.id + '"><strong>Venue Configuration</strong></a>:<br>' +
-      '<span>' + getConfigurationDescription(requestForm) + '</span>' +
+    html += '<p><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
+      '<a href="/forum?id=' + requestForm.id + '"><strong>Full Venue Configuration</strong></a>'
       '</p><br>';
   }
 
   // Official Committee
-  html += '<h3>Official Committee:</h3><br><ul>' +
+  html += '<h3>Venue Roles:</h3><br><ul>' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
   if (SHOW_AC_TAB) {
     html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
