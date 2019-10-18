@@ -304,7 +304,7 @@ var getConfigurationDescription = function(note) {
     'Author And Reviewer Anonymity: ' + note.content['Author and Reviewer Anonymity'],
     note.content['Open Reviewing Policy'],
     note.content['Public Commentary'],
-    'Paper matching should use ' + note.content['Paper Matching'].join(', ')
+    'Paper matching uses ' + note.content['Paper Matching'].join(', ')
   ];
   if (note.content['Other Important Information']) {
     description.push(note.content['Other Important Information']);
@@ -401,9 +401,9 @@ var displayConfiguration = function(requestForm, invitations) {
   // Config
   if (requestForm) {
     html += '<h3>Description:</h3><br>';
-    html += '<p><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
+    html += '<p style="margin-bottom:2rem"><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
       '<a href="/forum?id=' + requestForm.id + '"><strong>Full Venue Configuration</strong></a>'
-      '</p><br>';
+      '</p>';
   }
 
   // Official Committee
