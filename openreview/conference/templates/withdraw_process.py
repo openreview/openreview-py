@@ -27,11 +27,11 @@ def process(client, note, invitation):
         client.post_invitation(invitation)
 
     # Mail Authors, Reviewers, ACs (if present) and PCs
-    email_subject = '''{CONFERENCE_SHORT_NAME}: Paper #{paper_number} withdrawn by Paper Authors'''.format(
+    email_subject = '''{CONFERENCE_SHORT_NAME}: Paper #{paper_number} withdrawn by paper authors'''.format(
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,
         paper_number = forum_note.number
     )
-    email_body = '''The {CONFERENCE_SHORT_NAME} paper title "{paper_title}" has been withdrawn by the Paper Authors.'''.format(
+    email_body = '''The {CONFERENCE_SHORT_NAME} paper title "{paper_title}" has been withdrawn by the paper authors.'''.format(
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,
         paper_title = forum_note.content['title']
     )
