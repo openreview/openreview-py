@@ -274,8 +274,8 @@ class Conference(object):
 
         if submitted_reviewers:
             committee.append(self.get_reviewers_id(number) + '/Submitted')
-        else:
-            committee.append(self.get_reviewers_id(number))
+
+        committee.append(self.get_reviewers_id(number))
 
         if self.use_area_chairs:
             committee.append(self.get_area_chairs_id(number))
