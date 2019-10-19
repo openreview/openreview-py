@@ -614,7 +614,7 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
