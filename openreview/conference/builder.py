@@ -1088,6 +1088,9 @@ class ConferenceBuilder(object):
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
+    def enable_reviewer_reassignment(self, enable):
+        self.conference.enable_reviewer_reassignment = enable
+
     def set_submission_stage(
             self,
             name='Submission',
