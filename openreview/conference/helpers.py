@@ -86,6 +86,9 @@ def get_conference(client, request_form_id):
     if 'OpenReview Affinity' in paper_matching_options:
         builder.set_expertise_selection_stage(due_date = submission_due_date)
 
+    if 'Organizers will assign papers manually' in paper_matching_options:
+        builder.enable_reviewer_reassignment(enable = True)
+
     conference = builder.get_result()
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference
