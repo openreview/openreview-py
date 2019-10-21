@@ -598,6 +598,11 @@ class Conference(object):
                 self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
                 is_signatory = False)
 
+            self.__create_group(
+                self.get_reviewers_id(number = n.number) + '/Submitted',
+                self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                is_signatory = False)
+
         return self.__set_reviewer_page()
 
     def set_authors(self):
@@ -662,7 +667,6 @@ class Conference(object):
                 },
                 use_profile = True
             )
-            self.__create_group(self.get_reviewers_id(number = number) + '/Submitted', self.get_program_chairs_id())
             return result
 
     def set_assignments(self, assingment_title, is_area_chair=False):
