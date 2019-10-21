@@ -546,8 +546,16 @@ class OfficialCommentInvitation(openreview.Invitation):
         if comment_stage.allow_public_comments:
             readers.append('everyone')
 
-        committee = conference.get_committee(number = note.number, submitted_reviewers = not comment_stage.unsubmitted_reviewers, with_authors = True)
-        readers.extend(committee)
+        readers.append(conference.get_authors_id(note.number))
+        readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
+
+        if comment_stage.unsubmitted_reviewers:
+            readers.append(conference.get_reviewers_id(note.number))
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(note.number))
+
+        readers.append(conference.get_program_chairs_id())
 
         if comment_stage.reader_selection:
             reply_readers = {
@@ -564,7 +572,7 @@ class OfficialCommentInvitation(openreview.Invitation):
             super = conference.get_invitation_id('Comment'),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = committee,
+            invitees = readers,
             reply = {
                 'forum': note.id,
                 'replyto': None,
