@@ -19,10 +19,11 @@ function(){
       //TODO: use the variable instead, when we have anonymous groups integrated
       var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Reviewers';
       var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Area_Chairs';
+      var AREA_CHAIR_1_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Area_Chairs';
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 
-      if (PROGRAM_CHAIRS_ID){
+      if (PROGRAM_CHAIRS_ID) {
         var program_chair_mail = {
           groups: [PROGRAM_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
@@ -41,7 +42,7 @@ function(){
 
       if (USE_AREA_CHAIRS && (note.readers.includes('everyone') || note.readers.includes(AREA_CHAIRS_ID))) {
         var areachair_mail = {
-          groups: [AREA_CHAIRS_ID],
+          groups: [AREA_CHAIR_1_ID],
           ignoreGroups: ignoreGroups,
           subject : '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'A submission to ' + SHORT_PHRASE + ', for which you are an official area chair, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
@@ -50,7 +51,7 @@ function(){
       }
 
       var reviewers_submitted = REVIEWERS_ID + '/Submitted';
-      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)){
+      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)) {
         var reviewer_mail = {
           groups: [REVIEWERS_ID],
           ignoreGroups: ignoreGroups,
@@ -79,7 +80,7 @@ function(){
       }
 
       return Promise.all(promises)
-      .then(function(result){
+      .then(function(result) {
         return or3client.addGroupMember(reviewers_submitted, note.signatures[0], token);
       })
     })
