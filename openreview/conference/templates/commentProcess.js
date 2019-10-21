@@ -16,11 +16,9 @@ function(){
       var AUTHORS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/' + AUTHORS_NAME;
       //TODO: use the variable instead, when we have anonymous groups integrated
       var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Reviewers';
-      var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chairs';
-      var BUDDY_AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Buddy_Area_Chair1';
+      var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chair1';
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
-      ignoreGroups.push(BUDDY_AREA_CHAIRS_ID);
 
       var ac_mail = {
         groups: [AREA_CHAIRS_ID],
