@@ -19,10 +19,12 @@ function(){
       //TODO: use the variable instead, when we have anonymous groups integrated
       var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Reviewers';
       var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Area_Chairs';
+      var BUDDY_AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Buddy_Area_Chair1';
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
+      ignoreGroups.push(BUDDY_AREA_CHAIRS_ID);
 
-      if (PROGRAM_CHAIRS_ID){
+      if (PROGRAM_CHAIRS_ID) {
         var program_chair_mail = {
           groups: [PROGRAM_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
@@ -50,7 +52,7 @@ function(){
       }
 
       var reviewers_submitted = REVIEWERS_ID + '/Submitted';
-      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)){
+      if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)) {
         var reviewer_mail = {
           groups: [REVIEWERS_ID],
           ignoreGroups: ignoreGroups,
@@ -79,7 +81,7 @@ function(){
       }
 
       return Promise.all(promises)
-      .then(function(result){
+      .then(function(result) {
         return or3client.addGroupMember(reviewers_submitted, note.signatures[0], token);
       })
     })
