@@ -14,6 +14,7 @@ var DESK_REJECTED_SUBMISSION_ID = '';
 var DECISION_INVITATION_REGEX = '';
 var DECISION_HEADING_MAP = {};
 var PAGE_SIZE = 25;
+
 var HEADER = {};
 
 var paperDisplayOptions = {
@@ -60,12 +61,15 @@ function load() {
   }) : $.Deferred().resolve([]);
 
   var decisionNotesP = Webfield.getAll('/notes', { invitation: DECISION_INVITATION_REGEX, noDetails: true });
-  var authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
-    pageSize: PAGE_SIZE,
-    'content.authorids': user.profile.id,
-    details: 'noDetails'
-  });
-  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP, authorNotesP);
+
+  var userGroupP;
+  if (!user || _.startsWith(user.id, 'guest_')) {
+    userGroupsP = $.Deferred().resolve([]);
+  } else {
+    userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true });
+  }
+
+  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP, userGroupsP);
 }
 
 function renderConferenceHeader() {
@@ -81,10 +85,10 @@ function getElementId(decision) {
 }
 
 function renderConferenceTabs() {
-   sections.push({
-      heading: 'Your Consoles',
-      id: 'your-consoles',
-   });
+  sections.push({
+    heading: 'Your Consoles',
+    id: 'your-consoles',
+  });
   for (var decision in DECISION_HEADING_MAP) {
     sections.push({
       heading: DECISION_HEADING_MAP[decision],
@@ -129,24 +133,30 @@ function createConsoleLinks(allGroups) {
   $('#your-consoles .submissions-list').append(links);
 }
 
-function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes, authorNotes) {
+function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
 
+  if (userGroups.length) {
+
+    var $container = $('#your-consoles').empty();
+    $container.append('<ul class="list-unstyled submissions-list">');
+
+    var allConsoles = [];
+    userGroups.forEach(function(group) {
+      allConsoles.push(group.id);
+    });
+
+    // Render all console links for the user
+    createConsoleLinks(allConsoles);
+
+    $('.tabs-container a[href="#your-consoles"]').parent().show();
+  } else {
+    $('.tabs-container a[href="#your-consoles"]').parent().hide();
+  }
   var notesDict = {};
   _.forEach(notes, function(n) {
     notesDict[n.id] = n;
   });
   var papersByDecision = {};
-
-  var allConsoles = [];
-  if (authorNotes.length) {
-    allConsoles.push(AUTHORS_ID);
-  }
-  userGroups.forEach(function(group) {
-    allConsoles.push(group.id);
-  });
-
-  // Render all console links for the user
-  createConsoleLinks(allConsoles);
 
   for (var decision in DECISION_HEADING_MAP) {
     papersByDecision[decision] = [];
