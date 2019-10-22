@@ -8,12 +8,12 @@
 // Constants
 var CONFERENCE_ID = '';
 var BLIND_SUBMISSION_ID = '';
+var SUBMISSION_ID = '';
 var WITHDRAWN_SUBMISSION_ID = '';
 var DESK_REJECTED_SUBMISSION_ID = '';
 var DECISION_INVITATION_REGEX = '';
 var DECISION_HEADING_MAP = {};
 var PAGE_SIZE = 25;
-
 var HEADER = {};
 
 var paperDisplayOptions = {
@@ -60,8 +60,12 @@ function load() {
   }) : $.Deferred().resolve([]);
 
   var decisionNotesP = Webfield.getAll('/notes', { invitation: DECISION_INVITATION_REGEX, noDetails: true });
-
-  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP);
+  var authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
+    pageSize: PAGE_SIZE,
+    'content.authorids': user.profile.id,
+    details: 'noDetails'
+  });
+  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP, authorNotesP);
 }
 
 function renderConferenceHeader() {
@@ -77,6 +81,10 @@ function getElementId(decision) {
 }
 
 function renderConferenceTabs() {
+   sections.push({
+      heading: 'Your Consoles',
+      id: 'your-consoles',
+   });
   for (var decision in DECISION_HEADING_MAP) {
     sections.push({
       heading: DECISION_HEADING_MAP[decision],
@@ -101,13 +109,44 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes) {
+function createConsoleLinks(allGroups) {
+  var uniqueGroups = _.sortBy(_.uniq(allGroups));
+  var links = [];
+  uniqueGroups.forEach(function(group) {
+    var groupName = group.split('/').pop();
+    if (groupName.slice(-1) === 's') {
+      groupName = groupName.slice(0, -1);
+    }
+    links.push(
+      [
+        '<li class="note invitation-link">',
+        '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
+        '</li>'
+      ].join('')
+    );
+  });
+
+  $('#your-consoles .submissions-list').append(links);
+}
+
+function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes, authorNotes) {
 
   var notesDict = {};
   _.forEach(notes, function(n) {
     notesDict[n.id] = n;
   });
   var papersByDecision = {};
+
+  var allConsoles = [];
+  if (authorNotes.length) {
+    allConsoles.push(AUTHORS_ID);
+  }
+  userGroups.forEach(function(group) {
+    allConsoles.push(group.id);
+  });
+
+  // Render all console links for the user
+  createConsoleLinks(allConsoles);
 
   for (var decision in DECISION_HEADING_MAP) {
     papersByDecision[decision] = [];
