@@ -178,7 +178,7 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes,
         return;
     }
     setTimeout(function() {
-      if (activeTab < Object.keys(DECISION_HEADING_MAP).length) {
+      if (activeTab < Object.keys(DECISION_HEADING_MAP).length+1) {
         Webfield.ui.searchResults(
           papersByDecision[containerId],
           _.assign({}, paperDisplayOptions, {showTags: false, container: '#' + containerId})
