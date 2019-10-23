@@ -299,7 +299,7 @@ var renderHeader = function() {
   ]);
 };
 
-var renderStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, container) {
+var renderStatusTable = function(profiles, notes, completedReviews, metaReviews, allInvitations, reviewerIds, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
@@ -625,6 +625,7 @@ var renderTableAndTasks = function(fetchedData) {
     fetchedData.blindedNotes,
     fetchedData.officialReviews,
     fetchedData.metaReviews,
+    fetchedData.invitations,
     _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
     '#assigned-papers'
   );
