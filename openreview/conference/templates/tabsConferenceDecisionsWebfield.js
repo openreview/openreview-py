@@ -174,6 +174,9 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes,
     var activeTab = 0;
     activeTab = $(e.target).data('tabIndex');
     var containerId = sections[activeTab].id;
+    if (containerId === 'your-consoles') {
+        return;
+    }
     setTimeout(function() {
       if (activeTab < Object.keys(DECISION_HEADING_MAP).length) {
         Webfield.ui.searchResults(
