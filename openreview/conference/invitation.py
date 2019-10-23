@@ -543,6 +543,7 @@ class OfficialCommentInvitation(openreview.Invitation):
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
 
         readers = []
+        invitees = conference.get_committee(number=note.number, with_authors=True)
         if comment_stage.allow_public_comments:
             readers.append('everyone')
 
@@ -576,7 +577,7 @@ class OfficialCommentInvitation(openreview.Invitation):
             super = conference.get_invitation_id('Comment'),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = readers,
+            invitees = invitees,
             reply = {
                 'forum': note.id,
                 'replyto': None,
