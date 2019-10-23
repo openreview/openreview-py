@@ -547,6 +547,10 @@ class OfficialCommentInvitation(openreview.Invitation):
             readers.append('everyone')
 
         readers.append(conference.get_authors_id(note.number))
+
+        if comment_stage.reader_selection:
+            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
+
         readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
 
         if comment_stage.unsubmitted_reviewers:
