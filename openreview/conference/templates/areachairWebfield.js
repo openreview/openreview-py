@@ -299,7 +299,7 @@ var renderHeader = function() {
   ]);
 };
 
-var renderStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, container) {
+var renderStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
@@ -309,8 +309,9 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
 
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
+    var metaReviewInvitation = _.find(allInvitations, ['id', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview);
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, metaReviewInvitation);
   });
 
   // Sort form handler
@@ -590,6 +591,14 @@ var renderTableRows = function(rows, container) {
   }
 }
 
+var filterInvitationsByInvitee = function(invitations, invitee_name) {
+  // Filter out tasks this invitee is not invited to
+  var filterFunc = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(invitee_name) !== -1; });
+  };
+  return _.filter(invitations, filterFunc);
+}
+
 var renderTasks = function(invitations, edgeInvitations) {
   //  My Tasks tab
   var tasksOptions = {
@@ -598,12 +607,9 @@ var renderTasks = function(invitations, edgeInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  // Filter out non-areachair tasks
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
-  };
-  var areachairInvitations = _.filter(invitations, filterFunc);
-  var areachairEdgeInvitations = _.filter(edgeInvitations, filterFunc);
+  // Extract only areachair tasks
+  var areachairInvitations = filterInvitationsByInvitee(invitations, AREA_CHAIR_NAME);
+  var areachairEdgeInvitations = filterInvitationsByInvitee(edgeInvitations, AREA_CHAIR_NAME);
 
   Webfield.ui.newTaskList(areachairInvitations, areachairEdgeInvitations, tasksOptions);
   $('.tabs-container a[href="#areachair-tasks"]').parent().show();
@@ -615,6 +621,7 @@ var renderTableAndTasks = function(fetchedData) {
   renderStatusTable(
     fetchedData.profiles,
     fetchedData.blindedNotes,
+    filterInvitationsByInvitee(fetchedData.invitations, AREA_CHAIR_NAME),
     fetchedData.officialReviews,
     fetchedData.metaReviews,
     _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
@@ -626,7 +633,7 @@ var renderTableAndTasks = function(fetchedData) {
   Webfield.ui.done();
 }
 
-var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
+var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation) {
   var cellCheck = { selected: false, noteId: note.id };
 
   // Paper number cell
@@ -720,12 +727,13 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
     noteId: note.id,
     invitationId: getInvitationId('Meta_Review', note.number)
   };
-  var cell3 = {
-    invitationUrl: '/forum?' + $.param(invitationUrlParams)
-  };
+  var cell3 = {};
   if (metaReview) {
     cell3.recommendation = metaReview.content.recommendation;
     cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id;
+  }
+  if (metaReviewInvitation) {
+    cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);
   }
 
   return [cellCheck, cell0, cell1, cell2, cell3];
