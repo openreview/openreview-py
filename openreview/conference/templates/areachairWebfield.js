@@ -299,7 +299,7 @@ var renderHeader = function() {
   ]);
 };
 
-var renderStatusTable = function(profiles, notes, completedReviews, metaReviews, allInvitations, reviewerIds, container) {
+var renderStatusTable = function(profiles, notes, completedReviews, metaReviews, reviewerIds, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
@@ -320,13 +320,13 @@ var renderStatusTable = function(profiles, notes, completedReviews, metaReviews,
     Paper_Title: function(row) { return _.toLower(_.trim(row[2].content.title)); },
     Number_of_Reviews_Submitted: function(row) { return row[3].numSubmittedReviews; },
     Number_of_Reviews_Missing: function(row) { return row[3].numReviewers - row[3].numSubmittedReviews; },
-    Average_Rating: function(row) { return row[4].averageRating === 'N/A' ? 0 : row[4].averageRating; },
-    Max_Rating: function(row) { return row[4].maxRating === 'N/A' ? 0 : row[4].maxRating; },
-    Min_Rating: function(row) { return row[4].minRating === 'N/A' ? 0 : row[4].minRating; },
-    Average_Confidence: function(row) { return row[5].averageConfidence === 'N/A' ? 0 : row[5].averageConfidence; },
-    Max_Confidence: function(row) { return row[5].maxConfidence === 'N/A' ? 0 : row[5].maxConfidence; },
-    Min_Confidence: function(row) { return row[5].minConfidence === 'N/A' ? 0 : row[5].minConfidence; },
-    Meta_Review_Rating: function(row) { return row[6].recommendation ? _.toInteger(row[6].recommendation.split(':')[0]) : 0; }
+    Average_Rating: function(row) { return row[3].averageRating === 'N/A' ? 0 : row[3].averageRating; },
+    Max_Rating: function(row) { return row[3].maxRating === 'N/A' ? 0 : row[3].maxRating; },
+    Min_Rating: function(row) { return row[3].minRating === 'N/A' ? 0 : row[3].minRating; },
+    Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
+    Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
+    Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
+    Meta_Review_Rating: function(row) { return row[4].recommendation ? _.toInteger(row[4].recommendation.split(':')[0]) : 0; }
   };
   var sortResults = function(newOption, switchOrder) {
     if (switchOrder) {
@@ -562,14 +562,6 @@ var renderTableRows = function(rows, container) {
     },
     Handlebars.templates.noteSummary,
     Handlebars.templates.noteReviewers,
-    function(data) {
-      return '<h4>Avg: ' + data.averageRating + '</h4><span>Min: ' + data.minRating + '</span>' +
-        '<br><span>Max: ' + data.maxRating + '</span>';
-    },
-    function(data) {
-      return '<h4>Avg: ' + data.averageConfidence + '</h4><span>Min: ' + data.minConfidence + '</span>' +
-        '<br><span>Max: ' + data.maxConfidence + '</span>';
-    },
     Handlebars.templates.noteMetaReviewStatus
   ];
 
@@ -582,7 +574,7 @@ var renderTableRows = function(rows, container) {
   var tableHtml = Handlebars.templates['components/table']({
     headings: [
       '<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
-      'Review Progress', 'Rating', 'Confidence', 'Status'
+      'Review Progress', 'Meta Review Status'
     ],
     rows: rowsHtml,
     extraClasses: 'ac-console-table'
@@ -625,7 +617,6 @@ var renderTableAndTasks = function(fetchedData) {
     fetchedData.blindedNotes,
     fetchedData.officialReviews,
     fetchedData.metaReviews,
-    fetchedData.invitations,
     _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
     '#assigned-papers'
   );
@@ -687,41 +678,41 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
     }
   }
 
+  var averageRating = 'N/A';
+  var minRating = 'N/A';
+  var maxRating = 'N/A';
+  if (ratings.length) {
+    averageRating = _.round(_.sum(ratings) / ratings.length, 2);
+    minRating = _.min(ratings);
+    maxRating = _.max(ratings);
+  }
+
+  var averageConfidence = 'N/A';
+  var minConfidence = 'N/A';
+  var maxConfidence = 'N/A';
+  if (confidences.length) {
+    averageConfidence = _.round(_.sum(confidences) / confidences.length, 2);
+    minConfidence = _.min(confidences);
+    maxConfidence = _.max(confidences);
+  }
+
   var cell2 = {
     noteId: note.id,
     paperNumber: note.number,
     numSubmittedReviews: Object.keys(completedReviews).length,
     numReviewers: Object.keys(reviewerIds).length,
     reviewers: combinedObj,
+    averageRating: averageRating,
+    maxRating: maxRating,
+    minRating: minRating,
+    averageConfidence: averageConfidence,
+    minConfidence: minConfidence,
+    maxConfidence: maxConfidence,
     sendReminder: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
   };
   reviewerSummaryMap[note.number] = cell2;
-
-  // Rating cell
-  var cell3 = {
-    averageRating: 'N/A',
-    minRating: 'N/A',
-    maxRating: 'N/A'
-  };
-  if (ratings.length) {
-    cell3.averageRating = _.round(_.sum(ratings) / ratings.length, 2);
-    cell3.minRating = _.min(ratings);
-    cell3.maxRating = _.max(ratings);
-  }
-
-  // Confidence cell
-  var cell4 = {
-    averageConfidence: 'N/A',
-    minConfidence: 'N/A',
-    maxConfidence: 'N/A'
-  };
-  if (confidences.length) {
-    cell4.averageConfidence = _.round(_.sum(confidences) / confidences.length, 2);
-    cell4.minConfidence = _.min(confidences);
-    cell4.maxConfidence = _.max(confidences);
-  }
 
   // Status cell
   var invitationUrlParams = {
@@ -729,15 +720,15 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
     noteId: note.id,
     invitationId: getInvitationId('Meta_Review', note.number)
   };
-  var cell5 = {
+  var cell3 = {
     invitationUrl: '/forum?' + $.param(invitationUrlParams)
   };
   if (metaReview) {
-    cell5.recommendation = metaReview.content.recommendation;
-    cell5.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id;
+    cell3.recommendation = metaReview.content.recommendation;
+    cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id;
   }
 
-  return [cellCheck, cell0, cell1, cell2, cell3, cell4, cell5];
+  return [cellCheck, cell0, cell1, cell2, cell3];
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
