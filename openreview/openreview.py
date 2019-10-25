@@ -452,7 +452,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.content
 
-    def put_pdf(self, fname):
+    def put_pdf(self, fname, invitation=None):
         """
         Uploads a pdf to the openreview server
 
@@ -466,10 +466,13 @@ class Client(object):
         params['id'] = id
 
         headers = self.headers.copy()
-        headers['content-type'] = 'application/pdf'
 
         with open(fname, 'rb') as f:
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+            if invitation:
+                response = requests.put(self.baseurl + '/attachment', files=(('file', f), ('invitationId', invitation)), headers = headers)
+            else:
+                headers['content-type'] = 'application/pdf'
+                response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
 
         response = self.__handle_response(response)
         return response.json()['url']

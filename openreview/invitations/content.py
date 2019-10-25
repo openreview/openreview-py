@@ -195,7 +195,10 @@ submission = {
     'pdf': {
         'description': 'Upload a PDF file that ends with .pdf',
         'order': 9,
-        'value-regex': 'upload',
+        'value-file': {
+            'fileTypes': ['pdf'],
+            'size': 50
+        },
         'required':True
     }
 }
