@@ -9,8 +9,12 @@ else:
 
 import requests
 import pprint
+import json
 import os
+import getpass
 import re
+import datetime
+
 
 
 class OpenReviewException(Exception):
@@ -21,17 +25,25 @@ class Client(object):
     :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
-    :type username: str, optional
-    :param password: OpenReview password. If none is provided, it defaults to the environment variable `OPENREVIEW_PASSWORD`
+    :type username: str, optional. If none is provided, it defaults to the environment variable `OPENREVIEW_PASSWORD`
+    :param password: OpenReview password
     :type password: str, optional
     :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None):
-
         self.baseurl = baseurl
         if not self.baseurl:
-           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
+            self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
+
+        if not username:
+            username = os.environ.get('OPENREVIEW_USERNAME')
+
+        if not password:
+            password = os.environ.get('OPENREVIEW_PASSWORD')
+
+        self.token = token
+        self.profile = None
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -39,39 +51,27 @@ class Client(object):
         self.mail_url = self.baseurl + '/mail'
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
-        self.edges_url = self.baseurl + '/edges'
-        self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
-        self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
         self.messages_url = self.baseurl + '/messages'
         self.process_logs_url = self.baseurl + '/logs/process'
 
-        self.token = token
-        self.profile = None
         self.headers = {
-            'User-Agent': 'test-create-script'
+            'User-Agent': 'test-create-script',
+            'Authorization': self.token
         }
 
-        if self.token:
-            self.headers['Authorization'] = self.token
+        if username and password:
+            self.login_user(username, password)
+
+        if token:
             try:
                 self.profile = self.get_profile()
             except:
                 self.profile = None
-        else:
-            if not username:
-                username = os.environ.get('OPENREVIEW_USERNAME')
-
-            if not password:
-                password = os.environ.get('OPENREVIEW_PASSWORD')
-
-            if username or password:
-                self.login_user(username, password)
-
 
 
     ## PRIVATE FUNCTIONS
@@ -250,24 +250,6 @@ class Client(object):
         response = self.__handle_response(response)
         t = response.json()['tags'][0]
         return Tag.from_json(t)
-
-    def get_edge(self, id):
-        """
-        Get a single Edge by id if available
-
-        :param id: id of the Edge
-        :type id: str
-
-        return: Edge object with its information
-        :rtype: Edge
-        """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
-        response = self.__handle_response(response)
-        edges = response.json()['edges']
-        if edges:
-            return Edge.from_json(edges[0])
-        else:
-            raise OpenReviewException('Edge not found')
 
     def get_profile(self, email_or_id = None):
         """
@@ -485,36 +467,12 @@ class Client(object):
         :rtype: Profile
         """
         response = requests.post(
-            self.profiles_url,
+            self.profiles_url + '/reference',
             json = profile.to_json(),
             headers = self.headers)
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
-
-    def merge_profiles(self, profileTo, profileFrom):
-        """
-        Merges two Profiles
-
-        :param profileTo: Profile object to merge to
-        :type profileTo: Profile
-        :param profileFrom: Profile object to merge from (this profile will be deleted)
-        :type: profileFrom: Profile
-
-        :return: The new updated Profile
-        :rtype: Profile
-        """
-        response = requests.post(
-            self.profiles_merge_url,
-            json = {
-                'to': profileTo,
-                'from': profileFrom
-            },
-            headers = self.headers)
-
-        response = self.__handle_response(response)
-        return Profile.from_json(response.json())
-
 
     def get_groups(self, id = None, regex = None, member = None, signatory = None, limit = None, offset = None):
         """
@@ -737,9 +695,23 @@ class Client(object):
         response = requests.get(self.reference_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['references'][0]
-        return Note.from_json(n)
+        return Profile.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
+    def get_by_canopy(self, canopies):
+        """
+        Get a collection of references by canopy
+
+        :param canopy: the canopy to retrieve
+        :type id: str
+
+        :return: list of references that are members of the canopy
+        :rtype: List[Profile]
+        """
+        response = requests.get(self.profiles_url + '/references', params = {'canopies':canopies}, headers = self.headers)
+        response = self.__handle_response(response)
+        return [Profile.from_json(n) for n in response.json()['docs']]
+
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, authorReferent = None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -755,7 +727,7 @@ class Client(object):
         :type original: bool, optional
 
         :return: List of revisions
-        :rtype: list[Note]
+        :rtype: list[Profile]
         """
         params = {}
         if referent != None:
@@ -770,13 +742,15 @@ class Client(object):
             params['offset'] = offset
         if original == True:
             params['original'] = "true"
+        if authorReferent != None:
+            params['authorReferent'] = authorReferent
 
         response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Note.from_json(n) for n in response.json()['references']]
+        return [Profile.from_json(n) for n in response.json()['references']]
 
-    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
+    def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -798,10 +772,6 @@ class Client(object):
             params['forum'] = forum
         if invitation != None:
             params['invitation'] = invitation
-        if signature != None:
-            params['signature'] = signature
-        if tag != None:
-            params['tag'] = tag
         if limit != None:
             params['limit'] = limit
         if offset != None:
@@ -811,57 +781,6 @@ class Client(object):
         response = self.__handle_response(response)
 
         return [Tag.from_json(t) for t in response.json()['tags']]
-
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
-        """
-        Returns a list of Edge objects based on the filters provided.
-
-        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
-        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head
-        :arg tail
-        :arg label
-        """
-        params = {}
-
-        params['id'] = id
-        params['invitation'] = invitation
-        params['head'] = head
-        params['tail'] = tail
-        params['label'] = label
-        params['limit'] = limit
-        params['offset'] = offset
-
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return [Edge.from_json(t) for t in response.json()['edges']]
-
-    def get_grouped_edges(self, invitation=None, groupby='head', select='tail', limit=None, offset=None):
-        '''
-        Returns a list of JSON objects where each one represents a group of edges.  For example calling this
-        method with default arguments will give back a list of groups where each group is of the form:
-        {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
-        Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
-        :param invitation:
-        :param groupby:
-        :param select:
-        :param limit:
-        :param offset:
-        :return:
-        '''
-        params = {}
-        params['id'] = None
-        params['invitation'] = invitation
-        params['groupBy'] = groupby
-        params['select'] = select
-        params['limit'] = limit
-        params['offset'] = offset
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
-        response = self.__handle_response(response)
-        json = response.json()
-        return json['groupedEdges'] # a list of JSON objects holding information about an edge
-
 
     def post_group(self, group, overwrite = True):
         """
@@ -927,40 +846,6 @@ class Client(object):
         response = self.__handle_response(response)
 
         return Tag.from_json(response.json())
-
-    def post_edge(self, edge):
-        """
-        Posts the edge. Upon success, returns the posted Edge object.
-        """
-        response = requests.post(self.edges_url, json = edge.to_json(), headers = self.headers)
-        response = self.__handle_response(response)
-
-        return Edge.from_json(response.json())
-
-    def post_edges (self, edges):
-        '''
-        Posts the list of Edges.   Returns a list Edge objects updated with their ids.
-        '''
-        send_json = [edge.to_json() for edge in edges]
-        response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
-        response = self.__handle_response(response)
-        received_json_array = response.json()
-        edge_objects = [Edge.from_json(edge) for edge in received_json_array]
-        return edge_objects
-
-    def delete_edges(self, invitation):
-        """
-        Deletes edges by invitation.
-
-        :param invitation: an invitation ID
-        type invitation: str
-
-        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
-        :rtype: dict
-        """
-        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
-        response = self.__handle_response(response)
-        return response.json()
 
     def delete_note(self, note_id):
         """
@@ -1761,78 +1646,6 @@ class Tag(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
-class Edge(object):
-    def __init__(self, head, tail, invitation, readers, writers, signatures, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
-        self.id = id
-        self.invitation = invitation
-        self.head = head
-        self.tail = tail
-        self.weight = weight
-        self.label = label
-        self.cdate = cdate
-        self.ddate = ddate
-        self.readers = readers
-        self.nonreaders = nonreaders
-        self.writers = writers
-        self.signatures = signatures
-        self.tcdate = tcdate
-        self.tmdate = tmdate
-        self.tddate = tddate
-        self.tauthor = tauthor
-
-    def to_json(self):
-        '''
-        Returns serialized json string for a given object
-        '''
-        return {
-            'id': self.id,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
-            'invitation': self.invitation,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'writers': self.writers,
-            'signatures': self.signatures,
-            'head': self.head,
-            'tail': self.tail,
-            'weight': self.weight,
-            'label': self.label
-        }
-
-    @classmethod
-    def from_json(Edge, e):
-        '''
-        Returns a deserialized object from a json string
-
-        :arg t: The json string consisting of a serialized object of type "Edge"
-        '''
-        edge = Edge(
-            id = e.get('id'),
-            cdate = e.get('cdate'),
-            tcdate = e.get('tcdate'),
-            tmdate = e.get('tmdate'),
-            ddate = e.get('ddate'),
-            tddate = e.get('tddate'),
-            invitation = e.get('invitation'),
-            readers = e.get('readers'),
-            nonreaders = e.get('nonreaders'),
-            writers = e.get('writers'),
-            signatures = e.get('signatures'),
-            head = e.get('head'),
-            tail = e.get('tail'),
-            weight = e.get('weight'),
-            label = e.get('label')
-        )
-        return edge
-
-    def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-        return 'Edge(' + content + ')'
-
-    def __str__(self):
-        pp = pprint.PrettyPrinter()
-        return pp.pformat(vars(self))
-
 
 class Profile(object):
     """
@@ -1867,7 +1680,7 @@ class Profile(object):
     :param tauthor: True author
     :type tauthor: str, optional
     """
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, _canopies=None, _=None, authorReferent=None):
         self.id = id
         self.number = number
         self.tcdate = tcdate
@@ -1883,6 +1696,9 @@ class Profile(object):
         self.metaContent = metaContent
         self.active = active
         self.password = password
+        self._canopies = _canopies
+        self._ = _
+        self.authorReferent = authorReferent
         if tauthor:
             self.tauthor = tauthor
 
@@ -1916,7 +1732,10 @@ class Profile(object):
             'content': self.content,
             'metaContent': self.metaContent,
             'active': self.active,
-            'password': self.password
+            'password': self.password,
+            '_canopies': self._canopies,
+            '_': self._,
+            'authorReferent': self.authorReferent
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
@@ -1949,7 +1768,10 @@ class Profile(object):
         writers=n.get('writers'),
         content=n.get('content'),
         metaContent=n.get('metaContent'),
-        tauthor=n.get('tauthor')
+        tauthor=n.get('tauthor'),
+        _canopies=n.get('_canopies'),
+        _=n.get('_'),
+        authorReferent=n.get('authorReferent')
         )
         return profile
 
