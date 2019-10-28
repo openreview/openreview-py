@@ -216,8 +216,6 @@ var getUserProfiles = function(userIds) {
       _.forEach(searchResults, function(result) {
         _.forEach(result.profiles, addProfileToMap);
       });
-    } else {
-      _.forEach(searchResults.profiles, addProfileToMap);
     }
     return profileMap;
   })
@@ -1629,6 +1627,8 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       id: reviewerProfile.id,
       name: reviewerProfile.name,
       email: reviewerProfile.email,
+      allEmails: reviewerProfile.allEmails,
+      allNames: reviewerProfile.allNames,
       forum: paperForum,
       forumUrl: forumUrl,
       lastReminderSent: lastReminderSent,
