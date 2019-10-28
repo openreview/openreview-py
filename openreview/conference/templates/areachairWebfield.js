@@ -259,6 +259,10 @@ var getUserProfiles = function(userIds) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profile.allEmails = profile.content.emails;
+      profile.allNames = _.filter(profile.content.names, function(name){
+        return !_.isEmpty(name.username);
+      });
       profileMap[profile.id] = profile;
     };
     _.forEach(searchResults, function(result) {
@@ -657,6 +661,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
         id: reviewer.id,
         name: reviewer.name,
         email: reviewer.email,
+        allNames: reviewer.allNames,
+        allEmails: reviewer.allEmails,
         completedReview: true,
         forum: reviewObj.forum,
         note: reviewObj.id,
@@ -677,6 +683,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
         id: reviewer.id,
         name: reviewer.name,
         email: reviewer.email,
+        allNames: reviewer.allNames,
+        allEmails: reviewer.allEmails,
         forum: note.forum,
         forumUrl: forumUrl,
         lastReminderSent: lastReminderSent ? new Date(parseInt(lastReminderSent)).toLocaleDateString() : lastReminderSent,
@@ -817,11 +825,15 @@ var registerEventHandlers = function() {
       promptError('Please enter a valid email for assigning a reviewer');
       return false;
     }
-    var alreadyAssigned = _.find(reviewerSummaryMap[paperNumber].reviewers, function(rev){
-      return (rev.email === userToAdd) || (rev.id === userToAdd);
+    var reviewer_id = null;
+    var alreadyAssigned = _.find(reviewerSummaryMap[paperNumber].reviewers, function(rev) {
+      if ((rev.email === userToAdd) || (rev.id === userToAdd) || (_.indexOf(rev.allEmails, userToAdd) > -1) || (_.indexOf(rev.allNames, userToAdd) > -1)) {
+        reviewer_id = rev.id;
+        return true;
+      };
     });
     if (alreadyAssigned) {
-      promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
+      promptError('Reviewer ' + view.prettyId(reviewer_id ? reviewer_id : userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
       return false;
     }
 
@@ -877,6 +889,8 @@ var registerEventHandlers = function() {
         id: reviewerProfile.id,
         name: reviewerProfile.name,
         email: reviewerProfile.email,
+        allNames: reviewerProfile.allNames,
+        allEmails: reviewerProfile.allEmails,
         forum: paperForum,
         forumUrl: forumUrl,
         lastReminderSent: lastReminderSent,
