@@ -1193,6 +1193,8 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         id: reviewer.id,
         name: reviewer.name,
         email: reviewer.email,
+        allNames: reviewer.allNames,
+        allEmails: reviewer.allEmails,
         completedReview: true,
         forum: reviewObj.forum,
         note: reviewObj.id,
@@ -1213,6 +1215,8 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         id: reviewer.id,
         name: reviewer.name,
         email: reviewer.email,
+        allNames: reviewer.allNames,
+        allEmails: reviewer.allEmails,
         forum: note.forum,
         forumUrl: '/forum?' + $.param({
           id: note.forum,
@@ -1570,11 +1574,15 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     promptError('Please enter a valid email for assigning a reviewer');
     return false;
   }
+  var reviewer_id = null;
   var alreadyAssigned = _.find(reviewerSummaryMap[paperNumber].reviewers, function(rev) {
-    return (rev.email === userToAdd) || (rev.id === userToAdd);
+    if ((rev.email === userToAdd) || (rev.id === userToAdd) || (_.indexOf(rev.allEmails, userToAdd) > -1) || (_.indexOf(rev.allNames, userToAdd) > -1)) {
+      reviewer_id = rev.id;
+      return true;
+    };
   });
   if (alreadyAssigned) {
-    promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
+    promptError('Reviewer ' + view.prettyId(reviewer_id ? reviewer_id : userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
     return false;
   }
 
