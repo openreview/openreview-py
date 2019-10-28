@@ -926,14 +926,24 @@ var registerEventHandlers = function() {
     var paperNumber = $link.data('paperNumber');
     var reviewerNumber = $link.data('reviewerNumber');
 
+    var membersToDelete = [
+      reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id
+    ];
+    _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allEmails, function(email){
+      membersToDelete.push(email);
+    });
+    _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allNames, function(name){
+      membersToDelete.push(name.username);
+    });
+
     Webfield.delete('/groups/members', {
       id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-      members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
+      members: membersToDelete
     })
     .then(function(result) {
       return Webfield.delete('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-        members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
+        members: membersToDelete
       });
     })
     .then(function(result) {
