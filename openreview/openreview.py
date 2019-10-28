@@ -776,7 +776,7 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['references']]
 
-    def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
+    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -798,6 +798,10 @@ class Client(object):
             params['forum'] = forum
         if invitation != None:
             params['invitation'] = invitation
+        if signature != None:
+            params['signature'] = signature
+        if tag != None:
+            params['tag'] = tag
         if limit != None:
             params['limit'] = limit
         if offset != None:
