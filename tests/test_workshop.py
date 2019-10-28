@@ -711,7 +711,7 @@ class TestWorkshop():
             'Reject': 'All Presentations'
         })
 
-        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", client.token)
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#accept-oral", client.token)
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -729,6 +729,11 @@ class TestWorkshop():
         accepted_notes = accepted_panel.find_elements_by_class_name('note')
         assert accepted_notes
         assert len(accepted_notes) == 1
+
+        pc_client = openreview.Client(username='program_chairs@hsdip.org', password='1234')
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client.token)
+        consoles_tab = selenium.find_element_by_id('your-consoles')
+        assert consoles_tab
 
     def test_pc_console(self, client, selenium, request_page):
 
