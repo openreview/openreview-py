@@ -145,10 +145,22 @@ def get_review_stage(client, request_forum):
         start_date = review_start_date,
         due_date = review_due_date,
         allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
-        public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'),
-        release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
-        release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers''').startswith('Yes')),
-        email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),
+        public = (
+            'everyone' in request_forum.content.get('review_readership', [])
+        ) or (
+            request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'
+        ),
+        release_to_authors = (
+            'Authors of the Paper' in request_forum.content.get('review_readership', [])
+        ) or (
+            request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')
+        ),
+        release_to_reviewers = (
+            'All Reviewers of the Paper' in request_forum.content.get('review_readership', [])
+        ) or (
+            request_forum.content.get('release_reviews_to_reviewers', '').startswith('Yes')
+        ),
+        email_pcs = (request_forum.content.get('email_program_chairs_about_reviews', '').startswith('Yes')),
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options
     )
