@@ -45,7 +45,7 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
@@ -356,7 +356,7 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf',
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf',
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Belief Propagation'
@@ -626,7 +626,7 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@colt.io', 'author2@colt.io'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
@@ -923,7 +923,7 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@colt17.io', 'author2@colt17.io'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
