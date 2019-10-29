@@ -469,7 +469,11 @@ class Client(object):
 
         with open(fname, 'rb') as f:
             if invitation:
-                response = requests.put(self.baseurl + '/attachment', files=(('file', f), ('invitationId', invitation)), headers = headers)
+                response = requests.put(self.baseurl + '/attachment', files={
+                    'invitationId': (None, invitation),
+                    'name': (None, 'pdf'),
+                    'file': ('paper.pdf', f)
+                }, headers = headers)
             else:
                 headers['content-type'] = 'application/pdf'
                 response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
