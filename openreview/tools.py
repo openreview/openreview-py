@@ -568,7 +568,7 @@ class iterget:
 
     next = __next__
 
-def iterget_tags(client, id = None, invitation = None, forum = None):
+def iterget_tags(client, id = None, invitation = None, forum = None, signature = None, tag = None):
     """
     Returns an iterator over Tags ignoring API limit.
 
@@ -596,6 +596,10 @@ def iterget_tags(client, id = None, invitation = None, forum = None):
         params['forum'] = forum
     if invitation != None:
         params['invitation'] = invitation
+    if signature != None:
+        params['signature'] = signature
+    if tag != None:
+        params['tag'] = tag
 
     return iterget(client.get_tags, **params)
 
