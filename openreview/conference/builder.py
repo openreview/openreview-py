@@ -744,7 +744,7 @@ class Conference(object):
                 reviewer_name = 'invitee'
                 if reviewer_id.startswith('~') :
                     reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
-                elif reviewer_id in emails and invitee_names:
+                elif (reviewer_id in emails) and invitee_names:
                     reviewer_name = invitee_names[emails.index(reviewer_id)]
                 tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
                     hash_seed,
