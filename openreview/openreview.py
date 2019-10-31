@@ -452,7 +452,8 @@ class Client(object):
         response = self.__handle_response(response)
         return response.content
 
-    def put_pdf(self, fname, invitation=None):
+    @deprecated(version='1.0.3', reason="Use put_attachment instead")
+    def put_pdf(self, fname):
         """
         Uploads a pdf to the openreview server
 
@@ -462,21 +463,38 @@ class Client(object):
         :return: A relative URL for the uploaded pdf
         :rtype: str
         """
-        params = {}
-        params['id'] = id
-
         headers = self.headers.copy()
 
         with open(fname, 'rb') as f:
-            if invitation:
-                response = requests.put(self.baseurl + '/attachment', files={
-                    'invitationId': (None, invitation),
-                    'name': (None, 'pdf'),
-                    'file': ('paper.pdf', f)
-                }, headers = headers)
-            else:
-                headers['content-type'] = 'application/pdf'
-                response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+            headers['content-type'] = 'application/pdf'
+            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+
+        response = self.__handle_response(response)
+        return response.json()['url']
+
+    def put_attachment(self, file_path, invitation, name):
+        """
+        Uploads a file to the openreview server
+
+        :param file: Path to the file
+        :type file: str
+        :param invitation: Invitation of the note that required the attachment
+        :type file: str
+        :param file: name of the note field to save the attachment url
+        :type file: str
+
+        :return: A relative URL for the uploaded file
+        :rtype: str
+        """
+
+        headers = self.headers.copy()
+
+        with open(file_path, 'rb') as f:
+            response = requests.put(self.baseurl + '/attachment', files={
+                'invitationId': (None, invitation),
+                'name': (None, name),
+                'file': (name, f)
+            }, headers = headers)
 
         response = self.__handle_response(response)
         return response.json()['url']
