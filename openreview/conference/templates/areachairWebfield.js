@@ -813,7 +813,8 @@ var registerEventHandlers = function() {
     var $currDiv = $('#' + paperNumber + '-add-reviewer');
     var userToAdd = $currDiv.find('input').attr('value_id').trim();
 
-    if (!userToAdd) {
+    if (!userToAdd || !((userToAdd.indexOf('@') > 0) || userToAdd.startsWith('~'))) {
+      // this checks if no input was given, OR  if the given input neither has an '@' nor does it start with a '~'
       promptError('Please enter a valid email for assigning a reviewer');
       return false;
     }
@@ -823,6 +824,9 @@ var registerEventHandlers = function() {
     if (alreadyAssigned) {
       promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
       return false;
+    }
+    if (!userToAdd.startsWith('~')) {
+      userToAdd = userToAdd.toLowerCase();
     }
 
     var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
