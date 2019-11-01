@@ -26,7 +26,7 @@ class TestECCVConference():
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
 
-        pc_client = helpers.create_user('pc@eccv.org', 'Program', 'Chair')
+        pc_client = helpers.create_user('pc@eccv.org', 'Program', 'ECCVChair')
 
         group = pc_client.get_group('thecvf.com/ECCV/2020/Conference')
         assert group
