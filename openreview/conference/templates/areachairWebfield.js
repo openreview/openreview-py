@@ -772,7 +772,7 @@ var registerEventHandlers = function() {
       };
 
       $('#message-reviewers-modal').modal('hide');
-      promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
+      promptMessage('A reminder email has been sent to ' + view.prettyId(userId), { overlay: true });
       postReviewerEmails(postData);
       $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
@@ -842,7 +842,7 @@ var registerEventHandlers = function() {
       if (userProfile && Object.keys(userProfile).length){
         reviewerProfile = userProfile[Object.keys(userProfile)[0]];
       }
-      Webfield.put('/groups/members', {
+      return Webfield.put('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
         members: [reviewerProfile.id]
       })
@@ -894,7 +894,7 @@ var registerEventHandlers = function() {
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-      promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber);
+      promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { overlay: true });
       var postData = {
         groups: [reviewerProfile.id],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
@@ -933,7 +933,7 @@ var registerEventHandlers = function() {
       reviewerSummaryMap[paperNumber].expandReviewerList = true;
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
+      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
     })
     return false;
   });
