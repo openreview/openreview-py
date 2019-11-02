@@ -141,19 +141,17 @@ function createConsoleLinks(allGroups) {
 function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
   // Categorize notes by decisions
   var notesDict = _.keyBy(notes, 'id');
+
   var papersByDecision = {};
   for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[decision] = [];
+    papersByDecision[getElementId(decision)] = [];
   }
 
   decisionNotes.forEach(function(d) {
     if (notesDict.hasOwnProperty(d.forum)) {
-      papersByDecision[d.content.decision].push(notesDict[d.forum]);
+      papersByDecision[getElementId(d.content.decision)].push(notesDict[d.forum]);
     }
   });
-  for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[getElementId(decision)] = _.sortBy(papersByDecision[decision], 'id');
-  }
 
   // Your Consoles Tab
   if (userGroups && userGroups.length) {
@@ -224,7 +222,7 @@ function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, 
   $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
     var containerSelector = $(e.target).attr('href');
     var containerId = containerSelector.substring(1);
-    if (!DECISION_HEADING_MAP.hasOwnProperty(containerId) || !$(containerSelector).length) {
+    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
       return;
     }
 
@@ -239,7 +237,7 @@ function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, 
   $('#group-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
     var containerSelector = $(e.target).attr('href');
     var containerId = containerSelector.substring(1);
-    if (!DECISION_HEADING_MAP.hasOwnProperty(containerId) || !$(containerSelector).length) {
+    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
       return;
     }
 
