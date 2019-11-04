@@ -772,7 +772,7 @@ var registerEventHandlers = function() {
       };
 
       $('#message-reviewers-modal').modal('hide');
-      promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
+      promptMessage('A reminder email has been sent to ' + view.prettyId(userId), { overlay: true });
       postReviewerEmails(postData);
       $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
 
@@ -813,7 +813,8 @@ var registerEventHandlers = function() {
     var $currDiv = $('#' + paperNumber + '-add-reviewer');
     var userToAdd = $currDiv.find('input').attr('value_id').trim();
 
-    if (!userToAdd) {
+    if (!userToAdd || !((userToAdd.indexOf('@') > 0) || userToAdd.startsWith('~'))) {
+      // this checks if no input was given, OR  if the given input neither has an '@' nor does it start with a '~'
       promptError('Please enter a valid email for assigning a reviewer');
       return false;
     }
@@ -823,6 +824,9 @@ var registerEventHandlers = function() {
     if (alreadyAssigned) {
       promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
       return false;
+    }
+    if (!userToAdd.startsWith('~')) {
+      userToAdd = userToAdd.toLowerCase();
     }
 
     var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
@@ -838,7 +842,7 @@ var registerEventHandlers = function() {
       if (userProfile && Object.keys(userProfile).length){
         reviewerProfile = userProfile[Object.keys(userProfile)[0]];
       }
-      Webfield.put('/groups/members', {
+      return Webfield.put('/groups/members', {
         id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
         members: [reviewerProfile.id]
       })
@@ -890,7 +894,7 @@ var registerEventHandlers = function() {
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-      promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber);
+      promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { overlay: true });
       var postData = {
         groups: [reviewerProfile.id],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
@@ -929,7 +933,7 @@ var registerEventHandlers = function() {
       reviewerSummaryMap[paperNumber].expandReviewerList = true;
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
-      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber);
+      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
     })
     return false;
   });
