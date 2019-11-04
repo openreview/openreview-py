@@ -139,7 +139,7 @@ function createConsoleLinks(allGroups) {
 }
 
 function groupNotesByDecision(notes, decisionNotes) {
-  // Categorize notes into buckets definied by DECISION_HEADING_MAP
+  // Categorize notes into buckets defined by DECISION_HEADING_MAP
   var notesDict = _.keyBy(notes, 'id');
 
   var papersByDecision = {};
