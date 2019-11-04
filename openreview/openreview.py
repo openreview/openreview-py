@@ -490,11 +490,11 @@ class Client(object):
         headers = self.headers.copy()
 
         with open(file_path, 'rb') as f:
-            response = requests.put(self.baseurl + '/attachment', files={
-                'invitationId': (None, invitation),
-                'name': (None, name),
-                'file': (file_path, f)
-            }, headers = headers)
+            response = requests.put(self.baseurl + '/attachment', files=(
+                ('invitationId', (None, invitation)),
+                ('name', (None, name)),
+                ('file', (file_path, f))
+            ), headers = headers)
 
         response = self.__handle_response(response)
         return response.json()['url']
