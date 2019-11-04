@@ -138,8 +138,8 @@ function createConsoleLinks(allGroups) {
   });
 }
 
-function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
-  // Categorize notes by decisions
+function groupNotesByDecision(notes, decisionNotes) {
+  // Categorize notes into buckets definied by DECISION_HEADING_MAP
   var notesDict = _.keyBy(notes, 'id');
 
   var papersByDecision = {};
@@ -148,10 +148,17 @@ function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, 
   }
 
   decisionNotes.forEach(function(d) {
-    if (notesDict.hasOwnProperty(d.forum)) {
-      papersByDecision[getElementId(d.content.decision)].push(notesDict[d.forum]);
+    var decisionKey = getElementId(d.content.decision);
+    if (notesDict[d.forum] && papersByDecision[decisionKey]) {
+      papersByDecision[decisionKey].push(notesDict[d.forum]);
     }
   });
+
+  return papersByDecision;
+}
+
+function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
+  var papersByDecision = groupNotesByDecision(notes, decisionNotes);
 
   // Your Consoles Tab
   if (userGroups && userGroups.length) {
