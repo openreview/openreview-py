@@ -225,6 +225,13 @@ function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, 
     $('.tabs-container a[href="#desk-rejected-submissions"]').parent().hide();
   }
 
+  //Hide empty decision tabs
+  for (decision in papersByDecision) {
+    if (!papersByDecision[decision].length) {
+      $('.tabs-container a[href="#' +  decision + '"]').parent().hide();
+    }
+  }
+
   // Register event handlers
   $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
     var containerSelector = $(e.target).attr('href');
