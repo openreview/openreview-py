@@ -97,7 +97,7 @@ class TestBuilder():
                 'authors': ['Test Author', 'Drew Barrymore']
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 

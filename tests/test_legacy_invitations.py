@@ -43,7 +43,7 @@ class TestLegacyInvitations():
                 'authors': ['Test User', 'Peter Test', 'Andrew Mc']
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         test_client.post_note(note)
 
