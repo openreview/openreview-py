@@ -77,7 +77,7 @@ class TestMatching():
                 ]
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_1.content['pdf'] = url
         note_1 = test_client.post_note(note_1)
 
@@ -97,7 +97,7 @@ class TestMatching():
                 ]
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_2.content['pdf'] = url
         note_2 = test_client.post_note(note_2)
 
@@ -117,7 +117,7 @@ class TestMatching():
                 ]
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_3.content['pdf'] = url
         note_3 = test_client.post_note(note_3)
 

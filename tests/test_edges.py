@@ -40,7 +40,7 @@ class TestEdges:
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com'],
                 'authors': ['Test User'],
-                'pdf': '/pdf/link_to_pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
         note = client.post_note(note)

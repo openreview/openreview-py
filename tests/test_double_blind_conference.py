@@ -335,7 +335,7 @@ class TestDoubleBlindConference():
                 ]
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         test_client.post_note(note)
 
@@ -705,7 +705,7 @@ note={under review}
                 ]
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 
@@ -730,7 +730,7 @@ note={under review}
                 ]
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 
@@ -1264,7 +1264,7 @@ note={under review}
                     'Knowledge Representation',
                     'Semantic Web'
                 ],
-                'pdf': '/pdf/1234.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
