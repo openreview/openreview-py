@@ -66,15 +66,11 @@ def request_page():
         selenium.get(url)
         if alert:
             try:
-                WebDriverWait(selenium, 5).until(EC.alert_is_present(),
-                                            'Timed out waiting for PA creation ' +
-                                            'confirmation popup to appear.')
-
+                WebDriverWait(selenium, 5).until(EC.alert_is_present())
                 alert = selenium.switch_to.alert
                 alert.accept()
-                print("alert accepted")
             except TimeoutException:
-                print("no alert")
+                print("No alert is present")
 
         timeout = 5
         try:
