@@ -10,13 +10,14 @@ function() {
   var hashKey = or3client.createHash(note.content.user, HASH_SEED);
 
   if (hashKey === note.content.key) {
+    var commonMessage = 'If you want to change your choice please click on the accept or decline links in the invitation email.';
     if (note.content.response === 'Yes') {
       console.log('Invitation replied Yes');
       //if a user is in the declined group, remove them from that group and add them to the reviewers group
       var email = {
         groups: [note.content.user],
-        subject: '[' + SHORT_PHRASE + '] You have accepted the invitation',
-        message: 'This email is to confirm that you have accepted the invitation to be a ' + REVIEWER_NAME
+        subject: '[' + SHORT_PHRASE + '] You have accepted the ' + REVIEWER_NAME + ' invitation',
+        message: 'This email is to confirm that you have accepted the invitation to be a ' + REVIEWER_NAME + '.\n\n' + commonMessage
       };
 
       or3client.removeGroupMember(REVIEWERS_DECLINED_ID, note.content.user, token)
@@ -29,8 +30,8 @@ function() {
       console.log('Invitation replied No');
       var email = {
         groups: [note.content.user],
-        subject: '[' + SHORT_PHRASE + '] You have declined the invitation',
-        message: 'This email is to confirm that you have declined the invitation to be a ' + REVIEWER_NAME
+        subject: '[' + SHORT_PHRASE + '] You have accepted the ' + REVIEWER_NAME + ' invitation',
+        message: 'This email is to confirm that you have declined the invitation to be a ' + REVIEWER_NAME + '.\n\n' + commonMessage
       };
       //if a user is in the reviewers group, remove them from that group and add them to the reviewers-declined group
       or3client.removeGroupMember(REVIEWERS_ACCEPTED_ID, note.content.user, token)

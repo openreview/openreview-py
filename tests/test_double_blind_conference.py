@@ -486,10 +486,10 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] You have accepted the invitation')
+        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] You have accepted the Reviewer invitation')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'This email is to confirm that you have accepted the invitation to be a Reviewer'
+        assert messages[0]['content']['text'] == 'This email is to confirm that you have accepted the invitation to be a Reviewer.\n\nIf you want to change your choice please click on the accept or decline links in the invitation email.'
 
         # Reject invitation
         reject_url = re.search('http://.*response=No', text).group(0)
@@ -504,10 +504,10 @@ class TestDoubleBlindConference():
         assert len(group.members) == 1
         assert 'mbok@mail.com' in group.members
 
-        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] You have declined the invitation')
+        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] You have declined the Reviewer invitation')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'This email is to confirm that you have declined the invitation to be a Reviewer'
+        assert messages[0]['content']['text'] == 'This email is to confirm that you have declined the invitation to be a Reviewer.\n\nIf you want to change your choice please click on the accept or decline links in the invitation email.'
 
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
