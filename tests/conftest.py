@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import UnexpectedAlertPresentException
 
 class Helpers:
     @staticmethod
@@ -32,7 +33,7 @@ class Helpers:
 
 @pytest.fixture
 def helpers():
-    return Helpers        
+    return Helpers
 
 @pytest.fixture(scope="session")
 def client():
@@ -56,17 +57,30 @@ def firefox_options(firefox_options):
 
 @pytest.fixture
 def request_page():
-    def request(selenium, url, token = None):
+    def request(selenium, url, token = None, alert=False):
         if token:
             selenium.get('http://localhost:3000')
             selenium.add_cookie({'name': 'openreview_sid', 'value': token.replace('Bearer ', '')})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
+        if alert:
+            try:
+                WebDriverWait(selenium, 5).until(EC.alert_is_present(),
+                                            'Timed out waiting for PA creation ' +
+                                            'confirmation popup to appear.')
+
+                alert = selenium.switch_to.alert
+                alert.accept()
+                print("alert accepted")
+            except TimeoutException:
+                print("no alert")
+
         timeout = 5
         try:
             element_present = EC.presence_of_element_located((By.ID, 'container'))
             WebDriverWait(selenium, timeout).until(element_present)
         except TimeoutException:
             print("Timed out waiting for page to load")
+
     return request
