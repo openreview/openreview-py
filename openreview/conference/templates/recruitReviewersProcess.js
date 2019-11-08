@@ -30,7 +30,7 @@ function() {
       console.log('Invitation replied No');
       var email = {
         groups: [note.content.user],
-        subject: '[' + SHORT_PHRASE + '] You have accepted the ' + REVIEWER_NAME + ' invitation',
+        subject: '[' + SHORT_PHRASE + '] You have declined the ' + REVIEWER_NAME + ' invitation',
         message: 'This email is to confirm that you have declined the invitation to be a ' + REVIEWER_NAME + '.\n\n' + commonMessage
       };
       //if a user is in the reviewers group, remove them from that group and add them to the reviewers-declined group
