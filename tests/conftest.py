@@ -64,15 +64,15 @@ def request_page():
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
+        timeout = 5
         if alert:
             try:
-                WebDriverWait(selenium, 5).until(EC.alert_is_present())
+                WebDriverWait(selenium, timeout).until(EC.alert_is_present())
                 alert = selenium.switch_to.alert
                 alert.accept()
             except TimeoutException:
                 print("No alert is present")
 
-        timeout = 5
         try:
             element_present = EC.presence_of_element_located((By.ID, 'container'))
             WebDriverWait(selenium, timeout).until(element_present)
