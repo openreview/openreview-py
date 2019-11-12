@@ -103,7 +103,7 @@ class TestReviewersConference():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
