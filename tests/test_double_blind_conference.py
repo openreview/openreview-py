@@ -475,7 +475,7 @@ class TestDoubleBlindConference():
 
         # Accept invitation
         accept_url = re.search('http://.*response=Yes', text).group(0)
-        request_page(selenium, accept_url)
+        request_page(selenium, accept_url, alert=True)
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
@@ -485,10 +485,15 @@ class TestDoubleBlindConference():
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group
         assert len(group.members) == 0
+
+        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
+        assert messages
+        assert len(messages)
+        assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
 
         # Reject invitation
         reject_url = re.search('http://.*response=No', text).group(0)
-        request_page(selenium, reject_url)
+        request_page(selenium, reject_url, alert=True)
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
@@ -498,6 +503,11 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 1
         assert 'mbok@mail.com' in group.members
+
+        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation declined')
+        assert messages
+        assert len(messages)
+        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.'
 
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
