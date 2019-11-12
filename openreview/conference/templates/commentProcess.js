@@ -17,11 +17,12 @@ function(){
       //TODO: use the variable instead, when we have anonymous groups integrated
       var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Reviewers';
       var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chairs';
+      var AREA_CHAIR_1_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chair1';
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 
       var ac_mail = {
-        groups: [AREA_CHAIRS_ID],
+        groups: [AREA_CHAIR_1_ID],
         ignoreGroups: ignoreGroups,
         subject: '[' + SHORT_PHRASE + '] Comment posted to a paper in your area. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
         message: 'A comment was posted to a paper for which you are serving as Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
@@ -65,6 +66,17 @@ function(){
           message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
+      } else {
+        var anonReviewers = note.readers.filter(reader => reader.indexOf('AnonReviewer') >= 0);
+        if (anonReviewers.length) {
+          var reviewer_mail = {
+            groups: anonReviewers,
+            ignoreGroups: ignoreGroups,
+            subject: '[' + SHORT_PHRASE + '] Comment posted to a paper you are reviewing. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
+            message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          };
+          promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
+        }
       }
 
       if(USE_AREA_CHAIRS && (note.readers.includes(AREA_CHAIRS_ID) || note.readers.includes('everyone'))){

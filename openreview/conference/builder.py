@@ -598,6 +598,11 @@ class Conference(object):
                 self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
                 is_signatory = False)
 
+            self.__create_group(
+                self.get_reviewers_id(number = n.number) + '/Submitted',
+                self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                is_signatory = False)
+
         return self.__set_reviewer_page()
 
     def set_authors(self):
@@ -662,7 +667,6 @@ class Conference(object):
                 },
                 use_profile = True
             )
-            self.__create_group(self.get_reviewers_id(number = number) + '/Submitted', self.get_program_chairs_id())
             return result
 
     def set_assignments(self, assingment_title, is_area_chair=False):
@@ -736,9 +740,13 @@ class Conference(object):
 
         if remind:
             remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
-            for reviewer in remind_reviewers:
-                name =  re.sub('[0-9]+', '', reviewer.replace('~', '').replace('_', ' ')) if reviewer.startswith('~') else 'invitee'
-                tools.recruit_reviewer(self.client, reviewer, name,
+            for reviewer_id in remind_reviewers:
+                reviewer_name = 'invitee'
+                if reviewer_id.startswith('~') :
+                    reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                elif (reviewer_id in emails) and invitee_names:
+                    reviewer_name = invitee_names[emails.index(reviewer_id)]
+                tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
                     hash_seed,
                     invitation.id,
                     recruit_message,
@@ -1087,6 +1095,9 @@ class ConferenceBuilder(object):
 
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
+
+    def enable_reviewer_reassignment(self, enable):
+        self.conference.enable_reviewer_reassignment = enable
 
     def set_submission_stage(
             self,

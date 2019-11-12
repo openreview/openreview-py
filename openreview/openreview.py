@@ -452,6 +452,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.content
 
+    @deprecated(version='1.0.3', reason="Use put_attachment instead")
     def put_pdf(self, fname):
         """
         Uploads a pdf to the openreview server
@@ -462,14 +463,38 @@ class Client(object):
         :return: A relative URL for the uploaded pdf
         :rtype: str
         """
-        params = {}
-        params['id'] = id
-
         headers = self.headers.copy()
-        headers['content-type'] = 'application/pdf'
 
         with open(fname, 'rb') as f:
+            headers['content-type'] = 'application/pdf'
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+
+        response = self.__handle_response(response)
+        return response.json()['url']
+
+    def put_attachment(self, file_path, invitation, name):
+        """
+        Uploads a file to the openreview server
+
+        :param file: Path to the file
+        :type file: str
+        :param invitation: Invitation of the note that required the attachment
+        :type file: str
+        :param file: name of the note field to save the attachment url
+        :type file: str
+
+        :return: A relative URL for the uploaded file
+        :rtype: str
+        """
+
+        headers = self.headers.copy()
+
+        with open(file_path, 'rb') as f:
+            response = requests.put(self.baseurl + '/attachment', files=(
+                ('invitationId', (None, invitation)),
+                ('name', (None, name)),
+                ('file', (file_path, f))
+            ), headers = headers)
 
         response = self.__handle_response(response)
         return response.json()['url']
@@ -776,7 +801,7 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['references']]
 
-    def get_tags(self, id = None, invitation = None, forum = None, limit = None, offset = None):
+    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -798,6 +823,10 @@ class Client(object):
             params['forum'] = forum
         if invitation != None:
             params['invitation'] = invitation
+        if signature != None:
+            params['signature'] = signature
+        if tag != None:
+            params['tag'] = tag
         if limit != None:
             params['limit'] = limit
         if offset != None:

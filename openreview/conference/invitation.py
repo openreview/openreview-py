@@ -329,6 +329,25 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = f.read()
 
             file_content = file_content.replace(
+                'CONFERENCE_ID = \'\'',
+                'CONFERENCE_ID = \'' + conference.get_id() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_SHORT_NAME = \'\'',
+                'CONFERENCE_SHORT_NAME = \'' + conference.get_short_name() + '\'')
+            file_content = file_content.replace(
+                'PAPER_AUTHORS_ID = \'\'',
+                'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PAPER_REVIEWERS_ID = \'\'',
+                'PAPER_REVIEWERS_ID = \'' + conference.get_reviewers_id(number=note.number) + '\'')
+            if conference.use_area_chairs:
+                file_content = file_content.replace(
+                    'PAPER_AREA_CHAIRS_ID = \'\'',
+                    'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PROGRAM_CHAIRS_ID = \'\'',
+                'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
+            file_content = file_content.replace(
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
             if conference.submission_stage.reveal_authors_on_withdraw:
@@ -425,6 +444,25 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = f.read()
 
             file_content = file_content.replace(
+                'CONFERENCE_ID = \'\'',
+                'CONFERENCE_ID = \'' + conference.get_id() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_SHORT_NAME = \'\'',
+                'CONFERENCE_SHORT_NAME = \'' + conference.get_short_name() + '\'')
+            file_content = file_content.replace(
+                'PAPER_AUTHORS_ID = \'\'',
+                'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PAPER_REVIEWERS_ID = \'\'',
+                'PAPER_REVIEWERS_ID = \'' + conference.get_reviewers_id(number=note.number) + '\'')
+            if conference.use_area_chairs:
+                file_content = file_content.replace(
+                    'PAPER_AREA_CHAIRS_ID = \'\'',
+                    'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
+            file_content = file_content.replace(
+                'PROGRAM_CHAIRS_ID = \'\'',
+                'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
+            file_content = file_content.replace(
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')
             if conference.submission_stage.reveal_authors_on_desk_reject:
@@ -505,11 +543,24 @@ class OfficialCommentInvitation(openreview.Invitation):
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
 
         readers = []
+        invitees = conference.get_committee(number=note.number, with_authors=True)
         if comment_stage.allow_public_comments:
             readers.append('everyone')
 
-        committee = conference.get_committee(number = note.number, submitted_reviewers = not comment_stage.unsubmitted_reviewers, with_authors = True)
-        readers.extend(committee)
+        readers.append(conference.get_authors_id(note.number))
+
+        if comment_stage.reader_selection:
+            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
+
+        readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
+
+        if comment_stage.unsubmitted_reviewers:
+            readers.append(conference.get_reviewers_id(note.number))
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(note.number))
+
+        readers.append(conference.get_program_chairs_id())
 
         if comment_stage.reader_selection:
             reply_readers = {
@@ -526,7 +577,7 @@ class OfficialCommentInvitation(openreview.Invitation):
             super = conference.get_invitation_id('Comment'),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = committee,
+            invitees = invitees,
             reply = {
                 'forum': note.id,
                 'replyto': None,
@@ -684,16 +735,21 @@ class PaperMetaReviewInvitation(openreview.Invitation):
         readers = meta_review_stage.get_readers(conference, note.number)
         regex = conference.get_program_chairs_id()
         invitees = [conference.get_program_chairs_id()]
+        writers = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
-            regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
-            invitees = [conference.get_area_chairs_id(number = note.number)]
+            paper_area_chair = conference.get_area_chairs_id(number = note.number)
+            regex = regex + '|' + paper_area_chair[:-1] + '[0-9]+'
+            invitees = [paper_area_chair]
+            writers.append(paper_area_chair)
 
-        super(PaperMetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name, note.number),
+        super(PaperMetaReviewInvitation, self).__init__(
+            id = conference.get_invitation_id(meta_review_stage.name, note.number),
             super = conference.get_invitation_id(meta_review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees,
+            noninvitees = [conference.get_authors_id(number = note.number)],
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
@@ -702,8 +758,8 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     "values": readers
                 },
                 'writers': {
-                    'values-regex': regex,
-                    'description': 'How your identity will be displayed.'
+                    'values': writers,
+                    'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
                     'values-regex': regex,
@@ -933,7 +989,8 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.js')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "';")
             content = content.replace("var REVIEWERS_ACCEPTED_ID = '';", "var REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "';")
             content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
             content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")

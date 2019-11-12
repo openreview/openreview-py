@@ -122,7 +122,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         test_client.post_note(note)
 
@@ -240,7 +240,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 
@@ -269,7 +269,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 
@@ -453,7 +453,7 @@ class TestWorkshop():
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
 
         builder.has_area_chairs(False)
-        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, allow_public_comments = True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True)
         conference = builder.get_result()
         assert conference
 
@@ -711,7 +711,7 @@ class TestWorkshop():
             'Reject': 'All Presentations'
         })
 
-        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", client.token)
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#accept-oral", client.token)
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -729,6 +729,11 @@ class TestWorkshop():
         accepted_notes = accepted_panel.find_elements_by_class_name('note')
         assert accepted_notes
         assert len(accepted_notes) == 1
+
+        pc_client = openreview.Client(username='program_chairs@hsdip.org', password='1234')
+        request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client.token)
+        consoles_tab = selenium.find_element_by_id('your-consoles')
+        assert consoles_tab
 
     def test_pc_console(self, client, selenium, request_page):
 
@@ -788,7 +793,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         posted_note = test_client.post_note(note)
         assert posted_note

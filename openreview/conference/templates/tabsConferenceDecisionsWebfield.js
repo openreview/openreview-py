@@ -36,16 +36,11 @@ function main() {
 }
 
 // Load makes all the API calls needed to get the data to render the page
-// It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
-
-  var notesP = Webfield.getAll(
-    '/notes',
-    {
-      invitation: BLIND_SUBMISSION_ID,
-      details: 'replyCount,original'
-    }
-  )
+  var notesP = Webfield.getAll('/notes', {
+    invitation: BLIND_SUBMISSION_ID,
+    details: 'replyCount,original'
+  });
 
   var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
@@ -59,9 +54,29 @@ function load() {
     includeCount: true
   }) : $.Deferred().resolve([]);
 
-  var decisionNotesP = Webfield.getAll('/notes', { invitation: DECISION_INVITATION_REGEX, noDetails: true });
+  var decisionNotesP = Webfield.getAll('/notes', {
+    invitation: DECISION_INVITATION_REGEX,
+    noDetails: true
+  });
 
-  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP);
+  var userGroupsP;
+  if (!user || _.startsWith(user.id, 'guest_')) {
+    userGroupsP = $.Deferred().resolve([]);
+  } else {
+    userGroupsP = Webfield.getAll('/groups', {
+      regex: CONFERENCE_ID + '/.*',
+      member: user.id,
+      web: true
+    }).then(function(groups) {
+      if (!groups || !groups.length) {
+        return [];
+      }
+
+      return groups.map(function(g) { return g.id; });
+    });
+  }
+
+  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP, userGroupsP);
 }
 
 function renderConferenceHeader() {
@@ -71,12 +86,16 @@ function renderConferenceHeader() {
 
 function getElementId(decision) {
   return decision.replace(' ', '-')
-  .replace('(', '')
-  .replace(')', '')
-  .toLowerCase();
+    .replace('(', '')
+    .replace(')', '')
+    .toLowerCase();
 }
 
 function renderConferenceTabs() {
+  sections.push({
+    heading: 'Your Consoles',
+    id: 'your-consoles',
+  });
   for (var decision in DECISION_HEADING_MAP) {
     sections.push({
       heading: DECISION_HEADING_MAP[decision],
@@ -95,53 +114,68 @@ function renderConferenceTabs() {
       id: 'desk-rejected-submissions',
     });
   }
+
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
     hidden: true
   });
 }
 
-function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes) {
+function createConsoleLinks(allGroups) {
+  var uniqueGroups = _.sortedUniq(allGroups.sort());
 
-  var notesDict = {};
-  _.forEach(notes, function(n) {
-    notesDict[n.id] = n;
+  return uniqueGroups.map(function(group) {
+    var groupName = group.split('/').pop();
+    if (groupName.slice(-1) === 's') {
+      groupName = groupName.slice(0, -1);
+    }
+
+    return [
+      '<li class="note invitation-link">',
+        '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
+      '</li>'
+    ].join('');
   });
-  var papersByDecision = {};
+}
 
+function groupNotesByDecision(notes, decisionNotes) {
+  // Categorize notes into buckets defined by DECISION_HEADING_MAP
+  var notesDict = _.keyBy(notes, 'id');
+
+  var papersByDecision = {};
   for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[decision] = [];
+    papersByDecision[getElementId(decision)] = [];
   }
 
-  _.forEach(decisionsNotes, function(d) {
-    if (_.has(notesDict, d.forum)) {
-      papersByDecision[d.content.decision].push(notesDict[d.forum]);
+  decisionNotes.forEach(function(d) {
+    var decisionKey = getElementId(d.content.decision);
+    if (notesDict[d.forum] && papersByDecision[decisionKey]) {
+      papersByDecision[decisionKey].push(notesDict[d.forum]);
     }
   });
-  for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[getElementId(decision)] = _.sortBy(papersByDecision[decision], function(o) { return o.id; });
+
+  return papersByDecision;
+}
+
+function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
+  var papersByDecision = groupNotesByDecision(notes, decisionNotes);
+
+  // Your Consoles Tab
+  if (userGroups && userGroups.length) {
+    var consoleLinks = createConsoleLinks(userGroups);
+    $('#your-consoles').html('<ul class="list-unstyled submissions-list">' +
+      consoleLinks.join('\n') + '</ul>');
+
+    $('.tabs-container a[href="#your-consoles"]').parent().show();
+  } else {
+    $('.tabs-container a[href="#your-consoles"]').parent().hide();
   }
 
-  $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
-    var activeTab = 0;
-    activeTab = $(e.target).data('tabIndex');
-    var containerId = sections[activeTab].id;
-    setTimeout(function() {
-      if (activeTab < Object.keys(DECISION_HEADING_MAP).length) {
-        Webfield.ui.searchResults(
-          papersByDecision[containerId],
-          _.assign({}, paperDisplayOptions, {showTags: false, container: '#' + containerId})
-        );
-      }
-    }, 100);
-  });
-
-  var withdrawnNotesCount = withdrawnNotes.count || 0;
-  if (WITHDRAWN_SUBMISSION_ID && withdrawnNotesCount) {
-
+  // Withdrawn Submissions Tab
+  if (WITHDRAWN_SUBMISSION_ID && withdrawnNotes.count) {
     $('#withdrawn-submissions').empty();
-    var withdrawnNotesArray = withdrawnNotes.notes || [];
-    Webfield.ui.submissionList(withdrawnNotesArray, {
+
+    Webfield.ui.submissionList(withdrawnNotes.notes, {
       heading: null,
       container: '#withdrawn-submissions',
       search: {
@@ -149,7 +183,7 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
       },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
-      noteCount: withdrawnNotesCount,
+      noteCount: withdrawnNotes.count,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
         return Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
@@ -164,13 +198,11 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
     $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
   }
 
-  var deskRejectedNotesCount = deskRejectedNotes.count || 0;
-  if (DESK_REJECTED_SUBMISSION_ID && deskRejectedNotesCount) {
-
+  // Desk Rejected Submissions Tab
+  if (DESK_REJECTED_SUBMISSION_ID && deskRejectedNotes.count) {
     $('#desk-rejected-submissions').empty();
 
-    var deskRejectedNotesArray = deskRejectedNotes.notes || [];
-    Webfield.ui.submissionList(deskRejectedNotesArray, {
+    Webfield.ui.submissionList(deskRejectedNotes.notes, {
       heading: null,
       container: '#desk-rejected-submissions',
       search: {
@@ -178,7 +210,7 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
       },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
-      noteCount: deskRejectedNotesCount,
+      noteCount: deskRejectedNotes.count,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
         return Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
@@ -193,14 +225,34 @@ function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes)
     $('.tabs-container a[href="#desk-rejected-submissions"]').parent().hide();
   }
 
+  // Register event handlers
+  $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
+    var containerSelector = $(e.target).attr('href');
+    var containerId = containerSelector.substring(1);
+    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
+      return;
+    }
+
+    setTimeout(function() {
+      Webfield.ui.searchResults(
+        papersByDecision[containerId],
+        Object.assign({}, paperDisplayOptions, { showTags: false, container: containerSelector })
+      );
+    }, 150);
+  });
+
   $('#group-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
-    var containerId = $(e.target).attr('href');
-    Webfield.ui.spinner(containerId, {inline: true});
+    var containerSelector = $(e.target).attr('href');
+    var containerId = containerSelector.substring(1);
+    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
+      return;
+    }
+
+    Webfield.ui.spinner(containerSelector, { inline: true });
   });
 
   $('#notes > .spinner-container').remove();
   $('.tabs-container').show();
-
 }
 
 // Go!
