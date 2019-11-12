@@ -10,7 +10,6 @@ function() {
   var hashKey = or3client.createHash(note.content.user, HASH_SEED);
 
   if (hashKey === note.content.key) {
-    var commonMessage = 'If you want to change your choice please click on the accept or decline links in the invitation email.';
     if (note.content.response === 'Yes') {
       console.log('Invitation replied Yes');
 
