@@ -973,7 +973,7 @@ class InvitationBuilder(object):
             'forum': None,
             'replyto': None,
             'readers': {
-                'values': ['~Super_User1', conference.get_program_chairs_id()]
+                'values': [conference.get_id()]
             },
             'signatures': {
                 'values-regex': '\\(anonymous\\)'
