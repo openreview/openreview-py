@@ -735,10 +735,13 @@ class PaperMetaReviewInvitation(openreview.Invitation):
         readers = meta_review_stage.get_readers(conference, note.number)
         regex = conference.get_program_chairs_id()
         invitees = [conference.get_program_chairs_id()]
+        writers = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
-            regex = regex + '|' + conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
-            invitees = [conference.get_area_chairs_id(number = note.number)]
+            paper_area_chair = conference.get_area_chairs_id(number = note.number)
+            regex = regex + '|' + paper_area_chair[:-1] + '[0-9]+'
+            invitees = [paper_area_chair]
+            writers.append(paper_area_chair)
 
         super(PaperMetaReviewInvitation, self).__init__(
             id = conference.get_invitation_id(meta_review_stage.name, note.number),
@@ -755,7 +758,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     "values": readers
                 },
                 'writers': {
-                    'values': invitees,
+                    'values': writers,
                     'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
