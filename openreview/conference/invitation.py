@@ -735,16 +735,21 @@ class PaperMetaReviewInvitation(openreview.Invitation):
         readers = meta_review_stage.get_readers(conference, note.number)
         regex = conference.get_program_chairs_id()
         invitees = [conference.get_program_chairs_id()]
+        writers = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
-            regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
-            invitees = [conference.get_area_chairs_id(number = note.number)]
+            paper_area_chair = conference.get_area_chairs_id(number = note.number)
+            regex = regex + '|' + paper_area_chair[:-1] + '[0-9]+'
+            invitees = [paper_area_chair]
+            writers.append(paper_area_chair)
 
-        super(PaperMetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name, note.number),
+        super(PaperMetaReviewInvitation, self).__init__(
+            id = conference.get_invitation_id(meta_review_stage.name, note.number),
             super = conference.get_invitation_id(meta_review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees,
+            noninvitees = [conference.get_authors_id(number = note.number)],
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
@@ -753,8 +758,8 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     "values": readers
                 },
                 'writers': {
-                    'values-regex': regex,
-                    'description': 'How your identity will be displayed.'
+                    'values': writers,
+                    'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
                     'values-regex': regex,

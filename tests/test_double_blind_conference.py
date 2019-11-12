@@ -1059,7 +1059,7 @@ note={under review}
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
-            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             content = {
                 'title': 'Meta review title',
@@ -1102,7 +1102,7 @@ note={under review}
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
-            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
             content = {
                 'title': 'Meta review title',
