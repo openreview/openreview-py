@@ -470,7 +470,18 @@ class TestDoubleBlindConference():
         assert messages
         assert len(messages) == 1
 
+        # Test if the reminder mail has "Dear invitee" for unregistered users in case the name is not provided to recruit_reviewers
+        result = conference.recruit_reviewers(remind = True, emails = ['mbok@mail.com'])
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
         text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of AKBC 2019' in text
+
+        # Test if the mail has "Dear <name>" for unregistered users in case the name is provided to recruit_reviewers
+        result = conference.recruit_reviewers(remind = True, emails = ['mbok@mail.com'], invitee_names = ['Melisa Bok'])
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
+        text = messages[1]['content']['text']
+        assert 'Dear Melisa Bok,' in text
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Accept invitation
@@ -545,7 +556,7 @@ class TestDoubleBlindConference():
 
         messages = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
         assert messages
-        assert len(messages) == 3
+        assert len(messages) == 9
         tos = [ m['content']['to'] for m in messages]
         assert 'michael@mail.com' in tos
         assert 'mohit@mail.com' in tos
@@ -1048,7 +1059,7 @@ note={under review}
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
-            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             content = {
                 'title': 'Meta review title',
@@ -1091,7 +1102,7 @@ note={under review}
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
-            writers = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
             content = {
                 'title': 'Meta review title',
