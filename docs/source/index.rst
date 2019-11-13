@@ -21,6 +21,7 @@ Contents
    examples
    help
    conference_builder
+   mental_models
 
 
 Indices and tables
