@@ -370,7 +370,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                     'replyto': note.id,
                     'readers': {
                         "description": "User groups that will be able to read this withdraw note.",
-                        "values": ["everyone"]
+                        "values": conference.submission_stage.get_blind_readers(conference, note.number)
                     },
                     'writers': {
                         'values-copied': [
