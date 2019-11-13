@@ -47,6 +47,7 @@ class Client(object):
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
+        self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
         self.process_logs_url = self.baseurl + '/logs/process'
 
@@ -425,13 +426,18 @@ class Client(object):
 
         return []
 
-    def get_pdf(self, id):
+    def get_pdf(self, id, is_reference=False):
         """
-        Gets the binary content of a pdf using the provided note id
-        If the pdf is not found then this returns an error message with "status":404
+        Gets the binary content of a pdf using the provided note/reference id
+        If the pdf is not found then this returns an error message with "status":404.
 
-        :param id: Note id of the pdf
+        Use the note id when trying to get the latest pdf version and reference id
+        when trying to get a previous version of the pdf
+
+        :param id: Note id or Reference id of the pdf
         :type id: str
+        :param is_reference: Indicates that the passed id is a reference id instead of a note id
+        :type is_reference: bool, optional
 
         :return: The binary content of a pdf
         :rtype: bytes
@@ -448,7 +454,9 @@ class Client(object):
         headers = self.headers.copy()
         headers['content-type'] = 'application/pdf'
 
-        response = requests.get(self.pdf_url, params = params, headers = headers)
+        url = self.pdf_revisions_url if is_reference else self.pdf_url
+
+        response = requests.get(url, params = params, headers = headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -767,6 +775,8 @@ class Client(object):
     def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
+
+        Refer to the section of Mental Models and then click on Blind Submissions for more information.
 
         :param referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
         :type referent: str, optional
