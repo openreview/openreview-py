@@ -54,7 +54,7 @@ class Conference(object):
                 readers = ['everyone'] if public else [self.id, group_owner_id, group_id],
                 writers = [self.id, group_owner_id],
                 signatures = [self.id],
-                signatories = [group_id] if is_signatory else [self.id, group_owner_id],
+                signatories = [self.id, group_id] if is_signatory else [self.id, group_owner_id],
                 members = members))
         else:
             return self.client.add_members_to_group(group, members)

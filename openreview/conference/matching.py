@@ -93,7 +93,7 @@ class Matching(object):
         '''
 
         readers = {
-            'values': [self.conference.get_id()]
+            'values-copied': [self.conference.get_id(), self.conference.get_id() + '/Paper{head.number}/Area_Chairs']
         }
 
         if extendable_readers:
