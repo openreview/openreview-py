@@ -150,6 +150,7 @@ class BidInvitation(openreview.Invitation):
         readers = [
             conference.get_id(),
             conference.get_program_chairs_id(),
+            conference.get_area_chairs_id(),
             match_group_id
         ]
 
@@ -1019,7 +1020,7 @@ class InvitationBuilder(object):
             id = conference.get_recommendation_id(),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
-            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
             readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],

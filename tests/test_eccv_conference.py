@@ -240,6 +240,7 @@ class TestECCVConference():
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
+        conference.setup_matching()
         conference.setup_matching(is_area_chair=True)
 
         blinded_notes = conference.get_submissions()
@@ -367,4 +368,6 @@ class TestECCVConference():
             weight = 0.86
         ))
 
+        conference.set_assignments('ac-matching', is_area_chair=True)
+        conference.open_recommendations()
 

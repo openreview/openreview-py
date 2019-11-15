@@ -108,7 +108,7 @@ class Matching(object):
         invitation = openreview.Invitation(
             id=edge_id,
             invitees=[self.conference.get_id()],
-            readers=[self.conference.get_id()],
+            readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
             reply={
@@ -489,31 +489,21 @@ class Matching(object):
 
         # Get the configuration note to check the group to assign
         client = self.conference.client
-        notes = client.get_notes(
-            invitation=self.match_group.id + '/-/Assignment_Configuration',
-            content={'title': assingment_title})
+        is_area_chair = self.conference.get_area_chairs_id() == self.match_group.id
 
-        if notes:
-            configuration_note = notes[0]
-            match_group = configuration_note.content['match_group']
-            is_area_chair = self.conference.get_area_chairs_id() == match_group
+        submissions = openreview.tools.iterget_notes(
+            client,
+            invitation=self.conference.get_blind_submission_id())
 
-            submissions = openreview.tools.iterget_notes(
-                client,
-                invitation=self.conference.get_blind_submission_id())
+        assignment_edges = openreview.tools.iterget_edges(
+            client,
+            invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assingment_title)
 
-            assignment_edges = openreview.tools.iterget_edges(
-                client,
-                invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-                label=assingment_title)
+        paper_by_forum = {n.forum: n for n in submissions}
 
-            paper_by_forum = {n.forum: n for n in submissions}
-
-            for edge in assignment_edges:
-                paper_number = paper_by_forum.get(edge.head).number
-                user = edge.tail
-                new_assigned_group = self.conference.set_assignment(user, paper_number, is_area_chair)
-                print(new_assigned_group)
-
-        else:
-            raise openreview.OpenReviewException('Configuration not found for ' + assingment_title)
+        for edge in assignment_edges:
+            paper_number = paper_by_forum.get(edge.head).number
+            user = edge.tail
+            new_assigned_group = self.conference.set_assignment(user, paper_number, is_area_chair)
+            print(new_assigned_group)
