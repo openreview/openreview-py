@@ -198,7 +198,7 @@ class TestECCVConference():
         note.content['supplemental_material'] = url
         test_client.post_note(note)
 
-    def test_recommend_reviewers(self, test_client, helpers):
+    def test_recommend_reviewers(self, test_client, helpers, selenium, request_page):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
         builder = openreview.conference.ConferenceBuilder(pc_client)
@@ -371,3 +371,6 @@ class TestECCVConference():
         conference.set_assignments('ac-matching', is_area_chair=True)
         conference.open_recommendations()
 
+        ## Go to edge browser
+        ## http://localhost:3000/edge/browse?start=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1&traverse=thecvf.com/ECCV/2020/Conference/-/Recommendation&edit=thecvf.com/ECCV/2020/Conference/-/Recommendation&browse=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict
+        request_page(selenium, "http://localhost:3000/edge/browse?start=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1&traverse=thecvf.com/ECCV/2020/Conference/-/Recommendation&edit=thecvf.com/ECCV/2020/Conference/-/Recommendation&browse=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict", ac1_client.token)
