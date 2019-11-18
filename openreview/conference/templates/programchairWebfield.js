@@ -334,7 +334,7 @@ var displayHeader = function() {
     }
   ];
 
-  if (SHOW_AC_TAB) {
+  if (AREA_CHAIRS_ID) {
     tabs.push(    {
       heading: 'Area Chair Status',
       id: 'areachair-status',
@@ -409,7 +409,7 @@ var displayConfiguration = function(requestForm, invitations) {
   // Official Committee
   html += '<h3>Venue Roles:</h3><br><ul>' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
-  if (SHOW_AC_TAB) {
+  if (AREA_CHAIRS_ID) {
     html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
@@ -423,7 +423,7 @@ var displayConfiguration = function(requestForm, invitations) {
   html += '<h3>Timeline:</h3><br><ul>';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
-  if (SHOW_AC_TAB) {
+  if (AREA_CHAIRS_ID) {
     html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
   }
   html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
@@ -457,7 +457,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
       'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
     '';
   var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
-    return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
+    return '<option id="' + option + '-' + container.substring(1) +' value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
   });
   var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
     '<strong style="vertical-align: middle;">Sort By:</strong> ' +
@@ -742,7 +742,7 @@ var displayPaperStatusTable = function() {
       var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
 
       var rows = [checked, numberHtml, summaryHtml, reviewHtml];
-      if (SHOW_AC_TAB) {
+      if (AREA_CHAIRS_ID) {
         rows.push(areachairHtml);
       }
       rows.push(decisionHtml);
@@ -750,7 +750,7 @@ var displayPaperStatusTable = function() {
     });
 
     var headings = ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary', 'Review Progress'];
-    if (SHOW_AC_TAB) {
+    if (AREA_CHAIRS_ID) {
       headings.push('Status');
     }
     headings.push('Decision');
@@ -808,7 +808,7 @@ var displayPaperStatusTable = function() {
     $('.console-table th').eq(0).css('width', '4%');
     $('.console-table th').eq(1).css('width', '4%');
     $('.console-table th').eq(2).css('width', '22%');
-    if (SHOW_AC_TAB) {
+    if (AREA_CHAIRS_ID) {
       $('.console-table th').eq(3).css('width', '30%');
       $('.console-table th').eq(4).css('width', '28%');
       $('.console-table th').eq(5).css('width', '12%');
@@ -1441,7 +1441,7 @@ controller.addHandler('areachairs', {
 
       var metaReviewsP;
       var areaChairGroupsP;
-      if (SHOW_AC_TAB) {
+      if (AREA_CHAIRS_ID) {
         metaReviewsP = getMetaReviews();
         areaChairGroupsP = getAreaChairGroups(noteNumbers);
       } else {
@@ -1495,7 +1495,7 @@ controller.addHandler('areachairs', {
         }
         displayConfiguration(requestForm, invitations);
         displayPaperStatusTable();
-        if (SHOW_AC_TAB) {
+        if (AREA_CHAIRS_ID) {
           displaySPCStatusTable();
         }
         Webfield.ui.done();
@@ -1607,7 +1607,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   })
   .then(function(result) {
     var commonReaders = [CONFERENCE_ID, CONFERENCE_ID + '/Program_Chairs'];
-    if (SHOW_AC_TAB) {
+    if (AREA_CHAIRS_ID) {
       commonReaders.push(CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs');
     }
     return Webfield.post('/groups', {
