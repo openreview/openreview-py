@@ -172,7 +172,7 @@ class TestBuilder():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-    def test_PC_console_sort_by_options(self, client, test_client, selenium, request_page, helpers, logger):
+    def test_PC_console_sort_by_options(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -199,7 +199,7 @@ class TestBuilder():
             writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
             signatures = ['~Test_Author1'],
             content = {
-                'title': 'Paper title',
+                'title': 'Paper title Sort Conference',
                 'abstract': 'This is an abstract',
                 'authorids': ['author_test1@mail.com', 'drew@mail.com'],
                 'authors': ['Test Author', 'Drew Barrymore']
@@ -209,17 +209,22 @@ class TestBuilder():
         note.content['pdf'] = url
         client.post_note(note)
 
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now)
+        conference = builder.get_result()
+
+        conference.create_blind_submissions()
+
         pc_client = helpers.create_user('pc_testconsole1@mail.com', 'Test', 'PCConsole')
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
 
         assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
 
-        expected_options = ['Paper_Number', 'Paper_Title', 'Average_Rating', 'Max_Rating', 'Min_Rating', 'Average_Confidence', 'Max_Confidence', 'Min_Confidence', 'Reviewers_Assigned', 'Reviews_Submitted', 'Reviews_Missing']
+        expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta_Review_Missing']
 
         for option in expected_options:
-            assert selenium.find_element_by_xpath('//*[@id="' + option + '-paper-status"]')
+            assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
 
         with pytest.raises(NoSuchElementException):
             for option in unexpected_options:
-                selenium.find_element_by_xpath('//*[@id="' + option + '-paper-status"]')
+                assert selenium.find_element_by_id(option + '-paper-status')

@@ -457,7 +457,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
       'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
     '';
   var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
-    return '<option id="' + option + '-' + container.substring(1) +' value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
+    return '<option id="' + option.replace(/_/g, '-') + '-' + container.substring(1) +'" value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
   });
   var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
     '<strong style="vertical-align: middle;">Sort By:</strong> ' +
@@ -595,6 +595,8 @@ var displayPaperStatusTable = function() {
   if (AREA_CHAIRS_ID) {
     sortOptions["Meta_Review_Missing"] = function(row) { return row.areachairProgressData.numMetaReview; }
   }
+
+  sortOptions["Decision"] = function(row) { return row.decision; }
 
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
