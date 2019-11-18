@@ -220,11 +220,19 @@ class TestBuilder():
         assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
-        unexpected_options = ['Meta_Review_Missing']
+        unexpected_options = ['Meta Review Missing']
 
         for option in expected_options:
             assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
 
         with pytest.raises(NoSuchElementException):
             for option in unexpected_options:
-                assert selenium.find_element_by_id(option + '-paper-status')
+                assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
+
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+        expected_options.append('Meta Review Missing')
+        for option in expected_options:
+            assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
