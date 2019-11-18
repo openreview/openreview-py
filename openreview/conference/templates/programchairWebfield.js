@@ -572,7 +572,6 @@ var displayPaperStatusTable = function() {
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
   });
-
   var toNumber = function(value) {
     return value === 'N/A' ? 0 : value;
   }
@@ -589,14 +588,13 @@ var displayPaperStatusTable = function() {
     Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
     Reviewers_Assigned: function(row) { return row.reviewProgressData.numReviewers; },
     Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
-    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; }
+    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+    Decision: function(row) { return row.decision ? row.decision.content.decision : 'No Decision'; }
   };
 
   if (AREA_CHAIRS_ID) {
     sortOptions["Meta_Review_Missing"] = function(row) { return row.areachairProgressData.numMetaReview; }
   }
-
-  sortOptions["Decision"] = function(row) { return row.decision; }
 
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
