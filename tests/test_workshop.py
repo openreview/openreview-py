@@ -625,7 +625,6 @@ class TestWorkshop():
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {
-                'title': 'Meta review title',
                 'metareview': 'Paper is very good!',
                 'recommendation': 'Accept (Oral)',
                 'confidence': '4: The area chair is confident but not absolutely certain'
