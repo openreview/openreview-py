@@ -13,10 +13,10 @@ function() {
     if (note.content.response === 'Yes') {
       console.log('Invitation replied Yes');
       //if a user is in the declined group, remove them from that group and add them to the reviewers group
-      var text = 'Thank you for accepting the invitation to be a ' + REVIEWER_NAME + ' for ' + SHORT_PHRASE + '.\n'
-      text += 'The ' + SHORT_PHRASE + ' program chairs will be contacting you with more information regarding next steps soon. '
-      text += 'In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\n'
-      text += 'If you would like to change your decision, please click the Decline link in the previous invitation email.'
+      var text = 'Thank you for accepting the invitation to be a ' + REVIEWER_NAME + ' for ' + SHORT_PHRASE + '.\n';
+      text += 'The ' + SHORT_PHRASE + ' program chairs will be contacting you with more information regarding next steps soon. ';
+      text += 'In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\n';
+      text += 'If you would like to change your decision, please click the Decline link in the previous invitation email.';
 
       var email = {
         groups: [note.content.user],
@@ -33,8 +33,8 @@ function() {
     } else if (note.content.response === 'No') {
       console.log('Invitation replied No');
 
-      var text = 'You have declined the invitation to become a ' + REVIEWER_NAME + ' for ' + SHORT_PHRASE + '.\n\n'
-      text += 'If you would like to change your decision, please click the Accept link in the previous invitation email.'
+      var text = 'You have declined the invitation to become a ' + REVIEWER_NAME + ' for ' + SHORT_PHRASE + '.\n\n';
+      text += 'If you would like to change your decision, please click the Accept link in the previous invitation email.';
 
       var email = {
         groups: [note.content.user],
