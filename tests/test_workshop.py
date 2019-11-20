@@ -122,7 +122,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         test_client.post_note(note)
 
@@ -240,7 +240,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 
@@ -269,7 +269,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 
@@ -625,7 +625,6 @@ class TestWorkshop():
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {
-                'title': 'Meta review title',
                 'metareview': 'Paper is very good!',
                 'recommendation': 'Accept (Oral)',
                 'confidence': '4: The area chair is confident but not absolutely certain'
@@ -793,7 +792,7 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         posted_note = test_client.post_note(note)
         assert posted_note

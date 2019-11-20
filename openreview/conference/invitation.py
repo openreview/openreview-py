@@ -735,16 +735,21 @@ class PaperMetaReviewInvitation(openreview.Invitation):
         readers = meta_review_stage.get_readers(conference, note.number)
         regex = conference.get_program_chairs_id()
         invitees = [conference.get_program_chairs_id()]
+        writers = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
-            regex = conference.get_area_chairs_id(note.number)[:-1] + '[0-9]+'
-            invitees = [conference.get_area_chairs_id(number = note.number)]
+            paper_area_chair = conference.get_area_chairs_id(number = note.number)
+            regex = regex + '|' + paper_area_chair[:-1] + '[0-9]+'
+            invitees = [paper_area_chair]
+            writers.append(paper_area_chair)
 
-        super(PaperMetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name, note.number),
+        super(PaperMetaReviewInvitation, self).__init__(
+            id = conference.get_invitation_id(meta_review_stage.name, note.number),
             super = conference.get_invitation_id(meta_review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees,
+            noninvitees = [conference.get_authors_id(number = note.number)],
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
@@ -753,8 +758,8 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     "values": readers
                 },
                 'writers': {
-                    'values-regex': regex,
-                    'description': 'How your identity will be displayed.'
+                    'values': writers,
+                    'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
                     'values-regex': regex,
@@ -1049,9 +1054,8 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.js')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
-            content = content.replace("var INVITEE_ROLE = '';", "var INVITEE_ROLE = '" + options.get('reviewers_name') + "';")
+            content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "';")
             content = content.replace("var REVIEWERS_ACCEPTED_ID = '';", "var REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "';")
             content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
             content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")
