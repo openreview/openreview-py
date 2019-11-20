@@ -961,6 +961,73 @@ class InvitationBuilder(object):
         for review in reviews:
             self.client.post_invitation(ReviewRevisionInvitation(conference, name, review, start_date, due_date, additional_fields, remove_fields))
 
+    def set_reviewer_reduced_load_invitation(self, conference, options = {}):
+
+        reduced_load_invitation_reply = {
+            'forum': None,
+            'replyto': None,
+            'readers': {
+                'values-copied': [
+                    conference.get_id()
+                ]
+            },
+            'writers': {
+                'values-copied': [
+                    conference.get_id()
+                ]
+            },
+            'signatures': {
+                'values-regex': '\\(anonymous\\)|~.*'
+            },
+            'content': {
+                'user': {
+                    'description': 'Email address or OpenReview Profile Id',
+                    'order': 1,
+                    'value-regex': '.*',
+                    'required': True
+                },
+                'key': {
+                    'description': 'Email key hash',
+                    'order': 2,
+                    'value-regex': '.{0,100}',
+                    'required': True
+                },
+                'response': {
+                    'required': True,
+                    'description': 'Please confirm your response to the invitation.',
+                    'value-radio': ['Yes', 'No'],
+                    'default': 'Yes',
+                    'order': 3
+                },
+                'reduced_load': {
+                    'description': 'Please select a load that you would be comfortable reviewing.',
+                    'required': False,
+                    'value-dropdown': options.get('reduced_load_on_decline', []),
+                    'order': 4
+                }
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadProcess.js')) as f:
+            content = f.read()
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            content = content.replace("var INVITEE_ROLE = '';", "var INVITEE_ROLE = '" + options.get('reviewers_name') + "';")
+            content = content.replace("var REVIEWERS_ACCEPTED_ID = '';", "var REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "';")
+            content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
+            content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")
+
+            reduced_load_invitation = openreview.Invitation(
+                    id = conference.get_invitation_id('Reduced_Load'),
+                    duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
+                    readers = ['everyone'],
+                    nonreaders = [],
+                    invitees = ['everyone'],
+                    noninvitees = [],
+                    writers = [conference.get_id()],
+                    signatures = [conference.get_id()],
+                    reply = reduced_load_invitation_reply,
+                    process_string = content)
+            return self.client.post_invitation(reduced_load_invitation)
 
     def set_reviewer_recruiter_invitation(self, conference, options = {}):
 
@@ -978,16 +1045,18 @@ class InvitationBuilder(object):
             },
             'content': invitations.recruitment
         }
-
         reply = self.__build_options(default_reply, options.get('reply', {}))
-
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            content = content.replace("var INVITEE_ROLE = '';", "var INVITEE_ROLE = '" + options.get('reviewers_name') + "';")
             content = content.replace("var REVIEWERS_ACCEPTED_ID = '';", "var REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "';")
             content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
             content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")
+            if conference.reduced_load_on_decline:
+                content = content.replace("var REDUCED_LOAD_INVITATION_NAME = '';", "var REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load';")
             invitation = openreview.Invitation(id = conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers')),
                 duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
                 readers = ['everyone'],

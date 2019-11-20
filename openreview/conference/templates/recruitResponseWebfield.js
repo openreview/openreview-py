@@ -1,7 +1,7 @@
 // Constants
 var CONFERENCE_ID = '';
 var HEADER = {};
-var REDUCED_LOAD_INVITATION = '';
+var REDUCED_LOAD_INVITATION_NAME = '';
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -37,14 +37,15 @@ function render() {
       ].join('\n'));
     } else if (declined) {
       // Get invitation to request max load
-      Webfield.get('/invitations', { regex: REDUCED_LOAD_INVITATION })
+      var reduced_load_invitation_id = CONFERENCE_ID + '/-/' + REDUCED_LOAD_INVITATION_NAME;
+      Webfield.get('/invitations', { regex: reduced_load_invitation_id })
       .then(function(result) {
         if (result.hasOwnProperty('invitations') && result.invitations.length) {
           invitation = result.invitations[0];
           $response.append([
             '<div class="panel">',
               '<div class="row">',
-                '<p>If you declined because you are looking for a reduced load, please use this <strong><a href="/invitation?id=' + REDUCED_LOAD_INVITATION + '&invitation_response=Yes&user=' + args.user + '&key=' + args.key + '">LINK</a></strong> to request a load you would be comfortable reviewing.</p>',
+                '<strong><p>If you declined because you are looking for a reduced load, please use this <strong><a href="/invitation?id=' + reduced_load_invitation_id + '&invitation_response=Yes&user=' + args.user + '&key=' + args.key + '">LINK</a></strong> to request a load you would be comfortable reviewing.</p></strong>',
               '</div>',
             '</div>'
           ].join('\n'));
