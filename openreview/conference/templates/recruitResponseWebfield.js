@@ -61,8 +61,6 @@ function render() {
         return null;
       });
     }
-  } else {
-    promptError('Response parameter missing');
   }
 
   Webfield.ui.done();

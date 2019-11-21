@@ -39,8 +39,6 @@ function render() {
       var message = 'You have declined the invitation from ' + HEADER.title + '.';
       $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
     }
-  } else {
-    promptError('Response parameter missing');
   }
 
   Webfield.ui.done();
