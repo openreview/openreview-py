@@ -17,9 +17,9 @@ function render() {
   var $response = $('#notes');
   $response.empty();
 
-  if (args.response) {
-    var accepted = (args.response === 'Yes');
-    var declined = (args.response === 'No');
+  if (note && note.content.response) {
+    var accepted = (note.content.response === 'Yes');
+    var declined = (note.content.response === 'No');
 
     if (accepted) {
       // Display response text

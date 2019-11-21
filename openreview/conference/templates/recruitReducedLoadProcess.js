@@ -12,7 +12,7 @@ function() {
         if (note.content.response === 'Yes') {
             console.log('Invitation replied Yes');
             var text = 'Thank you for accepting the invitation to be a ' + REVIEWER_NAME + ' for ' + SHORT_PHRASE + '.\n';
-            text += 'We have noted your request to review a maximum of ' + note.content.reduced_load + ' submissions.\n';
+            text += 'We have noted your request to review a maximum of ' + note.content.reviewer_load + ' submissions.\n';
             text += 'The ' + SHORT_PHRASE + ' program chairs will be contacting you with more information regarding next steps soon. ';
             text += 'In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\n';
             text += 'If you would like to change your decision, please click the Decline link in the previous invitation email.';
