@@ -45,7 +45,7 @@ function render() {
           $response.append([
             '<div class="panel">',
               '<div class="row">',
-                '<h3>If you chose to decline because the number of reviews required was too high, you can request a reduced reviewer load by clicking here: <a href="/invitation?id=' + reduced_load_invitation_id + '&invitation_response=Yes&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3>',
+                '<h3>If you chose to decline because the number of reviews required was too high, you can request a reduced reviewer load by clicking here: <a href="/invitation?id=' + reduced_load_invitation_id + '&response=Yes&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3>',
               '</div>',
             '</div>'
           ].join('\n'));
