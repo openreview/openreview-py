@@ -64,9 +64,10 @@ class TestECCVConference():
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
-        message = notes.find_element_by_tag_name("h3")
-        assert message
-        assert 'If you chose to decline because the number of reviews required was too high, you can request a reduced reviewer load by clicking here: Request reduced load' == message.text
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from thecvf.com/ECCV/2020/Conference.' == messages[0].text
+        assert 'It is unfortunate that you decline. In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
 
         group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers')
         assert group
@@ -80,7 +81,7 @@ class TestECCVConference():
         messages = client.get_messages(to='mohit@mail.com', subject='[] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.'
+        assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
 
 
