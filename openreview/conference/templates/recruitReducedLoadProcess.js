@@ -25,7 +25,7 @@ function() {
             //if a user is in the declined group, remove them from that group and add them to the reviewers group
             or3client.removeGroupMember(REVIEWERS_DECLINED_ID, note.content.user, token)
             .then(result => or3client.addGroupMember(REVIEWERS_ACCEPTED_ID, note.content.user, token))
-            .then(result => or3client.or3request(or3client.mailUrl, userMail, 'POST', token))
+            .then(result => or3client.or3request(or3client.mailUrl, email, 'POST', token))
             .then(result => done())
             .catch(error => done(error));
             return true;
