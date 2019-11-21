@@ -1062,7 +1062,6 @@ note={under review}
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             content = {
-                'title': 'Meta review title',
                 'metareview': 'Paper is very good!',
                 'recommendation': 'Accept (Oral)',
                 'confidence': '4: The area chair is confident but not absolutely certain'
@@ -1105,7 +1104,6 @@ note={under review}
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
             content = {
-                'title': 'Meta review title',
                 'metareview': 'Excellent Paper!',
                 'recommendation': 'Accept (Oral)',
                 'confidence': '4: The area chair is confident but not absolutely certain'

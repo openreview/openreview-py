@@ -122,20 +122,14 @@ review = {
 }
 
 meta_review = {
-    'title': {
-        'order': 1,
-        'value-regex': '.{1,500}',
-        'description': 'Brief summary of your review.',
-        'required': True
-    },
     'metareview': {
-        'order': 2,
+        'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
         'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'required': True
     },
     'recommendation': {
-        'order': 3,
+        'order': 2,
         'value-dropdown': [
             'Accept (Oral)',
             'Accept (Poster)',
@@ -144,7 +138,7 @@ meta_review = {
         'required': True
     },
     'confidence': {
-        'order': 4,
+        'order': 3,
         'value-radio': [
             '5: The area chair is absolutely certain',
             '4: The area chair is confident but not absolutely certain',
