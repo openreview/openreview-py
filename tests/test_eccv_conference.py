@@ -37,6 +37,53 @@ class TestECCVConference():
         assert pc_group.web
 
 
+    def test_recruit_reviewer(self, client, helpers, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+        assert conference, 'conference is None'
+        conference.set_program_chairs(['pc@eccv.org'])
+
+        conference.set_recruitment_reduced_load(['4','5','6','7'])
+        result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
+        assert result
+        assert result.id == 'thecvf.com/ECCV/2020/Conference/Reviewers/Invited'
+        assert 'mbok@mail.com' in result.members
+        assert 'mohit@mail.com' in result.members
+
+        messages = client.get_messages(to = 'mohit@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
+        text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of  to serve as a reviewer' in text
+
+        reject_url = re.search('http://.*response=No', text).group(0)
+        request_page(selenium, reject_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        message = notes.find_element_by_tag_name("h3")
+        assert message
+        assert 'If you chose to decline because the number of reviews required was too high, you can request a reduced reviewer load by clicking here: Request reduced load' == message.text
+
+        group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 0
+
+        group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 1
+        assert 'mohit@mail.com' in group.members
+
+        messages = client.get_messages(to='mohit@mail.com', subject='[] Reviewer Invitation declined')
+        assert messages
+        assert len(messages)
+        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.'
+
+
+
     def test_submission_additional_files(self, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
