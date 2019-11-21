@@ -47,7 +47,7 @@ function render() {
           $response.append([
             '<div class="panel">',
               '<div class="row">',
-                '<h3 style="line-height:normal;">It is unfortunate that you decline. In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + reduced_load_invitation_id + '&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3>',
+                '<h3 style="line-height:normal;">In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + reduced_load_invitation_id + '&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3>',
               '</div>',
             '</div>'
           ].join('\n'));
