@@ -24,7 +24,7 @@ function render() {
 
     if (accepted) {
       // Display response text
-      var message = 'Thank you for accepting the invitation!';
+      var message = 'Thank you for accepting this invitation from ' + HEADER.title;
       $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
 
       $response.append([
@@ -45,12 +45,12 @@ function render() {
           $response.append([
             '<div class="panel">',
               '<div class="row">',
-                '<strong><p>If you declined because you are looking for a reduced load, please use this <strong><a href="/invitation?id=' + reduced_load_invitation_id + '&invitation_response=Yes&user=' + args.user + '&key=' + args.key + '">LINK</a></strong> to request a load you would be comfortable reviewing.</p></strong>',
+                '<h3>If you chose to decline because the number of reviews required was too high, you can request a reduced reviewer load by clicking here: <a href="/invitation?id=' + reduced_load_invitation_id + '&invitation_response=Yes&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3>',
               '</div>',
             '</div>'
           ].join('\n'));
         } else {
-          var message = 'You have declined the invitation.';
+          var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
         }
       })

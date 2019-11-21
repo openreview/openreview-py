@@ -1004,8 +1004,8 @@ class InvitationBuilder(object):
                     'default': 'Yes',
                     'order': 3
                 },
-                'reduced_load': {
-                    'description': 'Please select a load that you would be comfortable reviewing.',
+                'submission_load': {
+                    'description': 'Please select the number of submissions that you would be comfortable reviewing.',
                     'required': False,
                     'value-dropdown': options.get('reduced_load_on_decline', []),
                     'order': 4
