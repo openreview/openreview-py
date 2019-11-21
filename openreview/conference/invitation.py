@@ -999,14 +999,13 @@ class InvitationBuilder(object):
                 },
                 'response': {
                     'required': True,
-                    'description': 'Please confirm your response to the invitation.',
-                    'value-radio': ['Yes', 'No'],
-                    'default': 'Yes',
+                    'description': 'Please select a reviewer load to confirm your acceptance of the invitation.',
+                    'value': 'Yes',
                     'order': 3
                 },
-                'submission_load': {
+                'reviewer_load': {
                     'description': 'Please select the number of submissions that you would be comfortable reviewing.',
-                    'required': False,
+                    'required': True,
                     'value-dropdown': options.get('reduced_load_on_decline', []),
                     'order': 4
                 }
