@@ -25,13 +25,13 @@ function render() {
     if (accepted) {
       // Display response text
       var message = 'Thank you for accepting this invitation from ' + HEADER.title;
-      $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
+      $response.append('<div class="panel"><div class="row"><h3 style="line-height:normal;">' + message + '</h3></div></div>');
 
       $response.append([
         '<div class="panel">',
           '<div class="row">',
-            '<p>If you do not already have an OpenReview account, please sign up <a href="/signup">here</a>.</p>',
-            '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile?mode=edit">profile page</a> and has been confirmed.</p>',
+            '<p>If you do not already have an OpenReview account, please sign up <a style="font-weight:bold;" href="/signup">here</a>.</p>',
+            '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit">profile page</a> and has been confirmed.</p>',
           '</div>',
         '</div>'
       ].join('\n'));
@@ -43,17 +43,17 @@ function render() {
         if (result.hasOwnProperty('invitations') && result.invitations.length) {
           invitation = result.invitations[0];
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
-          $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
+          $response.append('<div class="panel"><div class="row"><h3 style="line-height:normal;">' + message + '</h3></div></div>');
           $response.append([
             '<div class="panel">',
               '<div class="row">',
-                '<h3 style="line-height:normal;">If you chose to decline because the number of reviews required was too high, you can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + reduced_load_invitation_id + '&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3>',
+                '<h3 style="line-height:normal;">It is unfortunate that you decline. In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + reduced_load_invitation_id + '&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3>',
               '</div>',
             '</div>'
           ].join('\n'));
         } else {
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
-          $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
+          $response.append('<div class="panel"><div class="row"><h3 style="line-height:normal;">' + message + '</h3></div></div>');
         }
       })
       .fail(function(error) {

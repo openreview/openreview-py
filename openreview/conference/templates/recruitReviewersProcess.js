@@ -2,10 +2,12 @@ function() {
   var or3client = lib.or3client;
 
   var SHORT_PHRASE = '';
+  var CONFERENCE_NAME = '';
   var REVIEWER_NAME = '';
   var REVIEWERS_ACCEPTED_ID = '';
   var REVIEWERS_DECLINED_ID = '';
   var HASH_SEED = '';
+  var REDUCED_LOAD_INVITATION_NAME = '';
 
   var hashKey = or3client.createHash(note.content.user, HASH_SEED);
 
@@ -34,7 +36,11 @@ function() {
       console.log('Invitation replied No');
 
       var text = 'You have declined the invitation to become a ' + REVIEWER_NAME + ' for ' + SHORT_PHRASE + '.\n\n';
-      text += 'If you would like to change your decision, please click the Accept link in the previous invitation email.';
+      text += 'If you would like to change your decision, please click the Accept link in the previous invitation email.\n\n';
+
+      if (REDUCED_LOAD_INVITATION_NAME){
+        text += 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: https://openreview.net/invitation?id=' + CONFERENCE_NAME + '/-/' + REDUCED_LOAD_INVITATION_NAME + '&user=' + note.content.user + '&key=' + note.content.key + ' .\n\n'
+      }
 
       var email = {
         groups: [note.content.user],
