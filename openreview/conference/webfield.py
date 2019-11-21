@@ -235,6 +235,27 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
+    def set_reduced_load_page(self, conference_id, invitation, options = {}):
+
+        default_header = {
+            'title': conference_id,
+            'subtitle': conference_id,
+            'location': 'TBD',
+            'date': 'TBD',
+            'website': 'nourl',
+            'instructions': '',
+            'deadline': 'TBD'
+        }
+
+        header = self.__build_options(default_header, options)
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadWeb.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            invitation.web = content
+            return self.client.post_invitation(invitation)
+
     def set_recruit_page(self, conference_id, invitation, options = {}):
 
         default_header = {
@@ -253,6 +274,7 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var REDUCED_LOAD_INVITATION_NAME = '';", "var REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load';")
             invitation.web = content
             return self.client.post_invitation(invitation)
 
