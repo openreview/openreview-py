@@ -682,7 +682,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
 
-    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
+    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], override_url_root = ''):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -761,7 +761,8 @@ class Conference(object):
                     recruit_message,
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False)
+                    verbose = False,
+                    recruitment_url_root = override_url_root)
 
         for index, email in enumerate(emails):
             if email not in set(reviewers_invited_group.members):
@@ -774,7 +775,8 @@ class Conference(object):
                     recruit_message,
                     recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False)
+                    verbose = False,
+                    recruitment_url_root = override_url_root)
 
         return self.client.get_group(id = reviewers_invited_id)
 
