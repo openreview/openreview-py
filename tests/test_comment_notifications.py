@@ -573,7 +573,7 @@ class TestCommentNotification():
         subject = 'Remind to reviewers'
         recipients = ['reviewer@auai.org']
         message = 'This is a reminder'
-        response = ac_client.send_mail(subject, recipients, message)
+        response = ac_client.post_message(subject, recipients, message)
         assert response
 
         messages = client.get_messages(subject='Remind to reviewers')
@@ -582,7 +582,7 @@ class TestCommentNotification():
         assert messages[0]['content']['to'] == 'reviewer@auai.org'
 
         recipients = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1']
-        response = ac_client.send_mail(subject, recipients, 'This is a second reminder')
+        response = ac_client.post_message(subject, recipients, 'This is a second reminder')
         assert response
 
         messages_2 = client.get_messages(subject='.*Remind to reviewers.*')
@@ -592,9 +592,9 @@ class TestCommentNotification():
         assert messages_2[1]['content']['to'] == 'reviewer@auai.org'
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'):
-            ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
+            ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
 
-        ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
+        ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
