@@ -1264,7 +1264,7 @@ def recruit_reviewer(client, user, first,
     recruit_message_subj,
     reviewers_invited_id,
     verbose=True,
-    recruitment_url_root = ''):
+    recruitment_link_baseurl = ''):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1297,7 +1297,7 @@ def recruit_reviewer(client, user, first,
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
-        baseurl = recruitment_url_root if recruitment_url_root else client.baseurl,
+        baseurl = recruitment_link_baseurl if recruitment_link_baseurl else client.baseurl,
         recruitment_inv = recruit_reviewers_id,
         user = user,
         hashkey = hashkey
