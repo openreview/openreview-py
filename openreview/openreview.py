@@ -1084,8 +1084,8 @@ class Client(object):
         """
         Adds members to a group
 
-        :param group: Group to which the members will be added
-        :type group: Group
+        :param group: Group (or Group's id) to which the members will be added
+        :type group: Group or str
         :param members: Members that will be added to the group. Members should be in a string, unicode or a list format
         :type members: str, list, unicode
 
@@ -1116,8 +1116,8 @@ class Client(object):
         """
         Removes members from a group
 
-        :param group: Group from which the members will be removed
-        :type group: Group
+        :param group: Group (or Group's id) from which the members will be removed
+        :type group: Group or str
         :param members: Members that will be removed. Members should be in a string, unicode or a list format
         :type members: str, list, unicode
 
