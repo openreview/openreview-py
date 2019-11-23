@@ -1093,12 +1093,17 @@ class Client(object):
         :rtype: Group
         """
         def add_member(group, members):
+            group_id = ''
+            if type(group) in string_types:
+                group_id = group
+            else:
+                group_id = group.id
+
             if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())
-            else:
-                return group
+            return group
 
         member_type = type(members)
         if member_type in string_types:
@@ -1119,16 +1124,21 @@ class Client(object):
         :return: Group without the members that were removed
         :type: Group
         """
-        def remove_member(group,members):
-            response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
+        def remove_member(group, members):
+            group_id = ''
+            if type(group) in string_types:
+                group_id = group
+            else:
+                group_id = group.id
+            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
             return Group.from_json(response.json())
 
         member_type = type(members)
         if member_type in string_types:
-            return remove_member(group.id, [members])
+            return remove_member(group, [members])
         if member_type == list:
-            return remove_member(group.id, members)
+            return remove_member(group, members)
 
     def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
         """
