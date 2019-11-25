@@ -1094,7 +1094,7 @@ class Client(object):
         """
         def add_member(group, members):
             if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = requests.put(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())
             else:

@@ -1308,11 +1308,11 @@ def recruit_reviewer(client, user, first,
     )
 
     # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [user], personalized_message)
+    response = client.post_message(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
-        reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, [user])
+        # reviewers_invited = client.get_group(reviewers_invited_id)
+        client.add_members_to_group(reviewers_invited_id, [user])
 
     if verbose:
         print("Sent to the following: ", response)
