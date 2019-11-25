@@ -777,9 +777,6 @@ class Conference(object):
                     reviewers_invited_id,
                     verbose = False)
 
-        if failed_cases:
-            print ('Failed to send recruitment/reminder for these emails:', ', '.join(failed_cases))
-
         return self.client.get_group(id = reviewers_invited_id)
 
     def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
