@@ -703,12 +703,13 @@ class ReviewRevisionInvitation(openreview.Invitation):
 
 class MetaReviewInvitation(openreview.Invitation):
 
-    def __init__(self, conference, process = None):
+    def __init__(self, conference):
         content = invitations.meta_review.copy()
         meta_review_stage = conference.meta_review_stage
         additional_fields = meta_review_stage.additional_fields
         start_date = meta_review_stage.start_date
         due_date = meta_review_stage.due_date
+        process = meta_review_stage.process
 
         for key in additional_fields:
             content[key] = additional_fields[key]
@@ -935,10 +936,10 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_meta_review_invitation(self, conference, notes, process = None):
+    def set_meta_review_invitation(self, conference, notes):
 
         invitations = []
-        self.client.post_invitation(MetaReviewInvitation(conference, process))
+        self.client.post_invitation(MetaReviewInvitation(conference))
         for note in notes:
             invitations.append(self.client.post_invitation(PaperMetaReviewInvitation(conference, note)))
 

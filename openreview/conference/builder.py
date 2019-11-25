@@ -153,10 +153,10 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_comment_invitation(self, notes)
 
-    def __create_meta_review_stage(self, process=None):
+    def __create_meta_review_stage(self):
 
         notes = list(self.get_submissions())
-        return self.invitation_builder.set_meta_review_invitation(self, notes, process)
+        return self.invitation_builder.set_meta_review_invitation(self, notes)
 
     def __create_decision_stage(self):
 
@@ -221,9 +221,9 @@ class Conference(object):
         self.comment_stage = stage
         return self.__create_comment_stage()
 
-    def set_meta_review_stage(self, stage, process = None):
+    def set_meta_review_stage(self, stage):
         self.meta_review_stage = stage
-        return self.__create_meta_review_stage(process)
+        return self.__create_meta_review_stage()
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
@@ -970,12 +970,13 @@ class CommentStage(object):
 
 class MetaReviewStage(object):
 
-    def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}):
+    def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Meta_Review'
         self.public = public
         self.additional_fields = additional_fields
+        self.process = None
 
     def get_readers(self, conference, number):
 
@@ -1163,8 +1164,8 @@ class ConferenceBuilder(object):
     def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
         self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
 
-    def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}):
-        self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields)
+    def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
+        self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields, process)
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers)
