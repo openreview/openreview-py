@@ -1093,12 +1093,7 @@ class Client(object):
         :rtype: Group
         """
         def add_member(group, members):
-            group_id = ''
-            if type(group) in string_types:
-                group_id = group
-            else:
-                group_id = group.id
-
+            group_id = group if type(group) in string_types else group.id
             if members:
                 response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
                 response = self.__handle_response(response)
@@ -1125,11 +1120,7 @@ class Client(object):
         :type: Group
         """
         def remove_member(group, members):
-            group_id = ''
-            if type(group) in string_types:
-                group_id = group
-            else:
-                group_id = group.id
+            group_id = group if type(group) in string_types else group.id
             response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
             return Group.from_json(response.json())
