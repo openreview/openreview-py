@@ -747,8 +747,6 @@ class Conference(object):
         if message:
             recruit_message = message
 
-        failed_cases = []
-
         if remind:
             remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
             for reviewer_id in remind_reviewers:
@@ -758,32 +756,26 @@ class Conference(object):
                 elif (reviewer_id in emails) and invitee_names:
                     reviewer_name = invitee_names[emails.index(reviewer_id)]
 
-                try:
-                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        'Reminder: ' + recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
-                except:
-                    failed_cases.append(reviewer_id)
+                tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    'Reminder: ' + recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
 
         for index, email in enumerate(emails):
             if email not in set(reviewers_invited_group.members):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-                try:
-                    tools.recruit_reviewer(self.client, email, name,
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
-                except:
-                    failed_cases.append(email)
+                tools.recruit_reviewer(self.client, email, name,
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
 
         if failed_cases:
             print ('Failed to send recruitment/reminder for these emails:', ', '.join(failed_cases))
