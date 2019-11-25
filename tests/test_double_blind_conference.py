@@ -572,7 +572,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         conference = builder.get_result()
-        result = conference.recruit_reviewers(['test_subject1@mail.com', 'test_subject2@mail.com'], recruitment_link_baseurl = 'https://testme_1234.com')
+        result = conference.recruit_reviewers(['test_subject1@mail.com', 'test_subject2@mail.com'], baseurl = 'https://testme_1234.com')
         assert result
         assert result.id == 'ABCD.ws/2020/Conference/Reviewers/Invited'
         assert 'test_subject1@mail.com' in result.members
@@ -601,7 +601,7 @@ class TestDoubleBlindConference():
 
         # Test if the reminder mail has "Dear invitee" for unregistered users in case the name is not provided to recruit_reviewers
         # In the same test, check if recruitment link baseurl has been overridden
-        result = conference.recruit_reviewers(remind = True, emails = ['test_subject1@mail.com'], recruitment_link_baseurl = 'https://testme_1234.com')
+        result = conference.recruit_reviewers(remind = True, emails = ['test_subject1@mail.com'], baseurl = 'https://testme_1234.com')
         messages = client.get_messages(to = 'test_subject1@mail.com', subject = 'Reminder: ABCD.ws/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
