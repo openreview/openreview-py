@@ -235,6 +235,27 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
+    def set_reduced_load_page(self, conference_id, invitation, options = {}):
+
+        default_header = {
+            'title': conference_id,
+            'subtitle': conference_id,
+            'location': 'TBD',
+            'date': 'TBD',
+            'website': 'nourl',
+            'instructions': '',
+            'deadline': 'TBD'
+        }
+
+        header = self.__build_options(default_header, options)
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadWeb.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            invitation.web = content
+            return self.client.post_invitation(invitation)
+
     def set_recruit_page(self, conference_id, invitation, options = {}):
 
         default_header = {
@@ -253,6 +274,7 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var REDUCED_LOAD_INVITATION_NAME = '';", "var REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load';")
             invitation.web = content
             return self.client.post_invitation(invitation)
 
@@ -361,7 +383,6 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + submission_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var SHOW_AC_TAB = false;", "var SHOW_AC_TAB = true;" if conference.use_area_chairs else "var SHOW_AC_TAB = false;")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
             content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
@@ -371,7 +392,7 @@ class WebfieldBuilder(object):
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
             content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
             content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
-            if conference.has_area_chairs:
+            if conference.use_area_chairs:
                 content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
             if conference.request_form_id:

@@ -45,6 +45,7 @@ class Conference(object):
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
+        self.reduced_load_on_decline = []
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
         group = tools.get_group(self.client, id = group_id)
@@ -678,6 +679,9 @@ class Conference(object):
         self.__set_reviewer_reassignment(enabled=True)
         return conference_matching.deploy(assingment_title)
 
+    def set_recruitment_reduced_load(self, reduced_load_options):
+        self.reduced_load_on_decline = reduced_load_options
+
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
 
         pcs_id = self.get_program_chairs_id()
@@ -699,6 +703,11 @@ class Conference(object):
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed
         }
+        if options['reviewers_name'] == 'Reviewers' and self.reduced_load_on_decline:
+            options['reduced_load_on_decline'] = self.reduced_load_on_decline
+            invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
+            invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
+
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
         recruit_message = '''Dear {name},
@@ -1176,6 +1185,7 @@ class ConferenceBuilder(object):
             self.conference.set_submission_stage(self.submission_stage)
 
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
+        self.conference.set_program_chairs()
         self.conference.set_authors()
         self.conference.set_reviewers()
         if self.conference.use_area_chairs:

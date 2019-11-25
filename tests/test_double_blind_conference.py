@@ -541,7 +541,7 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.'
+        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\n'
 
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
@@ -1086,7 +1086,6 @@ note={under review}
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             content = {
-                'title': 'Meta review title',
                 'metareview': 'Paper is very good!',
                 'recommendation': 'Accept (Oral)',
                 'confidence': '4: The area chair is confident but not absolutely certain'
@@ -1129,7 +1128,6 @@ note={under review}
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
             content = {
-                'title': 'Meta review title',
                 'metareview': 'Excellent Paper!',
                 'recommendation': 'Accept (Oral)',
                 'confidence': '4: The area chair is confident but not absolutely certain'
