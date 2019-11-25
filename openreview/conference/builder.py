@@ -762,7 +762,7 @@ class Conference(object):
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False,
-                    recruitment_link_baseurl = recruitment_link_baseurl)
+                    baseurl = baseurl)
 
         for index, email in enumerate(emails):
             if email not in set(reviewers_invited_group.members):
@@ -776,7 +776,7 @@ class Conference(object):
                     recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False,
-                    recruitment_link_baseurl = recruitment_link_baseurl)
+                    baseurl = baseurl)
 
         return self.client.get_group(id = reviewers_invited_id)
 
