@@ -1041,7 +1041,7 @@ class InvitationBuilder(object):
             'forum': None,
             'replyto': None,
             'readers': {
-                'values': ['~Super_User1']
+                'values': [conference.get_id()]
             },
             'signatures': {
                 'values-regex': '\\(anonymous\\)'

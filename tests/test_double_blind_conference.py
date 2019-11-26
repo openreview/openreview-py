@@ -406,7 +406,7 @@ class TestDoubleBlindConference():
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
         assert len(papers.find_elements_by_class_name('note')) == 1
 
-    def test_recruit_reviewers(self, client, selenium, request_page):
+    def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -416,6 +416,9 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         conference = builder.get_result()
+
+        pc_client = helpers.create_user(email = 'akbc_pc_1@akbc.ws', first = 'AKBC', last = 'PCOne')
+        conference.set_program_chairs(emails = ['akbc_pc_1@akbc.ws'])
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
         assert result
@@ -497,6 +500,20 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
+        recruit_invitation = re.search('http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
+        assert len(acceptance_notes) == 1
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 0
+
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
         assert messages
         assert len(messages)
@@ -515,6 +532,12 @@ class TestDoubleBlindConference():
         assert len(group.members) == 1
         assert 'mbok@mail.com' in group.members
 
+        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        acceptance_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'Yes']
+        decline_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'No']
+        assert len(acceptance_notes) == 1
+        assert len(decline_notes) == 1
+        
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation declined')
         assert messages
         assert len(messages)
@@ -622,7 +645,7 @@ class TestDoubleBlindConference():
         result = conference.set_program_chairs(['pc@mail.com', 'pc2@mail.com'])
         assert result
         assert result.members
-        assert ['pc@mail.com', 'pc2@mail.com'] == result.members
+        assert ['akbc_pc_1@akbc.ws', 'pc@mail.com', 'pc2@mail.com'] == result.members
 
         #Sign up as Program Chair
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
@@ -1008,10 +1031,11 @@ note={under review}
         assert 'reviewer2@mail.com' in recipients
 
         messages = client.get_messages(subject = '[AKBC 2019] A review has been received on Paper number: 1, Paper title: "New paper title"')
-        assert len(messages) == 2
+        assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
+        assert 'akbc_pc_1@akbc.ws' in recipients
 
         ## Check review visibility
         notes = reviewer_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Official_Review')
