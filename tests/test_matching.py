@@ -638,6 +638,7 @@ class TestMatching():
             writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             signatures = ['~AreaChair_One1'],
             forum = invitation.reply['forum'],
+            replyto=invitation.reply['replyto'],
             content = {
                 'title': 'UAI 2019 Registration',
                 'subject_areas': [
