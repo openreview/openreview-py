@@ -50,14 +50,21 @@ def get_conference(client, request_form_id):
     builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
     builder.set_conference_short_name(note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')))
     builder.set_conference_year(conference_start_date.year)
-    builder.set_homepage_header({
-    'title': note.content['title'],
-    'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
-    'deadline': 'Submission Start: ' + submission_start_date_str + ' GMT, End: ' + submission_due_date_str+' GMT',
-    'date': conference_start_date_str,
-    'website': note.content['Official Website URL'],
-    'location': note.content.get('Location')
-    })
+
+    homepage_header = {
+        'title': note.content['title'],
+        'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
+        'deadline': 'Submission Start: ' + submission_start_date_str + ' GMT, End: ' + submission_due_date_str + ' GMT',
+        'date': conference_start_date_str,
+        'website': note.content['Official Website URL'],
+        'location': note.content.get('Location')
+    }
+    override_header = note.content.get('homepage_override', '')
+    if override_header:
+        for key in override_header.keys():
+            homepage_header[key] = override_header[key]
+
+    builder.set_homepage_header(homepage_header)
 
     if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
         builder.has_area_chairs(True)
