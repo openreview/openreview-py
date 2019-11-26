@@ -1263,7 +1263,8 @@ def recruit_reviewer(client, user, first,
     recruit_message,
     recruit_message_subj,
     reviewers_invited_id,
-    verbose=True):
+    verbose=True,
+    baseurl = ''):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1284,6 +1285,8 @@ def recruit_reviewer(client, user, first,
     :type reviewers_invited_id: str
     :param verbose: Shows response of :meth:`openreview.Client.send_mail` and shows the body of the message sent
     :type verbose: bool, optional
+    :param baseurl: Use this baseUrl instead of client.baseurl to create recruitment links
+    :type baseurl: str, optional
     """
 
     # the HMAC.new() function only accepts bytestrings, not unicode.
@@ -1294,7 +1297,7 @@ def recruit_reviewer(client, user, first,
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
-        baseurl = client.baseurl,
+        baseurl = baseurl if baseurl else client.baseurl,
         recruitment_inv = recruit_reviewers_id,
         user = user,
         hashkey = hashkey
@@ -1311,8 +1314,7 @@ def recruit_reviewer(client, user, first,
     response = client.send_mail(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
-        reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, [user])
+        client.add_members_to_group(reviewers_invited_id, [user])
 
     if verbose:
         print("Sent to the following: ", response)
