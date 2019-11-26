@@ -709,6 +709,7 @@ class MetaReviewInvitation(openreview.Invitation):
         additional_fields = meta_review_stage.additional_fields
         start_date = meta_review_stage.start_date
         due_date = meta_review_stage.due_date
+        process = meta_review_stage.process
 
         for key in additional_fields:
             content[key] = additional_fields[key]
@@ -723,7 +724,8 @@ class MetaReviewInvitation(openreview.Invitation):
             multiReply = False,
             reply = {
                 'content': content
-            }
+            },
+            process_string = process
         )
 
 
