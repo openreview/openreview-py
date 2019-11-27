@@ -560,6 +560,7 @@ class TestWorkshop():
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review/AnonReviewer1/Revision',
             forum = submission.id,
             referent = review.id,
+            replyto=review.replyto,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],

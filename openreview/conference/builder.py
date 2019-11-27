@@ -45,6 +45,7 @@ class Conference(object):
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
+        self.reduced_load_on_decline = []
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
         group = tools.get_group(self.client, id = group_id)
@@ -678,7 +679,10 @@ class Conference(object):
         self.__set_reviewer_reassignment(enabled=True)
         return conference_matching.deploy(assingment_title)
 
-    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
+    def set_recruitment_reduced_load(self, reduced_load_options):
+        self.reduced_load_on_decline = reduced_load_options
+
+    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], baseurl = ''):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -699,6 +703,11 @@ class Conference(object):
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed
         }
+        if options['reviewers_name'] == 'Reviewers' and self.reduced_load_on_decline:
+            options['reduced_load_on_decline'] = self.reduced_load_on_decline
+            invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
+            invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
+
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
         recruit_message = '''Dear {name},
@@ -746,13 +755,15 @@ class Conference(object):
                     reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
                 elif (reviewer_id in emails) and invitee_names:
                     reviewer_name = invitee_names[emails.index(reviewer_id)]
+
                 tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
                     hash_seed,
                     invitation.id,
                     recruit_message,
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False)
+                    verbose = False,
+                    baseurl = baseurl)
 
         for index, email in enumerate(emails):
             if email not in set(reviewers_invited_group.members):
@@ -765,7 +776,8 @@ class Conference(object):
                     recruit_message,
                     recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False)
+                    verbose = False,
+                    baseurl = baseurl)
 
         return self.client.get_group(id = reviewers_invited_id)
 
@@ -949,12 +961,13 @@ class CommentStage(object):
 
 class MetaReviewStage(object):
 
-    def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}):
+    def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Meta_Review'
         self.public = public
         self.additional_fields = additional_fields
+        self.process = None
 
     def get_readers(self, conference, number):
 
@@ -1142,8 +1155,8 @@ class ConferenceBuilder(object):
     def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
         self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
 
-    def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}):
-        self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields)
+    def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
+        self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields, process)
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers)
@@ -1176,6 +1189,7 @@ class ConferenceBuilder(object):
             self.conference.set_submission_stage(self.submission_stage)
 
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
+        self.conference.set_program_chairs()
         self.conference.set_authors()
         self.conference.set_reviewers()
         if self.conference.use_area_chairs:

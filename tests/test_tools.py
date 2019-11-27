@@ -10,11 +10,118 @@ class TestTools():
 
     def test_get_submission_invitations(self, client):
         invitations = openreview.tools.get_submission_invitations(client)
-        assert len(invitations) == 13, "Invitations could not be retrieved"
+        assert len(invitations) == 16, "Invitations could not be retrieved"
+
+    def test_add_members_to_group(self, client):
+        new_group = client.post_group(
+            openreview.Group(
+                id = 'NewGroup',
+                members = [],
+                signatures = ['~Super_User1'],
+                signatories = ['NewGroup'],
+                readers = ['everyone'],
+                writers =['NewGroup']
+            ))
+        assert new_group
+
+        # Test that add_members_to_group works while passing it a Group object and one member of type string
+        posted_group = client.add_members_to_group(new_group, 'test_subject_x@mail.com')
+        assert posted_group
+        assert len(posted_group.members) == 1
+        assert 'test_subject_x@mail.com' in posted_group.members
+
+        # Test that add_members_to_group works while passing it a Group object and a list of members each of type string
+        posted_group = client.add_members_to_group(posted_group, ['test_subject_y1@mail.com', 'test_subject_y2@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 3
+        assert 'test_subject_x@mail.com' in posted_group.members
+        assert 'test_subject_y1@mail.com' in posted_group.members
+        assert 'test_subject_y2@mail.com' in posted_group.members
+
+        # Test that add_members_to_group works while passing it a Group id string and one member of type string
+        posted_group = client.add_members_to_group(posted_group.id, 'test_subject_x2@mail.com')
+        assert posted_group
+        assert len(posted_group.members) == 4
+        assert 'test_subject_x@mail.com' in posted_group.members
+        assert 'test_subject_y1@mail.com' in posted_group.members
+        assert 'test_subject_y2@mail.com' in posted_group.members
+        assert 'test_subject_x2@mail.com' in posted_group.members
+
+        # Test that add_members_to_group works while passing it a Group id string and a list of members each of type string
+        posted_group = client.add_members_to_group(posted_group, ['test_subject_y2_1@mail.com', 'test_subject_y2_2@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 6
+        assert 'test_subject_x@mail.com' in posted_group.members
+        assert 'test_subject_y1@mail.com' in posted_group.members
+        assert 'test_subject_y2@mail.com' in posted_group.members
+        assert 'test_subject_x2@mail.com' in posted_group.members
+        assert 'test_subject_y2_1@mail.com' in posted_group.members
+        assert 'test_subject_y2_2@mail.com' in posted_group.members
+
+        # Test that adding an existing member should not have any effect
+        posted_group = client.add_members_to_group(posted_group, ['test_subject_y2_1@mail.com', 'test_subject_y2_2@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 6
+
+    def test_remove_members_from_group(self, client):
+        new_group = client.post_group(
+            openreview.Group(
+                id = 'NewGroup',
+                members = [],
+                signatures = ['~Super_User1'],
+                signatories = ['NewGroup'],
+                readers = ['everyone'],
+                writers =['NewGroup']
+            ))
+        assert new_group
+        assert len(new_group.members) == 0
+
+        posted_group = client.add_members_to_group(new_group.id, ['test_subject_x@mail.com', 'test_subject_y@mail.com', 'test_subject_z@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 3
+
+        # Test that remove_members_from_group works while passing it a Group object and one member of type string
+        posted_group = client.remove_members_from_group(posted_group, 'test_subject_x@mail.com')
+        assert posted_group
+        assert len(posted_group.members) == 2
+        assert 'test_subject_x@mail.com' not in posted_group.members
+
+        # Test that remove_members_from_group works while passing it a Group object and and a list of members each of type string
+        posted_group = client.remove_members_from_group(posted_group, ['test_subject_x@mail.com', 'test_subject_y@mail.com', 'test_subject_z@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 0
+
+        posted_group = client.add_members_to_group(posted_group.id, ['test_subject_a@mail.com', 'test_subject_b@mail.com', 'test_subject_x@mail.com', 'test_subject_y@mail.com', 'test_subject_z@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 5
+
+        # Test that remove_members_from_group works while passing it a Group id string and one member of type string
+        posted_group = client.remove_members_from_group(posted_group.id, 'test_subject_x@mail.com')
+        assert posted_group
+        assert len(posted_group.members) == 4
+        assert 'test_subject_x@mail.com' not in posted_group.members
+        assert 'test_subject_a@mail.com' in posted_group.members
+        assert 'test_subject_b@mail.com' in posted_group.members
+        assert 'test_subject_y@mail.com' in posted_group.members
+        assert 'test_subject_z@mail.com' in posted_group.members
+
+        # Test that remove_members_from_group works while passing it a Group id string and a list of members each of type string
+        posted_group = client.remove_members_from_group(posted_group.id, ['test_subject_y@mail.com', 'test_subject_z@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 2
+        assert 'test_subject_a@mail.com' in posted_group.members
+        assert 'test_subject_b@mail.com' in posted_group.members
+
+        # Test that remove_members_from_group does not affect the group if the input member/members are already not in group.members
+        posted_group = client.remove_members_from_group(posted_group.id, ['test_subject_y@mail.com', 'test_subject_z@mail.com'])
+        assert posted_group
+        assert len(posted_group.members) == 2
+        assert 'test_subject_a@mail.com' in posted_group.members
+        assert 'test_subject_b@mail.com' in posted_group.members
 
     def test_get_all_venues(self, client):
         venues = openreview.tools.get_all_venues(client)
-        assert len(venues) == 10, "Venues could not be retrieved"
+        assert len(venues) == 12, "Venues could not be retrieved"
 
     def test_iterget_notes(self, client):
         notes_iterator = openreview.tools.iterget_notes(client)
