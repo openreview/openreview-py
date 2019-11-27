@@ -274,11 +274,20 @@ class CommentInvitation(openreview.Invitation):
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, withdrawn_submission_content=None):
+    def __init__(self, conference):
 
-        content = invitations.submission.copy()
-        if withdrawn_submission_content:
-            content = withdrawn_submission_content
+        content = {
+            'authorids': {
+                'values-regex': '.*',
+                'required': False,
+                'order': 3
+            },
+            'authors': {
+                'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                'required': False,
+                'order': 2
+            }
+        }
 
         if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_withdraw):
             content['authors'] = {
@@ -389,11 +398,20 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
 class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, desk_rejected_submission_content=None):
+    def __init__(self, conference):
 
-        content = invitations.submission.copy()
-        if desk_rejected_submission_content:
-            content = desk_rejected_submission_content
+        content = {
+            'authorids': {
+                'values-regex': '.*',
+                'required': False,
+                'order': 3
+            },
+            'authors': {
+                'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                'required': False,
+                'order': 2
+            }
+        }
 
         if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_desk_reject):
             content['authors'] = {
@@ -901,10 +919,7 @@ class InvitationBuilder(object):
 
         invitations = []
 
-        submission_invitation = self.client.get_invitation(id = conference.get_submission_id())
-        withdrawn_submission_content = submission_invitation.reply['content']
-
-        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, withdrawn_submission_content))
+        self.client.post_invitation(WithdrawnSubmissionInvitation(conference))
 
         notes = list(conference.get_submissions())
         for note in notes:
@@ -916,10 +931,7 @@ class InvitationBuilder(object):
 
         invitations = []
 
-        submission_invitation = self.client.get_invitation(id = conference.get_submission_id())
-        desk_rejected_submission_content = submission_invitation.reply['content']
-
-        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, desk_rejected_submission_content))
+        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference))
 
         notes = list(conference.get_submissions())
         for note in notes:

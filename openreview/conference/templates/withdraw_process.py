@@ -13,9 +13,7 @@ def process(client, note, invitation):
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
     if REVEAL_AUTHORS_ON_WITHDRAW:
         # REVEAL_AUTHORS_ON_WITHDRAW will only be True if this is a double blind conference
-        original_note = client.get_note(id = forum_note.original)
-        forum_note.content['authors'] = original_note.content['authors']
-        forum_note.content['authorids'] = original_note.content['authorids']
+        forum_note.content = {}
     client.post_note(forum_note)
 
     # Expire review, meta-review and decision invitations
