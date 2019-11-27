@@ -537,7 +537,7 @@ class TestDoubleBlindConference():
         decline_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'No']
         assert len(acceptance_notes) == 1
         assert len(decline_notes) == 1
-        
+
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation declined')
         assert messages
         assert len(messages)
@@ -1074,6 +1074,7 @@ note={under review}
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Official_Review/AnonReviewer1/Revision',
             forum = submission.id,
             referent = review.id,
+            replyto=review.replyto,
             readers = ['AKBC.ws/2019/Conference/Program_Chairs',
             'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
             'AKBC.ws/2019/Conference/Paper1/Reviewers',
@@ -1336,7 +1337,7 @@ note={under review}
 
         assert conference.open_revise_submissions()
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Revision',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper3/-/Revision',
             forum = notes[0].original,
             referent = notes[0].original,
             readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
