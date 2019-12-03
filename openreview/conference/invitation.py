@@ -489,6 +489,12 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_NAME = \'\'',
+                'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_YEAR = \'\'',
+                'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
             if conference.submission_stage.reveal_authors_on_desk_reject:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_DESK_REJECT = False',

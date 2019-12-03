@@ -16,8 +16,7 @@ def process(client, note, invitation):
     forum_note.content = {
         '_bibtex': openreview.tools.get_bibtex(note = forum_note, venue_fullname = CONFERENCE_NAME, year = CONFERENCE_YEAR, anonymous = not(REVEAL_AUTHORS_ON_WITHDRAW), baseurl = 'https://openreview.net')
     }
-
-    client.post_note(forum_note)
+    forum_note = client.post_note(forum_note)
 
     # Expire review, meta-review and decision invitations
     invitation_regex = CONFERENCE_ID + '/Paper' + str(forum_note.number) + '/-/(Official_Review|Meta_Review|Decision|Revision|Withdraw)$'
