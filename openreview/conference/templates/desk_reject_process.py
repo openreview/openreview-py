@@ -15,7 +15,7 @@ def process(client, note, invitation):
     forum_note.invitation = DESK_REJECTED_SUBMISSION_ID
     original_author_list = []
     if forum_note.content['authors'] == ['Anonymous']:
-        original_note == client.get_note(forum_note.original)
+        original_note = client.get_note(forum_note.original)
         original_author_list = original_note.content['authors']
 
     forum_note.content = {
