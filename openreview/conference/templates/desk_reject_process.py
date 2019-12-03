@@ -14,7 +14,7 @@ def process(client, note, invitation):
     forum_note = client.get_note(note.forum)
     forum_note.invitation = DESK_REJECTED_SUBMISSION_ID
     forum_note.content = {
-        '_bibtex': openreview.tools.get_bibtex(note = forum_note, venue_fullname = CONFERENCE_NAME, year = CONFERENCE_YEAR, anonymous = not(REVEAL_AUTHORS_ON_DESK_REJECT), baseurl = 'https://openreview.net')
+        '_bibtex': openreview.tools.get_bibtex(note = forum_note, venue_fullname = CONFERENCE_NAME, year = CONFERENCE_YEAR, anonymous = not(REVEAL_AUTHORS_ON_DESK_REJECT), baseurl = 'https://openreview.net', author_names = original_author_list)
     }
     forum_note = client.post_note(forum_note)
 
