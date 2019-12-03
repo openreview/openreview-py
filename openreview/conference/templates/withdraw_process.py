@@ -14,7 +14,7 @@ def process(client, note, invitation):
     forum_note = client.get_note(note.forum)
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
     original_author_list = []
-    if forum_note.content['authors'] == ['Anonymous']:
+    if forum_note.content['authors'] == ['Anonymous'] and REVEAL_AUTHORS_ON_WITHDRAW:
         original_note = client.get_note(forum_note.original)
         original_author_list = original_note.content['authors']
 
