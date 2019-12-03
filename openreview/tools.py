@@ -366,7 +366,6 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         authors = 'Anonymous'
     else:
         first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
-
         if names_reversed:
             # last, first
             author_list = []
