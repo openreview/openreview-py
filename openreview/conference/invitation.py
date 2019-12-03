@@ -299,7 +299,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
         super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_withdrawn_submission_id(conference),
-            cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
@@ -372,13 +372,13 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                cdate=tools.datetime_millis(conference.submission_stage.due_date),
-                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)),
-                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)),
+                cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
+                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)) if conference.submission_stage.due_date else None,
+                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
                 invitees=[conference.get_authors_id(note.number)],
                 readers=['everyone'],
                 writers=[conference.get_id()],
-                signatures=['OpenReview.net'],
+                signatures=['~Super_User1'],
                 multiReply=False,
                 reply={
                     'forum': note.id,
@@ -429,7 +429,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
         super(DeskRejectedSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_desk_rejected_submission_id(conference),
-            cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
@@ -502,13 +502,13 @@ class PaperDeskRejectInvitation(openreview.Invitation):
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
-                cdate=tools.datetime_millis(conference.submission_stage.due_date),
-                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)),
-                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)),
+                cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
+                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)) if conference.submission_stage.due_date else None,
+                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
                 invitees=[conference.get_program_chairs_id()],
                 readers=['everyone'],
                 writers=[conference.get_id()],
-                signatures=['OpenReview.net'],
+                signatures=['~Super_User1'],
                 multiReply=False,
                 reply={
                     'forum': note.id,

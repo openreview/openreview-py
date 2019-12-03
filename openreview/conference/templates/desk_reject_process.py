@@ -37,9 +37,9 @@ def process(client, note, invitation):
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,
         paper_number = forum_note.number
     )
-    email_body = '''The {CONFERENCE_SHORT_NAME} paper title "{paper_title}" has been marked desk rejected by the program chairs.'''.format(
+    email_body = '''The {CONFERENCE_SHORT_NAME} paper "{paper_title_or_num}" has been marked desk rejected by the program chairs.'''.format(
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,
-        paper_title = forum_note.content['title']
+        paper_title_or_num = forum_note.content.get('title', '#'+str(forum_note.number))
     )
     recipients = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID, PROGRAM_CHAIRS_ID]
     if PAPER_AREA_CHAIRS_ID:

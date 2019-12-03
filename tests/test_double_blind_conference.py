@@ -1363,3 +1363,111 @@ note={under review}
         assert posted_note
 
         assert len(test_client.get_references(referent = notes[0].original)) == 2
+
+    def test_withdraw_submission(self, client, test_client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_withdraw = True, allow_withdraw = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+        conference.create_withdraw_invitations()
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 3
+
+        withdrawal_note = openreview.Note(
+            invitation = 'AKBC.ws/2019/Conference/Paper3/-/Withdraw',
+            forum = notes[0].forum,
+            replyto = notes[0].forum,
+            readers = ['everyone'],
+            writers = [conference.id + '/Paper{number}/Authors'.format(number = notes[0].number), conference.id],
+            signatures = [conference.id + '/Paper{number}/Authors'.format(number = notes[0].number)],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        )
+
+        posted_note = test_client.post_note(withdrawal_note)
+        assert posted_note
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 2
+
+        withdrawn_notes = client.get_notes(invitation = conference.submission_stage.get_withdrawn_submission_id(conference))
+
+        assert len(withdrawn_notes) == 1
+        assert withdrawn_notes[0].content.get('_bibtex')
+        assert withdrawn_notes[0].content.get('_bibtex') == '@misc{\nuser2019paper,\ntitle={Paper title Revision 2},\nauthor={Test User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + withdrawn_notes[0].id + '}\n}'
+
+        messages = client.get_messages(subject = '^AKBC 2019: Paper .* withdrawn by paper authors$')
+        assert len(messages) == 7
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mail.com' in recipients
+        assert 'pc@mail.com' in recipients
+        assert 'akbc_pc_1@akbc.ws' in recipients
+        assert 'akbc_pc@mail.com' in recipients
+        assert 'pc2@mail.com' in recipients
+
+    def test_desk_reject_submission(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_desk_reject = True, allow_desk_reject = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+        conference.create_desk_reject_invitations()
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 2
+
+        desk_reject_note = openreview.Note(
+            invitation = 'AKBC.ws/2019/Conference/Paper2/-/Desk_Reject',
+            forum = notes[0].forum,
+            replyto = notes[0].forum,
+            readers = ['everyone'],
+            writers = [conference.get_program_chairs_id()],
+            signatures = [conference.get_program_chairs_id()],
+            content = {
+                'desk_reject_comments': 'PC has decided to reject this submission.',
+                'title': 'Submission Desk Rejected by Program Chairs'
+            }
+        )
+
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
+
+        posted_note = pc_client.post_note(desk_reject_note)
+        assert posted_note
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+
+        desk_rejected_notes = client.get_notes(invitation = conference.submission_stage.get_desk_rejected_submission_id(conference))
+
+        assert len(desk_rejected_notes) == 1
+        assert desk_rejected_notes[0].content.get('_bibtex')
+        assert desk_rejected_notes[0].content.get('_bibtex') == '@misc{\nuser2019test,\ntitle={Test Paper title},\nauthor={Test User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + desk_rejected_notes[0].id + '}\n}'
+
+        messages = client.get_messages(subject = '^AKBC 2019: Paper .* marked desk rejected by program chairs$')
+        assert len(messages) == 7
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mail.com' in recipients
+        assert 'pc@mail.com' in recipients
+        assert 'akbc_pc_1@akbc.ws' in recipients
+        assert 'akbc_pc@mail.com' in recipients
+        assert 'pc2@mail.com' in recipients
