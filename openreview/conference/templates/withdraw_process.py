@@ -2,6 +2,8 @@ def process(client, note, invitation):
     from datetime import datetime
     CONFERENCE_ID = ''
     CONFERENCE_SHORT_NAME = ''
+    CONFERENCE_NAME = ''
+    CONFERENCE_YEAR = ''
     PAPER_AUTHORS_ID = ''
     PAPER_REVIEWERS_ID = ''
     PAPER_AREA_CHAIRS_ID = ''
@@ -11,9 +13,10 @@ def process(client, note, invitation):
 
     forum_note = client.get_note(note.forum)
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
-    if REVEAL_AUTHORS_ON_WITHDRAW:
-        # REVEAL_AUTHORS_ON_WITHDRAW will only be True if this is a double blind conference
-        forum_note.content = {}
+    forum_note.content = {
+        '_bibtex': openreview.tools.get_bibtex(note = forum_note, venue_fullname = CONFERENCE_NAME, year = CONFERENCE_YEAR, anonymous = REVEAL_AUTHORS_ON_WITHDRAW, baseurl = 'https://openreview.net')
+    }
+
     client.post_note(forum_note)
 
     # Expire review, meta-review and decision invitations

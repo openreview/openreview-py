@@ -359,7 +359,16 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_NAME = \'\'',
+                'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_YEAR = \'\'',
+                'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
             if conference.submission_stage.reveal_authors_on_withdraw:
+                file_content = file_content.replace(
+                    'REVEAL_AUTHORS_ON_WITHDRAW = False',
+                    "REVEAL_AUTHORS_ON_WITHDRAW = True")
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
                     "REVEAL_AUTHORS_ON_WITHDRAW = True")

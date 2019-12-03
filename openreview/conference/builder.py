@@ -195,7 +195,7 @@ class Conference(object):
     def set_year(self, year):
         self.year = year
 
-    def get_year(self, year):
+    def get_year(self):
         return self.year
 
     def set_reviewers_name(self, name):
