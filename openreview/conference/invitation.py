@@ -369,9 +369,6 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
                     "REVEAL_AUTHORS_ON_WITHDRAW = True")
-                file_content = file_content.replace(
-                    'REVEAL_AUTHORS_ON_WITHDRAW = False',
-                    "REVEAL_AUTHORS_ON_WITHDRAW = True")
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
