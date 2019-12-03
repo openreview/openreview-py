@@ -13,13 +13,13 @@ def process(client, note, invitation):
 
     forum_note = client.get_note(note.forum)
     forum_note.invitation = DESK_REJECTED_SUBMISSION_ID
-    original_author_list = []
+
+    original_note = None
     if forum_note.content['authors'] == ['Anonymous'] and REVEAL_AUTHORS_ON_WITHDRAW:
         original_note = client.get_note(forum_note.original)
-        original_author_list = original_note.content['authors']
 
     forum_note.content = {
-        '_bibtex': openreview.tools.get_bibtex(note = forum_note, venue_fullname = CONFERENCE_NAME, year = CONFERENCE_YEAR, anonymous = not(REVEAL_AUTHORS_ON_DESK_REJECT), baseurl = 'https://openreview.net', author_names = original_author_list)
+        '_bibtex': openreview.tools.get_bibtex(note = original_note if original_note else forum_note, venue_fullname = CONFERENCE_NAME, url_forum = forum_note.id year = CONFERENCE_YEAR, anonymous = not(REVEAL_AUTHORS_ON_DESK_REJECT), baseurl = 'https://openreview.net')
     }
     forum_note = client.post_note(forum_note)
 

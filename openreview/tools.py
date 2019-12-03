@@ -321,7 +321,7 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
-def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net', author_names = []):
+def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
     """
     Generates a bibtex field for a given Note.
 
@@ -365,19 +365,18 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         first_author_last_name = 'anonymous'
         authors = 'Anonymous'
     else:
-        note_authors = author_names if author_names else note.content['authors']
-        first_author_last_name = note_authors[0].split(' ')[-1].lower()
+        first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
 
         if names_reversed:
             # last, first
             author_list = []
-            for name in note_authors:
+            for name in note.content['authors']:
                 last = name.split(' ')[-1]
                 rest = (' ').join(name.split(' ')[:-1])
                 author_list.append(last+', '+rest)
             authors = ' and '.join(author_list)
         else:
-            authors = ' and '.join(note_authors)
+            authors = ' and '.join(note.content['authors'])
 
     bibtex_title = capitalize_title(note.content['title'])
 
