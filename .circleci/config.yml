@@ -128,11 +128,11 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - build
+      # - build
       - build-py3
       - deploy:
           requires:
-            - build
+            - build-py3
           filters:
             branches:
               only: master

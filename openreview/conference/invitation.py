@@ -274,11 +274,20 @@ class CommentInvitation(openreview.Invitation):
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, withdrawn_submission_content=None):
+    def __init__(self, conference):
 
-        content = invitations.submission.copy()
-        if withdrawn_submission_content:
-            content = withdrawn_submission_content
+        content = {
+            'authorids': {
+                'values-regex': '.*',
+                'required': False,
+                'order': 3
+            },
+            'authors': {
+                'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                'required': False,
+                'order': 2
+            }
+        }
 
         if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_withdraw):
             content['authors'] = {
@@ -290,7 +299,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
         super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_withdrawn_submission_id(conference),
-            cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
@@ -350,6 +359,12 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_NAME = \'\'',
+                'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_YEAR = \'\'',
+                'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
             if conference.submission_stage.reveal_authors_on_withdraw:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
@@ -357,13 +372,13 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                cdate=tools.datetime_millis(conference.submission_stage.due_date),
-                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)),
-                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)),
+                cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
+                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)) if conference.submission_stage.due_date else None,
+                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
                 invitees=[conference.get_authors_id(note.number)],
                 readers=['everyone'],
                 writers=[conference.get_id()],
-                signatures=['OpenReview.net'],
+                signatures=['~Super_User1'],
                 multiReply=False,
                 reply={
                     'forum': note.id,
@@ -389,11 +404,20 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
 class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, desk_rejected_submission_content=None):
+    def __init__(self, conference):
 
-        content = invitations.submission.copy()
-        if desk_rejected_submission_content:
-            content = desk_rejected_submission_content
+        content = {
+            'authorids': {
+                'values-regex': '.*',
+                'required': False,
+                'order': 3
+            },
+            'authors': {
+                'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                'required': False,
+                'order': 2
+            }
+        }
 
         if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_desk_reject):
             content['authors'] = {
@@ -405,7 +429,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
         super(DeskRejectedSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_desk_rejected_submission_id(conference),
-            cdate=tools.datetime_millis(conference.submission_stage.due_date),
+            cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
@@ -465,6 +489,12 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_NAME = \'\'',
+                'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_YEAR = \'\'',
+                'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
             if conference.submission_stage.reveal_authors_on_desk_reject:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_DESK_REJECT = False',
@@ -472,13 +502,13 @@ class PaperDeskRejectInvitation(openreview.Invitation):
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
-                cdate=tools.datetime_millis(conference.submission_stage.due_date),
-                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)),
-                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)),
+                cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
+                duedate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 80)) if conference.submission_stage.due_date else None,
+                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
                 invitees=[conference.get_program_chairs_id()],
                 readers=['everyone'],
                 writers=[conference.get_id()],
-                signatures=['OpenReview.net'],
+                signatures=['~Super_User1'],
                 multiReply=False,
                 reply={
                     'forum': note.id,
@@ -901,10 +931,7 @@ class InvitationBuilder(object):
 
         invitations = []
 
-        submission_invitation = self.client.get_invitation(id = conference.get_submission_id())
-        withdrawn_submission_content = submission_invitation.reply['content']
-
-        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, withdrawn_submission_content))
+        self.client.post_invitation(WithdrawnSubmissionInvitation(conference))
 
         notes = list(conference.get_submissions())
         for note in notes:
@@ -916,10 +943,7 @@ class InvitationBuilder(object):
 
         invitations = []
 
-        submission_invitation = self.client.get_invitation(id = conference.get_submission_id())
-        desk_rejected_submission_content = submission_invitation.reply['content']
-
-        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, desk_rejected_submission_content))
+        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference))
 
         notes = list(conference.get_submissions())
         for note in notes:
