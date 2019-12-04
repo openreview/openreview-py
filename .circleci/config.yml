@@ -12,7 +12,7 @@ jobs:
       - checkout
       - run: sudo apt-get update
       - run: sudo apt-get install python-pip
-      - run: sudo pip install -e ~/openreview-py-repo
+      - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
       - run:
@@ -52,7 +52,7 @@ jobs:
             sudo pip install selenium
             sudo pip install pytest-selenium
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --ignore=tests/test_double_blind_conference.py::test_withdraw_submission --ignore=tests/test_double_blind_conference.py::test_desk_reject_submission
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
       - store_test_results:
           path: test-reports
       - store_artifacts:
@@ -128,7 +128,7 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - build
+      # - build
       - build-py3
       - deploy:
           requires:
