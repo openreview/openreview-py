@@ -607,10 +607,10 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_iterator = self.get_submissions(details='original')
+        notes_list = list(self.get_submissions(details='original'))
         author_group_ids = []
 
-        for n in notes_iterator:
+        for n in sorted(notes_list, key=lambda x:x.number):
             group = self.__create_group(
                 group_id = '{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number),
                 group_owner_id = self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
