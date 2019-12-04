@@ -1,5 +1,6 @@
 import openreview
 import pytest
+import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -37,7 +38,8 @@ def helpers():
 
 @pytest.fixture(scope="session")
 def client():
-    client = Helpers.create_user('openreview.net', 'Super', 'User')
+    requests.put('http://localhost:3000/reset/openreview.net', json = {'password': '1234'})
+    client = openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
     yield client
 
 @pytest.fixture(scope="session")
