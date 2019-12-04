@@ -132,7 +132,7 @@ workflows:
       - build-py3
       - deploy:
           requires:
-            - build
+            - build-py3
           filters:
             branches:
               only: master
