@@ -52,7 +52,7 @@ jobs:
             sudo pip install selenium
             sudo pip install pytest-selenium
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --ignore=tests/test_double_blind_conference.py::test_withdraw_submission --ignore=tests/test_double_blind_conference.py::test_desk_reject_submission
       - store_test_results:
           path: test-reports
       - store_artifacts:

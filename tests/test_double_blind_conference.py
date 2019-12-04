@@ -1395,7 +1395,6 @@ note={under review}
 
         posted_note = test_client.post_note(withdrawal_note)
         assert posted_note
-        time.sleep(10)
         notes = conference.get_submissions()
         assert notes
         assert len(notes) == 2
