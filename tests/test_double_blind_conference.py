@@ -595,10 +595,10 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         conference = builder.get_result()
-        result = conference.recruit_reviewers(['test_subject1@mail.com', 'test_subject2@mail.com'], baseurl = 'https://testme_1234.com')
+        result = conference.recruit_reviewers(['test_subject+1@mail.com', 'test_subject2@mail.com'], baseurl = 'https://testme_1234.com')
         assert result
         assert result.id == 'ABCD.ws/2020/Conference/Reviewers/Invited'
-        assert 'test_subject1@mail.com' in result.members
+        assert 'test_subject+1@mail.com' in result.members
         assert 'test_subject2@mail.com' in result.members
 
         group = client.get_group('ABCD.ws/2020/Conference/Reviewers')
@@ -615,17 +615,18 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        messages = client.get_messages(to = 'test_subject1@mail.com', subject = 'ABCD.ws/2020/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'test_subject+1@mail.com', subject = 'ABCD.ws/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ABCD 2020' in text
         assert 'https://testme_1234.com' in text
         assert 'http://localhost:3000' not in text
+        assert '%2B' in text
 
         # Test if the reminder mail has "Dear invitee" for unregistered users in case the name is not provided to recruit_reviewers
         # In the same test, check if recruitment link baseurl has been overridden
-        result = conference.recruit_reviewers(remind = True, emails = ['test_subject1@mail.com'], baseurl = 'https://testme_1234.com')
-        messages = client.get_messages(to = 'test_subject1@mail.com', subject = 'Reminder: ABCD.ws/2020/Conference: Invitation to Review')
+        result = conference.recruit_reviewers(remind = True, emails = ['test_subject+1@mail.com'], baseurl = 'https://testme_1234.com')
+        messages = client.get_messages(to = 'test_subject+1@mail.com', subject = 'Reminder: ABCD.ws/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ABCD 2020' in text
@@ -767,15 +768,7 @@ class TestDoubleBlindConference():
         assert len(blind_submissions) == 1
         assert blind_submissions[0].content['authors'] == ['Anonymous']
         assert blind_submissions[0].content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
-        assert blind_submissions[0].content['_bibtex'] == '''@inproceedings{
-anonymous2019new,
-title={New paper title},
-author={Anonymous},
-booktitle={Submitted to Automated Knowledge Base Construction},
-year={2019},
-url={http://localhost:3000/forum?id=''' + blind_submissions[0].id + '''},
-note={under review}
-}'''
+        assert blind_submissions[0].content['_bibtex'] == '''@inproceedings{\nanonymous2019new,\ntitle={New paper title},\nauthor={Anonymous},\nbooktitle={Submitted to Automated Knowledge Base Construction},\nyear={2019},\nurl={http://localhost:3000/forum?id=''' + blind_submissions[0].id + '''},\nnote={under review}\n}'''
 
         invitation = client.get_invitation(conference.get_submission_id())
         assert invitation
