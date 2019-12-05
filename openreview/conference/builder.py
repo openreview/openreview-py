@@ -399,7 +399,7 @@ class Conference(object):
 
     def get_submissions(self, accepted = False, details = None):
         invitation = self.get_blind_submission_id()
-        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details))
+        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details), sort = 'number:asc')
         if accepted:
             decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*'))
             accepted_forums = [d.forum for d in decisions if d.content['decision'].startswith('Accept')]
@@ -607,10 +607,10 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_list = list(self.get_submissions(details='original'))
+        notes_iterator = self.get_submissions(details='original')
         author_group_ids = []
 
-        for n in sorted(notes_list, key=lambda x:x.number):
+        for n in notes_iterator:
             group = self.__create_group(
                 group_id = '{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number),
                 group_owner_id = self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
