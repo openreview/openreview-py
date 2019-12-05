@@ -1,6 +1,6 @@
 version: 3
 jobs:
-  build-py3:
+  build:
     working_directory: ~/openreview-py-repo
     docker:
       - image: circleci/node:8.9.1-stretch
@@ -71,10 +71,10 @@ workflows:
   version: 3
   build-deploy:
     jobs:
-      - build-py3
+      - build
       - deploy:
           requires:
-            - build-py3
+            - build
           filters:
             branches:
               only: master
