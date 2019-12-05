@@ -13,11 +13,13 @@ var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 
 // Ajax functions
 var getNumberfromGroup = function(groupId, name) {
-
   var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith(name); });
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
   if (paper) {
-    return parseInt(paper.replace(name, ''));
+    return parseInt(paper.replace(name, ''), 10);
   } else {
     return null;
   }
@@ -129,13 +131,14 @@ var getUserProfiles = function(userIds) {
     return $.Deferred().resolve([]);
   }
 
-  return $.post('/user/profiles', JSON.stringify({ids: userIds}))
+  return Webfield.post('/user/profiles', { ids: userIds })
   .then(function(result) {
-
     var profileMap = {};
+    if (!result || !result.profiles) {
+      return profileMap;
+    }
 
-    _.forEach(result.profiles, function(profile) {
-
+    result.profiles.forEach(function(profile) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail;
@@ -143,10 +146,6 @@ var getUserProfiles = function(userIds) {
     })
 
     return profileMap;
-  })
-  .fail(function(error) {
-    displayError();
-    return null;
   });
 };
 
@@ -409,22 +408,18 @@ $('#group-container').on('click', 'a.send-reminder-link', function(e) {
   var userId = $(this).data('userId');
   var forumUrl = $(this).data('forumUrl');
   var postData = {
+    groups: [userId],
     subject: SHORT_PHRASE + ' Reminder',
     message: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
-      'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.',
-    groups: [userId]
+      'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.'
   };
 
-  $.post('/mail', JSON.stringify(postData), function(result) {
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
-    //Save the timestamp in the local storage
+  return Webfield.post('/messages', postData).then(function() {
+    // Save the timestamp in the local storage
     localStorage.setItem(forumUrl + '|' + userId, Date.now());
+    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
     renderTable();
-  }, 'json').fail(function(error) {
-    console.log(error);
-    promptError('The reminder email could not be sent at this time');
   });
-  return false;
 });
 
 OpenBanner.venueHomepageLink(CONFERENCE_ID);
