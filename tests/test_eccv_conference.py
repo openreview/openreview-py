@@ -36,7 +36,6 @@ class TestECCVConference():
         assert pc_group
         assert pc_group.web
 
-
     def test_recruit_reviewer(self, client, helpers, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -49,13 +48,13 @@ class TestECCVConference():
         conference.set_program_chairs(['pc@eccv.org'])
 
         conference.set_recruitment_reduced_load(['4','5','6','7'])
-        result = conference.recruit_reviewers(['mbok@mail.com', 'mohit@mail.com'])
+        result = conference.recruit_reviewers(['mbok@mail.com', 'mohit+1@mail.com'])
         assert result
         assert result.id == 'thecvf.com/ECCV/2020/Conference/Reviewers/Invited'
         assert 'mbok@mail.com' in result.members
-        assert 'mohit@mail.com' in result.members
+        assert 'mohit+1@mail.com' in result.members
 
-        messages = client.get_messages(to = 'mohit@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'mohit+1@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of  to serve as a reviewer' in text
@@ -76,14 +75,12 @@ class TestECCVConference():
         group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers/Declined')
         assert group
         assert len(group.members) == 1
-        assert 'mohit@mail.com' in group.members
+        assert 'mohit+1@mail.com' in group.members
 
-        messages = client.get_messages(to='mohit@mail.com', subject='[] Reviewer Invitation declined')
+        messages = client.get_messages(to='mohit+1@mail.com', subject='[] Reviewer Invitation declined')
         assert messages
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
-
-
 
     def test_submission_additional_files(self, test_client):
 

@@ -18,6 +18,7 @@ from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
 import tld
+import urllib.parse as urlparse
 
 def get_profile(client, value):
     """
@@ -1299,7 +1300,7 @@ def recruit_reviewer(client, user, first,
     url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
         baseurl = baseurl if baseurl else client.baseurl,
         recruitment_inv = recruit_reviewers_id,
-        user = user,
+        user = urlparse.quote(user),
         hashkey = hashkey
     )
 
