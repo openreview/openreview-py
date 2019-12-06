@@ -1284,7 +1284,7 @@ def recruit_reviewer(client, user, first,
     :type recruit_message_subj: str
     :param reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed. str
     :type reviewers_invited_id: str
-    :param verbose: Shows response of :meth:`openreview.Client.send_mail` and shows the body of the message sent
+    :param verbose: Shows response of :meth:`openreview.Client.post_message` and shows the body of the message sent
     :type verbose: bool, optional
     :param baseurl: Use this baseUrl instead of client.baseurl to create recruitment links
     :type baseurl: str, optional
@@ -1312,7 +1312,7 @@ def recruit_reviewer(client, user, first,
     )
 
     # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [user], personalized_message)
+    response = client.post_message(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
         client.add_members_to_group(reviewers_invited_id, [user])
