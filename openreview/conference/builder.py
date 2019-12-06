@@ -607,7 +607,7 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_iterator = self.get_submissions(details='original')
+        notes_iterator = self.get_submissions(details='original', sort='number:asc')
         author_group_ids = []
 
         for n in notes_iterator:
