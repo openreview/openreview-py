@@ -838,6 +838,22 @@ class TestDoubleBlindConference():
         assert blind_submissions[0].id == blind_submissions_3[0].id
         assert blind_submissions_3[2].readers == ['everyone']
 
+    def test_author_groups_inorder(self, client):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        conference = builder.get_result()
+        conference.set_authors()
+
+        conference_authors_group = client.get_group(id=conference.get_authors_id())
+        assert conference_authors_group
+        assert len(conference_authors_group.members) == 3
+        for num in range(len(conference_authors_group.members)):
+            assert conference_authors_group.members[num] == conference.get_authors_id(num+1)
+
     def test_open_comments(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
