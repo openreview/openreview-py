@@ -397,7 +397,7 @@ class Conference(object):
             options['deadline'] = self.homepage_header.get('deadline')
         return options
 
-    def get_submissions(self, accepted = False, details = None, sort = 'number:asc'):
+    def get_submissions(self, accepted = False, details = None, sort = None):
         invitation = self.get_blind_submission_id()
         notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details, sort = sort))
         if accepted:

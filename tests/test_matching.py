@@ -371,7 +371,7 @@ class TestMatching():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
-        submissions = conference.get_submissions(sort=None)
+        submissions = conference.get_submissions()
         assert submissions
         assert 3 == len(submissions)
 
@@ -447,7 +447,7 @@ class TestMatching():
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        blinded_notes = list(conference.get_submissions(sort=None))
+        blinded_notes = list(conference.get_submissions())
 
         ## Open reviewer recommendations
         now = datetime.datetime.utcnow()
@@ -549,7 +549,7 @@ class TestMatching():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
-        submissions = conference.get_submissions(sort=None)
+        submissions = conference.get_submissions()
         assert submissions
         assert 3 == len(submissions)
 
@@ -715,7 +715,7 @@ class TestMatching():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
-        submissions = conference.get_submissions(sort=None)
+        submissions = conference.get_submissions()
         assert submissions
         assert 3 == len(submissions)
 

@@ -1331,7 +1331,7 @@ note={under review}
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        notes = conference.get_submissions(sort=None)
+        notes = conference.get_submissions()
         assert notes
         assert len(notes) == 3
 
@@ -1376,7 +1376,7 @@ note={under review}
         conference = builder.get_result()
         conference.create_withdraw_invitations()
 
-        notes = conference.get_submissions(sort=None)
+        notes = conference.get_submissions()
         assert notes
         assert len(notes) == 3
 
@@ -1428,7 +1428,7 @@ note={under review}
         conference = builder.get_result()
         conference.create_desk_reject_invitations()
 
-        notes = conference.get_submissions(sort=None)
+        notes = conference.get_submissions()
         assert notes
         assert len(notes) == 2
 

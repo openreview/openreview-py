@@ -1141,7 +1141,7 @@ class TestCommentNotification():
         conference.set_program_chairs(emails = ['author2@colt17.io'])
         conference.open_comments()
 
-        notes = list(conference.get_submissions(sort=None))
+        notes = list(conference.get_submissions())
         assert notes
         note = notes[0]
 
