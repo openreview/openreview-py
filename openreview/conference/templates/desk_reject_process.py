@@ -44,4 +44,4 @@ def process(client, note, invitation):
     recipients = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID, PROGRAM_CHAIRS_ID]
     if PAPER_AREA_CHAIRS_ID:
         recipients.append(PAPER_AREA_CHAIRS_ID)
-    client.send_mail(email_subject, recipients, email_body)
+    client.post_message(email_subject, recipients, email_body)
