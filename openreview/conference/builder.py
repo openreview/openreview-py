@@ -397,9 +397,9 @@ class Conference(object):
             options['deadline'] = self.homepage_header.get('deadline')
         return options
 
-    def get_submissions(self, accepted = False, details = None):
+    def get_submissions(self, accepted = False, details = None, sort = None):
         invitation = self.get_blind_submission_id()
-        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details))
+        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details, sort = sort))
         if accepted:
             decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*'))
             accepted_forums = [d.forum for d in decisions if d.content['decision'].startswith('Accept')]
@@ -607,7 +607,7 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_iterator = self.get_submissions(details='original')
+        notes_iterator = self.get_submissions(details='original', sort='number:asc')
         author_group_ids = []
 
         for n in notes_iterator:
