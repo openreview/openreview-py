@@ -5,7 +5,7 @@ jobs:
     docker:
       - image: circleci/node:10-buster
       - image: circleci/redis:3
-      - image: circleci/mongo:3.6-buster
+      - image: circleci/mongo:3.6.11
       - image: elastic/elasticsearch:6.2.2
     steps:
       - checkout
