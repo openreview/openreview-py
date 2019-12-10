@@ -764,7 +764,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None):
+def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None, expired = None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -796,6 +796,8 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     :type replyto: str, optional
     :param details:
     :type details: str, optional
+    :param expired: get also expired invitions, by default returns 'active' invitations.
+    :type expired: bool, optional
 
     :return: Iterator over Invitations filtered by the provided parameters
     :rtype: iterget
@@ -828,6 +830,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['note'] = note
     if replyto != None:
         params['replyto'] = replyto
+    params['expired'] = expired
 
     return iterget(client.get_invitations, **params)
 
