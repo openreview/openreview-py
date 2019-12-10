@@ -21,7 +21,7 @@ setup(name='openreview-py',
           'pylatexenc',
           'ortools',
           'fuzzywuzzy',
-          'tld'
+          'tld==0.10'
       ],
       extras_require={
           'docs': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
