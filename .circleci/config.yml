@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/node-buster
+      - image: circleci/node:10-buster
       - image: circleci/redis-buster
       - image: circleci/mongo:3.6-buster
       - image: elastic/elasticsearch:6.2.2
