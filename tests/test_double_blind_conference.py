@@ -624,11 +624,6 @@ class TestDoubleBlindConference():
         assert 'http://localhost:3000' not in link
         assert '%2B' in link
 
-        messages = client.get_messages(to = 'akbc_pc_1@akbc.ws', subject = 'ABCD.ws/2020/Conference: Invitation to Review')
-        text = messages[0]['content']['text']
-        link = re.search('http(.+?)response=', text).group(0)
-        assert '%7E' in link
-
         messages = client.get_messages(to = 'test_subject2@mail.com', subject = 'ABCD.ws/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         link = re.search('http(.+?)response=', text).group(0)
