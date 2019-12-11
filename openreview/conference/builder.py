@@ -434,12 +434,12 @@ class Conference(object):
 
         desk_reject_invitations = self.invitation_builder.set_desk_reject_invitation(self)
 
-    def create_blind_submissions(self):
+    def create_blind_submissions(self, force=False):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
 
-        if self.submission_stage.due_date and (tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
+        if not force and self.submission_stage.due_date and (tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
             raise openreview.OpenReviewException('Submission invitation is still due. Aborted blind note creation!')
 
         submissions_by_original = { note.original: note for note in self.get_submissions() }
