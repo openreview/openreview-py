@@ -1030,6 +1030,8 @@ class TestDoubleBlindConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
+        time.sleep(2)
+
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1111,6 +1113,8 @@ class TestDoubleBlindConference():
         )
         review_note = reviewer_client.post_note(note)
         assert review_note
+
+        time.sleep(2)
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -1416,6 +1420,9 @@ class TestDoubleBlindConference():
 
         posted_note = test_client.post_note(withdrawal_note)
         assert posted_note
+
+        time.sleep(2)
+
         notes = conference.get_submissions()
         assert notes
         assert len(notes) == 2
@@ -1470,6 +1477,8 @@ class TestDoubleBlindConference():
 
         posted_note = pc_client.post_note(desk_reject_note)
         assert posted_note
+
+        time.sleep(2)
 
         notes = conference.get_submissions()
         assert notes

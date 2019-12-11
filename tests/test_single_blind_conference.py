@@ -411,6 +411,8 @@ class TestSingleBlindConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
+        time.sleep(2)
+
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -455,6 +457,8 @@ class TestSingleBlindConference():
         )
         review_note = reviewer2_client.post_note(note)
         assert review_note
+
+        time.sleep(2)
 
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 2
