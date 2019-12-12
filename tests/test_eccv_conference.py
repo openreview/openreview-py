@@ -455,4 +455,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
         url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}'.format(start=start, edit=edit, browse=browse)
         request_page(selenium, url, ac1_client.token)
         print(url)
+
+
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
+            writers = ['~AreaChair_ECCV_One1'],
+            signatures = ['~AreaChair_ECCV_One1'],
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_ECCV_Three1',
+            weight = 1))
+
         assert 1 == 2
