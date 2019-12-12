@@ -1136,9 +1136,9 @@ class InvitationBuilder(object):
                         }
                     },
                     'tail': {
-                        'type': 'Group',
+                        'type': 'Profile',
                         'query': {
-                            'id': conference.get_reviewers_id()
+                            'group': conference.get_reviewers_id()
                         }
                     },
                     'weight': {
