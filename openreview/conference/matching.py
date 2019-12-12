@@ -208,7 +208,8 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=[self.conference.id, profile.id],
+                        readers=[self.conference.id, self.conference.get_area_chairs_id(), profile.id],
+                        nonreaders=[self.conference.get_authors_id(number=paper_note_id)],
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
@@ -233,7 +234,8 @@ class Matching(object):
                     head=paper_note_id,
                     tail=profile_id,
                     weight=float(score),
-                    readers=[self.conference.id, profile_id],
+                    readers=[self.conference.id, self.conference.get_area_chairs_id(), profile_id],
+                    nonreaders=[self.conference.get_authors_id(number=1)],
                     writers=[self.conference.id],
                     signatures=[self.conference.id]
                 ))

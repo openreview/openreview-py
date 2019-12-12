@@ -7,6 +7,7 @@ import time
 import os
 import re
 import csv
+import random
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -285,14 +286,34 @@ class TestECCVConference():
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
-        conference.setup_matching()
-        conference.setup_matching(is_area_chair=True)
 
         blinded_notes = conference.get_submissions()
 
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.id, '~Reviewer_ECCV_One1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_ECCV_Two1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_ECCV_Three1', round(random.random(), 2)])
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/temp.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.number, 'reviewer1@eccv.org', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer2eccv.org', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer3@eccv.org', round(random.random(), 2)])
+
+
+        conference.setup_matching(
+            affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'),
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
+        )
+        conference.setup_matching(is_area_chair=True)
+
         ### Bids
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[0].number), '~Reviewer_ECCV_One1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].id)],
             writers = [conference.id, '~Reviewer_ECCV_One1'],
             signatures = ['~Reviewer_ECCV_One1'],
             head = blinded_notes[0].id,
@@ -300,7 +321,8 @@ class TestECCVConference():
             label = 'Neutral'
         ))
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[1].number), '~Reviewer_ECCV_One1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].id)],
             writers = [conference.id, '~Reviewer_ECCV_One1'],
             signatures = ['~Reviewer_ECCV_One1'],
             head = blinded_notes[1].id,
@@ -308,7 +330,8 @@ class TestECCVConference():
             label = 'Very High'
         ))
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[4].number), '~Reviewer_ECCV_One1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].id)],
             writers = [conference.id, '~Reviewer_ECCV_One1'],
             signatures = ['~Reviewer_ECCV_One1'],
             head = blinded_notes[4].id,
@@ -317,7 +340,8 @@ class TestECCVConference():
         ))
 
         r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[2].number), '~Reviewer_ECCV_Two1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].id)],
             writers = [conference.id, '~Reviewer_ECCV_Two1'],
             signatures = ['~Reviewer_ECCV_Two1'],
             head = blinded_notes[2].id,
@@ -325,7 +349,8 @@ class TestECCVConference():
             label = 'Neutral'
         ))
         r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[3].number), '~Reviewer_ECCV_Two1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[3].id)],
             writers = [conference.id, '~Reviewer_ECCV_Two1'],
             signatures = ['~Reviewer_ECCV_Two1'],
             head = blinded_notes[3].id,
@@ -333,7 +358,8 @@ class TestECCVConference():
             label = 'Very High'
         ))
         r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[4].number), '~Reviewer_ECCV_Two1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].id)],
             writers = [conference.id, '~Reviewer_ECCV_Two1'],
             signatures = ['~Reviewer_ECCV_Two1'],
             head = blinded_notes[4].id,
@@ -342,7 +368,8 @@ class TestECCVConference():
         ))
 
         r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[4].number), '~Reviewer_ECCV_Three1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].id)],
             writers = [conference.id, '~Reviewer_ECCV_Three1'],
             signatures = ['~Reviewer_ECCV_Three1'],
             head = blinded_notes[4].id,
@@ -350,7 +377,8 @@ class TestECCVConference():
             label = 'Neutral'
         ))
         r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[2].number), '~Reviewer_ECCV_Three1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].id)],
             writers = [conference.id, '~Reviewer_ECCV_Three1'],
             signatures = ['~Reviewer_ECCV_Three1'],
             head = blinded_notes[2].id,
@@ -358,7 +386,8 @@ class TestECCVConference():
             label = 'Very High'
         ))
         r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[0].number), '~Reviewer_ECCV_Three1'],
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].id)],
             writers = [conference.id, '~Reviewer_ECCV_Three1'],
             signatures = ['~Reviewer_ECCV_Three1'],
             head = blinded_notes[0].id,
@@ -368,7 +397,7 @@ class TestECCVConference():
 
         ## Area chairs assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[0].number)],
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
@@ -377,7 +406,7 @@ class TestECCVConference():
             weight = 0.98
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[1].number)],
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
@@ -386,7 +415,7 @@ class TestECCVConference():
             weight = 0.88
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[2].number)],
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
@@ -395,7 +424,7 @@ class TestECCVConference():
             weight = 0.79
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[3].number)],
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[3].id,
@@ -404,7 +433,7 @@ class TestECCVConference():
             weight = 0.99
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, conference.get_area_chairs_id(number=blinded_notes[4].number)],
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[4].id,
@@ -413,9 +442,17 @@ class TestECCVConference():
             weight = 0.86
         ))
 
-        conference.set_assignments('ac-matching', is_area_chair=True)
         conference.open_recommendations()
 
         ## Go to edge browser
-        ## http://localhost:3000/edge/browse?start=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1&traverse=thecvf.com/ECCV/2020/Conference/-/Recommendation&edit=thecvf.com/ECCV/2020/Conference/-/Recommendation&browse=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict
-        request_page(selenium, "http://localhost:3000/edge/browse?start=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1&traverse=thecvf.com/ECCV/2020/Conference/-/Recommendation&edit=thecvf.com/ECCV/2020/Conference/-/Recommendation&browse=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict", ac1_client.token)
+        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
+        edit = 'thecvf.com/ECCV/2020/Conference/-/Recommendation'
+        browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
+
+        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}'.format(start=start, edit=edit, browse=browse)
+        request_page(selenium, url, ac1_client.token)
+        print(url)
+        assert 1 == 2
