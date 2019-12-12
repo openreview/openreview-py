@@ -1040,6 +1040,27 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
+
+    def post_message(self, subject, recipients, message):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param subject: Subject of the e-mail
+        :type subject: str
+        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
+        :type recipients: list[str]
+        :param message: Message in the e-mail
+        :type message: str
+
+        :return: Contains the message that was sent to each Group
+        :rtype: dict
+        """
+        response = requests.post(self.messages_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    @deprecated(version='1.0.6', reason="Use post_message instead")
     def send_mail(self, subject, recipients, message):
         """
         Posts a message to the recipients and consequently sends them emails as well
@@ -1063,8 +1084,8 @@ class Client(object):
         """
         Adds members to a group
 
-        :param group: Group to which the members will be added
-        :type group: Group
+        :param group: Group (or Group's id) to which the members will be added
+        :type group: Group or str
         :param members: Members that will be added to the group. Members should be in a string, unicode or a list format
         :type members: str, list, unicode
 
@@ -1072,12 +1093,12 @@ class Client(object):
         :rtype: Group
         """
         def add_member(group, members):
+            group_id = group if type(group) in string_types else group.id
             if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())
-            else:
-                return group
+            return group
 
         member_type = type(members)
         if member_type in string_types:
@@ -1090,24 +1111,25 @@ class Client(object):
         """
         Removes members from a group
 
-        :param group: Group from which the members will be removed
-        :type group: Group
+        :param group: Group (or Group's id) from which the members will be removed
+        :type group: Group or str
         :param members: Members that will be removed. Members should be in a string, unicode or a list format
         :type members: str, list, unicode
 
         :return: Group without the members that were removed
         :type: Group
         """
-        def remove_member(group,members):
-            response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
+        def remove_member(group, members):
+            group_id = group if type(group) in string_types else group.id
+            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
             return Group.from_json(response.json())
 
         member_type = type(members)
         if member_type in string_types:
-            return remove_member(group.id, [members])
+            return remove_member(group, [members])
         if member_type == list:
-            return remove_member(group.id, members)
+            return remove_member(group, members)
 
     def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
         """
@@ -1164,7 +1186,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None):
+    def get_messages(self, to = None, subject = None, offset = None, limit = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1177,7 +1199,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'offset': offset, 'limit': limit }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 

@@ -18,6 +18,7 @@ from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
 import tld
+import urllib.parse as urlparse
 
 def get_profile(client, value):
     """
@@ -763,7 +764,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None):
+def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None, expired = None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -795,6 +796,8 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     :type replyto: str, optional
     :param details:
     :type details: str, optional
+    :param expired: get also expired invitions, by default returns 'active' invitations.
+    :type expired: bool, optional
 
     :return: Iterator over Invitations filtered by the provided parameters
     :rtype: iterget
@@ -827,6 +830,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['note'] = note
     if replyto != None:
         params['replyto'] = replyto
+    params['expired'] = expired
 
     return iterget(client.get_invitations, **params)
 
@@ -1263,7 +1267,8 @@ def recruit_reviewer(client, user, first,
     recruit_message,
     recruit_message_subj,
     reviewers_invited_id,
-    verbose=True):
+    verbose=True,
+    baseurl = ''):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1282,8 +1287,10 @@ def recruit_reviewer(client, user, first,
     :type recruit_message_subj: str
     :param reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed. str
     :type reviewers_invited_id: str
-    :param verbose: Shows response of :meth:`openreview.Client.send_mail` and shows the body of the message sent
+    :param verbose: Shows response of :meth:`openreview.Client.post_message` and shows the body of the message sent
     :type verbose: bool, optional
+    :param baseurl: Use this baseUrl instead of client.baseurl to create recruitment links
+    :type baseurl: str, optional
     """
 
     # the HMAC.new() function only accepts bytestrings, not unicode.
@@ -1294,9 +1301,9 @@ def recruit_reviewer(client, user, first,
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
-        baseurl = client.baseurl,
+        baseurl = baseurl if baseurl else client.baseurl,
         recruitment_inv = recruit_reviewers_id,
-        user = user,
+        user = urlparse.quote(user),
         hashkey = hashkey
     )
 
@@ -1308,11 +1315,10 @@ def recruit_reviewer(client, user, first,
     )
 
     # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [user], personalized_message)
+    response = client.post_message(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
-        reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, [user])
+        client.add_members_to_group(reviewers_invited_id, [user])
 
     if verbose:
         print("Sent to the following: ", response)

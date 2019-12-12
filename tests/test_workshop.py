@@ -416,6 +416,8 @@ class TestWorkshop():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
+        time.sleep(2)
+
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -483,6 +485,8 @@ class TestWorkshop():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
+        time.sleep(2)
+
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -519,6 +523,8 @@ class TestWorkshop():
         reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
         review_note = reviewer_client.post_note(note)
         assert review_note
+
+        time.sleep(2)
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -560,6 +566,7 @@ class TestWorkshop():
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review/AnonReviewer1/Revision',
             forum = submission.id,
             referent = review.id,
+            replyto=review.replyto,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
@@ -575,6 +582,8 @@ class TestWorkshop():
         reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
         review_note = reviewer_client.post_note(note)
         assert review_note
+
+        time.sleep(2)
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -625,7 +634,6 @@ class TestWorkshop():
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {
-                'title': 'Meta review title',
                 'metareview': 'Paper is very good!',
                 'recommendation': 'Accept (Oral)',
                 'confidence': '4: The area chair is confident but not absolutely certain'

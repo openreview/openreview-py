@@ -52,6 +52,8 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -84,6 +86,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+        time.sleep(2)
+
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -140,6 +144,8 @@ class TestCommentNotification():
 
         reply_comment_note = test_client.post_note(reply_comment_note)
 
+        time.sleep(2)
+
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
         assert len(messages) == 3
@@ -192,6 +198,8 @@ class TestCommentNotification():
         )
 
         reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
+
+        time.sleep(2)
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -264,6 +272,8 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        time.sleep(2)
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -367,6 +377,8 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -411,6 +423,8 @@ class TestCommentNotification():
         reviewer_client = helpers.create_user('reviewer@auai.org', 'Reviewer', 'UAI')
         review_note = reviewer_client.post_note(note)
         assert review_note
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = review_note.id)
         assert logs
@@ -458,6 +472,8 @@ class TestCommentNotification():
         )
         comment_note = reviewer_client.post_note(comment_note)
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -503,6 +519,8 @@ class TestCommentNotification():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = review_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -543,6 +561,8 @@ class TestCommentNotification():
         )
         comment_note = reviewer_client.post_note(comment_note)
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -573,7 +593,7 @@ class TestCommentNotification():
         subject = 'Remind to reviewers'
         recipients = ['reviewer@auai.org']
         message = 'This is a reminder'
-        response = ac_client.send_mail(subject, recipients, message)
+        response = ac_client.post_message(subject, recipients, message)
         assert response
 
         messages = client.get_messages(subject='Remind to reviewers')
@@ -582,7 +602,7 @@ class TestCommentNotification():
         assert messages[0]['content']['to'] == 'reviewer@auai.org'
 
         recipients = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1']
-        response = ac_client.send_mail(subject, recipients, 'This is a second reminder')
+        response = ac_client.post_message(subject, recipients, 'This is a second reminder')
         assert response
 
         messages_2 = client.get_messages(subject='.*Remind to reviewers.*')
@@ -592,9 +612,9 @@ class TestCommentNotification():
         assert messages_2[1]['content']['to'] == 'reviewer@auai.org'
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'):
-            ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
+            ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
 
-        ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
+        ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
@@ -633,6 +653,8 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -665,6 +687,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -717,6 +741,8 @@ class TestCommentNotification():
             }
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply_comment_note.id)
         assert logs
@@ -771,6 +797,8 @@ class TestCommentNotification():
         )
 
         reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply2_comment_note.id)
         assert logs
@@ -836,6 +864,8 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply3_comment_note.id)
         assert logs
@@ -930,6 +960,8 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -962,6 +994,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -1013,6 +1047,8 @@ class TestCommentNotification():
             }
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply_comment_note.id)
         assert logs
@@ -1068,6 +1104,8 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply3_comment_note.id)
         assert logs
@@ -1168,6 +1206,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
