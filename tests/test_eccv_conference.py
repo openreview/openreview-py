@@ -82,6 +82,14 @@ class TestECCVConference():
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
+        accept_url = re.search('http://.*response=Yes', text).group(0)
+        request_page(selenium, accept_url, alert=True)
+
+        group = client.get_group(conference.get_reviewers_id())
+        assert group
+        assert len(group.members) == 1
+        assert group.members[0] == 'test_reviewer_eccv@mail.com'
+
     def test_open_registration(self, client, helpers, selenium, request_page):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -118,14 +126,6 @@ class TestECCVConference():
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of  to serve as a reviewer' in text
-
-        accept_url = re.search('http://.*response=Yes', text).group(0)
-        request_page(selenium, accept_url, alert=True)
-
-        group = client.get_group(conference.get_reviewers_id())
-        assert group
-        assert len(group.members) == 1
-        assert group.members[0] == 'test_reviewer_eccv@mail.com'
 
         reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
         reviewer_tasks_url = client.baseurl + '/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
