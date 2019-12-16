@@ -872,7 +872,7 @@ class Client(object):
 
         return [Edge.from_json(t) for t in response.json()['edges']]
 
-    def get_grouped_edges(self, invitation=None, groupby='head', select='tail', limit=None, offset=None):
+    def get_grouped_edges(self, invitation=None, groupby='head', select='tail'):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
@@ -881,8 +881,6 @@ class Client(object):
         :param invitation:
         :param groupby:
         :param select:
-        :param limit:
-        :param offset:
         :return:
         '''
         params = {}
@@ -890,8 +888,6 @@ class Client(object):
         params['invitation'] = invitation
         params['groupBy'] = groupby
         params['select'] = select
-        params['limit'] = limit
-        params['offset'] = offset
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
