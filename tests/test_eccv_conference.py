@@ -82,6 +82,10 @@ class TestECCVConference():
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
+        messages = client.get_messages(to='test_reviewer_eccv@mail.com', subject='[] Reviewer Invitation declined')
+        assert messages
+        assert len(messages)
+
         accept_url = re.search('http://.*response=Yes', text).group(0)
         request_page(selenium, accept_url, alert=True)
 
