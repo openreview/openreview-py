@@ -112,6 +112,7 @@ class Conference(object):
             now = round(time.time() * 1000)
             if not invitation.expdate or invitation.expdate > now:
                 invitation.expdate = now
+                invitation.duedate = now
                 invitation = self.client.post_invitation(invitation)
 
             return invitation
@@ -163,11 +164,20 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
 
-    def __set_reviewer_reassignment(self, enabled = True):
+    def set_reviewer_reassignment(self, enabled = True):
         self.enable_reviewer_reassignment = enabled
 
         # Update PC & AC homepages
-        self.__set_program_chair_page()
+        # edit enable_reviewer_reassignment
+        pc_group = self.client.get_group(self.get_program_chairs_id())
+        if enabled:
+            pc_group.web = pc_group.web.replace("ENABLE_REVIEWER_REASSIGNMENT = false;",
+                                                "ENABLE_REVIEWER_REASSIGNMENT = true;")
+        else:
+            pc_group.web = pc_group.web.replace("ENABLE_REVIEWER_REASSIGNMENT = true;",
+                                                "ENABLE_REVIEWER_REASSIGNMENT = false;")
+        self.client.post_group(pc_group)
+
         if self.use_area_chairs:
             self.__set_area_chair_page()
 
@@ -415,6 +425,10 @@ class Conference(object):
 
         # Expire invitation
         invitation = self.__expire_invitation(self.get_submission_id())
+        # update submission due date
+        if self.submission_stage.due_date and (
+            tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
+            self.submission_stage.due_date = datetime.datetime.utcnow()
 
         # Add venue to active venues
         active_venues_group = self.client.get_group(id = 'active_venues')
@@ -483,8 +497,13 @@ class Conference(object):
                 blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
 
-        # Update page with double blind submissions
-        self.__set_program_chair_page()
+        # Update PC console with double blind submissions
+        pc_group = self.client.get_group(self.get_program_chairs_id())
+        submission_id = self.get_submission_id()
+        blind_id = self.get_blind_submission_id()
+        pc_group.web = pc_group.web.replace("var BLIND_SUBMISSION_ID = '" + submission_id + "';",
+                                            "var BLIND_SUBMISSION_ID = '" + blind_id + "';")
+        self.client.post_group(pc_group)
         return blinded_notes
 
     ## Deprecated
@@ -545,10 +564,10 @@ class Conference(object):
         return self.__expire_invitations(name)
 
     def set_program_chairs(self, emails = []):
-        self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        pcs = self.__create_group(self.get_program_chairs_id(), self.id, emails)
         ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
-        return self.__set_program_chair_page()
+        return pcs
 
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
@@ -670,14 +689,14 @@ class Conference(object):
             )
             return result
 
-    def set_assignments(self, assingment_title, is_area_chair=False):
+    def set_assignments(self, assignment_title, is_area_chair=False):
         if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
-        self.__set_reviewer_reassignment(enabled=True)
-        return conference_matching.deploy(assingment_title)
+        self.set_reviewer_reassignment(enabled=True)
+        return conference_matching.deploy(assignment_title)
 
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
@@ -1189,7 +1208,11 @@ class ConferenceBuilder(object):
             self.conference.set_submission_stage(self.submission_stage)
 
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
-        self.conference.set_program_chairs()
+        program_chairs_group = self.conference.set_program_chairs()
+        # if first time, add PC console
+        if not program_chairs_group.web:
+            self.webfield_builder.set_program_chair_page(self.conference, program_chairs_group)
+
         self.conference.set_authors()
         self.conference.set_reviewers()
         if self.conference.use_area_chairs:
