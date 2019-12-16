@@ -62,15 +62,18 @@ function getPaperNumbersFromGroups(groups) {
   }), _.isInteger);
 }
 
-function getNumberFromGroup(groupId, name) {
+function getNumberfromGroup(groupId, name) {
   var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith(name); });
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
   if (paper) {
-    return parseInt(paper.replace(name, ''));
+    return parseInt(paper.replace(name, ''), 10);
   } else {
     return null;
   }
-}
+};
 
 
 // Display the recommend interface populated with loaded data

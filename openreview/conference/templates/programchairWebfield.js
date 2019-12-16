@@ -45,11 +45,13 @@ var getAllReviewers = function() {
 }
 
 var getNumberfromGroup = function(groupId, name) {
-
   var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith(name); });
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
   if (paper) {
-    return parseInt(paper.replace(name, ''));
+    return parseInt(paper.replace(name, ''), 10);
   } else {
     return null;
   }
@@ -158,7 +160,7 @@ var getAreaChairGroups = function(noteNumbers) {
         var index = getNumberfromGroup(g.id, 'Area_Chair');
         if (num) {
           var areaChair = _.find(g.members, function(member) {
-            return (member.includes('~') || member.includes('@'));
+            return member.indexOf('~') > -1 || member.indexOf('@') > -1;
           });
           if (areaChair) {
             if (num in noteMap) {
@@ -1572,7 +1574,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   var $currDiv = $('#' + paperNumber + '-add-reviewer');
   var userToAdd = $currDiv.find('input').attr('value_id').trim();
 
-  if (!userToAdd || !((userToAdd.indexOf('@') > 0) || userToAdd.startsWith('~'))) {
+  if (!userToAdd || !((userToAdd.indexOf('@') > 0) || _.startsWith(userToAdd, '~'))) {
     // this checks if no input was given, OR  if the given input neither has an '@' nor does it start with a '~'
     promptError('Please enter a valid email for assigning a reviewer');
     return false;
@@ -1584,7 +1586,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
     return false;
   }
-  if (!userToAdd.startsWith('~')) {
+  if (!_.startsWith(userToAdd, '~')) {
     userToAdd = userToAdd.toLowerCase();
   }
 
@@ -1669,13 +1671,13 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       groups: [reviewerProfile.id],
       subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
       message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
-      ' for ' + SHORT_PHRASE + '.' +
-      '\n\nTo review this new assignment, please login and click on ' +
-      'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
-      '\n\nTo check all of your assigned papers, please click on https://openreview.net/group?id=' + REVIEWERS_ID +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
+        ' for ' + SHORT_PHRASE + '.' +
+        '\n\nTo review this new assignment, please login to OpenReview and go to ' +
+        'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
+        '\n\nTo see all of your assigned papers, go to https://openreview.net/group?id=' + REVIEWERS_ID +
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
     };
-    return Webfield.post('/mail', postData);
+    return Webfield.post('/messages', postData);
   });
   return false;
 });
@@ -1838,7 +1840,7 @@ var postReviewerEmails = function(postData) {
     postData.forumUrl
   );
 
-  return Webfield.post('/mail', postData)
+  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
   .then(function(response) {
     // Save the timestamp in the local storage
     for (var i = 0; i < postData.groups.length; i++) {
