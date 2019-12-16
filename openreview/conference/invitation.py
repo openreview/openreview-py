@@ -308,7 +308,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 'replyto': None,
                 'readers': {
                     'description': 'The users who will be allowed to read the reply content.',
-                    'values": [
+                    'values': [
                         'everyone'
                     ]
                 },
