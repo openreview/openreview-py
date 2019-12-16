@@ -629,7 +629,21 @@ class TestMatching():
 
         ## Open reviewer recommendations
         now = datetime.datetime.utcnow()
-        invitation = conference.open_registration(due_date = now + datetime.timedelta(minutes = 40))
+        additional_registration_content = {
+            'reviewing_experience': {
+                'description': 'How many times have you been a reviewer for any conference or journal?',
+                'value-radio': [
+                    'Never - this is my first time',
+                    '1 time - building my reviewer skills',
+                    '2-4 times  - comfortable with the reviewing process',
+                    '5-10 times  - active community citizen',
+                    '10+ times  - seasoned reviewer'
+                ],
+                'order': 5,
+                'required': False
+            }
+        }
+        invitation = conference.open_registration(due_date = now + datetime.timedelta(minutes = 40), additional_fields = additional_registration_content)
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
@@ -640,14 +654,13 @@ class TestMatching():
             forum = invitation.reply['forum'],
             replyto=invitation.reply['replyto'],
             content = {
-                'title': 'UAI 2019 Registration',
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Belief Propagation'
                 ],
-                'profile confirmed': 'Yes',
-                'expertise confirmed': 'Yes',
-                'reviewing experience': '2-4 times  - comfortable with the reviewing process'
+                'profile_confirmed': 'Yes',
+                'expertise_confirmed': 'Yes',
+                'reviewing_experience': '2-4 times  - comfortable with the reviewing process'
             }
         ))
 

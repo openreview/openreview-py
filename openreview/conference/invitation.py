@@ -1159,7 +1159,7 @@ class InvitationBuilder(object):
         # Create super invitation with a webfield
         registration_parent_invitation_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = conference.get_id())
         registration_parent_invitation = openreview.Invitation(
-            id = conference.get_invitation_id('Super/Registration'),
+            id = conference.get_invitation_id('Registration_Form'),
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -1257,5 +1257,5 @@ class InvitationBuilder(object):
             }
         ))
 
-        return self.client.post_invitation(registration_invitation)
+        return registration_invitation
 

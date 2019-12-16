@@ -48,10 +48,10 @@ class TestECCVConference():
         conference.set_program_chairs(['pc@eccv.org'])
 
         conference.set_recruitment_reduced_load(['4','5','6','7'])
-        result = conference.recruit_reviewers(['mbok@mail.com', 'mohit+1@mail.com'])
+        result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'])
         assert result
         assert result.id == 'thecvf.com/ECCV/2020/Conference/Reviewers/Invited'
-        assert 'mbok@mail.com' in result.members
+        assert 'test_reviewer_eccv@mail.com' in result.members
         assert 'mohit+1@mail.com' in result.members
 
         messages = client.get_messages(to = 'mohit+1@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
@@ -81,6 +81,88 @@ class TestECCVConference():
         assert messages
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+
+    def test_open_registration(self, client, helpers, selenium, request_page):
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        reviewer_registration_tasks = {
+            'TPMS_registration_confirmed' : {
+                'required': True,
+                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?',
+                'value-radio': [
+                    'Yes',
+                    'No'
+                ],
+                'order': 3},
+            'reviewer_instructions_compliance' : {
+                'required': True,
+                'description': 'Please confirm that you will adhere to the reviewer instructions.',
+                'value-radio': [
+                    'Yes',
+                    'No'
+                ],
+                'order': 4}
+        }
+        now = datetime.datetime.utcnow()
+        registration_invitation = conference.open_registration(
+            additional_fields = reviewer_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40))
+        assert registration_invitation.id
+
+        messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = conference.get_id() + ': Invitation to Review')
+        text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of  to serve as a reviewer' in text
+
+        accept_url = re.search('http://.*response=Yes', text).group(0)
+        request_page(selenium, accept_url, alert=True)
+
+        group = client.get_group(conference.get_reviewers_id())
+        assert group
+        assert len(group.members) == 1
+        assert group.members[0] == 'test_reviewer_eccv@mail.com'
+
+        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
+        reviewer_tasks_url = client.baseurl + '/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        request_page(selenium, reviewer_tasks_url, reviewer_client.token)
+
+        assert selenium.find_element_by_link_text('Registration')
+
+        registration_notes = reviewer_client.get_notes(invitation = conference.get_invitation_id('Registration_Form'))
+        assert registration_notes
+        assert len(registration_notes) == 1
+
+        registration_forum = registration_notes[0].forum
+
+        registration_note = reviewer_client.post_note(
+            openreview.Note(
+                invitation = registration_invitation.id,
+                forum = registration_forum,
+                replyto = registration_forum,
+                content = {
+                    'profile_confirmed': 'Yes',
+                    'expertise_confirmed': 'Yes',
+                    'TPMS_registration_confirmed': 'Yes',
+                    'reviewer_instructions_compliance': 'Yes'
+                },
+                signatures = [
+                    '~Testreviewer_Eccv1'
+                ],
+                readers = [
+                    conference.get_id(),
+                    '~Testreviewer_Eccv1'
+                ],
+                writers = [
+                    conference.get_id(),
+                    '~Testreviewer_Eccv1'
+                ]
+            ))
+        assert registration_note
 
     def test_submission_additional_files(self, test_client):
 
@@ -130,7 +212,6 @@ class TestECCVConference():
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'), conference.get_submission_id(), 'video')
         note.content['video'] = url
         test_client.post_note(note)
-
 
     def test_revise_additional_files(self, test_client):
 

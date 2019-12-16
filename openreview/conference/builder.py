@@ -511,9 +511,9 @@ class Conference(object):
 
     def open_registration(self, start_date = None, due_date = None, additional_fields = {}, is_area_chair = False):
         if is_area_chair:
-            self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_area_chairs_id())
+            return self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_area_chairs_id())
         else:
-            self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_reviewers_id())
+            return self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_reviewers_id())
 
     def open_comments(self):
         self.__create_comment_stage()
