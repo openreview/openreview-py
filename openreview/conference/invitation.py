@@ -1152,15 +1152,12 @@ class InvitationBuilder(object):
 
 
 
-    def set_registration_invitation(self, conference, override_content = [], start_date = None, due_date = None):
+    def set_registration_invitation(self, conference, start_date, due_date, additional_fields, committee_id):
 
-        invitees = []
-        if conference.use_area_chairs:
-            invitees.append(conference.get_area_chairs_id())
-        invitees.append(conference.get_reviewers_id())
+        invitees = [committee_id]
 
         # Create super invitation with a webfield
-        registration_parent_invitation_instructions = 'Help us get to know our reviewers better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = conference.get_id())
+        registration_parent_invitation_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = conference.get_id())
         registration_parent_invitation = openreview.Invitation(
             id = conference.get_invitation_id('Super/Registration'),
             readers = ['everyone'],
@@ -1175,7 +1172,7 @@ class InvitationBuilder(object):
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     'title': {
-                        'value': 'Reviewer Registration Form'
+                        'value': 'Registration Form'
                     },
                     'Instructions': {
                         'order': 1,
@@ -1196,13 +1193,13 @@ class InvitationBuilder(object):
             forum = None,
             content = {
                 'Instructions': registration_parent_invitation_instructions,
-                'title': 'Reviewer Registration Form'
+                'title': 'Registration Form'
             }
         ))
 
         registration_content = {
             'profile_confirmed': {
-                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "Yes".\n\n',
+                'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding email addresses, work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "Yes".\n\n',
                 'value-radio': ['Yes', 'No'],
                 'required': True,
                 'order': 1
@@ -1222,11 +1219,11 @@ class InvitationBuilder(object):
                 'required': False
             }
 
-        for content_key in override_content:
-            registration_content[content_key] = override_content[content_key]
+        for content_key in additional_fields:
+            registration_content[content_key] = additional_fields[content_key]
 
         registration_invitation = self.client.post_invitation(openreview.Invitation(
-            id = conference.get_registration_id(),
+            id = conference.get_registration_id(committee_id),
             cdate = tools.datetime_millis(start_date) if start_date else None,
             duedate = tools.datetime_millis(due_date) if due_date else None,
             expdate = tools.datetime_millis(due_date),
