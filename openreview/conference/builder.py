@@ -301,10 +301,7 @@ class Conference(object):
         return self.get_invitation_id(self.recommendation_name, number)
 
     def get_registration_id(self, committee_id = None):
-        if committee_id == self.get_area_chairs_id():
-            return self.get_invitation_id(name = self.registration_name, prefix = self.id + '/' + self.area_chairs_name)
-        else:
-            return self.get_invitation_id(name = self.registration_name, prefix = self.id + '/' + self.reviewers_name)
+        return self.get_invitation_id(name = self.registration_name, prefix = committee_id)
 
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
