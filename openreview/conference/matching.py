@@ -250,13 +250,7 @@ class Matching(object):
         edges = []
         user_subject_areas = list(openreview.tools.iterget_notes(
             self.client,
-            invitation=self.conference.get_registration_id(self.conference.get_reviewers_id())))
-
-        if self.conference.has_area_chairs:
-            user_subject_areas.extend(
-                list(openreview.tools.iterget_notes(
-                    self.client,
-                    invitation=self.conference.get_registration_id(self.conference.get_area_chairs_id()))))
+            invitation=self.conference.get_registration_id(self.match_group.id)))
 
         for note in submissions:
             note_subject_areas = note.content['subject_areas']
