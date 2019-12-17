@@ -400,3 +400,11 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
+    def edit_global_value(self, group, global_name, old_value, new_value):
+        group.web = group.web.replace("var "+global_name+" = "+old_value+";", "var "+global_name+" = "+new_value+";")
+        return self.client.post_group(group)
+
+    def edit_global_string_value(self, group, global_name, old_value, new_value):
+        group.web = group.web.replace("var " + global_name + " = '" + old_value + "';",
+                                      "var " + global_name + " = '" + new_value + "';")
+        return self.client.post_group(group)

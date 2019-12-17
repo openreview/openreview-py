@@ -168,15 +168,11 @@ class Conference(object):
         self.enable_reviewer_reassignment = enabled
 
         # Update PC & AC homepages
-        # edit enable_reviewer_reassignment
         pc_group = self.client.get_group(self.get_program_chairs_id())
         if enabled:
-            pc_group.web = pc_group.web.replace("ENABLE_REVIEWER_REASSIGNMENT = false;",
-                                                "ENABLE_REVIEWER_REASSIGNMENT = true;")
+            self.webfield_builder.edit_global_value(pc_group, "ENABLE_REVIEWER_REASSIGNMENT", "false", "true")
         else:
-            pc_group.web = pc_group.web.replace("ENABLE_REVIEWER_REASSIGNMENT = true;",
-                                                "ENABLE_REVIEWER_REASSIGNMENT = false;")
-        self.client.post_group(pc_group)
+            self.webfield_builder.edit_global_value(pc_group, "ENABLE_REVIEWER_REASSIGNMENT", "true", "false")
 
         if self.use_area_chairs:
             self.__set_area_chair_page()
@@ -499,11 +495,9 @@ class Conference(object):
 
         # Update PC console with double blind submissions
         pc_group = self.client.get_group(self.get_program_chairs_id())
-        submission_id = self.get_submission_id()
-        blind_id = self.get_blind_submission_id()
-        pc_group.web = pc_group.web.replace("var BLIND_SUBMISSION_ID = '" + submission_id + "';",
-                                            "var BLIND_SUBMISSION_ID = '" + blind_id + "';")
-        self.client.post_group(pc_group)
+        self.webfield_builder.edit_global_string_value(pc_group, "BLIND_SUBMISSION_ID",
+                                                self.get_submission_id(), self.get_blind_submission_id())
+
         return blinded_notes
 
     ## Deprecated
@@ -565,8 +559,12 @@ class Conference(object):
 
     def set_program_chairs(self, emails = []):
         pcs = self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        # if first time, add PC console
+        if not pcs.web:
+            self.webfield_builder.set_program_chair_page(self, pcs)
         ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
+
         return pcs
 
     def set_area_chairs(self, emails = []):
@@ -1209,9 +1207,6 @@ class ConferenceBuilder(object):
 
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
         program_chairs_group = self.conference.set_program_chairs()
-        # if first time, add PC console
-        if not program_chairs_group.web:
-            self.webfield_builder.set_program_chair_page(self.conference, program_chairs_group)
 
         self.conference.set_authors()
         self.conference.set_reviewers()
