@@ -300,8 +300,8 @@ class Conference(object):
     def get_recommendation_id(self, number = None):
         return self.get_invitation_id(self.recommendation_name, number)
 
-    def get_registration_id(self):
-        return self.get_invitation_id(self.registration_name)
+    def get_registration_id(self, committee_id):
+        return self.get_invitation_id(name = self.registration_name, prefix = committee_id)
 
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
@@ -506,8 +506,11 @@ class Conference(object):
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
-    def open_registration(self, start_date = None, due_date = None):
-        return self.invitation_builder.set_registration_invitation(self, start_date, due_date)
+    def open_registration(self, start_date = None, due_date = None, additional_fields = {}, is_area_chair = False):
+        if is_area_chair:
+            return self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_area_chairs_id())
+        else:
+            return self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_reviewers_id())
 
     def open_comments(self):
         self.__create_comment_stage()
