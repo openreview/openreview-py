@@ -7,6 +7,7 @@ import csv
 
 import openreview
 import tld
+import tqdm
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -81,7 +82,7 @@ def _get_author_profiles_by_papers(client, submissions):
         map_profiles = client.search_profiles(emails=list(set(list_authorids)))
 
         for note_num, email_map in map_note_number_to_author_profiles.items():
-            for email, profile in email_map.items():
+            for email in email_map:
                 if email in map_profiles:
                     map_note_number_to_author_profiles[note_num][email] = map_profiles[email]
 
@@ -184,7 +185,7 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id), extendable_readers=True)
         authorids_profiles = _get_author_profiles_by_papers(self.client, submissions)
 
-            edges = []
+        edges = []
         for submission in tqdm(submissions):
             author_profiles = [profile for profile in authorids_profiles[submission.number].values()]
             for profile in user_profiles:
