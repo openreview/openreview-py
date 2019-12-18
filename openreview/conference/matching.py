@@ -55,6 +55,38 @@ def _get_profiles(client, ids_or_emails):
 
     return profiles
 
+def _get_author_profiles_by_papers(client, submissions):
+        '''
+        Return map of paper number to a map of paper's author emails to their profiles
+        '''
+        map_note_number_to_author_profiles = {}
+
+        list_authorids = []
+        for submission in submissions:
+            paper_authors = submission.content['authorids']
+            if submission.details and submission.details.get('original'):
+                paper_authors = submission.details.get('original')['content']['authorids']
+
+            list_authorids.extend(paper_authors)
+
+            map_note_number_to_author_profiles[submission.number] = {}
+            for author_email in paper_authors:
+                map_note_number_to_author_profiles[submission.number][author_email] = openreview.Profile(
+                    id = author_email,
+                    content={
+                        'emails': [author_email],
+                        'preferredEmail': author_email
+                    })
+
+        map_profiles = client.search_profiles(emails=list(set(list_authorids)))
+
+        for note_num, email_map in map_note_number_to_author_profiles.items():
+            for email, profile in email_map.items():
+                if email in map_profiles:
+                    map_note_number_to_author_profiles[note_num][email] = map_profiles[email]
+
+        return map_note_number_to_author_profiles
+
 def _conflict_label(conflicts):
     if len(conflicts) == 0:
         return 'None'
@@ -150,18 +182,12 @@ class Matching(object):
         Create conflict edges between the given Notes and Profiles
         '''
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id), extendable_readers=True)
-        authorids_profiles = {}
+        authorids_profiles = _get_author_profiles_by_papers(self.client, submissions)
 
-        for submission in submissions:
             edges = []
+        for submission in tqdm(submissions):
+            author_profiles = [profile for profile in authorids_profiles[submission.number].values()]
             for profile in user_profiles:
-                authorids = submission.content['authorids']
-                if submission.details and submission.details.get('original'):
-                    authorids = submission.details['original']['content']['authorids']
-                if submission.number not in authorids_profiles:
-                    profiles = _get_profiles(self.client, authorids)
-                    authorids_profiles[submission.number] = profiles
-                author_profiles = authorids_profiles[submission.number]
                 conflicts = openreview.tools.get_conflicts(author_profiles, profile)
                 if conflicts:
                     edges.append(openreview.Edge(
