@@ -1514,6 +1514,25 @@ def get_conflicts(author_profiles, user_profile):
 
     return list(conflicts)
 
+def get_conflicts_multiple_users(author_profiles, user_profiles):
+    """
+    Finds conflicts between the provided user Profiles and author Profiles
+
+    :param author_profiles: List of Profiles for which an association is to be found
+    :type author_profiles: list[Profile]
+    :param user_profiles: List of Profiles for which the conflicts will be found
+    :type user_profiles: list[Profile]
+
+    :return: Dict containing map of user_profile.id to a List containing all the conflicts between the user Profile and the author Profiles
+    :rtype: dict
+    """
+    conflict_map = {}
+
+    for user_profile in user_profiles:
+        conflict_map[user_profile.id] = get_conflicts(author_profiles, user_profile)
+
+    return conflict_map
+
 def get_profile_info(profile):
     """
     Gets all the domains, emails, relations associated with a Profile
@@ -1554,7 +1573,7 @@ def get_profile_info(profile):
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)
     result = []
-    for i in range(0, num_edges, batch_size):
+    for i in tqdm(range(0, num_edges, batch_size)):
         end = min(i + batch_size, num_edges)
         batch = client.post_edges(edges[i:end])
         result += batch
