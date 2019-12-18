@@ -143,7 +143,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference, match_group_id):
+    def __init__(self, conference, match_group_id, request_count):
 
         bid_stage = conference.bid_stage
 
@@ -163,7 +163,7 @@ class BidInvitation(openreview.Invitation):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
-            taskCompletionCount = bid_stage.request_count,
+            taskCompletionCount = request_count,
             reply = {
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']
@@ -909,9 +909,9 @@ class InvitationBuilder(object):
     def set_bid_invitation(self, conference):
 
         invitations = []
-        invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_reviewers_id())))
+        invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_reviewers_id(), conference.bid_stage.request_count)))
         if conference.use_area_chairs:
-            invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_area_chairs_id())))
+            invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_area_chairs_id(), conference.bid_stage.ac_request_count)))
         return invitations
 
     def set_comment_invitation(self, conference, notes):

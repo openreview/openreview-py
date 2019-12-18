@@ -138,7 +138,7 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_bid_page(self, conference, invitation, group_id):
+    def set_bid_page(self, conference, invitation, group_id, request_count, instructions):
 
         sorted_tip = ''
         if conference.bid_stage.use_affinity_score:
@@ -148,7 +148,7 @@ class WebfieldBuilder(object):
                 that you provided in the Expertise Selection Interface.
             </li>'''
 
-        instructions_html = '''
+        default_instructions = '''
             <p class="dark"><strong>Instructions:</strong></p>
             <ul>
                 <li>
@@ -162,6 +162,9 @@ class WebfieldBuilder(object):
                 </li>
                 <li>
                     Use the search field to filter papers by keyword or subject area.
+                </li>
+                <li>
+                    Ensure that you have at least <strong>{request_count} bids</strong>.
                 </li>
             </ul>
             <p class="dark"><strong>A few tips:</strong></p>
@@ -177,11 +180,13 @@ class WebfieldBuilder(object):
                 </li>
                 {sorted_tip}
             </ul>
-            <br>'''.format(sorted_tip=sorted_tip)
+            <br>'''
+
+        instructions_html = instructions if instructions else default_instructions
 
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
-            'instructions': instructions_html
+            'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=request_count)
         }
 
         header = self.__build_options(default_header, conference.get_bidpage_header())

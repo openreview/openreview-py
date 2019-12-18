@@ -16,14 +16,64 @@ from selenium.common.exceptions import NoSuchElementException
 class TestECCVConference():
 
     @pytest.fixture(scope="class")
-    def builder(self, client):
+    def conference(self, client):
+        now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.has_area_chairs(True)
-        yield builder
+        builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
+        builder.set_submission_stage(double_blind = True,
+            public = False,
+            due_date = now + datetime.timedelta(minutes = 10),
+            additional_fields= {
+                'video': {
+                    'description': 'Short video with presentation of the paper, it supports: mov, mp4, zip',
+                    'required': True,
+                    'value-file': {
+                        'fileTypes': ['mov', 'mp4', 'zip'],
+                        'size': 50000000000
+                    }
+                },
+                'supplemental_material': {
+                    'description': 'Paper appendix',
+                    'required': False,
+                    'value-file': {
+                        'fileTypes': ['pdf'],
+                        'size': 500000000000
+                    }
+                }
+            })
+
+
+        instructions = '''<p class="dark"><strong>Instructions:</strong></p>
+        <ul>
+            <li>
+                Please indicate your <strong>level of interest</strong> in
+                reviewing the submitted papers below,
+                on a scale from "Very Low" interest to "Very High" interest. Papers were automatically pre-ranked using the expertise information in your profile.
+            </li>
+            <li>
+                Bid on as many papers as possible to correct errors of this automatic procedure.
+            </li>
+            <li>
+                Bidding on the top ranked papers removes false positives.
+            </li>
+            <li>
+                You can use the search field to find papers by keywords from the title or abstract to reduce false negatives.
+            </li>
+            <li>
+                Ensure that you have at least <strong>{request_count} bids</strong>, which are "Very High" or "High".
+            </li>
+            <li>
+                Papers for which you have a conflict of interest are not shown.
+            </li>
+        </ul>
+        <br>'''
+        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
+        yield builder.get_result()
 
 
     def test_create_conference(self, client, helpers):
@@ -47,10 +97,8 @@ class TestECCVConference():
         assert pc_group
         assert pc_group.web
 
-    def test_recruit_reviewer(self, builder, client, helpers, selenium, request_page):
+    def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        conference = builder.get_result()
-        assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
 
         conference.set_recruitment_reduced_load(['4','5','6','7'])
@@ -99,13 +147,7 @@ class TestECCVConference():
         assert len(group.members) == 1
         assert group.members[0] == 'test_reviewer_eccv@mail.com'
 
-    def test_expersite_selection(self, builder, helpers, selenium, request_page):
-
-        now = datetime.datetime.utcnow()
-        builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
-
-        conference = builder.get_result()
-        assert conference
+    def test_expersite_selection(self, conference, helpers, selenium, request_page):
 
         reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
@@ -122,9 +164,7 @@ class TestECCVConference():
         assert notes[0].text == 'Papers not automatically included as part of this import process can be uploaded by using the Upload button.'
         assert notes[1].text == 'Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.'
 
-    def test_open_registration(self, builder, helpers, selenium, request_page):
-
-        conference = builder.get_result()
+    def test_open_registration(self, conference, helpers, selenium, request_page):
 
         reviewer_registration_tasks = {
             'TPMS_registration_confirmed' : {
@@ -187,32 +227,7 @@ class TestECCVConference():
             ))
         assert registration_note
 
-    def test_submission_additional_files(self, builder, test_client):
-
-        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True,
-            public = False,
-            due_date = now + datetime.timedelta(minutes = 10),
-            additional_fields= {
-                'video': {
-                    'description': 'Short video with presentation of the paper, it supports: mov, mp4, zip',
-                    'required': True,
-                    'value-file': {
-                        'fileTypes': ['mov', 'mp4', 'zip'],
-                        'size': 50000000000
-                    }
-                },
-                'supplemental_material': {
-                    'description': 'Paper appendix',
-                    'required': False,
-                    'value-file': {
-                        'fileTypes': ['pdf'],
-                        'size': 500000000000
-                    }
-                }
-            })
-        conference = builder.get_result()
+    def test_submission_additional_files(self, conference, test_client):
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'],
@@ -231,33 +246,10 @@ class TestECCVConference():
         note.content['video'] = url
         test_client.post_note(note)
 
-    def test_revise_additional_files(self, builder, test_client):
+    def test_revise_additional_files(self, conference, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True,
-            public = False,
-            due_date = now - datetime.timedelta(minutes = 30),
-            additional_fields= {
-                'video': {
-                    'description': 'Short video with presentation of the paper, it supports: mov, mp4, zip',
-                    'required': True,
-                    'value-file': {
-                        'fileTypes': ['mov', 'mp4', 'zip'],
-                        'size': 50000000000
-                    }
-                },
-                'supplemental_material': {
-                    'description': 'Paper appendix',
-                    'required': False,
-                    'value-file': {
-                        'fileTypes': ['pdf'],
-                        'size': 500000000000
-                    }
-                }
-            })
-        conference = builder.get_result()
-        conference.create_blind_submissions()
+        conference.create_blind_submissions(force=True)
         conference.set_authors()
 
         notes = conference.get_submissions()
@@ -334,3 +326,34 @@ class TestECCVConference():
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), 'thecvf.com/ECCV/2020/Conference/-/Revision', 'supplemental_material')
         note.content['supplemental_material'] = url
         test_client.post_note(note)
+
+    def test_bid_stage(self, conference, helpers, selenium, request_page):
+
+        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
+        reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        request_page(selenium, reviewer_tasks_url, reviewer_client.token)
+
+        assert selenium.find_element_by_link_text('ECCV 2020 Conference Reviewers Bid')
+
+        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid', reviewer_client.token)
+        header = selenium.find_element_by_id('header')
+        assert header
+        notes = header.find_elements_by_tag_name("li")
+        assert notes
+        assert len(notes) == 6
+        assert notes[4].text == 'Ensure that you have at least 40 bids, which are "Very High" or "High".'
+
+        conference.set_area_chairs(['test_ac_eccv@mail.com'])
+        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
+        request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_area_chairs_id() + '#areachair-tasks', ac_client.token)
+
+        assert selenium.find_element_by_link_text('ECCV 2020 Conference Area Chairs Bid')
+
+        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid', ac_client.token)
+        header = selenium.find_element_by_id('header')
+        assert header
+        notes = header.find_elements_by_tag_name("li")
+        assert notes
+        assert len(notes) == 6
+        assert notes[4].text == 'Ensure that you have at least 60 bids, which are "Very High" or "High".'
+

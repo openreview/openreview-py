@@ -91,12 +91,12 @@ class Conference(object):
         """
         bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_reviewers_id()))
         if bid_invitation:
-            self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id())
+            self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id(), self.bid_stage.request_count, self.bid_stage.instructions)
 
         if self.use_area_chairs:
             bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_area_chairs_id()))
             if bid_invitation:
-                self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id())
+                self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id(), self.bid_stage.ac_request_count, self.bid_stage.instructions)
 
     def __set_recommendation_page(self):
         recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
@@ -888,12 +888,14 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False):
+    def __init__(self, start_date=None, due_date=None, request_count=50, use_affinity_score=False, instructions=False, ac_request_count=None):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Bid'
         self.request_count = request_count
         self.use_affinity_score = use_affinity_score
+        self.instructions=instructions
+        self.ac_request_count=ac_request_count if ac_request_count else request_count
 
 
 class ReviewStage(object):
@@ -1149,8 +1151,8 @@ class ConferenceBuilder(object):
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
         self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date)
 
-    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False):
-        self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score)
+    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions=False, ac_request_count=None):
+        self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score, instructions, ac_request_count)
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
