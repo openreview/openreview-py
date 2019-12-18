@@ -113,6 +113,14 @@ class TestECCVConference():
 
         assert selenium.find_element_by_link_text('ECCV 2020 Conference Expertise Selection')
 
+        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token)
+        header = selenium.find_element_by_id('header')
+        assert header
+        notes = header.find_elements_by_tag_name("li")
+        assert notes
+        assert len(notes) == 2
+        assert notes[0].text == 'Papers not automatically included as part of this import process can be uploaded by using the Upload button.'
+        assert notes[1].text == 'Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.'
 
     def test_open_registration(self, builder, helpers, selenium, request_page):
 

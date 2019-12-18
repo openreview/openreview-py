@@ -109,7 +109,6 @@ class WebfieldBuilder(object):
                 <p class=\"dark\">Listed below are all the papers you have authored that exist in the OpenReview database.
                         <br>
                         <br>
-
                         <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
                         <br>
                         <br>
@@ -122,7 +121,6 @@ class WebfieldBuilder(object):
                         <li>Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.</li>
                 </ul>
                 <br>
-
                 <p class=\"dark\"> Please contact <a href=mailto:info@openreview.net>info@openreview.net</a> with any questions or concerns about this interface, or about the expertise scoring process.
                 </p>'''
         }
