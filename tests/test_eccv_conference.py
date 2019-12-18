@@ -15,6 +15,17 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestECCVConference():
 
+    @pytest.fixture(scope="class")
+    def builder(self, client):
+        #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
+        builder.has_area_chairs(True)
+        yield builder
+
+
     def test_create_conference(self, client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -36,13 +47,8 @@ class TestECCVConference():
         assert pc_group
         assert pc_group.web
 
-    def test_recruit_reviewer(self, client, helpers, selenium, request_page):
+    def test_recruit_reviewer(self, builder, client, helpers, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
-        builder.has_area_chairs(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
@@ -93,12 +99,23 @@ class TestECCVConference():
         assert len(group.members) == 1
         assert group.members[0] == 'test_reviewer_eccv@mail.com'
 
-    def test_open_registration(self, client, helpers, selenium, request_page):
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
+    def test_expersite_selection(self, builder, helpers, selenium, request_page):
 
-        builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
-        builder.has_area_chairs(True)
+        now = datetime.datetime.utcnow()
+        builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
+
+        conference = builder.get_result()
+        assert conference
+
+        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
+        reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        request_page(selenium, reviewer_tasks_url, reviewer_client.token)
+
+        assert selenium.find_element_by_link_text('ECCV 2020 Conference Expertise Selection')
+
+
+    def test_open_registration(self, builder, helpers, selenium, request_page):
+
         conference = builder.get_result()
 
         reviewer_registration_tasks = {
@@ -125,13 +142,8 @@ class TestECCVConference():
             due_date = now + datetime.timedelta(minutes = 40))
         assert registration_invitation.id
 
-        messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = conference.get_id() + ': Invitation to Review')
-        text = messages[0]['content']['text']
-        assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of  to serve as a reviewer' in text
-
-        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
-        reviewer_tasks_url = client.baseurl + '/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
+        reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
         assert selenium.find_element_by_link_text('Registration')
@@ -167,14 +179,9 @@ class TestECCVConference():
             ))
         assert registration_note
 
-    def test_submission_additional_files(self, test_client):
+    def test_submission_additional_files(self, builder, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(pc_client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
-        builder.has_area_chairs(True)
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True,
             public = False,
@@ -216,14 +223,9 @@ class TestECCVConference():
         note.content['video'] = url
         test_client.post_note(note)
 
-    def test_revise_additional_files(self, test_client):
+    def test_revise_additional_files(self, builder, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(pc_client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
-        builder.has_area_chairs(True)
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True,
             public = False,
