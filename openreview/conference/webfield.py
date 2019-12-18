@@ -113,14 +113,13 @@ class WebfieldBuilder(object):
                         <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
                         <br>
                         <br>
-                        Where possible, your previously authored papers from selected conferences were imported from <a href=https://dblp.org>DBLP.org</a> to populate this list. The keywords in these papers will be used to recommend submissions for you during the bidding process, and to assign submissions to you during the review process.
+                        Your previously authored papers from selected conferences were imported automatically from <a href=https://dblp.org>DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process.
                 </p>
                 <br>
                 <p class=\"dark\"><strong>Important Notes:</strong></p>
                 <ul>
-                        <li>By default, each paper is considered, unless you click on \"Exclude\" for a paper.</li>
-                        <li>Papers not included as part of this import process can be uploaded by using the Upload button below</b>.</li>
-                        <li>When uploading a paper, <b>the upload will not appear on this page if you do not include your email address in the \"authorids\" field, but it will be included in the recommendations process, even if it does not appear here</b>.
+                        <li>Papers not automatically included as part of this import process can be uploaded by using the Upload button.</li>
+                        <li>Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.</li>
                 </ul>
                 <br>
 
