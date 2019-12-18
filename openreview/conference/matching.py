@@ -7,7 +7,7 @@ import csv
 
 import openreview
 import tld
-import tqdm
+from tqdm import tqdm
 
 def _jaccard_similarity(list1, list2):
     '''
