@@ -170,9 +170,9 @@ class Conference(object):
         # Update PC & AC homepages
         pc_group = self.client.get_group(self.get_program_chairs_id())
         if enabled:
-            self.webfield_builder.edit_global_value(pc_group, "ENABLE_REVIEWER_REASSIGNMENT", "false", "true")
+            self.webfield_builder.edit_web_value(pc_group, "ENABLE_REVIEWER_REASSIGNMENT", "true")
         else:
-            self.webfield_builder.edit_global_value(pc_group, "ENABLE_REVIEWER_REASSIGNMENT", "true", "false")
+            self.webfield_builder.edit_web_value(pc_group, "ENABLE_REVIEWER_REASSIGNMENT", "false")
 
         if self.use_area_chairs:
             self.__set_area_chair_page()
@@ -392,11 +392,9 @@ class Conference(object):
         if pc_group and pc_group.web:
             # update PC console
             if self.use_area_chairs:
-                self.webfield_builder.edit_global_string_value(pc_group, "AREA_CHAIRS_ID",
-                                                               '', self.get_area_chairs_id())
+                self.webfield_builder.edit_web_string_value(pc_group, "AREA_CHAIRS_ID", self.get_area_chairs_id())
             else:
-                self.webfield_builder.edit_global_string_value(pc_group, "AREA_CHAIRS_ID",
-                                                                self.get_area_chairs_id(), '')
+                self.webfield_builder.edit_web_string_value(pc_group, "AREA_CHAIRS_ID", '')
 
     def get_homepage_options(self):
         options = {}
@@ -504,8 +502,7 @@ class Conference(object):
 
         # Update PC console with double blind submissions
         pc_group = self.client.get_group(self.get_program_chairs_id())
-        self.webfield_builder.edit_global_string_value(pc_group, "BLIND_SUBMISSION_ID",
-                                                self.get_submission_id(), self.get_blind_submission_id())
+        self.webfield_builder.edit_web_string_value(pc_group, "BLIND_SUBMISSION_ID", self.get_blind_submission_id())
 
         return blinded_notes
 
