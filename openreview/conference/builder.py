@@ -434,7 +434,7 @@ class Conference(object):
 
         desk_reject_invitations = self.invitation_builder.set_desk_reject_invitation(self)
 
-    def create_blind_submissions(self, force=False):
+    def create_blind_submissions(self, force=False, hide_fields=[]):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
@@ -444,7 +444,7 @@ class Conference(object):
 
         submissions_by_original = { note.original: note for note in self.get_submissions() }
 
-        self.invitation_builder.set_blind_submission_invitation(self)
+        self.invitation_builder.set_blind_submission_invitation(self, hide_fields)
         blinded_notes = []
 
         for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
@@ -472,6 +472,9 @@ class Conference(object):
                     'authorids': [self.get_authors_id(number = blind_note.number)],
                     'authors': ['Anonymous'],
                 }
+
+                for field in hide_fields:
+                    blind_note.content[field] = ''
 
                 if self.submission_stage.public:
                     blind_note.content['_bibtex'] = tools.get_bibtex(note = note,

@@ -23,6 +23,7 @@ class TestECCVConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
+        builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
@@ -249,7 +250,7 @@ class TestECCVConference():
     def test_revise_additional_files(self, conference, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        conference.create_blind_submissions(force=True)
+        conference.create_blind_submissions(force=True, hide_fields=['pdf', 'video', 'supplemental_material'])
         conference.set_authors()
 
         notes = conference.get_submissions()

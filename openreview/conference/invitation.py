@@ -69,7 +69,21 @@ class SubmissionInvitation(openreview.Invitation):
 
 class BlindSubmissionsInvitation(openreview.Invitation):
 
-    def __init__(self, conference):
+    def __init__(self, conference, hide_fields):
+
+        content = {
+            'authors': {
+                'values': ['Anonymous']
+            },
+            'authorids': {
+                'values-regex': '.*'
+            }
+        }
+        for field in hide_fields:
+            content[field] = {
+                'value-regex': '.*'
+            }
+
         super(BlindSubmissionsInvitation, self).__init__(id = conference.get_blind_submission_id(),
             readers = ['everyone'],
             writers = [conference.get_id()],
@@ -87,14 +101,7 @@ class BlindSubmissionsInvitation(openreview.Invitation):
                 'signatures': {
                     'values': [conference.get_id()]
                 },
-                'content': {
-                    'authors': {
-                        'values': ['Anonymous']
-                    },
-                    'authorids': {
-                        'values-regex': '.*'
-                    }
-                }
+                'content': content
             }
         )
 
@@ -894,9 +901,9 @@ class InvitationBuilder(object):
         return self.client.post_invitation(SubmissionInvitation(conference))
 
 
-    def set_blind_submission_invitation(self, conference):
+    def set_blind_submission_invitation(self, conference, hide_fields):
 
-        invitation = BlindSubmissionsInvitation(conference = conference)
+        invitation = BlindSubmissionsInvitation(conference = conference, hide_fields=hide_fields)
 
         return  self.client.post_invitation(invitation)
 
