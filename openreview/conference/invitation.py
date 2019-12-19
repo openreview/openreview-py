@@ -1159,14 +1159,15 @@ class InvitationBuilder(object):
 
 
 
-    def set_registration_invitation(self, conference, start_date, due_date, additional_fields, committee_id):
+    def set_registration_invitation(self, conference, start_date, due_date, additional_fields, committee_id, committee_name):
 
         invitees = [committee_id]
+        readers = [conference.id, committee_id]
 
         # Create super invitation with a webfield
         registration_parent_invitation_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = conference.get_id())
         registration_parent_invitation = openreview.Invitation(
-            id = conference.get_invitation_id('Registration_Form'),
+            id = conference.get_invitation_id(name='Registration_Form', prefix=committee_id),
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -1174,12 +1175,12 @@ class InvitationBuilder(object):
             reply = {
                 'forum': None,
                 'replyto': None,
-                'readers': {'values': invitees},
+                'readers': {'values': readers},
                 'writers': {'values': [conference.get_id()]},
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     'title': {
-                        'value': 'Registration Form'
+                        'value': committee_name + ' Registration'
                     },
                     'Instructions': {
                         'order': 1,
@@ -1193,14 +1194,14 @@ class InvitationBuilder(object):
 
         registration_parent = self.client.post_note(openreview.Note(
             invitation = registration_parent_invitation.id,
-            readers = invitees,
+            readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             replyto = None,
             forum = None,
             content = {
                 'Instructions': registration_parent_invitation_instructions,
-                'title': 'Registration Form'
+                'title': committee_name + ' Registration'
             }
         ))
 
@@ -1235,7 +1236,7 @@ class InvitationBuilder(object):
             duedate = tools.datetime_millis(due_date) if due_date else None,
             expdate = tools.datetime_millis(due_date),
             multiReply = False,
-            readers = ['everyone'],
+            readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,

@@ -167,6 +167,7 @@ class TestECCVConference():
 
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
+        # Reviewers
         reviewer_registration_tasks = {
             'TPMS_registration_confirmed' : {
                 'required': True,
@@ -197,7 +198,7 @@ class TestECCVConference():
 
         assert selenium.find_element_by_link_text('Registration')
 
-        registration_notes = reviewer_client.get_notes(invitation = conference.get_invitation_id('Registration_Form'))
+        registration_notes = reviewer_client.get_notes(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Registration_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
@@ -227,6 +228,31 @@ class TestECCVConference():
                 ]
             ))
         assert registration_note
+
+        #Area Chairs
+        conference.set_area_chairs(['test_ac_eccv@mail.com'])
+        ac_registration_tasks = {
+            'TPMS_registration_confirmed' : {
+                'required': True,
+                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?',
+                'value-radio': [
+                    'Yes',
+                    'No'
+                ],
+                'order': 3}
+        }
+        now = datetime.datetime.utcnow()
+        registration_invitation = conference.open_registration(
+            additional_fields = ac_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40), is_area_chair=True)
+        assert registration_invitation.id
+
+        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
+        reviewer_tasks_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
+        request_page(selenium, reviewer_tasks_url, ac_client.token)
+
+        assert selenium.find_element_by_link_text('Registration')
+
 
     def test_submission_additional_files(self, conference, test_client):
 
@@ -344,8 +370,7 @@ class TestECCVConference():
         assert len(notes) == 6
         assert notes[4].text == 'Ensure that you have at least 40 bids, which are "Very High" or "High".'
 
-        conference.set_area_chairs(['test_ac_eccv@mail.com'])
-        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
+        ac_client = openreview.Client(username='test_ac_eccv@mail.com', password='1234')
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_area_chairs_id() + '#areachair-tasks', ac_client.token)
 
         assert selenium.find_element_by_link_text('ECCV 2020 Conference Area Chairs Bid')
