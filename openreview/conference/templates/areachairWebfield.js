@@ -58,11 +58,13 @@ var findProfile = function(profiles, id) {
 }
 
 var getNumberfromGroup = function(groupId, name) {
-
   var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith(name); });
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
   if (paper) {
-    return parseInt(paper.replace(name, ''));
+    return parseInt(paper.replace(name, ''), 10);
   } else {
     return null;
   }
@@ -813,7 +815,7 @@ var registerEventHandlers = function() {
     var $currDiv = $('#' + paperNumber + '-add-reviewer');
     var userToAdd = $currDiv.find('input').attr('value_id').trim();
 
-    if (!userToAdd || !((userToAdd.indexOf('@') > 0) || userToAdd.startsWith('~'))) {
+    if (!userToAdd || !((userToAdd.indexOf('@') > 0) || _.startsWith(userToAdd, '~'))) {
       // this checks if no input was given, OR  if the given input neither has an '@' nor does it start with a '~'
       promptError('Please enter a valid email for assigning a reviewer');
       return false;
@@ -825,7 +827,7 @@ var registerEventHandlers = function() {
       promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
       return false;
     }
-    if (!userToAdd.startsWith('~')) {
+    if (!_.startsWith(userToAdd, '~')) {
       userToAdd = userToAdd.toLowerCase();
     }
 
@@ -900,12 +902,12 @@ var registerEventHandlers = function() {
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
         message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
         ' for ' + SHORT_PHRASE + '.' +
-        '\n\nTo review this new assignment, please login and click on ' +
+        '\n\nTo review this new assignment, please login to OpenReview and go to ' +
         'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
-        '\n\nTo check all of your assigned papers, please click on https://openreview.net/group?id=' + REVIEWER_GROUP +
+        '\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=' + REVIEWER_GROUP +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair'
       };
-      return Webfield.post('/mail', postData);
+      return Webfield.post('/messages', postData);
     });
     return false;
   });
@@ -978,7 +980,7 @@ var postReviewerEmails = function(postData) {
     postData.forumUrl
   );
 
-  return Webfield.post('/mail', postData)
+  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
     .then(function(response) {
       // Save the timestamp in the local storage
       for (var i = 0; i < postData.groups.length; i++) {
