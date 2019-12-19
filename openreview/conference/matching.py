@@ -4,7 +4,6 @@ A module containing tools for matching and and main Matching instance class
 
 from __future__ import division
 import csv
-
 import openreview
 import tld
 from tqdm import tqdm
@@ -201,7 +200,7 @@ class Matching(object):
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
-            openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         return invitation
 
     def _build_tpms_scores(self, tpms_score_file, submissions, user_profiles):
@@ -251,7 +250,7 @@ class Matching(object):
 
         edges = []
         with open(score_file) as file_handle:
-            for row in csv.reader(file_handle):
+            for row in tqdm(csv.reader(file_handle)):
                 paper_note_id = row[0]
                 profile_id = row[1]
                 score = row[2]
