@@ -388,6 +388,15 @@ class Conference(object):
 
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
+        pc_group = tools.get_group(self.client, self.get_program_chairs_id())
+        if pc_group and pc_group.web:
+            # update PC console
+            if self.use_area_chairs:
+                self.webfield_builder.edit_global_string_value(pc_group, "AREA_CHAIRS_ID",
+                                                               '', self.get_area_chairs_id())
+            else:
+                self.webfield_builder.edit_global_string_value(pc_group, "AREA_CHAIRS_ID",
+                                                                self.get_area_chairs_id(), '')
 
     def get_homepage_options(self):
         options = {}
@@ -1206,8 +1215,7 @@ class ConferenceBuilder(object):
             self.conference.set_submission_stage(self.submission_stage)
 
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
-        program_chairs_group = self.conference.set_program_chairs()
-
+        self.conference.set_program_chairs()
         self.conference.set_authors()
         self.conference.set_reviewers()
         if self.conference.use_area_chairs:
