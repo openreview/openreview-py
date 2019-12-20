@@ -440,7 +440,7 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   if (registrationForms && registrationForms.length) {
     html += '<h3>Registration Forms:</h3><br><ul>';
     registrationForms.forEach(function(form) {
-      html += '<li><a href="/forum?id=' + form.forum + '">' + forum.content.title + '</a></li>';
+      html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
     })
     html += '</ul><br>';
   }
