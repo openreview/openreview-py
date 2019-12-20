@@ -272,7 +272,7 @@ http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
         assert notes
         assert len(notes) == 2
         assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
-        assert notes[1].text == 'You accepted to review up to 7 papers.'
+        assert notes[1].text == 'You agreed to review up to 7 papers.'
 
         reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
         request_page(selenium, 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token)
@@ -282,7 +282,7 @@ http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
         assert notes
         assert len(notes) == 2
         assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
-        assert notes[1].text == 'You accepted to review up to 4 papers.'
+        assert notes[1].text == 'You agreed to review up to 4 papers.'
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
