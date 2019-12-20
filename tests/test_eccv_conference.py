@@ -188,35 +188,36 @@ class TestECCVConference():
 
         # Reviewers
         reviewer_registration_tasks = {
-            'reviewer_compliance_count' : {
+            'TPMS_registration_confirmed' : {
                 'required': True,
-                'description': 'I confirm that I will provide the number of reviews agreed upon when I accepted the invitation to review. This number is visible in my reviewer console at http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers.',
+                'description': '''Have you registered and/or updated your TPMS account?.\n\n
+You can create profiles by first registering here:\n\n
+http://torontopapermatching.org/webapp/profileBrowser/register/\n\n
+You can login to the system here:\n\n
+http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
+                ''',
                 'value-checkbox': 'Yes',
                 'order': 3
             },
-            'reviewer_compliance_instructions' : {
+            'review_count_confirm' : {
                 'required': True,
-                'description': 'I confirm that I will adhere to the reviewer instructions available at [new link still to be communicated].',
+                'description': 'I confirm that I will provide the number of reviews agreed upon when I accepted the invitation to review. This number is visible in my reviewer console at http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers.',
                 'value-checkbox': 'Yes',
                 'order': 4
             },
-            'emergency_reviewer' : {
+            'review_instructions_confirm' : {
+                'required': True,
+                'description': 'I confirm that I will adhere to the reviewer instructions available at [new link still to be communicated].',
+                'value-checkbox': 'Yes',
+                'order': 5
+            },
+            'emergency_review_count' : {
                 'required': True,
                 'description': 'Decide whether you can and want to serve as emergency reviewer. Select how many reviews you can volunteer as emergency reviewer.',
-                'value-dropdown': ['0', '1', '2'],
-                'order': 5,
+                'value-radio': ['0', '1', '2'],
+                'order': 6,
                 'default': '0'
-            },
-            'TPMS_registration_confirmed' : {
-                'required': True,
-                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?.',
-                'value-radio': [
-                    'Yes',
-                    'No'
-                ],
-                'order': 6
-            },
-
+            }
         }
         now = datetime.datetime.utcnow()
         registration_invitation = conference.open_registration(
@@ -245,9 +246,9 @@ class TestECCVConference():
                     'profile_confirmed': 'Yes',
                     'expertise_confirmed': 'Yes',
                     'TPMS_registration_confirmed': 'Yes',
-                    'reviewer_compliance_count': 'Yes',
-                    'reviewer_compliance_instructions': 'Yes',
-                    'emergency_reviewer': '0'
+                    'review_count_confirm': 'Yes',
+                    'review_instructions_confirm': 'Yes',
+                    'emergency_review_count': '0'
                 },
                 signatures = [
                     '~Testreviewer_Eccv1'
@@ -271,7 +272,7 @@ class TestECCVConference():
         assert notes
         assert len(notes) == 2
         assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
-        assert notes[1].text == 'You accepted to review up to 7 papers'
+        assert notes[1].text == 'You accepted to review up to 7 papers.'
 
         reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
         request_page(selenium, 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token)
