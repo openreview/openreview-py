@@ -25,6 +25,7 @@ class TestECCVConference():
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.set_override_homepage(True)
         builder.has_area_chairs(True)
+        builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
             public = False,
@@ -74,7 +75,9 @@ class TestECCVConference():
         </ul>
         <br>'''
         builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
-        yield builder.get_result()
+        conference = builder.get_result()
+        conference.set_program_chairs(['pc@eccv.org'])
+        return conference
 
 
     def test_create_conference(self, client, helpers):
@@ -100,9 +103,6 @@ class TestECCVConference():
 
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        conference.set_program_chairs(['pc@eccv.org'])
-
-        conference.set_recruitment_reduced_load(['4','5','6','7'])
         result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'])
         assert result
         assert result.id == 'thecvf.com/ECCV/2020/Conference/Reviewers/Invited'
@@ -137,6 +137,24 @@ class TestECCVConference():
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
+        ## Reduce the load of Mohit
+        notes = client.get_notes(invitation='thecvf.com/ECCV/2020/Conference/-/Recruit_Reviewers', content={'user': 'mohit+1@mail.com'})
+        assert notes
+        assert len(notes) == 1
+
+        client.post_note(openreview.Note(
+            invitation='thecvf.com/ECCV/2020/Conference/-/Reduced_Load',
+            readers=['thecvf.com/ECCV/2020/Conference', 'mohit+1@mail.com'],
+            writers=['thecvf.com/ECCV/2020/Conference'],
+            signatures=['(anonymous)'],
+            content={
+                'user': 'mohit+1@mail.com',
+                'key': notes[0].content['key'],
+                'response': 'Yes',
+                'reviewer_load': '4'
+            }
+        ))
+
         messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
 
@@ -145,8 +163,9 @@ class TestECCVConference():
 
         group = client.get_group(conference.get_reviewers_id())
         assert group
-        assert len(group.members) == 1
-        assert group.members[0] == 'test_reviewer_eccv@mail.com'
+        assert len(group.members) == 2
+        assert group.members[0] == 'mohit+1@mail.com'
+        assert group.members[1] == 'test_reviewer_eccv@mail.com'
 
     def test_expersite_selection(self, conference, helpers, selenium, request_page):
 
@@ -169,22 +188,35 @@ class TestECCVConference():
 
         # Reviewers
         reviewer_registration_tasks = {
+            'reviewer_compliance_count' : {
+                'required': True,
+                'description': 'I confirm that I will provide the number of reviews agreed upon when I accepted the invitation to review. This number is visible in my reviewer console at http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers.',
+                'value-checkbox': 'Yes',
+                'order': 3
+            },
+            'reviewer_compliance_instructions' : {
+                'required': True,
+                'description': 'I confirm that I will adhere to the reviewer instructions available at [new link still to be communicated].',
+                'value-checkbox': 'Yes',
+                'order': 4
+            },
+            'emergency_reviewer' : {
+                'required': True,
+                'description': 'Decide whether you can and want to serve as emergency reviewer. Select how many reviews you can volunteer as emergency reviewer.',
+                'value-dropdown': ['0', '1', '2'],
+                'order': 5,
+                'default': '0'
+            },
             'TPMS_registration_confirmed' : {
                 'required': True,
-                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?',
+                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?.',
                 'value-radio': [
                     'Yes',
                     'No'
                 ],
-                'order': 3},
-            'reviewer_instructions_compliance' : {
-                'required': True,
-                'description': 'Please confirm that you will adhere to the reviewer instructions.',
-                'value-radio': [
-                    'Yes',
-                    'No'
-                ],
-                'order': 4}
+                'order': 6
+            },
+
         }
         now = datetime.datetime.utcnow()
         registration_invitation = conference.open_registration(
@@ -213,7 +245,9 @@ class TestECCVConference():
                     'profile_confirmed': 'Yes',
                     'expertise_confirmed': 'Yes',
                     'TPMS_registration_confirmed': 'Yes',
-                    'reviewer_instructions_compliance': 'Yes'
+                    'reviewer_compliance_count': 'Yes',
+                    'reviewer_compliance_instructions': 'Yes',
+                    'emergency_reviewer': '0'
                 },
                 signatures = [
                     '~Testreviewer_Eccv1'
@@ -228,6 +262,26 @@ class TestECCVConference():
                 ]
             ))
         assert registration_note
+
+
+        request_page(selenium, 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer_client.token)
+        header = selenium.find_element_by_id('header')
+        assert header
+        notes = header.find_elements_by_class_name("description")
+        assert notes
+        assert len(notes) == 2
+        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
+        assert notes[1].text == 'You accepted to review up to 7 papers'
+
+        reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
+        request_page(selenium, 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token)
+        header = selenium.find_element_by_id('header')
+        assert header
+        notes = header.find_elements_by_class_name("description")
+        assert notes
+        assert len(notes) == 2
+        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
+        assert notes[1].text == 'You accepted to review up to 4 papers.'
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])

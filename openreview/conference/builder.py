@@ -46,6 +46,7 @@ class Conference(object):
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
         self.reduced_load_on_decline = []
+        self.default_reviewer_load = 0
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
         group = tools.get_group(self.client, id = group_id)
@@ -695,9 +696,6 @@ class Conference(object):
         self.__set_reviewer_reassignment(enabled=True)
         return conference_matching.deploy(assingment_title)
 
-    def set_recruitment_reduced_load(self, reduced_load_options):
-        self.reduced_load_on_decline = reduced_load_options
-
     def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], baseurl = ''):
 
         pcs_id = self.get_program_chairs_id()
@@ -1184,6 +1182,10 @@ class ConferenceBuilder(object):
 
     def set_request_form_id(self, id):
         self.conference.request_form_id = id
+
+    def set_recruitment_reduced_load(self, reduced_load_options, default_reviewer_load):
+        self.conference.reduced_load_on_decline = reduced_load_options
+        self.conference.default_reviewer_load = default_reviewer_load
 
     def get_result(self):
 

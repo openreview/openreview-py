@@ -1006,7 +1006,8 @@ class InvitationBuilder(object):
             'replyto': None,
             'readers': {
                 'values-copied': [
-                    conference.get_id()
+                    conference.get_id(),
+                    '{content.user}'
                 ]
             },
             'writers': {
