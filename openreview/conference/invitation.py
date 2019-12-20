@@ -1181,7 +1181,7 @@ class InvitationBuilder(object):
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     'title': {
-                        'value': committee_name + ' Registration'
+                        'value': committee_name[:-1] + ' Registration'
                     },
                     'Instructions': {
                         'order': 1,
@@ -1202,7 +1202,7 @@ class InvitationBuilder(object):
             forum = None,
             content = {
                 'Instructions': registration_parent_invitation_instructions,
-                'title': committee_name + ' Registration'
+                'title': committee_name[:-1] + ' Registration'
             }
         ))
 

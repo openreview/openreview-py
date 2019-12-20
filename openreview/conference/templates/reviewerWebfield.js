@@ -197,7 +197,7 @@ var displayHeader = function(headerP) {
   .then(function(customLoad) {
     var customLoadDiv = '';
     if (customLoad > 0) {
-      customLoadDiv = '<div class="description">You accepted to review up to <b>' + customLoad + ' papers</b>.</div>';
+      customLoadDiv = '<div class="description">You agreed to review up to <b>' + customLoad + ' papers</b>.</div>';
     }
     var $panel = $('#group-container');
     $panel.hide('fast', function() {
