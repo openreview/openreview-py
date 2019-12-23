@@ -685,7 +685,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
 
-    def recruit_reviewers(self, emails = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], baseurl = ''):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], baseurl = ''):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -695,6 +695,7 @@ class Conference(object):
         if reviewer_accepted_name:
             reviewers_accepted_id = reviewers_id + '/' + reviewer_accepted_name
         hash_seed = '1234'
+        invitees = [e.lower() if '@' in e else e for e in invitees]
 
         reviewers_accepted_group = self.__create_group(reviewers_accepted_id, pcs_id)
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
@@ -756,8 +757,8 @@ class Conference(object):
                 reviewer_name = 'invitee'
                 if reviewer_id.startswith('~') :
                     reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
-                elif (reviewer_id in emails) and invitee_names:
-                    reviewer_name = invitee_names[emails.index(reviewer_id)]
+                elif (reviewer_id in invitees) and invitee_names:
+                    reviewer_name = invitee_names[invitees.index(reviewer_id)]
 
                 tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
                     hash_seed,
@@ -768,7 +769,7 @@ class Conference(object):
                     verbose = False,
                     baseurl = baseurl)
 
-        for index, email in enumerate(emails):
+        for index, email in enumerate(invitees):
             if email not in set(reviewers_invited_group.members):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
