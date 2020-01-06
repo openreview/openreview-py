@@ -767,6 +767,7 @@ class TestDoubleBlindConference():
         }
         builder.set_submission_stage(double_blind = False, public = True, additional_fields=additional_fields)
         builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
         conference = builder.get_result()
 
         with pytest.raises(openreview.OpenReviewException, match=r'Conference is not double blind'):
@@ -1398,6 +1399,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_withdraw = True, allow_withdraw = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
         conference = builder.get_result()
         conference.create_withdraw_invitations()
 
@@ -1453,6 +1455,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_desk_reject = True, allow_desk_reject = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
         conference = builder.get_result()
         conference.create_desk_reject_invitations()
 
