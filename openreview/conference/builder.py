@@ -75,11 +75,6 @@ class Conference(object):
         if area_chairs_group:
             return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
 
-    def __set_program_chair_page(self):
-        program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
-        if program_chairs_group:
-            return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
-
     def __set_expertise_selection_page(self):
         expertise_selection_invitation = tools.get_invitation(self.client, self.get_expertise_selection_id())
         if expertise_selection_invitation:
