@@ -172,7 +172,8 @@ class Conference(object):
         self.webfield_builder.edit_web_value(pc_group, 'ENABLE_REVIEWER_REASSIGNMENT', str(enabled).lower())
 
         if self.use_area_chairs:
-            self.__set_area_chair_page()
+            ac_group = self.client.get_group(self.get_area_chairs_id())
+            self.webfield_builder.edit_web_value(ac_group, 'ENABLE_REVIEWER_REASSIGNMENT', str(enabled).lower())
 
     def set_id(self, id):
         self.id = id
