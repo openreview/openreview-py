@@ -274,7 +274,7 @@ var getInvitations = function() {
 };
 
 var getRegistrationForms = function() {
-  return Webfield.getAll('/notes', { invitation: CONFERENCE_ID + '/.*/-/Registration_Form'});
+  return Webfield.getAll('/notes', { invitation: CONFERENCE_ID + '/.*/-/Form'});
 };
 
 var getPcAssignmentTagInvitations = function() {
