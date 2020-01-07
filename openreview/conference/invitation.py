@@ -1160,15 +1160,14 @@ class InvitationBuilder(object):
 
 
 
-    def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, committee_id, committee_name):
+    def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, instructions, committee_id, committee_name):
 
         invitees = [committee_id]
         readers = [conference.id, committee_id]
 
         # Create super invitation with a webfield
-        registration_parent_invitation_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = conference.get_id())
         registration_parent_invitation = openreview.Invitation(
-            id = conference.get_invitation_id(name='Registration_Form', prefix=committee_id),
+            id = conference.get_invitation_id(name='Form', prefix=committee_id),
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -1181,11 +1180,11 @@ class InvitationBuilder(object):
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     'title': {
-                        'value': committee_name[:-1] + ' Registration'
+                        'value': committee_name[:-1] + ' Information'
                     },
-                    'Instructions': {
+                    'instructions': {
                         'order': 1,
-                        'value': registration_parent_invitation_instructions
+                        'value': instructions
                     }
                 }
             }
@@ -1201,8 +1200,8 @@ class InvitationBuilder(object):
             replyto = None,
             forum = None,
             content = {
-                'Instructions': registration_parent_invitation_instructions,
-                'title': committee_name[:-1] + ' Registration'
+                'instructions': instructions,
+                'title': committee_name[:-1] + ' Information'
             }
         ))
 
@@ -1277,6 +1276,7 @@ class InvitationBuilder(object):
             start_date=stage.start_date,
             due_date=stage.due_date,
             additional_fields=stage.ac_additional_fields,
+            instructions=stage.ac_instructions,
             committee_id=conference.get_area_chairs_id(),
             committee_name=conference.get_area_chairs_name()))
 
@@ -1284,6 +1284,7 @@ class InvitationBuilder(object):
         start_date=stage.start_date,
         due_date=stage.due_date,
         additional_fields=stage.additional_fields,
+        instructions=stage.instructions,
         committee_id=conference.get_reviewers_id(),
         committee_name=conference.get_reviewers_name()))
 

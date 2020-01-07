@@ -28,49 +28,88 @@ class TestECCVConference():
         builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
         # Reviewers
         reviewer_registration_tasks = {
+            'profile_confirmed': {
+                'required': True,
+                'description': 'I confirm that I updated my OpenReview profile.',
+                'value-checkbox': 'Yes',
+                'order': 1
+            },
+            'expertise_confirmed': {
+                'required': True,
+                'description': 'I confirm that I verified my expertise.',
+                'value-checkbox': 'Yes',
+                'order': 1
+            },
             'TPMS_registration_confirmed' : {
                 'required': True,
-                'description': '''Have you registered and/or updated your TPMS account?.\n\n
-You can create profiles by first registering here:\n\n
-http://torontopapermatching.org/webapp/profileBrowser/register/\n\n
-You can login to the system here:\n\n
-http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
-                ''',
+                'description': 'I confirm that I updated my TPMS account.',
                 'value-checkbox': 'Yes',
                 'order': 3
             },
-            'review_count_confirm' : {
+            'reviewer_instructions_confirm' : {
                 'required': True,
-                'description': 'I confirm that I will provide the number of reviews agreed upon when I accepted the invitation to review. This number is visible in my reviewer console at http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers.',
+                'description': 'I confirm that I will adhere to the reviewer instructions and will do my best to provide the agreed upon number of reviews in time.',
                 'value-checkbox': 'Yes',
                 'order': 4
-            },
-            'review_instructions_confirm' : {
-                'required': True,
-                'description': 'I confirm that I will adhere to the reviewer instructions available at [new link still to be communicated].',
-                'value-checkbox': 'Yes',
-                'order': 5
             },
             'emergency_review_count' : {
                 'required': True,
                 'description': 'Decide whether you can and want to serve as emergency reviewer. Select how many reviews you can volunteer as emergency reviewer.',
                 'value-radio': ['0', '1', '2'],
-                'order': 6,
+                'order': 5,
                 'default': '0'
             }
         }
 
         ac_registration_tasks = {
+            'profile_confirmed': {
+                'required': True,
+                'description': 'I confirm that I updated my OpenReview profile.',
+                'value-checkbox': 'Yes',
+                'order': 1
+            },
+            'expertise_confirmed': {
+                'required': True,
+                'description': 'I confirm that I verified my expertise.',
+                'value-checkbox': 'Yes',
+                'order': 1
+            },
             'TPMS_registration_confirmed' : {
                 'required': True,
-                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?',
-                'value-radio': [
-                    'Yes',
-                    'No'
-                ],
+                'description': 'I confirm that I updated my TPMP account',
+                'value-checkbox': 'Yes',
                 'order': 3}
         }
-        builder.set_registration_stage(additional_fields = reviewer_registration_tasks, due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields=ac_registration_tasks)
+
+        reviewer_instructions = '''
+1. In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding email addresses, work history and professional relationships: https://openreview.net/profile?mode=edit
+
+2. We automatically populated your profile with your published papers. These represent your expertise and will be used to match submissions to you. Please take a moment to verify if the selection of papers is representative of your expertise and modify it if necessary: https://openreview.net/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection
+
+3. Full paper matching will be done via the Toronto paper matching system (TPMS). Please update your TPMS profile so that it represents your expertise well: http://torontopapermatching.org/webapp/profileBrowser/login/
+If you don't have a TPMS account yet, you can create one here: http://torontopapermatching.org/webapp/profileBrowser/register/
+Ensure that the email you use for your TPMS profile is listed as one of the emails in your OpenReview profile.
+
+4. Please check the reviewer instructions: https://eccv2020.eu/reviewer-instructions/
+
+5. Emergency reviewers are important to ensure that all papers receive 3 reviews even if some reviewers cannot submit their reviews in time (e.g. due to sickness). If you know for sure that you will be able to review 1 or 2 papers within 72-96 hours in the time from May 15 to May 19, you can volunteer as emergency reviewer. We will reduce your normal load by the number of papers you agree to handle as emergency reviewer. Every emergency review will increase your reviewer score in addition to the score assigned by the area chair.
+        '''
+
+        ac_instructions = '''
+1. In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles with their latest information regarding email addresses, work history and professional relationships: https://openreview.net/profile?mode=edit
+
+2. We automatically populated your profile with your published papers. These represent your expertise and will be used to match submissions to you. Please take a moment to verify if the selection of papers is representative of your expertise and modify it if necessary: https://openreview.net/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection
+
+3. Full paper matching will be done via the Toronto paper matching system (TPMS). Please update your TPMS profile so that it represents your expertise well: http://torontopapermatching.org/webapp/profileBrowser/login/
+If you don't have a TPMS account yet, you can create one here: http://torontopapermatching.org/webapp/profileBrowser/register/
+Ensure that the email you use for your TPMS profile is listed as one of the emails in your OpenReview profile.
+        '''
+        builder.set_registration_stage(name='Profile_Confirmation',
+        additional_fields = reviewer_registration_tasks,
+        due_date = now + datetime.timedelta(minutes = 40),
+        ac_additional_fields=ac_registration_tasks,
+        instructions=reviewer_instructions,
+        ac_instructions=ac_instructions)
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
             public = False,
@@ -242,9 +281,9 @@ Please contact info@openreview.net with any questions or concerns about this int
         reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
-        assert selenium.find_element_by_link_text('Registration')
+        assert selenium.find_element_by_link_text('Reviewer Profile Confirmation')
 
-        registration_notes = reviewer_client.get_notes(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Registration_Form')
+        registration_notes = reviewer_client.get_notes(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
@@ -252,15 +291,14 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         registration_note = reviewer_client.post_note(
             openreview.Note(
-                invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Registration',
+                invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Profile_Confirmation',
                 forum = registration_forum,
                 replyto = registration_forum,
                 content = {
                     'profile_confirmed': 'Yes',
                     'expertise_confirmed': 'Yes',
                     'TPMS_registration_confirmed': 'Yes',
-                    'review_count_confirm': 'Yes',
-                    'review_instructions_confirm': 'Yes',
+                    'reviewer_instructions_confirm': 'Yes',
                     'emergency_review_count': '0'
                 },
                 signatures = [
@@ -303,7 +341,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         reviewer_tasks_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token)
 
-        assert selenium.find_element_by_link_text('Registration')
+        assert selenium.find_element_by_link_text('Area Chair Profile Confirmation')
 
 
     def test_submission_additional_files(self, conference, test_client):
@@ -412,7 +450,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
-        assert selenium.find_element_by_link_text('Bid')
+        assert selenium.find_element_by_link_text('Reviewer Bid')
 
         request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid', reviewer_client.token)
         header = selenium.find_element_by_id('header')
@@ -425,7 +463,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ac_client = openreview.Client(username='test_ac_eccv@mail.com', password='1234')
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_area_chairs_id() + '#areachair-tasks', ac_client.token)
 
-        assert selenium.find_element_by_link_text('Bid')
+        assert selenium.find_element_by_link_text('Area Chair Bid')
 
         request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid', ac_client.token)
         header = selenium.find_element_by_id('header')
