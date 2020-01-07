@@ -173,16 +173,23 @@ class TestECCVConference():
         reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
-        assert selenium.find_element_by_link_text('ECCV 2020 Conference Expertise Selection')
+        assert selenium.find_element_by_link_text('Expertise Selection')
 
         request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token)
         header = selenium.find_element_by_id('header')
         assert header
-        notes = header.find_elements_by_tag_name("li")
+        notes = header.find_elements_by_class_name("description")
         assert notes
-        assert len(notes) == 2
-        assert notes[0].text == 'Papers not automatically included as part of this import process can be uploaded by using the Upload button.'
-        assert notes[1].text == 'Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.'
+        assert len(notes) == 1
+        assert notes[0].text == '''Listed below are all the papers you have authored that exist in the OpenReview database.
+
+By default, we consider all of these papers to formulate your expertise. Please click on "Exclude" for papers that you do NOT want to be used to represent your expertise.
+
+Your previously authored papers from selected conferences were imported automatically from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process.
+
+Papers not automatically included as part of this import process can be uploaded by using the Upload button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
+
+Please contact info@openreview.net with any questions or concerns about this interface, or about the expertise scoring process.'''
 
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
@@ -415,7 +422,7 @@ http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
         reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
-        assert selenium.find_element_by_link_text('ECCV 2020 Conference Reviewers Bid')
+        assert selenium.find_element_by_link_text('Bid')
 
         request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid', reviewer_client.token)
         header = selenium.find_element_by_id('header')
@@ -428,7 +435,7 @@ http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
         ac_client = openreview.Client(username='test_ac_eccv@mail.com', password='1234')
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_area_chairs_id() + '#areachair-tasks', ac_client.token)
 
-        assert selenium.find_element_by_link_text('ECCV 2020 Conference Area Chairs Bid')
+        assert selenium.find_element_by_link_text('Bid')
 
         request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid', ac_client.token)
         header = selenium.find_element_by_id('header')

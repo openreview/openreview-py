@@ -115,11 +115,8 @@ class WebfieldBuilder(object):
                         Your previously authored papers from selected conferences were imported automatically from <a href=https://dblp.org>DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process.
                 </p>
                 <br>
-                <p class=\"dark\"><strong>Important Notes:</strong></p>
-                <ul>
-                        <li>Papers not automatically included as part of this import process can be uploaded by using the Upload button.</li>
-                        <li>Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.</li>
-                </ul>
+                    Papers not automatically included as part of this import process can be uploaded by using the <b>Upload</b> button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
+                <br>
                 <br>
                 <p class=\"dark\"> Please contact <a href=mailto:info@openreview.net>info@openreview.net</a> with any questions or concerns about this interface, or about the expertise scoring process.
                 </p>'''
