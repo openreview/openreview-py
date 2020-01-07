@@ -35,10 +35,10 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
-        self.registration_name = 'Registration'
         self.submission_stage = SubmissionStage()
         self.bid_stage = BidStage()
         self.expertise_selection_stage = ExpertiseSelectionStage()
+        self.registration_stage = RegistrationStage()
         self.review_stage = ReviewStage()
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
@@ -138,6 +138,9 @@ class Conference(object):
         self.invitation_builder.set_expertise_selection_invitation(self)
         return self.__set_expertise_selection_page()
 
+    def __create_registration_stage(self):
+        return self.invitation_builder.set_registration_invitation(self)
+
     def __create_bid_stage(self):
 
         self.invitation_builder.set_bid_invitation(self)
@@ -209,6 +212,10 @@ class Conference(object):
     def set_expertise_selection_stage(self, stage):
         self.expertise_selection_stage = stage
         return self.__create_expertise_selection_stage()
+
+    def set_registration_stage(self, stage):
+        self.registration_stage = stage
+        return self.__create_registration_stage()
 
     def set_bid_stage(self, stage):
         self.bid_stage = stage
@@ -312,7 +319,7 @@ class Conference(object):
         return self.get_invitation_id(self.recommendation_name, number)
 
     def get_registration_id(self, committee_id):
-        return self.get_invitation_id(name = self.registration_name, prefix = committee_id)
+        return self.get_invitation_id(name = self.registration_stage.name, prefix = committee_id)
 
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
@@ -520,11 +527,10 @@ class Conference(object):
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
         return self.__set_recommendation_page()
 
+    ## Deprecated
     def open_registration(self, start_date = None, due_date = None, additional_fields = {}, is_area_chair = False):
-        if is_area_chair:
-            return self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_area_chairs_id(), self.get_area_chairs_name())
-        else:
-            return self.invitation_builder.set_registration_invitation(self, start_date, due_date, additional_fields, self.get_reviewers_id(), self.get_reviewers_name())
+        self.registration_stage = RegistrationStage(start_date=start_date, due_date=due_date, additional_fields=additional_fields)
+        self.__create_registration_stage()
 
     def open_comments(self):
         self.__create_comment_stage()
@@ -1040,6 +1046,15 @@ class DecisionStage(object):
 
         return [conference.get_authors_id(number = number)]
 
+class RegistrationStage(object):
+
+    def __init__(self, name='Registration', start_date=None, due_date=None, additional_fields={}, ac_additional_fields={}):
+        self.name = name
+        self.start_date = start_date
+        self.due_date = due_date
+        self.additional_fields = additional_fields
+        self.ac_additional_fields = ac_additional_fields
+
 
 class ConferenceBuilder(object):
 
@@ -1050,6 +1065,7 @@ class ConferenceBuilder(object):
         self.override_homepage = False
         self.submission_stage = None
         self.expertise_selection_stage = None
+        self.registration_stage = None
         self.bid_stage = None
         self.review_stage = None
         self.comment_stage = None
@@ -1162,6 +1178,9 @@ class ConferenceBuilder(object):
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
         self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date)
 
+    def set_registration_stage(self, name='Registration', start_date=None, due_date=None, additional_fields={}, ac_additional_fields={}):
+        self.registration_stage=RegistrationStage(name, start_date, due_date, additional_fields, ac_additional_fields)
+
     def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions=False, ac_request_count=None):
         self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score, instructions, ac_request_count)
 
@@ -1241,6 +1260,9 @@ class ConferenceBuilder(object):
 
         if self.expertise_selection_stage:
             self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
+
+        if self.registration_stage:
+            self.conference.set_registration_stage(self.registration_stage)
 
         if self.review_stage:
             self.conference.set_review_stage(self.review_stage)

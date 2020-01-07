@@ -622,13 +622,6 @@ class TestMatching():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
-        conference = builder.get_result()
-        assert conference, 'conference is None'
-
-        blinded_notes = list(conference.get_submissions())
-
-        ## Open reviewer recommendations
-        now = datetime.datetime.utcnow()
         additional_registration_content = {
             'reviewing_experience': {
                 'description': 'How many times have you been a reviewer for any conference or journal?',
@@ -643,21 +636,28 @@ class TestMatching():
                 'required': False
             }
         }
-        invitation = conference.open_registration(
-            due_date = now + datetime.timedelta(minutes = 40),
-            additional_fields = additional_registration_content,
-            is_area_chair = True)
+        builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
+        conference = builder.get_result()
+        assert conference, 'conference is None'
+
+        blinded_notes = list(conference.get_submissions())
+
+        registration_notes = client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration_Form')
+        assert registration_notes
+        assert len(registration_notes) == 1
+
+        registration_forum = registration_notes[0].forum
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
         ac1_client.post_note(
             openreview.Note(
-                invitation = invitation.id,
+                invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration',
                 readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
                 writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
                 signatures = ['~AreaChair_One1'],
-                forum = invitation.reply['forum'],
-                replyto = invitation.reply['replyto'],
+                forum = registration_forum,
+                replyto = registration_forum,
                 content = {
                     'subject_areas': [
                         'Algorithms: Approximate Inference',

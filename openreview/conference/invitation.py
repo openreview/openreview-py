@@ -1160,7 +1160,7 @@ class InvitationBuilder(object):
 
 
 
-    def set_registration_invitation(self, conference, start_date, due_date, additional_fields, committee_id, committee_name):
+    def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, committee_id, committee_name):
 
         invitees = [committee_id]
         readers = [conference.id, committee_id]
@@ -1268,3 +1268,23 @@ class InvitationBuilder(object):
 
         return registration_invitation
 
+    def set_registration_invitation(self, conference):
+
+        invitations = []
+        stage=conference.registration_stage
+        if conference.has_area_chairs:
+            invitations.append(self.__set_registration_invitation(conference=conference,
+            start_date=stage.start_date,
+            due_date=stage.due_date,
+            additional_fields=stage.ac_additional_fields,
+            committee_id=conference.get_area_chairs_id(),
+            committee_name=conference.get_area_chairs_name()))
+
+        invitations.append(self.__set_registration_invitation(conference=conference,
+        start_date=stage.start_date,
+        due_date=stage.due_date,
+        additional_fields=stage.additional_fields,
+        committee_id=conference.get_reviewers_id(),
+        committee_name=conference.get_reviewers_name()))
+
+        return invitations

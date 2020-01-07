@@ -26,6 +26,51 @@ class TestECCVConference():
         builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
+        # Reviewers
+        reviewer_registration_tasks = {
+            'TPMS_registration_confirmed' : {
+                'required': True,
+                'description': '''Have you registered and/or updated your TPMS account?.\n\n
+You can create profiles by first registering here:\n\n
+http://torontopapermatching.org/webapp/profileBrowser/register/\n\n
+You can login to the system here:\n\n
+http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
+                ''',
+                'value-checkbox': 'Yes',
+                'order': 3
+            },
+            'review_count_confirm' : {
+                'required': True,
+                'description': 'I confirm that I will provide the number of reviews agreed upon when I accepted the invitation to review. This number is visible in my reviewer console at http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers.',
+                'value-checkbox': 'Yes',
+                'order': 4
+            },
+            'review_instructions_confirm' : {
+                'required': True,
+                'description': 'I confirm that I will adhere to the reviewer instructions available at [new link still to be communicated].',
+                'value-checkbox': 'Yes',
+                'order': 5
+            },
+            'emergency_review_count' : {
+                'required': True,
+                'description': 'Decide whether you can and want to serve as emergency reviewer. Select how many reviews you can volunteer as emergency reviewer.',
+                'value-radio': ['0', '1', '2'],
+                'order': 6,
+                'default': '0'
+            }
+        }
+
+        ac_registration_tasks = {
+            'TPMS_registration_confirmed' : {
+                'required': True,
+                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?',
+                'value-radio': [
+                    'Yes',
+                    'No'
+                ],
+                'order': 3}
+        }
+        builder.set_registration_stage(additional_fields = reviewer_registration_tasks, due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields=ac_registration_tasks)
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
             public = False,
@@ -193,45 +238,6 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
-        # Reviewers
-        reviewer_registration_tasks = {
-            'TPMS_registration_confirmed' : {
-                'required': True,
-                'description': '''Have you registered and/or updated your TPMS account?.\n\n
-You can create profiles by first registering here:\n\n
-http://torontopapermatching.org/webapp/profileBrowser/register/\n\n
-You can login to the system here:\n\n
-http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
-                ''',
-                'value-checkbox': 'Yes',
-                'order': 3
-            },
-            'review_count_confirm' : {
-                'required': True,
-                'description': 'I confirm that I will provide the number of reviews agreed upon when I accepted the invitation to review. This number is visible in my reviewer console at http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers.',
-                'value-checkbox': 'Yes',
-                'order': 4
-            },
-            'review_instructions_confirm' : {
-                'required': True,
-                'description': 'I confirm that I will adhere to the reviewer instructions available at [new link still to be communicated].',
-                'value-checkbox': 'Yes',
-                'order': 5
-            },
-            'emergency_review_count' : {
-                'required': True,
-                'description': 'Decide whether you can and want to serve as emergency reviewer. Select how many reviews you can volunteer as emergency reviewer.',
-                'value-radio': ['0', '1', '2'],
-                'order': 6,
-                'default': '0'
-            }
-        }
-        now = datetime.datetime.utcnow()
-        registration_invitation = conference.open_registration(
-            additional_fields = reviewer_registration_tasks,
-            due_date = now + datetime.timedelta(minutes = 40))
-        assert registration_invitation.id
-
         reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
         reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
@@ -246,7 +252,7 @@ http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
 
         registration_note = reviewer_client.post_note(
             openreview.Note(
-                invitation = registration_invitation.id,
+                invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Registration',
                 forum = registration_forum,
                 replyto = registration_forum,
                 content = {
@@ -293,22 +299,6 @@ http://torontopapermatching.org/webapp/profileBrowser/login/\n\n
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
-        ac_registration_tasks = {
-            'TPMS_registration_confirmed' : {
-                'required': True,
-                'description': 'Have you registered and/or updated your TPMS account, and updated your OpenReview profile to include the email address you used for TPMS?',
-                'value-radio': [
-                    'Yes',
-                    'No'
-                ],
-                'order': 3}
-        }
-        now = datetime.datetime.utcnow()
-        registration_invitation = conference.open_registration(
-            additional_fields = ac_registration_tasks,
-            due_date = now + datetime.timedelta(minutes = 40), is_area_chair=True)
-        assert registration_invitation.id
-
         ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token)
