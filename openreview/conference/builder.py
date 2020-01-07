@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 import datetime
 import re
+from tqdm import tqdm
 from .. import openreview
 from .. import tools
 from . import webfield
@@ -753,7 +754,8 @@ class Conference(object):
 
         if remind:
             remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
-            for reviewer_id in remind_reviewers:
+            print ('Sending reminders for recruitment invitations')
+            for reviewer_id in tqdm(remind_reviewers):
                 reviewer_name = 'invitee'
                 if reviewer_id.startswith('~') :
                     reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
@@ -769,7 +771,8 @@ class Conference(object):
                     verbose = False,
                     baseurl = baseurl)
 
-        for index, email in enumerate(invitees):
+        print ('Sending recruitment invitations')
+        for index, email in enumerate(tqdm(invitees)):
             if email not in set(reviewers_invited_group.members):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
