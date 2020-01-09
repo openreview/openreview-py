@@ -7,6 +7,7 @@ var HEADER = {};
 var REVIEWER_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var LEGACY_INVITATION_ID = false;
+var REVIEW_LOAD = 0;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
@@ -179,45 +180,66 @@ var getOfficialReviews = function(noteNumbers) {
 
 // Render functions
 var displayHeader = function(headerP) {
-  var $panel = $('#group-container');
-  $panel.hide('fast', function() {
-    $panel.prepend('\
-      <div id="header">\
-        <h1>' + HEADER.title + '</h1>\
-        <div class="description">' + HEADER.instructions + '</div>\
-      </div>\
-      <div id="notes">\
-        <div class="tabs-container"></div>\
-      </div>'
-    );
 
-    var loadingMessage = '<p class="empty-message">Loading...</p>';
-    var tabsData = {
-      sections: [
-        {
-          heading: 'Assigned Papers',
-          id: 'assigned-papers',
-          content: loadingMessage,
-          active: true
-        },
-        {
-          heading: 'Reviewer Schedule',
-          id: 'reviewer-schedule',
-          content: HEADER.schedule
-        },
-        {
-          heading: 'Reviewer Tasks',
-          id: 'reviewer-tasks',
-          content: loadingMessage,
-        }
-      ]
-    };
-    $panel.find('.tabs-container').append(Handlebars.templates['components/tabs'](tabsData));
+  var reducedLoadP = $.Deferred().resolve(0);
+  if (REVIEW_LOAD > 0) {
+    reducedLoadP = Webfield.get('/notes', { invitation: CONFERENCE_ID + '/-/Reduced_Load'})
+    .then(function(result) {
+      if (result.notes && result.notes.length) {
+        return result.notes[0].content.reviewer_load;
+      } else {
+        return REVIEW_LOAD;
+      }
+    })
+  }
 
-    $panel.show('fast', function() {
-      headerP.resolve(true);
+  reducedLoadP
+  .then(function(customLoad) {
+    var customLoadDiv = '';
+    if (customLoad > 0) {
+      customLoadDiv = '<div class="description">You agreed to review up to <b>' + customLoad + ' papers</b>.</div>';
+    }
+    var $panel = $('#group-container');
+    $panel.hide('fast', function() {
+      $panel.prepend('\
+        <div id="header">\
+          <h1>' + HEADER.title + '</h1>\
+          <div class="description">' + HEADER.instructions + '</div>\
+          ' + customLoadDiv + '\
+        </div>\
+        <div id="notes">\
+          <div class="tabs-container"></div>\
+        </div>'
+      );
+
+      var loadingMessage = '<p class="empty-message">Loading...</p>';
+      var tabsData = {
+        sections: [
+          {
+            heading: 'Assigned Papers',
+            id: 'assigned-papers',
+            content: loadingMessage,
+            active: true
+          },
+          {
+            heading: 'Reviewer Schedule',
+            id: 'reviewer-schedule',
+            content: HEADER.schedule
+          },
+          {
+            heading: 'Reviewer Tasks',
+            id: 'reviewer-tasks',
+            content: loadingMessage,
+          }
+        ]
+      };
+      $panel.find('.tabs-container').append(Handlebars.templates['components/tabs'](tabsData));
+
+      $panel.show('fast', function() {
+        headerP.resolve(true);
+      });
     });
-  });
+  })
 };
 
 var displayStatusTable = function(profiles, notes, completedRatings, officialReviews, reviewerIds, container, options) {

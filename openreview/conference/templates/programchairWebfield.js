@@ -273,6 +273,10 @@ var getInvitations = function() {
   return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
 };
 
+var getRegistrationForms = function() {
+  return Webfield.getAll('/notes', { invitation: CONFERENCE_ID + '/.*/-/Form'});
+};
+
 var getPcAssignmentTagInvitations = function() {
   return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
 };
@@ -355,7 +359,19 @@ var displayHeader = function() {
   Webfield.ui.tabPanel(tabs);
 };
 
-var displayConfiguration = function(requestForm, invitations) {
+var buildConfiguration = function() {
+  var requestFormP = $.Deferred().resolve();
+  if (REQUEST_FORM_ID) {
+    requestFormP = getRequestForm();
+  }
+
+  $.when(requestFormP, getInvitations(), getRegistrationForms())
+  .then(function(requestForm, invitations, registrationForms) {
+    return displayConfiguration(requestForm, invitations, registrationForms);
+  })
+}
+
+var displayConfiguration = function(requestForm, invitations, registrationForms) {
 
   var formatPeriod = function(invitation) {
     var start;
@@ -420,6 +436,14 @@ var displayConfiguration = function(requestForm, invitations) {
     '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
     '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul><br>';
+
+  if (registrationForms && registrationForms.length) {
+    html += '<h3>Registration Forms:</h3><br><ul>';
+    registrationForms.forEach(function(form) {
+      html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
+    })
+    html += '</ul><br>';
+  }
 
   // Timeline
   html += '<h3>Timeline:</h3><br><ul>';
@@ -1452,10 +1476,6 @@ controller.addHandler('areachairs', {
         areaChairGroupsP = $.Deferred().resolve({ byNotes: buildNoteMap(noteNumbers), byAreaChairs: {}});
       }
       var decisionReviewsP = getDecisionReviews();
-      var requestFormP = $.Deferred().resolve();
-      if (REQUEST_FORM_ID) {
-        requestFormP = getRequestForm();
-      }
       var assignmentTagsP = $.Deferred().resolve();
       if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
         assignmentTagsP = getPcAssignmentTags();
@@ -1467,13 +1487,11 @@ controller.addHandler('areachairs', {
         getReviewerGroups(noteNumbers),
         areaChairGroupsP,
         decisionReviewsP,
-        requestFormP,
-        getInvitations(),
         pcAssignmentTagInvitations,
         assignmentTagsP
       );
     })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations, pcAssignmentTagInvitations) {
+    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, pcAssignmentTagInvitations) {
       var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
         return result.concat(_.values(idsObj));
       }, []));
@@ -1496,13 +1514,15 @@ controller.addHandler('areachairs', {
           decisions: decisions,
           pcAssignmentTagInvitations: pcAssignmentTagInvitations
         }
-        displayConfiguration(requestForm, invitations);
+      })
+      .then(buildConfiguration())
+      .then(function() {
         displayPaperStatusTable();
         if (AREA_CHAIRS_ID) {
           displaySPCStatusTable();
         }
         Webfield.ui.done();
-      });
+      })
     })
     .fail(function(error) {
       displayError();
