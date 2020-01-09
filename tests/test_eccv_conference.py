@@ -251,7 +251,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert group.members[0] == 'mohit+1@mail.com'
         assert group.members[1] == 'test_reviewer_eccv@mail.com'
 
-    def test_expersite_selection(self, conference, helpers, selenium, request_page):
+    def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
         reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
