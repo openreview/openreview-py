@@ -42,19 +42,18 @@ function load() {
     details: 'replyCount,original'
   });
 
-  var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.getAll('/notes', {
-    invitation: WITHDRAWN_SUBMISSION_ID,
-    details: 'replyCount,original'
+  var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
+    pageSize: PAGE_SIZE,
+    includeCount: true
   }) : $.Deferred().resolve([]);
 
-  var deskRejectedNotesP = DESK_REJECTED_SUBMISSION_ID ? Webfield.getAll('/notes', {
-    invitation: DESK_REJECTED_SUBMISSION_ID,
-    details: 'replyCount,original'
+  var deskRejectedNotesP = DESK_REJECTED_SUBMISSION_ID ? Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
+    pageSize: PAGE_SIZE,
+    includeCount: true
   }) : $.Deferred().resolve([]);
 
   var decisionNotesP = Webfield.getAll('/notes', {
     invitation: DECISION_INVITATION_REGEX,
-    noDetails: true
   });
 
   var userGroupsP;
@@ -157,6 +156,58 @@ function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, 
     $('.tabs-container a[href="#your-consoles"]').parent().show();
   } else {
     $('.tabs-container a[href="#your-consoles"]').parent().hide();
+  }
+
+  // Withdrawn Submissions Tab
+  if (WITHDRAWN_SUBMISSION_ID && withdrawnNotes.count) {
+    $('#withdrawn-submissions').empty();
+
+    Webfield.ui.submissionList(withdrawnNotes.notes, {
+      heading: null,
+      container: '#withdrawn-submissions',
+      search: {
+        enabled: false
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: withdrawnNotes.count,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
+      fadeIn: false
+    });
+  } else {
+    $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
+  }
+
+  // Desk Rejected Submissions Tab
+  if (DESK_REJECTED_SUBMISSION_ID && deskRejectedNotes.count) {
+    $('#desk-rejected-submissions').empty();
+
+    Webfield.ui.submissionList(deskRejectedNotes.notes, {
+      heading: null,
+      container: '#desk-rejected-submissions',
+      search: {
+        enabled: false
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: deskRejectedNotes.count,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
+      fadeIn: false
+    });
+  } else {
+    $('.tabs-container a[href="#desk-rejected-submissions"]').parent().hide();
   }
 
   // Register event handlers

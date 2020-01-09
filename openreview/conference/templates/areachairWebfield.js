@@ -110,12 +110,12 @@ var loadData = function(result) {
     var noteNumbersStr = noteNumbers.join(',');
 
     blindedNotesP = Webfield.getAll('/notes', {
-      invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr, noDetails: true
+      invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr
     });
 
     var noteNumberRegex = noteNumbers.join('|');
     metaReviewsP = Webfield.getAll('/notes', {
-      invitation: getInvitationRegex(OFFICIAL_META_REVIEW_NAME, noteNumberRegex), noDetails: true
+      invitation: getInvitationRegex(OFFICIAL_META_REVIEW_NAME, noteNumberRegex)
     });
   } else {
     blindedNotesP = $.Deferred().resolve([]);
@@ -166,7 +166,7 @@ var getOfficialReviews = function(noteNumbers) {
   var noteMap = buildNoteMap(noteNumbers);
 
   return Webfield.getAll('/notes', {
-    invitation: getInvitationRegex(OFFICIAL_REVIEW_NAME, noteNumbers.join('|')), noDetails: true
+    invitation: getInvitationRegex(OFFICIAL_REVIEW_NAME, noteNumbers.join('|'))
   })
   .then(function(notes) {
     var ratingExp = /^(\d+): .*/;

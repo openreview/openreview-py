@@ -45,7 +45,7 @@ var getBlindedNotes = function(noteNumbers) {
 
   var noteNumbersStr = noteNumbers.join(',');
 
-  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr, noDetails: true })
+  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr })
     .then(function(result) {
       return result.notes;
     });
@@ -56,7 +56,7 @@ var getAllRatings = function(callback) {
   var allNotes = [];
 
   function getPromise(offset, limit) {
-    return $.getJSON('notes', { invitation: invitationId, offset: offset, limit: limit, noDetails: true })
+    return $.getJSON('notes', { invitation: invitationId, offset: offset, limit: limit })
     .then(function(result) {
       allNotes = _.union(allNotes, result.notes);
       if (result.notes.length == limit) {
@@ -168,7 +168,7 @@ var getOfficialReviews = function(noteNumbers) {
     return $.Deferred().resolve({});
   }
 
-  return $.getJSON('notes', { invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true, noDetails: true })
+  return $.getJSON('notes', { invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true })
     .then(function(result) {
       return result.notes;
     }).fail(function(error) {
