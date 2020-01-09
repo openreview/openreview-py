@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import os
 import json
-
+import re
 
 
 class WebfieldBuilder(object):
@@ -400,3 +400,14 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
+    def edit_web_value(self, group, global_name, new_value):
+        # replaces a value (ex. true)
+        old_value = re.search("var "+global_name+" = .*;", group.web)
+        group.web = group.web.replace(old_value.group(), "var "+global_name+" = "+new_value+";")
+        return self.client.post_group(group)
+
+    def edit_web_string_value(self, group, global_name, new_value):
+        # replaces a string by adding the quotes
+        old_value = re.search("var "+global_name+" = .*;", group.web)
+        group.web = group.web.replace(old_value.group(),"var " + global_name + " = '" + new_value + "';")
+        return self.client.post_group(group)

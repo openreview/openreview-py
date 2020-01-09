@@ -75,11 +75,6 @@ class Conference(object):
         if area_chairs_group:
             return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
 
-    def __set_program_chair_page(self):
-        program_chairs_group = tools.get_group(self.client, self.get_program_chairs_id())
-        if program_chairs_group:
-            return self.webfield_builder.set_program_chair_page(self, program_chairs_group)
-
     def __set_expertise_selection_page(self):
         expertise_selection_invitation = tools.get_invitation(self.client, self.get_expertise_selection_id())
         if expertise_selection_invitation:
@@ -112,6 +107,7 @@ class Conference(object):
             now = round(time.time() * 1000)
             if not invitation.expdate or invitation.expdate > now:
                 invitation.expdate = now
+                invitation.duedate = now
                 invitation = self.client.post_invitation(invitation)
 
             return invitation
@@ -163,13 +159,16 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
 
-    def __set_reviewer_reassignment(self, enabled = True):
+    def set_reviewer_reassignment(self, enabled = True):
         self.enable_reviewer_reassignment = enabled
 
         # Update PC & AC homepages
-        self.__set_program_chair_page()
+        pc_group = self.client.get_group(self.get_program_chairs_id())
+        self.webfield_builder.edit_web_value(pc_group, 'ENABLE_REVIEWER_REASSIGNMENT', str(enabled).lower())
+
         if self.use_area_chairs:
-            self.__set_area_chair_page()
+            ac_group = self.client.get_group(self.get_area_chairs_id())
+            self.webfield_builder.edit_web_value(ac_group, 'ENABLE_REVIEWER_REASSIGNMENT', str(enabled).lower())
 
     def set_id(self, id):
         self.id = id
@@ -382,6 +381,13 @@ class Conference(object):
 
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
+        pc_group = tools.get_group(self.client, self.get_program_chairs_id())
+        if pc_group and pc_group.web:
+            # update PC console
+            if self.use_area_chairs:
+                self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', self.get_area_chairs_id())
+            else:
+                self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', '')
 
     def get_homepage_options(self):
         options = {}
@@ -415,6 +421,10 @@ class Conference(object):
 
         # Expire invitation
         invitation = self.__expire_invitation(self.get_submission_id())
+        # update submission due date
+        if self.submission_stage.due_date and (
+            tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
+            self.submission_stage.due_date = datetime.datetime.utcnow()
 
         # Add venue to active venues
         active_venues_group = self.client.get_group(id = 'active_venues')
@@ -483,8 +493,10 @@ class Conference(object):
                 blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
 
-        # Update page with double blind submissions
-        self.__set_program_chair_page()
+        # Update PC console with double blind submissions
+        pc_group = self.client.get_group(self.get_program_chairs_id())
+        self.webfield_builder.edit_web_string_value(pc_group, 'BLIND_SUBMISSION_ID', self.get_blind_submission_id())
+
         return blinded_notes
 
     ## Deprecated
@@ -548,10 +560,14 @@ class Conference(object):
         return self.__expire_invitations(name)
 
     def set_program_chairs(self, emails = []):
-        self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        pcs = self.__create_group(self.get_program_chairs_id(), self.id, emails)
+        # if first time, add PC console
+        if not pcs.web:
+            self.webfield_builder.set_program_chair_page(self, pcs)
         ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
-        return self.__set_program_chair_page()
+
+        return pcs
 
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
@@ -673,14 +689,14 @@ class Conference(object):
             )
             return result
 
-    def set_assignments(self, assingment_title, is_area_chair=False):
+    def set_assignments(self, assignment_title, is_area_chair=False):
         if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
-        self.__set_reviewer_reassignment(enabled=True)
-        return conference_matching.deploy(assingment_title)
+        self.set_reviewer_reassignment(enabled=True)
+        return conference_matching.deploy(assignment_title)
 
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
