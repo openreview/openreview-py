@@ -69,7 +69,21 @@ class SubmissionInvitation(openreview.Invitation):
 
 class BlindSubmissionsInvitation(openreview.Invitation):
 
-    def __init__(self, conference):
+    def __init__(self, conference, hide_fields):
+
+        content = {
+            'authors': {
+                'values': ['Anonymous']
+            },
+            'authorids': {
+                'values-regex': '.*'
+            }
+        }
+        for field in hide_fields:
+            content[field] = {
+                'value-regex': '.*'
+            }
+
         super(BlindSubmissionsInvitation, self).__init__(id = conference.get_blind_submission_id(),
             readers = ['everyone'],
             writers = [conference.get_id()],
@@ -87,14 +101,7 @@ class BlindSubmissionsInvitation(openreview.Invitation):
                 'signatures': {
                     'values': [conference.get_id()]
                 },
-                'content': {
-                    'authors': {
-                        'values': ['Anonymous']
-                    },
-                    'authorids': {
-                        'values-regex': '.*'
-                    }
-                }
+                'content': content
             }
         )
 
@@ -143,7 +150,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference, match_group_id):
+    def __init__(self, conference, match_group_id, request_count):
 
         bid_stage = conference.bid_stage
 
@@ -163,7 +170,7 @@ class BidInvitation(openreview.Invitation):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
-            taskCompletionCount = bid_stage.request_count,
+            taskCompletionCount = request_count,
             reply = {
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']
@@ -894,9 +901,9 @@ class InvitationBuilder(object):
         return self.client.post_invitation(SubmissionInvitation(conference))
 
 
-    def set_blind_submission_invitation(self, conference):
+    def set_blind_submission_invitation(self, conference, hide_fields):
 
-        invitation = BlindSubmissionsInvitation(conference = conference)
+        invitation = BlindSubmissionsInvitation(conference = conference, hide_fields=hide_fields)
 
         return  self.client.post_invitation(invitation)
 
@@ -909,9 +916,9 @@ class InvitationBuilder(object):
     def set_bid_invitation(self, conference):
 
         invitations = []
-        invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_reviewers_id())))
+        invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_reviewers_id(), conference.bid_stage.request_count)))
         if conference.use_area_chairs:
-            invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_area_chairs_id())))
+            invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_area_chairs_id(), conference.bid_stage.ac_request_count)))
         return invitations
 
     def set_comment_invitation(self, conference, notes):
@@ -999,7 +1006,8 @@ class InvitationBuilder(object):
             'replyto': None,
             'readers': {
                 'values-copied': [
-                    conference.get_id()
+                    conference.get_id(),
+                    '{content.user}'
                 ]
             },
             'writers': {
@@ -1152,14 +1160,14 @@ class InvitationBuilder(object):
 
 
 
-    def set_registration_invitation(self, conference, start_date, due_date, additional_fields, committee_id):
+    def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, instructions, committee_id, committee_name):
 
         invitees = [committee_id]
+        readers = [conference.id, committee_id]
 
         # Create super invitation with a webfield
-        registration_parent_invitation_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile?mode=edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = conference.get_id())
         registration_parent_invitation = openreview.Invitation(
-            id = conference.get_invitation_id('Registration_Form'),
+            id = conference.get_invitation_id(name='Form', prefix=committee_id),
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -1167,16 +1175,16 @@ class InvitationBuilder(object):
             reply = {
                 'forum': None,
                 'replyto': None,
-                'readers': {'values': invitees},
+                'readers': {'values': readers},
                 'writers': {'values': [conference.get_id()]},
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     'title': {
-                        'value': 'Registration Form'
+                        'value': committee_name[:-1] + ' Information'
                     },
-                    'Instructions': {
+                    'instructions': {
                         'order': 1,
-                        'value': registration_parent_invitation_instructions
+                        'value': instructions
                     }
                 }
             }
@@ -1186,27 +1194,27 @@ class InvitationBuilder(object):
 
         registration_parent = self.client.post_note(openreview.Note(
             invitation = registration_parent_invitation.id,
-            readers = invitees,
+            readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             replyto = None,
             forum = None,
             content = {
-                'Instructions': registration_parent_invitation_instructions,
-                'title': 'Registration Form'
+                'instructions': instructions,
+                'title': committee_name[:-1] + ' Information'
             }
         ))
 
         registration_content = {
             'profile_confirmed': {
                 'description': 'In order to avoid conflicts of interest in reviewing, we ask that all reviewers take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding email addresses, work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting "Yes".\n\n',
-                'value-radio': ['Yes', 'No'],
+                'value-checkbox': 'Yes',
                 'required': True,
                 'order': 1
             },
             'expertise_confirmed': {
                 'description': 'We will be using OpenReview\'s Expertise System as a factor in calculating paper-reviewer affinity scores. Please take a moment to ensure that your latest papers are visible at the Expertise Selection (link in instructions above). Please confirm finishing this step by selecting "Yes".\n\n',
-                'value-radio': ['Yes', 'No'],
+                'value-checkbox': 'Yes',
                 'required': True,
                 'order': 2
             }
@@ -1228,7 +1236,7 @@ class InvitationBuilder(object):
             duedate = tools.datetime_millis(due_date) if due_date else None,
             expdate = tools.datetime_millis(due_date),
             multiReply = False,
-            readers = ['everyone'],
+            readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
@@ -1259,3 +1267,25 @@ class InvitationBuilder(object):
 
         return registration_invitation
 
+    def set_registration_invitation(self, conference):
+
+        invitations = []
+        stage=conference.registration_stage
+        if conference.has_area_chairs:
+            invitations.append(self.__set_registration_invitation(conference=conference,
+            start_date=stage.start_date,
+            due_date=stage.due_date,
+            additional_fields=stage.ac_additional_fields,
+            instructions=stage.ac_instructions,
+            committee_id=conference.get_area_chairs_id(),
+            committee_name=conference.get_area_chairs_name()))
+
+        invitations.append(self.__set_registration_invitation(conference=conference,
+        start_date=stage.start_date,
+        due_date=stage.due_date,
+        additional_fields=stage.additional_fields,
+        instructions=stage.instructions,
+        committee_id=conference.get_reviewers_id(),
+        committee_name=conference.get_reviewers_name()))
+
+        return invitations

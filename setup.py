@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='1.0.8',
+      version='1.0.9',
       description='OpenReview client library',
       url='https://github.com/openreview/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
