@@ -23,7 +23,7 @@ jobs:
             npm install
             sudo npm install -g grunt-cli
             grunt regen
-            mkdir pdfs
+            mkdir files
       - run:
           name: run app
           command: |

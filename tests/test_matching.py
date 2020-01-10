@@ -622,38 +622,54 @@ class TestMatching():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+        additional_registration_content = {
+            'reviewing_experience': {
+                'description': 'How many times have you been a reviewer for any conference or journal?',
+                'value-radio': [
+                    'Never - this is my first time',
+                    '1 time - building my reviewer skills',
+                    '2-4 times  - comfortable with the reviewing process',
+                    '5-10 times  - active community citizen',
+                    '10+ times  - seasoned reviewer'
+                ],
+                'order': 5,
+                'required': False
+            }
+        }
+        builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
         blinded_notes = list(conference.get_submissions())
 
-        ## Open reviewer recommendations
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_registration(due_date = now + datetime.timedelta(minutes = 40))
+        registration_notes = client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Form')
+        assert registration_notes
+        assert len(registration_notes) == 1
+
+        registration_forum = registration_notes[0].forum
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
-        ac1_client.post_note(openreview.Note(invitation = conference.get_registration_id(),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
-            forum = invitation.reply['forum'],
-            replyto=invitation.reply['replyto'],
-            content = {
-                'title': 'UAI 2019 Registration',
-                'subject_areas': [
-                    'Algorithms: Approximate Inference',
-                    'Algorithms: Belief Propagation'
-                ],
-                'profile confirmed': 'Yes',
-                'expertise confirmed': 'Yes',
-                'reviewing experience': '2-4 times  - comfortable with the reviewing process'
-            }
-        ))
+        ac1_client.post_note(
+            openreview.Note(
+                invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration',
+                readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+                writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+                signatures = ['~AreaChair_One1'],
+                forum = registration_forum,
+                replyto = registration_forum,
+                content = {
+                    'subject_areas': [
+                        'Algorithms: Approximate Inference',
+                        'Algorithms: Belief Propagation'
+                    ],
+                    'profile_confirmed': 'Yes',
+                    'expertise_confirmed': 'Yes',
+                    'reviewing_experience': '2-4 times  - comfortable with the reviewing process'
+                }))
 
         # Set up reviewer matching
         conference.setup_matching()
-
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')

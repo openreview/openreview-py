@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import os
 import json
-
+import re
 
 
 class WebfieldBuilder(object):
@@ -109,21 +109,15 @@ class WebfieldBuilder(object):
                 <p class=\"dark\">Listed below are all the papers you have authored that exist in the OpenReview database.
                         <br>
                         <br>
-
                         <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
                         <br>
                         <br>
-                        Where possible, your previously authored papers from selected conferences were imported from <a href=https://dblp.org>DBLP.org</a> to populate this list. The keywords in these papers will be used to recommend submissions for you during the bidding process, and to assign submissions to you during the review process.
+                        Your previously authored papers from selected conferences were imported automatically from <a href=https://dblp.org>DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process.
                 </p>
                 <br>
-                <p class=\"dark\"><strong>Important Notes:</strong></p>
-                <ul>
-                        <li>By default, each paper is considered, unless you click on \"Exclude\" for a paper.</li>
-                        <li>Papers not included as part of this import process can be uploaded by using the Upload button below</b>.</li>
-                        <li>When uploading a paper, <b>the upload will not appear on this page if you do not include your email address in the \"authorids\" field, but it will be included in the recommendations process, even if it does not appear here</b>.
-                </ul>
+                    Papers not automatically included as part of this import process can be uploaded by using the <b>Upload</b> button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
                 <br>
-
+                <br>
                 <p class=\"dark\"> Please contact <a href=mailto:info@openreview.net>info@openreview.net</a> with any questions or concerns about this interface, or about the expertise scoring process.
                 </p>'''
         }
@@ -141,7 +135,7 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_bid_page(self, conference, invitation, group_id):
+    def set_bid_page(self, conference, invitation, group_id, request_count, instructions):
 
         sorted_tip = ''
         if conference.bid_stage.use_affinity_score:
@@ -151,7 +145,7 @@ class WebfieldBuilder(object):
                 that you provided in the Expertise Selection Interface.
             </li>'''
 
-        instructions_html = '''
+        default_instructions = '''
             <p class="dark"><strong>Instructions:</strong></p>
             <ul>
                 <li>
@@ -165,6 +159,9 @@ class WebfieldBuilder(object):
                 </li>
                 <li>
                     Use the search field to filter papers by keyword or subject area.
+                </li>
+                <li>
+                    Ensure that you have at least <strong>{request_count} bids</strong>.
                 </li>
             </ul>
             <p class="dark"><strong>A few tips:</strong></p>
@@ -180,11 +177,13 @@ class WebfieldBuilder(object):
                 </li>
                 {sorted_tip}
             </ul>
-            <br>'''.format(sorted_tip=sorted_tip)
+            <br>'''
+
+        instructions_html = instructions if instructions else default_instructions
 
         default_header = {
             'title': conference.get_short_name() + ' Bidding Console',
-            'instructions': instructions_html
+            'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=request_count)
         }
 
         header = self.__build_options(default_header, conference.get_bidpage_header())
@@ -323,6 +322,7 @@ class WebfieldBuilder(object):
             content = content.replace("var REVIEWER_NAME = {};", "var REVIEWER_NAME = " + conference.reviewers_name + ";")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
+            content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load) + ";")
             group.web = content
             return self.client.post_group(group)
 
@@ -400,3 +400,14 @@ class WebfieldBuilder(object):
             group.web = content
             return self.client.post_group(group)
 
+    def edit_web_value(self, group, global_name, new_value):
+        # replaces a value (ex. true)
+        old_value = re.search("var "+global_name+" = .*;", group.web)
+        group.web = group.web.replace(old_value.group(), "var "+global_name+" = "+new_value+";")
+        return self.client.post_group(group)
+
+    def edit_web_string_value(self, group, global_name, new_value):
+        # replaces a string by adding the quotes
+        old_value = re.search("var "+global_name+" = .*;", group.web)
+        group.web = group.web.replace(old_value.group(),"var " + global_name + " = '" + new_value + "';")
+        return self.client.post_group(group)

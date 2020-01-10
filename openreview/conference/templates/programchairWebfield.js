@@ -45,11 +45,13 @@ var getAllReviewers = function() {
 }
 
 var getNumberfromGroup = function(groupId, name) {
-
   var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith(name); });
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
   if (paper) {
-    return parseInt(paper.replace(name, ''));
+    return parseInt(paper.replace(name, ''), 10);
   } else {
     return null;
   }
@@ -70,7 +72,7 @@ var getInvitationId = function(name, number) {
 
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, noDetails: true, sort:'number:asc'
+    invitation: BLIND_SUBMISSION_ID, sort:'number:asc'
   });
 };
 
@@ -82,7 +84,7 @@ var getOfficialReviews = function(noteNumbers) {
   var noteMap = buildNoteMap(noteNumbers);
 
   return Webfield.getAll('/notes', {
-    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), noDetails: true
+    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*')
   })
   .then(function(notes) {
     var ratingExp = /^(\d+): .*/;
@@ -158,7 +160,7 @@ var getAreaChairGroups = function(noteNumbers) {
         var index = getNumberfromGroup(g.id, 'Area_Chair');
         if (num) {
           var areaChair = _.find(g.members, function(member) {
-            return (member.includes('~') || member.includes('@'));
+            return member.indexOf('~') > -1 || member.indexOf('@') > -1;
           });
           if (areaChair) {
             if (num in noteMap) {
@@ -247,13 +249,13 @@ var findProfile = function(profiles, id) {
 
 var getMetaReviews = function() {
   return Webfield.getAll('/notes', {
-    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*'), noDetails: true
+    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*')
   });
 };
 
 var getDecisionReviews = function() {
   return Webfield.getAll('/notes', {
-    invitation: getInvitationId(DECISION_NAME, '.*'), noDetails: true
+    invitation: getInvitationId(DECISION_NAME, '.*')
   });
 };
 
@@ -269,6 +271,10 @@ var getRequestForm = function() {
 
 var getInvitations = function() {
   return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
+};
+
+var getRegistrationForms = function() {
+  return Webfield.getAll('/notes', { invitation: CONFERENCE_ID + '/.*/-/Form'});
 };
 
 var getPcAssignmentTagInvitations = function() {
@@ -353,7 +359,19 @@ var displayHeader = function() {
   Webfield.ui.tabPanel(tabs);
 };
 
-var displayConfiguration = function(requestForm, invitations) {
+var buildConfiguration = function() {
+  var requestFormP = $.Deferred().resolve();
+  if (REQUEST_FORM_ID) {
+    requestFormP = getRequestForm();
+  }
+
+  $.when(requestFormP, getInvitations(), getRegistrationForms())
+  .then(function(requestForm, invitations, registrationForms) {
+    return displayConfiguration(requestForm, invitations, registrationForms);
+  })
+}
+
+var displayConfiguration = function(requestForm, invitations, registrationForms) {
 
   var formatPeriod = function(invitation) {
     var start;
@@ -418,6 +436,14 @@ var displayConfiguration = function(requestForm, invitations) {
     '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
     '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul><br>';
+
+  if (registrationForms && registrationForms.length) {
+    html += '<h3>Registration Forms:</h3><br><ul>';
+    registrationForms.forEach(function(form) {
+      html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
+    })
+    html += '</ul><br>';
+  }
 
   // Timeline
   html += '<h3>Timeline:</h3><br><ul>';
@@ -1450,10 +1476,6 @@ controller.addHandler('areachairs', {
         areaChairGroupsP = $.Deferred().resolve({ byNotes: buildNoteMap(noteNumbers), byAreaChairs: {}});
       }
       var decisionReviewsP = getDecisionReviews();
-      var requestFormP = $.Deferred().resolve();
-      if (REQUEST_FORM_ID) {
-        requestFormP = getRequestForm();
-      }
       var assignmentTagsP = $.Deferred().resolve();
       if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
         assignmentTagsP = getPcAssignmentTags();
@@ -1465,13 +1487,11 @@ controller.addHandler('areachairs', {
         getReviewerGroups(noteNumbers),
         areaChairGroupsP,
         decisionReviewsP,
-        requestFormP,
-        getInvitations(),
         pcAssignmentTagInvitations,
         assignmentTagsP
       );
     })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations, pcAssignmentTagInvitations) {
+    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, pcAssignmentTagInvitations) {
       var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
         return result.concat(_.values(idsObj));
       }, []));
@@ -1494,13 +1514,15 @@ controller.addHandler('areachairs', {
           decisions: decisions,
           pcAssignmentTagInvitations: pcAssignmentTagInvitations
         }
-        displayConfiguration(requestForm, invitations);
+      })
+      .then(buildConfiguration())
+      .then(function() {
         displayPaperStatusTable();
         if (AREA_CHAIRS_ID) {
           displaySPCStatusTable();
         }
         Webfield.ui.done();
-      });
+      })
     })
     .fail(function(error) {
       displayError();
@@ -1572,7 +1594,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   var $currDiv = $('#' + paperNumber + '-add-reviewer');
   var userToAdd = $currDiv.find('input').attr('value_id').trim();
 
-  if (!userToAdd || !((userToAdd.indexOf('@') > 0) || userToAdd.startsWith('~'))) {
+  if (!userToAdd || !((userToAdd.indexOf('@') > 0) || _.startsWith(userToAdd, '~'))) {
     // this checks if no input was given, OR  if the given input neither has an '@' nor does it start with a '~'
     promptError('Please enter a valid email for assigning a reviewer');
     return false;
@@ -1584,7 +1606,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
     return false;
   }
-  if (!userToAdd.startsWith('~')) {
+  if (!_.startsWith(userToAdd, '~')) {
     userToAdd = userToAdd.toLowerCase();
   }
 
@@ -1669,13 +1691,13 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       groups: [reviewerProfile.id],
       subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
       message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
-      ' for ' + SHORT_PHRASE + '.' +
-      '\n\nTo review this new assignment, please login and click on ' +
-      'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
-      '\n\nTo check all of your assigned papers, please click on https://openreview.net/group?id=' + REVIEWERS_ID +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
+        ' for ' + SHORT_PHRASE + '.' +
+        '\n\nTo review this new assignment, please login to OpenReview and go to ' +
+        'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
+        '\n\nTo see all of your assigned papers, go to https://openreview.net/group?id=' + REVIEWERS_ID +
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
     };
-    return Webfield.post('/mail', postData);
+    return Webfield.post('/messages', postData);
   });
   return false;
 });
@@ -1838,7 +1860,7 @@ var postReviewerEmails = function(postData) {
     postData.forumUrl
   );
 
-  return Webfield.post('/mail', postData)
+  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
   .then(function(response) {
     // Save the timestamp in the local storage
     for (var i = 0; i < postData.groups.length; i++) {

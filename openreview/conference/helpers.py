@@ -179,10 +179,19 @@ def get_meta_review_stage(client, request_forum):
     else:
         meta_review_due_date = None
 
+    additional_fields = {}
+    options = request_forum.content.get('recommendation_options', '').strip()
+    if options:
+        additional_fields = {'recommendation': {
+            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]},
+            'required': True}
+
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
-        public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'))
+        public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
+        additional_fields = additional_fields
+    )
 
 def get_decision_stage(client, request_forum):
     decision_start_date = request_forum.content.get('decision_start_date', '').strip()

@@ -99,8 +99,7 @@ function load() {
 
     authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
       pageSize: PAGE_SIZE,
-      'content.authorids': user.profile.id,
-      details: 'noDetails'
+      'content.authorids': user.profile.id
     });
   }
 
