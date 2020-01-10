@@ -54,7 +54,6 @@ function load() {
 
   var decisionNotesP = Webfield.getAll('/notes', {
     invitation: DECISION_INVITATION_REGEX,
-    noDetails: true
   });
 
   var userGroupsP;

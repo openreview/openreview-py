@@ -72,7 +72,7 @@ var getInvitationId = function(name, number) {
 
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, noDetails: true, sort:'number:asc'
+    invitation: BLIND_SUBMISSION_ID, sort:'number:asc'
   });
 };
 
@@ -84,7 +84,7 @@ var getOfficialReviews = function(noteNumbers) {
   var noteMap = buildNoteMap(noteNumbers);
 
   return Webfield.getAll('/notes', {
-    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), noDetails: true
+    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*')
   })
   .then(function(notes) {
     var ratingExp = /^(\d+): .*/;
@@ -249,13 +249,13 @@ var findProfile = function(profiles, id) {
 
 var getMetaReviews = function() {
   return Webfield.getAll('/notes', {
-    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*'), noDetails: true
+    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*')
   });
 };
 
 var getDecisionReviews = function() {
   return Webfield.getAll('/notes', {
-    invitation: getInvitationId(DECISION_NAME, '.*'), noDetails: true
+    invitation: getInvitationId(DECISION_NAME, '.*')
   });
 };
 
