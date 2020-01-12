@@ -632,12 +632,8 @@ def iterget_grouped_edges(
     ):
     '''Helper function for retrieving and parsing all edges in bulk'''
 
-    grouped_edges_iterator = iterget(
-        client.get_grouped_edges,
-        invitation=invitation,
-        groupby=groupby,
-        select=select
-    )
+    ## Backend has pagination temporally disabled, it returns all the groups now so we need to do one iteration.
+    grouped_edges_iterator = client.get_grouped_edges(invitation=invitation, groupby=groupby, select=select)
 
     for group in grouped_edges_iterator:
         group_edges = []
