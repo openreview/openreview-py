@@ -374,6 +374,10 @@ class Matching(object):
                     'config_invitation': {
                         'value': self._get_edge_invitation_id('Assignment_Configuration')
                     },
+                    'solver': {
+                        'value-radio': ['MinMax', 'FairFlow'],
+                        'default': 'MinMax'
+                    },
                     'status': {
                         'default': 'Initialized',
                         'value-dropdown': [
