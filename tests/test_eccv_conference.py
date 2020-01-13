@@ -347,15 +347,16 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_submission_additional_files(self, conference, test_client):
 
+        domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = conference.get_submission_id(),
-                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
+                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
                 signatures = ['~Test_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
-                    'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                    'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
                     'authors': ['Test User', 'Peter Test', 'Andrew Mc']
                 }
             )
@@ -433,8 +434,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         pc_client.post_invitation(invitation)
 
         note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/-/Revision',
-            readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@mit.edu', '~Test_User1'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mit.edu'],
             signatures = ['~Test_User1'],
             referent = note.original,
             forum = note.original,
@@ -479,9 +480,10 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_recommend_reviewers(self, conference, test_client, helpers, selenium, request_page):
 
-        r1_client = helpers.create_user('reviewer1@eccv.org', 'Reviewer', 'ECCV_One')
-        r2_client = helpers.create_user('reviewer2eccv.org', 'Reviewer', 'ECCV_Two')
-        r3_client = helpers.create_user('reviewer3@eccv.org', 'Reviewer', 'ECCV_Three')
+        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV_One')
+        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV_Two')
+        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV_Three')
+        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV_Four')
         ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV_One')
         ac2_client = helpers.create_user('ac2eccv.org', 'AreaChair', 'ECCV_Two')
 
@@ -496,13 +498,15 @@ Please contact info@openreview.net with any questions or concerns about this int
                 writer.writerow([submission.id, '~Reviewer_ECCV_One1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Reviewer_ECCV_Two1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Reviewer_ECCV_Three1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_ECCV_Four1', round(random.random(), 2)])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/temp.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             for submission in blinded_notes:
-                writer.writerow([submission.number, 'reviewer1@eccv.org', round(random.random(), 2)])
-                writer.writerow([submission.number, 'reviewer2eccv.org', round(random.random(), 2)])
-                writer.writerow([submission.number, 'reviewer3@eccv.org', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer1@fb.com', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer2@google.com', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer3@umass.edu', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer4@mit.edu', round(random.random(), 2)])
 
 
         conference.setup_matching(
@@ -593,6 +597,15 @@ Please contact info@openreview.net with any questions or concerns about this int
             signatures = ['~Reviewer_ECCV_Three1'],
             head = blinded_notes[0].id,
             tail = '~Reviewer_ECCV_Three1',
+            label = 'High'
+        ))
+        r4_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Four1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].id)],
+            writers = [conference.id, '~Reviewer_ECCV_Four1'],
+            signatures = ['~Reviewer_ECCV_Four1'],
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_ECCV_Four1',
             label = 'High'
         ))
 
