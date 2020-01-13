@@ -170,8 +170,9 @@ class Matching(object):
                         tail=profile.id,
                         weight=-1,
                         label=_conflict_label(conflicts),
-                        readers=[self.conference.id, profile.id],
+                        readers=[self.conference.id, self.conference.get_area_chairs_id(), profile.id],
                         writers=[self.conference.id],
+                        nonreaders=[self.conference.get_authors_id(number=submission.number)],
                         signatures=[self.conference.id]
                     ))
             openreview.tools.post_bulk_edges(client=self.client, edges=edges)
@@ -208,8 +209,8 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=[self.conference.id, self.conference.get_area_chairs_id(), profile.id],
-                        nonreaders=[self.conference.get_authors_id(number=paper_note_id)],
+                        readers=[self.conference.id, self.conference.get_area_chairs_id(), profile_id],
+                        nonreaders=[self.conference.get_authors_id(number=number)],
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
@@ -217,11 +218,13 @@ class Matching(object):
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         return invitation
 
-    def _build_scores(self, score_invitation_id, score_file):
+    def _build_scores(self, score_invitation_id, score_file, submissions):
         '''
         Given a csv file with affinity scores, create score edges
         '''
         invitation = self._create_edge_invitation(score_invitation_id)
+
+        submissions_per_id = {note.id: note.number for note in submissions}
 
         edges = []
         with open(score_file) as file_handle:
@@ -235,7 +238,7 @@ class Matching(object):
                     tail=profile_id,
                     weight=float(score),
                     readers=[self.conference.id, self.conference.get_area_chairs_id(), profile_id],
-                    nonreaders=[self.conference.get_authors_id(number=1)],
+                    nonreaders=[self.conference.get_authors_id(number=submissions_per_id[paper_note_id])],
                     writers=[self.conference.id],
                     signatures=[self.conference.id]
                 ))
@@ -454,7 +457,8 @@ class Matching(object):
         if affinity_score_file:
             invitation = self._build_scores(
                 self.conference.get_affinity_score_id(self.match_group.id),
-                affinity_score_file
+                affinity_score_file,
+                submissions
             )
             score_spec[invitation.id] = {
                 'weight': 1,
@@ -464,7 +468,8 @@ class Matching(object):
         if elmo_score_file:
             invitation = self._build_scores(
                 self.conference.get_elmo_score_id(self.match_group.id),
-                elmo_score_file
+                elmo_score_file,
+                submissions
             )
             score_spec[invitation.id] = {
                 'weight': 1,
