@@ -1141,16 +1141,18 @@ class InvitationBuilder(object):
                         'type': 'Note',
                         'query': {
                             'invitation': conference.get_blind_submission_id()
-                        }
+                        },
+                        'required': True
                     },
                     'tail': {
                         'type': 'Profile',
                         'query': {
                             'group': conference.get_reviewers_id()
-                        }
+                        },
+                        'required': True
                     },
                     'weight': {
-                        'value-regex': '[0-9]+',
+                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 9, 10],
                         'required': True
                     }
                 }

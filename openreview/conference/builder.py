@@ -315,8 +315,10 @@ class Conference(object):
     def get_bid_id(self, group_id):
         return self.get_invitation_id(self.bid_stage.name, prefix=group_id)
 
-    def get_recommendation_id(self, number = None):
-        return self.get_invitation_id(self.recommendation_name, number)
+    def get_recommendation_id(self, group_id=None):
+        if not group_id:
+            group_id = self.get_reviewers_id()
+        return self.get_invitation_id(self.recommendation_name, prefix=group_id)
 
     def get_registration_id(self, committee_id):
         return self.get_invitation_id(name = self.registration_stage.name, prefix = committee_id)

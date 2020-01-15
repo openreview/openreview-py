@@ -661,7 +661,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         ## Go to edge browser
         start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
-        edit = 'thecvf.com/ECCV/2020/Conference/-/Recommendation'
+        edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
         browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
 thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
 thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;\
@@ -679,6 +679,22 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
             head = blinded_notes[0].id,
             tail = '~Reviewer_ECCV_Three1',
             weight = 1))
+
+        ac2_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            writers = ['~AreaChair_ECCV_Two1'],
+            signatures = ['~AreaChair_ECCV_Two1'],
+            head = blinded_notes[3].id,
+            tail = '~Reviewer_ECCV_Three1',
+            weight = 10))
+
+        ac2_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            writers = ['~AreaChair_ECCV_Two1'],
+            signatures = ['~AreaChair_ECCV_Two1'],
+            head = blinded_notes[4].id,
+            tail = '~Reviewer_ECCV_Three1',
+            weight = 5))
 
         assert 1 == 2
 
