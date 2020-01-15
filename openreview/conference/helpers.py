@@ -96,6 +96,16 @@ def get_conference(client, request_form_id):
     if 'Organizers will assign papers manually' in paper_matching_options:
         builder.enable_reviewer_reassignment(enable = True)
 
+    if submission_due_date < datetime.datetime.now():
+        # if submissions have expired, check for creating bidding, reviews and meta-reviews
+        if 'bid_due_date' in note.content.keys():
+            get_bid_stage(client, note)
+        if 'review_deadline' in note.content.keys():
+            get_review_stage(client, note)
+        if 'meta_review_deadline' in note.content.keys():
+            get_meta_review_stage(client, note)
+
+
     conference = builder.get_result()
     conference.set_program_chairs(emails = note.content['Contact Emails'])
     return conference
