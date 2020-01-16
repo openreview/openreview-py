@@ -518,7 +518,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ### Bids
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[0].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id, '~Reviewer_ECCV_One1'],
             signatures = ['~Reviewer_ECCV_One1'],
             head = blinded_notes[0].id,
@@ -527,7 +527,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[1].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
             writers = [conference.id, '~Reviewer_ECCV_One1'],
             signatures = ['~Reviewer_ECCV_One1'],
             head = blinded_notes[1].id,
@@ -536,7 +536,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[4].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
             writers = [conference.id, '~Reviewer_ECCV_One1'],
             signatures = ['~Reviewer_ECCV_One1'],
             head = blinded_notes[4].id,
@@ -546,7 +546,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[2].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
             writers = [conference.id, '~Reviewer_ECCV_Two1'],
             signatures = ['~Reviewer_ECCV_Two1'],
             head = blinded_notes[2].id,
@@ -555,7 +555,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[3].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[3].number)],
             writers = [conference.id, '~Reviewer_ECCV_Two1'],
             signatures = ['~Reviewer_ECCV_Two1'],
             head = blinded_notes[3].id,
@@ -564,7 +564,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[4].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
             writers = [conference.id, '~Reviewer_ECCV_Two1'],
             signatures = ['~Reviewer_ECCV_Two1'],
             head = blinded_notes[4].id,
@@ -574,7 +574,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[4].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
             writers = [conference.id, '~Reviewer_ECCV_Three1'],
             signatures = ['~Reviewer_ECCV_Three1'],
             head = blinded_notes[4].id,
@@ -583,7 +583,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[2].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
             writers = [conference.id, '~Reviewer_ECCV_Three1'],
             signatures = ['~Reviewer_ECCV_Three1'],
             head = blinded_notes[2].id,
@@ -592,7 +592,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[0].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id, '~Reviewer_ECCV_Three1'],
             signatures = ['~Reviewer_ECCV_Three1'],
             head = blinded_notes[0].id,
@@ -601,7 +601,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         r4_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Four1'],
-            nonreaders = [conference.get_authors_id(number=blinded_notes[0].id)],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id, '~Reviewer_ECCV_Four1'],
             signatures = ['~Reviewer_ECCV_Four1'],
             head = blinded_notes[0].id,

@@ -163,6 +163,11 @@ class BidInvitation(openreview.Invitation):
 
         invitees = [match_group_id]
 
+        values_copied = [conference.get_id()]
+        if match_group_id == conference.get_reviewers_id():
+            values_copied.append(conference.get_area_chairs_id())
+        values_copied.append('{signatures}')
+
         super(BidInvitation, self).__init__(id = conference.get_bid_id(match_group_id),
             cdate = tools.datetime_millis(bid_stage.start_date),
             duedate = tools.datetime_millis(bid_stage.due_date),
@@ -174,7 +179,10 @@ class BidInvitation(openreview.Invitation):
             taskCompletionCount = request_count,
             reply = {
                 'readers': {
-                    'values-copied': [conference.get_id(), '{signatures}']
+                    'values-copied': values_copied
+                },
+                'nonreaders': {
+                    'values-regex': conference.get_authors_id(number='.*')
                 },
                 'signatures': {
                     'values-regex': '~.*'

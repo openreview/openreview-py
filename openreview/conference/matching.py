@@ -79,6 +79,7 @@ class Matching(object):
         self.conference = conference
         self.client = conference.client
         self.match_group = match_group
+        self.is_area_chair = conference.get_area_chairs_id() == match_group.id
 
     def _get_edge_invitation_id(self, edge_name):
         '''
@@ -86,33 +87,31 @@ class Matching(object):
         '''
         return self.conference.get_invitation_id(edge_name, prefix=self.match_group.id)
 
-    def _create_edge_invitation(self, edge_id, extendable_readers=False):
+    def _create_edge_invitation(self, edge_id):
         '''
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
         '''
 
+        commitee = [self.conference.get_id()]
+        if not self.is_area_chair:
+            commitee.append(self.conference.get_area_chairs_id())
+
         readers = {
-            'values-copied': [self.conference.get_id(), '{tail}']
+            'values-copied': commitee + ['{tail}']
         }
-
-        if extendable_readers:
-            regex = self.conference.get_id() + '|~.*|.*@.*'
-            if self.match_group.id == self.conference.get_reviewers_id() and self.conference.use_area_chairs:
-                regex += '|' + self.conference.get_area_chairs_id()
-
-            readers = {
-                'values-regex': regex
-            }
 
         invitation = openreview.Invitation(
             id=edge_id,
             invitees=[self.conference.get_id()],
-            readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
+            readers=commitee,
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
             reply={
                 'readers': readers,
+                'nonreaders': {
+                    'values-regex': self.conference.get_authors_id(number='.*')
+                },
                 'writers': {
                     'values': [self.conference.get_id()]
                 },
@@ -496,7 +495,6 @@ class Matching(object):
 
         # Get the configuration note to check the group to assign
         client = self.conference.client
-        is_area_chair = self.conference.get_area_chairs_id() == self.match_group.id
 
         submissions = openreview.tools.iterget_notes(
             client,
@@ -512,5 +510,5 @@ class Matching(object):
         for edge in assignment_edges:
             paper_number = paper_by_forum.get(edge.head).number
             user = edge.tail
-            new_assigned_group = self.conference.set_assignment(user, paper_number, is_area_chair)
+            new_assigned_group = self.conference.set_assignment(user, paper_number, self.is_area_chair)
             print(new_assigned_group)
