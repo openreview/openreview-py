@@ -376,7 +376,8 @@ class Matching(object):
                     },
                     'solver': {
                         'value-radio': ['MinMax', 'FairFlow'],
-                        'default': 'MinMax'
+                        'default': 'MinMax',
+                        'required': True
                     },
                     'status': {
                         'default': 'Initialized',
