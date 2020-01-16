@@ -93,18 +93,19 @@ class Matching(object):
         e.g. "Affinity_Score"
         '''
 
-        commitee = [self.conference.get_id()]
+        edge_readers = [self.conference.get_id()]
         if not self.is_area_chair:
-            commitee.append(self.conference.get_area_chairs_id())
+            ## Area Chairs should read the edges of the reviewer invitations.
+            edge_readers.append(self.conference.get_area_chairs_id())
 
         readers = {
-            'values-copied': commitee + ['{tail}']
+            'values-copied': edge_readers + ['{tail}']
         }
 
         invitation = openreview.Invitation(
             id=edge_id,
             invitees=[self.conference.get_id()],
-            readers=commitee,
+            readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
             reply={
