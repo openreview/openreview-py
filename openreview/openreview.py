@@ -50,11 +50,12 @@ class Client(object):
         self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.token = token
         self.profile = None
         self.headers = {
-            'User-Agent': 'test-create-script'
+            'User-Agent': self.user_agent
         }
 
         if self.token:
@@ -115,7 +116,7 @@ class Client(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password }
-        header = { 'User-Agent': 'test-create-script' }
+        header = { 'User-Agent': self.user_agent }
         response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
