@@ -513,7 +513,22 @@ Please contact info@openreview.net with any questions or concerns about this int
             affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
         )
-        conference.setup_matching(is_area_chair=True)
+
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.id, '~AreaChair_ECCV_One1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~AreaChair_ECCV_Two1', round(random.random(), 2)])
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/temp.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.number, 'ac1@eccv.org', round(random.random(), 2)])
+                writer.writerow([submission.number, 'ac2eccv.org', round(random.random(), 2)])
+
+        conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
 
         ### Bids
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
@@ -659,7 +674,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         conference.open_recommendations()
 
-        ## Go to edge browser
+        ## Go to edge browser to recommend reviewers
         start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
         edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
         browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
@@ -695,6 +710,17 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
             head = blinded_notes[4].id,
             tail = '~Reviewer_ECCV_Three1',
             weight = 5))
+
+        ## Go to edge browser to browse the assignments
+        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching'
+        edit = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment'
+        browse = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/TPMS_Score;\
+thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score;\
+thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid;\
+thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Conflict'
+        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}'.format(start=start, edit=edit, browse=browse)
+        request_page(selenium, url, ac1_client.token)
+        print(url)
 
         assert 1 == 2
 
