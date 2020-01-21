@@ -159,7 +159,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
+        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
         return conference
@@ -682,7 +682,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
 thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;\
 thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
 
-        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}'.format(start=start, edit=edit, browse=browse)
+        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&maxColumns=2'.format(start=start, edit=edit, browse=browse)
         request_page(selenium, url, ac1_client.token)
         print(url)
 
@@ -712,13 +712,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
             weight = 5))
 
         ## Go to edge browser to browse the assignments
-        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching'
-        edit = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment'
+        edit = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching'
         browse = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/TPMS_Score;\
 thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score;\
 thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid;\
 thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Conflict'
-        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}'.format(start=start, edit=edit, browse=browse)
+        url = 'http://localhost:3000/edge/browse?traverse={edit}&edit={edit}&browse={browse}'.format(edit=edit, browse=browse)
         request_page(selenium, url, ac1_client.token)
         print(url)
 
