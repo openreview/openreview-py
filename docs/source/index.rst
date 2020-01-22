@@ -22,6 +22,7 @@ Contents
    help
    conference_builder
    mental_models
+   matcher
 
 
 Indices and tables
