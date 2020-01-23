@@ -304,12 +304,6 @@ class Matching(object):
                         'description': 'Max number of reviewers that can review a paper',
                         'order': 2
                     },
-                    'min_users': {
-                        'value-regex': '[0-9]+',
-                        'required': True,
-                        'description': 'Min number of reviewers required to review a paper',
-                        'order': 3
-                    },
                     'max_papers': {
                         'value-regex': '[0-9]+',
                         'required': True,
