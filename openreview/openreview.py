@@ -55,7 +55,8 @@ class Client(object):
         self.token = token
         self.profile = None
         self.headers = {
-            'User-Agent': self.user_agent
+            'User-Agent': self.user_agent,
+            'Accept': 'application/json'
         }
 
         if self.token:
@@ -116,7 +117,6 @@ class Client(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password }
-        header = { 'User-Agent': self.user_agent }
         response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
