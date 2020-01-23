@@ -1096,6 +1096,7 @@ class ConferenceBuilder(object):
         self.comment_stage = None
         self.meta_review_stage = None
         self.decision_stage = None
+        self.program_chairs_ids = []
 
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
@@ -1143,6 +1144,9 @@ class ConferenceBuilder(object):
 
     def set_conference_program_chairs_name(self, name):
         self.conference.set_program_chairs_name(name)
+
+    def set_conference_program_chairs_ids(self, ids):
+        self.program_chairs_ids = ids
 
     def set_homepage_header(self, header):
         self.conference.set_homepage_header(header)
@@ -1256,7 +1260,7 @@ class ConferenceBuilder(object):
             self.conference.set_submission_stage(self.submission_stage)
 
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
-        self.conference.set_program_chairs()
+        self.conference.set_program_chairs(emails=self.program_chairs_ids)
         self.conference.set_authors()
         self.conference.set_reviewers()
         if self.conference.use_area_chairs:
