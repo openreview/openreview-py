@@ -117,7 +117,8 @@ class Client(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password }
-        response = requests.post(self.login_url, headers=self.header, json=user)
+        header = { 'User-Agent': self.user_agent, 'Accept': 'application/json'}
+        response = requests.post(self.login_url, headers=header, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -879,6 +880,7 @@ class Client(object):
         method with default arguments will give back a list of groups where each group is of the form:
         {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
         Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
+
         :param invitation:
         :param groupby:
         :param select:
