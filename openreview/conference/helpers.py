@@ -4,6 +4,11 @@ import json
 
 def get_conference(client, request_form_id):
 
+    builder = get_conference_builder(client, request_form_id)
+    return builder.get_result()
+
+def get_conference_builder(client, request_form_id):
+
     note = client.get_note(request_form_id)
 
     if note.invitation not in 'OpenReview.net/Support/-/Request_Form':
@@ -98,9 +103,9 @@ def get_conference(client, request_form_id):
     if 'Organizers will assign papers manually' in paper_matching_options:
         builder.enable_reviewer_reassignment(enable = True)
 
-    conference = builder.get_result()
-    conference.set_program_chairs(emails = note.content['Contact Emails'])
-    return conference
+    builder.set_conference_program_chairs_ids(note.content['Contact Emails'])
+
+    return builder
 
 def get_bid_stage(client, request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
