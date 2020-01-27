@@ -451,7 +451,7 @@ class TestMatching():
 
         ## Open reviewer recommendations
         now = datetime.datetime.utcnow()
-        conference.open_recommendations(due_date = now + datetime.timedelta(minutes = 40))
+        conference.open_recommendations(assignment_title='', due_date = now + datetime.timedelta(minutes = 40))
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
