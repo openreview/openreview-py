@@ -50,11 +50,13 @@ class Client(object):
         self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.token = token
         self.profile = None
         self.headers = {
-            'User-Agent': 'test-create-script'
+            'User-Agent': self.user_agent,
+            'Accept': 'application/json'
         }
 
         if self.token:
@@ -115,8 +117,7 @@ class Client(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password }
-        header = { 'User-Agent': 'test-create-script' }
-        response = requests.post(self.login_url, headers=header, json=user)
+        response = requests.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -878,6 +879,7 @@ class Client(object):
         method with default arguments will give back a list of groups where each group is of the form:
         {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
         Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
+
         :param invitation:
         :param groupby:
         :param select:

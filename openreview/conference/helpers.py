@@ -4,6 +4,11 @@ import json
 
 def get_conference(client, request_form_id):
 
+    builder = get_conference_builder(client, request_form_id)
+    return builder.get_result()
+
+def get_conference_builder(client, request_form_id):
+
     note = client.get_note(request_form_id)
 
     if note.invitation not in 'OpenReview.net/Support/-/Request_Form':
@@ -16,6 +21,7 @@ def get_conference(client, request_form_id):
     builder.set_request_form_id(request_form_id)
 
     conference_start_date_str = 'TBD'
+    conference_start_date = None
     start_date = note.content.get('Venue Start Date', note.content.get('Conference Start Date', '')).strip()
     if start_date:
         try:
@@ -49,7 +55,8 @@ def get_conference(client, request_form_id):
     builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
     builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
     builder.set_conference_short_name(note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')))
-    builder.set_conference_year(conference_start_date.year)
+    if conference_start_date:
+        builder.set_conference_year(conference_start_date.year)
 
     homepage_header = {
         'title': note.content['title'],
@@ -96,9 +103,9 @@ def get_conference(client, request_form_id):
     if 'Organizers will assign papers manually' in paper_matching_options:
         builder.enable_reviewer_reassignment(enable = True)
 
-    conference = builder.get_result()
-    conference.set_program_chairs(emails = note.content['Contact Emails'])
-    return conference
+    builder.set_conference_program_chairs_ids(note.content['Contact Emails'])
+
+    return builder
 
 def get_bid_stage(client, request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()

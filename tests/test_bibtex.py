@@ -44,14 +44,15 @@ url={'''
         assert bibtex == valid_bibtex
 
         # test accepted False and names reversed
-        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=False, anonymous=False,
-                                             names_reversed=True)
+        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=False, anonymous=False, names_reversed=True)
+
         valid_bibtex = '''@misc{
 user2020paper,
 title={Paper title has an {\^O}},
 author={User, Bibtex and Te{\\"e}t, Peter and McC, Andrew},
 year={2020},
 url={https://openreview.net/forum?id='''
+
         valid_bibtex = valid_bibtex + posted_note.forum + '''}
 }'''
 
