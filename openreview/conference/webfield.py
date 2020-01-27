@@ -208,15 +208,14 @@ class WebfieldBuilder(object):
 
         default_header = {
             'title': conference.get_short_name() + ' Reviewer Recommendation',
-            'instructions': '<p class="dark">Recommend a ranked list of reviewer for each of your assigned papers.</p>\
+            'instructions': '<p class="dark">Recommend a ranked list of reviewers for each of your assigned papers.</p>\
                 <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
-                    <li>Follow this link listed below to see your assigned papers.</li>\
-                    <li>For each or your assigned papers recommend 7 reviewers in a ranked list.</li>\
-                    <li>You can select a number between 1 and 10 to define the ranking of the reviewer. 10 is the highed and 1 is the lowest.</li>\
-                    <li>Reviewers with conflicts with the paper are not shown.</li>\
-                    <li>You can sort the list of reviewers by different type of scores.</li>\
-                    <li>You can also search reviewers by name.</li>\
+                    <li>For each of your assigned papers, please select 7 reviewers to recommend.</li>\
+                    <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
+                    <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
+                    <li>The list of reviewers can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
+                    <li>To get started click the button below.</li>\
                 </ul>\
                 <br>'
         }
