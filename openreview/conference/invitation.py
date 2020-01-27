@@ -1117,14 +1117,8 @@ class InvitationBuilder(object):
 
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_invitation(self, conference, start_date, due_date, notes_iterator, assignment_notes_iterator):
+    def set_recommendation_invitation(self, conference, start_date, due_date):
 
-        assignment_note_by_forum = {}
-        if assignment_notes_iterator:
-            for assignment_note in assignment_notes_iterator:
-                assignment_note_by_forum[assignment_note.forum] = assignment_note.content
-
-        # Create super invitation with a webfield
         recommendation_invitation = openreview.Invitation(
             id = conference.get_recommendation_id(),
             cdate = tools.datetime_millis(start_date),
@@ -1167,7 +1161,7 @@ class InvitationBuilder(object):
             }
         )
 
-        recommendation_invitation = self.client.post_invitation(recommendation_invitation)
+        return self.client.post_invitation(recommendation_invitation)
 
 
 

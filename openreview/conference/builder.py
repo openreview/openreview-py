@@ -95,10 +95,10 @@ class Conference(object):
             if bid_invitation:
                 self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id(), self.bid_stage.ac_request_count, self.bid_stage.instructions)
 
-    def __set_recommendation_page(self):
+    def __set_recommendation_page(self, assignment_title, score_ids):
         recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
         if recommendation_invitation:
-            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation)
+            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, assignment_title, score_ids)
 
     def __expire_invitation(self, invitation_id):
         # Get invitation
@@ -532,15 +532,22 @@ class Conference(object):
         if self.use_area_chairs:
             self.__expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
-    def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
-        notes_iterator = self.get_submissions()
-        assignment_notes_iterator = None
+    def open_recommendations(self, assignment_title, start_date = None, due_date = None):
 
-        if reviewer_assingment_title:
-            assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.get_paper_assignment_id(), content = { 'title': reviewer_assingment_title })
+        score_ids = []
+        invitation_id = self.get_invitation_id('TPMS_Score', prefix=self.get_reviewers_id())
+        if tools.get_invitation(self.client, invitation_id):
+            score_ids.append(invitation_id)
+        invitation_id = self.get_invitation_id('Affinity_Score', prefix=self.get_reviewers_id())
+        if tools.get_invitation(self.client, invitation_id):
+            score_ids.append(invitation_id)
+        invitation_id = self.get_bid_id(self.get_reviewers_id())
+        if tools.get_invitation(self.client, invitation_id):
+            score_ids.append(invitation_id)
+        score_ids.append(self.get_conflict_score_id(self.get_reviewers_id()))
 
-        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
-        return self.__set_recommendation_page()
+        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date)
+        return self.__set_recommendation_page(assignment_title, score_ids)
 
     ## Deprecated
     def open_registration(self, name=None, start_date=None, due_date=None, additional_fields={}, ac_additional_fields={}, instructions=None, ac_instructions=None):

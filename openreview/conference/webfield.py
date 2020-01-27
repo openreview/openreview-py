@@ -204,32 +204,34 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_page(self, conference, invitation):
+    def set_recommendation_page(self, conference, invitation, assignment_title, score_ids):
 
         default_header = {
-            'title': conference.get_short_name() + ' Reviewer Recommendation Console',
-            'instructions': '<p class="dark">Please select the reviewers you want to recommend for each paper.</p>\
-                <p class="dark"><strong>Please note:</strong></p>\
+            'title': conference.get_short_name() + ' Reviewer Recommendation',
+            'instructions': '<p class="dark">Recommend a ranked list of reviewer for each of your assigned papers.</p>\
+                <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
-                    <li>The list of reviewers for each papers are sorted by assignment score.</li>\
-                    <li>Assigned: reviewers assigned using the first macthing, Alternate: next possible reviewers to assign.</li>\
-                </ul>\
-                <p class="dark"><strong>A few tips:</strong></p>\
-                <ul>\
-                    <li>.</li>\
-                    <li>.</li>\
+                    <li>Follow this link listed below to see your assigned papers.</li>\
+                    <li>For each of your assigned paper, select a ranked list of 7 reviewers.</li>\
+                    <li>You can select a number between 1 and 10 to define the ranking of the reviewer. 10 is the highed and 1 is the lowest.</li>\
+                    <li>Reviewers with conflicts with the paper are not shown.</li>\
+                    <li>You can sort the list of reviewers by different type of scores.</li>\
+                    <li>You can also search reviewers by name.</li>\
                 </ul>\
                 <br>'
         }
 
         header = self.__build_options(default_header, {})
 
+        start_param = conference.get_paper_assignment_id(conference.get_area_chairs_id()) + ',label:{assignment_title}'.format(assignment_title=assignment_title) + ',tail:{userId}'
+        edit_param = invitation.id
+        browse_param = ';'.join(score_ids)
+        params = 'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param)
         with open(os.path.join(os.path.dirname(__file__), 'templates/recommendationWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
-            content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
+            content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
 
             invitation.web = content
             return self.client.post_invitation(invitation)

@@ -672,20 +672,8 @@ Please contact info@openreview.net with any questions or concerns about this int
             weight = 0.86
         ))
 
-        conference.open_recommendations()
-
-        ## Go to edge browser to recommend reviewers
-        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
-        edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
-        browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
-thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
-thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;\
-thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
-
-        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&maxColumns=2'.format(start=start, edit=edit, browse=browse)
-        request_page(selenium, url, ac1_client.token)
-        print(url)
-
+        now = datetime.datetime.utcnow()
+        conference.open_recommendations(assignment_title='ac-matching', due_date=now + datetime.timedelta(minutes = 1440))
 
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
@@ -711,16 +699,22 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
             tail = '~Reviewer_ECCV_Three1',
             weight = 5))
 
-        ## Go to edge browser to browse the assignments
-        edit = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching'
-        browse = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/TPMS_Score;\
-thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score;\
-thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid;\
-thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Conflict'
-        url = 'http://localhost:3000/edge/browse?traverse={edit}&edit={edit}&browse={browse}'.format(edit=edit, browse=browse)
-        request_page(selenium, url, ac1_client.token)
-        print(url)
+        ## Go to edge browser to recommend reviewers
+        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
+        edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
+        browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
 
-        assert 1 == 2
+        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&maxColumns=2'.format(start=start, edit=edit, browse=browse)
+
+        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation', ac1_client.token)
+        panel = selenium.find_element_by_id('notes')
+        assert panel
+        links = panel.find_elements_by_tag_name('a')
+        assert links
+        assert len(links) == 1
+        assert url == links[0].get_attribute("href")
 
 
