@@ -25,9 +25,10 @@ function renderContent() {
   var params = EDGE_BROWSER_PARAMS.replace('{userId}', user.profile.id);
   var browseUrl = window.location.origin + '/edge/browse?' + params;
 
+  $('#content').removeClass('legacy-styles');
   $('#notes').empty().append(
     '<p class="text-center">' +
-      '<a href="' + browseUrl + '" class="btn btn-secondary" target="_blank">Recommend Reviewers</a>' +
+      '<a href="' + browseUrl + '" class="btn btn-lg btn-primary" target="_blank">Recommend Reviewers</a>' +
     '</p>'
   );
 
