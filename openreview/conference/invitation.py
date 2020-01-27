@@ -325,7 +325,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 'readers': {
                     'description': 'The users who will be allowed to read the reply content.',
                     'values': [
-                        conference.get_id()
+                        'everyone'
                     ]
                 },
                 'writers': {
@@ -401,7 +401,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                     'replyto': note.id,
                     'readers': {
                         'description': 'User groups that will be able to read this withdraw note.',
-                        'values': conference.submission_stage.get_blind_readers(conference, note.number)
+                        'values': ['everyone']
                     },
                     'writers': {
                         'values-copied': [
@@ -454,7 +454,9 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 'replyto': None,
                 'readers': {
                     'description': 'The users who will be allowed to read the reply content.',
-                    'values': [conference.get_id()]
+                    'values': [
+                        'everyone'
+                    ]
                 },
                 'writers': {
                     'values': [
@@ -529,7 +531,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                     'replyto': note.id,
                     'readers': {
                         'description': 'User groups that will be able to read this desk reject note.',
-                        'values': conference.submission_stage.get_blind_readers(conference, note.number)
+                        'values': ['everyone']
                     },
                     'writers': {
                         'values-copied': [
