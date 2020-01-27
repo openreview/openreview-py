@@ -212,7 +212,7 @@ class WebfieldBuilder(object):
                 <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
                     <li>Follow this link listed below to see your assigned papers.</li>\
-                    <li>For each of your assigned paper, select a ranked list of 7 reviewers.</li>\
+                    <li>For each or your assigned papers recommend 7 reviewers in a ranked list.</li>\
                     <li>You can select a number between 1 and 10 to define the ranking of the reviewer. 10 is the highed and 1 is the lowest.</li>\
                     <li>Reviewers with conflicts with the paper are not shown.</li>\
                     <li>You can sort the list of reviewers by different type of scores.</li>\
