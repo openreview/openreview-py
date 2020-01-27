@@ -17,22 +17,21 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-
-// Perform all the required API calls
 function load() {
   return $.Deferred().resolve();
 }
 
-
-// Display the recommend interface populated with loaded data
 function renderContent() {
-
   var params = EDGE_BROWSER_PARAMS.replace('{userId}', user.profile.id);
-  var browseUrl = window.location.origin + '/edge/browse?' + decodeURIComponent(params);
+  var browseUrl = window.location.origin + '/edge/browse?' + params;
 
-  $('#notes').empty().append('<a href="' + browseUrl + '" target="_blank">Go to reviewers recommendation</a>');
+  $('#notes').empty().append(
+    '<p class="text-center">' +
+      '<a href="' + browseUrl + '" class="btn btn-secondary" target="_blank">Recommend Reviewers</a>' +
+    '</p>'
+  );
 
-  $.Deferred().resolve();
+  return $.Deferred().resolve();
 }
 
 // Go!
