@@ -589,11 +589,12 @@ class OfficialCommentInvitation(openreview.Invitation):
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
 
         readers = []
-        invitees = conference.get_committee(number=note.number, with_authors=True)
+        invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors)
         if comment_stage.allow_public_comments:
             readers.append('everyone')
 
-        readers.append(conference.get_authors_id(note.number))
+        if comment_stage.authors:
+            readers.append(conference.get_authors_id(note.number))
 
         if comment_stage.reader_selection:
             readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
