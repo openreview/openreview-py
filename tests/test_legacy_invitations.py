@@ -27,7 +27,7 @@ class TestLegacyInvitations():
         builder.has_area_chairs(True)
         builder.use_legacy_invitation_id(True)
         now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_submission_stage(public = True, due_date = now + datetime.timedelta(minutes = 40))
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         conference = builder.get_result()

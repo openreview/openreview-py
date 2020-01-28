@@ -88,7 +88,7 @@ class TestBuilder():
 
         author_client = helpers.create_user('author_test1@mail.com', 'Test', 'Author')
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_Author1', 'drew@mail.com', 'test.org/2019/Conference/Program_Chairs'],
+            readers = ['~Test_Author1', 'drew@mail.com', 'test.org/2019/Conference'],
             writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
             signatures = ['~Test_Author1'],
             content = {
@@ -195,7 +195,7 @@ class TestBuilder():
         conference.set_program_chairs(emails=['pc_testconsole1@mail.com'])
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_Author1', 'drew@mail.com', 'test.org/2019/Conference/Program_Chairs'],
+            readers = ['~Test_Author1', 'drew@mail.com', 'sortTest.org/2019/Conference'],
             writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
             signatures = ['~Test_Author1'],
             content = {

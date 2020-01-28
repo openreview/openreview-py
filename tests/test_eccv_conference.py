@@ -434,8 +434,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         pc_client.post_invitation(invitation)
 
         note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/-/Revision',
-            readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@mit.edu', '~Test_User1'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mit.edu'],
+            readers = ['thecvf.com/ECCV/2020/Conference', '~Test_User1'],
+            writers = [conference.id, '~Test_User1'],
             signatures = ['~Test_User1'],
             referent = note.original,
             forum = note.original,
