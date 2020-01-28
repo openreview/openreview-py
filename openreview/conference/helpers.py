@@ -61,7 +61,7 @@ def get_conference_builder(client, request_form_id):
     homepage_header = {
         'title': note.content['title'],
         'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
-        'deadline': 'Submission Start: ' + submission_start_date_str + ' GMT, End: ' + submission_due_date_str + ' GMT',
+        'deadline': 'Submission Start: ' + submission_start_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0',
         'date': conference_start_date_str,
         'website': note.content['Official Website URL'],
         'location': note.content.get('Location')
