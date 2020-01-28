@@ -78,7 +78,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@midl.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -134,7 +134,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'test@mail.com'],
+            writers = [conference.id, authors_group_id],
             signatures = [authors_group_id],
             content = {
                 'title': 'Reply to comment title',
@@ -189,7 +189,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [reviewers_group_id, acs_group_id],
-            writers = [conference.id, 'reviewer@midl.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Another reply to comment title',
@@ -263,7 +263,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'programchair@midl.io'],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
                 'title': 'Another reply to comment title',
@@ -358,7 +358,7 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -463,7 +463,7 @@ class TestCommentNotification():
             forum = review_note.forum,
             replyto = review_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@auai.org'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -552,7 +552,7 @@ class TestCommentNotification():
             forum = review_note.forum,
             replyto = review_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@auai.org'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Second Comment title',
@@ -679,7 +679,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@colt.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -733,7 +733,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'test@mail.com'],
+            writers = [conference.id, authors_group_id],
             signatures = [authors_group_id],
             content = {
                 'title': 'Reply to comment title',
@@ -788,7 +788,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@colt.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Another reply to comment title',
@@ -855,7 +855,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'programchair@colt.io'],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
                 'title': 'Another reply to comment title',
@@ -986,7 +986,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@colt17.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -1039,7 +1039,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'test@mail.com'],
+            writers = [conference.id, authors_group_id],
             signatures = [authors_group_id],
             content = {
                 'title': 'Reply to comment title',
@@ -1095,7 +1095,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'programchair@colt17.io'],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
                 'title': 'Another reply to comment title',
@@ -1198,7 +1198,7 @@ class TestCommentNotification():
             replyto = note.id,
             readers = [reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
             nonreaders = [authors_group_id],
-            writers = [conference.id, 'reviewer@colt17.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': '[NO_AUTHORS] comment',

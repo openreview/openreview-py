@@ -56,7 +56,7 @@ class TestBuilderConsoles():
         # need a paper to be able to check if reassign reviewers is activated
         helpers.create_user('author_test2@mail.com', 'Test', 'AuthorTwo')
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_AuthorTwo1', 'drew@mail.com', conference.get_program_chairs_id()],
+            readers = ['~Test_AuthorTwo1', 'drew@mail.com', conference.get_id()],
             writers = [conference.id, '~Test_AuthorTwo1', 'drew@mail.com'],
             signatures = ['~Test_AuthorTwo1'],
             content = {
