@@ -704,10 +704,11 @@ Please contact info@openreview.net with any questions or concerns about this int
         edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
         browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
 thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
-thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid;\
-thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
+        hide = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
+        referrer = '[Return%20Instructions](/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation)'
 
-        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&maxColumns=2'.format(start=start, edit=edit, browse=browse)
+        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
 
         request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation', ac1_client.token)
         panel = selenium.find_element_by_id('notes')

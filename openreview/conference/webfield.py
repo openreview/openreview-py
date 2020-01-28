@@ -204,7 +204,7 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_page(self, conference, invitation, assignment_title, score_ids):
+    def set_recommendation_page(self, conference, invitation, assignment_title, score_ids, conflict_id):
 
         default_header = {
             'title': conference.get_short_name() + ' Reviewer Recommendation',
@@ -225,7 +225,7 @@ class WebfieldBuilder(object):
         start_param = conference.get_paper_assignment_id(conference.get_area_chairs_id()) + ',label:{assignment_title}'.format(assignment_title=assignment_title) + ',tail:{userId}'
         edit_param = invitation.id
         browse_param = ';'.join(score_ids)
-        params = 'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param)
+        params = 'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
         with open(os.path.join(os.path.dirname(__file__), 'templates/recommendationWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")

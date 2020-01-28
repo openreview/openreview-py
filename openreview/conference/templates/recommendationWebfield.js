@@ -28,7 +28,7 @@ function renderContent() {
   $('#content').removeClass('legacy-styles');
   $('#notes').empty().append(
     '<p class="text-center">' +
-      '<a href="' + browseUrl + '" class="btn btn-lg btn-primary" target="_blank">Recommend Reviewers</a>' +
+      '<a href="' + browseUrl + '" class="btn btn-lg btn-primary" >Recommend Reviewers</a>' +
     '</p>'
   );
 
