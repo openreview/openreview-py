@@ -80,12 +80,20 @@ class Matching(object):
         self.client = conference.client
         self.match_group = match_group
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
+        self.should_read_by_area_chair = not self.is_area_chair and conference.has_area_chairs
 
     def _get_edge_invitation_id(self, edge_name):
         '''
         Returns a correctly formatted edge invitation ID for this Matching's match group
         '''
         return self.conference.get_invitation_id(edge_name, prefix=self.match_group.id)
+
+    def _get_edge_readers(self, tail):
+        readers = [self.conference.id]
+        if self.should_read_by_area_chair:
+            readers.append(self.conference.get_area_chairs_id())
+        readers.append(tail)
+        return readers
 
     def _create_edge_invitation(self, edge_id):
         '''
@@ -94,7 +102,7 @@ class Matching(object):
         '''
 
         edge_readers = [self.conference.get_id()]
-        if not self.is_area_chair:
+        if self.should_read_by_area_chair:
             ## Area Chairs should read the edges of the reviewer invitations.
             edge_readers.append(self.conference.get_area_chairs_id())
 
@@ -170,7 +178,7 @@ class Matching(object):
                         tail=profile.id,
                         weight=-1,
                         label=_conflict_label(conflicts),
-                        readers=[self.conference.id, self.conference.get_area_chairs_id(), profile.id],
+                        readers=self._get_edge_readers(tail=profile.id),
                         writers=[self.conference.id],
                         nonreaders=[self.conference.get_authors_id(number=submission.number)],
                         signatures=[self.conference.id]
@@ -209,7 +217,7 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=[self.conference.id, self.conference.get_area_chairs_id(), profile_id],
+                        readers=self._get_edge_readers(tail=profile_id),
                         nonreaders=[self.conference.get_authors_id(number=number)],
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
@@ -237,7 +245,7 @@ class Matching(object):
                     head=paper_note_id,
                     tail=profile_id,
                     weight=float(score),
-                    readers=[self.conference.id, self.conference.get_area_chairs_id(), profile_id],
+                    readers=self._get_edge_readers(tail=profile_id),
                     nonreaders=[self.conference.get_authors_id(number=submissions_per_id[paper_note_id])],
                     writers=[self.conference.id],
                     signatures=[self.conference.id]
@@ -270,7 +278,7 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=[self.conference.id, profile_id],
+                        readers=self._get_edge_readers(tail=profile_id),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
