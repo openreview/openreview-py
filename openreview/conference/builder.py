@@ -535,15 +535,15 @@ class Conference(object):
     def open_recommendations(self, assignment_title, start_date = None, due_date = None):
 
         score_ids = []
-        invitation_id = self.get_invitation_id('TPMS_Score', prefix=self.get_reviewers_id())
-        if tools.get_invitation(self.client, invitation_id):
-            score_ids.append(invitation_id)
-        invitation_id = self.get_invitation_id('Affinity_Score', prefix=self.get_reviewers_id())
-        if tools.get_invitation(self.client, invitation_id):
-            score_ids.append(invitation_id)
-        invitation_id = self.get_bid_id(self.get_reviewers_id())
-        if tools.get_invitation(self.client, invitation_id):
-            score_ids.append(invitation_id)
+        invitation_ids = [
+            self.get_invitation_id('TPMS_Score', prefix=self.get_reviewers_id()),
+            self.get_invitation_id('Affinity_Score', prefix=self.get_reviewers_id()),
+            self.get_bid_id(self.get_reviewers_id())
+        ]
+
+        for invitation_id in invitation_ids:
+            if tools.get_invitation(self.client, invitation_id):
+                score_ids.append(invitation_id)
 
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date)
         return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()))
