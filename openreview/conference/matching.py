@@ -79,6 +79,8 @@ class Matching(object):
         self.conference = conference
         self.client = conference.client
         self.match_group = match_group
+        self.is_area_chair = conference.get_area_chairs_id() == match_group.id
+        self.should_read_by_area_chair = not self.is_area_chair and conference.has_area_chairs
 
     def _get_edge_invitation_id(self, edge_name):
         '''
@@ -86,33 +88,39 @@ class Matching(object):
         '''
         return self.conference.get_invitation_id(edge_name, prefix=self.match_group.id)
 
-    def _create_edge_invitation(self, edge_id, extendable_readers=False):
+    def _get_edge_readers(self, tail):
+        readers = [self.conference.id]
+        if self.should_read_by_area_chair:
+            readers.append(self.conference.get_area_chairs_id())
+        readers.append(tail)
+        return readers
+
+    def _create_edge_invitation(self, edge_id):
         '''
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
         '''
 
+        edge_readers = [self.conference.get_id()]
+        if self.should_read_by_area_chair:
+            ## Area Chairs should read the edges of the reviewer invitations.
+            edge_readers.append(self.conference.get_area_chairs_id())
+
         readers = {
-            'values': [self.conference.get_id()]
+            'values-copied': edge_readers + ['{tail}']
         }
-
-        if extendable_readers:
-            regex = self.conference.get_id() + '|~.*|.*@.*'
-            if self.match_group.id == self.conference.get_reviewers_id() and self.conference.use_area_chairs:
-                regex += '|' + self.conference.get_area_chairs_id()
-
-            readers = {
-                'values-regex': regex
-            }
 
         invitation = openreview.Invitation(
             id=edge_id,
             invitees=[self.conference.get_id()],
-            readers=[self.conference.get_id()],
+            readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
             reply={
                 'readers': readers,
+                'nonreaders': {
+                    'values-regex': self.conference.get_authors_id(number='.*')
+                },
                 'writers': {
                     'values': [self.conference.get_id()]
                 },
@@ -149,7 +157,7 @@ class Matching(object):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
-        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id), extendable_readers=True)
+        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         authorids_profiles = {}
 
         for submission in submissions:
@@ -170,8 +178,9 @@ class Matching(object):
                         tail=profile.id,
                         weight=-1,
                         label=_conflict_label(conflicts),
-                        readers=[self.conference.id, profile.id],
+                        readers=self._get_edge_readers(tail=profile.id),
                         writers=[self.conference.id],
+                        nonreaders=[self.conference.get_authors_id(number=submission.number)],
                         signatures=[self.conference.id]
                     ))
             openreview.tools.post_bulk_edges(client=self.client, edges=edges)
@@ -182,7 +191,7 @@ class Matching(object):
         Create tpms score edges given a csv file with scores, papers, and profiles.
         '''
         # pylint: disable=too-many-locals
-        invitation = self._create_edge_invitation(self._get_edge_invitation_id('TPMS_Score'), extendable_readers=True)
+        invitation = self._create_edge_invitation(self._get_edge_invitation_id('TPMS_Score'))
 
         submissions_per_number = {note.number: note for note in submissions}
         profiles_by_email = {}
@@ -208,7 +217,8 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=[self.conference.id, profile.id],
+                        readers=self._get_edge_readers(tail=profile_id),
+                        nonreaders=[self.conference.get_authors_id(number=number)],
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
@@ -216,11 +226,13 @@ class Matching(object):
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         return invitation
 
-    def _build_scores(self, score_invitation_id, score_file):
+    def _build_scores(self, score_invitation_id, score_file, submissions):
         '''
         Given a csv file with affinity scores, create score edges
         '''
-        invitation = self._create_edge_invitation(score_invitation_id, extendable_readers=True)
+        invitation = self._create_edge_invitation(score_invitation_id)
+
+        submissions_per_id = {note.id: note.number for note in submissions}
 
         edges = []
         with open(score_file) as file_handle:
@@ -233,7 +245,8 @@ class Matching(object):
                     head=paper_note_id,
                     tail=profile_id,
                     weight=float(score),
-                    readers=[self.conference.id, profile_id],
+                    readers=self._get_edge_readers(tail=profile_id),
+                    nonreaders=[self.conference.get_authors_id(number=submissions_per_id[paper_note_id])],
                     writers=[self.conference.id],
                     signatures=[self.conference.id]
                 ))
@@ -245,7 +258,7 @@ class Matching(object):
         '''
         Create subject area scores between all users in the match group and all given submissions
         '''
-        invitation = self._create_edge_invitation(self._get_edge_invitation_id('Subject_Areas_Score'), extendable_readers=True)
+        invitation = self._create_edge_invitation(self._get_edge_invitation_id('Subject_Areas_Score'))
 
         edges = []
         user_subject_areas = list(openreview.tools.iterget_notes(
@@ -265,7 +278,7 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=[self.conference.id],
+                        readers=self._get_edge_readers(tail=profile_id),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
@@ -434,7 +447,7 @@ class Matching(object):
 
         self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
-        self._create_edge_invitation(self._get_edge_invitation_id('Custom_Load'), extendable_readers=True)
+        self._create_edge_invitation(self._get_edge_invitation_id('Custom_Load'))
 
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client,
@@ -451,7 +464,8 @@ class Matching(object):
         if affinity_score_file:
             invitation = self._build_scores(
                 self.conference.get_affinity_score_id(self.match_group.id),
-                affinity_score_file
+                affinity_score_file,
+                submissions
             )
             score_spec[invitation.id] = {
                 'weight': 1,
@@ -461,7 +475,8 @@ class Matching(object):
         if elmo_score_file:
             invitation = self._build_scores(
                 self.conference.get_elmo_score_id(self.match_group.id),
-                elmo_score_file
+                elmo_score_file,
+                submissions
             )
             score_spec[invitation.id] = {
                 'weight': 1,
@@ -488,31 +503,20 @@ class Matching(object):
 
         # Get the configuration note to check the group to assign
         client = self.conference.client
-        notes = client.get_notes(
-            invitation=self.match_group.id + '/-/Assignment_Configuration',
-            content={'title': assingment_title})
 
-        if notes:
-            configuration_note = notes[0]
-            match_group = configuration_note.content['match_group']
-            is_area_chair = self.conference.get_area_chairs_id() == match_group
+        submissions = openreview.tools.iterget_notes(
+            client,
+            invitation=self.conference.get_blind_submission_id())
 
-            submissions = openreview.tools.iterget_notes(
-                client,
-                invitation=self.conference.get_blind_submission_id())
+        assignment_edges = openreview.tools.iterget_edges(
+            client,
+            invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assingment_title)
 
-            assignment_edges = openreview.tools.iterget_edges(
-                client,
-                invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-                label=assingment_title)
+        paper_by_forum = {n.forum: n for n in submissions}
 
-            paper_by_forum = {n.forum: n for n in submissions}
-
-            for edge in assignment_edges:
-                paper_number = paper_by_forum.get(edge.head).number
-                user = edge.tail
-                new_assigned_group = self.conference.set_assignment(user, paper_number, is_area_chair)
-                print(new_assigned_group)
-
-        else:
-            raise openreview.OpenReviewException('Configuration not found for ' + assingment_title)
+        for edge in assignment_edges:
+            paper_number = paper_by_forum.get(edge.head).number
+            user = edge.tail
+            new_assigned_group = self.conference.set_assignment(user, paper_number, self.is_area_chair)
+            print(new_assigned_group)

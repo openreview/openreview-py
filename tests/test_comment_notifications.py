@@ -33,7 +33,6 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -62,7 +61,7 @@ class TestCommentNotification():
 
         conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -353,7 +352,7 @@ class TestCommentNotification():
             "Algorithms: Exact Inference",
         ])
         builder.set_override_homepage(True)
-        builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False)
+        builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
         builder.set_review_stage(release_to_authors=True)
         conference = builder.get_result()
 
@@ -451,8 +450,7 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        conference.open_comments()
-
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, unsubmitted_reviewers = False, authors=True))
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
@@ -634,7 +632,7 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -663,7 +661,8 @@ class TestCommentNotification():
 
         conference.set_authors()
         conference.set_program_chairs(emails = ['programchair@colt.io'])
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True))
+
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -941,7 +940,7 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True, authors=True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -970,7 +969,7 @@ class TestCommentNotification():
 
         conference.set_authors()
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection=True, authors=True))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -1173,11 +1172,10 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, authors=True)
         conference = builder.get_result()
 
         conference.set_program_chairs(emails = ['author2@colt17.io'])
-        conference.open_comments()
 
         notes = list(conference.get_submissions())
         assert notes

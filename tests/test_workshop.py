@@ -455,7 +455,7 @@ class TestWorkshop():
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
 
         builder.has_area_chairs(False)
-        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True, authors=True)
         conference = builder.get_result()
         assert conference
 

@@ -157,10 +157,16 @@ class BidInvitation(openreview.Invitation):
         readers = [
             conference.get_id(),
             conference.get_program_chairs_id(),
+            conference.get_area_chairs_id(),
             match_group_id
         ]
 
         invitees = [match_group_id]
+
+        values_copied = [conference.get_id()]
+        if match_group_id == conference.get_reviewers_id():
+            values_copied.append(conference.get_area_chairs_id())
+        values_copied.append('{signatures}')
 
         super(BidInvitation, self).__init__(id = conference.get_bid_id(match_group_id),
             cdate = tools.datetime_millis(bid_stage.start_date),
@@ -173,7 +179,10 @@ class BidInvitation(openreview.Invitation):
             taskCompletionCount = request_count,
             reply = {
                 'readers': {
-                    'values-copied': [conference.get_id(), '{signatures}']
+                    'values-copied': values_copied
+                },
+                'nonreaders': {
+                    'values-regex': conference.get_authors_id(number='.*')
                 },
                 'signatures': {
                     'values-regex': '~.*'
@@ -580,11 +589,12 @@ class OfficialCommentInvitation(openreview.Invitation):
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
 
         readers = []
-        invitees = conference.get_committee(number=note.number, with_authors=True)
+        invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors)
         if comment_stage.allow_public_comments:
             readers.append('everyone')
 
-        readers.append(conference.get_authors_id(note.number))
+        if comment_stage.authors:
+            readers.append(conference.get_authors_id(note.number))
 
         if comment_stage.reader_selection:
             readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
@@ -1108,19 +1118,13 @@ class InvitationBuilder(object):
 
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_invitation(self, conference, start_date, due_date, notes_iterator, assignment_notes_iterator):
+    def set_recommendation_invitation(self, conference, start_date, due_date):
 
-        assignment_note_by_forum = {}
-        if assignment_notes_iterator:
-            for assignment_note in assignment_notes_iterator:
-                assignment_note_by_forum[assignment_note.forum] = assignment_note.content
-
-        # Create super invitation with a webfield
         recommendation_invitation = openreview.Invitation(
             id = conference.get_recommendation_id(),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
-            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
             readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
@@ -1140,23 +1144,25 @@ class InvitationBuilder(object):
                         'type': 'Note',
                         'query': {
                             'invitation': conference.get_blind_submission_id()
-                        }
+                        },
+                        'required': True
                     },
                     'tail': {
-                        'type': 'Group',
+                        'type': 'Profile',
                         'query': {
-                            'id': conference.get_reviewers_id()
-                        }
+                            'group': conference.get_reviewers_id()
+                        },
+                        'required': True
                     },
                     'weight': {
-                        'value-regex': '[0-9]+',
+                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                         'required': True
                     }
                 }
             }
         )
 
-        recommendation_invitation = self.client.post_invitation(recommendation_invitation)
+        return self.client.post_invitation(recommendation_invitation)
 
 
 

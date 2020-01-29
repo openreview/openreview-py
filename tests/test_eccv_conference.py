@@ -7,6 +7,7 @@ import time
 import os
 import re
 import csv
+import random
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -158,7 +159,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
+        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
         return conference
@@ -346,32 +347,35 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_submission_additional_files(self, conference, test_client):
 
-        note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
-            content = {
-                'title': 'Paper title',
-                'abstract': 'This is an abstract',
-                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter Test', 'Andrew Mc']
-            }
-        )
-        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
-        note.content['pdf'] = url
-        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'), conference.get_submission_id(), 'video')
-        note.content['video'] = url
-        test_client.post_note(note)
+        domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
+        for i in range(1,6):
+            note = openreview.Note(invitation = conference.get_submission_id(),
+                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
+                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~Test_User1'],
+                content = {
+                    'title': 'Paper title ' + str(i) ,
+                    'abstract': 'This is an abstract ' + str(i),
+                    'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
+                    'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                }
+            )
+            url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+            note.content['pdf'] = url
+            url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'), conference.get_submission_id(), 'video')
+            note.content['video'] = url
+            test_client.post_note(note)
 
     def test_revise_additional_files(self, conference, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+
         conference.create_blind_submissions(force=True, hide_fields=['pdf', 'video', 'supplemental_material'])
         conference.set_authors()
 
         notes = conference.get_submissions()
         assert notes
-        assert len(notes) == 1
+        assert len(notes) == 5
         note = notes[0]
 
         invitation = openreview.Invitation(
@@ -404,7 +408,7 @@ Please contact info@openreview.net with any questions or concerns about this int
                         'required': False,
                         'value-file': {
                             'fileTypes': ['pdf'],
-                            'size': 50000000000
+                            'size': 50
                         }
                     },
                     'video': {
@@ -412,7 +416,7 @@ Please contact info@openreview.net with any questions or concerns about this int
                         'required': False,
                         'value-file': {
                             'fileTypes': ['mov', 'mp4', 'zip'],
-                            'size': 50000000000
+                            'size': 50
                         }
                     },
                     'supplemental_material': {
@@ -420,7 +424,7 @@ Please contact info@openreview.net with any questions or concerns about this int
                         'required': False,
                         'value-file': {
                             'fileTypes': ['pdf'],
-                            'size': 500000000000
+                            'size': 50
                         }
                     }
                 }
@@ -443,6 +447,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), 'thecvf.com/ECCV/2020/Conference/-/Revision', 'supplemental_material')
         note.content['supplemental_material'] = url
         test_client.post_note(note)
+
 
     def test_bid_stage(self, conference, helpers, selenium, request_page):
 
@@ -472,4 +477,245 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert notes
         assert len(notes) == 6
         assert notes[4].text == 'Ensure that you have at least 60 bids, which are "Very High" or "High".'
+
+    def test_recommend_reviewers(self, conference, test_client, helpers, selenium, request_page):
+
+        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV_One')
+        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV_Two')
+        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV_Three')
+        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV_Four')
+        ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV_One')
+        ac2_client = helpers.create_user('ac2eccv.org', 'AreaChair', 'ECCV_Two')
+
+        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
+        conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
+
+        blinded_notes = conference.get_submissions()
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.id, '~Reviewer_ECCV_One1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_ECCV_Two1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_ECCV_Three1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_ECCV_Four1', round(random.random(), 2)])
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/temp.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.number, 'reviewer1@fb.com', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer2@google.com', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer3@umass.edu', round(random.random(), 2)])
+                writer.writerow([submission.number, 'reviewer4@mit.edu', round(random.random(), 2)])
+
+
+        conference.setup_matching(
+            affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'),
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
+        )
+
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.id, '~AreaChair_ECCV_One1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~AreaChair_ECCV_Two1', round(random.random(), 2)])
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/temp.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in blinded_notes:
+                writer.writerow([submission.number, 'ac1@eccv.org', round(random.random(), 2)])
+                writer.writerow([submission.number, 'ac2eccv.org', round(random.random(), 2)])
+
+        conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
+
+        ### Bids
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
+            writers = [conference.id, '~Reviewer_ECCV_One1'],
+            signatures = ['~Reviewer_ECCV_One1'],
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_ECCV_One1',
+            label = 'Neutral'
+        ))
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
+            writers = [conference.id, '~Reviewer_ECCV_One1'],
+            signatures = ['~Reviewer_ECCV_One1'],
+            head = blinded_notes[1].id,
+            tail = '~Reviewer_ECCV_One1',
+            label = 'Very High'
+        ))
+        r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
+            writers = [conference.id, '~Reviewer_ECCV_One1'],
+            signatures = ['~Reviewer_ECCV_One1'],
+            head = blinded_notes[4].id,
+            tail = '~Reviewer_ECCV_One1',
+            label = 'High'
+        ))
+
+        r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
+            writers = [conference.id, '~Reviewer_ECCV_Two1'],
+            signatures = ['~Reviewer_ECCV_Two1'],
+            head = blinded_notes[2].id,
+            tail = '~Reviewer_ECCV_Two1',
+            label = 'Neutral'
+        ))
+        r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[3].number)],
+            writers = [conference.id, '~Reviewer_ECCV_Two1'],
+            signatures = ['~Reviewer_ECCV_Two1'],
+            head = blinded_notes[3].id,
+            tail = '~Reviewer_ECCV_Two1',
+            label = 'Very High'
+        ))
+        r2_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
+            writers = [conference.id, '~Reviewer_ECCV_Two1'],
+            signatures = ['~Reviewer_ECCV_Two1'],
+            head = blinded_notes[4].id,
+            tail = '~Reviewer_ECCV_Two1',
+            label = 'High'
+        ))
+
+        r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
+            writers = [conference.id, '~Reviewer_ECCV_Three1'],
+            signatures = ['~Reviewer_ECCV_Three1'],
+            head = blinded_notes[4].id,
+            tail = '~Reviewer_ECCV_Three1',
+            label = 'Neutral'
+        ))
+        r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
+            writers = [conference.id, '~Reviewer_ECCV_Three1'],
+            signatures = ['~Reviewer_ECCV_Three1'],
+            head = blinded_notes[2].id,
+            tail = '~Reviewer_ECCV_Three1',
+            label = 'Very High'
+        ))
+        r3_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Three1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
+            writers = [conference.id, '~Reviewer_ECCV_Three1'],
+            signatures = ['~Reviewer_ECCV_Three1'],
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_ECCV_Three1',
+            label = 'High'
+        ))
+        r4_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
+            readers = [conference.id, conference.get_area_chairs_id(), '~Reviewer_ECCV_Four1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
+            writers = [conference.id, '~Reviewer_ECCV_Four1'],
+            signatures = ['~Reviewer_ECCV_Four1'],
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_ECCV_Four1',
+            label = 'High'
+        ))
+
+        ## Area chairs assignments
+        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[0].id,
+            tail = '~AreaChair_ECCV_One1',
+            label = 'ac-matching',
+            weight = 0.98
+        ))
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[1].id,
+            tail = '~AreaChair_ECCV_One1',
+            label = 'ac-matching',
+            weight = 0.88
+        ))
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[2].id,
+            tail = '~AreaChair_ECCV_One1',
+            label = 'ac-matching',
+            weight = 0.79
+        ))
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[3].id,
+            tail = '~AreaChair_ECCV_Two1',
+            label = 'ac-matching',
+            weight = 0.99
+        ))
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[4].id,
+            tail = '~AreaChair_ECCV_Two1',
+            label = 'ac-matching',
+            weight = 0.86
+        ))
+
+        now = datetime.datetime.utcnow()
+        conference.open_recommendations(assignment_title='ac-matching', due_date=now + datetime.timedelta(minutes = 1440))
+
+        ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
+            readers = [conference.id, '~AreaChair_ECCV_One1'],
+            writers = ['~AreaChair_ECCV_One1'],
+            signatures = ['~AreaChair_ECCV_One1'],
+            head = blinded_notes[0].id,
+            tail = '~Reviewer_ECCV_Three1',
+            weight = 1))
+
+        ac2_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            writers = ['~AreaChair_ECCV_Two1'],
+            signatures = ['~AreaChair_ECCV_Two1'],
+            head = blinded_notes[3].id,
+            tail = '~Reviewer_ECCV_Three1',
+            weight = 10))
+
+        ac2_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
+            readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            writers = ['~AreaChair_ECCV_Two1'],
+            signatures = ['~AreaChair_ECCV_Two1'],
+            head = blinded_notes[4].id,
+            tail = '~Reviewer_ECCV_Three1',
+            weight = 5))
+
+        ## Go to edge browser to recommend reviewers
+        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
+        edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
+        browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
+thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
+        hide = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
+        referrer = '[Return%20Instructions](/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation)'
+
+        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
+
+        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation', ac1_client.token)
+        panel = selenium.find_element_by_id('notes')
+        assert panel
+        links = panel.find_elements_by_tag_name('a')
+        assert links
+        assert len(links) == 1
+        assert url == links[0].get_attribute("href")
+
 
