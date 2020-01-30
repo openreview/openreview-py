@@ -183,10 +183,17 @@ var displayHeader = function(headerP) {
 
   var reducedLoadP = $.Deferred().resolve(0);
   if (REVIEW_LOAD > 0) {
+    userIds = _.union([user.profile.id], user.profile.emails);
     reducedLoadP = Webfield.get('/notes', { invitation: CONFERENCE_ID + '/-/Reduced_Load'})
     .then(function(result) {
       if (result.notes && result.notes.length) {
-        return result.notes[0].content.reviewer_load;
+        if (result.notes.length == 1) {
+          return result.notes[0].content.reviewer_load;
+        } else {
+          //If there is more than one there might be a Program Chair
+          loads = _.filter(result.notes, function(note) { return userIds.indexOf(note.content.user) >= 0;});
+          return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
+        }
       } else {
         return REVIEW_LOAD;
       }
