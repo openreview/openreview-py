@@ -203,6 +203,7 @@ class Matching(object):
         with open(tpms_score_file) as file_handle:
             for row in csv.reader(file_handle):
                 number = int(row[0])
+                score = row[2]
                 if number in submissions_per_number and re.match(r'^-?\d+(?:\.\d+)?$', score):
                     paper_note_id = submissions_per_number[number].id
                     profile = profiles_by_email.get(row[1])
@@ -211,7 +212,6 @@ class Matching(object):
                     else:
                         profile_id = row[1]
 
-                    score = row[2]
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
