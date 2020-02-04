@@ -1195,8 +1195,10 @@ class ConferenceBuilder(object):
             double_blind=False,
             allow_withdraw=False,
             reveal_authors_on_withdraw=False,
+            reveal_submissions_on_withdraw=False,
             allow_desk_reject=False,
             reveal_authors_on_desk_reject=False,
+            reveal_submissions_on_desk_reject=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -1210,8 +1212,10 @@ class ConferenceBuilder(object):
             double_blind,
             allow_withdraw,
             reveal_authors_on_withdraw,
+            reveal_submissions_on_withdraw,
             allow_desk_reject,
             reveal_authors_on_desk_reject,
+            reveal_submissions_on_desk_reject,
             additional_fields,
             remove_fields,
             subject_areas
