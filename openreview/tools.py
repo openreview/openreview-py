@@ -1661,3 +1661,30 @@ def match_authors_to_emails(name_list, email_list, verbose=False):
         print('There was an issue with the min cost flow input.')
 
     return emails_by_authorname
+
+def overwrite_pdf(client, note_id, file_path):
+    """
+    Overwrite all the references of a note with the new pdf file.
+    If the note has an original note then update original references
+    """
+    note = client.get_note(id=note_id)
+    original_note = note
+
+    if note.original:
+        original_note = client.get_note(id=note.original)
+
+    references = client.get_references(referent=original_note.id)
+
+    updated_references = []
+
+    if references:
+        pdf_url = client.put_pdf(file_path)
+
+        for reference in references:
+            if 'pdf' in reference.content:
+                reference.content['pdf'] = pdf_url
+                updated_references.append(client.post_note(reference))
+
+    return updated_references
+
+
