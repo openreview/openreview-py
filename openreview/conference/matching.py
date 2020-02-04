@@ -180,7 +180,6 @@ class Matching(object):
                         label=_conflict_label(conflicts),
                         readers=self._get_edge_readers(tail=profile.id),
                         writers=[self.conference.id],
-                        nonreaders=[self.conference.get_authors_id(number=submission.number)],
                         signatures=[self.conference.id]
                     ))
             openreview.tools.post_bulk_edges(client=self.client, edges=edges)
