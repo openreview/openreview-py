@@ -335,13 +335,15 @@ class Matching(object):
                         'order': 5
                     },
                     'paper_invitation': {
-                        'value': self.conference.get_blind_submission_id(),
+                        'value-regex': self.conference.get_blind_submission_id() + '.*',
+                        'default': self.conference.get_blind_submission_id(),
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 6
                     },
                     'match_group': {
-                        'value': self.match_group.id,
+                        'value-regex': '.*',
+                        'default': self.match_group.id,
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 7
