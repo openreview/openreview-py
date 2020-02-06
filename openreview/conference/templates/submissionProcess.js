@@ -7,7 +7,7 @@ function() {
   if (note.content.abstract) {
     authorMessage += '\n\nAbstract: ' + note.content.abstract;
   }
-  authorMessage += '\n\nTo view your submission, click here: ' + baseUrl + '/forum?id=' + note.forum + '\n\nIf you are not an author for this submission and want yourself removed, you can do so by reaching out to the person who added you at ' + note.tauthor;
+  authorMessage += '\n\nTo view your submission, click here: ' + baseUrl + '/forum?id=' + note.forum + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor;
 
   var authorMail = {
     groups: note.content.authorids,
