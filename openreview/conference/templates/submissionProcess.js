@@ -6,7 +6,7 @@ function() {
   var authorMail = {
     groups: note.content.authorids,
     subject: SHORT_PHRASE + ' has received your submission titled ' + note.content.title,
-    message: 'Your submission to ' + SHORT_PHRASE + ' has been posted.\n\nTitle: ' + note.content.title + '\n\nAbstract: ' + note.content.abstract + '\n\nTo view your submission, click here: ' + baseUrl + '/forum?id=' + note.forum
+    message: 'Your submission to ' + SHORT_PHRASE + ' has been posted.\n\nTitle: ' + note.content.title + '\n\nAbstract: ' + note.content.abstract + '\n\nTo view your submission, click here: ' + baseUrl + '/forum?id=' + note.forum + '\n\nIf you are not an author for this submission and want yourself removed, you can do so by reaching out to the person who added you at ' + note.tauthor
   };
 
   or3client.or3request(or3client.mailUrl, authorMail, 'POST', token)
