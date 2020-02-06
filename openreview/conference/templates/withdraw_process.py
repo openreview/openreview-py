@@ -10,6 +10,7 @@ def process(client, note, invitation):
     PROGRAM_CHAIRS_ID = ''
     WITHDRAWN_SUBMISSION_ID = ''
     REVEAL_AUTHORS_ON_WITHDRAW = False
+    REVEAL_SUBMISSIONS_ON_WITHDRAW = False
 
     forum_note = client.get_note(note.forum)
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
@@ -22,6 +23,12 @@ def process(client, note, invitation):
     forum_note.content = {
         '_bibtex': openreview.tools.get_bibtex(note = note, venue_fullname = CONFERENCE_NAME, url_forum = forum_note.id, year = CONFERENCE_YEAR, anonymous = not(REVEAL_AUTHORS_ON_WITHDRAW), baseurl = 'https://openreview.net')
     }
+
+    if REVEAL_SUBMISSIONS_ON_WITHDRAW:
+        forum_note.readers = ['everyone']
+    else:
+        forum_note.readers = [CONFERENCE_ID, PAPER_AUTHORS_ID]
+
     forum_note = client.post_note(forum_note)
 
     # Expire review, meta-review and decision invitations

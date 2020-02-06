@@ -313,6 +313,15 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 'values-regex': '.*'
             }
 
+        if conference.submission_stage.reveal_submissions_on_withdraw:
+            readers = {
+                'values': ['everyone']
+            }
+        else:
+            readers = {
+                'values-copied': [conference.id, '{content.authorids}']
+            }
+
         super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_withdrawn_submission_id(conference),
             cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
@@ -322,12 +331,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
             reply={
                 'forum': None,
                 'replyto': None,
-                'readers': {
-                    'description': 'The users who will be allowed to read the reply content.',
-                    'values': [
-                        'everyone'
-                    ]
-                },
+                'readers': readers,
                 'writers': {
                     'values': [
                         conference.get_id()
@@ -349,6 +353,17 @@ class PaperWithdrawInvitation(openreview.Invitation):
         content = invitations.withdraw.copy()
 
         withdraw_process_file = 'templates/withdraw_process.py'
+
+
+        if conference.submission_stage.reveal_submissions_on_withdraw:
+            readers = {
+                'description': 'User groups that will be able to read this withdraw note.',
+                'values': ['everyone']
+            }
+        else:
+            readers = {
+                'values-copied': [conference.id, '{signatures}']
+            }
 
         with open(os.path.join(os.path.dirname(__file__), withdraw_process_file)) as f:
             file_content = f.read()
@@ -385,6 +400,10 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
                     'REVEAL_AUTHORS_ON_WITHDRAW = True')
+            if conference.submission_stage.reveal_submissions_on_withdraw:
+                file_content = file_content.replace(
+                    'REVEAL_SUBMISSIONS_ON_WITHDRAW = False',
+                    'REVEAL_SUBMISSIONS_ON_WITHDRAW = True')
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
@@ -399,10 +418,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 reply={
                     'forum': note.id,
                     'replyto': note.id,
-                    'readers': {
-                        'description': 'User groups that will be able to read this withdraw note.',
-                        'values': ['everyone']
-                    },
+                    'readers': readers,
                     'writers': {
                         'values-copied': [
                             conference.get_id(),
@@ -443,6 +459,15 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 'values-regex': '.*'
             }
 
+        if conference.submission_stage.reveal_submissions_on_desk_reject:
+            readers = {
+                'values': ['everyone']
+            }
+        else:
+            readers = {
+                'values-copied': [conference.id, '{content.authorids}']
+            }
+
         super(DeskRejectedSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_desk_rejected_submission_id(conference),
             cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
@@ -452,12 +477,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
             reply={
                 'forum': None,
                 'replyto': None,
-                'readers': {
-                    'description': 'The users who will be allowed to read the reply content.',
-                    'values': [
-                        'everyone'
-                    ]
-                },
+                'readers': readers,
                 'writers': {
                     'values': [
                         conference.get_id()
@@ -479,6 +499,17 @@ class PaperDeskRejectInvitation(openreview.Invitation):
         content = invitations.desk_reject.copy()
 
         desk_reject_process_file = 'templates/desk_reject_process.py'
+
+
+        if conference.submission_stage.reveal_submissions_on_desk_reject:
+            readers = {
+                'description': 'User groups that will be able to read this withdraw note.',
+                'values': ['everyone']
+            }
+        else:
+            readers = {
+                'values-copied': [conference.id, '{signatures}']
+            }
 
         with open(os.path.join(os.path.dirname(__file__), desk_reject_process_file)) as f:
             file_content = f.read()
@@ -515,6 +546,10 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_DESK_REJECT = False',
                     'REVEAL_AUTHORS_ON_DESK_REJECT = True')
+            if conference.submission_stage.reveal_submissions_on_withdraw:
+                file_content = file_content.replace(
+                    'REVEAL_SUBMISSIONS_ON_DESK_REJECT = False',
+                    'REVEAL_SUBMISSIONS_ON_DESK_REJECT = True')
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
@@ -529,10 +564,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 reply={
                     'forum': note.id,
                     'replyto': note.id,
-                    'readers': {
-                        'description': 'User groups that will be able to read this desk reject note.',
-                        'values': ['everyone']
-                    },
+                    'readers': readers,
                     'writers': {
                         'values-copied': [
                             conference.get_id(),
