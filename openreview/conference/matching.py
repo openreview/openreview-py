@@ -4,9 +4,9 @@ A module containing tools for matching and and main Matching instance class
 
 from __future__ import division
 import csv
-
 import openreview
 import tld
+import re
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -180,7 +180,6 @@ class Matching(object):
                         label=_conflict_label(conflicts),
                         readers=self._get_edge_readers(tail=profile.id),
                         writers=[self.conference.id],
-                        nonreaders=[self.conference.get_authors_id(number=submission.number)],
                         signatures=[self.conference.id]
                     ))
             openreview.tools.post_bulk_edges(client=self.client, edges=edges)
@@ -203,7 +202,8 @@ class Matching(object):
         with open(tpms_score_file) as file_handle:
             for row in csv.reader(file_handle):
                 number = int(row[0])
-                if number in submissions_per_number:
+                score = row[2]
+                if number in submissions_per_number and re.match(r'^-?\d+(?:\.\d+)?$', score):
                     paper_note_id = submissions_per_number[number].id
                     profile = profiles_by_email.get(row[1])
                     if profile:
@@ -211,7 +211,6 @@ class Matching(object):
                     else:
                         profile_id = row[1]
 
-                    score = row[2]
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
@@ -336,13 +335,15 @@ class Matching(object):
                         'order': 5
                     },
                     'paper_invitation': {
-                        'value': self.conference.get_blind_submission_id(),
+                        'value-regex': self.conference.get_blind_submission_id() + '.*',
+                        'default': self.conference.get_blind_submission_id(),
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 6
                     },
                     'match_group': {
-                        'value': self.match_group.id,
+                        'value-regex': '.*',
+                        'default': self.match_group.id,
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 7
