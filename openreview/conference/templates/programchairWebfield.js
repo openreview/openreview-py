@@ -30,6 +30,7 @@ var allReviewers = [];
 var conferenceStatusData = {};
 var pcTags = {};
 var selectedNotesById = {};
+var matchingNoteIds = [];
 var paperStatusNeedsRerender = false;
 
 var main = function() {
@@ -90,10 +91,10 @@ var main = function() {
 
     // Build list of all profile ids to get
     var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroupMaps.byNotes, function(result, idsObj) {
-      return result.concat(_.values(idsObj));
+      return result.concat(Object.values(idsObj));
     }, []));
     var uniqueAreaChairIds = _.uniq(_.reduce(areaChairGroupMaps.byNotes, function(result, idsObj) {
-      return result.concat(_.values(idsObj));
+      return result.concat(Object.values(idsObj));
     }, []));
     var uniqueIds = _.union(uniqueReviewerIds, uniqueAreaChairIds);
 
@@ -102,10 +103,6 @@ var main = function() {
   .then(function(profiles) {
     conferenceStatusData.profiles = profiles;
 
-    displayPaperStatusTable();
-    if (AREA_CHAIRS_ID) {
-      displayAreaChairsStatusTable();
-    }
     Webfield.ui.done();
   })
   .fail(function() {
@@ -177,15 +174,15 @@ var getAreaChairGroups = function() {
 };
 
 var getUserProfiles = function(userIds) {
-  var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
-  var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
+  var ids = _.filter(userIds, function(id) { return id.charAt(0) === '~'; });
+  var emails = _.filter(userIds, function(id) { return id.indexOf('@') > 0; });
 
   var profileSearch = [];
   if (ids.length) {
-    profileSearch.push(Webfield.post('/profiles/search', {ids: ids}));
+    profileSearch.push(Webfield.post('/profiles/search', { ids: ids }));
   }
   if (emails.length) {
-    profileSearch.push(Webfield.post('/profiles/search', {emails: emails}));
+    profileSearch.push(Webfield.post('/profiles/search', { emails: emails }));
   }
 
   return $.when.apply($, profileSearch)
@@ -197,12 +194,12 @@ var getUserProfiles = function(userIds) {
     }
     var addProfileToMap = function(profile) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+      profile.name = name ?
+        [name.first, name.middle, name.last].filter(_.identity).join(' ') :
+        view.prettyId(profile.id);
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
       profile.allEmails = profile.content.emails;
-      profile.allNames = _.filter(profile.content.names, function(name){
-        return !_.isEmpty(name.username);
-      });
+      profile.allNames = _.filter(profile.content.names, function(name) { return name.username; });
       profileMap[profile.id] = profile;
     };
     if (searchResults.length) {
@@ -213,10 +210,6 @@ var getUserProfiles = function(userIds) {
       _.forEach(searchResults.profiles, addProfileToMap);
     }
     return profileMap;
-  })
-  .fail(function(error) {
-    displayError();
-    return null;
   });
 };
 
@@ -307,6 +300,9 @@ var findNextAnonGroupNumber = function(paperNumber) {
 };
 
 var findProfile = function(profiles, id) {
+  if (profiles[id]) {
+    return profiles[id];
+  }
   var profile = _.find(profiles, function(p) {
     return _.find(p.content.names, function(n) { return n.username === id; }) || _.includes(p.content.emails, id);
   });
@@ -728,7 +724,7 @@ var displayPaperStatusTable = function() {
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
-      return (tags.length && tags[0].tag === view.prettyId(user.profile.id));
+      return (tags && tags.length && tags[0].tag === view.prettyId(user.profile.id));
     };
   }
 
@@ -754,9 +750,14 @@ var displayPaperStatusTable = function() {
       );
     };
 
-    var filteredRows = searchText
-      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc')
-      : rowData;
+    var filteredRows;
+    if (searchText) {
+      filteredRows = _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc');
+      matchingNoteIds = filteredRows.map(function(row) { return row.note.id; });
+    } else {
+      filteredRows = rowData;
+      matchingNoteIds = [];
+    }
     renderTable(container, filteredRows);
   };
 
@@ -781,7 +782,7 @@ var displayPaperStatusTable = function() {
         }
         return rev;
       });
-      var users = _.values(reviewers);
+      var users = Object.values(reviewers);
       if (filter === 'msg-submitted-reviewers') {
         users = users.filter(function(u) {
           return u.completedReview;
@@ -1814,6 +1815,8 @@ $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
       selectedNotesById[noteId] = false;
     }
   }
+
+  matchingNoteIds = [];
 });
 
 $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
@@ -1839,7 +1842,11 @@ $('#group-container').on('change', '#select-all-papers', function(e) {
 
   for (var noteId in selectedNotesById) {
     if (selectedNotesById.hasOwnProperty(noteId)) {
-      selectedNotesById[noteId] = isSuperSelected;
+      if (isSuperSelected) {
+        selectedNotesById[noteId] = !matchingNoteIds.length || _.includes(matchingNoteIds, noteId);
+      } else {
+        selectedNotesById[noteId] = isSuperSelected;
+      }
     }
   }
 });
