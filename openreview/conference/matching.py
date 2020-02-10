@@ -199,6 +199,7 @@ class Matching(object):
                 profiles_by_email[email] = profile
 
         edges = []
+        row_count = 0
         with open(tpms_score_file) as file_handle:
             for row in csv.reader(file_handle):
                 number = int(row[0])
@@ -221,8 +222,11 @@ class Matching(object):
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
+                    row_count += 1
 
-        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        posted_edges = openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        if len(posted_edges) < row_count:
+            raise openreview.OpenReviewException('Failed during bulk post of TPMS edges! Found {0} TPMS scores, but posted {1} edges'.format(row_count, len(posted_edges)))
         return invitation
 
     def _build_scores(self, score_invitation_id, score_file, submissions):
