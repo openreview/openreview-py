@@ -605,7 +605,8 @@ var renderTasks = function(invitations, edgeInvitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#areachair-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#areachair-tasks)')
   }
   $(tasksOptions.container).empty();
 

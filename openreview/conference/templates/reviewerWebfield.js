@@ -282,7 +282,8 @@ var displayTasks = function(invitations, edgeInvitations){
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#reviewer-tasks)')
   }
   $(tasksOptions.container).empty();
 
