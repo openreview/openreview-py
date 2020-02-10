@@ -226,7 +226,7 @@ class Matching(object):
 
         posted_edges = openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         if len(posted_edges) < row_count:
-            raise openreview.OpenReviewException('Failed during bulk post of TPMS edges! Found {0} TPMS scores, but posted {1} edges'.format(row_count, len(posted_edges)))
+            raise openreview.OpenReviewException('Failed during bulk post of TPMS edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(tpms_score_file, row_count, len(posted_edges)))
         return invitation
 
     def _build_scores(self, score_invitation_id, score_file, submissions):
@@ -238,6 +238,7 @@ class Matching(object):
         submissions_per_id = {note.id: note.number for note in submissions}
 
         edges = []
+        row_count = 0
         with open(score_file) as file_handle:
             for row in csv.reader(file_handle):
                 paper_note_id = row[0]
@@ -253,8 +254,11 @@ class Matching(object):
                     writers=[self.conference.id],
                     signatures=[self.conference.id]
                 ))
+                row_count += 1
 
-        openreview.tools.post_bulk_edges(client=self.conference.client, edges=edges)
+        posted_edges = openreview.tools.post_bulk_edges(client=self.conference.client, edges=edges)
+        if len(posted_edges) < row_count:
+            raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, row_count, len(posted_edges)))
         return invitation
 
     def _build_subject_area_scores(self, submissions):
