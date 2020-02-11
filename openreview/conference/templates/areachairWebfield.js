@@ -177,7 +177,7 @@ var getOfficialReviews = function(noteNumbers) {
       if (num) {
         if (num in noteMap) {
           // Need to parse rating and confidence strings into ints
-          ratingMatch = n.content.rating.match(ratingExp);
+          ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
           n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
           confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
           n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
@@ -605,7 +605,8 @@ var renderTasks = function(invitations, edgeInvitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#areachair-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#areachair-tasks)')
   }
   $(tasksOptions.container).empty();
 
@@ -644,6 +645,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   // Note summary cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
+  cell1.referrer = encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)')
 
   // Review progress cell
   var reviewObj;
@@ -663,7 +665,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
         note: reviewObj.id,
         rating: reviewObj.rating,
         confidence: reviewObj.confidence,
-        reviewLength: reviewObj.content.review.length
+        reviewLength: reviewObj.content.review && reviewObj.content.review.length
       };
       ratings.push(reviewObj.rating);
       confidences.push(reviewObj.confidence);
@@ -719,7 +721,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     maxConfidence: maxConfidence,
     sendReminder: true,
     expandReviewerList: false,
-    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
+    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
+    referrer: encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)')
   };
   reviewerSummaryMap[note.number] = cell2;
 

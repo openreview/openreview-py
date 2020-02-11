@@ -1397,7 +1397,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_withdraw = True, allow_withdraw = True)
+        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_withdraw = True, allow_withdraw = True, reveal_submissions_on_withdraw=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
@@ -1454,7 +1454,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_desk_reject = True, allow_desk_reject = True)
+        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_desk_reject = True, allow_desk_reject = True, reveal_submissions_on_desk_reject=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)

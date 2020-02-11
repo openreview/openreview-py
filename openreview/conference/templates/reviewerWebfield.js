@@ -282,7 +282,8 @@ var displayTasks = function(invitations, edgeInvitations){
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#reviewer-tasks)')
   }
   $(tasksOptions.container).empty();
 
@@ -306,17 +307,21 @@ var displayError = function(message) {
 // Helper functions
 var buildTableRow = function(note, reviewerIds, completedRatings, officialReview) {
   var number = '<strong class="note-number">' + note.number + '</strong>';
+  var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#assigned-papers)');
 
   // Build Note Summary Cell
-  note.content.authors = null;  // Don't display 'Blinded Authors'
+  var cell1 = note;
+  cell1.content.authors = null;  // Don't display 'Blinded Authors'
+  cell1.referrer = referrerUrl;
   //note.content.authorDomains = domains;
-  var summaryHtml = Handlebars.templates.noteSummary(note);
+  var summaryHtml = Handlebars.templates.noteSummary(cell1);
 
   // Build Status Cell
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
+    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number),
+    referrer: referrerUrl
   };
   var reviewStatus = {
     invitationUrl: '/forum?' + $.param(invitationUrlParams),
@@ -325,7 +330,7 @@ var buildTableRow = function(note, reviewerIds, completedRatings, officialReview
   if (officialReview) {
     reviewStatus.paperRating = officialReview.content.rating;
     reviewStatus.review = officialReview.content.review;
-    reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id;
+    reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id + '&referrer=' + referrerUrl;
   }
   var statusHtml = Handlebars.templates.noteReviewStatus(reviewStatus);
 

@@ -457,13 +457,13 @@ class Conference(object):
         if not self.submission_stage.allow_withdraw:
             raise openreview.OpenReviewException('Conference does not allow withdraw invitations')
 
-        withdraw_invitations = self.invitation_builder.set_withdraw_invitation(self)
+        return self.invitation_builder.set_withdraw_invitation(self)
 
     def create_desk_reject_invitations(self):
         if not self.submission_stage.allow_desk_reject:
             raise openreview.OpenReviewException('Conference does not allow desk rejects')
 
-        desk_reject_invitations = self.invitation_builder.set_desk_reject_invitation(self)
+        return self.invitation_builder.set_desk_reject_invitation(self)
 
     def create_blind_submissions(self, force=False, hide_fields=[]):
 
@@ -861,8 +861,10 @@ class SubmissionStage(object):
             double_blind=False,
             allow_withdraw=False,
             reveal_authors_on_withdraw=False,
+            reveal_submissions_on_withdraw=False,
             allow_desk_reject=False,
             reveal_authors_on_desk_reject=False,
+            reveal_submissions_on_desk_reject=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -875,8 +877,10 @@ class SubmissionStage(object):
         self.double_blind = double_blind
         self.allow_withdraw = allow_withdraw
         self.reveal_authors_on_withdraw = reveal_authors_on_withdraw
+        self.reveal_submissions_on_withdraw = reveal_submissions_on_withdraw
         self.allow_desk_reject = allow_desk_reject
         self.reveal_authors_on_desk_reject = reveal_authors_on_desk_reject
+        self.reveal_submissions_on_desk_reject = reveal_submissions_on_desk_reject
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
@@ -1003,8 +1007,9 @@ class ReviewStage(object):
 
 class CommentStage(object):
 
-    def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
-        self.name = 'Comment'
+    def __init__(self, official_name = 'Official_Comment', start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
+        self.official_name = official_name
+        self.public_name = 'Public_Comment'
         self.start_date = start_date
         self.allow_public_comments = allow_public_comments
         self.anonymous = anonymous
@@ -1191,8 +1196,10 @@ class ConferenceBuilder(object):
             double_blind=False,
             allow_withdraw=False,
             reveal_authors_on_withdraw=False,
+            reveal_submissions_on_withdraw=False,
             allow_desk_reject=False,
             reveal_authors_on_desk_reject=False,
+            reveal_submissions_on_desk_reject=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -1206,8 +1213,10 @@ class ConferenceBuilder(object):
             double_blind,
             allow_withdraw,
             reveal_authors_on_withdraw,
+            reveal_submissions_on_withdraw,
             allow_desk_reject,
             reveal_authors_on_desk_reject,
+            reveal_submissions_on_desk_reject,
             additional_fields,
             remove_fields,
             subject_areas
