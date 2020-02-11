@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import datetime
 import json
+import time
 import openreview
 import pytest
 from selenium.common.exceptions import NoSuchElementException
@@ -220,6 +221,8 @@ class TestBuilder():
         paper_status_tab = selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert paper_status_tab
         paper_status_tab.click()
+
+        time.sleep(2)
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta Review Missing']
