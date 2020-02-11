@@ -146,11 +146,6 @@ var loadData = function(result) {
     .then(function(result) {
       allReviewers = result.groups[0].members;
     });
-    //get reviewers with conflict
-    //allReviewersWithConflictP=Webfield.get('/edges',{invitation:REVIEWER_GROUP_WITH_CONFLICT})
-    //.then(result=>{
-  //    allReviewerWithConflict=result.edges;
-  //  });
   } else {
     allReviewersP = $.Deferred().resolve([]);
   }
@@ -599,12 +594,6 @@ var renderTableRows = function(rows, container) {
 
   $('.table-container', container).remove();
   $(container).append(tableHtml);
-
-  // if (ENABLE_REVIEWER_REASSIGNMENT) {
-  //   for(key in reviewerSummaryMap) {
-  //     updateReviewerContainer(key);
-  //   }
-  // }
 }
 
 var filterInvitationsByInvitee = function(invitations, invitee_name) {
