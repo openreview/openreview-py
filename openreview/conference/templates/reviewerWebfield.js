@@ -278,7 +278,6 @@ var displayStatusTable = function(profiles, notes, completedRatings, officialRev
 };
 
 var displayTasks = function(invitations, edgeInvitations){
-  console.log('displayTasks');
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',

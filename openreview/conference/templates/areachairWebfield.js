@@ -606,7 +606,7 @@ var renderTasks = function(invitations, edgeInvitations) {
   var tasksOptions = {
     container: '#areachair-tasks',
     emptyMessage: 'No outstanding tasks for this conference',
-    referrer: encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#areachair-tasks)')
+    referrer: encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#areachair-tasks)')
   }
   $(tasksOptions.container).empty();
 
@@ -638,6 +638,7 @@ var renderTableAndTasks = function(fetchedData) {
 
 var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation) {
   var cellCheck = { selected: false, noteId: note.id };
+  var referrerUrl = encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)');
 
   // Paper number cell
   var cell0 = { number: note.number};
@@ -645,7 +646,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   // Note summary cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
-  cell1.referrer = encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)')
+  cell1.referrer = referrerUrl;
 
   // Review progress cell
   var reviewObj;
@@ -722,7 +723,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     sendReminder: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
-    referrer: encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)')
+    referrer: referrerUrl
   };
   reviewerSummaryMap[note.number] = cell2;
 
@@ -730,12 +731,13 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: getInvitationId('Meta_Review', note.number)
+    invitationId: getInvitationId('Meta_Review', note.number),
+    referrer: referrerUrl
   };
   var cell3 = {};
   if (metaReview) {
     cell3.recommendation = metaReview.content.recommendation;
-    cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id;
+    cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id + '&referrer=' + referrerUrl;
   }
   if (metaReviewInvitation) {
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);
