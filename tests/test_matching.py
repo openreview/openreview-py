@@ -451,7 +451,7 @@ class TestMatching():
 
         ## Open reviewer recommendations
         now = datetime.datetime.utcnow()
-        conference.open_recommendations(due_date = now + datetime.timedelta(minutes = 40))
+        conference.open_recommendations(assignment_title='', due_date = now + datetime.timedelta(minutes = 40))
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
@@ -491,7 +491,6 @@ class TestMatching():
         assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
         assert 'auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
         assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
 
@@ -499,6 +498,14 @@ class TestMatching():
         conference.setup_matching(
             is_area_chair=True,
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'))
+
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
+        assert invitation
+        assert 'scores_specification' in invitation.reply['content']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')

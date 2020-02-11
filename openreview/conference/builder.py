@@ -57,7 +57,7 @@ class Conference(object):
                 readers = ['everyone'] if public else [self.id, group_owner_id, group_id],
                 writers = [self.id, group_owner_id],
                 signatures = [self.id],
-                signatories = [group_id] if is_signatory else [self.id, group_owner_id],
+                signatories = [self.id, group_id] if is_signatory else [self.id, group_owner_id],
                 members = members))
         else:
             return self.client.add_members_to_group(group, members)
@@ -95,10 +95,10 @@ class Conference(object):
             if bid_invitation:
                 self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id(), self.bid_stage.ac_request_count, self.bid_stage.instructions)
 
-    def __set_recommendation_page(self):
+    def __set_recommendation_page(self, assignment_title, score_ids, conflict_id):
         recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
         if recommendation_invitation:
-            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation)
+            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, assignment_title, score_ids, conflict_id)
 
     def __expire_invitation(self, invitation_id):
         # Get invitation
@@ -315,8 +315,10 @@ class Conference(object):
     def get_bid_id(self, group_id):
         return self.get_invitation_id(self.bid_stage.name, prefix=group_id)
 
-    def get_recommendation_id(self, number = None):
-        return self.get_invitation_id(self.recommendation_name, number)
+    def get_recommendation_id(self, group_id=None):
+        if not group_id:
+            group_id = self.get_reviewers_id()
+        return self.get_invitation_id(self.recommendation_name, prefix=group_id)
 
     def get_registration_id(self, committee_id):
         return self.get_invitation_id(name = self.registration_stage.name, prefix = committee_id)
@@ -530,15 +532,21 @@ class Conference(object):
         if self.use_area_chairs:
             self.__expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
-    def open_recommendations(self, start_date = None, due_date = None, reviewer_assingment_title = None):
-        notes_iterator = self.get_submissions()
-        assignment_notes_iterator = None
+    def open_recommendations(self, assignment_title, start_date = None, due_date = None):
 
-        if reviewer_assingment_title:
-            assignment_notes_iterator = tools.iterget_notes(self.client, invitation = self.get_paper_assignment_id(), content = { 'title': reviewer_assingment_title })
+        score_ids = []
+        invitation_ids = [
+            self.get_invitation_id('TPMS_Score', prefix=self.get_reviewers_id()),
+            self.get_invitation_id('Affinity_Score', prefix=self.get_reviewers_id()),
+            self.get_bid_id(self.get_reviewers_id())
+        ]
 
-        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, notes_iterator, assignment_notes_iterator)
-        return self.__set_recommendation_page()
+        for invitation_id in invitation_ids:
+            if tools.get_invitation(self.client, invitation_id):
+                score_ids.append(invitation_id)
+
+        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date)
+        return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()))
 
     ## Deprecated
     def open_registration(self, name=None, start_date=None, due_date=None, additional_fields={}, ac_additional_fields={}, instructions=None, ac_instructions=None):
@@ -995,7 +1003,7 @@ class ReviewStage(object):
 
 class CommentStage(object):
 
-    def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
+    def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
         self.name = 'Comment'
         self.start_date = start_date
         self.allow_public_comments = allow_public_comments
@@ -1003,6 +1011,7 @@ class CommentStage(object):
         self.unsubmitted_reviewers = unsubmitted_reviewers
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
+        self.authors = authors
 
 class MetaReviewStage(object):
 
@@ -1219,8 +1228,8 @@ class ConferenceBuilder(object):
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
 
-    def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False):
-        self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs)
+    def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False ):
+        self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
 
     def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
         self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields, process)
