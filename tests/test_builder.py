@@ -217,11 +217,12 @@ class TestBuilder():
         pc_client = helpers.create_user('pc_testconsole1@mail.com', 'Test', 'PCConsole')
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
 
-        assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
+        paper_status_tab = selenium.find_element_by_xpath('//a[@href="#paper-status"]')
+        assert paper_status_tab
+        paper_status_tab.click()
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta Review Missing']
-
         for option in expected_options:
             assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
 
@@ -233,6 +234,7 @@ class TestBuilder():
         conference = builder.get_result()
 
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+
         expected_options.append('Meta Review Missing')
         for option in expected_options:
             assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
