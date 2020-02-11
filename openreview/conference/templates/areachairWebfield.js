@@ -645,6 +645,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   // Note summary cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
+  cell1.referrer = encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)')
 
   // Review progress cell
   var reviewObj;
@@ -720,7 +721,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     maxConfidence: maxConfidence,
     sendReminder: true,
     expandReviewerList: false,
-    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
+    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
+    referrer: encodeURIComponent('[AC Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)')
   };
   reviewerSummaryMap[note.number] = cell2;
 
