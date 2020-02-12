@@ -546,7 +546,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_DESK_REJECT = False',
                     'REVEAL_AUTHORS_ON_DESK_REJECT = True')
-            if conference.submission_stage.reveal_submissions_on_withdraw:
+            if conference.submission_stage.reveal_submissions_on_desk_reject:
                 file_content = file_content.replace(
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = False',
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = True')
