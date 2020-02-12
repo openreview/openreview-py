@@ -220,9 +220,9 @@ class TestBuilder():
 
         paper_status_tab = selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert paper_status_tab
-        paper_status_tab.click()
 
         time.sleep(2)
+        paper_status_tab.click()
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta Review Missing']
