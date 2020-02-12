@@ -132,7 +132,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                         'size': 500000000000
                     }
                 }
-            })
+            },
+            allow_desk_reject=True,
+            allow_withdraw=True)
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
@@ -718,4 +720,79 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(links) == 1
         assert url == links[0].get_attribute("href")
 
+
+    def test_desk_reject_submission(self, conference, client):
+
+        conference.close_submissions()
+        conference.create_desk_reject_invitations()
+
+        blinded_notes = conference.get_submissions()
+        assert len(blinded_notes) == 5
+
+        desk_reject_note = openreview.Note(
+            invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Desk_Reject',
+            forum = blinded_notes[0].forum,
+            replyto = blinded_notes[0].forum,
+            readers = [conference.get_id(), conference.get_program_chairs_id()],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
+            signatures = [conference.get_program_chairs_id()],
+            content = {
+                'desk_reject_comments': 'PC has decided to reject this submission.',
+                'title': 'Submission Desk Rejected by Program Chairs'
+            }
+        )
+
+        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+        posted_note = pc_client.post_note(desk_reject_note)
+        assert posted_note
+
+        time.sleep(2)
+
+        logs = client.get_process_logs(id = posted_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
+        blinded_notes = conference.get_submissions()
+        assert len(blinded_notes) == 4
+
+        desk_rejected_notes = client.get_notes(invitation = conference.submission_stage.get_desk_rejected_submission_id(conference))
+
+        assert len(desk_rejected_notes) == 1
+
+
+    def test_withdraw_submission(self, conference, client, test_client):
+
+        conference.create_withdraw_invitations()
+
+        blinded_notes = conference.get_submissions()
+        assert len(blinded_notes) == 4
+
+        withdrawal_note = openreview.Note(
+            invitation = 'thecvf.com/ECCV/2020/Conference/Paper4/-/Withdraw',
+            forum = blinded_notes[0].forum,
+            replyto = blinded_notes[0].forum,
+            readers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
+            writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
+            signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        )
+
+        posted_note = test_client.post_note(withdrawal_note)
+        assert posted_note
+
+        time.sleep(2)
+
+        logs = client.get_process_logs(id = posted_note.id)
+        assert logs
+        assert logs[0]['status'] == 'ok'
+
+        blinded_notes = conference.get_submissions()
+        assert len(blinded_notes) == 3
+
+        withdrawn_notes = client.get_notes(invitation = conference.submission_stage.get_withdrawn_submission_id(conference))
+
+        assert len(withdrawn_notes) == 1
 
