@@ -290,7 +290,7 @@ class CommentInvitation(openreview.Invitation):
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference):
+    def __init__(self, conference, reveal_authors, reveal_submission):
 
         content = {
             'authorids': {
@@ -305,7 +305,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
             }
         }
 
-        if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_withdraw):
+        if (conference.submission_stage.double_blind and not reveal_authors):
             content['authors'] = {
                 'values': ['Anonymous']
             }
@@ -313,7 +313,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 'values-regex': '.*'
             }
 
-        if conference.submission_stage.reveal_submissions_on_withdraw:
+        if reveal_submission:
             readers = {
                 'values': ['everyone']
             }
@@ -348,14 +348,14 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
 class PaperWithdrawInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note):
+    def __init__(self, conference, note, reveal_authors, reveal_submission):
 
         content = invitations.withdraw.copy()
 
         withdraw_process_file = 'templates/withdraw_process.py'
 
 
-        if conference.submission_stage.reveal_submissions_on_withdraw:
+        if reveal_submission:
             readers = {
                 'description': 'User groups that will be able to read this withdraw note.',
                 'values': ['everyone']
@@ -396,11 +396,11 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
-            if conference.submission_stage.reveal_authors_on_withdraw:
+            if reveal_authors:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
                     'REVEAL_AUTHORS_ON_WITHDRAW = True')
-            if conference.submission_stage.reveal_submissions_on_withdraw:
+            if reveal_submission:
                 file_content = file_content.replace(
                     'REVEAL_SUBMISSIONS_ON_WITHDRAW = False',
                     'REVEAL_SUBMISSIONS_ON_WITHDRAW = True')
@@ -436,7 +436,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
 class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference):
+    def __init__(self, conference, reveal_authors, reveal_submission):
 
         content = {
             'authorids': {
@@ -451,7 +451,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
             }
         }
 
-        if (conference.submission_stage.double_blind and not conference.submission_stage.reveal_authors_on_desk_reject):
+        if (conference.submission_stage.double_blind and not reveal_authors):
             content['authors'] = {
                 'values': ['Anonymous']
             }
@@ -459,7 +459,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 'values-regex': '.*'
             }
 
-        if conference.submission_stage.reveal_submissions_on_desk_reject:
+        if reveal_submission:
             readers = {
                 'values': ['everyone']
             }
@@ -494,14 +494,14 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
 class PaperDeskRejectInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note):
+    def __init__(self, conference, note, reveal_authors, reveal_submission):
 
         content = invitations.desk_reject.copy()
 
         desk_reject_process_file = 'templates/desk_reject_process.py'
 
 
-        if conference.submission_stage.reveal_submissions_on_desk_reject:
+        if reveal_submission:
             readers = {
                 'description': 'User groups that will be able to read this withdraw note.',
                 'values': ['everyone']
@@ -542,11 +542,11 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
-            if conference.submission_stage.reveal_authors_on_desk_reject:
+            if reveal_authors:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_DESK_REJECT = False',
                     'REVEAL_AUTHORS_ON_DESK_REJECT = True')
-            if conference.submission_stage.reveal_submissions_on_desk_reject:
+            if reveal_submission:
                 file_content = file_content.replace(
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = False',
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = True')
@@ -976,27 +976,27 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_withdraw_invitation(self, conference):
+    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission):
 
         invitations = []
 
-        self.client.post_invitation(WithdrawnSubmissionInvitation(conference))
+        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission))
 
         notes = list(conference.get_submissions())
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission)))
 
         return invitations
 
-    def set_desk_reject_invitation(self, conference):
+    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission):
 
         invitations = []
 
-        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference))
+        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission))
 
         notes = list(conference.get_submissions())
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note)))
+            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission)))
 
         return invitations
 
