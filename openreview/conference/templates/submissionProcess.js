@@ -1,21 +1,32 @@
-function() {
+function processUpdate() {
   var or3client = lib.or3client;
 
   var SHORT_PHRASE = '';
 
-  var authorMessage = 'Your submission to ' + SHORT_PHRASE + ' has been posted.\n\nSubmission Number: ' + note.number + '\n\nTitle: ' + note.content.title;
-  if (note.content.abstract) {
-    authorMessage += '\n\nAbstract: ' + note.content.abstract;
-  }
-  authorMessage += '\n\nTo view your submission, click here: ' + baseUrl + '/forum?id=' + note.forum + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor;
+  var authorSubject = SHORT_PHRASE + ' has received your submission titled ' + note.content.title;
+  var noteAbstract = (note.content.abstract ? `\n\nAbstract: ${note.content.abstract}` : '');
+  var action = existingNote ? 'updated' : 'posted';
+  var authorMessage = `Your submission to ${SHORT_PHRASE} has been ${action}.Submission Number: ${note.number} \n\nTitle: ${note.content.title} ${noteAbstract} \n\nTo view your submission, click here: ${baseUrl}/forum?id=${note.forum}`;
 
   var authorMail = {
-    groups: note.content.authorids,
-    subject: SHORT_PHRASE + ' has received your submission titled ' + note.content.title,
+    groups: [note.tauthor],
+    subject: authorSubject,
     message: authorMessage
   };
 
-  or3client.or3request(or3client.mailUrl, authorMail, 'POST', token)
+  authorMessage += `\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ${note.tauthor}`;
+
+  var otherAuthorsMail = {
+    groups: note.content.authorids,
+    ignoreGroups: [note.tauthor],
+    subject: authorSubject,
+    message: authorMessage
+  };
+
+  Promise.all([
+    or3client.or3request(or3client.mailUrl, authorMail, 'POST', token),
+    or3client.or3request(or3client.mailUrl, otherAuthorsMail, 'POST', token)
+    ])
   .then(result => done())
   .catch(error => done(error));
 
