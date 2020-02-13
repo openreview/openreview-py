@@ -362,7 +362,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values-copied': [conference.id, '{signatures}']
+                'values': note.readers
             }
 
         with open(os.path.join(os.path.dirname(__file__), withdraw_process_file)) as f:
@@ -508,7 +508,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values-copied': [conference.id, '{signatures}']
+                'values': note.readers
             }
 
         with open(os.path.join(os.path.dirname(__file__), desk_reject_process_file)) as f:

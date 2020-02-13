@@ -721,7 +721,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert url == links[0].get_attribute("href")
 
 
-    def test_desk_reject_submission(self, conference, client):
+    def test_desk_reject_submission(self, conference, client, test_client):
 
         conference.close_submissions()
         conference.create_desk_reject_invitations()
@@ -733,7 +733,10 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Desk_Reject',
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
-            readers = [conference.get_id(), conference.get_program_chairs_id()],
+            readers = ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
+                'thecvf.com/ECCV/2020/Conference/Reviewers',
+                'thecvf.com/ECCV/2020/Conference/Area_Chairs',
+                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
@@ -759,6 +762,10 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         assert len(desk_rejected_notes) == 1
 
+        desk_reject_note = test_client.get_note(posted_note.id)
+        assert desk_reject_note
+        assert desk_reject_note.content['desk_reject_comments'] == 'PC has decided to reject this submission.'
+
 
     def test_withdraw_submission(self, conference, client, test_client):
 
@@ -771,7 +778,10 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation = 'thecvf.com/ECCV/2020/Conference/Paper4/-/Withdraw',
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
-            readers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
+            readers = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
+                'thecvf.com/ECCV/2020/Conference/Reviewers',
+                'thecvf.com/ECCV/2020/Conference/Area_Chairs',
+                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             content = {
