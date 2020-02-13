@@ -93,9 +93,7 @@ def get_conference_builder(client, request_form_id):
         due_date = submission_due_date,
         additional_fields = submission_additional_options,
         allow_withdraw = True,
-        reveal_authors_on_withdraw = True,
-        allow_desk_reject = True,
-        reveal_authors_on_desk_reject = True)
+        allow_desk_reject = True)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
