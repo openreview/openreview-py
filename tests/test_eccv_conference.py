@@ -132,9 +132,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                         'size': 500000000000
                     }
                 }
-            },
-            allow_desk_reject=True,
-            allow_withdraw=True)
+            })
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
