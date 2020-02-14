@@ -362,8 +362,8 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('author-console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
@@ -403,8 +403,8 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('author-console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 

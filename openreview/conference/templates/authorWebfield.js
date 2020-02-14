@@ -48,8 +48,7 @@ function load() {
   } else {
     authorNotesP = Webfield.get('/notes', {
       'content.authorids': user.profile.id,
-      invitation: SUBMISSION_ID,
-      details: 'replyCount,writable'
+      invitation: SUBMISSION_ID
     }).then(function(result) {
       return result.notes;
     });
