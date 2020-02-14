@@ -103,6 +103,7 @@ var main = function() {
   .then(function(profiles) {
     conferenceStatusData.profiles = profiles;
 
+    $('.tabs-container .nav-tabs > li').removeClass('loading');
     Webfield.ui.done();
   })
   .fail(function() {
@@ -459,6 +460,7 @@ var renderHeader = function() {
   });
 
   Webfield.ui.tabPanel(tabs);
+  $('.tabs-container .nav-tabs > li').not(':first-child').addClass('loading');
 };
 
 var displayConfiguration = function(requestForm, invitations, registrationForms) {
@@ -1797,6 +1799,11 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     paperStatusNeedsRerender = true;
   });
   return false;
+});
+
+$('#group-container').on('show.bs.tab', 'ul.nav-tabs li a', function(e) {
+  // Don't allow the user to switch tabs until all data is finished loading
+  return !$(e.target).parent().hasClass('loading');
 });
 
 $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
