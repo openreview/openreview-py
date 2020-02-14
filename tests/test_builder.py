@@ -5,6 +5,9 @@ import json
 import time
 import openreview
 import pytest
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
 class TestBuilder():
@@ -221,8 +224,9 @@ class TestBuilder():
         paper_status_tab = selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert paper_status_tab
 
-        time.sleep(2)
-        paper_status_tab.click()
+        WebDriverWait(selenium, 5).until(
+            EC.presence_of_element_located((By.ID, 'div-msg-reviewers'))
+        )
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta Review Missing']
