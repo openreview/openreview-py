@@ -224,8 +224,8 @@ class TestBuilder():
         paper_status_tab = selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert paper_status_tab
 
-        WebDriverWait(selenium, 5).until(
-            EC.presence_of_element_located((By.ID, 'div-msg-reviewers'))
+        WebDriverWait(selenium, 10).until(
+            EC.presence_of_element_located((By.ID, 'message-reviewers-btn'))
         )
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
