@@ -354,8 +354,7 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
             m = capitalization_regex.search(word)
             if m:
                 new_word = '{' + word[m.start():m.end()] + '}'
-                words[idx] = words[idx].
-                (word[m.start():m.end()], new_word)
+                words[idx] = words[idx].replace(word[m.start():m.end()], new_word)
         return ''.join(words)
 
 
