@@ -503,7 +503,8 @@ def replace_members_with_ids(client, group):
                 else:
                     raise e
         else:
-            ids.append(member)
+            profile = client.get_profile(member)
+            ids.append(profile.id)
 
     group.members = ids + emails
     return client.post_group(group)
