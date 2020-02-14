@@ -20,7 +20,6 @@ var REVIEWER_GROUP_WITH_CONFLICT=`${REVIEWER_GROUP}/-/Conflict`;
 
 var reviewerSummaryMap = {};
 var allReviewers = [];
-var reviewerWithConflictForThisPaper=[];
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -508,16 +507,16 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   }
 };
 
-var updateReviewerContainer = function(paperNumber,renderEmptyDropdown=false) {
+var updateReviewerContainer = function (paperNumber, renderEmptyDropdown, reviewerWithConflictForThisPaper) {
+  renderEmptyDropdown = renderEmptyDropdown || false;
   $addReviewerContainer = $('#' + paperNumber + '-add-reviewer');
   $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
   paperForum = $reviewerProgressContainer.data('paperForum');
 
   var paperNoteId=reviewerSummaryMap[paperNumber].noteId;
-  //var reviewerWithConflictForThisPaper=allReviewerWithConflict.filter(reviewerWithConflict=>reviewerWithConflict.head===paperNoteId).map(p=>p.tail);
   var dropdownOptions=[];
   if(renderEmptyDropdown===false){
-    dropdownOptions = _.map(allReviewers.filter(reviewer=>reviewerWithConflictForThisPaper.indexOf(reviewer)==-1), function(member) {
+    dropdownOptions = _.map(!reviewerWithConflictForThisPaper ? allReviewers : allReviewers.filter(reviewer => reviewerWithConflictForThisPaper.indexOf(reviewer) == -1), function(member) {
       return {
         id: member,
         description: view.prettyId(member)
@@ -804,20 +803,22 @@ var registerEventHandlers = function() {
   });
 
   $('#group-container').on('click', 'a.collapse-btn', function(e) {
+    var paperIdArray = $(this).attr('href').split("-");//href attribute is in format of #{paperId}-reviewers
+    paperIdArray.pop(); //
+    var paperId = paperIdArray.join('-').substring(1);
+    var paperNumber = reviewerSummaryMap[Object.keys(reviewerSummaryMap).filter(p => reviewerSummaryMap[p].noteId === paperId)].paperNumber;
     if ($(this).text() === 'Show reviewers') {
       $(this).text('Hide reviewers');
-      var paperId=$(this).attr('href').split("-")[0].replace("#","");
-      var paperNumber=reviewerSummaryMap[Object.keys(reviewerSummaryMap).filter(p=>reviewerSummaryMap[p].noteId===paperId)].paperNumber;
-      updateReviewerContainer(paperNumber,true);//render empty dropdown as placeholder for visual consistency
-      var allReviewersWithConflictP=Webfield.get('/edges',{head:paperId,invitation:REVIEWER_GROUP_WITH_CONFLICT})
-      .then(result=>{
-        reviewerWithConflictForThisPaper=result.edges.map(p=>p.tail);
-        $addReviewerContainer.children().remove()//remove empty dropdown when actual data arrive
-        updateReviewerContainer(paperNumber)//render dropdown with filtered value
-      });
+      updateReviewerContainer(paperNumber, true);//render empty dropdown as placeholder for visual consistency
+      Webfield.get('/edges', { head: paperId, invitation: REVIEWER_GROUP_WITH_CONFLICT })
+        .then(result => {
+          var reviewerWithConflictForThisPaper = result.edges.map(p => p.tail);
+          $addReviewerContainer.children().remove()//remove empty dropdown when actual data arrive
+          updateReviewerContainer(paperNumber, false, reviewerWithConflictForThisPaper)//render dropdown with filtered value
+        });
     } else {
       $(this).text('Show reviewers');
-      $addReviewerContainer.children().remove()
+      $(`#${paperNumber}-add-reviewer`).children().remove()
     }
   });
 
