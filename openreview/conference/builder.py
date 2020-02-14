@@ -453,17 +453,11 @@ class Conference(object):
 
         return invitation
 
-    def create_withdraw_invitations(self):
-        if not self.submission_stage.allow_withdraw:
-            raise openreview.OpenReviewException('Conference does not allow withdraw invitations')
+    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False):
+        return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission)
 
-        withdraw_invitations = self.invitation_builder.set_withdraw_invitation(self)
-
-    def create_desk_reject_invitations(self):
-        if not self.submission_stage.allow_desk_reject:
-            raise openreview.OpenReviewException('Conference does not allow desk rejects')
-
-        desk_reject_invitations = self.invitation_builder.set_desk_reject_invitation(self)
+    def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False):
+        return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission)
 
     def create_blind_submissions(self, force=False, hide_fields=[]):
 
@@ -859,10 +853,6 @@ class SubmissionStage(object):
             due_date=None,
             public=False,
             double_blind=False,
-            allow_withdraw=False,
-            reveal_authors_on_withdraw=False,
-            allow_desk_reject=False,
-            reveal_authors_on_desk_reject=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -873,10 +863,6 @@ class SubmissionStage(object):
         self.name = name
         self.public = public
         self.double_blind = double_blind
-        self.allow_withdraw = allow_withdraw
-        self.reveal_authors_on_withdraw = reveal_authors_on_withdraw
-        self.allow_desk_reject = allow_desk_reject
-        self.reveal_authors_on_desk_reject = reveal_authors_on_desk_reject
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
@@ -1189,10 +1175,6 @@ class ConferenceBuilder(object):
             due_date=None,
             public=False,
             double_blind=False,
-            allow_withdraw=False,
-            reveal_authors_on_withdraw=False,
-            allow_desk_reject=False,
-            reveal_authors_on_desk_reject=False,
             additional_fields={},
             remove_fields=[],
             subject_areas=[]
@@ -1204,10 +1186,6 @@ class ConferenceBuilder(object):
             due_date,
             public,
             double_blind,
-            allow_withdraw,
-            reveal_authors_on_withdraw,
-            allow_desk_reject,
-            reveal_authors_on_desk_reject,
             additional_fields,
             remove_fields,
             subject_areas
