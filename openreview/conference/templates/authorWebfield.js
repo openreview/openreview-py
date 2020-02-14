@@ -48,9 +48,33 @@ function load() {
   } else {
     authorNotesP = Webfield.get('/notes', {
       'content.authorids': user.profile.id,
-      invitation: SUBMISSION_ID
+      invitation: SUBMISSION_ID,
+      details: 'overwriting'
     }).then(function(result) {
-      return result.notes;
+      //Get the blind submissions to have backward compatibility with the paper number
+      var originalNotes = result.notes;
+      blindNoteIds = [];
+      originalNotes.forEach(function(note) {
+        if (note.details.overwriting && note.details.overwriting.length) {
+          blindNoteIds.push(note.details.overwriting[0]);
+        }
+      });
+
+      if (blindNoteIds.length) {
+        return Webfield.post('/notes/search', {
+          ids: blindNoteIds
+        })
+        .then(function(result) {
+          return result.notes.map(function(blindNote) {
+            var originalNote = originalNotes.find(function(o) { return o.id == blindNote.original;});
+            blindNote.content.authors = originalNote.content.authors;
+            blindNote.content.authorids = originalNote.content.authorids;
+            return blindNote;
+          });
+        })
+      } else {
+        return result.notes;
+      }
     });
 
     invitationsP = Webfield.get('/invitations', {
@@ -114,15 +138,6 @@ function renderContent(authorNotes, invitations, edgeInvitations) {
 
   Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
 
-  // Your Private Versions and Your Anonymous Versions tabs
-  // Webfield.ui.submissionList(authorNotes, {
-  //   heading: null,
-  //   container: '#your-submissions',
-  //   search: { enabled: false },
-  //   fadeIn: false,
-  //   displayOptions: paperDisplayOptions
-  // });
-
   //Render table like AC console
   renderStatusTable(authorNotes, {}, [], {}, '#your-submissions');
 
@@ -171,7 +186,7 @@ var renderTableRows = function(rows, container) {
 
   var tableHtml = Handlebars.templates['components/table']({
     headings: [
-      '#', 'Paper Summary'
+      'Paper ID', 'Paper Summary'
       // Temporally hide review status
       //, 'Review Progress', 'Meta Review Status'
     ],
