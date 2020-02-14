@@ -8,7 +8,6 @@ import pytest
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
 class TestBuilder():
@@ -225,13 +224,9 @@ class TestBuilder():
         assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert selenium.find_element_by_xpath('//div[@id="venue-configuration"]//h3')
 
-        try:
-            WebDriverWait(selenium, 10).until(
-                EC.presence_of_element_located((By.ID, 'message-reviewers-btn'))
-            )
-        except TimeoutException:
-            paper_status_tab = selenium.find_element_by_id('paper-status')
-            print(paper_status_tab.get_attribute('innerHTML'))
+        time.sleep(15)
+        paper_status_tab = selenium.find_element_by_id('paper-status')
+        print(paper_status_tab.get_attribute('innerHTML'))
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta Review Missing']
