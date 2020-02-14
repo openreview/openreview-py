@@ -219,3 +219,48 @@ class TestTools():
         assert openreview.tools.subdomains('   ') == []
 
 
+    def test_replace_members_with_ids(self, client, test_client):
+
+        posted_group = client.post_group(openreview.Group(id='test.org',
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            signatories=['~Super_User1'],
+            members=['test@mail.com', '~Test_User1', '~Another_Name1']
+        ))
+
+        assert posted_group
+
+        client.post_profile(openreview.Profile(
+            referent='~Test_User1',
+            signatures = ['~Test_User1'],
+            content={
+                'names': [
+                    {
+                    'first': 'Another',
+                    'last': 'Name',
+                    'username': '~Another_Name1'
+                    }
+                ]
+            }
+        ))
+
+        replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
+        assert replaced_group
+
+        assert replaced_group.members == ['~Test_User1']
+
+
+        posted_group = client.post_group(openreview.Group(id='test.org',
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            signatories=['~Super_User1'],
+            members=['~Super_User1', '~Another_Name1', 'noprofile@mail.com']
+        ))
+
+        replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
+        assert replaced_group
+
+        assert replaced_group.members == ['~Super_User1', '~Test_User1', 'noprofile@mail.com']
+
