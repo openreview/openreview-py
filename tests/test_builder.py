@@ -224,6 +224,7 @@ class TestBuilder():
         paper_status_tab = selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert paper_status_tab
 
+        assert selenium.find_element_by_xpath('//div[@id="venue-configuration"]//h3')
         WebDriverWait(selenium, 10).until(
             EC.presence_of_element_located((By.ID, 'message-reviewers-btn'))
         )
