@@ -149,7 +149,7 @@ class TestWorkshop():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_tag_name('author-console-table')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('author-console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
