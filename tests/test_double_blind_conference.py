@@ -1397,13 +1397,13 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_withdraw = True, allow_withdraw = True, reveal_submissions_on_withdraw=True)
+        builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.create_withdraw_invitations()
+        conference.create_withdraw_invitations(reveal_authors=True, reveal_submission=True)
 
         notes = conference.get_submissions()
         assert notes
@@ -1454,13 +1454,13 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_desk_reject = True, allow_desk_reject = True, reveal_submissions_on_desk_reject=True)
+        builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.create_desk_reject_invitations()
+        conference.create_desk_reject_invitations(reveal_authors=True, reveal_submission=True)
 
         notes = conference.get_submissions()
         assert notes
