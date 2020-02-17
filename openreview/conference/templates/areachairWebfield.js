@@ -515,8 +515,10 @@ var updateReviewerContainer = function (paperNumber, renderEmptyDropdown, review
 
   var paperNoteId=reviewerSummaryMap[paperNumber].noteId;
   var dropdownOptions=[];
-  if(renderEmptyDropdown===false){
-    dropdownOptions = _.map(!reviewerWithConflictForThisPaper ? allReviewers : allReviewers.filter(reviewer => reviewerWithConflictForThisPaper.indexOf(reviewer) == -1), function(member) {
+  if (renderEmptyDropdown === false) {
+    dropdownOptions = _.map(!reviewerWithConflictForThisPaper ? allReviewers : allReviewers.filter(function (reviewer) {
+      return reviewerWithConflictForThisPaper.indexOf(reviewer) == -1;
+    }), function (member) {
       return {
         id: member,
         description: view.prettyId(member)
@@ -806,16 +808,22 @@ var registerEventHandlers = function() {
     var paperIdArray = $(this).attr('href').split("-");//href attribute is in format of #{paperId}-reviewers
     paperIdArray.pop(); //
     var paperId = paperIdArray.join('-').substring(1);
-    var paperNumber = reviewerSummaryMap[Object.keys(reviewerSummaryMap).filter(p => reviewerSummaryMap[p].noteId === paperId)].paperNumber;
+    var paperNumber = reviewerSummaryMap[Object.keys(reviewerSummaryMap).filter(function (p) {
+      return reviewerSummaryMap[p].noteId === paperId;
+    })].paperNumber;
     if ($(this).text() === 'Show reviewers') {
       $(this).text('Hide reviewers');
       updateReviewerContainer(paperNumber, true);//render empty dropdown as placeholder for visual consistency
-      Webfield.get('/edges', { head: paperId, invitation: REVIEWER_GROUP_WITH_CONFLICT })
-        .then(result => {
-          var reviewerWithConflictForThisPaper = result.edges.map(p => p.tail);
-          $addReviewerContainer.children().remove()//remove empty dropdown when actual data arrive
-          updateReviewerContainer(paperNumber, false, reviewerWithConflictForThisPaper)//render dropdown with filtered value
+      Webfield.get('/edges', {
+        head: paperId,
+        invitation: REVIEWER_GROUP_WITH_CONFLICT
+      }).then(function (result) {
+        var reviewerWithConflictForThisPaper = result.edges.map(function (p) {
+          return p.tail;
         });
+        $addReviewerContainer.children().remove(); //remove empty dropdown when actual data arrive
+        updateReviewerContainer(paperNumber, false, reviewerWithConflictForThisPaper); //render dropdown with filtered value
+      });
     } else {
       $(this).text('Show reviewers');
       $(`#${paperNumber}-add-reviewer`).children().remove()
