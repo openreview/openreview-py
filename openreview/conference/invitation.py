@@ -1196,7 +1196,46 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(recommendation_invitation)
 
+    def set_paper_ranking_invitation(self, conference, group_id, start_date, due_date):
 
+        reviewer_paper_ranking_invitation = openreview.Invitation(
+            id = conference.get_invitation_id('Paper_Ranking', prefix=group_id),
+            cdate = tools.datetime_millis(start_date),
+            duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
+            readers = [conference.get_program_chairs_id(), group_id],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = [conference.get_program_chairs_id(), group_id],
+            multiReply = True,
+            reply = {
+                "invitation": conference.get_submission_id(),
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
+                'signatures': {
+                    'description': 'How your identity will be displayed with the above content.',
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    "tag": {
+                        "description": "Select value",
+                        "order": 1,
+                        "value-dropdown": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5"
+                        ],
+                        "required": True
+                    }
+                }
+            }
+        )
+
+        return self.client.post_invitation(reviewer_paper_ranking_invitation)
 
     def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, instructions, committee_id, committee_name):
 
