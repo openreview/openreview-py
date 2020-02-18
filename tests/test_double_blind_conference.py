@@ -1520,4 +1520,5 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         conference = builder.get_result()
 
-        conference.open_paper_ranking()
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(due_date = now + datetime.timedelta(minutes = 10))

@@ -8,20 +8,8 @@ var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var PAPER_RANKING_ID = '';
 var GROUP_NAME = '';
 
-var INSTRUCTIONS = '<p class="dark">Please indicate your level of interest in reviewing \
-  the submitted papers below, on a scale from "Very Low" to "Very High".</p>\
-  <p class="dark"><strong>Please note:</strong></p>\
-  <ul>\
-    <li><strong>Conflict of interest will be taken into account at the next stage. So, please do not worry about that while bidding.</strong></li>\
-    <li>Please update your Conflict of Interest details on your profile page, specifically "Emails", "Education and Career History" & "Advisors and Other Relations" fields.</li>\
-  </ul>\
-  <p class="dark"><strong>A few tips:</strong></p>\
-  <ul>\
-    <li>We expect <strong>approximately 50 bids per user</strong>. Please bid on as many papers as possible to ensure that your preferences are taken into account.</li>\
-    <li>For the best bidding experience, <strong>it is recommended that you filter papers by Subject Area</strong> and search for key phrases in paper metadata using the search form.</li>\
-    <li>Don\'t worry about suspected conflicts of interest during the bidding process. These will be accounted for during the paper matching process.</li>\
-    <li>Default bid on each paper is \"No Bid\".</li>\
-  </ul><br>'
+var INSTRUCTIONS = '<p class="dark">Please rank your assigned papers selecting a number in each dropdown below where value 1 is the best.</p>\
+<br>'
 
 var getNumberfromGroup = function(groupId, name) {
   var tokens = groupId.split('/');
