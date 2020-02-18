@@ -42,7 +42,7 @@ jobs:
             sudo apt-get install firefox-esr
             mkdir ~/openreview-py-repo/tests/drivers
             cd ~/openreview-py-repo/tests/drivers
-            wget https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
       - run:
