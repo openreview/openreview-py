@@ -166,7 +166,7 @@ var getReviewerGroups = function() {
 
 var getAreaChairGroups = function() {
   if (!AREA_CHAIRS_ID) {
-    return $.Deferred.resolve([]);
+    return $.Deferred().resolve([]);
   }
 
   return Webfield.getAll('/groups', {
@@ -216,7 +216,7 @@ var getUserProfiles = function(userIds) {
 
 var getMetaReviews = function() {
   if (!AREA_CHAIRS_ID) {
-    return $.Deferred.resolve([]);
+    return $.Deferred().resolve([]);
   }
 
   return Webfield.getAll('/notes', {
