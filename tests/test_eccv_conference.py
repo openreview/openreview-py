@@ -366,6 +366,48 @@ Please contact info@openreview.net with any questions or concerns about this int
             note.content['video'] = url
             test_client.post_note(note)
 
+    def test_submission_edit(self, conference, client, test_client):
+        
+        existing_notes = client.get_notes(invitation = conference.get_submission_id())
+        assert len(existing_notes) == 5
+
+        time.sleep(2)
+        note = existing_notes[0]
+        process_logs = client.get_process_logs(id = note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = ' has received your submission titled ' + note.content['title'])
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+
+        note.content['title'] = 'I have been updated'
+        client.post_note(note)
+
+        time.sleep(2)
+        note = client.get_note(note.id)
+
+        process_logs = client.get_process_logs(id = note.id)
+        assert len(process_logs) == 2
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[1]['status'] == 'ok'
+
+        messages = client.get_messages(subject = ' has received your submission titled I have been updated')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mit.edu' in recipients
+
+        tauthor_message = [msg for msg in messages if msg['content']['to'] == note.tauthor][0]
+        assert tauthor_message
+        assert tauthor_message['content']['text'] == 'Your submission to  has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id
+
+        other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
+        assert len(other_author_messages) == 2
+        assert other_author_messages[0]['content']['text'] == 'Your submission to  has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
+
     def test_revise_additional_files(self, conference, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
