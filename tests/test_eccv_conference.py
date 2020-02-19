@@ -392,12 +392,14 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(process_logs) == 2
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[1]['status'] == 'ok'
-        print (process_logs)
 
         messages = client.get_messages(subject = ' has received your submission titled I have been updated')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
-        assert 'test@mail.com' in recipients        
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mit.edu' in recipients
+        
 
     def test_revise_additional_files(self, conference, test_client):
 
