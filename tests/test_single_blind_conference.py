@@ -203,7 +203,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('author-console-table')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
@@ -250,7 +250,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('author-console-table')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
     def test_close_submission(self, client, test_client, selenium, request_page):
@@ -516,7 +516,7 @@ class TestSingleBlindConference():
         tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
         assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('author-console-table')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         conference.set_authorpage_header({
@@ -541,7 +541,7 @@ class TestSingleBlindConference():
         tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
         assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('author-console-table')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Reviewer user
