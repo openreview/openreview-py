@@ -16,6 +16,9 @@ jobs:
       - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
+      - run: mkdir ~/openreview/files
+      - run: mkdir ~/openreview/files/attachments
+      - run: mkdir ~/openreview/files/pdfs
       - run:
           name: install app
           command: |
@@ -23,7 +26,6 @@ jobs:
             npm install
             sudo npm install -g grunt-cli
             grunt regen
-            mkdir files
       - run:
           name: run app
           command: |
