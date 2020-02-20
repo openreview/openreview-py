@@ -318,7 +318,7 @@ class TestDoubleBlindConference():
         assert 10 == invitation.reply['content']['archival_status']['order']
 
         note = openreview.Note(invitation = invitation.id,
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -788,7 +788,7 @@ class TestDoubleBlindConference():
         assert invitation
 
         note = openreview.Note(invitation = invitation.id,
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -814,7 +814,7 @@ class TestDoubleBlindConference():
         assert blind_submissions_2[1].readers == ['everyone']
 
         note = openreview.Note(invitation = invitation.id,
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -1506,3 +1506,50 @@ class TestDoubleBlindConference():
         assert 'akbc_pc_1@akbc.ws' in recipients
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
+
+
+    def test_edit_revision_as_pc(self, client, test_client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        conference = builder.get_result()
+
+        conference.close_submissions()
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Revision',
+            forum = notes[0].original,
+            referent = notes[0].original,
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~Test_User1'],
+            content = {
+                'title': 'Paper title REVISED',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'archival_status': 'Archival',
+                'subject_areas': [
+                    'Databases',
+                    'Information Integration',
+                    'Knowledge Representation',
+                    'Semantic Web'
+                ],
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
+            }
+        )
+
+        posted_note = test_client.post_note(note)
+        assert posted_note
