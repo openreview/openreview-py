@@ -23,6 +23,7 @@ function main() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
   Webfield.ui.header(HEADER.title, HEADER.instructions);
+  $('#header').css('margin-bottom', '2rem');
 
   renderConferenceTabs();
 
@@ -71,7 +72,7 @@ function load() {
             blindNote.content.authorids = originalNote.content.authorids;
             return blindNote;
           });
-        })
+        });
       } else {
         return result.notes;
       }
@@ -133,7 +134,7 @@ function renderContent(authorNotes, invitations, edgeInvitations) {
   var tasksOptions = {
     container: '#author-tasks',
     emptyMessage: 'No outstanding tasks for this conference'
-  }
+  };
   $(tasksOptions.container).empty();
 
   Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
@@ -141,10 +142,10 @@ function renderContent(authorNotes, invitations, edgeInvitations) {
   //Render table like AC console
   renderStatusTable(authorNotes, {}, [], {}, '#your-submissions');
 
-  $('.author-console-table th').eq(0).css('width', '4%');
-  $('.author-console-table th').eq(1).css('width', '40%');
-  $('.author-console-table th').eq(2).css('width', '28%');
-  $('.author-console-table th').eq(3).css('width', '28%');
+  $('.console-table th').eq(0).css('width', '4%');
+  $('.console-table th').eq(1).css('width', '40%');
+  $('.console-table th').eq(2).css('width', '28%');
+  $('.console-table th').eq(3).css('width', '28%');
 
   // Remove spinner and show content
   $('#notes .spinner-container').remove();
@@ -191,13 +192,12 @@ var renderTableRows = function(rows, container) {
       //, 'Review Progress', 'Meta Review Status'
     ],
     rows: rowsHtml,
-    extraClasses: 'author-console-table'
+    extraClasses: 'console-table'
   });
 
   $('.table-container', container).remove();
   $(container).append(tableHtml);
-
-}
+};
 
 var buildTableRow = function(note, reviewerIds, completedReviews, metaReview) {
   var cellCheck = { selected: false, noteId: note.id };
