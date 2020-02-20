@@ -1043,7 +1043,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1057,7 +1057,13 @@ class Client(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.messages_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
+        response = requests.post(self.messages_url, json = {
+            'groups': recipients,
+            'subject': subject ,
+            'message': message,
+            'ignoreGroups': ignoreRecipients,
+            'from': sender
+            }, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
