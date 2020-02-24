@@ -16,9 +16,9 @@ jobs:
       - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
-      - run: mkdir ~/openreview/files
-      - run: mkdir ~/openreview/files/attachments
-      - run: mkdir ~/openreview/files/pdfs
+      - run: mkdir -p ~/openreview/files/pdfs
+      - run: mkdir -p ~/openreview/files/attachments/pdf
+      - run: mkdir -p ~/openreview/files/attachments/csv
       - run:
           name: install app
           command: |
