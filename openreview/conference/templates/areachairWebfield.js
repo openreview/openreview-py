@@ -16,7 +16,7 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]+$';
 var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
-var REVIEWER_GROUP_WITH_CONFLICT = `${REVIEWER_GROUP}/-/Conflict`;
+var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 
 var reviewerSummaryMap = {};
 var allReviewers = [];
@@ -513,12 +513,14 @@ var updateReviewerContainer = function (paperNumber, renderEmptyDropdown, review
   $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
   paperForum = $reviewerProgressContainer.data('paperForum');
 
-  var paperNoteId=reviewerSummaryMap[paperNumber].noteId;
-  var dropdownOptions=[];
-  if (renderEmptyDropdown === false) {
-    dropdownOptions = _.map(!reviewerWithConflictForThisPaper ? allReviewers : allReviewers.filter(function (reviewer) {
-      return reviewerWithConflictForThisPaper.indexOf(reviewer) == -1;
-    }), function (member) {
+  var paperNoteId = reviewerSummaryMap[paperNumber].noteId;
+  var dropdownOptions = [];
+  if (!renderEmptyDropdown) {
+    var reviewersToRender = allReviewers;
+    if (reviewerWithConflictForThisPaper) reviewersToRender = allReviewers.filter(function (reviewer) {
+      return reviewerWithConflictForThisPaper.indexOf(reviewer) === -1;
+    })
+    dropdownOptions = _.map(reviewersToRender, function (member) {
       return {
         id: member,
         description: view.prettyId(member)
@@ -808,9 +810,10 @@ var registerEventHandlers = function() {
     var paperIdArray = $(this).attr('href').split("-");//href attribute is in format of #{paperId}-reviewers
     paperIdArray.pop(); //
     var paperId = paperIdArray.join('-').substring(1);
-    var paperNumber = reviewerSummaryMap[Object.keys(reviewerSummaryMap).filter(function (p) {
+    var paperIndex = Object.keys(reviewerSummaryMap).filter(function (p) {
       return reviewerSummaryMap[p].noteId === paperId;
-    })].paperNumber;
+    })
+    var paperNumber = reviewerSummaryMap[paperIndex].paperNumber;
     if ($(this).text() === 'Show reviewers') {
       $(this).text('Hide reviewers');
       updateReviewerContainer(paperNumber, true);//render empty dropdown as placeholder for visual consistency
@@ -826,7 +829,7 @@ var registerEventHandlers = function() {
       });
     } else {
       $(this).text('Show reviewers');
-      $(`#${paperNumber}-add-reviewer`).children().remove()
+      $(paperNumber + '-add-reviewer').children().remove()
     }
   });
 
