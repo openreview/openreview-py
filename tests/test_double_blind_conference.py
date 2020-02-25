@@ -1397,13 +1397,13 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_withdraw = True, allow_withdraw = True)
+        builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.create_withdraw_invitations()
+        conference.create_withdraw_invitations(reveal_authors=True, reveal_submission=True)
 
         notes = conference.get_submissions()
         assert notes
@@ -1454,13 +1454,13 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True, reveal_authors_on_desk_reject = True, allow_desk_reject = True)
+        builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.create_desk_reject_invitations()
+        conference.create_desk_reject_invitations(reveal_authors=True, reveal_submission=True)
 
         notes = conference.get_submissions()
         assert notes
@@ -1506,3 +1506,70 @@ class TestDoubleBlindConference():
         assert 'akbc_pc_1@akbc.ws' in recipients
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
+
+    def test_release_reviews(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_review_stage(public=True)
+        builder.get_result()
+
+        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
+        assert(reviews)
+        assert len(reviews) == 1
+        assert reviews[0].readers == ['everyone']
+
+    def test_release_meta_reviews(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_meta_review_stage(public=True, additional_fields = {
+            'best paper' : {
+                'description' : 'Nominate as best paper?',
+                'value-radio' : ['Yes', 'No'],
+                'required' : False
+            }
+        })
+        builder.get_result()
+
+        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Meta_Review')
+        assert(reviews)
+        print(reviews)
+        assert len(reviews) == 2
+        assert reviews[0].readers == ['everyone']
+        assert reviews[1].readers == ['everyone']
+
+    def test_release_decisions(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_decision_stage(public=True)
+        builder.get_result()
+
+        decisions = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Decision')
+        assert(decisions)
+        assert len(decisions) == 3
+        assert decisions[0].readers == ['everyone']
+        assert decisions[1].readers == ['everyone']
+        assert decisions[2].readers == ['everyone']
