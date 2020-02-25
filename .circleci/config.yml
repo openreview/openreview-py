@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/node:8.9.1-stretch
+      - image: circleci/node:12.13.1
       - image: circleci/redis:3-stretch
       - image: circleci/mongo:3.6-stretch
       - image: elastic/elasticsearch:6.2.2
