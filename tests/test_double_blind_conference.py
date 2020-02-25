@@ -1367,7 +1367,7 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper3/-/Revision',
             forum = notes[0].original,
             referent = notes[0].original,
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            readers = ['AKBC.ws/2019/Conference', '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -1532,7 +1532,7 @@ class TestDoubleBlindConference():
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Revision',
             forum = notes[0].original,
             referent = notes[0].original,
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
+            readers = ['AKBC.ws/2019/Conference', '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
