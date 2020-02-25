@@ -1443,10 +1443,10 @@ var buildSPCTableRow = function(index, areaChair, papers) {
       averageRating = _.round(_.sum(ratings) / ratings.length, 2);
       minRating = _.min(ratings);
       maxRating = _.max(ratings);
-    }
 
-    if (ratings.length == numOfReviewers) {
-      numCompletedReviews++;
+      if (ratings.length == numOfReviewers) {
+        numCompletedReviews++;
+      }
     }
 
     if (paper.metaReview) {
