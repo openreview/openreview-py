@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/node:8.9.1-stretch
+      - image: circleci/node:12.13.1
       - image: circleci/redis:3-stretch
       - image: circleci/mongo:3.6-stretch
       - image: elastic/elasticsearch:6.2.2
@@ -16,6 +16,9 @@ jobs:
       - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
       - run: mkdir ~/openreview/logs
+      - run: mkdir ~/openreview/files
+      - run: mkdir ~/openreview/files/attachments
+      - run: mkdir ~/openreview/files/pdfs
       - run:
           name: install app
           command: |
@@ -23,7 +26,6 @@ jobs:
             npm install
             sudo npm install -g grunt-cli
             grunt regen
-            mkdir files
       - run:
           name: run app
           command: |
