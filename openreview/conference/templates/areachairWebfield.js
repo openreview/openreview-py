@@ -859,8 +859,8 @@ var registerEventHandlers = function() {
 
     var reviewersWithConflict = paperAndReviewersWithConflict[paperNumber];
     if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS && //if enabled then skip checking
-      (allReviewers.includes(userToAdd) == false) || //input is not in dropdown or 
-      (reviewersWithConflict && reviewersWithConflict.includes(userToAdd))) {//input is in conflict
+      (_.includes(allReviewers, userToAdd) == false) || //input is not in dropdown or 
+      (reviewersWithConflict && _.includes(reviewersWithConflict, userToAdd))) {//input is in conflict
       promptError('Please choose only from the reviewers from the dropdown');
       $currDiv.find('input').val('');
       $currDiv.find('input').attr('value_id', '');
