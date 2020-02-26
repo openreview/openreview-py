@@ -509,7 +509,6 @@ Please contact info@openreview.net with any questions or concerns about this int
         now = datetime.datetime.utcnow()
 
         for submission in submissions:
-
             id = conference.get_invitation_id('Supplementary_Material', submission.number)
             invitation = openreview.Invitation(
                 id = id,
@@ -525,7 +524,9 @@ Please contact info@openreview.net with any questions or concerns about this int
                         'values': submission.readers
                     },
                     'writers': {
-                        'values': submission.writers
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
                     },
                     'signatures': {
                         'values-regex': '~.*'
@@ -551,14 +552,17 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
             readers = note.readers,
-            writers = note.writers,
+            writers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
             signatures = ['~Test_User1'],
             referent = note.original,
             forum = note.original,
-            content = {
-            }
+            content = {}
         )
-        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), 'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material', 'supplementary_material')
+        url = test_client.put_attachment(
+            os.path.join(os.path.dirname(__file__), 'data/paper.pdf'),
+            'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
+            'supplementary_material'
+        )
         note.content['supplementary_material'] = url
         test_client.post_note(note)
 
