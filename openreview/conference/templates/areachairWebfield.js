@@ -1,4 +1,3 @@
-
 // Constants
 var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
