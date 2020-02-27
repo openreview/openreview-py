@@ -868,7 +868,7 @@ var registerEventHandlers = function() {
 
     if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS && //check only if reassign to outside is disabled
       (_.includes(allReviewers, userToAdd) === false)) { // not in allreviewers means is a outside reviewer
-      promptError('Please choose only from the reviewers from the dropdown');
+      promptError('Please choose only reviewers from the dropdown');
       $currDiv.find('input').val('');
       $currDiv.find('input').attr('value_id', '');
       return false;
