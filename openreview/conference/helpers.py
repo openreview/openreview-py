@@ -64,7 +64,8 @@ def get_conference_builder(client, request_form_id):
         'deadline': 'Submission Start: ' + submission_start_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0',
         'date': conference_start_date_str,
         'website': note.content['Official Website URL'],
-        'location': note.content.get('Location')
+        'location': note.content.get('Location'),
+        'contact': note.content.get('contact_email')
     }
     override_header = note.content.get('homepage_override', '')
     if override_header:
@@ -90,11 +91,7 @@ def get_conference_builder(client, request_form_id):
         public = public,
         start_date = submission_start_date,
         due_date = submission_due_date,
-        additional_fields = submission_additional_options,
-        allow_withdraw = True,
-        reveal_authors_on_withdraw = True,
-        allow_desk_reject = True,
-        reveal_authors_on_desk_reject = True)
+        additional_fields = submission_additional_options)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
@@ -103,7 +100,9 @@ def get_conference_builder(client, request_form_id):
     if 'Organizers will assign papers manually' in paper_matching_options:
         builder.enable_reviewer_reassignment(enable = True)
 
-    builder.set_conference_program_chairs_ids(note.content['Contact Emails'])
+    ## Contact Emails is deprecated
+    program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
+    builder.set_conference_program_chairs_ids(program_chair_ids)
 
     return builder
 
