@@ -859,7 +859,7 @@ var registerEventHandlers = function() {
 
     var reviewersWithConflict = paperAndReviewersWithConflict[paperNumber];
     if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS && //if enabled then skip checking
-      (_.includes(allReviewers, userToAdd) == false) || //input is not in dropdown or 
+      (_.includes(allReviewers, userToAdd) === false) || //input is not in dropdown or 
       (reviewersWithConflict && _.includes(reviewersWithConflict, userToAdd))) {//input is in conflict
       promptError('Please choose only from the reviewers from the dropdown');
       $currDiv.find('input').val('');
