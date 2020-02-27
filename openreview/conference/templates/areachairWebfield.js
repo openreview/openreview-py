@@ -858,9 +858,17 @@ var registerEventHandlers = function() {
     }
 
     var reviewersWithConflict = paperAndReviewersWithConflict[paperNumber];
-    if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS && //if enabled then skip checking
-      (_.includes(allReviewers, userToAdd) === false) || //input is not in dropdown or 
-      (reviewersWithConflict && _.includes(reviewersWithConflict, userToAdd))) {//input is in conflict
+
+    //if input is a reviewer in conflict, show error no matter of ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS flag
+    if(reviewersWithConflict && _.includes(reviewersWithConflict, userToAdd)){
+      promptError('The reviewer entered is invalid');
+      $currDiv.find('input').val('');
+      $currDiv.find('input').attr('value_id', '');
+      return false;
+    }
+
+    if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS && //check only if reassign to outside is disabled
+      (_.includes(allReviewers, userToAdd) === false)) { // not in allreviewers means is a outside reviewer
       promptError('Please choose only from the reviewers from the dropdown');
       $currDiv.find('input').val('');
       $currDiv.find('input').attr('value_id', '');
