@@ -1344,12 +1344,19 @@ class TestDoubleBlindConference():
             'archival_status': {
                 'description': 'Archival Status.',
                 'order': 10,
-                'required': False
+                'required': False,
+                'value-radio': ['Archival', 'Non-Archival'],
             },
             'subject_areas': {
                 'description': 'Subject Areas.',
                 'order': 12,
-                'required': False
+                'required': False,
+                'value-dropdown': [
+                    'Databases',
+                    'Information Integration',
+                    'Knowledge Representation',
+                    'Semantic Web'
+                ]
             },
         }
         builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
@@ -1376,12 +1383,7 @@ class TestDoubleBlindConference():
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
-                'subject_areas': [
-                    'Databases',
-                    'Information Integration',
-                    'Knowledge Representation',
-                    'Semantic Web'
-                ],
+                'subject_areas': 'Databases',
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
@@ -1541,12 +1543,7 @@ class TestDoubleBlindConference():
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
-                'subject_areas': [
-                    'Databases',
-                    'Information Integration',
-                    'Knowledge Representation',
-                    'Semantic Web'
-                ],
+                'subject_areas': 'Databases',
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
