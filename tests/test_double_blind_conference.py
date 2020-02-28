@@ -1541,8 +1541,16 @@ class TestDoubleBlindConference():
 
     def test_edit_revision_as_pc(self, client, test_client, helpers):
 
-        conference = builder.get_result()
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
 
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        conference = builder.get_result()
         conference.close_submissions()
 
         notes = conference.get_submissions()
