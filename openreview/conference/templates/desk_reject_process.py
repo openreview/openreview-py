@@ -25,7 +25,11 @@ def process(client, note, invitation):
     if REVEAL_SUBMISSIONS_ON_DESK_REJECT:
         forum_note.readers = ['everyone']
     else:
-        forum_note.readers = [CONFERENCE_ID, PAPER_AUTHORS_ID]
+        committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
+        if PAPER_AREA_CHAIRS_ID:
+            committee.append(PAPER_AREA_CHAIRS_ID)
+        committee.append(PROGRAM_CHAIRS_ID)
+        forum_note.readers = committee
 
     if REVEAL_AUTHORS_ON_DESK_REJECT:
         forum_note.content = {
@@ -57,7 +61,4 @@ def process(client, note, invitation):
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,
         paper_title_or_num = forum_note.content.get('title', '#'+str(forum_note.number))
     )
-    recipients = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID, PROGRAM_CHAIRS_ID]
-    if PAPER_AREA_CHAIRS_ID:
-        recipients.append(PAPER_AREA_CHAIRS_ID)
-    client.post_message(email_subject, recipients, email_body)
+    client.post_message(email_subject, committee, email_body)
