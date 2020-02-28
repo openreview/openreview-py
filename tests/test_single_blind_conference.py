@@ -203,8 +203,8 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS")
@@ -250,8 +250,8 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
     def test_close_submission(self, client, test_client, selenium, request_page):
 
@@ -516,8 +516,8 @@ class TestSingleBlindConference():
         tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
         assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         conference.set_authorpage_header({
             'title': 'Author Console',
@@ -541,8 +541,8 @@ class TestSingleBlindConference():
         tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
         assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Reviewer user
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer@mail.com', password='1234')

@@ -2,8 +2,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import datetime
 import json
+import time
 import openreview
 import pytest
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
 class TestBuilder():
@@ -218,10 +223,14 @@ class TestBuilder():
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
 
         assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
+        assert selenium.find_element_by_xpath('//div[@id="venue-configuration"]//h3')
+
+        WebDriverWait(selenium, 10).until(
+            EC.presence_of_element_located((By.ID, 'message-reviewers-btn'))
+        )
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta Review Missing']
-
         for option in expected_options:
             assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
 
@@ -233,6 +242,7 @@ class TestBuilder():
         conference = builder.get_result()
 
         request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+
         expected_options.append('Meta Review Missing')
         for option in expected_options:
             assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
