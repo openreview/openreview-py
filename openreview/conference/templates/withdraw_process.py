@@ -12,6 +12,11 @@ def process(client, note, invitation):
     REVEAL_AUTHORS_ON_WITHDRAW = False
     REVEAL_SUBMISSIONS_ON_WITHDRAW = False
 
+    committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
+    if PAPER_AREA_CHAIRS_ID:
+        committee.append(PAPER_AREA_CHAIRS_ID)
+    committee.append(PROGRAM_CHAIRS_ID)
+
     forum_note = client.get_note(note.forum)
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
 
@@ -24,10 +29,6 @@ def process(client, note, invitation):
     if REVEAL_SUBMISSIONS_ON_WITHDRAW:
         forum_note.readers = ['everyone']
     else:
-        committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
-        if PAPER_AREA_CHAIRS_ID:
-            committee.append(PAPER_AREA_CHAIRS_ID)
-        committee.append(PROGRAM_CHAIRS_ID)
         forum_note.readers = committee
 
     if REVEAL_AUTHORS_ON_WITHDRAW:
