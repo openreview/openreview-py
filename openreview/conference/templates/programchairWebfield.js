@@ -1324,11 +1324,10 @@ var updateReviewerContainer = function(paperNumber) {
 }
 
 var buildEdgeBrowserUrl = function(reviewerId) {
-  var referrerText = 'Back to PC Console';
-  var referrerUrl = '/group' + location.search + location.hash;
   var bidInv = REVIEWERS_ID + '/-/' + BID_NAME
+  var referrerUrl = '/group' + location.search + location.hash;
 
-  // Right now this is only showing bids, elmos scores and conflicts as the
+  // Right now this is only showing bids, elmo scores, and conflicts as the
   // other scores invitations + labels are not available in the PC console
   return '/edge/browse' +
     '?start=' + bidInv + ',tail:' + reviewerId +
@@ -1336,7 +1335,7 @@ var buildEdgeBrowserUrl = function(reviewerId) {
     '&browse=' + bidInv +
     ';' + REVIEWERS_ID + '/-/ELMo_Score' +
     ';' + REVIEWERS_ID + '/-/Conflict' +
-    '&referrer=' + encodeURIComponent('[' + referrerText + '](' + referrerUrl + ')');
+    '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
 }
 
 // Helper functions
