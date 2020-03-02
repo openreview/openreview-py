@@ -149,8 +149,8 @@ class TestWorkshop():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
         request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
@@ -190,8 +190,8 @@ class TestWorkshop():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
     def test_create_blind_submissions(self, client):
 

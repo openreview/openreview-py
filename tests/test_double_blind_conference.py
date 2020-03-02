@@ -362,8 +362,8 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
@@ -403,8 +403,8 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
@@ -1334,6 +1334,36 @@ class TestDoubleBlindConference():
         assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
         assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
 
+    def test_reassign_reviewers_with_conflict_of_interest(self,client,test_client,selenium,request_page):
+        builder=openreview.conference.ConferenceBuilder(client)
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.has_area_chairs(True)
+        builder.enable_reviewer_reassignment(True)#enable review reassignment so that the assign_Reviewer_Textbox is rendered on page
+        conference = builder.get_result()
+
+        #area chair to reassign reviewer
+        ac_client=openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
+        request_page(selenium,"http://localhost:3000/group?id=AKBC.ws/2019/Conference/Area_Chairs",ac_client.token)
+
+        show_Reviewers_AnchorTag=selenium.find_element_by_xpath('//*[@id="1-reviewer-progress"]/a')
+        selenium.execute_script("arguments[0].click()",show_Reviewers_AnchorTag) #click on "show reviewers anchor tag"
+        time.sleep(5) #leave some time for the API and js to complete
+
+        #get the reviewers textbox and click on it to show dropdown
+        assign_Reviewer_Textbox_Present=EC.presence_of_element_located((By.XPATH,'//*[@id="1-add-reviewer"]/div/input'))
+        WebDriverWait(selenium,5).until(assign_Reviewer_Textbox_Present)
+        assign_Reviewer_Textbox=selenium.find_element_by_xpath('//*[@id="1-add-reviewer"]/div/input')
+        selenium.execute_script("arguments[0].click()",assign_Reviewer_Textbox)
+
+        #get the dropdown div and check how many dropdown options in it
+        dropdown_Options_Present=EC.presence_of_element_located((By.XPATH,'//*[@id="1-add-reviewer"]/div/div'))
+        WebDriverWait(selenium,5).until(dropdown_Options_Present)
+        dropdown_Options=selenium.find_element_by_xpath('//*[@id="1-add-reviewer"]/div/div')
+        assert len(dropdown_Options.find_elements_by_xpath('//*[@id="1-add-reviewer"]/div/div/div'))==2
+
+        
     def test_open_revise_submissions(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1506,3 +1536,70 @@ class TestDoubleBlindConference():
         assert 'akbc_pc_1@akbc.ws' in recipients
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
+
+    def test_release_reviews(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_review_stage(public=True)
+        builder.get_result()
+
+        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
+        assert(reviews)
+        assert len(reviews) == 1
+        assert reviews[0].readers == ['everyone']
+
+    def test_release_meta_reviews(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_meta_review_stage(public=True, additional_fields = {
+            'best paper' : {
+                'description' : 'Nominate as best paper?',
+                'value-radio' : ['Yes', 'No'],
+                'required' : False
+            }
+        })
+        builder.get_result()
+
+        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Meta_Review')
+        assert(reviews)
+        print(reviews)
+        assert len(reviews) == 2
+        assert reviews[0].readers == ['everyone']
+        assert reviews[1].readers == ['everyone']
+
+    def test_release_decisions(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_decision_stage(public=True)
+        builder.get_result()
+
+        decisions = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Decision')
+        assert(decisions)
+        assert len(decisions) == 3
+        assert decisions[0].readers == ['everyone']
+        assert decisions[1].readers == ['everyone']
+        assert decisions[2].readers == ['everyone']
