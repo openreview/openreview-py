@@ -186,7 +186,7 @@ class Matching(object):
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
         edges_iter = openreview.tools.iterget_edges(self.client, invitation=invitation.id)
-        edges_posted = sum(1 for _ in edges_iter)
+        edges_posted = len(list(edges_iter))
         if edges_posted < len(edges):
             raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
         return invitation
