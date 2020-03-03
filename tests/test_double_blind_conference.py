@@ -1537,7 +1537,7 @@ class TestDoubleBlindConference():
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
 
-    def test_paper_ranking(self, client, request_page):
+    def test_paper_ranking(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
