@@ -495,7 +495,7 @@ class Matching(object):
         self._build_config_invitation(score_spec)
 
 
-    def deploy(self, assingment_title):
+    def deploy(self, assignment_title):
         '''
         WARNING: This function untested
 
@@ -512,12 +512,15 @@ class Matching(object):
         assignment_edges = openreview.tools.iterget_edges(
             client,
             invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-            label=assingment_title)
+            label=assignment_title)
 
         paper_by_forum = {n.forum: n for n in submissions}
 
         for edge in assignment_edges:
-            paper_number = paper_by_forum.get(edge.head).number
-            user = edge.tail
-            new_assigned_group = self.conference.set_assignment(user, paper_number, self.is_area_chair)
-            print(new_assigned_group)
+            if edge.head in paper_by_forum:
+                paper_number = paper_by_forum.get(edge.head).number
+                user = edge.tail
+                new_assigned_group = self.conference.set_assignment(user, paper_number, self.is_area_chair)
+                print(new_assigned_group)
+            else:
+                print('paper not found', edge.head)
