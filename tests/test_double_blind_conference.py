@@ -1543,12 +1543,33 @@ class TestDoubleBlindConference():
         assert 'akbc_pc_1@akbc.ws' in recipients
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
-
+        
         author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
         assert author_group
         print(author_group)
         assert len(author_group.members) == 1
-        assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members
+        assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members        
+
+    def test_paper_ranking(self, client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        conference = builder.get_result()
+
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(due_date = now + datetime.timedelta(minutes = 10))
+
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
+
+        request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewer/-/Paper_Ranking", reviewer_client.token)
+
 
     def test_release_reviews(self, client, helpers):
 
@@ -1561,6 +1582,8 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
+        conference = builder.get_result()
+
         builder.set_review_stage(public=True)
         builder.get_result()
 
@@ -1591,7 +1614,6 @@ class TestDoubleBlindConference():
 
         reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Meta_Review')
         assert(reviews)
-        print(reviews)
         assert len(reviews) == 2
         assert reviews[0].readers == ['everyone']
         assert reviews[1].readers == ['everyone']
