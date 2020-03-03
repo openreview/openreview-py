@@ -761,7 +761,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert url == links[0].get_attribute("href")
 
 
-    def test_desk_reject_submission(self, conference, client, test_client):
+    def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.close_submissions()
         conference.create_desk_reject_invitations(reveal_submission=False)
@@ -814,12 +814,20 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
         assert author_group
-        print(author_group)
         assert len(author_group.members) == 4
         assert 'thecvf.com/ECCV/2020/Conference/Paper5/Authors' not in author_group.members
 
+        request_page(selenium, "http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('author-schedule')
+        assert tabs.find_element_by_id('author-tasks')
+        assert tabs.find_element_by_id('your-submissions')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 5
 
-    def test_withdraw_submission(self, conference, client, test_client):
+
+    def test_withdraw_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.create_withdraw_invitations(reveal_submission=False)
 
@@ -866,7 +874,15 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
         assert author_group
-        print(author_group)
         assert len(author_group.members) == 3
         assert 'thecvf.com/ECCV/2020/Conference/Paper4/Authors' not in author_group.members
+
+        request_page(selenium, "http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
+        tabs = selenium.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('author-schedule')
+        assert tabs.find_element_by_id('author-tasks')
+        assert tabs.find_element_by_id('your-submissions')
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 4
 
