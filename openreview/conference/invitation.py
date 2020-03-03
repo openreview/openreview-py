@@ -938,6 +938,17 @@ class InvitationBuilder(object):
 
         return merged_options
 
+    def __update_readers(self, invitation):
+        ## Update readers of current notes
+        notes = self.client.get_notes(invitation=invitation.id)
+
+        for note in notes:
+            if 'values' in invitation.reply['readers'] and note.readers != invitation.reply['readers']['values']:
+                note.readers = invitation.reply['readers']['values']
+                if 'nonreaders' in invitation.reply:
+                    note.nonreaders = invitation.reply['nonreaders']['values']
+                self.client.post_note(note)
+
     def set_submission_invitation(self, conference):
 
         return self.client.post_invitation(SubmissionInvitation(conference))
@@ -1004,8 +1015,11 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
+
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperReviewInvitation(conference, note)))
+            invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
+            self.__update_readers(invitation)
+            invitations.append(invitation)
 
         return invitations
 
@@ -1014,7 +1028,9 @@ class InvitationBuilder(object):
         invitations = []
         self.client.post_invitation(MetaReviewInvitation(conference))
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperMetaReviewInvitation(conference, note)))
+            invitation = self.client.post_invitation(PaperMetaReviewInvitation(conference, note))
+            self.__update_readers(invitation)
+            invitations.append(invitation)
 
         return invitations
 
@@ -1023,7 +1039,9 @@ class InvitationBuilder(object):
         invitations = []
         self.client.post_invitation(DecisionInvitation(conference))
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperDecisionInvitation(conference, note)))
+            invitation = self.client.post_invitation(PaperDecisionInvitation(conference, note))
+            self.__update_readers(invitation)
+            invitations.append(invitation)
 
         return invitations
 

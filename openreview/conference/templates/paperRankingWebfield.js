@@ -75,7 +75,8 @@ function renderContent(notes, tagInvitations) {
     replyCount: true,
     showContents: true,
     showTags: true,
-    tagInvitations: tagInvitations
+    tagInvitations: tagInvitations,
+    referrer: encodeURIComponent('[Paper Ranking](/invitation?id=' + PAPER_RANKING_ID + ')')
   };
 
   var sections = [
