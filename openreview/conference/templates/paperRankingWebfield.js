@@ -8,13 +8,13 @@ var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var PAPER_RANKING_ID = '';
 var GROUP_NAME = '';
 
-var INSTRUCTIONS = '<p class="dark">Please rank your assigned papers selecting a number in each dropdown below where value 1 is the best.</p>\
+var INSTRUCTIONS = '<p class="dark">Please select how each paper ranks among the entire batch of papers you are reviewing (1=best).</p>\
 <br>'
 
 var getNumberfromGroup = function(groupId, name) {
   var tokens = groupId.split('/');
   var paper = _.find(tokens, function(token) {
-      return _.startsWith(token, name);
+    return _.startsWith(token, name);
   });
 
   if (paper) {

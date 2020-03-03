@@ -1241,7 +1241,7 @@ class InvitationBuilder(object):
                         "description": "Select value",
                         "order": 1,
                         "value-dropdown": [
-                            "1",
+                            "1 - Best",
                             "2",
                             "3",
                             "4",
