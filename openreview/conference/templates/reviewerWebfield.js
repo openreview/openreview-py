@@ -277,7 +277,7 @@ var displayStatusTable = function(profiles, notes, completedRatings, officialRev
   }
 };
 
-var displayTasks = function(invitations, edgeInvitations){
+var displayTasks = function(invitations, edgeInvitations, tagInvitations){
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',
@@ -292,8 +292,9 @@ var displayTasks = function(invitations, edgeInvitations){
   };
   var reviewerInvitations = _.filter(invitations, filterFunc);
   var reviewerEdgeInvitations = _.filter(edgeInvitations, filterFunc);
+  var reviewerTagInvitations = _.filter(tagInvitations, filterFunc);
 
-  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations, tasksOptions)
+  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations.concat(reviewerTagInvitations), tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
 }
 
@@ -386,10 +387,19 @@ controller.addHandler('reviewers', {
           }).then(function(result) {
             return result.invitations;
           }),
+          Webfield.get('/invitations', {
+            regex: WILDCARD_INVITATION,
+            invitee: true,
+            duedate: true,
+            type: 'tags',
+            details:'repliedTags'
+          }).then(function(result) {
+            return result.invitations;
+          }),
           headerLoaded
         );
       })
-      .then(function(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds, invitations, edgeInvitations, loaded) {
+      .then(function(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, loaded) {
         var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
           return result.concat(_.values(idsObj));
         }, []));
@@ -403,7 +413,8 @@ controller.addHandler('reviewers', {
             officialReviews: officialReviews,
             noteToReviewerIds: noteToReviewerIds,
             invitations: invitations,
-            edgeInvitations: edgeInvitations
+            edgeInvitations: edgeInvitations,
+            tagInvitations: tagInvitations
           }
           renderTable();
         });
@@ -425,7 +436,7 @@ var renderTable = function() {
     '#assigned-papers'
   );
 
-  displayTasks(fetchedData.invitations, fetchedData.edgeInvitations);
+  displayTasks(fetchedData.invitations, fetchedData.edgeInvitations, fetchedData.tagInvitations);
 
   Webfield.ui.done();
 }

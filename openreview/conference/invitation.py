@@ -319,7 +319,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values-copied': [conference.id, '{content.authorids}']
+                'values-regex': '.*'
             }
 
         super(WithdrawnSubmissionInvitation, self).__init__(
@@ -362,7 +362,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values': note.readers
+                'values': conference.get_committee(with_authors=True, number=note.number)
             }
 
         with open(os.path.join(os.path.dirname(__file__), withdraw_process_file)) as f:
@@ -465,7 +465,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values-copied': [conference.id, '{content.authorids}']
+                'values-regex': '.*'
             }
 
         super(DeskRejectedSubmissionInvitation, self).__init__(
@@ -508,7 +508,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values': note.readers
+                'values': conference.get_committee(with_authors=True, number=note.number)
             }
 
         with open(os.path.join(os.path.dirname(__file__), desk_reject_process_file)) as f:
@@ -938,6 +938,17 @@ class InvitationBuilder(object):
 
         return merged_options
 
+    def __update_readers(self, invitation):
+        ## Update readers of current notes
+        notes = self.client.get_notes(invitation=invitation.id)
+
+        for note in notes:
+            if 'values' in invitation.reply['readers'] and note.readers != invitation.reply['readers']['values']:
+                note.readers = invitation.reply['readers']['values']
+                if 'nonreaders' in invitation.reply:
+                    note.nonreaders = invitation.reply['nonreaders']['values']
+                self.client.post_note(note)
+
     def set_submission_invitation(self, conference):
 
         return self.client.post_invitation(SubmissionInvitation(conference))
@@ -1004,8 +1015,11 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
+
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperReviewInvitation(conference, note)))
+            invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
+            self.__update_readers(invitation)
+            invitations.append(invitation)
 
         return invitations
 
@@ -1014,7 +1028,9 @@ class InvitationBuilder(object):
         invitations = []
         self.client.post_invitation(MetaReviewInvitation(conference))
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperMetaReviewInvitation(conference, note)))
+            invitation = self.client.post_invitation(PaperMetaReviewInvitation(conference, note))
+            self.__update_readers(invitation)
+            invitations.append(invitation)
 
         return invitations
 
@@ -1023,7 +1039,9 @@ class InvitationBuilder(object):
         invitations = []
         self.client.post_invitation(DecisionInvitation(conference))
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperDecisionInvitation(conference, note)))
+            invitation = self.client.post_invitation(PaperDecisionInvitation(conference, note))
+            self.__update_readers(invitation)
+            invitations.append(invitation)
 
         return invitations
 
@@ -1196,7 +1214,46 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(recommendation_invitation)
 
+    def set_paper_ranking_invitation(self, conference, group_id, start_date, due_date):
 
+        reviewer_paper_ranking_invitation = openreview.Invitation(
+            id = conference.get_invitation_id('Paper_Ranking', prefix=group_id),
+            cdate = tools.datetime_millis(start_date),
+            duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
+            readers = [conference.get_program_chairs_id(), group_id],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = [conference.get_program_chairs_id(), group_id],
+            multiReply = True,
+            reply = {
+                "invitation": conference.get_submission_id(),
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
+                'signatures': {
+                    'description': 'How your identity will be displayed with the above content.',
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    "tag": {
+                        "description": "Select value",
+                        "order": 1,
+                        "value-dropdown": [
+                            "1 - Best",
+                            "2",
+                            "3",
+                            "4",
+                            "5"
+                        ],
+                        "required": True
+                    }
+                }
+            }
+        )
+
+        return self.client.post_invitation(reviewer_paper_ranking_invitation)
 
     def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, instructions, committee_id, committee_name):
 

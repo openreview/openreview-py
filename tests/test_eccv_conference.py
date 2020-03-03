@@ -366,6 +366,48 @@ Please contact info@openreview.net with any questions or concerns about this int
             note.content['video'] = url
             test_client.post_note(note)
 
+    def test_submission_edit(self, conference, client, test_client):
+
+        existing_notes = client.get_notes(invitation = conference.get_submission_id())
+        assert len(existing_notes) == 5
+
+        time.sleep(2)
+        note = existing_notes[0]
+        process_logs = client.get_process_logs(id = note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = ' has received your submission titled ' + note.content['title'])
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+
+        note.content['title'] = 'I have been updated'
+        client.post_note(note)
+
+        time.sleep(2)
+        note = client.get_note(note.id)
+
+        process_logs = client.get_process_logs(id = note.id)
+        assert len(process_logs) == 2
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[1]['status'] == 'ok'
+
+        messages = client.get_messages(subject = ' has received your submission titled I have been updated')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mit.edu' in recipients
+
+        tauthor_message = [msg for msg in messages if msg['content']['to'] == note.tauthor][0]
+        assert tauthor_message
+        assert tauthor_message['content']['text'] == 'Your submission to  has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id
+
+        other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
+        assert len(other_author_messages) == 2
+        assert other_author_messages[0]['content']['text'] == 'Your submission to  has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
+
     def test_revise_additional_files(self, conference, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
@@ -730,7 +772,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
     def test_desk_reject_submission(self, conference, client, test_client):
 
         conference.close_submissions()
-        conference.create_desk_reject_invitations()
+        conference.create_desk_reject_invitations(reveal_submission=False)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 5
@@ -740,9 +782,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
             readers = ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
-                'thecvf.com/ECCV/2020/Conference/Reviewers',
-                'thecvf.com/ECCV/2020/Conference/Area_Chairs',
-                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
+            'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
@@ -767,15 +809,27 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         desk_rejected_notes = client.get_notes(invitation = conference.submission_stage.get_desk_rejected_submission_id(conference))
 
         assert len(desk_rejected_notes) == 1
+        assert desk_rejected_notes[0].content['authors'] == ['Anonymous']
+        assert desk_rejected_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors']
+        assert desk_rejected_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs']
 
         desk_reject_note = test_client.get_note(posted_note.id)
         assert desk_reject_note
         assert desk_reject_note.content['desk_reject_comments'] == 'PC has decided to reject this submission.'
 
+        author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 4
+        assert 'thecvf.com/ECCV/2020/Conference/Paper5/Authors' not in author_group.members
+
 
     def test_withdraw_submission(self, conference, client, test_client):
 
-        conference.create_withdraw_invitations()
+        conference.create_withdraw_invitations(reveal_submission=False)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 4
@@ -785,9 +839,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
             readers = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
-                'thecvf.com/ECCV/2020/Conference/Reviewers',
-                'thecvf.com/ECCV/2020/Conference/Area_Chairs',
-                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
+            'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             content = {
@@ -811,4 +865,16 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         withdrawn_notes = client.get_notes(invitation = conference.submission_stage.get_withdrawn_submission_id(conference))
 
         assert len(withdrawn_notes) == 1
+        assert withdrawn_notes[0].content['authors'] == ['Anonymous']
+        assert withdrawn_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors']
+        assert withdrawn_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
+            'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs']
+
+        author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 3
+        assert 'thecvf.com/ECCV/2020/Conference/Paper4/Authors' not in author_group.members
 

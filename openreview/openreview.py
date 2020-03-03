@@ -49,6 +49,7 @@ class Client(object):
         self.pdf_url = self.baseurl + '/pdf'
         self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
+        self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
@@ -856,8 +857,8 @@ class Client(object):
 
         :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head
-        :arg tail
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
         :arg label
         """
         params = {}
@@ -874,6 +875,31 @@ class Client(object):
         response = self.__handle_response(response)
 
         return [Edge.from_json(t) for t in response.json()['edges']]
+
+    def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
+        :arg label
+        """
+        params = {}
+
+        params['id'] = id
+        params['invitation'] = invitation
+        params['head'] = head
+        params['tail'] = tail
+        params['label'] = label
+        params['limit'] = 1
+        params['offset'] = 0
+
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['count']
 
     def get_grouped_edges(self, invitation=None, groupby='head', select='tail', limit=None, offset=None):
         '''
@@ -1045,7 +1071,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1059,7 +1085,37 @@ class Client(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.messages_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
+        response = requests.post(self.messages_url, json = {
+            'groups': recipients,
+            'subject': subject ,
+            'message': message,
+            'ignoreGroups': ignoreRecipients,
+            'from': sender
+            }, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_direct_message(self, subject, recipients, message, sender=None):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param subject: Subject of the e-mail
+        :type subject: str
+        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
+        :type recipients: list[str]
+        :param message: Message in the e-mail
+        :type message: str
+
+        :return: Contains the message that was sent to each Group
+        :rtype: dict
+        """
+        response = requests.post(self.messages_direct_url, json = {
+            'groups': recipients,
+            'subject': subject ,
+            'message': message,
+            'from': sender
+            }, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()

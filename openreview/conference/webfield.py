@@ -235,6 +235,19 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
+    def set_paper_ranking_page(self, conference, invitation, group_name):
+
+        header = {}
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paperRankingWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var PAPER_RANKING_ID = '';", "var PAPER_RANKING_ID = '" + invitation.id + "';")
+            content = content.replace("var GROUP_NAME = '';", "var GROUP_NAME = '" + group_name + "';")
+
+            invitation.web = content
+            return self.client.post_invitation(invitation)
+
     def set_reduced_load_page(self, conference_id, invitation, options = {}):
 
         default_header = {
