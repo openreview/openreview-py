@@ -1478,6 +1478,13 @@ class TestDoubleBlindConference():
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
 
+        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 2
+        assert 'AKBC.ws/2019/Conference/Paper3/Authors' not in author_group.members
+
+
     def test_desk_reject_submission(self, client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1536,6 +1543,12 @@ class TestDoubleBlindConference():
         assert 'akbc_pc_1@akbc.ws' in recipients
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
+        
+        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 1
+        assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members        
 
     def test_paper_ranking(self, client, selenium, request_page):
 

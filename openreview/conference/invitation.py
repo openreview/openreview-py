@@ -319,7 +319,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values-copied': [conference.id, '{content.authorids}']
+                'values-regex': '.*'
             }
 
         super(WithdrawnSubmissionInvitation, self).__init__(
@@ -362,7 +362,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values': note.readers
+                'values': conference.get_committee(with_authors=True, number=note.number)
             }
 
         with open(os.path.join(os.path.dirname(__file__), withdraw_process_file)) as f:
@@ -465,7 +465,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values-copied': [conference.id, '{content.authorids}']
+                'values-regex': '.*'
             }
 
         super(DeskRejectedSubmissionInvitation, self).__init__(
@@ -508,7 +508,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             }
         else:
             readers = {
-                'values': note.readers
+                'values': conference.get_committee(with_authors=True, number=note.number)
             }
 
         with open(os.path.join(os.path.dirname(__file__), desk_reject_process_file)) as f:
