@@ -855,8 +855,8 @@ class Client(object):
 
         :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
-        :arg head
-        :arg tail
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
         :arg label
         """
         params = {}
@@ -873,6 +873,31 @@ class Client(object):
         response = self.__handle_response(response)
 
         return [Edge.from_json(t) for t in response.json()['edges']]
+
+    def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
+        :arg label
+        """
+        params = {}
+
+        params['id'] = id
+        params['invitation'] = invitation
+        params['head'] = head
+        params['tail'] = tail
+        params['label'] = label
+        params['limit'] = 1
+        params['offset'] = 0
+
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['count']
 
     def get_grouped_edges(self, invitation=None, groupby='head', select='tail', limit=None, offset=None):
         '''
