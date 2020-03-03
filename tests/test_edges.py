@@ -56,3 +56,17 @@ class TestEdges:
         openreview.tools.post_bulk_edges(client, edges)
         them = list(openreview.tools.iterget_edges(client, invitation=inv1.id))
         assert len(edges) == len(them)
+
+    def test_get_edges(self, client):
+        invitation_id = 'NIPS.cc/2020/Workshop/MLITS/-/affinity'
+        all_edges = client.get_edges(invitation=invitation_id)
+        assert len(all_edges) == 1000
+        some_edges = client.get_edges(invitation=invitation_id, limit=500)
+        assert len(some_edges) == 500
+        super_user_edges = client.get_edges(tail='~Super_User1')
+        assert len(super_user_edges) == 1000
+
+    def test_get_edges_count(self, client):
+        invitation_id = 'NIPS.cc/2020/Workshop/MLITS/-/affinity'
+        count = client.get_edges_count(invitation=invitation_id)
+        assert count == 1000
