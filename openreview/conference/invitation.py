@@ -1202,7 +1202,8 @@ class InvitationBuilder(object):
                         'query': {
                             'group': conference.get_reviewers_id()
                         },
-                        'required': True
+                        'required': True,
+                        'description': 'Create an ordered ranking of reviewers by selecting values from the dropdowns (10 = best)'
                     },
                     'weight': {
                         'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
