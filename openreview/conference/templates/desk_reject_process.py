@@ -53,6 +53,8 @@ def process(client, note, invitation):
         invitation.expdate = now
         client.post_invitation(invitation)
 
+    client.remove_members_from_group(CONFERENCE_ID + '/Authors', PAPER_AUTHORS_ID)
+
     # Mail Authors, Reviewers, ACs (if present) and PCs
     email_subject = '''{CONFERENCE_SHORT_NAME}: Paper #{paper_number} marked desk rejected by program chairs'''.format(
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,

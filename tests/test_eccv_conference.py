@@ -812,6 +812,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert desk_reject_note
         assert desk_reject_note.content['desk_reject_comments'] == 'PC has decided to reject this submission.'
 
+        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 4
+        assert 'AKBC.ws/2019/Conference/Paper5/Authors' not in author_group.members
+
 
     def test_withdraw_submission(self, conference, client, test_client):
 
@@ -858,4 +864,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs']
 
+        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 3
+        assert 'AKBC.ws/2019/Conference/Paper4/Authors' not in author_group.members
 
