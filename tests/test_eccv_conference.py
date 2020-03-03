@@ -840,7 +840,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
     def test_desk_reject_submission(self, conference, client, test_client):
 
         conference.close_submissions()
-        conference.create_desk_reject_invitations()
+        conference.create_desk_reject_invitations(reveal_submission=False)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 5
@@ -850,9 +850,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
             readers = ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
-                'thecvf.com/ECCV/2020/Conference/Reviewers',
-                'thecvf.com/ECCV/2020/Conference/Area_Chairs',
-                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
+            'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
@@ -877,15 +877,27 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         desk_rejected_notes = client.get_notes(invitation = conference.submission_stage.get_desk_rejected_submission_id(conference))
 
         assert len(desk_rejected_notes) == 1
+        assert desk_rejected_notes[0].content['authors'] == ['Anonymous']
+        assert desk_rejected_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors']
+        assert desk_rejected_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs']
 
         desk_reject_note = test_client.get_note(posted_note.id)
         assert desk_reject_note
         assert desk_reject_note.content['desk_reject_comments'] == 'PC has decided to reject this submission.'
 
+        author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 4
+        assert 'thecvf.com/ECCV/2020/Conference/Paper5/Authors' not in author_group.members
+
 
     def test_withdraw_submission(self, conference, client, test_client):
 
-        conference.create_withdraw_invitations()
+        conference.create_withdraw_invitations(reveal_submission=False)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 4
@@ -895,9 +907,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
             readers = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
-                'thecvf.com/ECCV/2020/Conference/Reviewers',
-                'thecvf.com/ECCV/2020/Conference/Area_Chairs',
-                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
+            'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             content = {
@@ -921,4 +933,16 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         withdrawn_notes = client.get_notes(invitation = conference.submission_stage.get_withdrawn_submission_id(conference))
 
         assert len(withdrawn_notes) == 1
+        assert withdrawn_notes[0].content['authors'] == ['Anonymous']
+        assert withdrawn_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors']
+        assert withdrawn_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
+            'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
+            'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs']
+
+        author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
+        assert author_group
+        print(author_group)
+        assert len(author_group.members) == 3
+        assert 'thecvf.com/ECCV/2020/Conference/Paper4/Authors' not in author_group.members
 
