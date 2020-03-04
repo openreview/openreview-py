@@ -12,6 +12,7 @@ var DECISION_NAME = '';
 var BID_NAME = '';
 var RECOMMENDATION_NAME = '';
 var COMMENT_NAME = '';
+var SCORES_NAME = '';
 var AUTHORS_ID = '';
 var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
@@ -137,10 +138,10 @@ var loadConfigurationTab = function() {
 };
 
 var getAllReviewers = function() {
-  return Webfield.get('/groups', { id: REVIEWERS_ID })
+  return Webfield.get('/groups', { id: REVIEWERS_ID, limit: 1 })
   .then(function(result) {
     var members = _.get(result, 'groups[0].members', []);
-    return members.sort()
+    return members.sort();
   });
 };
 
@@ -149,10 +150,10 @@ var getAllAreaChairs = function() {
     return $.Deferred().resolve([]);
   }
 
-  return Webfield.getAll('/groups', { id: AREA_CHAIRS_ID })
+  return Webfield.get('/groups', { id: AREA_CHAIRS_ID, limit: 1 })
   .then(function(result) {
     var members = _.get(result, 'groups[0].members', []);
-    return members.sort()
+    return members.sort();
   });
 };
 
@@ -188,11 +189,11 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairRecommendati
 
   var idSearch = ids.length ?
     Webfield.post('/profiles/search', { ids: ids }) :
-    $.Deferred().resolve([])
+    $.Deferred().resolve([]);
 
   var emailSearch = emails.length ?
     Webfield.post('/profiles/search', { emails: emails }) :
-    $.Deferred().resolve([])
+    $.Deferred().resolve([]);
 
   return $.when(idSearch, emailSearch)
     .then(function(idResults, emailResults) {
@@ -272,16 +273,6 @@ var postReviewerEmails = function(postData) {
   });
 };
 
-var buildCountMap = function(results) {
-  if (!results || !results.length) {
-    return {};
-  }
-  return results.reduce(function(profileMap, groupedEdge) {
-    profileMap[groupedEdge.id.tail] = groupedEdge.count;
-    return profileMap;
-  }, {});
-};
-
 var getReviewerBidCounts = function() {
   if (!BID_NAME) {
     return $.Deferred().resolve({});
@@ -291,7 +282,15 @@ var getReviewerBidCounts = function() {
     invitation: REVIEWERS_ID + '/-/' + BID_NAME,
     groupBy: 'tail',
     select: 'count'
-  }, 'groupedEdges').then(buildCountMap);
+  }, 'groupedEdges').then(function(results) {
+    if (!results || !results.length) {
+      return {};
+    }
+    return results.reduce(function(profileMap, groupedEdge) {
+      profileMap[groupedEdge.id.tail] = groupedEdge.count;
+      return profileMap;
+    }, {});
+  });
 };
 
 var getAreaChairRecommendationCounts = function() {
@@ -299,11 +298,22 @@ var getAreaChairRecommendationCounts = function() {
     return $.Deferred().resolve({});
   }
 
+  // Can't perform a groupBy query on signatures, so we have to get the full list
   return Webfield.getAll('/edges', {
     invitation: REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME,
-    groupBy: 'tail',
-    select: 'count'
-  }, 'groupedEdges').then(buildCountMap);
+  }).then(function(edges) {
+    if (!edges || !edges.length) {
+      return {};
+    }
+    return edges.reduce(function(profileMap, edge) {
+      var acId = edge.signatures[0];
+      if (!profileMap[acId]) {
+        profileMap[acId] = 0
+      }
+      profileMap[acId] += 1
+      return profileMap;
+    }, {});
+  });
 };
 
 
@@ -1336,17 +1346,17 @@ var updateReviewerContainer = function(paperNumber) {
   );
 }
 
-var buildEdgeBrowserUrl = function(profileId, invGroup, invName) {
+var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
   var invitationId = invGroup + '/-/' + invName;
   var referrerUrl = '/group' + location.search + location.hash;
 
-  // Right now this is only showing bids, elmo scores, and conflicts as the
+  // Right now this is only showing bids, affinity scores, and conflicts as the
   // other scores invitations + labels are not available in the PC console
   return '/edge/browse' +
-    '?start=' + invitationId + ',tail:' + profileId +
+    '?start=' + invitationId + ',' + startQuery +
     '&traverse=' + invitationId +
     '&browse=' + invitationId +
-    ';' + invGroup + '/-/ELMo_Score' +
+    (SCORES_NAME ? ';' + invGroup + '/-/' + SCORES_NAME : '') +
     ';' + invGroup + '/-/Conflict' +
     '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
 }
@@ -1465,7 +1475,7 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     email: areaChair.email,
     showRecommendations: !!RECOMMENDATION_NAME,
     completedRecs: areaChair.acRecommendationCount || 0,
-    edgeBrowserRecsUrl: buildEdgeBrowserUrl(areaChair.id, AREA_CHAIRS_ID, RECOMMENDATION_NAME)
+    edgeBrowserRecsUrl: buildEdgeBrowserUrl('signatory:' + areaChair.id, REVIEWERS_ID, RECOMMENDATION_NAME)
   }
 
   var numCompletedReviews = 0;
@@ -1531,7 +1541,7 @@ var buildPCTableRow = function(index, reviewer, papers) {
     email: reviewer.email,
     showBids: !!BID_NAME,
     completedBids: reviewer.reviewerBidCount || 0,
-    edgeBrowserBidsUrl: buildEdgeBrowserUrl(reviewer.id, REVIEWERS_ID, BID_NAME)
+    edgeBrowserBidsUrl: buildEdgeBrowserUrl('tail:' + reviewer.id, REVIEWERS_ID, BID_NAME)
   }
 
   var reviewProgressData = {
