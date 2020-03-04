@@ -96,6 +96,7 @@ class WebfieldBuilder(object):
             content = content.replace("var DECISION_HEADING_MAP = {};", "var DECISION_HEADING_MAP = " + json.dumps(options.get('decision_heading_map', '{}'), sort_keys=True) + ";")
             content = content.replace("var WITHDRAWN_SUBMISSION_ID = '';", "var WITHDRAWN_SUBMISSION_ID = '" + options.get('withdrawn_submission_id', '') + "';")
             content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + options.get('desk_rejected_submission_id', '') + "';")
+            content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if options.get('public', False) else "var PUBLIC = false;")
 
             group.web = content
             group.signatures = [group.id]
