@@ -517,11 +517,14 @@ Please contact info@openreview.net with any questions or concerns about this int
                 writers = [conference.id],
                 signatures = [conference.id],
                 invitees = [conference.get_authors_id(number=submission.number)],
+                multiReply = False,
                 reply = {
                     'forum': submission.original,
                     'referent': submission.original,
                     'readers': {
-                        'values': submission.readers
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
                     },
                     'writers': {
                         'values': [
@@ -551,7 +554,7 @@ Please contact info@openreview.net with any questions or concerns about this int
             client.post_invitation(invitation)
 
         note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
-            readers = note.readers,
+            readers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
             writers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
             signatures = ['~Test_User1'],
             referent = note.original,
