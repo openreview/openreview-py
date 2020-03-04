@@ -196,7 +196,7 @@ class BidInvitation(openreview.Invitation):
                         'required': True
                     },
                     'tail': {
-                        'type': 'Group',
+                        'type': 'Profile',
                         'query' : {
                             'group' : match_group_id
                         },
@@ -247,7 +247,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
                         'type': 'Note'
                     },
                     'tail': {
-                        'type': 'Group'
+                        'type': 'Profile'
                     },
                     'label': {
                         'value-radio': ['Exclude'],
