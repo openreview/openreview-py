@@ -202,7 +202,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                     'order': 9,
                     'value-file': {
                         'fileTypes': ['pdf'],
-                        'size': 50000000
+                        'size': 50
                     },
                     'required':False
                 },
@@ -447,10 +447,6 @@ Please contact info@openreview.net with any questions or concerns about this int
                     'TPMS_agreement': 'All authors agree that the manuscript can be processed by TPMS for paper matching.'
                 }
             )
-            # url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
-            # note.content['pdf'] = url
-            # url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'), conference.get_submission_id(), 'video')
-            # note.content['video'] = url
             test_client.post_note(note)
 
     def test_submission_edit(self, conference, client, test_client):
