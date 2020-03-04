@@ -141,6 +141,14 @@ var loadData = function(result) {
     type: 'edges'
   });
 
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  });
+
   if (ENABLE_REVIEWER_REASSIGNMENT) {
     allReviewersP = Webfield.get('/groups', { id: REVIEWER_GROUP })
     .then(function(result) {
@@ -157,6 +165,7 @@ var loadData = function(result) {
     getReviewerGroups(noteNumbers),
     invitationsP,
     edgeInvitationsP,
+    tagInvitationsP,
     allReviewersP
   );
 };
@@ -217,7 +226,7 @@ var getReviewerGroups = function(noteNumbers) {
   });
 };
 
-var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, edgeInvitations, allReviewers) {
+var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, allReviewers) {
   var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
   }, []));
@@ -231,7 +240,8 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, noteToRevi
       metaReviews: metaReviews,
       noteToReviewerIds: noteToReviewerIds,
       invitations: invitations,
-      edgeInvitations: edgeInvitations
+      edgeInvitations: edgeInvitations,
+      tagInvitations: tagInvitations
     };
   });
 };
@@ -529,7 +539,7 @@ var updateReviewerContainer = function (paperNumber, renderEmptyDropdown) {
       };
     });
   }
-  
+
   var filterOptions = function(options, term) {
     return _.filter(options, function(p) {
       return _.includes(p.description.toLowerCase(), term.toLowerCase());
@@ -609,7 +619,7 @@ var filterInvitationsByInvitee = function(invitations, invitee_name) {
   return _.filter(invitations, filterFunc);
 }
 
-var renderTasks = function(invitations, edgeInvitations) {
+var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#areachair-tasks',
@@ -621,12 +631,14 @@ var renderTasks = function(invitations, edgeInvitations) {
   var areachairInvitations = filterInvitationsByInvitee(invitations, AREA_CHAIR_NAME);
   var areachairEdgeInvitations = filterInvitationsByInvitee(edgeInvitations, AREA_CHAIR_NAME);
 
-  Webfield.ui.newTaskList(areachairInvitations, areachairEdgeInvitations, tasksOptions);
+  var tagEdgeInvitations = areachairEdgeInvitations.concat(tagInvitations);
+
+  Webfield.ui.newTaskList(areachairInvitations, tagEdgeInvitations, tasksOptions);
   $('.tabs-container a[href="#areachair-tasks"]').parent().show();
 }
 
 var renderTableAndTasks = function(fetchedData) {
-  renderTasks(fetchedData.invitations, fetchedData.edgeInvitations);
+  renderTasks(fetchedData.invitations, fetchedData.edgeInvitations, fetchedData.tagInvitations);
 
   renderStatusTable(
     fetchedData.profiles,
