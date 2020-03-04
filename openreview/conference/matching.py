@@ -117,7 +117,7 @@ class Matching(object):
         if 'Custom_Load' in edge_id:
             edge_head_type = 'Group'
             edge_head_query = {
-                'group' : edge_id.split('/-/')[0]
+                'id' : edge_id.split('/-/')[0]
             }
 
         invitation = openreview.Invitation(
