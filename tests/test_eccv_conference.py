@@ -116,23 +116,108 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             public = False,
             due_date = now + datetime.timedelta(minutes = 10),
             additional_fields= {
-                'video': {
-                    'description': 'Short video with presentation of the paper, it supports: mov, mp4, zip',
-                    'required': True,
-                    'value-file': {
-                        'fileTypes': ['mov', 'mp4', 'zip'],
-                        'size': 50000000000
-                    }
+                'title': {
+                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                    'order': 1,
+                    'value-regex': '.{1,250}',
+                    'required':True
                 },
-                'supplemental_material': {
-                    'description': 'Paper appendix',
-                    'required': False,
+                "authors": {
+                    "description": "Comma separated list of author names.",
+                    "order": 2,
+                    "values-regex": "[^;,\\n]+(,[^,\\n]+)*",
+                    "required":True,
+                    "hidden":True
+                },
+                "authorids": {
+                    "description": "Search for authors by first and last name or by email address. Authors cannot be added after the deadline, so be sure to add all the authors of the paper. Take care to confirm that everyone added is actually a co-author, as there may be multiple OpenReview profiles with the same name.",
+                    "order": 3,
+                    "values-regex": "~.*|.*",
+                    "required":True
+                },
+                'abstract': {
+                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                    'order': 4,
+                    'value-regex': '[\\S\\s]{1,5000}',
+                    'required':False
+                },
+                'TL;DR': {
+                    'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                    'order': 5,
+                    'value-regex': '[^\\n]{0,250}',
+                    'required':False
+                },
+                'subject_areas': {
+                    'description': 'Select up to three subject areas.',
+                    'order': 6,
+                    'values-dropdown': [
+                        "3D from Multi-view and Sensors",
+                        "3D Point Clouds",
+                        "3D from Single Images",
+                        "3D Reconstruction",
+                        "Action Recognition, Understanding",
+                        "Adversarial Learning",
+                        "Biologically Inspired Vision",
+                        "Biomedical Image Processing",
+                        "Biometrics",
+                        "Computational Photography",
+                        "Computer Vision for General Medical,  Biological and Cell Microscopy",
+                        "Computer Vision Theory",
+                        "Datasets and Evaluation",
+                        "Deep Learning: Applications, Methodology, and Theory",
+                        "Document Analysis RGBD Sensors and Analytics",
+                        "Face, Gesture, and Body Pose",
+                        "Human Computer Interaction",
+                        "Image and Video Synthesis",
+                        "Large Scale Methods",
+                        "Low-level Vision",
+                        "Machine Learning",
+                        "Motion and Tracking",
+                        "Optimization Methods",
+                        "Physics-based Vision and Shape-from-X Recognition: Detection, Categorization, Retrieval",
+                        "Pose Estimation",
+                        "Recognition: Detection, Categorization, Indexing and Matching",
+                        "Remote Sensing and Hyperspectral Imaging",
+                        "Representation Learning",
+                        "Robotics and Driving Scene Analysis",
+                        "Scene Understanding",
+                        "Security/Surveillance",
+                        "Semi- and weakly-supervised Learning",
+                        "Segmentation, Grouping and Shape",
+                        "Statistical Learning",
+                        "Stereo/Depth Estimation",
+                        "Tracking",
+                        "Transfer Learning",
+                        "Unsupervised Learning",
+                        "Video Analytics Vision + Graphics Vision + Language",
+                        "Virtual and Augmented Reality",
+                        "Vision and Language",
+                        "Vision for Robotics, Graphics",
+                        "Visual Reasoning Vision Applications and Systems"
+                                    ],
+                    'required':False
+                },
+                'pdf': {
+                    'description': 'Upload a PDF file that ends with .pdf',
+                    'order': 9,
                     'value-file': {
                         'fileTypes': ['pdf'],
-                        'size': 500000000000
-                    }
+                        'size': 50
+                    },
+                    'required':False
+                },
+                "author_agreement": {
+                    "value-checkbox": "All authors agree with the author guidelines of ECCV 2020.",
+                    'order': 10,
+                    "required": True
+                },
+                "TPMS_agreement": {
+                    "value-checkbox": "All authors agree that the manuscript can be processed by TPMS for paper matching.",
+                    'order': 11,
+                    "required": True
                 }
-            })
+            },
+            remove_fields=['keywords'])
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
@@ -357,13 +442,11 @@ Please contact info@openreview.net with any questions or concerns about this int
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'author_agreement': 'All authors agree with the author guidelines of ECCV 2020.',
+                    'TPMS_agreement': 'All authors agree that the manuscript can be processed by TPMS for paper matching.'
                 }
             )
-            url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
-            note.content['pdf'] = url
-            url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'), conference.get_submission_id(), 'video')
-            note.content['video'] = url
             test_client.post_note(note)
 
     def test_submission_edit(self, conference, client, test_client):
@@ -408,86 +491,78 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(other_author_messages) == 2
         assert other_author_messages[0]['content']['text'] == 'Your submission to  has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
 
-    def test_revise_additional_files(self, conference, test_client):
+    def test_revise_additional_files(self, conference, client, test_client):
 
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
 
-        conference.create_blind_submissions(force=True, hide_fields=['pdf', 'video', 'supplemental_material'])
+        conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
         conference.set_authors()
 
-        notes = conference.get_submissions()
-        assert notes
-        assert len(notes) == 5
-        note = notes[0]
+        submissions = conference.get_submissions()
+        assert submissions
+        assert len(submissions) == 5
+        note = submissions[0]
+        now = datetime.datetime.utcnow()
 
-        invitation = openreview.Invitation(
-            id = 'thecvf.com/ECCV/2020/Conference/-/Revision',
-            readers = ['everyone'],
-            writers = [conference.get_id()],
-            signatures = [conference.get_id()],
-            invitees = note.content['authorids'] + note.signatures,
-            reply = {
-                'forum': note.original,
-                'referent': note.original,
-                'readers': {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{signatures}'
-                    ]
-                },
-                'writers': {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{signatures}'
-                    ]
-                },
-                'signatures': {
-                    'values-regex': '~.*'
-                },
-                'content': {
-                    'pdf': {
-                        'description': 'Paper pdf',
-                        'required': False,
-                        'value-file': {
-                            'fileTypes': ['pdf'],
-                            'size': 50
-                        }
+        for submission in submissions:
+            id = conference.get_invitation_id('Supplementary_Material', submission.number)
+            invitation = openreview.Invitation(
+                id = id,
+                duedate = openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40)),
+                readers = ['everyone'],
+                writers = [conference.id],
+                signatures = [conference.id],
+                invitees = [conference.get_authors_id(number=submission.number)],
+                multiReply = False,
+                reply = {
+                    'forum': submission.original,
+                    'referent': submission.original,
+                    'readers': {
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
                     },
-                    'video': {
-                        'description': 'Short video with presentation of the paper, it supports: mov, mp4, zip',
-                        'required': False,
-                        'value-file': {
-                            'fileTypes': ['mov', 'mp4', 'zip'],
-                            'size': 50
-                        }
+                    'writers': {
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
                     },
-                    'supplemental_material': {
-                        'description': 'Paper appendix',
-                        'required': False,
-                        'value-file': {
-                            'fileTypes': ['pdf'],
-                            'size': 50
+                    'signatures': {
+                        'values-regex': '~.*'
+                    },
+                    'content': {
+                        'supplementary_material': {
+                            'order': 1,
+                            'required': True,
+                            'description': 'You can upload a single ZIP or a single PDF or a single MP4 file. Make sure that you do not use specialized codecs and the video runs on all computers. The maximum file size is 100MB.',
+                            'value-file': {
+                                'fileTypes': [
+                                    'pdf',
+                                    'zip',
+                                    'mp4'
+                                ],
+                                'size': 100
+                            }
                         }
                     }
                 }
-            }
-        )
+            )
+            client.post_invitation(invitation)
 
-        pc_client.post_invitation(invitation)
-
-        note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/-/Revision',
-            readers = ['thecvf.com/ECCV/2020/Conference', '~Test_User1'],
-            writers = [conference.id, '~Test_User1'],
+        note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
+            readers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
+            writers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
             signatures = ['~Test_User1'],
             referent = note.original,
             forum = note.original,
-            content = {
-            }
+            content = {}
         )
-        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), 'thecvf.com/ECCV/2020/Conference/-/Revision', 'pdf')
-        note.content['pdf'] = url
-        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), 'thecvf.com/ECCV/2020/Conference/-/Revision', 'supplemental_material')
-        note.content['supplemental_material'] = url
+        url = test_client.put_attachment(
+            os.path.join(os.path.dirname(__file__), 'data/paper.pdf'),
+            'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
+            'supplementary_material'
+        )
+        note.content['supplementary_material'] = url
         test_client.post_note(note)
 
 
