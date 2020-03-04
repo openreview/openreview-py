@@ -8,6 +8,7 @@
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
+var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 
 var paperDisplayOptions = {
@@ -66,7 +67,9 @@ function load() {
           ids: blindNoteIds
         })
         .then(function(result) {
-          return result.notes.map(function(blindNote) {
+          return result.notes.filter(function(note) {
+            return note.invitation === BLIND_SUBMISSION_ID;
+          }).map(function(blindNote) {
             var originalNote = originalNotes.find(function(o) { return o.id == blindNote.original;});
             blindNote.content.authors = originalNote.content.authors;
             blindNote.content.authorids = originalNote.content.authorids;
