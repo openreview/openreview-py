@@ -115,8 +115,13 @@ function renderSubmissionButton() {
       Webfield.ui.submissionButton(invitation, user, {
         onNoteCreated: function() {
           // Callback funtion to be run when a paper has successfully been submitted (required)
-          promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
-            'A list of all submissions will be available after the deadline');
+          if (PUBLIC) {
+            promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
+            'A list of all submissions will be available after the deadline.');
+          } else {
+            promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
+            'The author console page for managing your submissions will be available soon.');
+          }
 
           load().then(renderContent).then(function() {
             $('.tabs-container a[href="#your-consoles"]').click();
