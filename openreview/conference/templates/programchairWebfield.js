@@ -51,7 +51,8 @@ var main = function() {
     getMetaReviews(),
     getDecisionReviews(),
     getPcAssignmentInvitationsAndTags(),
-    getReviewerBidCounts(),
+    getBidCounts(REVIEWERS_ID),
+    getBidCounts(AREA_CHAIRS_ID),
     getAreaChairRecommendationCounts()
   ).then(function(
     reviewers,
@@ -64,6 +65,7 @@ var main = function() {
     decisions,
     pcAssignmentInvitationsAndTags,
     reviewerBidCounts,
+    areaChairBidCounts,
     areaChairRecommendationCounts
   ) {
     var noteNumbers = blindedNotes.map(function(note) { return note.number; });
@@ -97,7 +99,7 @@ var main = function() {
     };
 
     var uniqueIds = _.union(reviewers, areaChairs);
-    return getUserProfiles(uniqueIds, reviewerBidCounts, areaChairRecommendationCounts);
+    return getUserProfiles(uniqueIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts);
   })
   .then(function(profiles) {
     conferenceStatusData.profiles = profiles;
@@ -183,7 +185,7 @@ var getAreaChairGroups = function() {
   });
 };
 
-var getUserProfiles = function(userIds, reviewerBidCounts, areaChairRecommendationCounts) {
+var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts) {
   var ids = _.filter(userIds, function(id) { return id.charAt(0) === '~'; });
   var emails = _.filter(userIds, function(id) { return id.indexOf('@') > 0; });
 
@@ -213,7 +215,7 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairRecommendati
           allNames: _.filter(profile.content.names, function(name) { return name.username; }),
           email: profile.content.preferredEmail || profile.content.emails[0],
           allEmails: profile.content.emails,
-          reviewerBidCount: reviewerBidCounts[profile.id] || 0,
+          bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
           acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0
         };
         return profileMap;
@@ -273,13 +275,13 @@ var postReviewerEmails = function(postData) {
   });
 };
 
-var getReviewerBidCounts = function() {
-  if (!BID_NAME) {
+var getBidCounts = function(bidInvitationGroup) {
+  if (!bidInvitationGroup || !BID_NAME) {
     return $.Deferred().resolve({});
   }
 
   return Webfield.getAll('/edges', {
-    invitation: REVIEWERS_ID + '/-/' + BID_NAME,
+    invitation: bidInvitationGroup + '/-/' + BID_NAME,
     groupBy: 'tail',
     select: 'count'
   }, 'groupedEdges').then(function(results) {
@@ -1473,6 +1475,9 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     id: areaChair.id,
     name: areaChair.name,
     email: areaChair.email,
+    showBids: !!BID_NAME,
+    completedBids: areaChair.bidCount || 0,
+    edgeBrowserBidsUrl: buildEdgeBrowserUrl('tail:' + areaChair.id, AREA_CHAIRS_ID, BID_NAME),
     showRecommendations: !!RECOMMENDATION_NAME,
     completedRecs: areaChair.acRecommendationCount || 0,
     edgeBrowserRecsUrl: buildEdgeBrowserUrl('signatory:' + areaChair.id, REVIEWERS_ID, RECOMMENDATION_NAME)
@@ -1540,7 +1545,7 @@ var buildPCTableRow = function(index, reviewer, papers) {
     name: reviewer.name,
     email: reviewer.email,
     showBids: !!BID_NAME,
-    completedBids: reviewer.reviewerBidCount || 0,
+    completedBids: reviewer.bidCount || 0,
     edgeBrowserBidsUrl: buildEdgeBrowserUrl('tail:' + reviewer.id, REVIEWERS_ID, BID_NAME)
   }
 
