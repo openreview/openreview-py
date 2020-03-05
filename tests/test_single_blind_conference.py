@@ -148,6 +148,7 @@ class TestSingleBlindConference():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
         builder.has_area_chairs(True)
+        builder.set_override_homepage(True)
         conference = builder.get_result()
 
         invitation = client.get_invitation(conference.get_submission_id())
