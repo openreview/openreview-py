@@ -306,6 +306,7 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             group.web = content
             return self.client.post_group(group)
@@ -402,6 +403,8 @@ class WebfieldBuilder(object):
             content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
             content = content.replace("var COMMENT_NAME = '';", "var COMMENT_NAME = '" + conference.comment_stage.official_name + "';")
             content = content.replace("var BID_NAME = '';", "var BID_NAME = '" + conference.bid_stage.name + "';")
+            content = content.replace("var RECOMMENDATION_NAME = '';", "var RECOMMENDATION_NAME = '" + conference.recommendation_name + "';")
+            content = content.replace("var SCORES_NAME = '';", "var SCORES_NAME = 'Affinity_Score';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
             content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
