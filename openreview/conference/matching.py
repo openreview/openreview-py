@@ -162,7 +162,7 @@ class Matching(object):
         authorids_profiles = {}
 
         edge_count = 0
-        for submission in tqdm(submissions[:5], total=len(submissions[:5]), desc='_build_conflicts'):
+        for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
             edges = []
             for profile in user_profiles:
                 authorids = submission.content['authorids']
