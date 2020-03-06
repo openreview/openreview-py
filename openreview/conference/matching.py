@@ -246,21 +246,28 @@ class Matching(object):
         submissions_per_id = {note.id: note.number for note in submissions}
 
         edges = []
+        deleted_papers = []
         with open(score_file) as file_handle:
             for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
-                paper_note_id = row[0]
-                profile_id = row[1]
-                score = row[2]
-                edges.append(openreview.Edge(
-                    invitation=invitation.id,
-                    head=paper_note_id,
-                    tail=profile_id,
-                    weight=float(score),
-                    readers=self._get_edge_readers(tail=profile_id),
-                    nonreaders=[self.conference.get_authors_id(number=submissions_per_id[paper_note_id])],
-                    writers=[self.conference.id],
-                    signatures=[self.conference.id]
-                ))
+                paper_number = submissions_per_id.get(paper_note_id)
+                if paper_number:
+                    paper_note_id = row[0]
+                    profile_id = row[1]
+                    score = row[2]
+                    edges.append(openreview.Edge(
+                        invitation=invitation.id,
+                        head=paper_note_id,
+                        tail=profile_id,
+                        weight=float(score),
+                        readers=self._get_edge_readers(tail=profile_id),
+                        nonreaders=[self.conference.get_authors_id(number=paper_number)],
+                        writers=[self.conference.id],
+                        signatures=[self.conference.id]
+                    ))
+                else:
+                    deleted_papers.append(paper_number)
+
+        print('deleted papers', deleted_papers)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
@@ -511,8 +518,8 @@ class Matching(object):
                 'default': 0
             }
 
-        self._build_conflicts(submissions, user_profiles)
-        self._build_config_invitation(score_spec)
+        #self._build_conflicts(submissions, user_profiles)
+        #self._build_config_invitation(score_spec)
 
 
     def deploy(self, assignment_title):
