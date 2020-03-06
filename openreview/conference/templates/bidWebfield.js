@@ -152,7 +152,8 @@ function renderContent(notes, conflictIds, bidEdges) {
     showContents: true,
     showTags: false,
     showEdges: true,
-    edgeInvitations: [invitation] // Bid invitation automatically available
+    edgeInvitations: [invitation], // Bid invitation automatically available
+    referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
   };
 
   $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
