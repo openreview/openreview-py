@@ -10,6 +10,7 @@ var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
+var AUTHOR_NAME = 'Authors';
 
 var paperDisplayOptions = {
   pdfLink: true,
@@ -136,8 +137,9 @@ function renderContent(authorNotes, invitations, edgeInvitations) {
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
-  };
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)')
+  }
   $(tasksOptions.container).empty();
 
   Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);

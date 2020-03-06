@@ -511,6 +511,7 @@ var renderHeader = function() {
 };
 
 var displayConfiguration = function(requestForm, invitations, registrationForms) {
+  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs)');
   var formatPeriod = function(invitation) {
     var start;
     var end;
@@ -540,8 +541,9 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
 
   var renderInvitation = function(invitationMap, id, name) {
     var invitation = invitationMap[id];
+
     if (invitation) {
-      return '<li><a href="/invitation?id=' + invitation.id + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
+      return '<li><a href="/invitation?id=' + invitation.id + '&referrer=' + referrerUrl + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
     };
     return '';
   };
@@ -598,11 +600,13 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   // Timeline
   html += '<h3>Timeline:</h3><br><ul>';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
+  html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
   if (AREA_CHAIRS_ID) {
-    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+    html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
+    html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
+    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
   }
-  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
+  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
@@ -1367,9 +1371,12 @@ var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
 var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
   // Checkbox for selecting each row
   var cellCheck = { selected: false, noteId: note.id };
+  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
 
   // Build Note Summary Cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
+  var cell1 = note;
+  cell1.referrer = referrerUrl;
 
   // Build Review Progress Cell
   var reviewObj;
@@ -1450,19 +1457,21 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     maxConfidence: maxConfidence,
     sendReminder: true,
     expandReviewerList: false,
-    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
+    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
+    referrer: referrerUrl
   };
   reviewerSummaryMap[note.number] = reviewProgressData;
 
   var areachairProgressData = {
     numMetaReview: metaReview ? 'One' : 'No',
     areachair: areachairProfile,
-    metaReview: metaReview
+    metaReview: metaReview,
+    referrer: referrerUrl
   };
 
   return {
     cellCheck: cellCheck,
-    note: note,
+    note: cell1,
     reviewProgressData: reviewProgressData,
     areachairProgressData: areachairProgressData,
     decision: decision
@@ -1471,6 +1480,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
 
 var buildSPCTableRow = function(index, areaChair, papers) {
 
+  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
   var summary = {
     id: areaChair.id,
     name: areaChair.name,
@@ -1528,7 +1538,8 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     numCompletedMetaReviews: numCompletedMetaReviews,
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
-    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }])
+    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
+    referrer: referrerUrl
   }
 
   return {
@@ -1540,6 +1551,7 @@ var buildSPCTableRow = function(index, areaChair, papers) {
 
 var buildPCTableRow = function(index, reviewer, papers) {
 
+  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#reviewer-status)');
   var summary = {
     id: reviewer.id,
     name: reviewer.name,
@@ -1553,7 +1565,8 @@ var buildPCTableRow = function(index, reviewer, papers) {
     numCompletedMetaReviews: _.size(_.filter(papers, function(p) { return p.metaReview; })),
     numCompletedReviews: _.size(_.filter(papers, function(p) { return p.review; })),
     numPapers: papers.length,
-    papers: _.sortBy(papers, [function(p) { return p.note.number; }])
+    papers: _.sortBy(papers, [function(p) { return p.note.number; }]),
+    referrer: referrerUrl
   }
 
   var numCompletedReviews = 0;
@@ -1595,7 +1608,8 @@ var buildPCTableRow = function(index, reviewer, papers) {
   var reviewStatusData = {
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
-    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }])
+    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
+    referrer: referrerUrl
   }
 
   return {

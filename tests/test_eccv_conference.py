@@ -836,6 +836,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert url == links[0].get_attribute("href")
 
 
+    def test_ac_console(self, conference, test_client, helpers, selenium, request_page):
+
+        conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
+        conference.set_assignment('~AreaChair_ECCV_One1', 2, is_area_chair=True)
+
+        conference.set_assignment('~Reviewer_ECCV_One1', 1)
+        conference.set_assignment('~Reviewer_ECCV_One1', 2)
+
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.close_submissions()
