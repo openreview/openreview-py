@@ -455,11 +455,11 @@ class Matching(object):
             print('Recommendation invitation not found')
 
         # The reviewers are all emails so convert to tilde ids
-        self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
-        if not all(['~' in member for member in self.match_group.members]):
-            print(
-                'WARNING: not all reviewers have been converted to profile IDs.',
-                'Members without profiles will not have metadata created.')
+        # self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
+        # if not all(['~' in member for member in self.match_group.members]):
+        #     print(
+        #         'WARNING: not all reviewers have been converted to profile IDs.',
+        #         'Members without profiles will not have metadata created.')
 
         user_profiles = _get_profiles(self.client, self.match_group.members)
 

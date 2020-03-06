@@ -1275,11 +1275,11 @@ class ConferenceBuilder(object):
             self.conference.set_submission_stage(self.submission_stage)
 
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
-        self.conference.set_program_chairs(emails=self.program_chairs_ids)
-        self.conference.set_authors()
-        self.conference.set_reviewers()
-        if self.conference.use_area_chairs:
-            self.conference.set_area_chairs()
+        # self.conference.set_program_chairs(emails=self.program_chairs_ids)
+        # self.conference.set_authors()
+        # self.conference.set_reviewers()
+        # if self.conference.use_area_chairs:
+        #     self.conference.set_area_chairs()
 
         home_group = groups[-1]
         writable = home_group.details.get('writable') if home_group.details else True
