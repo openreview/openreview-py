@@ -1016,8 +1016,8 @@ class ReviewStage(object):
 
 class CommentStage(object):
 
-    def __init__(self, official_name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
-        self.official_name = official_name if official_name else 'Official_Comment'
+    def __init__(self, official_comment_name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
+        self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
         self.start_date = start_date
         self.allow_public_comments = allow_public_comments
