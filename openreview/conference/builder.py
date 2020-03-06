@@ -1295,6 +1295,7 @@ class ConferenceBuilder(object):
             options['blind_submission_id'] = self.conference.get_blind_submission_id()
             options['withdrawn_submission_id'] = self.conference.submission_stage.get_withdrawn_submission_id(self.conference)
             options['desk_rejected_submission_id'] = self.conference.submission_stage.get_desk_rejected_submission_id(self.conference)
+            options['public'] = self.conference.submission_stage.public
             self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)
