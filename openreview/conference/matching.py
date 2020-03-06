@@ -249,9 +249,9 @@ class Matching(object):
         deleted_papers = []
         with open(score_file) as file_handle:
             for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
+                paper_note_id = row[0]
                 paper_number = submissions_per_id.get(paper_note_id)
                 if paper_number:
-                    paper_note_id = row[0]
                     profile_id = row[1]
                     score = row[2]
                     edges.append(openreview.Edge(
