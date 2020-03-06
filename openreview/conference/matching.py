@@ -246,7 +246,7 @@ class Matching(object):
         submissions_per_id = {note.id: note.number for note in submissions}
 
         edges = []
-        deleted_papers = []
+        deleted_papers = set()
         with open(score_file) as file_handle:
             for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
                 paper_note_id = row[0]
@@ -265,7 +265,7 @@ class Matching(object):
                         signatures=[self.conference.id]
                     ))
                 else:
-                    deleted_papers.append(paper_number)
+                    deleted_papers.add(paper_note_id)
 
         print('deleted papers', deleted_papers)
 
