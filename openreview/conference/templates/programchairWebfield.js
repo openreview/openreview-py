@@ -597,6 +597,17 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
     html += '</ul><br>';
   }
 
+  // Bids and Recommendations
+  if (BID_NAME) {
+    html += '<h3>Bids & Recommendations:</h3><br><ul>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
+    if (RECOMMENDATION_NAME) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+    }
+    html += '</ul><br>';
+  }
+
   // Timeline
   html += '<h3>Timeline:</h3><br><ul>';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
@@ -1360,8 +1371,8 @@ var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
   // Right now this is only showing bids, affinity scores, and conflicts as the
   // other scores invitations + labels are not available in the PC console
   return '/edge/browse' +
-    '?start=' + invitationId + ',' + startQuery +
-    '&traverse=' + invitationId +
+    (startQuery ? '?start=' + invitationId + ',' + startQuery + '&' : '?') +
+    'traverse=' + invitationId +
     '&browse=' + invitationId +
     (SCORES_NAME ? ';' + invGroup + '/-/' + SCORES_NAME : '') +
     ';' + invGroup + '/-/Conflict' +
