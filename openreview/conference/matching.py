@@ -161,8 +161,9 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         authorids_profiles = {}
 
-        edges = []
-        for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
+        edge_count = 0
+        for submission in tqdm(submissions[:5], total=len(submissions[:5]), desc='_build_conflicts'):
+            edges = []
             for profile in user_profiles:
                 authorids = submission.content['authorids']
                 if submission.details and submission.details.get('original'):
@@ -183,7 +184,9 @@ class Matching(object):
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
-        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+            openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+            edge_count += len(edges)
+
         # Perform sanity check
         edges_posted = self.client.get_edges_count(invitation=invitation.id)
         if edges_posted < len(edges):
