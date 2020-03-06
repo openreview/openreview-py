@@ -1016,8 +1016,9 @@ class ReviewStage(object):
 
 class CommentStage(object):
 
-    def __init__(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
-        self.name = 'Comment'
+    def __init__(self, official_comment_name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
+        self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
+        self.public_name = 'Public_Comment'
         self.start_date = start_date
         self.allow_public_comments = allow_public_comments
         self.anonymous = anonymous
@@ -1233,8 +1234,8 @@ class ConferenceBuilder(object):
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
 
-    def set_comment_stage(self, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False ):
-        self.comment_stage = CommentStage(start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
+    def set_comment_stage(self, name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False ):
+        self.comment_stage = CommentStage(name, start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
 
     def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
         self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields, process)
@@ -1294,6 +1295,7 @@ class ConferenceBuilder(object):
             options['blind_submission_id'] = self.conference.get_blind_submission_id()
             options['withdrawn_submission_id'] = self.conference.submission_stage.get_withdrawn_submission_id(self.conference)
             options['desk_rejected_submission_id'] = self.conference.submission_stage.get_desk_rejected_submission_id(self.conference)
+            options['public'] = self.conference.submission_stage.public
             self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
 
         self.conference.set_conference_groups(groups)

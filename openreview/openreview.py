@@ -774,7 +774,7 @@ class Client(object):
         n = response.json()['references'][0]
         return Note.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False):
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -807,6 +807,8 @@ class Client(object):
             params['offset'] = offset
         if original == True:
             params['original'] = "true"
+        if trash:
+            params['trash'] = trash
 
         response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)

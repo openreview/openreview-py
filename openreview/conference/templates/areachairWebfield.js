@@ -189,7 +189,7 @@ var getOfficialReviews = function(noteNumbers) {
       if (num) {
         if (num in noteMap) {
           // Need to parse rating and confidence strings into ints
-          ratingMatch = n.content.rating.match(ratingExp);
+          ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
           n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
           confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
           n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
@@ -623,7 +623,8 @@ var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#areachair-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#areachair-tasks)')
   }
   $(tasksOptions.container).empty();
 
@@ -657,6 +658,7 @@ var renderTableAndTasks = function(fetchedData) {
 
 var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation) {
   var cellCheck = { selected: false, noteId: note.id };
+  var referrerUrl = encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)');
 
   // Paper number cell
   var cell0 = { number: note.number};
@@ -664,6 +666,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   // Note summary cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
+  cell1.referrer = referrerUrl;
 
   // Review progress cell
   var reviewObj;
@@ -683,7 +686,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
         note: reviewObj.id,
         rating: reviewObj.rating,
         confidence: reviewObj.confidence,
-        reviewLength: reviewObj.content.review.length
+        reviewLength: reviewObj.content.review && reviewObj.content.review.length
       };
       ratings.push(reviewObj.rating);
       confidences.push(reviewObj.confidence);
@@ -739,7 +742,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     maxConfidence: maxConfidence,
     sendReminder: true,
     expandReviewerList: false,
-    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
+    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
+    referrer: referrerUrl
   };
   reviewerSummaryMap[note.number] = cell2;
 
@@ -747,12 +751,13 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: getInvitationId('Meta_Review', note.number)
+    invitationId: getInvitationId('Meta_Review', note.number),
+    referrer: referrerUrl
   };
   var cell3 = {};
   if (metaReview) {
     cell3.recommendation = metaReview.content.recommendation;
-    cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id;
+    cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id + '&referrer=' + referrerUrl;
   }
   if (metaReviewInvitation) {
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);

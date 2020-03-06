@@ -8,7 +8,9 @@
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
+var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
+var AUTHOR_NAME = 'Authors';
 
 var paperDisplayOptions = {
   pdfLink: true,
@@ -66,7 +68,9 @@ function load() {
           ids: blindNoteIds
         })
         .then(function(result) {
-          return result.notes.map(function(blindNote) {
+          return result.notes.filter(function(note) {
+            return note.invitation === BLIND_SUBMISSION_ID;
+          }).map(function(blindNote) {
             var originalNote = originalNotes.find(function(o) { return o.id == blindNote.original;});
             blindNote.content.authors = originalNote.content.authors;
             blindNote.content.authorids = originalNote.content.authorids;
@@ -133,8 +137,9 @@ function renderContent(authorNotes, invitations, edgeInvitations) {
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
-  };
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)')
+  }
   $(tasksOptions.container).empty();
 
   Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);

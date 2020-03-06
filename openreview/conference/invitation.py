@@ -196,7 +196,7 @@ class BidInvitation(openreview.Invitation):
                         'required': True
                     },
                     'tail': {
-                        'type': 'Group',
+                        'type': 'Profile',
                         'query' : {
                             'group' : match_group_id
                         },
@@ -247,7 +247,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
                         'type': 'Note'
                     },
                     'tail': {
-                        'type': 'Group'
+                        'type': 'Profile'
                     },
                     'label': {
                         'value-radio': ['Exclude'],
@@ -652,7 +652,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                 'values': readers
             }
 
-        super(OfficialCommentInvitation, self).__init__(id = conference.get_invitation_id('Official_Comment', note.number),
+        super(OfficialCommentInvitation, self).__init__(id = conference.get_invitation_id(comment_stage.official_comment_name, note.number),
             super = conference.get_invitation_id('Comment'),
             writers = [conference.id],
             signatures = [conference.id],
@@ -830,7 +830,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees,
-            noninvitees = [conference.get_authors_id(number = note.number)],
+            noninvitees = [conference.get_authors_id(number = note.number), conference.id + '/Paper'+ str(note.number) + '/Secondary_Area_Chair'],
             reply = {
                 'forum': note.id,
                 'replyto': note.id,
@@ -1202,7 +1202,8 @@ class InvitationBuilder(object):
                         'query': {
                             'group': conference.get_reviewers_id()
                         },
-                        'required': True
+                        'required': True,
+                        'description': 'Create an ordered ranking of reviewers by selecting values from the dropdowns (10 = best)'
                     },
                     'weight': {
                         'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],

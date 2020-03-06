@@ -5,7 +5,7 @@ function processUpdate() {
 
   var authorSubject = SHORT_PHRASE + ' has received your submission titled ' + note.content.title;
   var noteAbstract = (note.content.abstract ? `\n\nAbstract: ${note.content.abstract}` : '');
-  var action = existingNote ? 'updated' : 'posted';
+  var action = note.ddate ? 'deleted' : (existingNote ? 'updated' : 'posted');
   var authorMessage = `Your submission to ${SHORT_PHRASE} has been ${action}.\n\nSubmission Number: ${note.number} \n\nTitle: ${note.content.title} ${noteAbstract} \n\nTo view your submission, click here: ${baseUrl}/forum?id=${note.forum}`;
 
   var authorMail = {
