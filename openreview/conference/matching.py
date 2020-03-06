@@ -111,6 +111,16 @@ class Matching(object):
             'values-copied': edge_readers + ['{tail}']
         }
 
+        edge_head_type = 'Note'
+        edge_head_query = {
+            'invitation' : self.conference.get_blind_submission_id()
+        }
+        if 'Custom_Load' in edge_id:
+            edge_head_type = 'Group'
+            edge_head_query = {
+                'id' : edge_id.split('/-/')[0]
+            }
+
         invitation = openreview.Invitation(
             id=edge_id,
             invitees=[self.conference.get_id()],
@@ -130,10 +140,8 @@ class Matching(object):
                 },
                 'content': {
                     'head': {
-                        'type': 'Note',
-                        'query' : {
-                            'invitation' : self.conference.get_blind_submission_id()
-                        }
+                        'type': edge_head_type,
+                        'query' : edge_head_query
                     },
                     'tail': {
                         'type': 'Profile',
