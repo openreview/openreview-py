@@ -229,7 +229,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
         super(ExpertiseSelectionInvitation, self).__init__(id = conference.get_expertise_selection_id(),
             cdate = tools.datetime_millis(expertise_selection_stage.start_date),
             duedate = tools.datetime_millis(expertise_selection_stage.due_date),
-            expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if expertise_selection_stage.due_date else None,
+            expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(minutes = LONG_BUFFER_DAYS)) if expertise_selection_stage.due_date else None,
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
