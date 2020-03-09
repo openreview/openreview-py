@@ -1470,15 +1470,11 @@ class TestDoubleBlindConference():
         assert withdrawn_notes[0].content.get('_bibtex') == '@misc{\nuser2019paper,\ntitle={Paper title Revision 2},\nauthor={Test User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + withdrawn_notes[0].id + '}\n}'
 
         messages = client.get_messages(subject = '^AKBC 2019: Paper .* withdrawn by paper authors$')
-        assert len(messages) == 7
+        assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
-        assert 'pc@mail.com' in recipients
-        assert 'akbc_pc_1@akbc.ws' in recipients
-        assert 'akbc_pc@mail.com' in recipients
-        assert 'pc2@mail.com' in recipients
 
         author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
         assert author_group
@@ -1536,15 +1532,11 @@ class TestDoubleBlindConference():
         assert desk_rejected_notes[0].content.get('_bibtex') == '@misc{\nuser2019test,\ntitle={Test Paper title},\nauthor={Test User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + desk_rejected_notes[0].id + '}\n}'
 
         messages = client.get_messages(subject = '^AKBC 2019: Paper .* marked desk rejected by program chairs$')
-        assert len(messages) == 7
+        assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
-        assert 'pc@mail.com' in recipients
-        assert 'akbc_pc_1@akbc.ws' in recipients
-        assert 'akbc_pc@mail.com' in recipients
-        assert 'pc2@mail.com' in recipients
         
         author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
         assert author_group
