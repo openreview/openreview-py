@@ -889,7 +889,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert desk_rejected_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Program_Chairs']
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs',
+            'thecvf.com/ECCV/2020/Conference']
 
         desk_reject_note = test_client.get_note(posted_note.id)
         assert desk_reject_note
@@ -953,7 +954,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert withdrawn_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Program_Chairs']
+            'thecvf.com/ECCV/2020/Conference/Program_Chairs',
+            'thecvf.com/ECCV/2020/Conference']
 
         author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
         assert author_group
