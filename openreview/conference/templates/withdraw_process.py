@@ -16,6 +16,9 @@ def process(client, note, invitation):
     if PAPER_AREA_CHAIRS_ID:
         committee.append(PAPER_AREA_CHAIRS_ID)
     committee.append(PROGRAM_CHAIRS_ID)
+    committee.append(CONFERENCE_ID)
+
+    mail_recipients = [PAPER_AUTHORS_ID]
 
     forum_note = client.get_note(note.forum)
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
@@ -63,4 +66,4 @@ def process(client, note, invitation):
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,
         paper_title_or_num = forum_note.content.get('title', '#'+str(forum_note.number))
     )
-    client.post_message(email_subject, committee, email_body)
+    client.post_message(email_subject, mail_recipients, email_body)
