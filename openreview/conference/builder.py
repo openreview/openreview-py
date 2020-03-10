@@ -498,8 +498,8 @@ class Conference(object):
             # Reviewers Paper group
             if reviewers:
                 self.__create_group(
-                    self.get_reviewers_id(number = n.number),
-                    self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                    self.get_reviewers_id(number=n.number),
+                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
                     is_signatory = False)
 
                 # Reviewers Submitted Paper group
