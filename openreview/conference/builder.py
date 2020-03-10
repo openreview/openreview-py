@@ -504,8 +504,8 @@ class Conference(object):
 
                 # Reviewers Submitted Paper group
                 self.__create_group(
-                    self.get_reviewers_id(number = n.number) + '/Submitted',
-                    self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                    self.get_reviewers_id(number=n.number) + '/Submitted',
+                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
                     is_signatory = False)
 
             # Area Chait Paper group
