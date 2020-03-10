@@ -510,7 +510,7 @@ class Conference(object):
 
             # Area Chait Paper group
             if self.use_area_chairs and area_chairs:
-                self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
+                self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
 
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
