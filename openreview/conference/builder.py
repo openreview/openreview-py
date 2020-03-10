@@ -482,8 +482,8 @@ class Conference(object):
         for n in notes_iterator:
             # Paper group
             group = self.__create_group(
-                group_id = '{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number),
-                group_owner_id = self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
+                group_id = '{conference_id}/Paper{number}'.format(conference_id=self.id, number=n.number),
+                group_owner_id = self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
                 is_signatory = False
             )
 
