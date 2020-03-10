@@ -535,7 +535,7 @@ class Conference(object):
 
                 blind_content = {
                     'authors': ['Anonymous'],
-                    'authorids': [self.get_authors_id(number = note.number)],
+                    'authorids': [self.get_authors_id(number=note.number)],
                     '_bibtex': None
                 }
 
