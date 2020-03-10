@@ -297,6 +297,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.has_area_chairs(True)
         conference = builder.get_result()
+        conference.create_paper_groups(authors=True)
 
         conference.set_comment_stage(openreview.CommentStage(authors=True))
 

@@ -27,6 +27,25 @@ class TestECCVConference():
         builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
+        builder.set_homepage_header({
+            'title': '2020 European Conference on Computer Vision',
+            'subtitle': 'ECCV 2020',
+            'deadline': '',
+            'date': 'Aug 23 2020',
+            'website': 'https://eccv2020.eu/',
+            'location': 'SEC, Glasgow',
+            'instructions': '''<p class="dark">
+            <strong>New: Extended paper pre-registration</strong>
+            <br> Please note that during the extended pre-registration period all registration problems will have to be resolved by the deadline of 5 March 2020 (23:59 UTC-0) (identical to the paper submission deadline). We will not be able to make any exceptions after this deadline.
+            <br>We are looking forward to your submissions.
+            </p>
+            <p class="dark">
+            <strong>Instructions:</strong> <a href="https://eccv2020.eu/author-instructions/" target="_blank">https://eccv2020.eu/author-instructions/</a>.
+            You can update the information on this form at any time before the deadline.</p>
+            <p class="dark">Deadline: 5 March 2020 (23:59 UTC-0)</p>''',
+            'contact': 'eccv20program@gmail.com'
+        })
+
         # Reviewers
         reviewer_registration_tasks = {
             'profile_confirmed': {
@@ -290,7 +309,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
-        assert 'You have declined the invitation from thecvf.com/ECCV/2020/Conference.' == messages[0].text
+        assert 'You have declined the invitation from 2020 European Conference on Computer Vision.' == messages[0].text
         assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
 
         group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers')

@@ -422,6 +422,7 @@ class Conference(object):
             options['website'] = self.homepage_header.get('website')
             options['instructions'] = self.homepage_header.get('instructions')
             options['deadline'] = self.homepage_header.get('deadline')
+            options['contact'] = self.homepage_header.get('contact')
         return options
 
     def get_submissions(self, accepted = False, details = None, sort = None):
