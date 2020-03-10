@@ -97,7 +97,8 @@ function load() {
       regex: CONFERENCE_ID + '.*',
       invitee: true,
       duedate: true,
-      type: 'edges'
+      type: 'edges',
+      details: 'repliedEdges'
     }).then(function(result) {
       return result.invitations;
     });

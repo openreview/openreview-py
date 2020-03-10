@@ -383,7 +383,8 @@ controller.addHandler('reviewers', {
             regex: WILDCARD_INVITATION,
             invitee: true,
             duedate: true,
-            type: 'edges'
+            type: 'edges',
+            details: 'repliedEdges'
           }).then(function(result) {
             return result.invitations;
           }),

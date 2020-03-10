@@ -597,6 +597,17 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
     html += '</ul><br>';
   }
 
+  // Bids and Recommendations
+  if (BID_NAME) {
+    html += '<h3>Bids & Recommendations:</h3><br><ul>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
+    if (RECOMMENDATION_NAME) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+    }
+    html += '</ul><br>';
+  }
+
   // Timeline
   html += '<h3>Timeline:</h3><br><ul>';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
@@ -1118,7 +1129,8 @@ var displayAreaChairsStatusTable = function() {
   var order = 'asc';
   var sortOptions = {
     Area_Chair: function(row) { return row.summary.name.toLowerCase(); },
-    Recommendations_Completed: function(row) { return row.summary.completedRecs },
+    Bids_Completed: function(row) { return row.summary.completedBids },
+    Reviewer_Recommendations_Completed: function(row) { return row.summary.completedRecs },
     Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
     Papers_with_Completed_Review_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
     Papers_with_Completed_Review: function(row) { return row.reviewProgressData.numCompletedReviews; },
@@ -1359,8 +1371,8 @@ var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
   // Right now this is only showing bids, affinity scores, and conflicts as the
   // other scores invitations + labels are not available in the PC console
   return '/edge/browse' +
-    '?start=' + invitationId + ',' + startQuery +
-    '&traverse=' + invitationId +
+    (startQuery ? '?start=' + invitationId + ',' + startQuery + '&' : '?') +
+    'traverse=' + invitationId +
     '&browse=' + invitationId +
     (SCORES_NAME ? ';' + invGroup + '/-/' + SCORES_NAME : '') +
     ';' + invGroup + '/-/Conflict' +
@@ -1368,15 +1380,16 @@ var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
 }
 
 // Helper functions
+var paperTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
+
 var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
   // Checkbox for selecting each row
   var cellCheck = { selected: false, noteId: note.id };
-  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
 
   // Build Note Summary Cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
-  cell1.referrer = referrerUrl;
+  cell1.referrer = paperTableReferrerUrl;
 
   // Build Review Progress Cell
   var reviewObj;
@@ -1458,7 +1471,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     sendReminder: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
-    referrer: referrerUrl
+    referrer: paperTableReferrerUrl
   };
   reviewerSummaryMap[note.number] = reviewProgressData;
 
@@ -1466,7 +1479,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     numMetaReview: metaReview ? 'One' : 'No',
     areachair: areachairProfile,
     metaReview: metaReview,
-    referrer: referrerUrl
+    referrer: paperTableReferrerUrl
   };
 
   return {
@@ -1478,9 +1491,10 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   }
 };
 
+var acTableeferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
+
 var buildSPCTableRow = function(index, areaChair, papers) {
 
-  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
   var summary = {
     id: areaChair.id,
     name: areaChair.name,
@@ -1539,7 +1553,7 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
     papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
-    referrer: referrerUrl
+    referrer: acTableeferrerUrl
   }
 
   return {
@@ -1549,9 +1563,10 @@ var buildSPCTableRow = function(index, areaChair, papers) {
 
 };
 
+var pcTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#reviewer-status)');
+
 var buildPCTableRow = function(index, reviewer, papers) {
 
-  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#reviewer-status)');
   var summary = {
     id: reviewer.id,
     name: reviewer.name,
@@ -1566,7 +1581,7 @@ var buildPCTableRow = function(index, reviewer, papers) {
     numCompletedReviews: _.size(_.filter(papers, function(p) { return p.review; })),
     numPapers: papers.length,
     papers: _.sortBy(papers, [function(p) { return p.note.number; }]),
-    referrer: referrerUrl
+    referrer: pcTableReferrerUrl
   }
 
   var numCompletedReviews = 0;
@@ -1609,7 +1624,7 @@ var buildPCTableRow = function(index, reviewer, papers) {
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
     papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
-    referrer: referrerUrl
+    referrer: pcTableReferrerUrl
   }
 
   return {
