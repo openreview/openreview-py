@@ -138,7 +138,8 @@ var loadData = function(result) {
     regex: WILDCARD_INVITATION,
     invitee: true,
     duedate: true,
-    type: 'edges'
+    type: 'edges',
+    details: 'repliedEdges'
   });
 
   var tagInvitationsP = Webfield.getAll('/invitations', {
