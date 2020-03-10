@@ -110,7 +110,7 @@ class TestReviewersConference():
         note = test_client.post_note(note)
         assert note
 
-        conference.set_authors()
+        conference.create_paper_groups(authors=True, reviewers=True)
         conference.set_reviewers(['reviewer_kgb@mail.com', 'reviewer_kgb2@mail.com'])
         conference.set_program_chairs([])
         conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')

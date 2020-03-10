@@ -121,7 +121,6 @@ class TestBuilder():
         assert blind_submissions
         assert len(blind_submissions) == 1
 
-        conference.set_authors()
         conference.set_review_stage(conference.review_stage)
 
         reviewer_client = helpers.create_user('reviewer_test1@mail.com', 'Test', 'ReviewerOne')

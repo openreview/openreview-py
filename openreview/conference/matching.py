@@ -433,7 +433,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -465,11 +465,11 @@ class Matching(object):
             print('Recommendation invitation not found')
 
         # The reviewers are all emails so convert to tilde ids
-        # self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
-        # if not all(['~' in member for member in self.match_group.members]):
-        #     print(
-        #         'WARNING: not all reviewers have been converted to profile IDs.',
-        #         'Members without profiles will not have metadata created.')
+        self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
+        if not all(['~' in member for member in self.match_group.members]):
+            print(
+                'WARNING: not all reviewers have been converted to profile IDs.',
+                'Members without profiles will not have metadata created.')
 
         user_profiles = _get_profiles(self.client, self.match_group.members)
 
@@ -518,8 +518,10 @@ class Matching(object):
                 'default': 0
             }
 
-        #self._build_conflicts(submissions, user_profiles)
-        #self._build_config_invitation(score_spec)
+        if build_conflicts:
+            self._build_conflicts(submissions, user_profiles)
+
+        self._build_config_invitation(score_spec)
 
 
     def deploy(self, assignment_title):

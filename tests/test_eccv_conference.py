@@ -496,7 +496,6 @@ Please contact info@openreview.net with any questions or concerns about this int
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
 
         conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
-        conference.set_authors()
 
         submissions = conference.get_submissions()
         assert submissions
