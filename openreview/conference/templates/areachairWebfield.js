@@ -612,6 +612,10 @@ var renderTableRows = function(rows, container) {
   $(container).append(tableHtml);
 }
 
+var filterFunc = function(inv) {
+  return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
+};
+
 var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
@@ -622,9 +626,6 @@ var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   $(tasksOptions.container).empty();
 
   // filter out non-areachair tasks
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
-  };
   var areachairInvitations = _.filter(invitations, filterFunc);
   var areachairTagInvitations = _.filter(tagInvitations, filterFunc);
   var areachairEdgeInvitations = _.filter(edgeInvitations, filterFunc);
@@ -639,7 +640,7 @@ var renderTableAndTasks = function(fetchedData) {
   renderStatusTable(
     fetchedData.profiles,
     fetchedData.blindedNotes,
-    filterInvitationsByInvitee(fetchedData.invitations, AREA_CHAIR_NAME),
+    _.filter(fetchedData.invitations, filterFunc),
     fetchedData.officialReviews,
     fetchedData.metaReviews,
     _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
