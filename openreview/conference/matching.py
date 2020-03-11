@@ -520,7 +520,7 @@ class Matching(object):
         self._build_config_invitation(score_spec)
 
 
-    def deploy(self, assignment_title):
+    def deploy(self, assignment_title, clear):
         '''
         WARNING: This function untested
 
@@ -533,6 +533,9 @@ class Matching(object):
         submissions = openreview.tools.iterget_notes(
             client,
             invitation=self.conference.get_blind_submission_id())
+
+        # if clear:
+        #     match_group = self.match_group.id.split('/')[-1]
 
         assignment_edges = openreview.tools.iterget_edges(
             client,

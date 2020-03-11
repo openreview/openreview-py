@@ -739,14 +739,24 @@ class Conference(object):
             )
             return result
 
-    def set_assignments(self, assignment_title, is_area_chair=False):
+    def set_assignments(self, assignment_title, is_area_chair=False, clear=False):
+        if is_area_chair:
+            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.meta_review_stage.name))
+        else: 
+            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.review_stage.name))
+
+        if invitation:
+            activation_date = invitation.cdate or invitation.tcdate
+            if activation_date < tools.datetime_millis(datetime.datetime.now()):
+                raise openreview.OpenReviewException('Review/Meta-Review stage has started.')
+
         if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
         self.set_reviewer_reassignment(enabled=True)
-        return conference_matching.deploy(assignment_title)
+        return conference_matching.deploy(assignment_title, clear)
 
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
