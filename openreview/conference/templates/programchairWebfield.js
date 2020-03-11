@@ -1184,11 +1184,20 @@ var displayAreaChairsStatusTable = function() {
     var filter  = $(this)[0].dataset['filter'];
 
     var filterFuncs = {
-      noBid: function(row) {
-        return row.summary.bidCount === 0;
+      'msg-no-bids': function(row) {
+        return row.summary.completedBids === 0;
+      },
+      'msg-no-recs': function(row) {
+        return row.summary.completedRecs === 0;
+      },
+      'msg-unsubmitted-reviews': function(row) {
+        return row.reviewProgressData.numCompletedReviews === 0;
+      },
+      'msg-unsubmitted-metareviews': function(row) {
+        return row.reviewProgressData.numCompletedMetaReviews === 0;
       }
     }
-    var usersToMessage = rowData.filter(filterFuncs['noBid']).map(function(row) {
+    var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
       return {
         groups: [row.summary.id],
         name: row.summary.name,
@@ -1378,11 +1387,14 @@ var displayReviewerStatusTable = function() {
     var filter  = $(this)[0].dataset['filter'];
 
     var filterFuncs = {
-      noBid: function(row) {
-        return row.summary.bidCount === 0;
+      'msg-no-bids': function(row) {
+        return row.summary.completedBids === 0;
+      },
+      'msg-unsubmitted-reviews': function(row) {
+        return row.reviewProgressData.numCompletedReviews === 0;
       }
     }
-    var usersToMessage = rowData.filter(filterFuncs['noBid']).map(function(row) {
+    var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
       return {
         groups: [row.summary.id],
         name: row.summary.name,
