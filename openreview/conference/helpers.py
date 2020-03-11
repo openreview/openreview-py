@@ -86,12 +86,17 @@ def get_conference_builder(client, request_form_id):
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
+
+    submission_remove_options = note.content.get('remove_submission_options', None)
+
     builder.set_submission_stage(
         double_blind = double_blind,
         public = public,
         start_date = submission_start_date,
         due_date = submission_due_date,
-        additional_fields = submission_additional_options)
+        additional_fields = submission_additional_options,
+        remove_fields = submission_remove_options
+        )
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
