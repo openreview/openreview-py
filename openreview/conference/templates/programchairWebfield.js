@@ -1206,11 +1206,11 @@ var displayAreaChairsStatusTable = function() {
         email: row.summary.email
       }
     });
-    localStorage.setItem('reviewerMessages', JSON.stringify({
+    localStorage.setItem('reviewerMessages', JSON.stringify([{
       groups: _.map(usersToMessage, 'id'),
       subject: subject,
       message: message
-    }));
+    }]));
     localStorage.setItem('messageCount', usersToMessage.length);
 
     // Show step 2
@@ -1406,11 +1406,11 @@ var displayReviewerStatusTable = function() {
         email: row.summary.email
       }
     });
-    localStorage.setItem('reviewerMessages', JSON.stringify({
+    localStorage.setItem('reviewerMessages', JSON.stringify([{
       groups: _.map(usersToMessage, 'id'),
       subject: subject,
       message: message
-    }));
+    }]));
     localStorage.setItem('messageCount', usersToMessage.length);
 
     // Show step 2
