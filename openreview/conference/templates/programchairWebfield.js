@@ -1218,6 +1218,7 @@ var displayAreaChairsStatusTable = function() {
       var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
       return text;
     }).join(', ');
+    $('#message-reviewers-modal .modal-body > p').html('A total of <span class="num-reviewers"></span> reminder emails will be sent to the following reviewers:');
     $('#message-reviewers-modal .reviewer-list').html(namesHtml);
     $('#message-reviewers-modal .num-reviewers').text(usersToMessage.length);
     $('#message-reviewers-modal .step-1').hide();
@@ -1417,6 +1418,7 @@ var displayReviewerStatusTable = function() {
       var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
       return text;
     }).join(', ');
+    $('#message-reviewers-modal .modal-body > p').html('A total of <span class="num-reviewers"></span> reminder emails will be sent to the following reviewers:');
     $('#message-reviewers-modal .reviewer-list').html(namesHtml);
     $('#message-reviewers-modal .num-reviewers').text(usersToMessage.length);
     $('#message-reviewers-modal .step-1').hide();
