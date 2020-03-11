@@ -18,6 +18,7 @@ var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
+var EMAIL_SENDER = null;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
@@ -260,13 +261,14 @@ var getPcAssignmentInvitationsAndTags = function() {
 };
 
 var postReviewerEmails = function(postData) {
-  postData.message = postData.message.replace(
-    '[[SUBMIT_REVIEW_LINK]]',
-    postData.forumUrl
-  );
+  var formttedData = _.pick(postData, ['groups', 'subject', 'message']);
+  formttedData.message = postData.message.replace('[[SUBMIT_REVIEW_LINK]]', postData.forumUrl);
+  if (EMAIL_SENDER) {
+    formttedData.from = EMAIL_SENDER;
+  }
 
-  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
-  .then(function(response) {
+  return Webfield.post('/messages', formttedData)
+  .then(function() {
     // Save the timestamp in the local storage
     for (var i = 0; i < postData.groups.length; i++) {
       var userId = postData.groups[i];
@@ -1970,6 +1972,9 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
         '\n\nTo see all of your assigned papers, go to https://openreview.net/group?id=' + REVIEWERS_ID +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
     };
+    if (EMAIL_SENDER) {
+      postData.from = EMAIL_SENDER;
+    }
     return Webfield.post('/messages', postData);
   });
   return false;
