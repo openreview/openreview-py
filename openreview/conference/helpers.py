@@ -87,7 +87,7 @@ def get_conference_builder(client, request_form_id):
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
 
-    submission_remove_options = note.content.get('remove_submission_options', None)
+    submission_remove_options = note.content.get('remove_submission_options', [])
 
     builder.set_submission_stage(
         double_blind = double_blind,
