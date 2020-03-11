@@ -58,8 +58,7 @@ class TestCommentNotification():
         assert logs[0]['status'] == 'ok'
 
         conference.close_submissions()
-
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
         conference.set_program_chairs(emails= ['programchair@midl.io'])
         conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True))
 
@@ -393,7 +392,6 @@ class TestCommentNotification():
         conference.close_submissions()
         blinded_notes = conference.create_blind_submissions()
         paper_note = blinded_notes[0]
-        conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@auai.org'])
         conference.set_area_chairs(emails = ['areachair@auai.org'])
         conference.set_reviewers(emails = ['reviewer@auai.org', 'reviewer2@auai.org'])
@@ -659,7 +657,7 @@ class TestCommentNotification():
 
         conference.close_submissions()
 
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
         conference.set_program_chairs(emails = ['programchair@colt.io'])
         conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True))
 
@@ -966,8 +964,7 @@ class TestCommentNotification():
         assert logs[0]['status'] == 'ok'
 
         conference.close_submissions()
-
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
         conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection=True, authors=True))
 

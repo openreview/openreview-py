@@ -422,6 +422,7 @@ class Conference(object):
             options['website'] = self.homepage_header.get('website')
             options['instructions'] = self.homepage_header.get('instructions')
             options['deadline'] = self.homepage_header.get('deadline')
+            options['contact'] = self.homepage_header.get('contact')
         return options
 
     def get_submissions(self, accepted = False, details = None, sort = None):
@@ -473,6 +474,48 @@ class Conference(object):
 
         return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission)
 
+    def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False):
+
+        notes_iterator = self.get_submissions(sort='number:asc', details='original')
+        author_group_ids = []
+
+        for n in notes_iterator:
+            # Paper group
+            group = self.__create_group(
+                group_id = '{conference_id}/Paper{number}'.format(conference_id=self.id, number=n.number),
+                group_owner_id = self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
+                is_signatory = False
+            )
+
+            # Author Paper group
+            if authors:
+                authorids = n.content.get('authorids')
+                if n.details and n.details.get('original'):
+                    authorids = n.details['original']['content']['authorids']
+                author_paper_group = self.__create_group(self.get_authors_id(n.number), self.id, authorids)
+                author_group_ids.append(author_paper_group.id)
+
+            # Reviewers Paper group
+            if reviewers:
+                self.__create_group(
+                    self.get_reviewers_id(number=n.number),
+                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
+                    is_signatory = False)
+
+                # Reviewers Submitted Paper group
+                self.__create_group(
+                    self.get_reviewers_id(number=n.number) + '/Submitted',
+                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
+                    is_signatory = False)
+
+            # Area Chait Paper group
+            if self.use_area_chairs and area_chairs:
+                self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
+
+        if author_group_ids:
+            self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
+
+
     def create_blind_submissions(self, force=False, hide_fields=[]):
 
         if not self.submission_stage.double_blind:
@@ -489,6 +532,16 @@ class Conference(object):
         for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
             blind_note = submissions_by_original.get(note.id)
             if not blind_note:
+
+                blind_content = {
+                    'authors': ['Anonymous'],
+                    'authorids': [self.get_authors_id(number=note.number)],
+                    '_bibtex': None
+                }
+
+                for field in hide_fields:
+                    blind_content[field] = ''
+
                 blind_note = openreview.Note(
                     id = None,
                     original= note.id,
@@ -496,34 +549,25 @@ class Conference(object):
                     forum=None,
                     signatures= [self.id],
                     writers= [self.id],
-                    readers= [self.id],
-                    content= {
-                        "authors": ['Anonymous'],
-                        "authorids": [self.id],
-                        "_bibtex": None
-                    })
+                    readers= self.submission_stage.get_blind_readers(self, note.number),
+                    content= blind_content)
 
                 blind_note = self.client.post_note(blind_note)
 
-                blind_note.readers = self.submission_stage.get_blind_readers(self, blind_note.number)
-
-                blind_note.content = {
-                    'authorids': [self.get_authors_id(number = blind_note.number)],
-                    'authors': ['Anonymous'],
-                }
-
-                for field in hide_fields:
-                    blind_note.content[field] = ''
-
                 if self.submission_stage.public:
-                    blind_note.content['_bibtex'] = tools.get_bibtex(note = note,
+                    blind_content['_bibtex'] = tools.get_bibtex(note = note,
                         venue_fullname = self.name,
                         url_forum=blind_note.id,
                         year=str(self.get_year()),
                         baseurl=self.client.baseurl)
 
-                blind_note = self.client.post_note(blind_note)
+                    blind_note.content = blind_content
+
+                    blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
+
+        ## We should only create the author groups
+        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
 
         # Update PC console with double blind submissions
         pc_group = self.client.get_group(self.get_program_chairs_id())
@@ -623,9 +667,6 @@ class Conference(object):
         if self.use_area_chairs:
             self.__create_group(self.get_area_chairs_id(), self.id, emails)
 
-            notes_iterator = self.get_submissions()
-            for n in notes_iterator:
-                self.__create_group(self.get_area_chairs_id(number = n.number), self.id)
             return self.__set_area_chair_page()
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
@@ -660,48 +701,19 @@ class Conference(object):
             group_owner_id = self.get_area_chairs_id() if self.use_area_chairs else self.id,
             members = emails)
 
-        notes_iterator = self.get_submissions()
-
-        for n in notes_iterator:
-            self.__create_group(
-                self.get_reviewers_id(number = n.number),
-                self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
-                is_signatory = False)
-
-            self.__create_group(
-                self.get_reviewers_id(number = n.number) + '/Submitted',
-                self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
-                is_signatory = False)
-
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        notes_iterator = self.get_submissions(details='original', sort='number:asc')
-        author_group_ids = []
-
-        for n in notes_iterator:
-            group = self.__create_group(
-                group_id = '{conference_id}/Paper{number}'.format(conference_id = self.id, number = n.number),
-                group_owner_id = self.get_area_chairs_id(number = n.number) if self.use_area_chairs else self.id,
-                is_signatory = False
-            )
-
-            authorids = n.content.get('authorids')
-            if n.details and n.details.get('original'):
-                authorids = n.details['original']['content']['authorids']
-            group = self.__create_group('{number_group}/{author_name}'.format(number_group = group.id, author_name = self.authors_name), self.id, authorids)
-            author_group_ids.append(group.id)
-
-        authors_group = self.__create_group(self.get_authors_id(), self.id, author_group_ids, public = True)
+        authors_group = self.__create_group(self.get_authors_id(), self.id, public=True)
         return self.webfield_builder.set_author_page(self, authors_group)
 
-    def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None):
+    def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
         if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file)
+        return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
     def set_assignment(self, user, number, is_area_chair = False):
 
