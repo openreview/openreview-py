@@ -116,11 +116,11 @@ function renderConferenceTabs() {
       id: 'your-submissions',
       active: true
     },
-    {
-      heading: 'Author Schedule',
-      id: 'author-schedule',
-      content: HEADER.schedule
-    },
+    // {
+    //   heading: 'Author Schedule',
+    //   id: 'author-schedule',
+    //   content: HEADER.schedule
+    // },
     {
       heading: 'Author Tasks',
       id: 'author-tasks'

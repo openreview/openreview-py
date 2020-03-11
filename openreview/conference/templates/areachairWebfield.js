@@ -302,11 +302,11 @@ var renderHeader = function() {
       extraClasses: 'horizontal-scroll',
       active: true
     },
-    {
-      heading: 'Area Chair Schedule',
-      id: 'areachair-schedule',
-      content: HEADER.schedule
-    },
+    // {
+    //   heading: 'Area Chair Schedule',
+    //   id: 'areachair-schedule',
+    //   content: HEADER.schedule
+    // },
     {
       heading: 'Area Chair Tasks',
       id: 'areachair-tasks',
