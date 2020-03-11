@@ -1280,8 +1280,8 @@ var displayAreaChairsStatusTable = function() {
         '<span class="caret"></span>' +
       '</button>' +
       '<ul class="dropdown-menu">' +
-        '<li><a class="msg-no-bids">Area Chairs with 0 bids</a></li>' +
-        '<li><a class="msg-no-recs">Area Chairs with 0 recommendations</a></li>' +
+        (BID_NAME ? '<li><a class="msg-no-bids">Area Chairs with 0 bids</a></li>' : '') +
+        (RECOMMENDATION_NAME ? '<li><a class="msg-no-recs">Area Chairs with 0 recommendations</a></li>' : '') +
         '<li><a class="msg-unsubmitted-reviews">Area Chairs with unsubmitted reviews</a></li>' +
         '<li><a class="msg-unsubmitted-metareviews">Area Chairs with unsubmitted meta reviews</a></li>' +
       '</ul>' +
@@ -1477,7 +1477,7 @@ var displayReviewerStatusTable = function() {
         '<span class="caret"></span>' +
       '</button>' +
       '<ul class="dropdown-menu">' +
-        '<li><a class="msg-no-bids">Reviewers with 0 bids</a></li>' +
+        (BID_NAME ? '<li><a class="msg-no-bids">Reviewers with 0 bids</a></li>' : '') +
         '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>'
