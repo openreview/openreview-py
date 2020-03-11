@@ -1201,14 +1201,16 @@ var displayAreaChairsStatusTable = function() {
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
       return {
-        groups: [row.summary.id],
+        id: row.summary.id,
         name: row.summary.name,
-        email: row.summary.email,
-        subject: subject,
-        message: message
+        email: row.summary.email
       }
     });
-    localStorage.setItem('reviewerMessages', JSON.stringify(usersToMessage));
+    localStorage.setItem('reviewerMessages', JSON.stringify({
+      groups: _.map(usersToMessage, 'id'),
+      subject: subject,
+      message: message
+    }));
     localStorage.setItem('messageCount', usersToMessage.length);
 
     // Show step 2
@@ -1398,14 +1400,16 @@ var displayReviewerStatusTable = function() {
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
       return {
-        groups: [row.summary.id],
+        id: row.summary.id,
         name: row.summary.name,
-        email: row.summary.email,
-        subject: subject,
-        message: message
+        email: row.summary.email
       }
     });
-    localStorage.setItem('reviewerMessages', JSON.stringify(usersToMessage));
+    localStorage.setItem('reviewerMessages', JSON.stringify({
+      groups: _.map(usersToMessage, 'id'),
+      subject: subject,
+      message: message
+    }));
     localStorage.setItem('messageCount', usersToMessage.length);
 
     // Show step 2
