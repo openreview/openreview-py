@@ -143,6 +143,12 @@ function renderContent(authorNotes, invitations, edgeInvitations) {
   }
   $(tasksOptions.container).empty();
 
+  var filterFunc = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
+  };
+  invitations = _.filter(invitations, filterFunc);
+  edgeInvitations = _.filter(edgeInvitations, filterFunc);
+
   Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
 
   //Render table like AC console

@@ -612,14 +612,6 @@ var renderTableRows = function(rows, container) {
   $(container).append(tableHtml);
 }
 
-var filterInvitationsByInvitee = function(invitations, invitee_name) {
-  // Filter out tasks this invitee is not invited to
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(invitee_name) !== -1; });
-  };
-  return _.filter(invitations, filterFunc);
-}
-
 var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
@@ -629,13 +621,15 @@ var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  // Extract only areachair tasks
-  var areachairInvitations = filterInvitationsByInvitee(invitations, AREA_CHAIR_NAME);
-  var areachairEdgeInvitations = filterInvitationsByInvitee(edgeInvitations, AREA_CHAIR_NAME);
+  // filter out non-areachair tasks
+  var filterFunc = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
+  };
+  var areachairInvitations = _.filter(invitations, filterFunc);
+  var areachairTagInvitations = _.filter(tagInvitations, filterFunc);
+  var areachairEdgeInvitations = _.filter(edgeInvitations, filterFunc);
 
-  var tagEdgeInvitations = areachairEdgeInvitations.concat(tagInvitations);
-
-  Webfield.ui.newTaskList(areachairInvitations, tagEdgeInvitations, tasksOptions);
+  Webfield.ui.newTaskList(areachairInvitations, areachairTagInvitations.concat(areachairEdgeInvitations), tasksOptions);
   $('.tabs-container a[href="#areachair-tasks"]').parent().show();
 }
 
