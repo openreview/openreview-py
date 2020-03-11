@@ -359,7 +359,6 @@ class TestDoubleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -400,7 +399,6 @@ class TestDoubleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", peter_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -1545,12 +1543,12 @@ class TestDoubleBlindConference():
         assert 'akbc_pc_1@akbc.ws' in recipients
         assert 'akbc_pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
-        
+
         author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
         assert author_group
         print(author_group)
         assert len(author_group.members) == 1
-        assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members        
+        assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members
 
     def test_paper_ranking(self, client, selenium, request_page):
 
