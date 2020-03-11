@@ -1253,7 +1253,7 @@ var displayAreaChairsStatusTable = function() {
 
       var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
         filter: filter,
-        defaultSubject: '',
+        defaultSubject: SHORT_PHRASE + ' Reminder',
         defaultBody: defaultBody,
       });
       $('body').append(modalHtml);
@@ -1450,7 +1450,7 @@ var displayReviewerStatusTable = function() {
 
       var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
         filter: filter,
-        defaultSubject: '',
+        defaultSubject: SHORT_PHRASE + ' Reminder',
         defaultBody: defaultBody,
       });
       $('body').append(modalHtml);
