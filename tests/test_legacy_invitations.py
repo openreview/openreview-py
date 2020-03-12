@@ -47,7 +47,7 @@ class TestLegacyInvitations():
         note.content['pdf'] = url
         test_client.post_note(note)
 
-        conference.set_authors()
+        conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.set_reviewers(['reviewer_legacy@mail.com'])
         conference.set_area_chairs(['ac_legacy@mail.com'])
         conference.set_program_chairs(['pc_legacy@mail.com'])

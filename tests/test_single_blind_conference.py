@@ -295,7 +295,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.has_area_chairs(True)
         conference = builder.get_result()
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
 
         conference.set_comment_stage(openreview.CommentStage(authors=True))
 
@@ -371,7 +371,7 @@ class TestSingleBlindConference():
             }
         })
         conference = builder.get_result()
-        conference.set_authors()
+        conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac2@mail.com'])
         conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])

@@ -846,7 +846,6 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
         conference = builder.get_result()
-        conference.set_authors()
 
         conference_authors_group = client.get_group(id=conference.get_authors_id())
         assert conference_authors_group
@@ -863,7 +862,6 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         conference = builder.get_result()
-        conference.set_authors()
 
         conference.set_comment_stage(openreview.CommentStage(authors=True))
 
@@ -909,7 +907,6 @@ class TestDoubleBlindConference():
         now = datetime.datetime.utcnow()
         builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 50)
         conference = builder.get_result()
-        conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com', 'reviewer@domain.com'])
 
@@ -954,7 +951,7 @@ class TestDoubleBlindConference():
             writer.writerow([submission.id, '~Reviewer_DoubleBlind1', '0.9'])
             writer.writerow([submission.id, '~Reviewer_Domain1', '0.8'])
 
-        conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), build_conflicts=True)
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
@@ -988,7 +985,6 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True, email_pcs = True)
         conference = builder.get_result()
-        conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
@@ -1080,7 +1076,6 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
-        conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
