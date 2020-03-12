@@ -98,9 +98,10 @@ class WebfieldBuilder(object):
             content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + options.get('desk_rejected_submission_id', '') + "';")
             content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if options.get('public', False) else "var PUBLIC = false;")
 
-            group.web = content
-            group.signatures = [group.id]
-            return self.client.post_group(group)
+            current_group = self.client.get_group(group.id)
+            current_group.web = content
+            current_group.signatures = [group.id]
+            return self.client.post_group(current_group)
 
     def set_expertise_selection_page(self, conference, invitation):
 
