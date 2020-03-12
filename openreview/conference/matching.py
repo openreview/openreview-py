@@ -520,7 +520,7 @@ class Matching(object):
         self._build_config_invitation(score_spec)
 
 
-    def deploy(self, assignment_title, clear):
+    def deploy(self, assignment_title, clear_assignments):
         '''
         WARNING: This function untested
 
@@ -534,7 +534,7 @@ class Matching(object):
             client,
             invitation=self.conference.get_blind_submission_id())
 
-        if clear:
+        if clear_assignments:
             groups = []
             if 'Reviewers' in self.match_group.id:
                 groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
