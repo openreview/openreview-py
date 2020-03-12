@@ -534,8 +534,16 @@ class Matching(object):
             client,
             invitation=self.conference.get_blind_submission_id())
 
-        # if clear:
-        #     match_group = self.match_group.id.split('/')[-1]
+        if clear:
+            groups = []
+            if 'Reviewers' in self.match_group.id:
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/AnonReviewer[0-9]+'))
+            else:
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chairs'))
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chair[0-9]+'))
+            for group in tqdm(groups, total=len(groups), desc='Deleting groups'):
+                client.delete_group(group.id)
 
         assignment_edges = openreview.tools.iterget_edges(
             client,

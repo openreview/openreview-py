@@ -748,7 +748,7 @@ class Conference(object):
         if invitation:
             activation_date = invitation.cdate or invitation.tcdate
             if activation_date < tools.datetime_millis(datetime.datetime.now()):
-                raise openreview.OpenReviewException('Review/Meta-Review stage has started.')
+                raise openreview.OpenReviewException('{} stage has started.'.format('MetaReview' if is_area_chair else 'Review'))
 
         if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
