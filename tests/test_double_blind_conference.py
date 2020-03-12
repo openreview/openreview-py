@@ -359,7 +359,6 @@ class TestDoubleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -400,7 +399,6 @@ class TestDoubleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", peter_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
