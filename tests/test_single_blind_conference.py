@@ -49,9 +49,9 @@ class TestSingleBlindConference():
         assert groups[2].readers == ['everyone']
         assert groups[2].nonreaders == []
         assert groups[2].writers == ['NIPS.cc/2018/Workshop']
-        assert groups[2].signatures == ['~Super_User1']
+        assert groups[2].signatures == ['NIPS.cc/2018/Workshop']
         assert groups[2].signatories == ['NIPS.cc/2018/Workshop']
-        assert groups[2].members == []
+        assert groups[2].members == ['NIPS.cc/2018/Workshop/Program_Chairs']
         assert groups[3].id == 'NIPS.cc/2018/Workshop/MLITS'
         assert groups[3].readers == ['everyone']
         assert groups[3].nonreaders == []
