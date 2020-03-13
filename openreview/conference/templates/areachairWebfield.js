@@ -302,11 +302,11 @@ var renderHeader = function() {
       extraClasses: 'horizontal-scroll',
       active: true
     },
-    {
-      heading: 'Area Chair Schedule',
-      id: 'areachair-schedule',
-      content: HEADER.schedule
-    },
+    // {
+    //   heading: 'Area Chair Schedule',
+    //   id: 'areachair-schedule',
+    //   content: HEADER.schedule
+    // },
     {
       heading: 'Area Chair Tasks',
       id: 'areachair-tasks',
@@ -612,13 +612,9 @@ var renderTableRows = function(rows, container) {
   $(container).append(tableHtml);
 }
 
-var filterInvitationsByInvitee = function(invitations, invitee_name) {
-  // Filter out tasks this invitee is not invited to
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(invitee_name) !== -1; });
-  };
-  return _.filter(invitations, filterFunc);
-}
+var filterFunc = function(inv) {
+  return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
+};
 
 var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
@@ -629,13 +625,12 @@ var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  // Extract only areachair tasks
-  var areachairInvitations = filterInvitationsByInvitee(invitations, AREA_CHAIR_NAME);
-  var areachairEdgeInvitations = filterInvitationsByInvitee(edgeInvitations, AREA_CHAIR_NAME);
+  // filter out non-areachair tasks
+  var areachairInvitations = _.filter(invitations, filterFunc);
+  var areachairTagInvitations = _.filter(tagInvitations, filterFunc);
+  var areachairEdgeInvitations = _.filter(edgeInvitations, filterFunc);
 
-  var tagEdgeInvitations = areachairEdgeInvitations.concat(tagInvitations);
-
-  Webfield.ui.newTaskList(areachairInvitations, tagEdgeInvitations, tasksOptions);
+  Webfield.ui.newTaskList(areachairInvitations, areachairTagInvitations.concat(areachairEdgeInvitations), tasksOptions);
   $('.tabs-container a[href="#areachair-tasks"]').parent().show();
 }
 
@@ -645,7 +640,7 @@ var renderTableAndTasks = function(fetchedData) {
   renderStatusTable(
     fetchedData.profiles,
     fetchedData.blindedNotes,
-    filterInvitationsByInvitee(fetchedData.invitations, AREA_CHAIR_NAME),
+    _.filter(fetchedData.invitations, filterFunc),
     fetchedData.officialReviews,
     fetchedData.metaReviews,
     _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh

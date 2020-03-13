@@ -146,7 +146,6 @@ class TestWorkshop():
         request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -187,7 +186,6 @@ class TestWorkshop():
         request_page(selenium, "http://localhost:3000/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -343,8 +341,6 @@ class TestWorkshop():
         for group in groups:
             assert group.members
 
-        conference.set_authors()
-
         group = client.get_group(id = conference.get_authors_id())
         assert group
         assert len(group.members) == 3
@@ -376,7 +372,6 @@ class TestWorkshop():
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
         builder.has_area_chairs(False)
         conference = builder.get_result()
-        conference.set_authors()
         conference.set_reviewers(emails = ['reviewer4@mail.com'])
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
@@ -807,7 +802,6 @@ class TestWorkshop():
         assert posted_note
 
         conference.create_blind_submissions()
-        conference.set_authors()
         conference.open_decisions()
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')

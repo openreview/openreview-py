@@ -47,7 +47,7 @@ class TestLegacyInvitations():
         note.content['pdf'] = url
         test_client.post_note(note)
 
-        conference.set_authors()
+        conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.set_reviewers(['reviewer_legacy@mail.com'])
         conference.set_area_chairs(['ac_legacy@mail.com'])
         conference.set_program_chairs(['pc_legacy@mail.com'])
@@ -70,8 +70,6 @@ class TestLegacyInvitations():
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
         assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
-        assert tabs.find_element_by_id('reviewer-schedule')
-        assert len(tabs.find_element_by_id('reviewer-schedule').find_elements_by_tag_name('h4')) == 1
         assert tabs.find_element_by_id('reviewer-tasks')
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
@@ -81,8 +79,6 @@ class TestLegacyInvitations():
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
         assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
-        assert tabs.find_element_by_id('areachair-schedule')
-        assert len(tabs.find_element_by_id('areachair-schedule').find_elements_by_tag_name('h4')) == 1
         assert tabs.find_element_by_id('areachair-tasks')
         assert len(tabs.find_element_by_id('areachair-tasks').find_elements_by_class_name('note')) == 1
         reviews = tabs.find_elements_by_class_name('reviewer-progress')
