@@ -47,7 +47,7 @@ class TestDoubleBlindConference():
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
         assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
-        assert groups[2].members == []
+        assert groups[2].members == ['AKBC.ws/2019/Conference/Program_Chairs']
         assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
 
         assert client.get_group(id = 'AKBC.ws')
@@ -98,7 +98,7 @@ class TestDoubleBlindConference():
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
         assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
-        assert groups[2].members == []
+        assert groups[2].members == ['AKBC.ws/2019/Conference/Program_Chairs']
         assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
         assert '"subtitle": "Automated Knowledge Base Construction"' in groups[2].web
 
@@ -171,7 +171,7 @@ class TestDoubleBlindConference():
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
         assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
-        assert groups[2].members == []
+        assert groups[2].members == ['AKBC.ws/2019/Conference/Program_Chairs']
         assert '"title": "AKBC 2019"' in groups[2].web
         assert '"subtitle": "Automated Knowledge Base Construction"' in groups[2].web
         assert '"location": "Amherst, Massachusetts, United States"' in groups[2].web
