@@ -49,16 +49,16 @@ class TestSingleBlindConference():
         assert groups[2].readers == ['everyone']
         assert groups[2].nonreaders == []
         assert groups[2].writers == ['NIPS.cc/2018/Workshop']
-        assert groups[2].signatures == ['NIPS.cc/2018/Workshop']
+        assert groups[2].signatures == ['~Super_User1']
         assert groups[2].signatories == ['NIPS.cc/2018/Workshop']
-        assert groups[2].members == ['NIPS.cc/2018/Workshop/Program_Chairs']
+        assert groups[2].members == []
         assert groups[3].id == 'NIPS.cc/2018/Workshop/MLITS'
         assert groups[3].readers == ['everyone']
         assert groups[3].nonreaders == []
         assert groups[3].writers == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatures == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatories == ['NIPS.cc/2018/Workshop/MLITS']
-        assert groups[3].members == []
+        assert groups[3].members == ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs']
         assert '"title": "2018 NIPS MLITS Workshop"' in groups[3].web
         assert '"subtitle": "Machine Learning for Intelligent Transportation Systems"' in groups[3].web
         assert '"location": "Montreal, Canada"' in groups[3].web
