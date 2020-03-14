@@ -1168,7 +1168,7 @@ class InvitationBuilder(object):
 
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_invitation(self, conference, start_date, due_date):
+    def set_recommendation_invitation(self, conference, start_date, due_date, total_recommendations):
 
         recommendation_invitation = openreview.Invitation(
             id = conference.get_recommendation_id(),
@@ -1180,6 +1180,7 @@ class InvitationBuilder(object):
             signatures = [conference.get_id()],
             invitees = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             multiReply = True,
+            taskCompletionCount = total_recommendations,
             reply = {
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
