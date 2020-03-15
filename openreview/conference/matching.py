@@ -167,6 +167,7 @@ class Matching(object):
         Create conflict edges between the given Notes and Profiles
         '''
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
+        # Get profile info from the match group
         user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
 
         edges = []
@@ -189,14 +190,13 @@ class Matching(object):
                 author_emails.update(author_info['emails'])
                 author_relations.update(author_info['relations'])
 
-            # Compute conflict with user and all the authors
+            # Compute conflicts for each user and all the paper authors
             for user_info in user_profiles_info:
                 conflicts = set()
                 conflicts.update(author_domains.intersection(user_info['domains']))
                 conflicts.update(author_relations.intersection(user_info['emails']))
                 conflicts.update(author_emails.intersection(user_info['relations']))
                 conflicts.update(author_emails.intersection(user_info['emails']))
-                conflicts = list(conflicts)
                 if conflicts:
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
