@@ -1524,6 +1524,7 @@ def get_profile_info(profile):
     domains = set()
     emails = set()
     relations = set()
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com']
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1539,8 +1540,9 @@ def get_profile_info(profile):
     relations.update([r['email'] for r in profile.content.get('relations', [])])
 
     ## Filter common domains
-    if 'gmail.com' in domains:
-        domains.remove('gmail.com')
+    for common_domain in common_domains:
+        if common_domain in domains:
+            domains.remove(common_domain)
 
     return {
         'id': profile.id,
