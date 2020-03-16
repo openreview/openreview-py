@@ -1543,6 +1543,7 @@ def get_profile_info(profile):
         domains.remove('gmail.com')
 
     return {
+        'id': profile.id,
         'domains': domains,
         'emails': emails,
         'relations': relations

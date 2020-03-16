@@ -264,3 +264,16 @@ class TestTools():
 
         assert replaced_group.members == ['~Super_User1', '~Test_User1', 'noprofile@mail.com']
 
+    def test_get_conflicts(self, client, helpers):
+
+        user = helpers.create_user('user@gmail.com', 'First', 'Last')
+
+        user_profile = client.get_profile(email_or_id='user@gmail.com')
+
+        conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
+        assert conflicts
+
+
+
+
+

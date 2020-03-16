@@ -167,33 +167,49 @@ class Matching(object):
         Create conflict edges between the given Notes and Profiles
         '''
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
-        authorids_profiles = {}
+        # Get profile info from the match group
+        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
 
-        edge_count = 0
+        edges = []
+
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
-            edges = []
-            for profile in user_profiles:
-                authorids = submission.content['authorids']
-                if submission.details and submission.details.get('original'):
-                    authorids = submission.details['original']['content']['authorids']
-                if submission.number not in authorids_profiles:
-                    profiles = _get_profiles(self.client, authorids)
-                    authorids_profiles[submission.number] = profiles
-                author_profiles = authorids_profiles[submission.number]
-                conflicts = openreview.tools.get_conflicts(author_profiles, profile)
+            # Get author profiles
+            authorids = submission.content['authorids']
+            if submission.details and submission.details.get('original'):
+                authorids = submission.details['original']['content']['authorids']
+
+            # Extract domains from each profile
+            author_profiles = _get_profiles(self.client, authorids)
+            author_domains = set()
+            author_emails = set()
+            author_relations = set()
+
+            for author_profile in author_profiles:
+                author_info = openreview.tools.get_profile_info(author_profile)
+                author_domains.update(author_info['domains'])
+                author_emails.update(author_info['emails'])
+                author_relations.update(author_info['relations'])
+
+            # Compute conflicts for each user and all the paper authors
+            for user_info in user_profiles_info:
+                conflicts = set()
+                conflicts.update(author_domains.intersection(user_info['domains']))
+                conflicts.update(author_relations.intersection(user_info['emails']))
+                conflicts.update(author_emails.intersection(user_info['relations']))
+                conflicts.update(author_emails.intersection(user_info['emails']))
                 if conflicts:
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=submission.id,
-                        tail=profile.id,
+                        tail=user_info['id'],
                         weight=-1,
                         label=_conflict_label(conflicts),
-                        readers=self._get_edge_readers(tail=profile.id),
+                        readers=self._get_edge_readers(tail=user_info['id']),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
-            openreview.tools.post_bulk_edges(client=self.client, edges=edges)
-            edge_count += len(edges)
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
         # Perform sanity check
         edges_posted = self.client.get_edges_count(invitation=invitation.id)
