@@ -95,10 +95,10 @@ class Conference(object):
             if bid_invitation:
                 self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id(), self.bid_stage.ac_request_count, self.bid_stage.instructions)
 
-    def __set_recommendation_page(self, assignment_title, score_ids, conflict_id):
+    def __set_recommendation_page(self, assignment_title, score_ids, conflict_id, total_recommendations):
         recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
         if recommendation_invitation:
-            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, assignment_title, score_ids, conflict_id)
+            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, assignment_title, score_ids, conflict_id, total_recommendations)
 
     def __expire_invitation(self, invitation_id):
         # Get invitation
@@ -584,7 +584,7 @@ class Conference(object):
         if self.use_area_chairs:
             self.__expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
-    def open_recommendations(self, assignment_title, start_date = None, due_date = None):
+    def open_recommendations(self, assignment_title, start_date = None, due_date = None, total_recommendations = 7):
 
         score_ids = []
         invitation_ids = [
@@ -597,8 +597,8 @@ class Conference(object):
             if tools.get_invitation(self.client, invitation_id):
                 score_ids.append(invitation_id)
 
-        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date)
-        return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()))
+        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, total_recommendations)
+        return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()), total_recommendations)
 
     def open_paper_ranking(self, start_date=None, due_date=None):
 

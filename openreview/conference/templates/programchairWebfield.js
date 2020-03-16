@@ -20,7 +20,7 @@ var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
@@ -130,7 +130,8 @@ var loadConfigurationTab = function() {
 
   var getInvitationsP = Webfield.getAll('/invitations', {
     regex: WILDCARD_INVITATION,
-    expired: true
+    expired: true,
+    type: 'all'
   });
 
   var getRegistrationFormsP = Webfield.getAll('/notes', {
@@ -533,6 +534,7 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   var formatPeriod = function(invitation) {
     var start;
     var end;
+    var exp = 'none';
     var afterStart = true;
     var beforeEnd = true;
     var now = Date.now();
@@ -546,12 +548,16 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
       end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
       beforeEnd = now < invitation.duedate;
     }
+    if (invitation.expdate) {
+      var date = new Date(invitation.expdate);
+      exp =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+    }
 
     var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
     if (end) {
-      periodString = periodString + 'until <em>' + end + '</em>';
+      periodString = periodString + 'until <em>' + end + '</em> and expires <em>' + exp + '</em>';
     } else {
-      periodString = periodString + 'no deadline';
+      periodString = periodString + 'no deadline' + ' and expires <em>' + exp + '</em>';
     }
 
     return periodString;
