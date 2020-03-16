@@ -199,12 +199,6 @@ function renderContent(notes, conflictIds, bidEdges) {
     updateCounts();
   });
 
-  $('#invitation-container').on('apiReturnedError', '.tag-widget', function (e, error) {
-    if (error.path === 'too many edges') {
-      setTimeout(function () { location.reload(); }, 1000);
-    }
-  });
-
   function updateNotes(notes) {
 
     var bidCount = 0;
