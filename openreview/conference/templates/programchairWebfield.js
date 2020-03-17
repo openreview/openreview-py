@@ -586,22 +586,22 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
 
   // Conference statistics
   var html = '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-  html += '<div class="col-md-3 col-xs-6">'
+  html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Active Submissions:</h4><h3>' + 5667 + '</h3>';
   html += '</div>';
 
-  html += '<div class="col-md-3 col-xs-6">'
+  html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Withdrawn Submissions:</h4><h3>' + 5667 + '</h3>';
   html += '</div>';
 
-  html += '<div class="col-md-3 col-xs-6">'
+  html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Desk Rejected Submissions:</h4><h3>' + 5667 + '</h3>';
   html += '</div>';
   html += '</div>';
 
   html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   if (BID_NAME) {
-    html += '<div class="col-md-3 col-xs-6">'
+    html += '<div class="col-md-4 col-xs-6">'
     html += '<h4>AC Bidding Progress:</h4>';
     html += '<p class="hint">% of ACs who have completed the required number of bids</p>';
     html += '<h3>55% <span>(5667 / 6000)</span></h3>';
@@ -609,7 +609,7 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   }
 
   if (RECOMMENDATION_NAME) {
-    html += '<div class="col-md-3 col-xs-6">'
+    html += '<div class="col-md-4 col-xs-6">'
     html += '<h4>Recommendation Progress:</h4>';
     html += '<p class="hint">% of ACs who have completed the required number of reviewer recommendations</p>';
     html += '<h3>55% <span>(5667 / 6000)</span></h3>';
@@ -617,8 +617,8 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   }
 
   if (BID_NAME) {
-    html += '<div class="col-md-3 col-xs-6">'
-    html += '<h4>Bidding Progress:</h4>';
+    html += '<div class="col-md-4 col-xs-6">'
+    html += '<h4>Reviewer Bidding Progress:</h4>';
     html += '<p class="hint">% of Reviewers who have completed the required number of bids</p>';
     html += '<h3>55% <span>(5667 / 6000)</span></h3>';
     html += '</div>';
@@ -626,16 +626,16 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   html += '</div>';
 
   html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-  html += '<div class="col-md-3 col-xs-6">'
+  html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Review Progress:</h4>';
   html += '<p class="hint">% of reviewers who have reviewed all their assigned papers</p>';
   html += '<h3>55% <span>(5667 / 6000)</span></h3>';
   html += '</div>';
 
-  html += '<div class="col-md-3 col-xs-6">'
+  html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Meta-Review Progress:</h4>';
   html += '<p class="hint">% of area chairs who have completed meta reviews for all their assigned papers</p>';
-  html += '<h3>' + 5667 + ' / 6000</h3>';
+  html += '<h3>55% <span>(5667 / 6000)</span></h3>';
   html += '</div>';
   html += '</div>';
 
