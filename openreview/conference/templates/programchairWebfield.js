@@ -489,7 +489,7 @@ var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
 // Render functions
 var renderHeader = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);
-  Webfield.ui.header(HEADER.title, HEADER.instructions);
+  Webfield.ui.header(HEADER.title, '');
 
   var loadingMessage = '<p class="empty-message">Loading...</p>';
   var tabs = [
@@ -584,18 +584,77 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
     invitationMap[invitation.id] = invitation;
   });
 
-  var html = '<div><br>'
+  // Conference statistics
+  var html = '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += '<div class="col-md-3 col-xs-6">'
+  html += '<h4>Active Submissions:</h4><h3>' + 5667 + '</h3>';
+  html += '</div>';
+
+  html += '<div class="col-md-3 col-xs-6">'
+  html += '<h4>Withdrawn Submissions:</h4><h3>' + 5667 + '</h3>';
+  html += '</div>';
+
+  html += '<div class="col-md-3 col-xs-6">'
+  html += '<h4>Desk Rejected Submissions:</h4><h3>' + 5667 + '</h3>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  if (BID_NAME) {
+    html += '<div class="col-md-3 col-xs-6">'
+    html += '<h4>AC Bidding Progress:</h4>';
+    html += '<p class="hint">% of ACs who have completed the required number of bids</p>';
+    html += '<h3>55% <span>(5667 / 6000)</span></h3>';
+    html += '</div>';
+  }
+
+  if (RECOMMENDATION_NAME) {
+    html += '<div class="col-md-3 col-xs-6">'
+    html += '<h4>Recommendation Progress:</h4>';
+    html += '<p class="hint">% of ACs who have completed the required number of reviewer recommendations</p>';
+    html += '<h3>55% <span>(5667 / 6000)</span></h3>';
+    html += '</div>';
+  }
+
+  if (BID_NAME) {
+    html += '<div class="col-md-3 col-xs-6">'
+    html += '<h4>Bidding Progress:</h4>';
+    html += '<p class="hint">% of Reviewers who have completed the required number of bids</p>';
+    html += '<h3>55% <span>(5667 / 6000)</span></h3>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += '<div class="col-md-3 col-xs-6">'
+  html += '<h4>Review Progress:</h4>';
+  html += '<p class="hint">% of reviewers who have reviewed all their assigned papers</p>';
+  html += '<h3>55% <span>(5667 / 6000)</span></h3>';
+  html += '</div>';
+
+  html += '<div class="col-md-3 col-xs-6">'
+  html += '<h4>Meta-Review Progress:</h4>';
+  html += '<p class="hint">% of area chairs who have completed meta reviews for all their assigned papers</p>';
+  html += '<h3>' + 5667 + ' / 6000</h3>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   // Config
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   if (requestForm) {
-    html += '<h3>Description:</h3><br>';
+    html += '<div class="col-md-3 col-xs-6">'
+    html += '<h4>Description:</h4>';
     html += '<p style="margin-bottom:2rem"><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
       '<a href="/forum?id=' + requestForm.id + '"><strong>Full Venue Configuration</strong></a>'
       '</p>';
+    html += '</div>';
   }
 
   // Official Committee
-  html += '<h3>Venue Roles:</h3><br><ul>' +
+  html += '<div class="col-md-3 col-xs-6">'
+  html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
   if (AREA_CHAIRS_ID) {
     html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
@@ -605,29 +664,36 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
-    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul><br>';
+    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul>';
+  html += '</div>';
 
+  // Registration Forms
   if (registrationForms && registrationForms.length) {
-    html += '<h3>Registration Forms:</h3><br><ul>';
+    html += '<div class="col-md-3 col-xs-6">'
+    html += '<h4>Registration Forms:</h4><ul style="padding-left: 15px">';
     registrationForms.forEach(function(form) {
       html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
     })
-    html += '</ul><br>';
+    html += '</ul>';
+    html += '</div>';
   }
 
   // Bids and Recommendations
   if (BID_NAME) {
-    html += '<h3>Bids & Recommendations:</h3><br><ul>';
+    html += '<div class="col-md-3 col-xs-6">'
+    html += '<h4>Bids & Recommendations:</h4><ul style="padding-left: 15px">';
     html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
     html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
     if (RECOMMENDATION_NAME) {
       html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
     }
-    html += '</ul><br>';
+    html += '</ul>';
+    html += '</div>';
   }
 
   // Timeline
-  html += '<h3>Timeline:</h3><br><ul>';
+  html += '<div class="col-md-6 col-xs-12">'
+  html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
   if (AREA_CHAIRS_ID) {
@@ -640,7 +706,9 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
-  html += '</ul></div>';
+  html += '</ul>';
+  html += '</div>';
+  html += '</div>';
 
   $('#venue-configuration').html(html);
 };
