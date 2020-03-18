@@ -854,6 +854,31 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert url == links[0].get_attribute("href")
 
 
+    def test_reviewer_matching(self, conference):
+
+        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+
+        ### Custom loads
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+            readers = [conference.id],
+            nonreaders = [],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = conference.get_reviewers_id(),
+            tail = '~Reviewer_ECCV_One1',
+            weight = 2
+        ))
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+            readers = [conference.id],
+            nonreaders = [],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = conference.get_reviewers_id(),
+            tail = '~Reviewer_ECCV_Two1',
+            weight = 1
+        ))
+
     def test_ac_console(self, conference, test_client, helpers, selenium, request_page):
 
         conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
