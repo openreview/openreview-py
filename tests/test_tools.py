@@ -264,3 +264,62 @@ class TestTools():
 
         assert replaced_group.members == ['~Super_User1', '~Test_User1', 'noprofile@mail.com']
 
+    def test_get_conflicts(self, client, helpers):
+
+        user = helpers.create_user('user@gmail.com', 'First', 'Last')
+
+        user_profile = client.get_profile(email_or_id='user@gmail.com')
+
+        conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
+        assert conflicts
+        assert conflicts[0] == 'user@gmail.com'
+
+        user = helpers.create_user('user@qq.com', 'First', 'Last')
+
+        user_profile = client.get_profile(email_or_id='user@qq.com')
+
+        conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
+        assert conflicts
+        assert conflicts[0] == 'user@qq.com'
+
+
+        user2 = helpers.create_user('user2@qq.com', 'First', 'Last')
+        user2_profile = client.get_profile(email_or_id='user2@qq.com')
+
+        conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
+        assert not conflicts
+
+
+        profile1 = openreview.Profile(
+            id = 'Test_Conflict1',
+            content = {
+                'emails': ['user@cmu.edu'],
+                'history': [{
+                    'institution': {
+                        'domain': 'user@126.com'
+                    }
+                }]
+            }
+        )
+
+        profile2 = openreview.Profile(
+            id = 'Test_Conflict2',
+            content = {
+                'emails': ['user2@126.com'],
+                'history': [{
+                    'institution': {
+                        'domain': 'user2@cmu.edu'
+                    }
+                }]
+            }
+        )
+
+        conflicts = openreview.tools.get_conflicts([profile1], profile2)
+        assert len(conflicts) == 1
+        assert conflicts[0] == 'cmu.edu'
+
+
+
+
+
+

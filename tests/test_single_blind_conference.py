@@ -58,7 +58,7 @@ class TestSingleBlindConference():
         assert groups[3].writers == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatures == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatories == ['NIPS.cc/2018/Workshop/MLITS']
-        assert groups[3].members == []
+        assert groups[3].members == ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs']
         assert '"title": "2018 NIPS MLITS Workshop"' in groups[3].web
         assert '"subtitle": "Machine Learning for Intelligent Transportation Systems"' in groups[3].web
         assert '"location": "Montreal, Canada"' in groups[3].web
