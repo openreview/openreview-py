@@ -562,7 +562,7 @@ var calcRecsComplete = function(acMap, areaChairRecommendationCounts, taskComple
 var calcReviewsComplete = function(reviewerMap, officialReviewMap) {
   return _.reduce(reviewerMap, function(numComplete, noteNumbers, profileId) {
     var allSubmitted = _.every(noteNumbers, function(n) {
-      return officialReviewMap[n][profileId];
+      return officialReviewMap[n] && officialReviewMap[n][profileId];
     });
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
