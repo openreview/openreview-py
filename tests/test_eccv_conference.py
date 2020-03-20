@@ -620,7 +620,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV_Three')
         r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV_Four')
         ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV_One')
-        ac2_client = helpers.create_user('ac2eccv.org', 'AreaChair', 'ECCV_Two')
+        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV_Two')
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
@@ -660,7 +660,7 @@ Please contact info@openreview.net with any questions or concerns about this int
             writer = csv.writer(file_handle)
             for submission in blinded_notes:
                 writer.writerow([submission.number, 'ac1@eccv.org', round(random.random(), 2)])
-                writer.writerow([submission.number, 'ac2eccv.org', round(random.random(), 2)])
+                writer.writerow([submission.number, 'ac2@eccv.org', round(random.random(), 2)])
 
         conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
