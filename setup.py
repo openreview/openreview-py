@@ -20,7 +20,7 @@ setup(name='openreview-py',
           "Deprecated",
           'pylatexenc',
           'ortools',
-          'fuzzywuzzy',
+          'rapidfuzz',
           'tld==0.10'
       ],
       extras_require={
