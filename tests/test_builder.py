@@ -121,7 +121,6 @@ class TestBuilder():
         assert blind_submissions
         assert len(blind_submissions) == 1
 
-        conference.set_authors()
         conference.set_review_stage(conference.review_stage)
 
         reviewer_client = helpers.create_user('reviewer_test1@mail.com', 'Test', 'ReviewerOne')
@@ -226,17 +225,17 @@ class TestBuilder():
         assert selenium.find_element_by_xpath('//div[@id="venue-configuration"]//h3')
 
         WebDriverWait(selenium, 10).until(
-            EC.presence_of_element_located((By.ID, 'message-reviewers-btn'))
+            EC.presence_of_element_located((By.CLASS_NAME, 'message-papers-btn'))
         )
 
         expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
         unexpected_options = ['Meta Review Missing']
         for option in expected_options:
-            assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
+            assert selenium.find_element_by_class_name('-'.join(option.split(' ')) + '-paper-status')
 
         with pytest.raises(NoSuchElementException):
             for option in unexpected_options:
-                assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
+                assert selenium.find_element_by_class_name('-'.join(option.split(' ')) + '-paper-status')
 
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -245,4 +244,4 @@ class TestBuilder():
 
         expected_options.append('Meta Review Missing')
         for option in expected_options:
-            assert selenium.find_element_by_id('-'.join(option.split(' ')) + '-paper-status')
+            assert selenium.find_element_by_class_name('-'.join(option.split(' ')) + '-paper-status')

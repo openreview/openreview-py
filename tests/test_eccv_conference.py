@@ -27,6 +27,25 @@ class TestECCVConference():
         builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
+        builder.set_homepage_header({
+            'title': '2020 European Conference on Computer Vision',
+            'subtitle': 'ECCV 2020',
+            'deadline': '',
+            'date': 'Aug 23 2020',
+            'website': 'https://eccv2020.eu/',
+            'location': 'SEC, Glasgow',
+            'instructions': '''<p class="dark">
+            <strong>New: Extended paper pre-registration</strong>
+            <br> Please note that during the extended pre-registration period all registration problems will have to be resolved by the deadline of 5 March 2020 (23:59 UTC-0) (identical to the paper submission deadline). We will not be able to make any exceptions after this deadline.
+            <br>We are looking forward to your submissions.
+            </p>
+            <p class="dark">
+            <strong>Instructions:</strong> <a href="https://eccv2020.eu/author-instructions/" target="_blank">https://eccv2020.eu/author-instructions/</a>.
+            You can update the information on this form at any time before the deadline.</p>
+            <p class="dark">Deadline: 5 March 2020 (23:59 UTC-0)</p>''',
+            'contact': 'eccv20program@gmail.com'
+        })
+
         # Reviewers
         reviewer_registration_tasks = {
             'profile_confirmed': {
@@ -290,7 +309,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
-        assert 'You have declined the invitation from thecvf.com/ECCV/2020/Conference.' == messages[0].text
+        assert 'You have declined the invitation from 2020 European Conference on Computer Vision.' == messages[0].text
         assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
 
         group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers')
@@ -496,7 +515,6 @@ Please contact info@openreview.net with any questions or concerns about this int
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
 
         conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
-        conference.set_authors()
 
         submissions = conference.get_submissions()
         assert submissions
@@ -602,7 +620,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV_Three')
         r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV_Four')
         ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV_One')
-        ac2_client = helpers.create_user('ac2eccv.org', 'AreaChair', 'ECCV_Two')
+        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV_Two')
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
@@ -642,7 +660,7 @@ Please contact info@openreview.net with any questions or concerns about this int
             writer = csv.writer(file_handle)
             for submission in blinded_notes:
                 writer.writerow([submission.number, 'ac1@eccv.org', round(random.random(), 2)])
-                writer.writerow([submission.number, 'ac2eccv.org', round(random.random(), 2)])
+                writer.writerow([submission.number, 'ac2@eccv.org', round(random.random(), 2)])
 
         conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
@@ -836,6 +854,31 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert url == links[0].get_attribute("href")
 
 
+    def test_reviewer_matching(self, conference):
+
+        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
+
+        ### Custom loads
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+            readers = [conference.id],
+            nonreaders = [],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = conference.get_reviewers_id(),
+            tail = '~Reviewer_ECCV_One1',
+            weight = 2
+        ))
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+            readers = [conference.id],
+            nonreaders = [],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = conference.get_reviewers_id(),
+            tail = '~Reviewer_ECCV_Two1',
+            weight = 1
+        ))
+
     def test_ac_console(self, conference, test_client, helpers, selenium, request_page):
 
         conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
@@ -904,7 +947,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         request_page(selenium, "http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -965,7 +1007,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         request_page(selenium, "http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')

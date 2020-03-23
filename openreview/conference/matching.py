@@ -167,31 +167,50 @@ class Matching(object):
         Create conflict edges between the given Notes and Profiles
         '''
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
-        authorids_profiles = {}
+        # Get profile info from the match group
+        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
 
         edges = []
+
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
-            for profile in user_profiles:
-                authorids = submission.content['authorids']
-                if submission.details and submission.details.get('original'):
-                    authorids = submission.details['original']['content']['authorids']
-                if submission.number not in authorids_profiles:
-                    profiles = _get_profiles(self.client, authorids)
-                    authorids_profiles[submission.number] = profiles
-                author_profiles = authorids_profiles[submission.number]
-                conflicts = openreview.tools.get_conflicts(author_profiles, profile)
+            # Get author profiles
+            authorids = submission.content['authorids']
+            if submission.details and submission.details.get('original'):
+                authorids = submission.details['original']['content']['authorids']
+
+            # Extract domains from each profile
+            author_profiles = _get_profiles(self.client, authorids)
+            author_domains = set()
+            author_emails = set()
+            author_relations = set()
+
+            for author_profile in author_profiles:
+                author_info = openreview.tools.get_profile_info(author_profile)
+                author_domains.update(author_info['domains'])
+                author_emails.update(author_info['emails'])
+                author_relations.update(author_info['relations'])
+
+            # Compute conflicts for each user and all the paper authors
+            for user_info in user_profiles_info:
+                conflicts = set()
+                conflicts.update(author_domains.intersection(user_info['domains']))
+                conflicts.update(author_relations.intersection(user_info['emails']))
+                conflicts.update(author_emails.intersection(user_info['relations']))
+                conflicts.update(author_emails.intersection(user_info['emails']))
                 if conflicts:
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=submission.id,
-                        tail=profile.id,
+                        tail=user_info['id'],
                         weight=-1,
                         label=_conflict_label(conflicts),
-                        readers=self._get_edge_readers(tail=profile.id),
+                        readers=self._get_edge_readers(tail=user_info['id']),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
+
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+
         # Perform sanity check
         edges_posted = self.client.get_edges_count(invitation=invitation.id)
         if edges_posted < len(edges):
@@ -251,21 +270,28 @@ class Matching(object):
         submissions_per_id = {note.id: note.number for note in submissions}
 
         edges = []
+        deleted_papers = set()
         with open(score_file) as file_handle:
             for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
                 paper_note_id = row[0]
-                profile_id = row[1]
-                score = row[2]
-                edges.append(openreview.Edge(
-                    invitation=invitation.id,
-                    head=paper_note_id,
-                    tail=profile_id,
-                    weight=float(score),
-                    readers=self._get_edge_readers(tail=profile_id),
-                    nonreaders=[self.conference.get_authors_id(number=submissions_per_id[paper_note_id])],
-                    writers=[self.conference.id],
-                    signatures=[self.conference.id]
-                ))
+                paper_number = submissions_per_id.get(paper_note_id)
+                if paper_number:
+                    profile_id = row[1]
+                    score = row[2]
+                    edges.append(openreview.Edge(
+                        invitation=invitation.id,
+                        head=paper_note_id,
+                        tail=profile_id,
+                        weight=float(score),
+                        readers=self._get_edge_readers(tail=profile_id),
+                        nonreaders=[self.conference.get_authors_id(number=paper_number)],
+                        writers=[self.conference.id],
+                        signatures=[self.conference.id]
+                    ))
+                else:
+                    deleted_papers.add(paper_note_id)
+
+        print('deleted papers', deleted_papers)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
@@ -431,7 +457,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -516,7 +542,9 @@ class Matching(object):
                 'default': 0
             }
 
-        self._build_conflicts(submissions, user_profiles)
+        if build_conflicts:
+            self._build_conflicts(submissions, user_profiles)
+
         self._build_config_invitation(score_spec)
 
 
@@ -534,6 +562,8 @@ class Matching(object):
             client,
             invitation=self.conference.get_blind_submission_id())
 
+        edges_count = client.get_edges_count(invitation=self.conference.get_paper_assignment_id(self.match_group.id), label=assignment_title)
+
         assignment_edges = openreview.tools.iterget_edges(
             client,
             invitation=self.conference.get_paper_assignment_id(self.match_group.id),
@@ -541,11 +571,10 @@ class Matching(object):
 
         paper_by_forum = {n.forum: n for n in submissions}
 
-        for edge in assignment_edges:
+        for edge in tqdm(assignment_edges, total=edges_count):
             if edge.head in paper_by_forum:
                 paper_number = paper_by_forum.get(edge.head).number
                 user = edge.tail
                 new_assigned_group = self.conference.set_assignment(user, paper_number, self.is_area_chair)
-                print(new_assigned_group)
             else:
                 print('paper not found', edge.head)

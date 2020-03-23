@@ -228,11 +228,11 @@ var displayHeader = function(headerP) {
             content: loadingMessage,
             active: true
           },
-          {
-            heading: 'Reviewer Schedule',
-            id: 'reviewer-schedule',
-            content: HEADER.schedule
-          },
+          // {
+          //   heading: 'Reviewer Schedule',
+          //   id: 'reviewer-schedule',
+          //   content: HEADER.schedule
+          // },
           {
             heading: 'Reviewer Tasks',
             id: 'reviewer-tasks',

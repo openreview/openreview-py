@@ -98,9 +98,10 @@ class WebfieldBuilder(object):
             content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + options.get('desk_rejected_submission_id', '') + "';")
             content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if options.get('public', False) else "var PUBLIC = false;")
 
-            group.web = content
-            group.signatures = [group.id]
-            return self.client.post_group(group)
+            current_group = self.client.get_group(group.id)
+            current_group.web = content
+            current_group.signatures = [group.id]
+            return self.client.post_group(current_group)
 
     def set_expertise_selection_page(self, conference, invitation):
 
@@ -205,14 +206,14 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_page(self, conference, invitation, assignment_title, score_ids, conflict_id):
+    def set_recommendation_page(self, conference, invitation, assignment_title, score_ids, conflict_id, total_recommendations):
 
         default_header = {
             'title': conference.get_short_name() + ' Reviewer Recommendation',
             'instructions': '<p class="dark">Recommend a ranked list of reviewers for each of your assigned papers.</p>\
                 <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
-                    <li>For each of your assigned papers, please select 7 reviewers to recommend.</li>\
+                    <li>For each of your assigned papers, please select ' + str(total_recommendations) + ' reviewers to recommend.</li>\
                     <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
                     <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
                     <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
