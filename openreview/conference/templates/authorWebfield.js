@@ -97,7 +97,8 @@ function load() {
       regex: CONFERENCE_ID + '.*',
       invitee: true,
       duedate: true,
-      type: 'edges'
+      type: 'edges',
+      details: 'repliedEdges'
     }).then(function(result) {
       return result.invitations;
     });
@@ -115,11 +116,11 @@ function renderConferenceTabs() {
       id: 'your-submissions',
       active: true
     },
-    {
-      heading: 'Author Schedule',
-      id: 'author-schedule',
-      content: HEADER.schedule
-    },
+    // {
+    //   heading: 'Author Schedule',
+    //   id: 'author-schedule',
+    //   content: HEADER.schedule
+    // },
     {
       heading: 'Author Tasks',
       id: 'author-tasks'
@@ -141,6 +142,12 @@ function renderContent(authorNotes, invitations, edgeInvitations) {
     referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)')
   }
   $(tasksOptions.container).empty();
+
+  var filterFunc = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
+  };
+  invitations = _.filter(invitations, filterFunc);
+  edgeInvitations = _.filter(edgeInvitations, filterFunc);
 
   Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
 

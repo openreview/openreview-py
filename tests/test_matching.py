@@ -130,7 +130,6 @@ class TestMatching():
         ])
         conference = builder.get_result()
         blinded_notes = conference.create_blind_submissions()
-        conference.set_authors()
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
@@ -185,7 +184,7 @@ class TestMatching():
         ))
 
         # Set up reviewer matching
-        conference.setup_matching()
+        conference.setup_matching(build_conflicts=True)
 
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
@@ -198,7 +197,7 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment')
 
         # Set up AC matching
-        conference.setup_matching(is_area_chair=True)
+        conference.setup_matching(is_area_chair=True, build_conflicts=True)
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -295,7 +294,7 @@ class TestMatching():
         assert conference, 'conference is None'
 
         # Set up reviewer matching
-        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
 
         print(conference.get_reviewers_id())
 
@@ -315,7 +314,8 @@ class TestMatching():
         # Set up ac matching
         conference.setup_matching(
             is_area_chair=True,
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'))
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
+            build_conflicts=True)
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -481,7 +481,7 @@ class TestMatching():
         ))
 
        # Set up reviewer matching
-        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
 
         print(conference.get_reviewers_id())
 
@@ -497,7 +497,8 @@ class TestMatching():
         # Set up ac matching
         conference.setup_matching(
             is_area_chair=True,
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'))
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
+            build_conflicts=True)
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -676,14 +677,14 @@ class TestMatching():
                 }))
 
         # Set up reviewer matching
-        conference.setup_matching()
+        conference.setup_matching(build_conflicts=True)
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
 
         # Set up AC matching
-        conference.setup_matching(is_area_chair=True)
+        conference.setup_matching(is_area_chair=True, build_conflicts=True)
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')

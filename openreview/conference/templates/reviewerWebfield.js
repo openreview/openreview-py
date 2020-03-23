@@ -228,11 +228,11 @@ var displayHeader = function(headerP) {
             content: loadingMessage,
             active: true
           },
-          {
-            heading: 'Reviewer Schedule',
-            id: 'reviewer-schedule',
-            content: HEADER.schedule
-          },
+          // {
+          //   heading: 'Reviewer Schedule',
+          //   id: 'reviewer-schedule',
+          //   content: HEADER.schedule
+          // },
           {
             heading: 'Reviewer Tasks',
             id: 'reviewer-tasks',
@@ -383,7 +383,8 @@ controller.addHandler('reviewers', {
             regex: WILDCARD_INVITATION,
             invitee: true,
             duedate: true,
-            type: 'edges'
+            type: 'edges',
+            details: 'repliedEdges'
           }).then(function(result) {
             return result.invitations;
           }),

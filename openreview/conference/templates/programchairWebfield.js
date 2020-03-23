@@ -18,8 +18,9 @@ var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
+var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
@@ -129,7 +130,8 @@ var loadConfigurationTab = function() {
 
   var getInvitationsP = Webfield.getAll('/invitations', {
     regex: WILDCARD_INVITATION,
-    expired: true
+    expired: true,
+    type: 'all'
   });
 
   var getRegistrationFormsP = Webfield.getAll('/notes', {
@@ -260,13 +262,14 @@ var getPcAssignmentInvitationsAndTags = function() {
 };
 
 var postReviewerEmails = function(postData) {
-  postData.message = postData.message.replace(
-    '[[SUBMIT_REVIEW_LINK]]',
-    postData.forumUrl
-  );
+  var formttedData = _.pick(postData, ['groups', 'subject', 'message']);
+  formttedData.message = postData.message.replace('[[SUBMIT_REVIEW_LINK]]', postData.forumUrl);
+  if (EMAIL_SENDER) {
+    formttedData.from = EMAIL_SENDER;
+  }
 
-  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
-  .then(function(response) {
+  return Webfield.post('/messages', formttedData)
+  .then(function() {
     // Save the timestamp in the local storage
     for (var i = 0; i < postData.groups.length; i++) {
       var userId = postData.groups[i];
@@ -468,6 +471,22 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
   };
 };
 
+var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
+  var invitationId = invGroup + '/-/' + invName;
+  var referrerUrl = '/group' + location.search + location.hash;
+
+  // Right now this is only showing bids, affinity scores, and conflicts as the
+  // other scores invitations + labels are not available in the PC console
+  return '/edge/browse' +
+    (startQuery ? '?start=' + invitationId + ',' + startQuery + '&' : '?') +
+    'traverse=' + invitationId +
+    '&browse=' + invitationId +
+    (SCORES_NAME ? ';' + invGroup + '/-/' + SCORES_NAME : '') +
+    ';' + invGroup + '/-/Conflict' +
+    '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
+}
+
+
 // Render functions
 var renderHeader = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);
@@ -515,6 +534,7 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   var formatPeriod = function(invitation) {
     var start;
     var end;
+    var exp = 'none';
     var afterStart = true;
     var beforeEnd = true;
     var now = Date.now();
@@ -528,12 +548,16 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
       end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
       beforeEnd = now < invitation.duedate;
     }
+    if (invitation.expdate) {
+      var date = new Date(invitation.expdate);
+      exp =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+    }
 
     var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
     if (end) {
-      periodString = periodString + 'until <em>' + end + '</em>';
+      periodString = periodString + 'until <em>' + end + '</em> and expires <em>' + exp + '</em>';
     } else {
-      periodString = periodString + 'no deadline';
+      periodString = periodString + 'no deadline' + ' and expires <em>' + exp + '</em>';
     }
 
     return periodString;
@@ -597,6 +621,17 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
     html += '</ul><br>';
   }
 
+  // Bids and Recommendations
+  if (BID_NAME) {
+    html += '<h3>Bids & Recommendations:</h3><br><ul>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
+    if (RECOMMENDATION_NAME) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+    }
+    html += '</ul><br>';
+  }
+
   // Timeline
   html += '<h3>Timeline:</h3><br><ul>';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
@@ -616,38 +651,25 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   $('#venue-configuration').html(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, searchResults, hideMessageButton) {
-  var messageReviewersButtonHtml = hideMessageButton ?
-    '' :
-    '<div id="div-msg-reviewers" class="btn-group" role="group">' +
-      '<button id="message-reviewers-btn" type="button" class="btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
-        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
-        '<span class="caret"></span>' +
-      '</button>' +
-      '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
-        '<li><a id="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
-        '<li><a id="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
-        '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
-      '</ul>' +
-    '</div>';
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults) {
   var searchType = container.substring(1).split('-')[0] + 's';
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
-    '<input type="text" id="form-search" class="form-control" placeholder="Search all ' + searchType + '..." ' +
+    '<input type="text" class="form-search form-control" class="form-control" placeholder="Search all ' + searchType + '..." ' +
       'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
     '';
   var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
-    return '<option id="' + option.replace(/_/g, '-') + '-' + container.substring(1) + '" value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
+    return '<option class="' + option.replace(/_/g, '-') + '-' + container.substring(1) + '" value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
   });
   var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
     '<strong style="vertical-align: middle;">Sort By:</strong> ' +
-    '<select id="form-sort" class="form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
-    '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
+    '<select class="form-sort form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
+    '<button class="form-order btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
     '';
 
   $(container).html(
     '<form class="form-inline search-form clearfix" role="search">' +
-      messageReviewersButtonHtml +
+      '<div class="pull-left"></div>' +
       '<div class="pull-right">' +
         searchBarHtml +
         sortDropdownHtml +
@@ -655,15 +677,15 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     '</form>'
   );
 
-  $(container + ' select#form-sort').on('change', function(event) {
+  $(container + ' select.form-sort').on('change', function(event) {
     sortResults($(event.target).val(), false);
   });
-  $(container + ' #form-order').on('click', function(event) {
-    sortResults($(container).find('#form-sort').val(), true);
+  $(container + ' .form-order').on('click', function(event) {
+    sortResults($(container).find('.form-sort').val(), true);
     return false;
   });
-  $(container + ' #form-search').on('keyup', _.debounce(function() {
-    var searchText = $(container + ' #form-search').val().toLowerCase().trim();
+  $(container + ' .form-search').on('keyup', _.debounce(function() {
+    var searchText = $(container + ' .form-search').val().toLowerCase().trim();
     searchResults(searchText);
   }, 300));
   $(container + ' form.search-form').on('submit', function() {
@@ -717,6 +739,23 @@ var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
     $noteSummaryContainer.append($tagWidget);
   });
 }
+
+var sendReviewerReminderEmailsStep2 = function(e) {
+  var reviewerMessages = localStorage.getItem('reviewerMessages');
+  var messageCount = localStorage.getItem('messageCount');
+  if (!reviewerMessages || !messageCount) {
+    $('#message-reviewers-modal').modal('hide');
+    promptError('Could not send emails at this time. Please refresh the page and try again.');
+  }
+  JSON.parse(reviewerMessages).forEach(postReviewerEmails);
+
+  localStorage.removeItem('reviewerMessages');
+  localStorage.removeItem('messageCount');
+
+  $('#message-reviewers-modal').modal('hide');
+  promptMessage('Successfully sent ' + messageCount + ' emails');
+};
+
 
 var displayPaperStatusTable = function() {
 
@@ -782,7 +821,7 @@ var displayPaperStatusTable = function() {
   }
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' #form-search').val('');
+    $(container + ' .form-search').val('');
 
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
@@ -793,7 +832,7 @@ var displayPaperStatusTable = function() {
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
-    $(container + ' #form-sort').val('Paper_Number');
+    $(container + ' .form-sort').val('Paper_Number');
 
     // Currently only searching on note number and note title
     var filterFunc = function(row) {
@@ -894,22 +933,6 @@ var displayPaperStatusTable = function() {
     return false;
   };
 
-  var sendReviewerReminderEmailsStep2 = function(e) {
-    var reviewerMessages = localStorage.getItem('reviewerMessages');
-    var messageCount = localStorage.getItem('messageCount');
-    if (!reviewerMessages || !messageCount) {
-      $('#message-reviewers-modal').modal('hide');
-      promptError('Could not send emails at this time. Please refresh the page and try again.');
-    }
-    JSON.parse(reviewerMessages).forEach(postReviewerEmails);
-
-    localStorage.removeItem('reviewerMessages');
-    localStorage.removeItem('messageCount');
-
-    $('#message-reviewers-modal').modal('hide');
-    promptMessage('Successfully sent ' + messageCount + ' emails');
-  };
-
   var renderTable = function(container, data) {
     var paperNumbers = [];
     var rowData = _.map(data, function(d) {
@@ -956,8 +979,8 @@ var displayPaperStatusTable = function() {
       return false;
     });
 
-    $('#div-msg-reviewers a').off('click').on('click', function(e) {
-      var filter = $(this).attr('id');
+    $('.message-papers-container li > a', container).off('click').on('click', function(e) {
+      var filter = $(this).attr('class');
       $('#message-reviewers-modal').remove();
 
       var defaultBody = '';
@@ -1022,6 +1045,17 @@ var displayPaperStatusTable = function() {
 
   if (rowData.length) {
     displaySortPanel(container, sortOptions, sortResults, searchResults);
+    $(container).find('form.search-form .pull-left').html('<div class="btn-group message-papers-container" role="group">' +
+      '<button type="button" class="message-papers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu">' +
+        '<li><a class="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
+        '<li><a class="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
+        '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
+      '</ul>' +
+    '</div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -1118,7 +1152,8 @@ var displayAreaChairsStatusTable = function() {
   var order = 'asc';
   var sortOptions = {
     Area_Chair: function(row) { return row.summary.name.toLowerCase(); },
-    Recommendations_Completed: function(row) { return row.summary.completedRecs },
+    Bids_Completed: function(row) { return row.summary.completedBids },
+    Reviewer_Recommendations_Completed: function(row) { return row.summary.completedRecs },
     Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
     Papers_with_Completed_Review_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
     Papers_with_Completed_Review: function(row) { return row.reviewProgressData.numCompletedReviews; },
@@ -1127,7 +1162,7 @@ var displayAreaChairsStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' #form-search').val('');
+    $(container + ' .form-search').val('');
 
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
@@ -1138,7 +1173,7 @@ var displayAreaChairsStatusTable = function() {
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
-    $(container + ' #form-sort').val('Area_Chair');
+    $(container + ' .form-sort').val('Area_Chair');
 
     // Currently only searching on area chair name
     var filterFunc = function(row) {
@@ -1148,6 +1183,54 @@ var displayAreaChairsStatusTable = function() {
       ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Area_Chair'], 'asc')
       : rowData;
     renderTable(container, filteredRows);
+  };
+
+  // Message modal handler
+  var sendReviewerReminderEmailsStep1 = function(e) {
+    var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
+    var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
+    var filter  = $(this)[0].dataset['filter'];
+
+    var filterFuncs = {
+      'msg-no-bids': function(row) {
+        return row.summary.completedBids === 0;
+      },
+      'msg-no-recs': function(row) {
+        return row.summary.completedRecs === 0;
+      },
+      'msg-unsubmitted-reviews': function(row) {
+        return row.reviewProgressData.numCompletedReviews === 0;
+      },
+      'msg-unsubmitted-metareviews': function(row) {
+        return row.reviewProgressData.numCompletedMetaReviews === 0;
+      }
+    }
+    var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
+      return {
+        id: row.summary.id,
+        name: row.summary.name,
+        email: row.summary.email
+      }
+    });
+    localStorage.setItem('reviewerMessages', JSON.stringify([{
+      groups: _.map(usersToMessage, 'id'),
+      subject: subject,
+      message: message
+    }]));
+    localStorage.setItem('messageCount', usersToMessage.length);
+
+    // Show step 2
+    var namesHtml = _.flatMap(usersToMessage, function(obj) {
+      var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
+      return text;
+    }).join(', ');
+    $('#message-reviewers-modal .modal-body > p').html('A total of <span class="num-reviewers"></span> reminder emails will be sent to the following reviewers:');
+    $('#message-reviewers-modal .reviewer-list').html(namesHtml);
+    $('#message-reviewers-modal .num-reviewers').text(usersToMessage.length);
+    $('#message-reviewers-modal .step-1').hide();
+    $('#message-reviewers-modal .step-2').show();
+
+    return false;
   };
 
   var renderTable = function(container, data) {
@@ -1172,9 +1255,49 @@ var displayAreaChairsStatusTable = function() {
       paginationOnClick($(this).parent(), $container, tableData);
       return false;
     });
+
+    $('.message-acs-container li > a', container).off('click').on('click', function(e) {
+      var filter = $(this).attr('class');
+      $('#message-reviewers-modal').remove();
+
+      var defaultBody = '';
+
+      var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+        filter: filter,
+        defaultSubject: SHORT_PHRASE + ' Reminder',
+        defaultBody: defaultBody,
+      });
+      $('body').append(modalHtml);
+      $('#message-reviewers-modal .modal-body > p').text('Enter a message to be sent to all selected area chairs below. You will have a chance to review a list of all recipients after clicking "Next" below.')
+
+      $('#message-reviewers-modal .btn-primary.step-1').on('click', sendReviewerReminderEmailsStep1);
+      $('#message-reviewers-modal .btn-primary.step-2').on('click', sendReviewerReminderEmailsStep2);
+      $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmailsStep1);
+
+      $('#message-reviewers-modal').modal();
+
+      if ($('.ac-console-table input.select-note-reviewers:checked').length) {
+        $('#message-reviewers-modal select[name="group"]').val('selected');
+      }
+      return false;
+    });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, true);
+  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  $(container).find('form.search-form .pull-left').html(
+    '<div class="btn-group message-acs-container" role="group">' +
+      '<button type="button" class="message-acs-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Area Chairs ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu">' +
+        (BID_NAME ? '<li><a class="msg-no-bids">Area Chairs with 0 bids</a></li>' : '') +
+        (RECOMMENDATION_NAME ? '<li><a class="msg-no-recs">Area Chairs with 0 recommendations</a></li>' : '') +
+        '<li><a class="msg-unsubmitted-reviews">Area Chairs with unsubmitted reviews</a></li>' +
+        '<li><a class="msg-unsubmitted-metareviews">Area Chairs with unsubmitted meta reviews</a></li>' +
+      '</ul>' +
+    '</div>'
+  );
   renderTable(container, rowData);
 };
 
@@ -1245,7 +1368,7 @@ var displayReviewerStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' #form-search').val('');
+    $(container + ' .form-search').val('');
 
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
@@ -1256,7 +1379,7 @@ var displayReviewerStatusTable = function() {
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
-    $(container + ' #form-sort').val('Reviewer');
+    $(container + ' .form-sort').val('Reviewer');
 
     // Currently only searching on reviewer name
     var filterFunc = function(row) {
@@ -1266,6 +1389,48 @@ var displayReviewerStatusTable = function() {
       ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Reviewer'], 'asc')
       : rowData;
     renderTable(container, filteredRows);
+  };
+
+  // Message modal handler
+  var sendReviewerReminderEmailsStep1 = function(e) {
+    var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
+    var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
+    var filter  = $(this)[0].dataset['filter'];
+
+    var filterFuncs = {
+      'msg-no-bids': function(row) {
+        return row.summary.completedBids === 0;
+      },
+      'msg-unsubmitted-reviews': function(row) {
+        return row.reviewProgressData.numCompletedReviews === 0;
+      }
+    }
+    var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
+      return {
+        id: row.summary.id,
+        name: row.summary.name,
+        email: row.summary.email
+      }
+    });
+    localStorage.setItem('reviewerMessages', JSON.stringify([{
+      groups: _.map(usersToMessage, 'id'),
+      subject: subject,
+      message: message
+    }]));
+    localStorage.setItem('messageCount', usersToMessage.length);
+
+    // Show step 2
+    var namesHtml = _.flatMap(usersToMessage, function(obj) {
+      var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
+      return text;
+    }).join(', ');
+    $('#message-reviewers-modal .modal-body > p').html('A total of <span class="num-reviewers"></span> reminder emails will be sent to the following reviewers:');
+    $('#message-reviewers-modal .reviewer-list').html(namesHtml);
+    $('#message-reviewers-modal .num-reviewers').text(usersToMessage.length);
+    $('#message-reviewers-modal .step-1').hide();
+    $('#message-reviewers-modal .step-2').show();
+
+    return false;
   };
 
   var renderTable = function(container, data) {
@@ -1290,9 +1455,47 @@ var displayReviewerStatusTable = function() {
       paginationOnClick($(this).parent(), $container, tableData);
       return false;
     });
+
+    $('.message-reviewers-container li > a', container).off('click').on('click', function(e) {
+      var filter = $(this).attr('class');
+      $('#message-reviewers-modal').remove();
+
+      var defaultBody = '';
+
+      var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+        filter: filter,
+        defaultSubject: SHORT_PHRASE + ' Reminder',
+        defaultBody: defaultBody,
+      });
+      $('body').append(modalHtml);
+      $('#message-reviewers-modal .modal-body > p').text('Enter a message to be sent to all selected reviewers below. You will have a chance to review a list of all recipients after clicking "Next" below.')
+
+      $('#message-reviewers-modal .btn-primary.step-1').on('click', sendReviewerReminderEmailsStep1);
+      $('#message-reviewers-modal .btn-primary.step-2').on('click', sendReviewerReminderEmailsStep2);
+      $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmailsStep1);
+
+      $('#message-reviewers-modal').modal();
+
+      if ($('.ac-console-table input.select-note-reviewers:checked').length) {
+        $('#message-reviewers-modal select[name="group"]').val('selected');
+      }
+      return false;
+    });
   };
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, true);
+  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  $(container).find('form.search-form .pull-left').html(
+    '<div class="btn-group message-reviewers-container" role="group">' +
+      '<button type="button" class="message-reviewers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu">' +
+        (BID_NAME ? '<li><a class="msg-no-bids">Reviewers with 0 bids</a></li>' : '') +
+        '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
+      '</ul>' +
+    '</div>'
+  );
   renderTable(container, rowData);
 };
 
@@ -1352,31 +1555,18 @@ var updateReviewerContainer = function(paperNumber) {
   );
 }
 
-var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
-  var invitationId = invGroup + '/-/' + invName;
-  var referrerUrl = '/group' + location.search + location.hash;
-
-  // Right now this is only showing bids, affinity scores, and conflicts as the
-  // other scores invitations + labels are not available in the PC console
-  return '/edge/browse' +
-    '?start=' + invitationId + ',' + startQuery +
-    '&traverse=' + invitationId +
-    '&browse=' + invitationId +
-    (SCORES_NAME ? ';' + invGroup + '/-/' + SCORES_NAME : '') +
-    ';' + invGroup + '/-/Conflict' +
-    '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
-}
 
 // Helper functions
+var paperTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
+
 var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
   // Checkbox for selecting each row
   var cellCheck = { selected: false, noteId: note.id };
-  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
 
   // Build Note Summary Cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
-  cell1.referrer = referrerUrl;
+  cell1.referrer = paperTableReferrerUrl;
 
   // Build Review Progress Cell
   var reviewObj;
@@ -1458,7 +1648,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     sendReminder: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
-    referrer: referrerUrl
+    referrer: paperTableReferrerUrl
   };
   reviewerSummaryMap[note.number] = reviewProgressData;
 
@@ -1466,7 +1656,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     numMetaReview: metaReview ? 'One' : 'No',
     areachair: areachairProfile,
     metaReview: metaReview,
-    referrer: referrerUrl
+    referrer: paperTableReferrerUrl
   };
 
   return {
@@ -1478,9 +1668,10 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   }
 };
 
+var acTableeferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
+
 var buildSPCTableRow = function(index, areaChair, papers) {
 
-  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
   var summary = {
     id: areaChair.id,
     name: areaChair.name,
@@ -1539,7 +1730,7 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
     papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
-    referrer: referrerUrl
+    referrer: acTableeferrerUrl
   }
 
   return {
@@ -1549,9 +1740,10 @@ var buildSPCTableRow = function(index, areaChair, papers) {
 
 };
 
+var pcTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#reviewer-status)');
+
 var buildPCTableRow = function(index, reviewer, papers) {
 
-  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#reviewer-status)');
   var summary = {
     id: reviewer.id,
     name: reviewer.name,
@@ -1566,7 +1758,7 @@ var buildPCTableRow = function(index, reviewer, papers) {
     numCompletedReviews: _.size(_.filter(papers, function(p) { return p.review; })),
     numPapers: papers.length,
     papers: _.sortBy(papers, [function(p) { return p.note.number; }]),
-    referrer: referrerUrl
+    referrer: pcTableReferrerUrl
   }
 
   var numCompletedReviews = 0;
@@ -1609,7 +1801,7 @@ var buildPCTableRow = function(index, reviewer, papers) {
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
     papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
-    referrer: referrerUrl
+    referrer: pcTableReferrerUrl
   }
 
   return {
@@ -1792,6 +1984,9 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
         '\n\nTo see all of your assigned papers, go to https://openreview.net/group?id=' + REVIEWERS_ID +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
     };
+    if (EMAIL_SENDER) {
+      postData.from = EMAIL_SENDER;
+    }
     return Webfield.post('/messages', postData);
   });
   return false;
@@ -1913,7 +2108,7 @@ $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
 $('#group-container').on('change', '#select-all-papers', function(e) {
   var $superCheckBox = $(this);
   var $allPaperCheckBoxes = $('input.select-note-reviewers');
-  var $msgReviewerButton = $('#message-reviewers-btn');
+  var $msgReviewerButton = $('.message-papers-btn');
 
   var isSuperSelected = $superCheckBox.prop('checked');
   if (isSuperSelected) {
@@ -1937,7 +2132,7 @@ $('#group-container').on('change', '#select-all-papers', function(e) {
 
 $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
   var $superCheckBox = $('#select-all-papers');
-  var $msgReviewerButton = $('#message-reviewers-btn');
+  var $msgReviewerButton = $('.message-papers-btn');
 
   var noteId = $(this).data('noteId');
   var isSelected = $(this).prop('checked');

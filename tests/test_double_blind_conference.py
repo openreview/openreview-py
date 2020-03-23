@@ -47,7 +47,7 @@ class TestDoubleBlindConference():
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
         assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
-        assert groups[2].members == []
+        assert groups[2].members == ['AKBC.ws/2019/Conference/Program_Chairs']
         assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
 
         assert client.get_group(id = 'AKBC.ws')
@@ -98,7 +98,7 @@ class TestDoubleBlindConference():
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
         assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
-        assert groups[2].members == []
+        assert groups[2].members == ['AKBC.ws/2019/Conference/Program_Chairs']
         assert '"title": "AKBC.ws/2019/Conference"' in groups[2].web
         assert '"subtitle": "Automated Knowledge Base Construction"' in groups[2].web
 
@@ -171,7 +171,7 @@ class TestDoubleBlindConference():
         assert groups[2].writers == ['AKBC.ws/2019/Conference']
         assert groups[2].signatures == ['AKBC.ws/2019/Conference']
         assert groups[2].signatories == ['AKBC.ws/2019/Conference']
-        assert groups[2].members == []
+        assert groups[2].members == ['AKBC.ws/2019/Conference/Program_Chairs']
         assert '"title": "AKBC 2019"' in groups[2].web
         assert '"subtitle": "Automated Knowledge Base Construction"' in groups[2].web
         assert '"location": "Amherst, Massachusetts, United States"' in groups[2].web
@@ -359,7 +359,6 @@ class TestDoubleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -400,7 +399,6 @@ class TestDoubleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Authors", peter_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
@@ -848,7 +846,6 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
         conference = builder.get_result()
-        conference.set_authors()
 
         conference_authors_group = client.get_group(id=conference.get_authors_id())
         assert conference_authors_group
@@ -865,7 +862,6 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         conference = builder.get_result()
-        conference.set_authors()
 
         conference.set_comment_stage(openreview.CommentStage(authors=True))
 
@@ -911,7 +907,6 @@ class TestDoubleBlindConference():
         now = datetime.datetime.utcnow()
         builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 10), request_count = 50)
         conference = builder.get_result()
-        conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com', 'reviewer@domain.com'])
 
@@ -956,7 +951,7 @@ class TestDoubleBlindConference():
             writer.writerow([submission.id, '~Reviewer_DoubleBlind1', '0.9'])
             writer.writerow([submission.id, '~Reviewer_Domain1', '0.8'])
 
-        conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), build_conflicts=True)
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
@@ -990,7 +985,6 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = True, email_pcs = True)
         conference = builder.get_result()
-        conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
@@ -1082,7 +1076,6 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         conference = builder.get_result()
-        conference.set_authors()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
@@ -1537,12 +1530,11 @@ class TestDoubleBlindConference():
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
-        
         author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
         assert author_group
         print(author_group)
         assert len(author_group.members) == 1
-        assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members        
+        assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members
 
     def test_paper_ranking(self, client, selenium, request_page):
 
