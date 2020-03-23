@@ -16,7 +16,6 @@ def process(client, note, invitation):
     if PAPER_AREA_CHAIRS_ID:
         committee.append(PAPER_AREA_CHAIRS_ID)
     committee.append(PROGRAM_CHAIRS_ID)
-    committee.append(CONFERENCE_ID)
 
     mail_recipients = [PAPER_AUTHORS_ID]
 
