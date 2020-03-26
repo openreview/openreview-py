@@ -247,6 +247,10 @@ class WebfieldBuilder(object):
             content = content.replace("var PAPER_RANKING_ID = '';", "var PAPER_RANKING_ID = '" + invitation.id + "';")
             content = content.replace("var GROUP_NAME = '';", "var GROUP_NAME = '" + group_name + "';")
 
+            if group_name == 'Area Chairs':
+                content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/Area_Chairs';")
+            else:
+                content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/AnonReviewer.*';")
             invitation.web = content
             return self.client.post_invitation(invitation)
 
