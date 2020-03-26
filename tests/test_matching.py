@@ -14,8 +14,8 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestMatching():
 
-    def test_setup_matching(self, client, test_client, helpers):
-
+    @pytest.fixture(scope="class")
+    def conference(self, client):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -51,10 +51,27 @@ class TestMatching():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+        additional_registration_content = {
+            'reviewing_experience': {
+                'description': 'How many times have you been a reviewer for any conference or journal?',
+                'value-radio': [
+                    'Never - this is my first time',
+                    '1 time - building my reviewer skills',
+                    '2-4 times  - comfortable with the reviewing process',
+                    '5-10 times  - active community citizen',
+                    '10+ times  - seasoned reviewer'
+                ],
+                'order': 5,
+                'required': False
+            }
+        }
+        builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
 
         builder.set_bid_stage(due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         conference = builder.get_result()
-        assert conference, 'conference is None'
+        return conference
+
+    def test_setup_matching(self, conference, client, test_client, helpers):
 
         ## Set committee
         conference.set_program_chairs(['pc1@mail.com', 'pc2@mail.com'])
@@ -122,13 +139,12 @@ class TestMatching():
         note_3 = test_client.post_note(note_3)
 
         ## Create blind submissions
-        builder.set_submission_stage(due_date = now, double_blind= True, subject_areas=[
+        conference.set_submission_stage(openreview.SubmissionStage(due_date=datetime.datetime.utcnow(), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
-        ])
-        conference = builder.get_result()
+        ]))
         blinded_notes = conference.create_blind_submissions()
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
@@ -254,44 +270,7 @@ class TestMatching():
         assert ac2_conflicts[0].label == 'Institutional (level 1)'
 
 
-    def test_setup_matching_with_tpms(self, client, test_client, helpers):
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        builder.set_conference_id('auai.org/UAI/2019/Conference')
-        builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
-        builder.set_conference_short_name('UAI 2019')
-        builder.set_homepage_header({
-        'title': 'UAI 2019',
-        'subtitle': 'Conference on Uncertainty in Artificial Intelligence',
-        'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2019, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2019',
-        'date': 'July 22 - July 25, 2019',
-        'website': 'http://auai.org/uai2019/',
-        'location': 'Tel Aviv, Israel',
-        'instructions': '''<p><strong>Important Information about Anonymity:</strong><br>
-            When you post a submission to UAI 2019, please provide the real names and email addresses of authors in the submission form below (but NOT in the manuscript).
-            The <em>original</em> record of your submission will be private, and will contain your real name(s).
-            The PDF in your submission should not contain the names of the authors. </p>
-            <p><strong>Conflict of Interest:</strong><br>
-            Please make sure that your current and previous affiliations listed on your OpenReview <a href=\"/profile\">profile page</a> is up-to-date to avoid conflict of interest.</p>
-            <p><strong>Questions or Concerns:</strong><br> Please contact the UAI 2019 Program chairs at <a href=\"mailto:uai2019chairs@gmail.com\">uai2019chairs@gmail.com</a>.
-            <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
-            </p>'''
-        })
-        builder.set_conference_area_chairs_name('Senior_Program_Committee')
-        builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_override_homepage(True)
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
-            "Algorithms: Approximate Inference",
-            "Algorithms: Belief Propagation",
-            "Algorithms: Distributed and Parallel",
-            "Algorithms: Exact Inference",
-        ])
-
-        conference = builder.get_result()
-        assert conference, 'conference is None'
+    def test_setup_matching_with_tpms(self, conference, client, helpers):
 
         # Set up reviewer matching
         conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
@@ -408,44 +387,7 @@ class TestMatching():
         assert r3_s2_tpms_scores[0].weight == 0.51
 
 
-    def test_setup_matching_with_recommendations(self, client, test_client, helpers):
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        builder.set_conference_id('auai.org/UAI/2019/Conference')
-        builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
-        builder.set_conference_short_name('UAI 2019')
-        builder.set_homepage_header({
-        'title': 'UAI 2019',
-        'subtitle': 'Conference on Uncertainty in Artificial Intelligence',
-        'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2019, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2019',
-        'date': 'July 22 - July 25, 2019',
-        'website': 'http://auai.org/uai2019/',
-        'location': 'Tel Aviv, Israel',
-        'instructions': '''<p><strong>Important Information about Anonymity:</strong><br>
-            When you post a submission to UAI 2019, please provide the real names and email addresses of authors in the submission form below (but NOT in the manuscript).
-            The <em>original</em> record of your submission will be private, and will contain your real name(s).
-            The PDF in your submission should not contain the names of the authors. </p>
-            <p><strong>Conflict of Interest:</strong><br>
-            Please make sure that your current and previous affiliations listed on your OpenReview <a href=\"/profile\">profile page</a> is up-to-date to avoid conflict of interest.</p>
-            <p><strong>Questions or Concerns:</strong><br> Please contact the UAI 2019 Program chairs at <a href=\"mailto:uai2019chairs@gmail.com\">uai2019chairs@gmail.com</a>.
-            <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
-            </p>'''
-        })
-        print ('Homepage header set')
-        builder.set_conference_area_chairs_name('Senior_Program_Committee')
-        builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_override_homepage(True)
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
-            "Algorithms: Approximate Inference",
-            "Algorithms: Belief Propagation",
-            "Algorithms: Distributed and Parallel",
-            "Algorithms: Exact Inference",
-        ])
-        conference = builder.get_result()
-        assert conference, 'conference is None'
+    def test_setup_matching_with_recommendations(self, conference, client, test_client, helpers):
 
         blinded_notes = list(conference.get_submissions())
 
@@ -594,59 +536,7 @@ class TestMatching():
         assert r3_s2_tpms_scores[0].weight == 0.51
 
 
-    def test_setup_matching_with_subject_areas(self, client, test_client, helpers):
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        builder.set_conference_id('auai.org/UAI/2019/Conference')
-        builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
-        builder.set_conference_short_name('UAI 2019')
-        builder.set_homepage_header({
-        'title': 'UAI 2019',
-        'subtitle': 'Conference on Uncertainty in Artificial Intelligence',
-        'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2019, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2019',
-        'date': 'July 22 - July 25, 2019',
-        'website': 'http://auai.org/uai2019/',
-        'location': 'Tel Aviv, Israel',
-        'instructions': '''<p><strong>Important Information about Anonymity:</strong><br>
-            When you post a submission to UAI 2019, please provide the real names and email addresses of authors in the submission form below (but NOT in the manuscript).
-            The <em>original</em> record of your submission will be private, and will contain your real name(s).
-            The PDF in your submission should not contain the names of the authors. </p>
-            <p><strong>Conflict of Interest:</strong><br>
-            Please make sure that your current and previous affiliations listed on your OpenReview <a href=\"/profile\">profile page</a> is up-to-date to avoid conflict of interest.</p>
-            <p><strong>Questions or Concerns:</strong><br> Please contact the UAI 2019 Program chairs at <a href=\"mailto:uai2019chairs@gmail.com\">uai2019chairs@gmail.com</a>.
-            <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
-            </p>'''
-        })
-        print ('Homepage header set')
-        builder.set_conference_area_chairs_name('Senior_Program_Committee')
-        builder.set_conference_reviewers_name('Program_Committee')
-        builder.set_override_homepage(True)
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
-            "Algorithms: Approximate Inference",
-            "Algorithms: Belief Propagation",
-            "Algorithms: Distributed and Parallel",
-            "Algorithms: Exact Inference",
-        ])
-        additional_registration_content = {
-            'reviewing_experience': {
-                'description': 'How many times have you been a reviewer for any conference or journal?',
-                'value-radio': [
-                    'Never - this is my first time',
-                    '1 time - building my reviewer skills',
-                    '2-4 times  - comfortable with the reviewing process',
-                    '5-10 times  - active community citizen',
-                    '10+ times  - seasoned reviewer'
-                ],
-                'order': 5,
-                'required': False
-            }
-        }
-        builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
-        conference = builder.get_result()
-        assert conference, 'conference is None'
+    def test_setup_matching_with_subject_areas(self, conference, client, test_client, helpers):
 
         blinded_notes = list(conference.get_submissions())
 
