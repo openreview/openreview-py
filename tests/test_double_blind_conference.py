@@ -1428,7 +1428,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.create_withdraw_invitations(reveal_authors=True, reveal_submission=True)
+        conference.create_withdraw_invitations(reveal_authors=True, reveal_submission=True, email_pcs=True)
 
         notes = conference.get_submissions()
         assert notes
