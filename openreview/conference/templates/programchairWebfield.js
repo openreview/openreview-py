@@ -26,6 +26,8 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
+var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
+var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID + '/Invited';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAGE_SIZE = 25;
 
@@ -57,9 +59,11 @@ var main = function() {
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
     getAreaChairRecommendationCounts(),
+    getGroupMembersCount(REVIEWERS_INVITED_ID),
+    getGroupMembersCount(AREA_CHAIRS_INVITED_ID),
     getRequestForm(),
     getRegistrationForms(),
-    getWildcardInvitations(),
+    getWildcardInvitations()
   ).then(function(
     reviewers,
     areaChairs,
@@ -75,6 +79,8 @@ var main = function() {
     reviewerBidCounts,
     areaChairBidCounts,
     areaChairRecommendationCounts,
+    reviewersInvitedCount,
+    areaChairsInvitedCount,
     requestForm,
     registrationForms,
     wildcardInvitations
@@ -113,19 +119,24 @@ var main = function() {
       blindSubmissionsCount: blindedNotes.length,
       withdrawnSubmissionsCount: withdrawnNotesCount,
       deskRejectedSubmissionsCount: deskRejectedNotesCount,
+      reviewersInvitedCount: reviewersInvitedCount,
+      areaChairsInvitedCount: areaChairsInvitedCount,
       reviewersCount: reviewers.length,
       areaChairsCount: areaChairs.length,
       acBidsComplete: calcBidsComplete(areaChairBidCounts, 50),
       acRecsComplete: calcRecsComplete(areaChairGroupMaps.byAreaChairs, areaChairRecommendationCounts, 10),
       reviewerBidsComplete: calcBidsComplete(reviewerBidCounts, 50),
-      reviewsComplete: calcReviewsComplete(reviewerGroupMaps.byReviewers, officialReviewMap),
-      metaReviewComplete: calcMetaReviewsComplete(areaChairGroupMaps.byAreaChairs, metaReviews)
-    }
+      reviewsCount: officialReviews.length,
+      reviewersComplete: calcReviewersComplete(reviewerGroupMaps.byReviewers, officialReviews),
+      paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
+      metaReviewsCount: metaReviews.length,
+      metaReviewersComplete: calcMetaReviewersComplete(areaChairGroupMaps.byAreaChairs, metaReviews),
+    };
     var conferenceConfig = {
       requestForm: requestForm,
       registrationForms: registrationForms,
       invitations: wildcardInvitations,
-    }
+    };
     displayStatsAndConfiguration(conferenceStats, conferenceConfig);
 
     var uniqueIds = _.union(reviewers, areaChairs);
@@ -375,6 +386,18 @@ var getAreaChairRecommendationCounts = function() {
   });
 };
 
+var getGroupMembersCount = function(invitationId) {
+  if (!invitationId) {
+    return 0;
+  }
+
+  return Webfield.get('/groups', { id: invitationId, limit: 1 })
+  .then(function(result) {
+    var members = _.get(result, 'groups[0].members', []);
+    return members.length;
+  });
+};
+
 
 // Util functions
 var getNumberfromGroup = function(groupId, name) {
@@ -559,16 +582,23 @@ var calcRecsComplete = function(acMap, areaChairRecommendationCounts, taskComple
   }, 0);
 };
 
-var calcReviewsComplete = function(reviewerMap, officialReviewMap) {
-  return _.reduce(reviewerMap, function(numComplete, noteNumbers, profileId) {
+var calcReviewersComplete = function(reviewerMap, officialReviews) {
+  return _.reduce(reviewerMap, function(numComplete, noteNumbers) {
     var allSubmitted = _.every(noteNumbers, function(n) {
-      return officialReviewMap[n] && officialReviewMap[n][profileId];
+      return _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, n)]);
     });
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
 };
 
-var calcMetaReviewsComplete = function(acMap, metaReviews) {
+var calcPaperReviewsComplete = function(noteMap, officialReviewMap) {
+  return _.reduce(noteMap, function(numComplete, reviewerMap, n) {
+    var allSubmitted = officialReviewMap[n] && Object.values(reviewerMap).length === Object.values(officialReviewMap[n]).length;
+    return allSubmitted ? numComplete + 1 : numComplete;
+  }, 0);
+};
+
+var calcMetaReviewersComplete = function(acMap, metaReviews) {
   return _.reduce(acMap, function(numComplete, noteNumbers) {
     var allSubmitted = _.every(noteNumbers, function(n) {
       return _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, n)]);
@@ -679,77 +709,111 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   var renderProgressStat = function(numComplete, numTotal) {
     return '<h3>' +
       _.round((numComplete / numTotal) * 100, 1) + '% &nbsp;' +
-      '<span style="color: #777; letter-spacing: 2px;">(' + numComplete + ' / ' + numTotal + ')</span>' +
+      '<span style="color: #777;">(' + numComplete + ' / ' + numTotal + ')</span>' +
     '</h3>';
-  }
+  };
 
-  var invitationMap = {};
-  conferenceConfig.invitations.forEach(function(invitation) {
-    invitationMap[invitation.id] = invitation;
-  });
+  var renderStatContainer = function(title, stat, hint) {
+    return '<div class="col-md-4 col-xs-6">' +
+      '<h4>' + title + '</h4>' +
+      (hint ? '<p class="hint">' + hint + '</p>' : '') + stat +
+      '</div>';
+  };
 
   // Conference statistics
   var html = '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-  html += '<div class="col-md-4 col-xs-6">'
-  html += '<h4>Active Submissions:</h4><h3>' + conferenceStats.blindSubmissionsCount + '</h3>';
+  html += renderStatContainer(
+    'Reviewer Recruitment:',
+    '<h3>' + conferenceStats.reviewersCount + ' / ' + conferenceStats.reviewersInvitedCount + '</h3>',
+    'accepted / invited'
+  );
+  html += renderStatContainer(
+    'Area Chair Recruitment:',
+    '<h3>' + conferenceStats.areaChairsCount + ' / ' + conferenceStats.areaChairsInvitedCount + '</h3>',
+    'accepted / invited'
+  );
   html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
-  html += '<div class="col-md-4 col-xs-6">'
-  html += '<h4>Withdrawn Submissions:</h4><h3>' + conferenceStats.withdrawnSubmissionsCount + '</h3>';
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Active Submissions:',
+    '<h3>' + conferenceStats.blindSubmissionsCount + '</h3>'
+  );
+  html += renderStatContainer(
+    'Withdrawn Submissions:',
+    '<h3>' + conferenceStats.withdrawnSubmissionsCount + '</h3>'
+  );
+  html += renderStatContainer(
+    'Desk Rejected Submissions:',
+    '<h3>' + conferenceStats.deskRejectedSubmissionsCount + '</h3>'
+  );
   html += '</div>';
-
-  html += '<div class="col-md-4 col-xs-6">'
-  html += '<h4>Desk Rejected Submissions:</h4><h3>' + conferenceStats.deskRejectedSubmissionsCount + '</h3>';
-  html += '</div>';
-  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   if (BID_NAME) {
-    html += '<div class="col-md-4 col-xs-6">'
-    html += '<h4>AC Bidding Progress:</h4>';
-    html += '<p class="hint">% of ACs who have completed the required number of bids</p>';
-    html += renderProgressStat(conferenceStats.acBidsComplete, conferenceStats.areaChairsCount);
-    html += '</div>';
+    html += renderStatContainer(
+      'AC Bidding Progress:',
+      renderProgressStat(conferenceStats.acBidsComplete, conferenceStats.areaChairsCount),
+      '% of ACs who have completed the required number of bids'
+    );
   }
-
   if (RECOMMENDATION_NAME) {
-    html += '<div class="col-md-4 col-xs-6">'
-    html += '<h4>Recommendation Progress:</h4>';
-    html += '<p class="hint">% of ACs who have completed the required number of reviewer recommendations</p>';
-    html += renderProgressStat(conferenceStats.acRecsComplete, conferenceStats.areaChairsCount);
-    html += '</div>';
+    html += renderStatContainer(
+      'Recommendation Progress:',
+      renderProgressStat(conferenceStats.acRecsComplete, conferenceStats.areaChairsCount),
+      '% of ACs who have completed the required number of reviewer recommendations'
+    );
   }
-
   if (BID_NAME) {
-    html += '<div class="col-md-4 col-xs-6">'
-    html += '<h4>Reviewer Bidding Progress:</h4>';
-    html += '<p class="hint">% of Reviewers who have completed the required number of bids</p>';
-    html += renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount);
-    html += '</div>';
+    html += renderStatContainer(
+      'Reviewer Bidding Progress:',
+      renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
+      '% of Reviewers who have completed the required number of bids'
+    );
   }
   html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-  html += '<div class="col-md-4 col-xs-6">'
-  html += '<h4>Review Progress:</h4>';
-  html += '<p class="hint">% of reviewers who have reviewed all their assigned papers</p>';
-  html += renderProgressStat(conferenceStats.reviewsComplete, conferenceStats.reviewersCount);
+  html += renderStatContainer(
+    'Reviews Submitted:',
+    '<h3>' + conferenceStats.reviewsCount + '</h3>',
+    'total number of official reviews submitted'
+  );
+  html += renderStatContainer(
+    'Reviewer Progress:',
+    renderProgressStat(conferenceStats.reviewersComplete, conferenceStats.reviewersCount),
+    '% of reviewers who have reviewed all of their assigned papers'
+  );
+  html += renderStatContainer(
+    'Paper Progress:',
+    renderProgressStat(conferenceStats.paperReviewsComplete, conferenceStats.blindSubmissionsCount),
+    '% of papers that have reveived reviews from all assigned reviewers'
+  );
   html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
-  html += '<div class="col-md-4 col-xs-6">'
-  html += '<h4>Meta-Review Progress:</h4>';
-  html += '<p class="hint">% of area chairs who have completed meta reviews for all their assigned papers</p>';
-  html += renderProgressStat(conferenceStats.metaReviewComplete, conferenceStats.areaChairsCount);
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Meta-Review Progress:',
+    renderProgressStat(conferenceStats.metaReviewsCount, conferenceStats.blindSubmissionsCount),
+    '% of papers that have received meta-reviews'
+  );
+  html += renderStatContainer(
+    'AC Meta-Review Progress:',
+    renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.areaChairsCount),
+    '% of area chairs who have completed meta reviews for all their assigned papers'
+  );
   html += '</div>';
-  html += '</div>';
-
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   // Config
   var requestForm = conferenceConfig.requestForm;
   html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   if (requestForm) {
-    html += '<div class="col-md-4 col-xs-6">'
+    html += '<div class="col-md-4 col-xs-12">'
     html += '<h4>Description:</h4>';
     html += '<p style="margin-bottom:2rem"><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
       '<a href="/forum?id=' + requestForm.id + '"><strong>Full Venue Configuration</strong></a>'
@@ -757,7 +821,32 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
     html += '</div>';
   }
 
+  // Timeline
+  var invitationMap = {};
+  conferenceConfig.invitations.forEach(function(invitation) {
+    invitationMap[invitation.id] = invitation;
+  });
+
+  html += '<div class="col-md-8 col-xs-12">'
+  html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
+  html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
+  html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
+  if (AREA_CHAIRS_ID) {
+    html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
+    html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
+    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+  }
+  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
+  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
+  html += '</ul>';
+  html += '</div>';
+  html += '</div>';
+
   // Official Committee
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
@@ -796,24 +885,6 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
     html += '</ul>';
     html += '</div>';
   }
-
-  // Timeline
-  html += '<div class="col-xs-12">'
-  html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
-  html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
-  html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
-  if (AREA_CHAIRS_ID) {
-    html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
-    html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
-    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
-  }
-  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
-  html += '</ul>';
-  html += '</div>';
   html += '</div>';
 
   $('#venue-configuration').html(html);
