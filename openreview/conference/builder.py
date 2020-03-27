@@ -973,7 +973,19 @@ class BidStage(object):
 
 class ReviewStage(object):
 
-    def __init__(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
+    def __init__(self,
+        start_date = None,
+        due_date = None,
+        name = None,
+        allow_de_anonymization = False,
+        public = False,
+        release_to_authors = False,
+        release_to_reviewers = False,
+        release_to_submitted_reviewers = False,
+        email_pcs = False,
+        additional_fields = {},
+        remove_fields = []
+    ):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Official_Review'
@@ -983,6 +995,7 @@ class ReviewStage(object):
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
+        self.release_to_submitted_reviewers = release_to_submitted_reviewers
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
@@ -999,8 +1012,10 @@ class ReviewStage(object):
 
         if self.release_to_reviewers:
             readers.append(conference.get_reviewers_id(number = number))
-        else:
+        elif self.release_to_submitted_reviewers:
             readers.append(conference.get_reviewers_id(number = number) + '/Submitted')
+        else:
+            readers.append('{signatures}')
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))

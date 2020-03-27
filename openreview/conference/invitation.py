@@ -726,30 +726,39 @@ class PaperReviewInvitation(openreview.Invitation):
         readers = review_stage.get_readers(conference, note.number)
         nonreaders = review_stage.get_nonreaders(conference, note.number)
 
+        reply = {
+            'forum': note.id,
+            'replyto': note.id,
+            'readers': {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values': readers
+            },
+            'nonreaders': {
+                'values': nonreaders
+            },
+            'writers': {
+                'values-regex': signature_regex,
+                'description': 'How your identity will be displayed.'
+            },
+            'signatures': {
+                'values-regex': signature_regex,
+                'description': 'How your identity will be displayed.'
+            }
+        }
+
+        has_copies = [r for r in readers if r.startswith('{') and r.endswith('}')]
+        if has_copies:
+            reply['readers'] = {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values-copied': readers
+            }
+
         super(PaperReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name, note.number),
             super = conference.get_invitation_id(review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = [conference.get_reviewers_id(number = note.number)],
-            reply = {
-                'forum': note.id,
-                'replyto': note.id,
-                'readers': {
-                    "description": "Select all user groups that should be able to read this comment.",
-                    "values": readers
-                },
-                'nonreaders': {
-                    "values": nonreaders
-                },
-                'writers': {
-                    'values-regex': signature_regex,
-                    'description': 'How your identity will be displayed.'
-                },
-                'signatures': {
-                    'values-regex': signature_regex,
-                    'description': 'How your identity will be displayed.'
-                }
-            }
+            reply = reply
         )
 
 class ReviewRevisionInvitation(openreview.Invitation):
@@ -1012,10 +1021,8 @@ class InvitationBuilder(object):
         return invitations
 
     def set_review_invitation(self, conference, notes):
-
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
-
         for note in notes:
             invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
             self.__update_readers(invitation)

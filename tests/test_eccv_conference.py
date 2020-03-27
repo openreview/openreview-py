@@ -879,14 +879,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             weight = 1
         ))
 
-    def test_ac_console(self, conference, test_client, helpers, selenium, request_page):
-
-        conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
-        conference.set_assignment('~AreaChair_ECCV_One1', 2, is_area_chair=True)
-
-        conference.set_assignment('~Reviewer_ECCV_One1', 1)
-        conference.set_assignment('~Reviewer_ECCV_One1', 2)
-
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.close_submissions()
@@ -1009,4 +1001,73 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 4
+
+
+    def test_review_stage(self, conference, client, test_client, selenium, request_page):
+
+        conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
+        conference.set_assignment('~AreaChair_ECCV_One1', 2, is_area_chair=True)
+
+        conference.set_assignment('~Reviewer_ECCV_One1', 1)
+        conference.set_assignment('~Reviewer_ECCV_One1', 2)
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_review_stage(openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+            additional_fields = {
+                'summary_of_contributions': {
+                    'order': 1,
+                    'description': 'Briefly describe the contributions of the paper in your own words. If necessary, also mention a discrepancy between the contributions claimed by the authors and the contributions from your point of view. This can be elaborated in Strengths and Weaknesses below. Max length: 800',
+                    'value-regex': '[\\S\\s]{0,800}',
+                    'required': True
+                },
+                'strengths': {
+                    'order': 2,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Describe the strengths of the paper in detail. Max length: 5000',
+                    'required': True
+                },
+                'weaknesses': {
+                    'order': 3,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Describe the weaknesses of the paper in detail. Provide solid arguments and evidence for your claims. For instance, it is not okay to say that something has been done before, if you do not provide concrete references. Max length: 5000',
+                    'required': True
+                },
+                'suggestion_to_reviewers': {
+                    'order': 4,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Here you can provide recommendations to the authors how they can improve their manuscript (e.g. typos). They are not relevant for your rating. Max length: 5000',
+                    'required': True
+                },
+                'preliminary_rating': {
+                    'order': 5,
+                    'value-dropdown': [
+                        '6: Strong accept',
+                        '5: Weak accept',
+                        '4: Borderline accept',
+                        '3: Borderline reject',
+                        '2: Weak reject',
+                        '1: Strong reject'
+                    ],
+                    'required': True
+                },
+                'preliminary_rating_justification': {
+                    'order': 6,
+                    'value-regex': '[\\S\\s]{0,1000}',
+                    'description': 'Briefly summarize the strenths and weaknesses and justify your rating. Keep in mind that your rating should not be based on your personal taste, but should be based on scientific arguments as elaborated in strengths and weaknesses. Max length: 1000',
+                    'required': True
+                },
+                'confidence': {
+                    'order': 7,
+                    'value-dropdown': [
+                        '4: High, published similar work',
+                        '3: Medium, published weakly related work',
+                        '2: Low, read similar work',
+                        '1: None, no idea why this paper was assigned to me'
+                    ],
+                    'required': True
+                }
+            },
+            remove_fields = ['title', 'rating', 'review']))
+        #assert False
 
