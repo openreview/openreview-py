@@ -1010,6 +1010,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         conference.set_assignment('~Reviewer_ECCV_One1', 1)
         conference.set_assignment('~Reviewer_ECCV_One1', 2)
+        conference.set_assignment('~Reviewer_ECCV_Two1', 1)
+        conference.set_assignment('~Reviewer_ECCV_Two1', 2)
 
         now = datetime.datetime.utcnow()
 
@@ -1069,5 +1071,95 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 }
             },
             remove_fields = ['title', 'rating', 'review']))
-        #assert False
+
+        r1_client = openreview.Client(username='reviewer1@fb.com', password='1234')
+        r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+
+
+        blinded_notes = conference.get_submissions()
+        assert len(blinded_notes) == 3
+
+        review_note = r1_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=blinded_notes[2].id,
+            invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            content={
+                'summary_of_contributions': 'summary_of_contributions',
+                'strengths': 'strengths',
+                'weaknesses': 'weaknesses',
+                'suggestion_to_reviewers': 'suggestion_to_reviewers',
+                'preliminary_rating': '6: Strong accept',
+                'preliminary_rating_justification': 'preliminary_rating_justification',
+                'confidence': '4: High, published similar work'
+            }
+        ))
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[] Your review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer1@fb.com' in recipients
+
+        ## AC and other reviewers
+        messages =  client.get_messages(subject = '[] Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac1@eccv.org' in recipients
+
+        ## PCs
+        assert not client.get_messages(subject = '[] A review has been received on Paper number: 1, Paper title: "Paper title 1"')
+        ## Authors
+        assert not client.get_messages(subject = '[] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
+
+        review_note = r2_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=blinded_notes[2].id,
+            invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            content={
+                'summary_of_contributions': 'summary_of_contributions',
+                'strengths': 'strengths 2',
+                'weaknesses': 'weaknesses 2',
+                'suggestion_to_reviewers': 'suggestion_to_reviewers 2',
+                'preliminary_rating': '5: Weak accept',
+                'preliminary_rating_justification': 'preliminary_rating_justification 2',
+                'confidence': '1: None, no idea why this paper was assigned to me'
+            }
+        ))
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[] Your review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer1@fb.com' in recipients
+        assert 'reviewer2@google.com' in recipients
+
+        ## AC and other reviewers
+        messages =  client.get_messages(subject = '[] Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac1@eccv.org' in recipients
+        assert 'ac1@eccv.org' in recipients
+
+        ## PCs
+        assert not client.get_messages(subject = '[] A review has been received on Paper number: 1, Paper title: "Paper title 1"')
+        ## Authors
+        assert not client.get_messages(subject = '[] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
+
+
 
