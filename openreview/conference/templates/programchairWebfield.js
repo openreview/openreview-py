@@ -127,6 +127,7 @@ var main = function() {
       acRecsComplete: calcRecsComplete(areaChairGroupMaps.byAreaChairs, areaChairRecommendationCounts, 10),
       reviewerBidsComplete: calcBidsComplete(reviewerBidCounts, 50),
       reviewsCount: officialReviews.length,
+      assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
       reviewersComplete: calcReviewersComplete(reviewerGroupMaps.byReviewers, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
       metaReviewsCount: metaReviews.length,
@@ -584,6 +585,12 @@ var calcRecsComplete = function(acMap, areaChairRecommendationCounts, taskComple
   }, 0);
 };
 
+var calcAssignedReviewsCount = function(reviewerMap) {
+  return _.reduce(reviewerMap, function(numComplete, noteNumbers) {
+    return numComplete + noteNumbers.length;
+  }, 0);
+};
+
 var calcReviewersComplete = function(reviewerMap, officialReviews) {
   return _.reduce(reviewerMap, function(numComplete, noteNumbers) {
     var allSubmitted = _.every(noteNumbers, function(n) {
@@ -780,9 +787,9 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
 
   html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   html += renderStatContainer(
-    'Reviews Submitted:',
-    '<h3>' + conferenceStats.reviewsCount + '</h3>',
-    'total number of official reviews submitted'
+    'Review Progress:',
+    renderProgressStat(conferenceStats.reviewsCount, conferenceStats.assignedReviewsCount),
+    '% of all assigned official reviews that have been submitted'
   );
   html += renderStatContainer(
     'Reviewer Progress:',
@@ -792,7 +799,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += renderStatContainer(
     'Paper Progress:',
     renderProgressStat(conferenceStats.paperReviewsComplete, conferenceStats.blindSubmissionsCount),
-    '% of papers that have reveived reviews from all assigned reviewers'
+    '% of papers that have received reviews from all assigned reviewers'
   );
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
