@@ -369,7 +369,7 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        })
+        }, release_to_submitted_reviewers=True)
         conference = builder.get_result()
         conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.set_program_chairs(emails = ['pc2@mail.com'])
@@ -492,7 +492,7 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        })
+        }, release_to_submitted_reviewers = True)
         conference = builder.get_result()
 
         # Author user

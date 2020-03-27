@@ -88,7 +88,7 @@ class TestReviewersConference():
         })
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True)
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True, release_to_submitted_reviewers=True)
         builder.set_override_homepage(True)
         conference = builder.get_result()
 
