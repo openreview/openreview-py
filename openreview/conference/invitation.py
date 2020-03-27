@@ -348,7 +348,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
 class PaperWithdrawInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, email_program_chairs):
 
         content = invitations.withdraw.copy()
 
@@ -396,6 +396,10 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
+            if email_program_chairs:
+                file_content = file_content.replace(
+                    'EMAIL_PROGRAM_CHAIRS = False',
+                    'EMAIL_PROGRAM_CHAIRS = True')
             if reveal_authors:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
@@ -407,6 +411,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
+                super=conference.submission_stage.get_withdrawn_submission_id(conference),
                 cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
                 duedate = None,
                 expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
@@ -553,6 +558,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
+                super=conference.submission_stage.get_desk_rejected_submission_id(conference),
                 cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
                 duedate = None,
                 expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
@@ -987,7 +993,7 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission):
+    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission, email_program_chairs):
 
         invitations = []
 
@@ -995,7 +1001,7 @@ class InvitationBuilder(object):
 
         notes = list(conference.get_submissions())
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_program_chairs)))
 
         return invitations
 
