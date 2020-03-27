@@ -163,8 +163,7 @@ var getRequestForm = function() {
   return Webfield.get('/notes', { id: REQUEST_FORM_ID, limit: 1 }, { handleErrors: false })
   .then(function(result) {
     return _.get(result, 'notes[0]', null);
-  })
-  .fail(function() {
+  }, function() {
     // Do not fail if config note cannot be loaded
     return $.Deferred().resolve(null);
   });
@@ -388,14 +387,17 @@ var getAreaChairRecommendationCounts = function() {
 
 var getGroupMembersCount = function(invitationId) {
   if (!invitationId) {
-    return 0;
+    return $.Deferred().resolve(0);
   }
 
-  return Webfield.get('/groups', { id: invitationId, limit: 1 })
-  .then(function(result) {
-    var members = _.get(result, 'groups[0].members', []);
-    return members.length;
-  });
+  return Webfield.get('/groups', { id: invitationId, limit: 1 }, { handleErrors: false })
+    .then(function(result) {
+      var members = _.get(result, 'groups[0].members', []);
+      return members.length;
+    }, function() {
+      // Do not fail if group cannot be retreived
+      return $.Deferred().resolve(0);
+    });
 };
 
 
