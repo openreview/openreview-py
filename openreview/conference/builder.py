@@ -454,7 +454,7 @@ class Conference(object):
 
         return invitation
 
-    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_program_chairs=False):
+    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False):
 
         if reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
@@ -462,7 +462,7 @@ class Conference(object):
         if not reveal_authors and not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Can not hide authors of single blind submissions')
 
-        return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_program_chairs)
+        return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_pcs)
 
     def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False):
 
