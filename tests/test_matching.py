@@ -696,3 +696,53 @@ class TestMatching():
         assert ac1_s2_subject_scores
         assert 1 == len(ac1_s2_subject_scores)
         assert ac1_s2_subject_scores[0].weight ==  1
+
+    def test_set_assigments(self, conference, client, test_client, helpers):
+        pc_client = helpers.create_user('pc1@mail.com', 'TestPC', 'UAI')
+        
+        blinded_notes = list(conference.get_submissions())
+
+        edges = client.get_edges(
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment', 
+            label='ac-matching'
+        )
+        assert 0 == len(edges)
+
+        #AC assignments
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, 'ac1@cmu.edu'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[0].id,
+            tail = 'ac1@cmu.edu',
+            label = 'ac-matching',
+            weight = 0.98
+        ))
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, 'ac2@umass.edu'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[1].id,
+            tail = 'ac2@umass.edu',
+            label = 'ac-matching',
+            weight = 0.87
+        ))
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
+            readers = [conference.id, 'ac2@umass.edu'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[2].id,
+            tail = 'ac2@umass.edu',
+            label = 'ac-matching',
+            weight = 0.87
+        ))
+
+        edges = client.get_edges(
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment', 
+            label='ac-matching'
+        )
+        assert 3 == len(edges)
+
+        conference.set_assignments(assignment_title='ac-matching', is_area_chair=True)
+
+       
