@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 import datetime
 import re
+from enum import Enum
 from tqdm import tqdm
 from .. import openreview
 from .. import tools
@@ -973,6 +974,11 @@ class BidStage(object):
 
 class ReviewStage(object):
 
+    class Readers(Enum):
+        REVIEWERS_SUBMITTED = 0
+        REVIEWERS_ASSIGNED = 1
+        REVIEWER_SIGNATURE = 2
+
     def __init__(self,
         start_date = None,
         due_date = None,
@@ -980,12 +986,12 @@ class ReviewStage(object):
         allow_de_anonymization = False,
         public = False,
         release_to_authors = False,
-        release_to_reviewers = False,
-        release_to_submitted_reviewers = False,
+        release_to_reviewers = Readers.REVIEWER_SIGNATURE,
         email_pcs = False,
         additional_fields = {},
         remove_fields = []
     ):
+
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Official_Review'
@@ -995,7 +1001,6 @@ class ReviewStage(object):
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
-        self.release_to_submitted_reviewers = release_to_submitted_reviewers
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
@@ -1010,11 +1015,11 @@ class ReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
-        if self.release_to_reviewers:
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
             readers.append(conference.get_reviewers_id(number = number))
-        elif self.release_to_submitted_reviewers:
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
             readers.append(conference.get_reviewers_id(number = number) + '/Submitted')
-        else:
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
             readers.append('{signatures}')
 
         if self.release_to_authors:
@@ -1258,8 +1263,8 @@ class ConferenceBuilder(object):
     def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions = False, ac_request_count = None):
         self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score, instructions, ac_request_count)
 
-    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, release_to_submitted_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
-        self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, release_to_submitted_reviewers, email_pcs, additional_fields, remove_fields)
+    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
+        self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
 
     def set_comment_stage(self, name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False ):
         self.comment_stage = CommentStage(name, start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
