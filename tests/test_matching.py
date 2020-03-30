@@ -697,7 +697,7 @@ class TestMatching():
         assert 1 == len(ac1_s2_subject_scores)
         assert ac1_s2_subject_scores[0].weight ==  1
 
-    def test_set_assigments(self, conference, client, test_client, helpers):
+    def test_set_assigments(self, conference, client, test_client, helpers): 
         pc_client = helpers.create_user('pc1@mail.com', 'TestPC', 'UAI')
         
         blinded_notes = list(conference.get_submissions())
@@ -709,40 +709,80 @@ class TestMatching():
         assert 0 == len(edges)
 
         #AC assignments
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, 'ac1@cmu.edu'],
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r1@mit.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'ac1@cmu.edu',
-            label = 'ac-matching',
+            tail = 'r1@mit.edu',
+            label = 'rev-matching',
             weight = 0.98
         ))
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, 'ac2@umass.edu'],
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r2@google.com'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[0].id,
+            tail = 'r2@google.com',
+            label = 'rev-matching',
+            weight = 0.87
+        ))
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r2@google.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'ac2@umass.edu',
-            label = 'ac-matching',
+            tail = 'r2@google.com',
+            label = 'rev-matching',
             weight = 0.87
         ))
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
-            readers = [conference.id, 'ac2@umass.edu'],
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r3@fb.com'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[1].id,
+            tail = 'r3@fb.com',
+            label = 'rev-matching',
+            weight = 0.94
+        ))
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r3@fb.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'ac2@umass.edu',
-            label = 'ac-matching',
-            weight = 0.87
+            tail = 'r3@fb.com',
+            label = 'rev-matching',
+            weight = 0.94
+        ))
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r1@mit.edu'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[2].id,
+            tail = 'r1@mit.edu',
+            label = 'rev-matching',
+            weight = 0.98
         ))
 
         edges = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment', 
-            label='ac-matching'
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment', 
+            label='rev-matching'
         )
-        assert 3 == len(edges)
+        assert 6 == len(edges)
 
-        conference.set_assignments(assignment_title='ac-matching', is_area_chair=True)
+        conference.set_assignments(assignment_title='rev-matching')
 
+        revs_paper0 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        assert ['~Reviewer_One1', 'r2@google.com'] == revs_paper0.members
+
+        revs_paper1 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        assert ['r2@google.com','r3@fb.com'] == revs_paper1.members
+
+        revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        assert ['r3@fb.com', '~Reviewer_One1'] == revs_paper2.members
        
