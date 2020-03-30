@@ -56,12 +56,15 @@ class Client(object):
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
+        self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
+        self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.headers = {
-            'User-Agent': 'test-create-script',
-            'Authorization': self.token
+            'User-Agent': self.user_agent,
+            'Accept': 'application/json'
         }
 
         if username and password:
@@ -114,8 +117,7 @@ class Client(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password }
-        header = { 'User-Agent': 'test-create-script' }
-        response = requests.post(self.login_url, headers=header, json=user)
+        response = requests.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -407,13 +409,18 @@ class Client(object):
 
         return []
 
-    def get_pdf(self, id):
+    def get_pdf(self, id, is_reference=False):
         """
-        Gets the binary content of a pdf using the provided note id
-        If the pdf is not found then this returns an error message with "status":404
+        Gets the binary content of a pdf using the provided note/reference id
+        If the pdf is not found then this returns an error message with "status":404.
 
-        :param id: Note id of the pdf
+        Use the note id when trying to get the latest pdf version and reference id
+        when trying to get a previous version of the pdf
+
+        :param id: Note id or Reference id of the pdf
         :type id: str
+        :param is_reference: Indicates that the passed id is a reference id instead of a note id
+        :type is_reference: bool, optional
 
         :return: The binary content of a pdf
         :rtype: bytes
@@ -430,10 +437,13 @@ class Client(object):
         headers = self.headers.copy()
         headers['content-type'] = 'application/pdf'
 
-        response = requests.get(self.pdf_url, params = params, headers = headers)
+        url = self.pdf_revisions_url if is_reference else self.pdf_url
+
+        response = requests.get(url, params = params, headers = headers)
         response = self.__handle_response(response)
         return response.content
 
+    @deprecated(version='1.0.3', reason="Use put_attachment instead")
     def put_pdf(self, fname):
         """
         Uploads a pdf to the openreview server
@@ -444,14 +454,38 @@ class Client(object):
         :return: A relative URL for the uploaded pdf
         :rtype: str
         """
-        params = {}
-        params['id'] = id
-
         headers = self.headers.copy()
-        headers['content-type'] = 'application/pdf'
 
         with open(fname, 'rb') as f:
+            headers['content-type'] = 'application/pdf'
             response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+
+        response = self.__handle_response(response)
+        return response.json()['url']
+
+    def put_attachment(self, file_path, invitation, name):
+        """
+        Uploads a file to the openreview server
+
+        :param file: Path to the file
+        :type file: str
+        :param invitation: Invitation of the note that required the attachment
+        :type file: str
+        :param file: name of the note field to save the attachment url
+        :type file: str
+
+        :return: A relative URL for the uploaded file
+        :rtype: str
+        """
+
+        headers = self.headers.copy()
+
+        with open(file_path, 'rb') as f:
+            response = requests.put(self.baseurl + '/attachment', files=(
+                ('invitationId', (None, invitation)),
+                ('name', (None, name)),
+                ('file', (file_path, f))
+            ), headers = headers)
 
         response = self.__handle_response(response)
         return response.json()['url']
@@ -711,9 +745,11 @@ class Client(object):
         response = self.__handle_response(response)
         return [Profile.from_json(n) for n in response.json()['docs']]
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, authorReferent = None):
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None, authorReferent = None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
+
+        Refer to the section of Mental Models and then click on Blind Submissions for more information.
 
         :param referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
         :type referent: str, optional
@@ -744,6 +780,9 @@ class Client(object):
             params['original'] = "true"
         if authorReferent != None:
             params['authorReferent'] = authorReferent
+
+        if trash:
+            params['trash'] = trash
 
         response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -781,6 +820,86 @@ class Client(object):
         response = self.__handle_response(response)
 
         return [Tag.from_json(t) for t in response.json()['tags']]
+
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
+        :arg label
+        """
+        params = {}
+
+        params['id'] = id
+        params['invitation'] = invitation
+        params['head'] = head
+        params['tail'] = tail
+        params['label'] = label
+        params['limit'] = limit
+        params['offset'] = offset
+
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return [Edge.from_json(t) for t in response.json()['edges']]
+
+    def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
+        :arg label
+        """
+        params = {}
+
+        params['id'] = id
+        params['invitation'] = invitation
+        params['head'] = head
+        params['tail'] = tail
+        params['label'] = label
+        params['limit'] = 1
+        params['offset'] = 0
+
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['count']
+
+    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select='tail', limit=None, offset=None):
+        '''
+        Returns a list of JSON objects where each one represents a group of edges.  For example calling this
+        method with default arguments will give back a list of groups where each group is of the form:
+        {id: {head: paper-1} values: [ {tail: user-1}, {tail: user-2} ]}
+        Note: The limit applies to the number of groups returned.  It does not apply to the number of edges within the groups.
+
+        :param invitation:
+        :param groupby:
+        :param select:
+        :param limit:
+        :param offset:
+        :return:
+        '''
+        params = {}
+        params['id'] = None
+        params['invitation'] = invitation
+        params['head'] = head
+        params['tail'] = tail
+        params['label'] = label
+        params['groupBy'] = groupby
+        params['select'] = select
+        params['limit'] = limit
+        params['offset'] = offset
+        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = self.__handle_response(response)
+        json = response.json()
+        return json['groupedEdges'] # a list of JSON objects holding information about an edge
+
 
     def post_group(self, group, overwrite = True):
         """
@@ -890,6 +1009,57 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
+
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param subject: Subject of the e-mail
+        :type subject: str
+        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
+        :type recipients: list[str]
+        :param message: Message in the e-mail
+        :type message: str
+
+        :return: Contains the message that was sent to each Group
+        :rtype: dict
+        """
+        response = requests.post(self.messages_url, json = {
+            'groups': recipients,
+            'subject': subject ,
+            'message': message,
+            'ignoreGroups': ignoreRecipients,
+            'from': sender
+            }, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_direct_message(self, subject, recipients, message, sender=None):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param subject: Subject of the e-mail
+        :type subject: str
+        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
+        :type recipients: list[str]
+        :param message: Message in the e-mail
+        :type message: str
+
+        :return: Contains the message that was sent to each Group
+        :rtype: dict
+        """
+        response = requests.post(self.messages_direct_url, json = {
+            'groups': recipients,
+            'subject': subject ,
+            'message': message,
+            'from': sender
+            }, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    @deprecated(version='1.0.6', reason="Use post_message instead")
     def send_mail(self, subject, recipients, message):
         """
         Posts a message to the recipients and consequently sends them emails as well
@@ -913,8 +1083,8 @@ class Client(object):
         """
         Adds members to a group
 
-        :param group: Group to which the members will be added
-        :type group: Group
+        :param group: Group (or Group's id) to which the members will be added
+        :type group: Group or str
         :param members: Members that will be added to the group. Members should be in a string, unicode or a list format
         :type members: str, list, unicode
 
@@ -922,12 +1092,12 @@ class Client(object):
         :rtype: Group
         """
         def add_member(group, members):
+            group_id = group if type(group) in string_types else group.id
             if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())
-            else:
-                return group
+            return group
 
         member_type = type(members)
         if member_type in string_types:
@@ -940,24 +1110,25 @@ class Client(object):
         """
         Removes members from a group
 
-        :param group: Group from which the members will be removed
-        :type group: Group
+        :param group: Group (or Group's id) from which the members will be removed
+        :type group: Group or str
         :param members: Members that will be removed. Members should be in a string, unicode or a list format
         :type members: str, list, unicode
 
         :return: Group without the members that were removed
         :type: Group
         """
-        def remove_member(group,members):
-            response = requests.delete(self.groups_url + '/members', json = {'id': group, 'members': members}, headers = self.headers)
+        def remove_member(group, members):
+            group_id = group if type(group) in string_types else group.id
+            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
             response = self.__handle_response(response)
             return Group.from_json(response.json())
 
         member_type = type(members)
         if member_type in string_types:
-            return remove_member(group.id, [members])
+            return remove_member(group, [members])
         if member_type == list:
-            return remove_member(group.id, members)
+            return remove_member(group, members)
 
     def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
         """
@@ -1014,7 +1185,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None):
+    def get_messages(self, to = None, subject = None, offset = None, limit = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1027,7 +1198,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject }, headers = self.headers)
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'offset': offset, 'limit': limit }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 
@@ -1774,4 +1945,3 @@ class Profile(object):
         authorReferent=n.get('authorReferent')
         )
         return profile
-

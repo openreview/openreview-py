@@ -10,14 +10,17 @@ var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
 var DECISION_NAME = '';
 var BID_NAME = '';
+var RECOMMENDATION_NAME = '';
 var COMMENT_NAME = '';
+var SCORES_NAME = '';
 var AUTHORS_ID = '';
 var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
+var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
@@ -26,33 +29,307 @@ var PAGE_SIZE = 25;
 
 // Page State
 var reviewerSummaryMap = {};
-var allReviewers = [];
 var conferenceStatusData = {};
 var pcTags = {};
 var selectedNotesById = {};
+var matchingNoteIds = [];
 var paperStatusNeedsRerender = false;
 
+var main = function() {
+  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+
+  renderHeader();
+
+  loadConfigurationTab().then(displayConfiguration);
+
+  $.when(
+    getAllReviewers(),
+    getAllAreaChairs(),
+    getReviewerGroups(),
+    getAreaChairGroups(),
+    getBlindedNotes(),
+    getOfficialReviews(),
+    getMetaReviews(),
+    getDecisionReviews(),
+    getPcAssignmentInvitationsAndTags(),
+    getBidCounts(REVIEWERS_ID),
+    getBidCounts(AREA_CHAIRS_ID),
+    getAreaChairRecommendationCounts()
+  ).then(function(
+    reviewers,
+    areaChairs,
+    reviewerGroups,
+    areaChairGroups,
+    blindedNotes,
+    officialReviews,
+    metaReviews,
+    decisions,
+    pcAssignmentInvitationsAndTags,
+    reviewerBidCounts,
+    areaChairBidCounts,
+    areaChairRecommendationCounts
+  ) {
+    var noteNumbers = blindedNotes.map(function(note) { return note.number; });
+    blindedNotes.forEach(function(n) {
+      selectedNotesById[n.id] = false;
+    });
+
+    reviewerSummaryMap = buildNoteMap(noteNumbers);
+
+    var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, areaChairGroups);
+    var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, reviewerGroups);
+    var officialReviewMap = buildOfficialReviewMap(noteNumbers, officialReviews);
+
+    pcAssignmentInvitationsAndTags.tags.forEach(function(tag) {
+      if (!(tag.forum in pcTags)) {
+        pcTags[tag.forum] = [];
+      }
+      pcTags[tag.forum].push(tag);
+    });
+
+    conferenceStatusData = {
+      reviewers: reviewers,
+      areaChairs: areaChairs,
+      blindedNotes: blindedNotes,
+      officialReviews: officialReviewMap,
+      metaReviews: metaReviews,
+      reviewerGroups: reviewerGroupMaps,
+      areaChairGroups: areaChairGroupMaps,
+      decisions: decisions,
+      pcAssignmentTagInvitations: pcAssignmentInvitationsAndTags.invitations
+    };
+
+    var uniqueIds = _.union(reviewers, areaChairs);
+    return getUserProfiles(uniqueIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts);
+  })
+  .then(function(profiles) {
+    conferenceStatusData.profiles = profiles;
+
+    $('.tabs-container .nav-tabs > li').removeClass('loading');
+    Webfield.ui.done();
+  })
+  .fail(function() {
+    displayError();
+  });
+};
+
+
 // Ajax functions
-var getAllReviewers = function() {
-  if (ENABLE_REVIEWER_REASSIGNMENT) {
-    return Webfield.get('/groups', { id: REVIEWERS_ID })
+var loadConfigurationTab = function() {
+  var requestFormP = $.Deferred().resolve();
+  if (REQUEST_FORM_ID) {
+    requestFormP = Webfield.get('/notes', { id: REQUEST_FORM_ID }, { handleErrors: false })
     .then(function(result) {
-      allReviewers = result.groups[0].members;
-      return allReviewers;
+      return _.get(result, 'notes[0]', {});
+    })
+    .fail(function() {
+      // Do not fail if config note cannot be loaded
+      return $.Deferred().resolve(null);
     });
   }
-  return $.Deferred().resolve([]);
-}
 
-var getNumberfromGroup = function(groupId, name) {
+  var getInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    expired: true,
+    type: 'all'
+  });
 
-  var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith(name); });
-  if (paper) {
-    return parseInt(paper.replace(name, ''));
-  } else {
-    return null;
+  var getRegistrationFormsP = Webfield.getAll('/notes', {
+    invitation: CONFERENCE_ID + '/.*/-/Form'
+  });
+
+  return $.when(requestFormP, getInvitationsP, getRegistrationFormsP);
+};
+
+var getAllReviewers = function() {
+  return Webfield.get('/groups', { id: REVIEWERS_ID, limit: 1 })
+  .then(function(result) {
+    var members = _.get(result, 'groups[0].members', []);
+    return members.sort();
+  });
+};
+
+var getAllAreaChairs = function() {
+  if (!AREA_CHAIRS_ID) {
+    return $.Deferred().resolve([]);
   }
+
+  return Webfield.get('/groups', { id: AREA_CHAIRS_ID, limit: 1 })
+  .then(function(result) {
+    var members = _.get(result, 'groups[0].members', []);
+    return members.sort();
+  });
+};
+
+var getBlindedNotes = function() {
+  return Webfield.getAll('/notes', {
+    invitation: BLIND_SUBMISSION_ID, sort: 'number:asc'
+  });
+};
+
+var getOfficialReviews = function() {
+  return Webfield.getAll('/notes', {
+    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*')
+  });
+};
+
+var getReviewerGroups = function() {
+  return Webfield.getAll('/groups', { id: ANONREVIEWER_WILDCARD });
+};
+
+var getAreaChairGroups = function() {
+  if (!AREA_CHAIRS_ID) {
+    return $.Deferred().resolve([]);
+  }
+
+  return Webfield.getAll('/groups', {
+    id: AREACHAIR_WILDCARD
+  });
+};
+
+var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts) {
+  var ids = _.filter(userIds, function(id) { return id.charAt(0) === '~'; });
+  var emails = _.filter(userIds, function(id) { return id.indexOf('@') > 0; });
+
+  var idSearch = ids.length ?
+    Webfield.post('/profiles/search', { ids: ids }) :
+    $.Deferred().resolve([]);
+
+  var emailSearch = emails.length ?
+    Webfield.post('/profiles/search', { emails: emails }) :
+    $.Deferred().resolve([]);
+
+  return $.when(idSearch, emailSearch)
+    .then(function(idResults, emailResults) {
+      idResults = idResults.profiles || [];
+      emailResults = emailResults.profiles || [];
+      var searchResults = idResults.concat(emailResults);
+
+      return searchResults.reduce(function(profileMap, profile) {
+        var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+        name = name ?
+          [name.first, name.middle, name.last].filter(_.identity).join(' ') :
+          view.prettyId(profile.id);
+
+        profileMap[profile.id] = {
+          id: profile.id,
+          name: name,
+          allNames: _.filter(profile.content.names, function(name) { return name.username; }),
+          email: profile.content.preferredEmail || profile.content.emails[0],
+          allEmails: profile.content.emails,
+          bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
+          acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0
+        };
+        return profileMap;
+      }, {});
+    });
+};
+
+var getMetaReviews = function() {
+  if (!AREA_CHAIRS_ID) {
+    return $.Deferred().resolve([]);
+  }
+
+  return Webfield.getAll('/notes', {
+    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*')
+  });
+};
+
+var getDecisionReviews = function() {
+  return Webfield.getAll('/notes', {
+    invitation: getInvitationId(DECISION_NAME, '.*')
+  });
+};
+
+var getPcAssignmentInvitationsAndTags = function() {
+  var invitationsAndTags = { invitations: [], tags: [] };
+
+  return Webfield.getAll('/invitations', {
+    regex: PC_PAPER_TAG_INVITATION, tags: true
+  })
+  .then(function(invitations) {
+    invitationsAndTags.invitations = invitations;
+
+    if (!invitations.length) {
+      return $.Deferred().resolve([]);
+    }
+    return Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION })
+  })
+  .then(function(tags) {
+    invitationsAndTags.tags = tags;
+    return invitationsAndTags;
+  });
+};
+
+var postReviewerEmails = function(postData) {
+  var formttedData = _.pick(postData, ['groups', 'subject', 'message']);
+  formttedData.message = postData.message.replace('[[SUBMIT_REVIEW_LINK]]', postData.forumUrl);
+  if (EMAIL_SENDER) {
+    formttedData.from = EMAIL_SENDER;
+  }
+
+  return Webfield.post('/messages', formttedData)
+  .then(function() {
+    // Save the timestamp in the local storage
+    for (var i = 0; i < postData.groups.length; i++) {
+      var userId = postData.groups[i];
+      localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
+    }
+  });
+};
+
+var getBidCounts = function(bidInvitationGroup) {
+  if (!bidInvitationGroup || !BID_NAME) {
+    return $.Deferred().resolve({});
+  }
+
+  return Webfield.getAll('/edges', {
+    invitation: bidInvitationGroup + '/-/' + BID_NAME,
+    groupBy: 'tail',
+    select: 'count'
+  }, 'groupedEdges').then(function(results) {
+    if (!results || !results.length) {
+      return {};
+    }
+    return results.reduce(function(profileMap, groupedEdge) {
+      profileMap[groupedEdge.id.tail] = groupedEdge.count;
+      return profileMap;
+    }, {});
+  });
+};
+
+var getAreaChairRecommendationCounts = function() {
+  if (!RECOMMENDATION_NAME) {
+    return $.Deferred().resolve({});
+  }
+
+  // Can't perform a groupBy query on signatures, so we have to get the full list
+  return Webfield.getAll('/edges', {
+    invitation: REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME,
+  }).then(function(edges) {
+    if (!edges || !edges.length) {
+      return {};
+    }
+    return edges.reduce(function(profileMap, edge) {
+      var acId = edge.signatures[0];
+      if (!profileMap[acId]) {
+        profileMap[acId] = 0
+      }
+      profileMap[acId] += 1
+      return profileMap;
+    }, {});
+  });
+};
+
+
+// Util functions
+var getNumberfromGroup = function(groupId, name) {
+  var tokens = groupId.split('/');
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
+  return paper ? parseInt(paper.replace(name, ''), 10) : null;
 };
 
 var getPaperNumbersfromGroups = function(groups) {
@@ -66,254 +343,152 @@ var getInvitationId = function(name, number) {
     return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
   }
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
-}
-
-var getBlindedNotes = function() {
-  return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, noDetails: true, sort:'number:asc'
-  });
-};
-
-var getOfficialReviews = function(noteNumbers) {
-  if (!noteNumbers.length) {
-    return $.Deferred().resolve({});
-  }
-
-  var noteMap = buildNoteMap(noteNumbers);
-
-  return Webfield.getAll('/notes', {
-    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), noDetails: true
-  })
-  .then(function(notes) {
-    var ratingExp = /^(\d+): .*/;
-
-    _.forEach(notes, function(n) {
-      if (_.startsWith(n.signatures[0], '~')) {
-        var num = getNumberfromGroup(n.invitation, 'Paper');
-        var index = n.signatures[0];
-      } else {
-        var num = getNumberfromGroup(n.signatures[0], 'Paper');
-        var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
-      }
-      if (num) {
-        if (num in noteMap) {
-          ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
-          n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
-          confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
-          n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
-
-          noteMap[num][index] = n;
-        }
-      }
-    });
-
-    return noteMap;
-  });
-};
-
-var getReviewerGroups = function(noteNumbers) {
-  var noteMap = buildNoteMap(noteNumbers);
-  var reviewerMap = {};
-
-  return Webfield.getAll('/groups', { id: ANONREVIEWER_WILDCARD })
-    .then(function(groups) {
-      _.forEach(groups, function(g) {
-        var num = getNumberfromGroup(g.id, 'Paper');
-        var index = getNumberfromGroup(g.id, 'AnonReviewer');
-        if (num) {
-          if (g.members.length) {
-            var reviewer = g.members[0];
-            if ((num in noteMap)) {
-              noteMap[num][index] = reviewer;
-            }
-
-            if (!(reviewer in reviewerMap)) {
-              reviewerMap[reviewer] = [];
-            }
-
-            reviewerMap[reviewer].push(num);
-          }
-
-        }
-      });
-      return {
-        byNotes: noteMap,
-        byReviewers: reviewerMap
-      };
-    })
-    .fail(function(error) {
-      displayError();
-      return null;
-    });
-};
-
-var getAreaChairGroups = function(noteNumbers) {
-  var noteMap = buildNoteMap(noteNumbers);
-  var areaChairMap = {};
-
-  return Webfield.getAll('/groups', { id: AREACHAIR_WILDCARD })
-    .then(function(groups) {
-      _.forEach(groups, function(g) {
-        var num = getNumberfromGroup(g.id, 'Paper');
-        var index = getNumberfromGroup(g.id, 'Area_Chair');
-        if (num) {
-          var areaChair = _.find(g.members, function(member) {
-            return (member.includes('~') || member.includes('@'));
-          });
-          if (areaChair) {
-            if (num in noteMap) {
-              noteMap[num][0] = areaChair;
-            }
-
-            if (!(areaChair in areaChairMap)) {
-              areaChairMap[areaChair] = [];
-            }
-            areaChairMap[areaChair].push(num);
-          }
-        }
-      });
-      return {
-        byNotes: noteMap,
-        byAreaChairs: areaChairMap
-      };
-    })
-    .fail(function(error) {
-      displayError();
-      return null;
-    });
-};
-
-var getUserProfiles = function(userIds) {
-  var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
-  var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
-
-  var profileSearch = [];
-  if (ids.length) {
-    profileSearch.push(Webfield.post('/profiles/search', {ids: ids}));
-  }
-  if (emails.length) {
-    profileSearch.push(Webfield.post('/profiles/search', {emails: emails}));
-  }
-
-  return $.when.apply($, profileSearch)
-  .then(function() {
-    var searchResults = _.toArray(arguments);
-    var profileMap = {};
-    if (!searchResults) {
-      return profileMap;
-    }
-    var addProfileToMap = function(profile) {
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail || profile.content.emails[0];
-      profile.allEmails = profile.content.emails;
-      profile.allNames = _.filter(profile.content.names, function(name){
-        return !_.isEmpty(name.username);
-      });
-      profileMap[profile.id] = profile;
-    };
-    if (searchResults.length) {
-      _.forEach(searchResults, function(result) {
-        _.forEach(result.profiles, addProfileToMap);
-      });
-    } else {
-      _.forEach(searchResults.profiles, addProfileToMap);
-    }
-    return profileMap;
-  })
-  .fail(function(error) {
-    displayError();
-    return null;
-  });
-};
-
-var findProfile = function(profiles, id) {
-  var profile = _.find(profiles, function(p) {
-    return _.find(p.content.names, function(n) { return n.username == id; }) || _.includes(p.content.emails, id);
-  });
-  if (profile) {
-    return profile;
-  } else {
-    return {
-      id: id,
-      name: id.indexOf('~') === 0 ? view.prettyId(id) : id,
-      email: id,
-      content: {
-        names: [{ username: id }]
-      }
-    }
-  }
-}
-
-var getMetaReviews = function() {
-  return Webfield.getAll('/notes', {
-    invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*'), noDetails: true
-  });
-};
-
-var getDecisionReviews = function() {
-  return Webfield.getAll('/notes', {
-    invitation: getInvitationId(DECISION_NAME, '.*'), noDetails: true
-  });
-};
-
-var getRequestForm = function() {
-  return controller.get('/notes', { id: REQUEST_FORM_ID }, null, function() {}, true)
-  .then(function(result) {
-    return _.get(result, 'notes[0]', {});
-  }, function(err) {
-    // Do not fail if config note cannot be loaded
-    return $.Deferred().resolve(null);
-  });
-};
-
-var getInvitations = function() {
-  return Webfield.getAll('/invitations', { regex: WILDCARD_INVITATION, expired: true });
-};
-
-var getPcAssignmentTagInvitations = function() {
-  return Webfield.getAll('/invitations', { regex: PC_PAPER_TAG_INVITATION, tags: true});
-};
-
-var getPcAssignmentTags = function() {
-  return Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION})
-  .then(function(results) {
-    if (results && results.length) {
-      results.forEach(function(tag) {
-        if (!(tag.forum in pcTags)) {
-          pcTags[tag.forum] = [];
-        }
-        pcTags[tag.forum].push(tag);
-      });
-    }
-  });
 };
 
 var findNextAnonGroupNumber = function(paperNumber) {
   var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
   for (var i = 1; i < paperReviewerNums.length + 1; i++) {
-    if (i.toString() !== paperReviewerNums[i-1]) {
+    if (i.toString() !== paperReviewerNums[i - 1]) {
       return i;
     }
   }
   return paperReviewerNums.length + 1;
 };
 
-var getConfigurationDescription = function(note) {
-  var description = [
-    'Author And Reviewer Anonymity: ' + note.content['Author and Reviewer Anonymity'],
-    note.content['Open Reviewing Policy'],
-    note.content['Public Commentary'],
-    'Paper matching uses ' + note.content['Paper Matching'].join(', ')
-  ];
-  if (note.content['Other Important Information']) {
-    description.push(note.content['Other Important Information']);
+var findProfile = function(profiles, id) {
+  if (profiles[id]) {
+    return profiles[id];
   }
-  return description.join('<br>').replace(/should be/g, 'are');
+  var profile = _.find(profiles, function(p) {
+    return _.includes(p.allNames, id) || _.includes(p.allEmails, id);
+  });
+  return profile || {
+    id: id,
+    name: id.indexOf('~') === 0 ? view.prettyId(id) : id,
+    email: id,
+    allEmails: [id],
+    allNames: [id]
+  }
 };
 
+var buildNoteMap = function(noteNumbers) {
+  var noteMap = Object.create(null);
+  for (var i = 0; i < noteNumbers.length; i++) {
+    noteMap[noteNumbers[i]] = Object.create(null);
+  }
+  return noteMap;
+};
+
+var buildAreaChairGroupMaps = function(noteNumbers, groups) {
+  var noteMap = buildNoteMap(noteNumbers);
+  var areaChairMap = {};
+
+  groups.forEach(function(g) {
+    var num = getNumberfromGroup(g.id, 'Paper');
+    if (!num) {
+      return;
+    }
+
+    var areaChair = _.find(g.members, function(member) {
+      return member.indexOf('~') > -1 || member.indexOf('@') > -1;
+    });
+    if (!areaChair) {
+      return;
+    }
+
+    if (num in noteMap) {
+      noteMap[num][0] = areaChair;
+    }
+    if (!(areaChair in areaChairMap)) {
+      areaChairMap[areaChair] = [];
+    }
+    areaChairMap[areaChair].push(num);
+  });
+
+  return {
+    byNotes: noteMap,
+    byAreaChairs: areaChairMap
+  };
+};
+
+var buildOfficialReviewMap = function(noteNumbers, notes) {
+  if (!noteNumbers || !noteNumbers.length) {
+    return $.Deferred().resolve({});
+  }
+
+  var noteMap = buildNoteMap(noteNumbers);
+  var ratingExp = /^(\d+): .*/;
+
+  _.forEach(notes, function(n) {
+    if (_.startsWith(n.signatures[0], '~')) {
+      var num = getNumberfromGroup(n.invitation, 'Paper');
+      var index = n.signatures[0];
+    } else {
+      var num = getNumberfromGroup(n.signatures[0], 'Paper');
+      var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
+    }
+    if (num) {
+      if (num in noteMap) {
+        ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
+        n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
+        confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
+        n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
+
+        noteMap[num][index] = n;
+      }
+    }
+  });
+
+  return noteMap;
+};
+
+var buildReviewerGroupMaps = function(noteNumbers, groups) {
+  var noteMap = buildNoteMap(noteNumbers);
+  var reviewerMap = {};
+
+  _.forEach(groups, function(g) {
+    var num = getNumberfromGroup(g.id, 'Paper');
+    var index = getNumberfromGroup(g.id, 'AnonReviewer');
+    if (num) {
+      if (g.members.length) {
+        var reviewer = g.members[0];
+        if ((num in noteMap)) {
+          noteMap[num][index] = reviewer;
+        }
+
+        if (!(reviewer in reviewerMap)) {
+          reviewerMap[reviewer] = [];
+        }
+
+        reviewerMap[reviewer].push(num);
+      }
+    }
+  });
+
+  return {
+    byNotes: noteMap,
+    byReviewers: reviewerMap
+  };
+};
+
+var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
+  var invitationId = invGroup + '/-/' + invName;
+  var referrerUrl = '/group' + location.search + location.hash;
+
+  // Right now this is only showing bids, affinity scores, and conflicts as the
+  // other scores invitations + labels are not available in the PC console
+  return '/edge/browse' +
+    (startQuery ? '?start=' + invitationId + ',' + startQuery + '&' : '?') +
+    'traverse=' + invitationId +
+    '&browse=' + invitationId +
+    (SCORES_NAME ? ';' + invGroup + '/-/' + SCORES_NAME : '') +
+    ';' + invGroup + '/-/Conflict' +
+    '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
+}
+
+
 // Render functions
-var displayHeader = function() {
+var renderHeader = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);
   Webfield.ui.header(HEADER.title, HEADER.instructions);
 
@@ -334,8 +509,8 @@ var displayHeader = function() {
     }
   ];
 
-  if (SHOW_AC_TAB) {
-    tabs.push(    {
+  if (AREA_CHAIRS_ID) {
+    tabs.push({
       heading: 'Area Chair Status',
       id: 'areachair-status',
       content: loadingMessage,
@@ -343,7 +518,7 @@ var displayHeader = function() {
     });
   }
 
-  tabs.push(    {
+  tabs.push({
     heading: 'Reviewer Status',
     id: 'reviewer-status',
     content: loadingMessage,
@@ -351,13 +526,15 @@ var displayHeader = function() {
   });
 
   Webfield.ui.tabPanel(tabs);
+  $('.tabs-container .nav-tabs > li').not(':first-child').addClass('loading');
 };
 
-var displayConfiguration = function(requestForm, invitations) {
-
+var displayConfiguration = function(requestForm, invitations, registrationForms) {
+  var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs)');
   var formatPeriod = function(invitation) {
     var start;
     var end;
+    var exp = 'none';
     var afterStart = true;
     var beforeEnd = true;
     var now = Date.now();
@@ -371,12 +548,16 @@ var displayConfiguration = function(requestForm, invitations) {
       end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
       beforeEnd = now < invitation.duedate;
     }
+    if (invitation.expdate) {
+      var date = new Date(invitation.expdate);
+      exp =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+    }
 
     var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
     if (end) {
-      periodString = periodString + 'until <em>' + end + '</em>';
+      periodString = periodString + 'until <em>' + end + '</em> and expires <em>' + exp + '</em>';
     } else {
-      periodString = periodString + 'no deadline';
+      periodString = periodString + 'no deadline' + ' and expires <em>' + exp + '</em>';
     }
 
     return periodString;
@@ -384,10 +565,24 @@ var displayConfiguration = function(requestForm, invitations) {
 
   var renderInvitation = function(invitationMap, id, name) {
     var invitation = invitationMap[id];
+
     if (invitation) {
-      return '<li><a href="/invitation?id=' + invitation.id + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
+      return '<li><a href="/invitation?id=' + invitation.id + '&referrer=' + referrerUrl + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
     };
     return '';
+  };
+
+  var getConfigurationDescription = function(note) {
+    var description = [
+      'Author And Reviewer Anonymity: ' + note.content['Author and Reviewer Anonymity'],
+      note.content['Open Reviewing Policy'],
+      note.content['Public Commentary'],
+      'Paper matching uses ' + note.content['Paper Matching'].join(', ')
+    ];
+    if (note.content['Other Important Information']) {
+      description.push(note.content['Other Important Information']);
+    }
+    return description.join('<br>').replace(/should be/g, 'are');
   };
 
   var invitationMap = {};
@@ -395,7 +590,6 @@ var displayConfiguration = function(requestForm, invitations) {
     invitationMap[invitation.id] = invitation;
   });
 
-  var container = '#venue-configuration';
   var html = '<div><br>'
 
   // Config
@@ -409,7 +603,7 @@ var displayConfiguration = function(requestForm, invitations) {
   // Official Committee
   html += '<h3>Venue Roles:</h3><br><ul>' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
-  if (SHOW_AC_TAB) {
+  if (AREA_CHAIRS_ID) {
     html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
@@ -419,55 +613,63 @@ var displayConfiguration = function(requestForm, invitations) {
     '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
     '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul><br>';
 
+  if (registrationForms && registrationForms.length) {
+    html += '<h3>Registration Forms:</h3><br><ul>';
+    registrationForms.forEach(function(form) {
+      html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
+    })
+    html += '</ul><br>';
+  }
+
+  // Bids and Recommendations
+  if (BID_NAME) {
+    html += '<h3>Bids & Recommendations:</h3><br><ul>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
+    if (RECOMMENDATION_NAME) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+    }
+    html += '</ul><br>';
+  }
+
   // Timeline
   html += '<h3>Timeline:</h3><br><ul>';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + BID_NAME, 'Bidding')
-  if (SHOW_AC_TAB) {
-    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+  html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
+  if (AREA_CHAIRS_ID) {
+    html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
+    html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
+    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
   }
-  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
+  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
   html += '</ul></div>';
 
-  $(container).empty().append(html);
+  $('#venue-configuration').html(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, searchResults, hideMessageButton) {
-  var messageReviewersButtonHtml = hideMessageButton ?
-    '' :
-    '<div id="div-msg-reviewers" class="btn-group" role="group">' +
-      '<button id="message-reviewers-btn" type="button" class="btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
-        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
-        '<span class="caret"></span>' +
-      '</button>' +
-      '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
-        '<li><a id="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
-        '<li><a id="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
-        '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
-      '</ul>' +
-    '</div>';
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults) {
   var searchType = container.substring(1).split('-')[0] + 's';
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
-    '<input type="text" id="form-search" class="form-control" placeholder="Search all ' + searchType + '..." ' +
+    '<input type="text" class="form-search form-control" class="form-control" placeholder="Search all ' + searchType + '..." ' +
       'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
     '';
   var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
-    return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
+    return '<option class="' + option.replace(/_/g, '-') + '-' + container.substring(1) + '" value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
   });
   var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
     '<strong style="vertical-align: middle;">Sort By:</strong> ' +
-    '<select id="form-sort" class="form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
-    '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
+    '<select class="form-sort form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
+    '<button class="form-order btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
     '';
 
-  $(container).empty().append(
+  $(container).html(
     '<form class="form-inline search-form clearfix" role="search">' +
-      messageReviewersButtonHtml +
+      '<div class="pull-left"></div>' +
       '<div class="pull-right">' +
         searchBarHtml +
         sortDropdownHtml +
@@ -475,15 +677,15 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     '</form>'
   );
 
-  $(container + ' select#form-sort').on('change', function(event) {
+  $(container + ' select.form-sort').on('change', function(event) {
     sortResults($(event.target).val(), false);
   });
-  $(container + ' #form-order').on('click', function(event) {
-    sortResults($(container).find('#form-sort').val(), true);
+  $(container + ' .form-order').on('click', function(event) {
+    sortResults($(container).find('.form-sort').val(), true);
     return false;
   });
-  $(container + ' #form-search').on('keyup', _.debounce(function() {
-    var searchText = $(container + ' #form-search').val().toLowerCase().trim();
+  $(container + ' .form-search').on('keyup', _.debounce(function() {
+    var searchText = $(container + ' .form-search').val().toLowerCase().trim();
     searchResults(searchText);
   }, 300));
   $(container + ' form.search-form').on('submit', function() {
@@ -538,6 +740,23 @@ var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
   });
 }
 
+var sendReviewerReminderEmailsStep2 = function(e) {
+  var reviewerMessages = localStorage.getItem('reviewerMessages');
+  var messageCount = localStorage.getItem('messageCount');
+  if (!reviewerMessages || !messageCount) {
+    $('#message-reviewers-modal').modal('hide');
+    promptError('Could not send emails at this time. Please refresh the page and try again.');
+  }
+  JSON.parse(reviewerMessages).forEach(postReviewerEmails);
+
+  localStorage.removeItem('reviewerMessages');
+  localStorage.removeItem('messageCount');
+
+  $('#message-reviewers-modal').modal('hide');
+  promptMessage('Successfully sent ' + messageCount + ' emails');
+};
+
+
 var displayPaperStatusTable = function() {
 
   var container = '#paper-status';
@@ -572,7 +791,6 @@ var displayPaperStatusTable = function() {
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
   });
-
   var toNumber = function(value) {
     return value === 'N/A' ? 0 : value;
   }
@@ -589,19 +807,21 @@ var displayPaperStatusTable = function() {
     Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
     Reviewers_Assigned: function(row) { return row.reviewProgressData.numReviewers; },
     Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
-    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
-    Meta_Review_Missing: function(row) { return row.areachairProgressData.numMetaReview; }
+    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; }
   };
-
+  if (AREA_CHAIRS_ID) {
+    sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
+  }
+  sortOptions['Decision'] = function(row) { return row.decision ? row.decision.content.decision : 'No Decision'; }
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
-      return (tags.length && tags[0].tag === view.prettyId(user.profile.id));
+      return (tags && tags.length && tags[0].tag === view.prettyId(user.profile.id));
     };
   }
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' #form-search').val('');
+    $(container + ' .form-search').val('');
 
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
@@ -612,7 +832,7 @@ var displayPaperStatusTable = function() {
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
-    $(container + ' #form-sort').val('Paper_Number');
+    $(container + ' .form-sort').val('Paper_Number');
 
     // Currently only searching on note number and note title
     var filterFunc = function(row) {
@@ -622,9 +842,14 @@ var displayPaperStatusTable = function() {
       );
     };
 
-    var filteredRows = searchText
-      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc')
-      : rowData;
+    var filteredRows;
+    if (searchText) {
+      filteredRows = _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc');
+      matchingNoteIds = filteredRows.map(function(row) { return row.note.id; });
+    } else {
+      filteredRows = rowData;
+      matchingNoteIds = [];
+    }
     renderTable(container, filteredRows);
   };
 
@@ -649,7 +874,7 @@ var displayPaperStatusTable = function() {
         }
         return rev;
       });
-      var users = _.values(reviewers);
+      var users = Object.values(reviewers);
       if (filter === 'msg-submitted-reviewers') {
         users = users.filter(function(u) {
           return u.completedReview;
@@ -708,22 +933,6 @@ var displayPaperStatusTable = function() {
     return false;
   };
 
-  var sendReviewerReminderEmailsStep2 = function(e) {
-    var reviewerMessages = localStorage.getItem('reviewerMessages');
-    var messageCount = localStorage.getItem('messageCount');
-    if (!reviewerMessages || !messageCount) {
-      $('#message-reviewers-modal').modal('hide');
-      promptError('Could not send emails at this time. Please refresh the page and try again.');
-    }
-    JSON.parse(reviewerMessages).forEach(postReviewerEmails);
-
-    localStorage.removeItem('reviewerMessages');
-    localStorage.removeItem('messageCount');
-
-    $('#message-reviewers-modal').modal('hide');
-    promptMessage('Successfully sent ' + messageCount + ' emails');
-  };
-
   var renderTable = function(container, data) {
     var paperNumbers = [];
     var rowData = _.map(data, function(d) {
@@ -739,7 +948,7 @@ var displayPaperStatusTable = function() {
       var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
 
       var rows = [checked, numberHtml, summaryHtml, reviewHtml];
-      if (SHOW_AC_TAB) {
+      if (AREA_CHAIRS_ID) {
         rows.push(areachairHtml);
       }
       rows.push(decisionHtml);
@@ -747,7 +956,7 @@ var displayPaperStatusTable = function() {
     });
 
     var headings = ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary', 'Review Progress'];
-    if (SHOW_AC_TAB) {
+    if (AREA_CHAIRS_ID) {
       headings.push('Status');
     }
     headings.push('Decision');
@@ -770,8 +979,8 @@ var displayPaperStatusTable = function() {
       return false;
     });
 
-    $('#div-msg-reviewers a').off('click').on('click', function(e) {
-      var filter = $(this).attr('id');
+    $('.message-papers-container li > a', container).off('click').on('click', function(e) {
+      var filter = $(this).attr('class');
       $('#message-reviewers-modal').remove();
 
       var defaultBody = '';
@@ -802,10 +1011,10 @@ var displayPaperStatusTable = function() {
   };
 
   var postRenderTable = function(data, pageNum) {
-    $('.console-table th').eq(0).css('width', '4%');
-    $('.console-table th').eq(1).css('width', '4%');
+    $('.console-table th').eq(0).css('width', '3%');
+    $('.console-table th').eq(1).css('width', '5%');
     $('.console-table th').eq(2).css('width', '22%');
-    if (SHOW_AC_TAB) {
+    if (AREA_CHAIRS_ID) {
       $('.console-table th').eq(3).css('width', '30%');
       $('.console-table th').eq(4).css('width', '28%');
       $('.console-table th').eq(5).css('width', '12%');
@@ -836,6 +1045,17 @@ var displayPaperStatusTable = function() {
 
   if (rowData.length) {
     displaySortPanel(container, sortOptions, sortResults, searchResults);
+    $(container).find('form.search-form .pull-left').html('<div class="btn-group message-papers-container" role="group">' +
+      '<button type="button" class="message-papers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu">' +
+        '<li><a class="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
+        '<li><a class="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
+        '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
+      '</ul>' +
+    '</div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -896,9 +1116,8 @@ var paginationOnClick = function($target, $container, tableData) {
   $container.data('lastPageNum', pageNum);
 };
 
-var displaySPCStatusTable = function() {
+var displayAreaChairsStatusTable = function() {
   var container = '#areachair-status';
-  var profiles = conferenceStatusData.profiles;
   var notes = conferenceStatusData.blindedNotes
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
@@ -906,9 +1125,7 @@ var displaySPCStatusTable = function() {
   var areachairIds = conferenceStatusData.areaChairGroups.byAreaChairs;
 
   var rowData = [];
-  var index = 1;
-  var sortedAreaChairIds = Object.keys(areachairIds).sort();
-  _.forEach(sortedAreaChairIds, function(areaChair) {
+  _.forEach(conferenceStatusData.areaChairs, function(areaChair, index) {
     var numbers = areachairIds[areaChair];
     var papers = [];
     _.forEach(numbers, function(number) {
@@ -928,14 +1145,15 @@ var displaySPCStatusTable = function() {
       });
     });
 
-    var areaChairProfile = findProfile(profiles, areaChair);
-    rowData.push(buildSPCTableRow(index, areaChairProfile, papers));
-    index++;
+    var areaChairProfile = findProfile(conferenceStatusData.profiles, areaChair);
+    rowData.push(buildSPCTableRow(index + 1, areaChairProfile, papers));
   });
 
   var order = 'asc';
   var sortOptions = {
-    Area_Chair: function(row) { return row.summary.name; },
+    Area_Chair: function(row) { return row.summary.name.toLowerCase(); },
+    Bids_Completed: function(row) { return row.summary.completedBids },
+    Reviewer_Recommendations_Completed: function(row) { return row.summary.completedRecs },
     Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
     Papers_with_Completed_Review_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
     Papers_with_Completed_Review: function(row) { return row.reviewProgressData.numCompletedReviews; },
@@ -944,7 +1162,7 @@ var displaySPCStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' #form-search').val('');
+    $(container + ' .form-search').val('');
 
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
@@ -955,7 +1173,7 @@ var displaySPCStatusTable = function() {
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
-    $(container + ' #form-sort').val('Area_Chair');
+    $(container + ' .form-sort').val('Area_Chair');
 
     // Currently only searching on area chair name
     var filterFunc = function(row) {
@@ -967,10 +1185,57 @@ var displaySPCStatusTable = function() {
     renderTable(container, filteredRows);
   };
 
+  // Message modal handler
+  var sendReviewerReminderEmailsStep1 = function(e) {
+    var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
+    var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
+    var filter  = $(this)[0].dataset['filter'];
+
+    var filterFuncs = {
+      'msg-no-bids': function(row) {
+        return row.summary.completedBids === 0;
+      },
+      'msg-no-recs': function(row) {
+        return row.summary.completedRecs === 0;
+      },
+      'msg-unsubmitted-reviews': function(row) {
+        return row.reviewProgressData.numCompletedReviews === 0;
+      },
+      'msg-unsubmitted-metareviews': function(row) {
+        return row.reviewProgressData.numCompletedMetaReviews === 0;
+      }
+    }
+    var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
+      return {
+        id: row.summary.id,
+        name: row.summary.name,
+        email: row.summary.email
+      }
+    });
+    localStorage.setItem('reviewerMessages', JSON.stringify([{
+      groups: _.map(usersToMessage, 'id'),
+      subject: subject,
+      message: message
+    }]));
+    localStorage.setItem('messageCount', usersToMessage.length);
+
+    // Show step 2
+    var namesHtml = _.flatMap(usersToMessage, function(obj) {
+      var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
+      return text;
+    }).join(', ');
+    $('#message-reviewers-modal .modal-body > p').html('A total of <span class="num-reviewers"></span> reminder emails will be sent to the following reviewers:');
+    $('#message-reviewers-modal .reviewer-list').html(namesHtml);
+    $('#message-reviewers-modal .num-reviewers').text(usersToMessage.length);
+    $('#message-reviewers-modal .step-1').hide();
+    $('#message-reviewers-modal .step-2').show();
+
+    return false;
+  };
+
   var renderTable = function(container, data) {
-    var index = 1;
-    var rowData = _.map(data, function(d) {
-      var number = '<strong class="note-number">' + index++ + '</strong>';
+    var rowData = data.map(function(d, index) {
+      var number = '<strong class="note-number">' + (index + 1) + '</strong>';
       var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
       var progressHtml = Handlebars.templates.notesAreaChairProgress(d.reviewProgressData);
       var statusHtml = Handlebars.templates.notesAreaChairStatus(d.reviewProgressData);
@@ -990,15 +1255,54 @@ var displaySPCStatusTable = function() {
       paginationOnClick($(this).parent(), $container, tableData);
       return false;
     });
+
+    $('.message-acs-container li > a', container).off('click').on('click', function(e) {
+      var filter = $(this).attr('class');
+      $('#message-reviewers-modal').remove();
+
+      var defaultBody = '';
+
+      var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+        filter: filter,
+        defaultSubject: SHORT_PHRASE + ' Reminder',
+        defaultBody: defaultBody,
+      });
+      $('body').append(modalHtml);
+      $('#message-reviewers-modal .modal-body > p').text('Enter a message to be sent to all selected area chairs below. You will have a chance to review a list of all recipients after clicking "Next" below.')
+
+      $('#message-reviewers-modal .btn-primary.step-1').on('click', sendReviewerReminderEmailsStep1);
+      $('#message-reviewers-modal .btn-primary.step-2').on('click', sendReviewerReminderEmailsStep2);
+      $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmailsStep1);
+
+      $('#message-reviewers-modal').modal();
+
+      if ($('.ac-console-table input.select-note-reviewers:checked').length) {
+        $('#message-reviewers-modal select[name="group"]').val('selected');
+      }
+      return false;
+    });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, true);
+  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  $(container).find('form.search-form .pull-left').html(
+    '<div class="btn-group message-acs-container" role="group">' +
+      '<button type="button" class="message-acs-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Area Chairs ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu">' +
+        (BID_NAME ? '<li><a class="msg-no-bids">Area Chairs with 0 bids</a></li>' : '') +
+        (RECOMMENDATION_NAME ? '<li><a class="msg-no-recs">Area Chairs with 0 recommendations</a></li>' : '') +
+        '<li><a class="msg-unsubmitted-reviews">Area Chairs with unsubmitted reviews</a></li>' +
+        '<li><a class="msg-unsubmitted-metareviews">Area Chairs with unsubmitted meta reviews</a></li>' +
+      '</ul>' +
+    '</div>'
+  );
   renderTable(container, rowData);
 };
 
-var displayPCStatusTable = function() {
+var displayReviewerStatusTable = function() {
   var container = '#reviewer-status';
-  var profiles = conferenceStatusData.profiles;
   var notes = conferenceStatusData.blindedNotes;
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
@@ -1007,7 +1311,7 @@ var displayPCStatusTable = function() {
 
   var findReview = function(reviews, profile) {
     var found;
-    profile.content.names.forEach(function(name) {
+    profile.allNames.forEach(function(name) {
       if (reviews[name.username]) {
         found = reviews[name.username];
       }
@@ -1016,11 +1320,9 @@ var displayPCStatusTable = function() {
   }
 
   var rowData = [];
-  var index = 1;
-  var sortedReviewerIds = Object.keys(reviewerById).sort();
-  _.forEach(sortedReviewerIds, function(reviewer) {
+  _.forEach(conferenceStatusData.reviewers, function(reviewer, index) {
     var numbers = reviewerById[reviewer];
-    var reviewerProfile = findProfile(profiles, reviewer);
+    var reviewerProfile = findProfile(conferenceStatusData.profiles, reviewer);
 
     var papers = [];
     _.forEach(numbers, function(number) {
@@ -1051,13 +1353,13 @@ var displayPCStatusTable = function() {
       });
     });
 
-    rowData.push(buildPCTableRow(index, reviewerProfile, papers));
-    index++;
+    rowData.push(buildPCTableRow(index + 1, reviewerProfile, papers));
   });
 
   var order = 'asc';
   var sortOptions = {
-    Reviewer: function(row) { return row.summary.name; },
+    Reviewer_Name: function(row) { return row.summary.name; },
+    Bids_Completed: function(row) { return row.summary.completedBids },
     Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
     Papers_with_Reviews_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
     Papers_with_Reviews_Submitted: function(row) { return row.reviewProgressData.numCompletedReviews; },
@@ -1066,7 +1368,7 @@ var displayPCStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' #form-search').val('');
+    $(container + ' .form-search').val('');
 
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
@@ -1077,7 +1379,7 @@ var displayPCStatusTable = function() {
 
   var searchResults = function(searchText) {
     $(container).data('lastPageNum', 1);
-    $(container + ' #form-sort').val('Reviewer');
+    $(container + ' .form-sort').val('Reviewer');
 
     // Currently only searching on reviewer name
     var filterFunc = function(row) {
@@ -1089,10 +1391,51 @@ var displayPCStatusTable = function() {
     renderTable(container, filteredRows);
   };
 
+  // Message modal handler
+  var sendReviewerReminderEmailsStep1 = function(e) {
+    var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
+    var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
+    var filter  = $(this)[0].dataset['filter'];
+
+    var filterFuncs = {
+      'msg-no-bids': function(row) {
+        return row.summary.completedBids === 0;
+      },
+      'msg-unsubmitted-reviews': function(row) {
+        return row.reviewProgressData.numCompletedReviews === 0;
+      }
+    }
+    var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
+      return {
+        id: row.summary.id,
+        name: row.summary.name,
+        email: row.summary.email
+      }
+    });
+    localStorage.setItem('reviewerMessages', JSON.stringify([{
+      groups: _.map(usersToMessage, 'id'),
+      subject: subject,
+      message: message
+    }]));
+    localStorage.setItem('messageCount', usersToMessage.length);
+
+    // Show step 2
+    var namesHtml = _.flatMap(usersToMessage, function(obj) {
+      var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
+      return text;
+    }).join(', ');
+    $('#message-reviewers-modal .modal-body > p').html('A total of <span class="num-reviewers"></span> reminder emails will be sent to the following reviewers:');
+    $('#message-reviewers-modal .reviewer-list').html(namesHtml);
+    $('#message-reviewers-modal .num-reviewers').text(usersToMessage.length);
+    $('#message-reviewers-modal .step-1').hide();
+    $('#message-reviewers-modal .step-2').show();
+
+    return false;
+  };
+
   var renderTable = function(container, data) {
-    var index = 1;
-    var rowData = _.map(data, function(d) {
-      var number = '<strong class="note-number">' + index++ + '</strong>';
+    var rowData = data.map(function(d, index) {
+      var number = '<strong class="note-number">' + (index + 1) + '</strong>';
       var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
       var progressHtml = Handlebars.templates.notesReviewerProgress(d.reviewProgressData);
       var statusHtml = Handlebars.templates.notesReviewerStatus(d.reviewStatusData);
@@ -1112,9 +1455,47 @@ var displayPCStatusTable = function() {
       paginationOnClick($(this).parent(), $container, tableData);
       return false;
     });
+
+    $('.message-reviewers-container li > a', container).off('click').on('click', function(e) {
+      var filter = $(this).attr('class');
+      $('#message-reviewers-modal').remove();
+
+      var defaultBody = '';
+
+      var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+        filter: filter,
+        defaultSubject: SHORT_PHRASE + ' Reminder',
+        defaultBody: defaultBody,
+      });
+      $('body').append(modalHtml);
+      $('#message-reviewers-modal .modal-body > p').text('Enter a message to be sent to all selected reviewers below. You will have a chance to review a list of all recipients after clicking "Next" below.')
+
+      $('#message-reviewers-modal .btn-primary.step-1').on('click', sendReviewerReminderEmailsStep1);
+      $('#message-reviewers-modal .btn-primary.step-2').on('click', sendReviewerReminderEmailsStep2);
+      $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmailsStep1);
+
+      $('#message-reviewers-modal').modal();
+
+      if ($('.ac-console-table input.select-note-reviewers:checked').length) {
+        $('#message-reviewers-modal select[name="group"]').val('selected');
+      }
+      return false;
+    });
   };
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, true);
+  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  $(container).find('form.search-form .pull-left').html(
+    '<div class="btn-group message-reviewers-container" role="group">' +
+      '<button type="button" class="message-reviewers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu">' +
+        (BID_NAME ? '<li><a class="msg-no-bids">Reviewers with 0 bids</a></li>' : '') +
+        '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
+      '</ul>' +
+    '</div>'
+  );
   renderTable(container, rowData);
 };
 
@@ -1128,7 +1509,7 @@ var updateReviewerContainer = function(paperNumber) {
   $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
   var paperForum = $reviewerProgressContainer.data('paperForum');
 
-  var dropdownOptions = _.map(allReviewers, function(member) {
+  var dropdownOptions = conferenceStatusData.reviewers.map(function(member) {
     return {
       id: member,
       description: view.prettyId(member)
@@ -1174,13 +1555,18 @@ var updateReviewerContainer = function(paperNumber) {
   );
 }
 
+
 // Helper functions
+var paperTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
+
 var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
   // Checkbox for selecting each row
   var cellCheck = { selected: false, noteId: note.id };
 
   // Build Note Summary Cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
+  var cell1 = note;
+  cell1.referrer = paperTableReferrerUrl;
 
   // Build Review Progress Cell
   var reviewObj;
@@ -1261,31 +1647,41 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     maxConfidence: maxConfidence,
     sendReminder: true,
     expandReviewerList: false,
-    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT
+    enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
+    referrer: paperTableReferrerUrl
   };
   reviewerSummaryMap[note.number] = reviewProgressData;
 
   var areachairProgressData = {
     numMetaReview: metaReview ? 'One' : 'No',
     areachair: areachairProfile,
-    metaReview: metaReview
+    metaReview: metaReview,
+    referrer: paperTableReferrerUrl
   };
 
   return {
     cellCheck: cellCheck,
-    note: note,
+    note: cell1,
     reviewProgressData: reviewProgressData,
     areachairProgressData: areachairProgressData,
     decision: decision
   }
 };
 
+var acTableeferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
+
 var buildSPCTableRow = function(index, areaChair, papers) {
 
   var summary = {
     id: areaChair.id,
     name: areaChair.name,
-    email: areaChair.email
+    email: areaChair.email,
+    showBids: !!BID_NAME,
+    completedBids: areaChair.bidCount || 0,
+    edgeBrowserBidsUrl: buildEdgeBrowserUrl('tail:' + areaChair.id, AREA_CHAIRS_ID, BID_NAME),
+    showRecommendations: !!RECOMMENDATION_NAME,
+    completedRecs: areaChair.acRecommendationCount || 0,
+    edgeBrowserRecsUrl: buildEdgeBrowserUrl('signatory:' + areaChair.id, REVIEWERS_ID, RECOMMENDATION_NAME)
   }
 
   var numCompletedReviews = 0;
@@ -1308,10 +1704,10 @@ var buildSPCTableRow = function(index, areaChair, papers) {
       averageRating = _.round(_.sum(ratings) / ratings.length, 2);
       minRating = _.min(ratings);
       maxRating = _.max(ratings);
-    }
 
-    if (ratings.length == numOfReviewers) {
-      numCompletedReviews++;
+      if (ratings.length == numOfReviewers) {
+        numCompletedReviews++;
+      }
     }
 
     if (paper.metaReview) {
@@ -1333,7 +1729,8 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     numCompletedMetaReviews: numCompletedMetaReviews,
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
-    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }])
+    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
+    referrer: acTableeferrerUrl
   }
 
   return {
@@ -1343,19 +1740,25 @@ var buildSPCTableRow = function(index, areaChair, papers) {
 
 };
 
+var pcTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#reviewer-status)');
+
 var buildPCTableRow = function(index, reviewer, papers) {
 
   var summary = {
     id: reviewer.id,
     name: reviewer.name,
-    email: reviewer.email
+    email: reviewer.email,
+    showBids: !!BID_NAME,
+    completedBids: reviewer.bidCount || 0,
+    edgeBrowserBidsUrl: buildEdgeBrowserUrl('tail:' + reviewer.id, REVIEWERS_ID, BID_NAME)
   }
 
   var reviewProgressData = {
     numCompletedMetaReviews: _.size(_.filter(papers, function(p) { return p.metaReview; })),
     numCompletedReviews: _.size(_.filter(papers, function(p) { return p.review; })),
     numPapers: papers.length,
-    papers: _.sortBy(papers, [function(p) { return p.note.number; }])
+    papers: _.sortBy(papers, [function(p) { return p.note.number; }]),
+    referrer: pcTableReferrerUrl
   }
 
   var numCompletedReviews = 0;
@@ -1397,7 +1800,8 @@ var buildPCTableRow = function(index, reviewer, papers) {
   var reviewStatusData = {
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
-    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }])
+    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
+    referrer: pcTableReferrerUrl
   }
 
   return {
@@ -1407,103 +1811,10 @@ var buildPCTableRow = function(index, reviewer, papers) {
   }
 };
 
-var buildNoteMap = function(noteNumbers) {
-  var noteMap = Object.create(null);
-  for (var i = 0; i < noteNumbers.length; i++) {
-    noteMap[noteNumbers[i]] = Object.create(null);
-    reviewerSummaryMap[noteNumbers[i]] = Object.create(null);
-  }
-  return noteMap;
-};
-
 // Kick the whole thing off
-displayHeader();
+main();
 
-$.ajaxSetup({
-  contentType: 'application/json; charset=utf-8'
-});
-
-controller.addHandler('areachairs', {
-  token: function(token) {
-    $.when(
-      getAllReviewers(),
-      getBlindedNotes(),
-      getPcAssignmentTagInvitations()
-    )
-    .then(function(reviewers, notes, pcAssignmentTagInvitations) {
-      var noteNumbers = _.map(notes, function(note) { return note.number; });
-      _.forEach(notes, function(n) {
-        selectedNotesById[n.id] = false;
-      });
-
-      var metaReviewsP;
-      var areaChairGroupsP;
-      if (SHOW_AC_TAB) {
-        metaReviewsP = getMetaReviews();
-        areaChairGroupsP = getAreaChairGroups(noteNumbers);
-      } else {
-        metaReviewsP = $.Deferred().resolve({ notes: []});
-        areaChairGroupsP = $.Deferred().resolve({ byNotes: buildNoteMap(noteNumbers), byAreaChairs: {}});
-      }
-      var decisionReviewsP = getDecisionReviews();
-      var requestFormP = $.Deferred().resolve();
-      if (REQUEST_FORM_ID) {
-        requestFormP = getRequestForm();
-      }
-      var assignmentTagsP = $.Deferred().resolve();
-      if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
-        assignmentTagsP = getPcAssignmentTags();
-      }
-      return $.when(
-        notes,
-        getOfficialReviews(noteNumbers),
-        metaReviewsP,
-        getReviewerGroups(noteNumbers),
-        areaChairGroupsP,
-        decisionReviewsP,
-        requestFormP,
-        getInvitations(),
-        pcAssignmentTagInvitations,
-        assignmentTagsP
-      );
-    })
-    .then(function(blindedNotes, officialReviews, metaReviews, reviewerGroups, areaChairGroups, decisions, requestForm, invitations, pcAssignmentTagInvitations) {
-      var uniqueReviewerIds = _.uniq(_.reduce(reviewerGroups.byNotes, function(result, idsObj) {
-        return result.concat(_.values(idsObj));
-      }, []));
-
-      var uniqueAreaChairIds = _.uniq(_.reduce(areaChairGroups.byNotes, function(result, idsObj) {
-        return result.concat(_.values(idsObj));
-      }, []));
-
-      var uniqueIds = _.union(uniqueReviewerIds, uniqueAreaChairIds);
-
-      return getUserProfiles(uniqueIds)
-      .then(function(profiles) {
-        conferenceStatusData = {
-          profiles: profiles,
-          blindedNotes: blindedNotes,
-          officialReviews: officialReviews,
-          metaReviews: metaReviews,
-          reviewerGroups: reviewerGroups,
-          areaChairGroups: areaChairGroups,
-          decisions: decisions,
-          pcAssignmentTagInvitations: pcAssignmentTagInvitations
-        }
-        displayConfiguration(requestForm, invitations);
-        displayPaperStatusTable();
-        if (SHOW_AC_TAB) {
-          displaySPCStatusTable();
-        }
-        Webfield.ui.done();
-      });
-    })
-    .fail(function(error) {
-      displayError();
-    });
-  }
-});
-
+// Event handlers
 $('#group-container').on('click', 'a.note-contents-toggle', function(e) {
   var hiddenText = 'Show paper details';
   var visibleText = 'Hide paper details';
@@ -1568,7 +1879,8 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   var $currDiv = $('#' + paperNumber + '-add-reviewer');
   var userToAdd = $currDiv.find('input').attr('value_id').trim();
 
-  if (!userToAdd) {
+  if (!userToAdd || !((userToAdd.indexOf('@') > 0) || _.startsWith(userToAdd, '~'))) {
+    // this checks if no input was given, OR  if the given input neither has an '@' nor does it start with a '~'
     promptError('Please enter a valid email for assigning a reviewer');
     return false;
   }
@@ -1579,17 +1891,22 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
     return false;
   }
+  if (!_.startsWith(userToAdd, '~')) {
+    userToAdd = userToAdd.toLowerCase();
+  }
 
   var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
   var reviewerProfile = {
-    'email' : userToAdd,
-    'id' : userToAdd,
-    'name': '',
-    'content': {'names': [{'username': userToAdd}]}
+    email : userToAdd,
+    id : userToAdd,
+    name: '',
+    content: {
+      names: [{ username: userToAdd }]
+    }
   };
 
   getUserProfiles([userToAdd])
-  .then(function (userProfile) {
+  .then(function(userProfile) {
     if (userProfile && Object.keys(userProfile).length) {
       reviewerProfile = userProfile[Object.keys(userProfile)[0]];
     }
@@ -1600,7 +1917,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
   })
   .then(function(result) {
     var commonReaders = [CONFERENCE_ID, CONFERENCE_ID + '/Program_Chairs'];
-    if (SHOW_AC_TAB) {
+    if (AREA_CHAIRS_ID) {
       commonReaders.push(CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs');
     }
     return Webfield.post('/groups', {
@@ -1661,13 +1978,16 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       groups: [reviewerProfile.id],
       subject: SHORT_PHRASE + ': You have been assigned as a Reviewer for paper number ' + paperNumber,
       message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
-      ' for ' + SHORT_PHRASE + '.' +
-      '\n\nTo review this new assignment, please login and click on ' +
-      'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
-      '\n\nTo check all of your assigned papers, please click on https://openreview.net/group?id=' + REVIEWERS_ID +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
+        ' for ' + SHORT_PHRASE + '.' +
+        '\n\nTo review this new assignment, please login to OpenReview and go to ' +
+        'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
+        '\n\nTo see all of your assigned papers, go to https://openreview.net/group?id=' + REVIEWERS_ID +
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair'
     };
-    return Webfield.post('/mail', postData);
+    if (EMAIL_SENDER) {
+      postData.from = EMAIL_SENDER;
+    }
+    return Webfield.post('/messages', postData);
   });
   return false;
 });
@@ -1753,14 +2073,19 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   return false;
 });
 
+$('#group-container').on('show.bs.tab', 'ul.nav-tabs li a', function(e) {
+  // Don't allow the user to switch tabs until all data is finished loading
+  return !$(e.target).parent().hasClass('loading');
+});
+
 $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
   var containerId = $(e.target).attr('href');
   if (containerId === '#paper-status') {
     displayPaperStatusTable();
   } else if (containerId === '#areachair-status') {
-    displaySPCStatusTable();
+    displayAreaChairsStatusTable();
   } else if (containerId === '#reviewer-status') {
-    displayPCStatusTable();
+    displayReviewerStatusTable();
   }
 
   // Reset select note state
@@ -1769,6 +2094,8 @@ $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
       selectedNotesById[noteId] = false;
     }
   }
+
+  matchingNoteIds = [];
 });
 
 $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
@@ -1781,7 +2108,7 @@ $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
 $('#group-container').on('change', '#select-all-papers', function(e) {
   var $superCheckBox = $(this);
   var $allPaperCheckBoxes = $('input.select-note-reviewers');
-  var $msgReviewerButton = $('#message-reviewers-btn');
+  var $msgReviewerButton = $('.message-papers-btn');
 
   var isSuperSelected = $superCheckBox.prop('checked');
   if (isSuperSelected) {
@@ -1794,14 +2121,18 @@ $('#group-container').on('change', '#select-all-papers', function(e) {
 
   for (var noteId in selectedNotesById) {
     if (selectedNotesById.hasOwnProperty(noteId)) {
-      selectedNotesById[noteId] = isSuperSelected;
+      if (isSuperSelected) {
+        selectedNotesById[noteId] = !matchingNoteIds.length || _.includes(matchingNoteIds, noteId);
+      } else {
+        selectedNotesById[noteId] = isSuperSelected;
+      }
     }
   }
 });
 
 $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
   var $superCheckBox = $('#select-all-papers');
-  var $msgReviewerButton = $('#message-reviewers-btn');
+  var $msgReviewerButton = $('.message-papers-btn');
 
   var noteId = $(this).data('noteId');
   var isSelected = $(this).prop('checked');
@@ -1823,21 +2154,3 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
     $superCheckBox.prop('checked', false);
   }
 });
-
-var postReviewerEmails = function(postData) {
-  postData.message = postData.message.replace(
-    '[[SUBMIT_REVIEW_LINK]]',
-    postData.forumUrl
-  );
-
-  return Webfield.post('/mail', postData)
-  .then(function(response) {
-    // Save the timestamp in the local storage
-    for (var i = 0; i < postData.groups.length; i++) {
-      var userId = postData.groups[i];
-      localStorage.setItem(postData.forumUrl + '|' + userId, Date.now());
-    }
-  });
-};
-
-OpenBanner.venueHomepageLink(CONFERENCE_ID);

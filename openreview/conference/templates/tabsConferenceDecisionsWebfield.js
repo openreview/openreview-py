@@ -36,36 +36,41 @@ function main() {
 }
 
 // Load makes all the API calls needed to get the data to render the page
-// It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
+  var notesP = Webfield.getAll('/notes', {
+    invitation: BLIND_SUBMISSION_ID,
+    details: 'replyCount,original'
+  });
 
-  var notesP = Webfield.getAll(
-    '/notes',
-    {
-      invitation: BLIND_SUBMISSION_ID,
-      details: 'replyCount,original'
-    }
-  )
-
-  var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
-    pageSize: PAGE_SIZE,
-    noDetails: true,
-    includeCount: true
+  var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.getAll('/notes', {
+    invitation: WITHDRAWN_SUBMISSION_ID,
+    details: 'replyCount,original'
   }) : $.Deferred().resolve([]);
 
-  var deskRejectedNotesP = DESK_REJECTED_SUBMISSION_ID ? Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
-    pageSize: PAGE_SIZE,
-    noDetails: true,
-    includeCount: true
+  var deskRejectedNotesP = DESK_REJECTED_SUBMISSION_ID ? Webfield.getAll('/notes', {
+    invitation: DESK_REJECTED_SUBMISSION_ID,
+    details: 'replyCount,original'
   }) : $.Deferred().resolve([]);
 
-  var decisionNotesP = Webfield.getAll('/notes', { invitation: DECISION_INVITATION_REGEX, noDetails: true });
+  var decisionNotesP = Webfield.getAll('/notes', {
+    invitation: DECISION_INVITATION_REGEX,
+  });
 
-  var userGroupP;
+  var userGroupsP;
   if (!user || _.startsWith(user.id, 'guest_')) {
     userGroupsP = $.Deferred().resolve([]);
   } else {
-    userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true });
+    userGroupsP = Webfield.getAll('/groups', {
+      regex: CONFERENCE_ID + '/.*',
+      member: user.id,
+      web: true
+    }).then(function(groups) {
+      if (!groups || !groups.length) {
+        return [];
+      }
+
+      return groups.map(function(g) { return g.id; });
+    });
   }
 
   return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP, userGroupsP);
@@ -78,9 +83,9 @@ function renderConferenceHeader() {
 
 function getElementId(decision) {
   return decision.replace(' ', '-')
-  .replace('(', '')
-  .replace(')', '')
-  .toLowerCase();
+    .replace('(', '')
+    .replace(')', '')
+    .toLowerCase();
 }
 
 function renderConferenceTabs() {
@@ -94,18 +99,7 @@ function renderConferenceTabs() {
       id: getElementId(decision)
     });
   }
-  if (WITHDRAWN_SUBMISSION_ID) {
-    sections.push({
-      heading: 'Withdrawn Submissions',
-      id: 'withdrawn-submissions',
-    });
-  }
-  if (DESK_REJECTED_SUBMISSION_ID) {
-    sections.push({
-      heading: 'Desk Rejected Submissions',
-      id: 'desk-rejected-submissions',
-    });
-  }
+
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
     hidden: true
@@ -113,145 +107,85 @@ function renderConferenceTabs() {
 }
 
 function createConsoleLinks(allGroups) {
-  var uniqueGroups = _.sortBy(_.uniq(allGroups));
-  var links = [];
-  uniqueGroups.forEach(function(group) {
+  var uniqueGroups = _.sortedUniq(allGroups.sort());
+
+  return uniqueGroups.map(function(group) {
     var groupName = group.split('/').pop();
     if (groupName.slice(-1) === 's') {
       groupName = groupName.slice(0, -1);
     }
-    links.push(
-      [
-        '<li class="note invitation-link">',
-        '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
-        '</li>'
-      ].join('')
-    );
-  });
 
-  $('#your-consoles .submissions-list').append(links);
+    return [
+      '<li class="note invitation-link">',
+        '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
+      '</li>'
+    ].join('');
+  });
 }
 
-function renderContent(notes, decisionsNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
+function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejectedNotes) {
+  // Categorize notes into buckets defined by DECISION_HEADING_MAP
+  var notesDict = _.keyBy(notes, 'id');
 
-  if (userGroups.length) {
+  var papersByDecision = {};
+  for (var decision in DECISION_HEADING_MAP) {
+    papersByDecision[getElementId(decision)] = [];
+  }
 
-    var $container = $('#your-consoles').empty();
-    $container.append('<ul class="list-unstyled submissions-list">');
+  decisionNotes.forEach(function(d) {
+    var decisionKey = getElementId(d.content.decision);
+    if (notesDict[d.forum] && papersByDecision[decisionKey]) {
+      papersByDecision[decisionKey].push(notesDict[d.forum]);
+    }
+  });
 
-    var allConsoles = [];
-    userGroups.forEach(function(group) {
-      allConsoles.push(group.id);
-    });
+  papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
 
-    // Render all console links for the user
-    createConsoleLinks(allConsoles);
+  return papersByDecision;
+}
+
+function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
+  var papersByDecision = groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejectedNotes);
+
+  // Your Consoles Tab
+  if (userGroups && userGroups.length) {
+    var consoleLinks = createConsoleLinks(userGroups);
+    $('#your-consoles').html('<ul class="list-unstyled submissions-list">' +
+      consoleLinks.join('\n') + '</ul>');
 
     $('.tabs-container a[href="#your-consoles"]').parent().show();
   } else {
     $('.tabs-container a[href="#your-consoles"]').parent().hide();
   }
-  var notesDict = {};
-  _.forEach(notes, function(n) {
-    notesDict[n.id] = n;
-  });
-  var papersByDecision = {};
 
-  for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[decision] = [];
-  }
-
-  _.forEach(decisionsNotes, function(d) {
-    if (_.has(notesDict, d.forum)) {
-      papersByDecision[d.content.decision].push(notesDict[d.forum]);
-    }
-  });
-  for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[getElementId(decision)] = _.sortBy(papersByDecision[decision], function(o) { return o.id; });
-  }
-
+  // Register event handlers
   $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
-    var activeTab = 0;
-    activeTab = $(e.target).data('tabIndex');
-    var containerId = sections[activeTab].id;
-    if (containerId === 'your-consoles') {
-        return;
+    var containerSelector = $(e.target).attr('href');
+    var containerId = containerSelector.substring(1);
+    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
+      return;
     }
+
     setTimeout(function() {
-      if (activeTab < Object.keys(DECISION_HEADING_MAP).length+1) {
-        Webfield.ui.searchResults(
-          papersByDecision[containerId],
-          _.assign({}, paperDisplayOptions, {showTags: false, container: '#' + containerId})
-        );
-      }
-    }, 100);
+      Webfield.ui.searchResults(
+        papersByDecision[containerId],
+        Object.assign({}, paperDisplayOptions, { showTags: false, container: containerSelector })
+      );
+    }, 150);
   });
-
-  var withdrawnNotesCount = withdrawnNotes.count || 0;
-  if (WITHDRAWN_SUBMISSION_ID && withdrawnNotesCount) {
-
-    $('#withdrawn-submissions').empty();
-    var withdrawnNotesArray = withdrawnNotes.notes || [];
-    Webfield.ui.submissionList(withdrawnNotesArray, {
-      heading: null,
-      container: '#withdrawn-submissions',
-      search: {
-        enabled: false
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: withdrawnNotesCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
-          noDetails: true,
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
-  } else {
-    $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
-  }
-
-  var deskRejectedNotesCount = deskRejectedNotes.count || 0;
-  if (DESK_REJECTED_SUBMISSION_ID && deskRejectedNotesCount) {
-
-    $('#desk-rejected-submissions').empty();
-
-    var deskRejectedNotesArray = deskRejectedNotes.notes || [];
-    Webfield.ui.submissionList(deskRejectedNotesArray, {
-      heading: null,
-      container: '#desk-rejected-submissions',
-      search: {
-        enabled: false
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: deskRejectedNotesCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
-          noDetails: true,
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
-  } else {
-    $('.tabs-container a[href="#desk-rejected-submissions"]').parent().hide();
-  }
 
   $('#group-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
-    var containerId = $(e.target).attr('href');
-    Webfield.ui.spinner(containerId, {inline: true});
+    var containerSelector = $(e.target).attr('href');
+    var containerId = containerSelector.substring(1);
+    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
+      return;
+    }
+
+    Webfield.ui.spinner(containerSelector, { inline: true });
   });
 
   $('#notes > .spinner-container').remove();
   $('.tabs-container').show();
-
 }
 
 // Go!

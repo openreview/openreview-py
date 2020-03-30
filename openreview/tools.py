@@ -18,6 +18,7 @@ from tqdm import tqdm
 from ortools.graph import pywrapgraph
 from fuzzywuzzy import fuzz
 import tld
+import urllib.parse as urlparse
 
 def get_profile(client, value):
     """
@@ -502,7 +503,8 @@ def replace_members_with_ids(client, group):
                 else:
                     raise e
         else:
-            ids.append(member)
+            profile = client.get_profile(member)
+            ids.append(profile.id)
 
     group.members = ids + emails
     return client.post_group(group)
@@ -631,12 +633,8 @@ def iterget_grouped_edges(
     ):
     '''Helper function for retrieving and parsing all edges in bulk'''
 
-    grouped_edges_iterator = iterget(
-        client.get_grouped_edges,
-        invitation=invitation,
-        groupby=groupby,
-        select=select
-    )
+    ## Backend has pagination temporally disabled, it returns all the groups now so we need to do one iteration.
+    grouped_edges_iterator = client.get_grouped_edges(invitation=invitation, groupby=groupby, select=select)
 
     for group in grouped_edges_iterator:
         group_edges = []
@@ -763,7 +761,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None):
+def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None, expired = None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -795,6 +793,8 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     :type replyto: str, optional
     :param details:
     :type details: str, optional
+    :param expired: get also expired invitions, by default returns 'active' invitations.
+    :type expired: bool, optional
 
     :return: Iterator over Invitations filtered by the provided parameters
     :rtype: iterget
@@ -827,6 +827,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['note'] = note
     if replyto != None:
         params['replyto'] = replyto
+    params['expired'] = expired
 
     return iterget(client.get_invitations, **params)
 
@@ -1263,7 +1264,8 @@ def recruit_reviewer(client, user, first,
     recruit_message,
     recruit_message_subj,
     reviewers_invited_id,
-    verbose=True):
+    verbose=True,
+    baseurl = ''):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1282,8 +1284,10 @@ def recruit_reviewer(client, user, first,
     :type recruit_message_subj: str
     :param reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed. str
     :type reviewers_invited_id: str
-    :param verbose: Shows response of :meth:`openreview.Client.send_mail` and shows the body of the message sent
+    :param verbose: Shows response of :meth:`openreview.Client.post_message` and shows the body of the message sent
     :type verbose: bool, optional
+    :param baseurl: Use this baseUrl instead of client.baseurl to create recruitment links
+    :type baseurl: str, optional
     """
 
     # the HMAC.new() function only accepts bytestrings, not unicode.
@@ -1294,9 +1298,9 @@ def recruit_reviewer(client, user, first,
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
-        baseurl = client.baseurl,
+        baseurl = baseurl if baseurl else client.baseurl,
         recruitment_inv = recruit_reviewers_id,
-        user = user,
+        user = urlparse.quote(user),
         hashkey = hashkey
     )
 
@@ -1308,11 +1312,10 @@ def recruit_reviewer(client, user, first,
     )
 
     # send the email through openreview
-    response = client.send_mail(recruit_message_subj, [user], personalized_message)
+    response = client.post_message(recruit_message_subj, [user], personalized_message)
 
     if 'groups' in response and response['groups']:
-        reviewers_invited = client.get_group(reviewers_invited_id)
-        client.add_members_to_group(reviewers_invited, [user])
+        client.add_members_to_group(reviewers_invited_id, [user])
 
     if verbose:
         print("Sent to the following: ", response)
@@ -1521,6 +1524,7 @@ def get_profile_info(profile):
     domains = set()
     emails = set()
     relations = set()
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com']
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1536,10 +1540,12 @@ def get_profile_info(profile):
     relations.update([r['email'] for r in profile.content.get('relations', [])])
 
     ## Filter common domains
-    if 'gmail.com' in domains:
-        domains.remove('gmail.com')
+    for common_domain in common_domains:
+        if common_domain in domains:
+            domains.remove(common_domain)
 
     return {
+        'id': profile.id,
         'domains': domains,
         'emails': emails,
         'relations': relations
@@ -1548,7 +1554,7 @@ def get_profile_info(profile):
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)
     result = []
-    for i in range(0, num_edges, batch_size):
+    for i in tqdm(range(0, num_edges, batch_size), total=(num_edges // batch_size + 1)):
         end = min(i + batch_size, num_edges)
         batch = client.post_edges(edges[i:end])
         result += batch
@@ -1659,3 +1665,30 @@ def match_authors_to_emails(name_list, email_list, verbose=False):
         print('There was an issue with the min cost flow input.')
 
     return emails_by_authorname
+
+def overwrite_pdf(client, note_id, file_path):
+    """
+    Overwrite all the references of a note with the new pdf file.
+    If the note has an original note then update original references
+    """
+    note = client.get_note(id=note_id)
+    original_note = note
+
+    if note.original:
+        original_note = client.get_note(id=note.original)
+
+    references = client.get_references(referent=original_note.id)
+
+    updated_references = []
+
+    if references:
+        pdf_url = client.put_pdf(file_path)
+
+        for reference in references:
+            if 'pdf' in reference.content:
+                reference.content['pdf'] = pdf_url
+                updated_references.append(client.post_note(reference))
+
+    return updated_references
+
+

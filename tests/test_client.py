@@ -8,7 +8,7 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 51, 'missing groups'
+        assert len(groups) == 86, 'missing groups'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -185,7 +185,7 @@ class TestClient():
                 'abstract': 'This is an abstract',
                 'authorids': ['mbok@mail.com', 'andrew@mail.com'],
                 'authors': ['Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/22234qweoiuweroi.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
         note = client.post_note(note)

@@ -33,7 +33,6 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -45,22 +44,23 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
         note = test_client.post_note(note)
         assert note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
 
         conference.close_submissions()
-
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -76,7 +76,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@midl.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -84,6 +84,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+        time.sleep(2)
+
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -130,7 +132,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'test@mail.com'],
+            writers = [conference.id, authors_group_id],
             signatures = [authors_group_id],
             content = {
                 'title': 'Reply to comment title',
@@ -139,6 +141,8 @@ class TestCommentNotification():
         )
 
         reply_comment_note = test_client.post_note(reply_comment_note)
+
+        time.sleep(2)
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -183,7 +187,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [reviewers_group_id, acs_group_id],
-            writers = [conference.id, 'reviewer@midl.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Another reply to comment title',
@@ -192,6 +196,8 @@ class TestCommentNotification():
         )
 
         reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
+
+        time.sleep(2)
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -255,7 +261,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'programchair@midl.io'],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
                 'title': 'Another reply to comment title',
@@ -264,6 +270,8 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        time.sleep(2)
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -343,12 +351,12 @@ class TestCommentNotification():
             "Algorithms: Exact Inference",
         ])
         builder.set_override_homepage(True)
-        builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False)
+        builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
         builder.set_review_stage(release_to_authors=True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -356,7 +364,7 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf',
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf',
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Belief Propagation'
@@ -366,6 +374,8 @@ class TestCommentNotification():
 
         note = test_client.post_note(note)
         assert note
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = note.id)
         assert logs
@@ -382,7 +392,6 @@ class TestCommentNotification():
         conference.close_submissions()
         blinded_notes = conference.create_blind_submissions()
         paper_note = blinded_notes[0]
-        conference.set_authors()
         conference.set_program_chairs(emails= ['programchair@auai.org'])
         conference.set_area_chairs(emails = ['areachair@auai.org'])
         conference.set_reviewers(emails = ['reviewer@auai.org', 'reviewer2@auai.org'])
@@ -412,6 +421,8 @@ class TestCommentNotification():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = review_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -437,8 +448,7 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        conference.open_comments()
-
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, unsubmitted_reviewers = False, authors=True))
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
@@ -449,7 +459,7 @@ class TestCommentNotification():
             forum = review_note.forum,
             replyto = review_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@auai.org'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -457,6 +467,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -503,6 +515,8 @@ class TestCommentNotification():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = review_note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
@@ -534,7 +548,7 @@ class TestCommentNotification():
             forum = review_note.forum,
             replyto = review_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@auai.org'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Second Comment title',
@@ -542,6 +556,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -573,7 +589,7 @@ class TestCommentNotification():
         subject = 'Remind to reviewers'
         recipients = ['reviewer@auai.org']
         message = 'This is a reminder'
-        response = ac_client.send_mail(subject, recipients, message)
+        response = ac_client.post_message(subject, recipients, message)
         assert response
 
         messages = client.get_messages(subject='Remind to reviewers')
@@ -582,7 +598,7 @@ class TestCommentNotification():
         assert messages[0]['content']['to'] == 'reviewer@auai.org'
 
         recipients = ['auai.org/UAI/2020/Conference/Paper1/AnonReviewer1']
-        response = ac_client.send_mail(subject, recipients, 'This is a second reminder')
+        response = ac_client.post_message(subject, recipients, 'This is a second reminder')
         assert response
 
         messages_2 = client.get_messages(subject='.*Remind to reviewers.*')
@@ -592,9 +608,9 @@ class TestCommentNotification():
         assert messages_2[1]['content']['to'] == 'reviewer@auai.org'
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'):
-            ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
+            ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
 
-        ac_client.send_mail(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
+        ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
@@ -614,7 +630,7 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -626,12 +642,14 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@colt.io', 'author2@colt.io'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
         note = test_client.post_note(note)
         assert note
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = note.id)
         assert logs
@@ -639,9 +657,10 @@ class TestCommentNotification():
 
         conference.close_submissions()
 
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
         conference.set_program_chairs(emails = ['programchair@colt.io'])
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True))
+
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -657,7 +676,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@colt.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -665,6 +684,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -709,7 +730,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'test@mail.com'],
+            writers = [conference.id, authors_group_id],
             signatures = [authors_group_id],
             content = {
                 'title': 'Reply to comment title',
@@ -717,6 +738,8 @@ class TestCommentNotification():
             }
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply_comment_note.id)
         assert logs
@@ -762,7 +785,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@colt.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Another reply to comment title',
@@ -771,6 +794,8 @@ class TestCommentNotification():
         )
 
         reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply2_comment_note.id)
         assert logs
@@ -827,7 +852,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'programchair@colt.io'],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
                 'title': 'Another reply to comment title',
@@ -836,6 +861,8 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply3_comment_note.id)
         assert logs
@@ -911,7 +938,7 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True, authors=True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -923,22 +950,23 @@ class TestCommentNotification():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@colt17.io', 'author2@colt17.io'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
         note = test_client.post_note(note)
         assert note
 
+        time.sleep(2)
+
         logs = client.get_process_logs(id = note.id)
         assert logs
         assert logs[0]['status'] == 'ok'
 
         conference.close_submissions()
-
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection=True, authors=True))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -954,7 +982,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'reviewer@colt17.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
@@ -962,6 +990,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -1005,7 +1035,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'test@mail.com'],
+            writers = [conference.id, authors_group_id],
             signatures = [authors_group_id],
             content = {
                 'title': 'Reply to comment title',
@@ -1013,6 +1043,8 @@ class TestCommentNotification():
             }
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply_comment_note.id)
         assert logs
@@ -1059,7 +1091,7 @@ class TestCommentNotification():
             forum = note.id,
             replyto = comment_note.id,
             readers = [authors_group_id, reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
-            writers = [conference.id, 'programchair@colt17.io'],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.get_program_chairs_id()],
             content = {
                 'title': 'Another reply to comment title',
@@ -1068,6 +1100,8 @@ class TestCommentNotification():
         )
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = reply3_comment_note.id)
         assert logs
@@ -1135,11 +1169,10 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True)
+        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, authors=True)
         conference = builder.get_result()
 
         conference.set_program_chairs(emails = ['author2@colt17.io'])
-        conference.open_comments()
 
         notes = list(conference.get_submissions())
         assert notes
@@ -1160,7 +1193,7 @@ class TestCommentNotification():
             replyto = note.id,
             readers = [reviewers_group_id, acs_group_id, conference.get_program_chairs_id()],
             nonreaders = [authors_group_id],
-            writers = [conference.id, 'reviewer@colt17.io'],
+            writers = [conference.id, anon_reviewers_group_id],
             signatures = [anon_reviewers_group_id],
             content = {
                 'title': '[NO_AUTHORS] comment',
@@ -1168,6 +1201,8 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
+
+        time.sleep(2)
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs

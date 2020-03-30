@@ -77,7 +77,7 @@ class TestMatching():
                 ]
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_1.content['pdf'] = url
         note_1 = test_client.post_note(note_1)
 
@@ -97,7 +97,7 @@ class TestMatching():
                 ]
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_2.content['pdf'] = url
         note_2 = test_client.post_note(note_2)
 
@@ -117,7 +117,7 @@ class TestMatching():
                 ]
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_3.content['pdf'] = url
         note_3 = test_client.post_note(note_3)
 
@@ -130,7 +130,6 @@ class TestMatching():
         ])
         conference = builder.get_result()
         blinded_notes = conference.create_blind_submissions()
-        conference.set_authors()
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
@@ -185,7 +184,7 @@ class TestMatching():
         ))
 
         # Set up reviewer matching
-        conference.setup_matching()
+        conference.setup_matching(build_conflicts=True)
 
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
@@ -198,7 +197,7 @@ class TestMatching():
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment')
 
         # Set up AC matching
-        conference.setup_matching(is_area_chair=True)
+        conference.setup_matching(is_area_chair=True, build_conflicts=True)
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -295,7 +294,7 @@ class TestMatching():
         assert conference, 'conference is None'
 
         # Set up reviewer matching
-        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
 
         print(conference.get_reviewers_id())
 
@@ -315,7 +314,8 @@ class TestMatching():
         # Set up ac matching
         conference.setup_matching(
             is_area_chair=True,
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'))
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
+            build_conflicts=True)
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -451,7 +451,7 @@ class TestMatching():
 
         ## Open reviewer recommendations
         now = datetime.datetime.utcnow()
-        conference.open_recommendations(due_date = now + datetime.timedelta(minutes = 40))
+        conference.open_recommendations(assignment_title='', due_date = now + datetime.timedelta(minutes = 40))
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
@@ -481,7 +481,7 @@ class TestMatching():
         ))
 
        # Set up reviewer matching
-        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'))
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
 
         print(conference.get_reviewers_id())
 
@@ -491,14 +491,22 @@ class TestMatching():
         assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
         assert 'auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
         assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
 
         # Set up ac matching
         conference.setup_matching(
             is_area_chair=True,
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'))
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
+            build_conflicts=True)
+
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
+        assert invitation
+        assert 'scores_specification' in invitation.reply['content']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
@@ -622,44 +630,61 @@ class TestMatching():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
+        additional_registration_content = {
+            'reviewing_experience': {
+                'description': 'How many times have you been a reviewer for any conference or journal?',
+                'value-radio': [
+                    'Never - this is my first time',
+                    '1 time - building my reviewer skills',
+                    '2-4 times  - comfortable with the reviewing process',
+                    '5-10 times  - active community citizen',
+                    '10+ times  - seasoned reviewer'
+                ],
+                'order': 5,
+                'required': False
+            }
+        }
+        builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
         conference = builder.get_result()
         assert conference, 'conference is None'
 
         blinded_notes = list(conference.get_submissions())
 
-        ## Open reviewer recommendations
-        now = datetime.datetime.utcnow()
-        invitation = conference.open_registration(due_date = now + datetime.timedelta(minutes = 40))
+        registration_notes = client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Form')
+        assert registration_notes
+        assert len(registration_notes) == 1
+
+        registration_forum = registration_notes[0].forum
 
         ## Recommend reviewers
         ac1_client = helpers.get_user('ac1@cmu.edu')
-        ac1_client.post_note(openreview.Note(invitation = conference.get_registration_id(),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
-            forum = invitation.reply['forum'],
-            content = {
-                'title': 'UAI 2019 Registration',
-                'subject_areas': [
-                    'Algorithms: Approximate Inference',
-                    'Algorithms: Belief Propagation'
-                ],
-                'profile confirmed': 'Yes',
-                'expertise confirmed': 'Yes',
-                'reviewing experience': '2-4 times  - comfortable with the reviewing process'
-            }
-        ))
+        ac1_client.post_note(
+            openreview.Note(
+                invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration',
+                readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+                writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
+                signatures = ['~AreaChair_One1'],
+                forum = registration_forum,
+                replyto = registration_forum,
+                content = {
+                    'subject_areas': [
+                        'Algorithms: Approximate Inference',
+                        'Algorithms: Belief Propagation'
+                    ],
+                    'profile_confirmed': 'Yes',
+                    'expertise_confirmed': 'Yes',
+                    'reviewing_experience': '2-4 times  - comfortable with the reviewing process'
+                }))
 
         # Set up reviewer matching
-        conference.setup_matching()
-
+        conference.setup_matching(build_conflicts=True)
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
 
         # Set up AC matching
-        conference.setup_matching(is_area_chair=True)
+        conference.setup_matching(is_area_chair=True, build_conflicts=True)
 
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
         assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')

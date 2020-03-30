@@ -58,7 +58,7 @@ class TestSingleBlindConference():
         assert groups[3].writers == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatures == ['NIPS.cc/2018/Workshop/MLITS']
         assert groups[3].signatories == ['NIPS.cc/2018/Workshop/MLITS']
-        assert groups[3].members == []
+        assert groups[3].members == ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs']
         assert '"title": "2018 NIPS MLITS Workshop"' in groups[3].web
         assert '"subtitle": "Machine Learning for Intelligent Transportation Systems"' in groups[3].web
         assert '"location": "Montreal, Canada"' in groups[3].web
@@ -148,6 +148,7 @@ class TestSingleBlindConference():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
         builder.has_area_chairs(True)
+        builder.set_override_homepage(True)
         conference = builder.get_result()
 
         invitation = client.get_invitation(conference.get_submission_id())
@@ -173,7 +174,7 @@ class TestSingleBlindConference():
                 'authors': ['Test User', 'Peter Test', 'Andrew Mc']
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         test_client.post_note(note)
 
@@ -200,11 +201,10 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS")
@@ -247,11 +247,10 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", peter_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
         assert tabs.find_element_by_id('author-tasks')
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
     def test_close_submission(self, client, test_client, selenium, request_page):
 
@@ -296,9 +295,9 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.has_area_chairs(True)
         conference = builder.get_result()
-        conference.set_authors()
+        conference.create_paper_groups(authors=True)
 
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(authors=True))
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -372,7 +371,7 @@ class TestSingleBlindConference():
             }
         })
         conference = builder.get_result()
-        conference.set_authors()
+        conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac2@mail.com'])
         conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
@@ -410,6 +409,8 @@ class TestSingleBlindConference():
         )
         review_note = reviewer_client.post_note(note)
         assert review_note
+
+        time.sleep(2)
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -455,6 +456,8 @@ class TestSingleBlindConference():
         )
         review_note = reviewer2_client.post_note(note)
         assert review_note
+
+        time.sleep(2)
 
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 2
@@ -503,17 +506,15 @@ class TestSingleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Author Console' == console.find_element_by_tag_name('a').text
 
-        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors#author-schedule", test_client.token)
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
-        assert 'TBD' == tabs.find_element_by_id('author-schedule').text
         assert tabs.find_element_by_id('author-tasks')
         tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
         assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         conference.set_authorpage_header({
             'title': 'Author Console',
@@ -521,7 +522,7 @@ class TestSingleBlindConference():
             'schedule': 'This is a schedule'
         })
 
-        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors#author-schedule", test_client.token)
+        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
 
         header = selenium.find_element_by_id('header')
         assert header
@@ -531,14 +532,12 @@ class TestSingleBlindConference():
         assert 'Set of instructions' == header.find_elements_by_class_name('description')[0].text
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('author-schedule')
-        assert 'This is a schedule' == tabs.find_element_by_id('author-schedule').text
         assert tabs.find_element_by_id('author-tasks')
         tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
         assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
-        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('submissions-list')
-        assert len(papers.find_elements_by_class_name('note')) == 1
+        papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
+        assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Reviewer user
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer@mail.com', password='1234')
@@ -557,8 +556,6 @@ class TestSingleBlindConference():
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
         assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
-        assert tabs.find_element_by_id('reviewer-schedule')
-        assert len(tabs.find_element_by_id('reviewer-schedule').find_elements_by_tag_name('h4')) == 1
         assert tabs.find_element_by_id('reviewer-tasks')
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
@@ -580,8 +577,6 @@ class TestSingleBlindConference():
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
         assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
-        assert tabs.find_element_by_id('reviewer-schedule')
-        #assert 'This is a schedule' == tabs.find_element_by_id('reviewer-schedule').text
         assert tabs.find_element_by_id('reviewer-tasks')
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
@@ -602,8 +597,6 @@ class TestSingleBlindConference():
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
         assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
-        assert tabs.find_element_by_id('areachair-schedule')
-        assert len(tabs.find_element_by_id('areachair-schedule').find_elements_by_tag_name('h4')) == 1
         assert tabs.find_element_by_id('areachair-tasks')
         assert len(tabs.find_element_by_id('areachair-tasks').find_elements_by_class_name('note')) == 0
         reviews = tabs.find_elements_by_class_name('reviewer-progress')

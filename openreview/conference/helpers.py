@@ -4,6 +4,11 @@ import json
 
 def get_conference(client, request_form_id):
 
+    builder = get_conference_builder(client, request_form_id)
+    return builder.get_result()
+
+def get_conference_builder(client, request_form_id):
+
     note = client.get_note(request_form_id)
 
     if note.invitation not in 'OpenReview.net/Support/-/Request_Form':
@@ -16,6 +21,7 @@ def get_conference(client, request_form_id):
     builder.set_request_form_id(request_form_id)
 
     conference_start_date_str = 'TBD'
+    conference_start_date = None
     start_date = note.content.get('Venue Start Date', note.content.get('Conference Start Date', '')).strip()
     if start_date:
         try:
@@ -49,15 +55,24 @@ def get_conference(client, request_form_id):
     builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
     builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
     builder.set_conference_short_name(note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')))
-    builder.set_conference_year(conference_start_date.year)
-    builder.set_homepage_header({
-    'title': note.content['title'],
-    'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
-    'deadline': 'Submission Start: ' + submission_start_date_str + ' GMT, End: ' + submission_due_date_str+' GMT',
-    'date': conference_start_date_str,
-    'website': note.content['Official Website URL'],
-    'location': note.content.get('Location')
-    })
+    if conference_start_date:
+        builder.set_conference_year(conference_start_date.year)
+
+    homepage_header = {
+        'title': note.content['title'],
+        'subtitle': note.content.get('Abbreviated Venue Name', note.content.get('Abbreviated Conference Name')),
+        'deadline': 'Submission Start: ' + submission_start_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0',
+        'date': conference_start_date_str,
+        'website': note.content['Official Website URL'],
+        'location': note.content.get('Location'),
+        'contact': note.content.get('contact_email')
+    }
+    override_header = note.content.get('homepage_override', '')
+    if override_header:
+        for key in override_header.keys():
+            homepage_header[key] = override_header[key]
+
+    builder.set_homepage_header(homepage_header)
 
     if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
         builder.has_area_chairs(True)
@@ -71,16 +86,17 @@ def get_conference(client, request_form_id):
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
+
+    submission_remove_options = note.content.get('remove_submission_options', [])
+
     builder.set_submission_stage(
         double_blind = double_blind,
         public = public,
         start_date = submission_start_date,
         due_date = submission_due_date,
         additional_fields = submission_additional_options,
-        allow_withdraw = True,
-        reveal_authors_on_withdraw = True,
-        allow_desk_reject = True,
-        reveal_authors_on_desk_reject = True)
+        remove_fields = submission_remove_options
+        )
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
@@ -89,9 +105,11 @@ def get_conference(client, request_form_id):
     if 'Organizers will assign papers manually' in paper_matching_options:
         builder.enable_reviewer_reassignment(enable = True)
 
-    conference = builder.get_result()
-    conference.set_program_chairs(emails = note.content['Contact Emails'])
-    return conference
+    ## Contact Emails is deprecated
+    program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
+    builder.set_conference_program_chairs_ids(program_chair_ids)
+
+    return builder
 
 def get_bid_stage(client, request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
@@ -172,10 +190,19 @@ def get_meta_review_stage(client, request_forum):
     else:
         meta_review_due_date = None
 
+    additional_fields = {}
+    options = request_forum.content.get('recommendation_options', '').strip()
+    if options:
+        additional_fields = {'recommendation': {
+            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]},
+            'required': True}
+
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
-        public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'))
+        public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
+        additional_fields = additional_fields
+    )
 
 def get_decision_stage(client, request_forum):
     decision_start_date = request_forum.content.get('decision_start_date', '').strip()

@@ -27,7 +27,7 @@ class TestLegacyInvitations():
         builder.has_area_chairs(True)
         builder.use_legacy_invitation_id(True)
         now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_submission_stage(public = True, due_date = now + datetime.timedelta(minutes = 40))
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         conference = builder.get_result()
@@ -43,18 +43,18 @@ class TestLegacyInvitations():
                 'authors': ['Test User', 'Peter Test', 'Andrew Mc']
             }
         )
-        url = test_client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         test_client.post_note(note)
 
-        conference.set_authors()
+        conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.set_reviewers(['reviewer_legacy@mail.com'])
         conference.set_area_chairs(['ac_legacy@mail.com'])
         conference.set_program_chairs(['pc_legacy@mail.com'])
         conference.set_assignment('reviewer_legacy@mail.com', 1)
         conference.set_assignment('ac_legacy@mail.com', 1, True)
 
-        conference.open_comments()
+        conference.set_comment_stage(openreview.CommentStage(authors=True))
         conference.open_reviews()
         conference.open_meta_reviews()
         conference.open_decisions()
@@ -70,8 +70,6 @@ class TestLegacyInvitations():
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
         assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
-        assert tabs.find_element_by_id('reviewer-schedule')
-        assert len(tabs.find_element_by_id('reviewer-schedule').find_elements_by_tag_name('h4')) == 1
         assert tabs.find_element_by_id('reviewer-tasks')
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
@@ -81,8 +79,6 @@ class TestLegacyInvitations():
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
         assert len(tabs.find_element_by_id('assigned-papers').find_elements_by_class_name('note')) == 1
-        assert tabs.find_element_by_id('areachair-schedule')
-        assert len(tabs.find_element_by_id('areachair-schedule').find_elements_by_tag_name('h4')) == 1
         assert tabs.find_element_by_id('areachair-tasks')
         assert len(tabs.find_element_by_id('areachair-tasks').find_elements_by_class_name('note')) == 1
         reviews = tabs.find_elements_by_class_name('reviewer-progress')

@@ -69,8 +69,6 @@ class TestReviewersConference():
         request_page(selenium, "http://localhost:3000/group?id=learningtheory.org/COLT/2019/Conference/Program_Committee", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
-        assert tabs.find_element_by_id('reviewer-schedule')
-
 
     def test_allow_review_de_anonymization(self, client, test_client, helpers, selenium, request_page):
 
@@ -103,14 +101,14 @@ class TestReviewersConference():
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
                 'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
-                'pdf': '/pdf/sdfskdls.pdf'
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
 
         note = test_client.post_note(note)
         assert note
 
-        conference.set_authors()
+        conference.create_paper_groups(authors=True, reviewers=True)
         conference.set_reviewers(['reviewer_kgb@mail.com', 'reviewer_kgb2@mail.com'])
         conference.set_program_chairs([])
         conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')

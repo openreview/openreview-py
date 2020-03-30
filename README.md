@@ -6,7 +6,7 @@ OpenReview Python library
 
 Prerequisites
 -------------
-You need to have Python 2.xx or 3.xx installed. Preferably use versions 3.xx, as we will stop giving support to Python 2.xx.
+You need to have Python 3.xx installed. Support for Python versions 2.xx has been stopped.
 
 Installation
 ------------

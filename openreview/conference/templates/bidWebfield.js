@@ -152,7 +152,8 @@ function renderContent(notes, conflictIds, bidEdges) {
     showContents: true,
     showTags: false,
     showEdges: true,
-    edgeInvitations: [invitation] // Bid invitation automatically available
+    edgeInvitations: [invitation], // Bid invitation automatically available
+    referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
   };
 
   $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
@@ -196,6 +197,12 @@ function renderContent(notes, conflictIds, bidEdges) {
     }
 
     updateCounts();
+  });
+
+  $('#invitation-container').on('apiReturnedError', '.tag-widget', function (e, error) {
+    if (error.path === 'too many edges') {
+      setTimeout(function () { location.reload(); }, 1000);
+    }
   });
 
   function updateNotes(notes) {

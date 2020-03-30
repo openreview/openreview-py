@@ -2,8 +2,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import datetime
 import json
+import time
 import openreview
 import pytest
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 
 class TestBuilder():
 
@@ -87,7 +93,7 @@ class TestBuilder():
 
         author_client = helpers.create_user('author_test1@mail.com', 'Test', 'Author')
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_Author1', 'drew@mail.com', 'test.org/2019/Conference/Program_Chairs'],
+            readers = ['~Test_Author1', 'drew@mail.com', 'test.org/2019/Conference'],
             writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
             signatures = ['~Test_Author1'],
             content = {
@@ -97,7 +103,7 @@ class TestBuilder():
                 'authors': ['Test Author', 'Drew Barrymore']
             }
         )
-        url = client.put_pdf(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'))
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
         client.post_note(note)
 
@@ -115,7 +121,6 @@ class TestBuilder():
         assert blind_submissions
         assert len(blind_submissions) == 1
 
-        conference.set_authors()
         conference.set_review_stage(conference.review_stage)
 
         reviewer_client = helpers.create_user('reviewer_test1@mail.com', 'Test', 'ReviewerOne')
@@ -170,3 +175,73 @@ class TestBuilder():
         )
         review_note = reviewer_client.post_note(note)
         assert review_note
+
+    def test_PC_console_sort_by_options(self, client, test_client, selenium, request_page, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('sortTest.org/2019/Conference')
+        builder.set_conference_name('Sort Test Conference 2019')
+        builder.set_conference_short_name('Sort TEST Conf 2019')
+        builder.set_homepage_header({
+        'title': 'Sort Test Conference 2019',
+        'subtitle': 'Sort TEST Conf 2019',
+        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
+        'date': 'Sept 11-15, 2019',
+        'website': 'https://testconf19.com',
+        'location': 'Berkeley, CA, USA'
+        })
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+        builder.has_area_chairs(False)
+        conference = builder.get_result()
+        conference.set_program_chairs(emails=['pc_testconsole1@mail.com'])
+
+        note = openreview.Note(invitation = conference.get_submission_id(),
+            readers = ['~Test_Author1', 'drew@mail.com', 'sortTest.org/2019/Conference'],
+            writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
+            signatures = ['~Test_Author1'],
+            content = {
+                'title': 'Paper title Sort Conference',
+                'abstract': 'This is an abstract',
+                'authorids': ['author_test1@mail.com', 'drew@mail.com'],
+                'authors': ['Test Author', 'Drew Barrymore']
+            }
+        )
+        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        note.content['pdf'] = url
+        client.post_note(note)
+
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now)
+        conference = builder.get_result()
+
+        conference.create_blind_submissions()
+
+        pc_client = helpers.create_user('pc_testconsole1@mail.com', 'Test', 'PCConsole')
+        request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+
+        assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
+        assert selenium.find_element_by_xpath('//div[@id="venue-configuration"]//h3')
+
+        WebDriverWait(selenium, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'message-papers-btn'))
+        )
+
+        expected_options = ['Paper Number', 'Paper Title', 'Average Rating', 'Max Rating', 'Min Rating', 'Average Confidence', 'Max Confidence', 'Min Confidence', 'Reviewers Assigned', 'Reviews Submitted', 'Reviews Missing', 'Decision']
+        unexpected_options = ['Meta Review Missing']
+        for option in expected_options:
+            assert selenium.find_element_by_class_name('-'.join(option.split(' ')) + '-paper-status')
+
+        with pytest.raises(NoSuchElementException):
+            for option in unexpected_options:
+                assert selenium.find_element_by_class_name('-'.join(option.split(' ')) + '-paper-status')
+
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+
+        expected_options.append('Meta Review Missing')
+        for option in expected_options:
+            assert selenium.find_element_by_class_name('-'.join(option.split(' ')) + '-paper-status')

@@ -6,7 +6,7 @@ All the Invitation Ids for Submissions can be retrieved like this::
     >>> from __future__ import print_function
     >>> import openreview
     >>> c = openreview.Client(baseurl='https://openreview.net')
-    >>> invi = openreview.get_submission_invitations(c)
+    >>> invi = openreview.tools.get_submission_invitations(c)
     >>> print(*inv,sep="\n")
     machineintelligence.cc/MIC/2018/Conference/-/Submission
     machineintelligence.cc/MIC/2018/Abstract/-/Submission
@@ -100,4 +100,3 @@ Using these Invitation Ids we can extract the relevant notes like this::
      'tcdate': 1509036001039,
      'tmdate': 1531951157137,
      'writers': [u'ICLR.cc/2018/Conference']}
-    

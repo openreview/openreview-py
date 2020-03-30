@@ -7,17 +7,20 @@ var HEADER = {};
 var REVIEWER_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var LEGACY_INVITATION_ID = false;
+var REVIEW_LOAD = 0;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 
 // Ajax functions
 var getNumberfromGroup = function(groupId, name) {
-
   var tokens = groupId.split('/');
-  paper = _.find(tokens, function(token) { return token.startsWith(name); });
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
   if (paper) {
-    return parseInt(paper.replace(name, ''));
+    return parseInt(paper.replace(name, ''), 10);
   } else {
     return null;
   }
@@ -43,7 +46,7 @@ var getBlindedNotes = function(noteNumbers) {
 
   var noteNumbersStr = noteNumbers.join(',');
 
-  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr, noDetails: true })
+  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr })
     .then(function(result) {
       return result.notes;
     });
@@ -54,7 +57,7 @@ var getAllRatings = function(callback) {
   var allNotes = [];
 
   function getPromise(offset, limit) {
-    return $.getJSON('notes', { invitation: invitationId, offset: offset, limit: limit, noDetails: true })
+    return $.getJSON('notes', { invitation: invitationId, offset: offset, limit: limit })
     .then(function(result) {
       allNotes = _.union(allNotes, result.notes);
       if (result.notes.length == limit) {
@@ -129,13 +132,14 @@ var getUserProfiles = function(userIds) {
     return $.Deferred().resolve([]);
   }
 
-  return $.post('/user/profiles', JSON.stringify({ids: userIds}))
+  return Webfield.post('/user/profiles', { ids: userIds })
   .then(function(result) {
-
     var profileMap = {};
+    if (!result || !result.profiles) {
+      return profileMap;
+    }
 
-    _.forEach(result.profiles, function(profile) {
-
+    result.profiles.forEach(function(profile) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail;
@@ -143,10 +147,6 @@ var getUserProfiles = function(userIds) {
     })
 
     return profileMap;
-  })
-  .fail(function(error) {
-    displayError();
-    return null;
   });
 };
 
@@ -169,7 +169,7 @@ var getOfficialReviews = function(noteNumbers) {
     return $.Deferred().resolve({});
   }
 
-  return $.getJSON('notes', { invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true, noDetails: true })
+  return $.getJSON('notes', { invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true })
     .then(function(result) {
       return result.notes;
     }).fail(function(error) {
@@ -180,45 +180,73 @@ var getOfficialReviews = function(noteNumbers) {
 
 // Render functions
 var displayHeader = function(headerP) {
-  var $panel = $('#group-container');
-  $panel.hide('fast', function() {
-    $panel.prepend('\
-      <div id="header">\
-        <h1>' + HEADER.title + '</h1>\
-        <div class="description">' + HEADER.instructions + '</div>\
-      </div>\
-      <div id="notes">\
-        <div class="tabs-container"></div>\
-      </div>'
-    );
 
-    var loadingMessage = '<p class="empty-message">Loading...</p>';
-    var tabsData = {
-      sections: [
-        {
-          heading: 'Assigned Papers',
-          id: 'assigned-papers',
-          content: loadingMessage,
-          active: true
-        },
-        {
-          heading: 'Reviewer Schedule',
-          id: 'reviewer-schedule',
-          content: HEADER.schedule
-        },
-        {
-          heading: 'Reviewer Tasks',
-          id: 'reviewer-tasks',
-          content: loadingMessage,
+  var reducedLoadP = $.Deferred().resolve(0);
+  if (REVIEW_LOAD > 0) {
+    var userIds = _.union(user.profile.usernames, user.profile.emails);
+    reducedLoadP = Webfield.get('/notes', { invitation: CONFERENCE_ID + '/-/Reduced_Load'})
+    .then(function(result) {
+      if (result.notes && result.notes.length) {
+        if (result.notes.length === 1) {
+          return result.notes[0].content.reviewer_load;
+        } else {
+          //If there is more than one there might be a Program Chair
+          var loads = result.notes.filter(function(note) { return userIds.indexOf(note.content.user) >= 0;});
+          return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
         }
-      ]
-    };
-    $panel.find('.tabs-container').append(Handlebars.templates['components/tabs'](tabsData));
+      } else {
+        return REVIEW_LOAD;
+      }
+    })
+  }
 
-    $panel.show('fast', function() {
-      headerP.resolve(true);
+  reducedLoadP
+  .then(function(customLoad) {
+    var customLoadDiv = '';
+    if (customLoad > 0) {
+      customLoadDiv = '<div class="description">You agreed to review up to <b>' + customLoad + ' papers</b>.</div>';
+    }
+    var $panel = $('#group-container');
+    $panel.hide('fast', function() {
+      $panel.prepend('\
+        <div id="header">\
+          <h1>' + HEADER.title + '</h1>\
+          <div class="description">' + HEADER.instructions + '</div>\
+          ' + customLoadDiv + '\
+        </div>\
+        <div id="notes">\
+          <div class="tabs-container"></div>\
+        </div>'
+      );
+
+      var loadingMessage = '<p class="empty-message">Loading...</p>';
+      var tabsData = {
+        sections: [
+          {
+            heading: 'Assigned Papers',
+            id: 'assigned-papers',
+            content: loadingMessage,
+            active: true
+          },
+          // {
+          //   heading: 'Reviewer Schedule',
+          //   id: 'reviewer-schedule',
+          //   content: HEADER.schedule
+          // },
+          {
+            heading: 'Reviewer Tasks',
+            id: 'reviewer-tasks',
+            content: loadingMessage,
+          }
+        ]
+      };
+      $panel.find('.tabs-container').append(Handlebars.templates['components/tabs'](tabsData));
+
+      $panel.show('fast', function() {
+        headerP.resolve(true);
+      });
     });
-  });
+  })
 };
 
 var displayStatusTable = function(profiles, notes, completedRatings, officialReviews, reviewerIds, container, options) {
@@ -249,12 +277,12 @@ var displayStatusTable = function(profiles, notes, completedRatings, officialRev
   }
 };
 
-var displayTasks = function(invitations, edgeInvitations){
-  console.log('displayTasks');
+var displayTasks = function(invitations, edgeInvitations, tagInvitations){
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',
-    emptyMessage: 'No outstanding tasks for this conference'
+    emptyMessage: 'No outstanding tasks for this conference',
+    referrer: encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#reviewer-tasks)')
   }
   $(tasksOptions.container).empty();
 
@@ -264,8 +292,9 @@ var displayTasks = function(invitations, edgeInvitations){
   };
   var reviewerInvitations = _.filter(invitations, filterFunc);
   var reviewerEdgeInvitations = _.filter(edgeInvitations, filterFunc);
+  var reviewerTagInvitations = _.filter(tagInvitations, filterFunc);
 
-  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations, tasksOptions)
+  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations.concat(reviewerTagInvitations), tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
 }
 
@@ -278,17 +307,21 @@ var displayError = function(message) {
 // Helper functions
 var buildTableRow = function(note, reviewerIds, completedRatings, officialReview) {
   var number = '<strong class="note-number">' + note.number + '</strong>';
+  var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#assigned-papers)');
 
   // Build Note Summary Cell
-  note.content.authors = null;  // Don't display 'Blinded Authors'
+  var cell1 = note;
+  cell1.content.authors = null;  // Don't display 'Blinded Authors'
+  cell1.referrer = referrerUrl;
   //note.content.authorDomains = domains;
-  var summaryHtml = Handlebars.templates.noteSummary(note);
+  var summaryHtml = Handlebars.templates.noteSummary(cell1);
 
   // Build Status Cell
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
+    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number),
+    referrer: referrerUrl
   };
   var reviewStatus = {
     invitationUrl: '/forum?' + $.param(invitationUrlParams),
@@ -297,7 +330,7 @@ var buildTableRow = function(note, reviewerIds, completedRatings, officialReview
   if (officialReview) {
     reviewStatus.paperRating = officialReview.content.rating;
     reviewStatus.review = officialReview.content.review;
-    reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id;
+    reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id + '&referrer=' + referrerUrl;
   }
   var statusHtml = Handlebars.templates.noteReviewStatus(reviewStatus);
 
@@ -350,14 +383,24 @@ controller.addHandler('reviewers', {
             regex: WILDCARD_INVITATION,
             invitee: true,
             duedate: true,
-            type: 'edges'
+            type: 'edges',
+            details: 'repliedEdges'
+          }).then(function(result) {
+            return result.invitations;
+          }),
+          Webfield.get('/invitations', {
+            regex: WILDCARD_INVITATION,
+            invitee: true,
+            duedate: true,
+            type: 'tags',
+            details:'repliedTags'
           }).then(function(result) {
             return result.invitations;
           }),
           headerLoaded
         );
       })
-      .then(function(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds, invitations, edgeInvitations, loaded) {
+      .then(function(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, loaded) {
         var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
           return result.concat(_.values(idsObj));
         }, []));
@@ -371,7 +414,8 @@ controller.addHandler('reviewers', {
             officialReviews: officialReviews,
             noteToReviewerIds: noteToReviewerIds,
             invitations: invitations,
-            edgeInvitations: edgeInvitations
+            edgeInvitations: edgeInvitations,
+            tagInvitations: tagInvitations
           }
           renderTable();
         });
@@ -393,7 +437,7 @@ var renderTable = function() {
     '#assigned-papers'
   );
 
-  displayTasks(fetchedData.invitations, fetchedData.edgeInvitations);
+  displayTasks(fetchedData.invitations, fetchedData.edgeInvitations, fetchedData.tagInvitations);
 
   Webfield.ui.done();
 }
@@ -409,22 +453,18 @@ $('#group-container').on('click', 'a.send-reminder-link', function(e) {
   var userId = $(this).data('userId');
   var forumUrl = $(this).data('forumUrl');
   var postData = {
+    groups: [userId],
     subject: SHORT_PHRASE + ' Reminder',
     message: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
-      'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.',
-    groups: [userId]
+      'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.'
   };
 
-  $.post('/mail', JSON.stringify(postData), function(result) {
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
-    //Save the timestamp in the local storage
+  return Webfield.post('/messages', postData).then(function() {
+    // Save the timestamp in the local storage
     localStorage.setItem(forumUrl + '|' + userId, Date.now());
+    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
     renderTable();
-  }, 'json').fail(function(error) {
-    console.log(error);
-    promptError('The reminder email could not be sent at this time');
   });
-  return false;
 });
 
 OpenBanner.venueHomepageLink(CONFERENCE_ID);
