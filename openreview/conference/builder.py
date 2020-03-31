@@ -975,9 +975,10 @@ class BidStage(object):
 class ReviewStage(object):
 
     class Readers(Enum):
-        REVIEWERS_SUBMITTED = 0
+        REVIEWERS = 0
         REVIEWERS_ASSIGNED = 1
-        REVIEWER_SIGNATURE = 2
+        REVIEWERS_SUBMITTED = 2
+        REVIEWER_SIGNATURE = 3
 
     def __init__(self,
         start_date = None,
@@ -1015,6 +1016,8 @@ class ReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
+            readers.append(conference.get_reviewers_id())
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
             readers.append(conference.get_reviewers_id(number = number))
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
