@@ -352,7 +352,7 @@ class TestCommentNotification():
         ])
         builder.set_override_homepage(True)
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
-        builder.set_review_stage(release_to_authors=True, release_to_submitted_reviewers=True)
+        builder.set_review_stage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
