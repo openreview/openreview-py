@@ -549,8 +549,11 @@ class Matching(object):
         if clear_assignments:
             groups = []
             if 'Reviewers' in self.match_group.id:
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
                 groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/AnonReviewer[0-9]+'))
-
+            else:
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chairs'))
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chair[0-9]+'))
             for group in tqdm(groups, total=len(groups), desc='Deleting groups'):
                 client.delete_group(group.id)
 
