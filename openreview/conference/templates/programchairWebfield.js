@@ -145,6 +145,18 @@ var main = function() {
   .then(function(profiles) {
     conferenceStatusData.profiles = profiles;
 
+    conferenceStatusData.blindedNotes
+    for (var i = 0; i < conferenceStatusData.blindedNotes.length; i++) {
+      var note = conferenceStatusData.blindedNotes[i];
+      var revIds = conferenceStatusData.reviewerGroups.byNotes[note.number];
+      for (var revNumber in revIds) {
+        var id = revIds[revNumber];
+        if (!id.id) {
+          revIds[revNumber] = findProfile(profiles, id);
+        }
+      }
+    }
+
     $('.tabs-container .nav-tabs > li').removeClass('loading');
     Webfield.ui.done();
   })
@@ -1025,16 +1037,8 @@ var displayPaperStatusTable = function() {
 
   var rowData = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number];
-    for (var revNumber in revIds) {
-      var id = revIds[revNumber];
-      if (!id.hasOwnProperty('id')) {
-        revIds[revNumber] = findProfile(profiles, id);
-      }
-    }
-
     var areachairId = areachairIds[note.number][0];
     var areachairProfile = {}
-
     if (areachairId) {
       areachairProfile = findProfile(profiles, areachairId);
     } else {
@@ -1045,10 +1049,10 @@ var displayPaperStatusTable = function() {
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
   });
+
   var toNumber = function(value) {
     return value === 'N/A' ? 0 : value;
   }
-
   var order = 'desc';
   var sortOptions = {
     Paper_Number: function(row) { return row.note.number; },
