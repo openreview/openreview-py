@@ -1453,10 +1453,10 @@ var displayAreaChairsStatusTable = function() {
         return row.summary.completedRecs === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews === 0 && row.reviewProgressData.numPapers > 0;
+        return row.reviewProgressData.numCompletedReviews < row.reviewProgressData.numPapers;
       },
       'msg-unsubmitted-metareviews': function(row) {
-        return row.reviewProgressData.numCompletedMetaReviews === 0 && row.reviewProgressData.numPapers > 0;
+        return row.reviewProgressData.numCompletedMetaReviews < row.reviewProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -1656,7 +1656,7 @@ var displayReviewerStatusTable = function() {
         return row.summary.completedBids === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews === 0 && row.reviewProgressData.numPapers > 0;
+        return row.reviewProgressData.numCompletedReviews < row.reviewProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
