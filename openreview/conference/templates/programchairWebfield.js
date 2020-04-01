@@ -1453,10 +1453,10 @@ var displayAreaChairsStatusTable = function() {
         return row.summary.completedRecs === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews === 0;
+        return row.reviewProgressData.numCompletedReviews === 0 && row.reviewProgressData.numPapers > 0;
       },
       'msg-unsubmitted-metareviews': function(row) {
-        return row.reviewProgressData.numCompletedMetaReviews === 0;
+        return row.reviewProgressData.numCompletedMetaReviews === 0 && row.reviewProgressData.numPapers > 0;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -1656,7 +1656,7 @@ var displayReviewerStatusTable = function() {
         return row.summary.completedBids === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews === 0;
+        return row.reviewProgressData.numCompletedReviews === 0 && row.reviewProgressData.numPapers > 0;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -2008,8 +2008,8 @@ var buildPCTableRow = function(index, reviewer, papers) {
   }
 
   var reviewProgressData = {
-    numCompletedMetaReviews: _.size(_.filter(papers, function(p) { return p.metaReview; })),
-    numCompletedReviews: _.size(_.filter(papers, function(p) { return p.review; })),
+    numCompletedMetaReviews: _.filter(papers, function(p) { return p.metaReview; }).length,
+    numCompletedReviews: _.filter(papers, function(p) { return p.review; }).length,
     numPapers: papers.length,
     papers: _.sortBy(papers, [function(p) { return p.note.number; }]),
     referrer: pcTableReferrerUrl
