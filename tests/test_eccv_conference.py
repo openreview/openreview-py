@@ -1164,9 +1164,50 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page):
 
-        conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True))
+        conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True))
 
-        ## Release reviews to authors
+        r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+
+        blinded_notes = conference.get_submissions()
+
+        comment_note = r2_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=blinded_notes[2].id,
+            invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Confidential_Comment',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            content={
+                'title': 'problem with review',
+                'comment': 'This is a comment to the ACs'
+            }
+        ))
+        assert comment_note
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = comment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '.*Comment posted to a paper in your area.')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac1@eccv.org' in recipients
+
+        messages = client.get_messages(subject = '.*Your comment was received on Paper Number')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer2@google.com' in recipients
+
+        ## PCs
+        assert not client.get_messages(subject = '[] A comment was posted. Paper number: 1, Paper title: "Paper title 1"')
+        ## Reviewers
+        assert not client.get_messages(subject = '[] Comment posted to a paper you are reviewing. Paper number: 1, Paper title: "Paper title 1"')
+        ## Authors
+        assert not client.get_messages(subject = '[] Your submission has received a comment. Paper number: 1, Paper title: "Paper title 1"')
+
+        now = datetime.datetime.utcnow()
+
+        ## Release reviews to authors and reviewers
         conference.set_review_stage(openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
             additional_fields = {
                 'summary_of_contributions': {
@@ -1222,5 +1263,5 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review'], release_to_authors = True ))
+            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
 
