@@ -625,26 +625,27 @@ class OfficialCommentInvitation(openreview.Invitation):
         if comment_stage.allow_public_comments:
             readers.append('everyone')
 
-        if comment_stage.authors:
-            readers.append(conference.get_authors_id(note.number))
+        readers.append(conference.get_program_chairs_id())
 
-        if comment_stage.reader_selection:
-            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(note.number))
 
         readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
 
         if comment_stage.unsubmitted_reviewers:
             readers.append(conference.get_reviewers_id(note.number))
 
-        if conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(note.number))
+        if comment_stage.reader_selection:
+            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
 
-        readers.append(conference.get_program_chairs_id())
+        if comment_stage.authors:
+            readers.append(conference.get_authors_id(note.number))
 
         if comment_stage.reader_selection:
             reply_readers = {
                 'description': 'Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response',
-                'values-dropdown': readers
+                'values-dropdown': readers,
+                'default': [conference.get_program_chairs_id()]
             }
         else:
             reply_readers = {
