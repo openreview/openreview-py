@@ -1052,7 +1052,7 @@ var displayPaperStatusTable = function() {
   var order = 'desc';
   var sortOptions = {
     Paper_Number: function(row) { return row.note.number; },
-    Paper_Title: function(row) { return _.toLower(_.trim(row.note.content.title)); },
+    Paper_Title: function(row) { return _.trim(row.note.content.title).toLowerCase(); },
     Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
     Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
     Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
@@ -1612,7 +1612,7 @@ var displayReviewerStatusTable = function() {
 
   var order = 'asc';
   var sortOptions = {
-    Reviewer_Name: function(row) { return row.summary.name; },
+    Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
     Bids_Completed: function(row) { return row.summary.completedBids },
     Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
     Papers_with_Reviews_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
