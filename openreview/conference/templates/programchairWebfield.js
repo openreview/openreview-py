@@ -6,7 +6,6 @@ var BLIND_SUBMISSION_ID = '';
 var WITHDRAWN_SUBMISSION_ID = '';
 var DESK_REJECTED_SUBMISSION_ID = '';
 var HEADER = {};
-var SHOW_AC_TAB = false;
 var LEGACY_INVITATION_ID = false;
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
@@ -368,7 +367,7 @@ var getBidCounts = function(bidInvitationGroup) {
 };
 
 var getAreaChairRecommendationCounts = function() {
-  if (!RECOMMENDATION_NAME || !SHOW_AC_TAB) {
+  if (!RECOMMENDATION_NAME || !AREA_CHAIRS_ID) {
     return $.Deferred().resolve({});
   }
 
@@ -643,7 +642,7 @@ var renderHeader = function() {
     }
   ];
 
-  if (AREA_CHAIRS_ID && SHOW_AC_TAB) {
+  if (AREA_CHAIRS_ID) {
     tabs.push({
       heading: 'Area Chair Status',
       id: 'areachair-status',
