@@ -27,7 +27,7 @@ var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
-var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID + '/Invited';
+var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAGE_SIZE = 25;
 
@@ -253,6 +253,10 @@ var getAreaChairGroups = function() {
 };
 
 var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts) {
+  reviewerBidCounts = reviewerBidCounts || {};
+  areaChairBidCounts = areaChairBidCounts || {};
+  areaChairRecommendationCounts = areaChairRecommendationCounts || {};
+
   var ids = _.filter(userIds, function(id) { return id.charAt(0) === '~'; });
   var emails = _.filter(userIds, function(id) { return id.indexOf('@') > 0; });
 
@@ -291,7 +295,7 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
 };
 
 var getMetaReviews = function() {
-  if (!AREA_CHAIRS_ID) {
+  if (!AREA_CHAIRS_ID ) {
     return $.Deferred().resolve([]);
   }
 
@@ -364,7 +368,7 @@ var getBidCounts = function(bidInvitationGroup) {
 };
 
 var getAreaChairRecommendationCounts = function() {
-  if (!RECOMMENDATION_NAME) {
+  if (!RECOMMENDATION_NAME || !SHOW_AC_TAB) {
     return $.Deferred().resolve({});
   }
 
@@ -639,7 +643,7 @@ var renderHeader = function() {
     }
   ];
 
-  if (AREA_CHAIRS_ID) {
+  if (AREA_CHAIRS_ID && SHOW_AC_TAB) {
     tabs.push({
       heading: 'Area Chair Status',
       id: 'areachair-status',
@@ -664,23 +668,23 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   var formatPeriod = function(invitation) {
     var start;
     var end;
-    var exp = 'none';
+    var exp = 'never';
     var afterStart = true;
     var beforeEnd = true;
     var now = Date.now();
     if (invitation.cdate) {
       var date = new Date(invitation.cdate);
-      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
       afterStart = now > invitation.cdate;
     }
     if (invitation.duedate) {
       var date = new Date(invitation.duedate);
-      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
       beforeEnd = now < invitation.duedate;
     }
     if (invitation.expdate) {
       var date = new Date(invitation.expdate);
-      exp =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      exp =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
     }
 
     var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
@@ -716,6 +720,9 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   };
 
   var renderProgressStat = function(numComplete, numTotal) {
+    if (numTotal === 0) {
+      return '<h3><span style="color: #777;">' + numComplete + ' / 0</span></h3>'
+    }
     return '<h3>' +
       _.round((numComplete / numTotal) * 100, 1) + '% &nbsp;' +
       '<span style="color: #777;">(' + numComplete + ' / ' + numTotal + ')</span>' +
