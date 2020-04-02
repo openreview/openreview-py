@@ -123,7 +123,7 @@ var main = function() {
       reviewersCount: reviewers.length,
       areaChairsCount: areaChairs.length,
       acBidsComplete: calcBidsComplete(areaChairBidCounts, 50),
-      acRecsComplete: calcRecsComplete(areaChairGroupMaps.byAreaChairs, areaChairRecommendationCounts, 10),
+      acRecsComplete: calcRecsComplete(areaChairGroupMaps.byAreaChairs, areaChairRecommendationCounts, 7),
       reviewerBidsComplete: calcBidsComplete(reviewerBidCounts, 50),
       reviewsCount: officialReviews.length,
       assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
