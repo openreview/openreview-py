@@ -11,6 +11,7 @@ def process(client, note, invitation):
     WITHDRAWN_SUBMISSION_ID = ''
     REVEAL_AUTHORS_ON_WITHDRAW = False
     REVEAL_SUBMISSIONS_ON_WITHDRAW = False
+    EMAIL_PROGRAM_CHAIRS = False
 
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
@@ -63,4 +64,7 @@ def process(client, note, invitation):
         CONFERENCE_SHORT_NAME = CONFERENCE_SHORT_NAME,
         paper_title_or_num = forum_note.content.get('title', '#'+str(forum_note.number))
     )
+
+    if not EMAIL_PROGRAM_CHAIRS:
+        committee.remove(PROGRAM_CHAIRS_ID)
     client.post_message(email_subject, committee, email_body)
