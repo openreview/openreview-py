@@ -617,7 +617,7 @@ var calcReviewersComplete = function(reviewerMap, officialReviews) {
 
 var calcPaperReviewsComplete = function(noteMap, officialReviewMap) {
   return _.reduce(noteMap, function(numComplete, reviewerMap, n) {
-    var allSubmitted = officialReviewMap[n] && Object.values(reviewerMap).length === Object.values(officialReviewMap[n]).length;
+    var allSubmitted = officialReviewMap[n] && Object.values(reviewerMap).length >0 && Object.values(reviewerMap).length === Object.values(officialReviewMap[n]).length;
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
 };
