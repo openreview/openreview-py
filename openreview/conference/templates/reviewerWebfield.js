@@ -46,7 +46,7 @@ var getBlindedNotes = function(noteNumbers) {
 
   var noteNumbersStr = noteNumbers.join(',');
 
-  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr })
+  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr, sort:'number:asc' })
     .then(function(result) {
       return result.notes;
     });
