@@ -1006,6 +1006,17 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
 
+    def _get_reviewer_readers(self, conference, number):
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
+            return conference.get_reviewers_id()
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
+            return conference.get_reviewers_id(number = number)
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
+            return conference.get_reviewers_id(number = number) + '/Submitted'
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
+            return '{signatures}'
+        raise openreview.OpenReviewException('Unrecognized readers option')
+
     def get_readers(self, conference, number):
 
         if self.public:
@@ -1016,14 +1027,7 @@ class ReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
-        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
-            readers.append(conference.get_reviewers_id())
-        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
-            readers.append(conference.get_reviewers_id(number = number))
-        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
-            readers.append(conference.get_reviewers_id(number = number) + '/Submitted')
-        if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
-            readers.append('{signatures}')
+        readers.append(self._get_reviewer_readers(conference, number))
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
