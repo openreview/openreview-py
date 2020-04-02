@@ -4,6 +4,7 @@ import os
 import json
 import datetime
 import openreview
+from tqdm import tqdm
 from .. import invitations
 from .. import tools
 
@@ -634,10 +635,10 @@ class OfficialCommentInvitation(openreview.Invitation):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(note.number))
 
-        readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
-
         if comment_stage.unsubmitted_reviewers:
             readers.append(conference.get_reviewers_id(note.number))
+        else:
+            readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
 
         if comment_stage.reader_selection:
             readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
@@ -992,11 +993,11 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(CommentInvitation(conference))
-        for note in notes:
+        for note in tqdm(notes, total=len(notes)):
             invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
 
         if conference.comment_stage.allow_public_comments:
-            for note in notes:
+            for note in tqdm(notes, total=len(notes)):
                 invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
 
         return invitations
@@ -1028,7 +1029,7 @@ class InvitationBuilder(object):
     def set_review_invitation(self, conference, notes):
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
-        for note in notes:
+        for note in tqdm(notes, total=len(notes)):
             invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
             self.__update_readers(invitation)
             invitations.append(invitation)
