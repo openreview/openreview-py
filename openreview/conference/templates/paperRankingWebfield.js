@@ -4,7 +4,7 @@
 
 var CONFERENCE_ID = '';
 var BLIND_INVITATION_ID = CONFERENCE_ID + '/-/Blind_Submission';
-var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
+var WILDCARD = '';
 var PAPER_RANKING_ID = '';
 var GROUP_NAME = '';
 
@@ -44,7 +44,7 @@ function main() {
 
 // Perform all the required API calls
 function load() {
-  var notesP = Webfield.getAll('/groups', {member: user.id, regex: ANONREVIEWER_WILDCARD})
+  var notesP = Webfield.getAll('/groups', {member: user.id, regex: WILDCARD})
   .then(function(groups) {
     return getPaperNumbersfromGroups(groups);
   })

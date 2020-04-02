@@ -348,7 +348,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
 class PaperWithdrawInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs):
 
         content = invitations.withdraw.copy()
 
@@ -396,6 +396,10 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
+            if email_pcs:
+                file_content = file_content.replace(
+                    'EMAIL_PROGRAM_CHAIRS = False',
+                    'EMAIL_PROGRAM_CHAIRS = True')
             if reveal_authors:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
@@ -997,7 +1001,7 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission):
+    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission, email_pcs):
 
         invitations = []
 
@@ -1005,7 +1009,7 @@ class InvitationBuilder(object):
 
         notes = list(conference.get_submissions())
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs)))
 
         return invitations
 
