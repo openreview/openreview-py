@@ -370,13 +370,13 @@ class Matching(object):
                     'max_papers': {
                         'value-regex': '[0-9]+',
                         'required': True,
-                        'description': 'Max number of reviews a person has to do',
+                        'description': 'Max number of reviews a user has to do',
                         'order': 3
                     },
                     'min_papers': {
                         'value-regex': '[0-9]+',
                         'required': True,
-                        'description': 'Min number of reviews a person should do',
+                        'description': 'Min number of reviews a user should do',
                         'order': 4
                     },
                     'alternates': {
@@ -396,7 +396,7 @@ class Matching(object):
                         'value-regex': '.*',
                         'default': self.match_group.id,
                         'required': True,
-                        'description': 'Invitation to get the configuration note',
+                        'description': 'Group id contatining users to be matched',
                         'order': 7
                     },
                     'scores_specification': {
@@ -415,7 +415,7 @@ class Matching(object):
                     'conflicts_invitation': {
                         'value': self.conference.get_conflict_score_id(self.match_group.id),
                         'required': True,
-                        'description': 'Invitation to store aggregated scores',
+                        'description': 'Invitation to store conflict scores',
                         'order': 10
                     },
                     'custom_load_invitation': {
@@ -430,7 +430,7 @@ class Matching(object):
                         'description': 'Invitation to store paper user assignments',
                         'order': 12
                     },
-                    'custom_max_users_invitation': {
+                    'custom_user_demand_invitation': {
                         'description': 'Invitation to store custom max number of users required by papers',
                         'default': self.match_group.id + '/-/Custom_Max_Users',
                         'order': 13,
