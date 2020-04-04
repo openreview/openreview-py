@@ -1,4 +1,3 @@
-
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
@@ -20,30 +19,9 @@ var main = function() {
 
   displayHeader();
 
-  var userIds = _.union(user.profile.usernames, user.profile.emails);
-
-  getReviewerNoteNumbers()
-    .then(function(noteNumbers) {
-      return $.when(
-        getBlindedNotes(noteNumbers),
-        getReviewRatings(noteNumbers),
-        getOfficialReviews(noteNumbers),
-        getReviewerGroups(noteNumbers),
-        getNoteInvitations(),
-        getEdgeInvitations(),
-        getTagInvitations(),
-        getCustomLoad(userIds)
-      );
-    })
+  loadReviewerData()
     .then(function(
-      blindedNotes,
-      reviewRatings,
-      officialReviews,
-      noteToReviewerIds,
-      invitations,
-      edgeInvitations,
-      tagInvitations,
-      customLoad
+      blindedNotes, officialReviews, invitations, edgeInvitations, tagInvitations, customLoad
     ) {
       if (customLoad > 0) {
         $('#header .description').append(
@@ -51,10 +29,8 @@ var main = function() {
         );
       }
 
-      displayStatusTable(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds);
-
+      displayStatusTable(blindedNotes, officialReviews);
       displayTasks(invitations, edgeInvitations, tagInvitations);
-
       Webfield.ui.done();
     })
     .fail(function(error) {
@@ -91,8 +67,8 @@ var buildNoteMap = function(noteNumbers) {
 // AJAX functions
 var getReviewerNoteNumbers = function() {
   return Webfield.get('/groups', {
-    member: user.id,
-    regex: ANONREVIEWER_WILDCARD
+    regex: ANONREVIEWER_WILDCARD,
+    member: user.id
   }).then(function(result) {
     if (!result.groups) {
       return [];
@@ -112,87 +88,6 @@ var getBlindedNotes = function(noteNumbers) {
     invitation: BLIND_SUBMISSION_ID, number: noteNumbers.join(',')
   }).then(function(result) {
     return result.notes || [];
-  });
-};
-
-var getReviewRatings = function(noteNumbers) {
-  if (!noteNumbers || !noteNumbers.length) {
-    return $.Deferred().resolve([]);
-  }
-
-  var noteMap = buildNoteMap(noteNumbers);
-
-  return Webfield.getAll('/notes', {
-    invitation: getInvitationId('Review_Rating', '.*')
-  }).then(function(notes) {
-    notes.forEach(function(note) {
-      var num = getNumberFromGroup(note.invitation, 'Paper');
-      if (num in noteMap) {
-        noteMap[num][note.forum] = note;
-      }
-    });
-    return noteMap;
-  });
-};
-
-var getReviewerGroups = function(noteNumbers) {
-  if (!noteNumbers || !noteNumbers.length) {
-    return $.Deferred().resolve([]);
-  }
-
-  var noteMap = buildNoteMap(noteNumbers);
-  var userIds = [];
-
-  return Webfield.get('/groups', { id: ANONREVIEWER_WILDCARD })
-    .then(function(result) {
-      if (!result.groups) {
-        return noteMap;
-      }
-      result.groups.forEach(function(g) {
-        if (!g.members.length) {
-          return;
-        }
-        var num = getNumberFromGroup(g.id, 'Paper');
-        var index = getNumberFromGroup(g.id, 'AnonReviewer');
-        if (num && index && (num in noteMap)) {
-          noteMap[num][index] = g.members[0];
-          userIds.push(g.members[0]);
-        }
-      });
-
-      return getUserProfiles(_.uniq(userIds));
-    })
-    .then(function(profiles) {
-      for (var paperNum in noteMap) {
-        var reviewerMap = noteMap[paperNum];
-        for (var reviewerNum in reviewerMap) {
-          var id = reviewerMap[reviewerNum];
-          reviewerMap[reviewerNum] = profiles[id] || { id: id, name: '', email: id };
-        }
-      }
-      return noteMap;
-    });
-};
-
-var getUserProfiles = function(userIds) {
-  if (!userIds || !userIds.length) {
-    return $.Deferred().resolve([]);
-  }
-
-  return Webfield.post('/user/profiles', { ids: userIds }).then(function(result) {
-    var profileMap = {};
-    if (!result || !result.profiles) {
-      return profileMap;
-    }
-
-    result.profiles.forEach(function(profile) {
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail;
-      profileMap[profile.id] = profile;
-    })
-
-    return profileMap;
   });
 };
 
@@ -267,6 +162,22 @@ var getCustomLoad = function(userIds) {
     });
 };
 
+var loadReviewerData = function() {
+  var userIds = _.union(user.profile.usernames, user.profile.emails);
+
+  return getReviewerNoteNumbers()
+    .then(function(noteNumbers) {
+      return $.when(
+        getBlindedNotes(noteNumbers),
+        getOfficialReviews(noteNumbers),
+        getNoteInvitations(),
+        getEdgeInvitations(),
+        getTagInvitations(),
+        getCustomLoad(userIds)
+      );
+    });
+};
+
 // Render functions
 var displayHeader = function() {
   Webfield.ui.venueHeader(HEADER);
@@ -290,18 +201,19 @@ var displayHeader = function() {
   });
 };
 
-var displayStatusTable = function(notes, completedRatings, officialReviews, reviewerIds) {
+var displayStatusTable = function(notes, officialReviews) {
   var $container = $('#assigned-papers');
 
-  if (Object.keys(reviewerIds).length === 0) {
-    $container.empty().append('<p class="empty-message">You have no assigned papers. Please check again after the paper assignment process. ');
+  if (notes.length === 0) {
+    $container.empty().append(
+      '<p class="empty-message">You have no assigned papers. Please check again after the paper assignment process is complete.</p>'
+    );
+    return;
   }
 
   var rowData = notes.map(function(note) {
     var officialReview = _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]);
-    return buildTableRow(
-      note, reviewerIds[note.number], completedRatings[note.number], officialReview
-    );
+    return buildTableRow(note, officialReview);
   });
 
   var tableHTML = Handlebars.templates['components/table']({
@@ -313,7 +225,7 @@ var displayStatusTable = function(notes, completedRatings, officialReviews, revi
   $container.empty().append(tableHTML);
 };
 
-var buildTableRow = function(note, reviewerIds, completedRatings, officialReview) {
+var buildTableRow = function(note, officialReview) {
   var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#assigned-papers)');
   var number = '<strong class="note-number">' + note.number + '</strong>';
 
