@@ -325,7 +325,7 @@ class WebfieldBuilder(object):
             'title': reviewers_name.replace('_', ' ') + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>',
+            progresses, so please check back frequently.</p>',
             'schedule': '<h4>Coming Soon</h4>\
             <p>\
                 <em><strong>Please check back later for updates.</strong></em>\
@@ -355,7 +355,7 @@ class WebfieldBuilder(object):
             'title': area_chair_name.replace('_', ' ') + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>',
+            progresses, so please check back frequently.</p>',
             'schedule': '<h4>Coming Soon</h4>\
             <p>\
                 <em><strong>Please check back later for updates.</strong></em>\
@@ -386,7 +386,7 @@ class WebfieldBuilder(object):
 
         instruction_str = '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>'
+            progresses, so please check back frequently.</p>'
 
         header = {
             'title': program_chairs_name.replace('_', ' ') + ' Console',

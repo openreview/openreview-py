@@ -427,7 +427,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         notes = header.find_elements_by_class_name("description")
         assert notes
         assert len(notes) == 2
-        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
+        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently.'
         assert notes[1].text == 'You agreed to review up to 7 papers.'
 
         reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
@@ -437,7 +437,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         notes = header.find_elements_by_class_name("description")
         assert notes
         assert len(notes) == 2
-        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
+        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently.'
         assert notes[1].text == 'You agreed to review up to 4 papers.'
 
         #Area Chairs

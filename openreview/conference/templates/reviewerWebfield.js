@@ -237,14 +237,9 @@ var buildTableRow = function(note, officialReview) {
   var summaryHtml = Handlebars.templates.noteSummary(cell1);
 
   // Build Status Cell
-  var invitationUrlParams = {
-    id: note.forum,
-    noteId: note.id,
-    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number),
-    referrer: referrerUrl
-  };
+  var invitationId = getInvitationId(OFFICIAL_REVIEW_NAME, note.number);
   var reviewStatus = {
-    invitationUrl: '/forum?' + $.param(invitationUrlParams),
+    invitationUrl: '/forum?id=' + note.forum + '&noteId=' + note.forum + '&invitationId=' + invitationId + '&referrer=' + referrerUrl,
     invitationName: 'Official Review'
   };
   if (officialReview) {
@@ -261,7 +256,7 @@ var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',
-    emptyMessage: 'No outstanding tasks for this conference',
+    emptyMessage: 'You have no outstanding tasks for this conference.',
     referrer: encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#reviewer-tasks)')
   }
   $(tasksOptions.container).empty();
@@ -270,9 +265,9 @@ var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
   var filterFunc = function(inv) {
     return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) > -1; });
   };
-  var reviewerInvitations = _.filter(invitations, filterFunc);
-  var reviewerEdgeInvitations = _.filter(edgeInvitations, filterFunc);
-  var reviewerTagInvitations = _.filter(tagInvitations, filterFunc);
+  var reviewerInvitations = invitations.filter(filterFunc);
+  var reviewerEdgeInvitations = edgeInvitations.filter(filterFunc);
+  var reviewerTagInvitations = tagInvitations.filter(filterFunc);
 
   Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations.concat(reviewerTagInvitations), tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
