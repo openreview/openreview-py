@@ -426,7 +426,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert header
         notes = header.find_elements_by_class_name("description")
         assert notes
-        assert len(notes) == 2
+        assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently.'
         assert notes[1].text == 'You agreed to review up to 7 papers.'
 
@@ -436,7 +436,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert header
         notes = header.find_elements_by_class_name("description")
         assert notes
-        assert len(notes) == 2
+        assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently.'
         assert notes[1].text == 'You agreed to review up to 4 papers.'
 
