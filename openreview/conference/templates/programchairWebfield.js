@@ -455,14 +455,16 @@ var findProfile = function(profiles, id) {
     return profiles[id];
   }
   var profile = _.find(profiles, function(p) {
-    return _.includes(p.allNames, id) || _.includes(p.allEmails, id);
+    return _.includes(_.map(p.allNames, 'username'), id) || _.includes(p.allEmails, id);
   });
   return profile || {
     id: id,
     name: id.indexOf('~') === 0 ? view.prettyId(id) : id,
     email: id,
     allEmails: [id],
-    allNames: [id]
+    allNames: [{
+      username: id
+    }]
   }
 };
 
@@ -1593,7 +1595,8 @@ var displayReviewerStatusTable = function() {
       var reviewerNum = 0;
       var reviewers = reviewerByNote[number];
       for (var revNumber in reviewers) {
-        if (reviewer == reviewers[revNumber].id) {
+        var profile = reviewers[revNumber];
+        if (_.includes(_.map(profile.allNames, 'username'), reviewer) || _.includes(profile.allEmails, reviewer)) {
           reviewerNum = revNumber;
           break;
         }
