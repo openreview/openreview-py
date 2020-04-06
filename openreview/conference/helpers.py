@@ -160,10 +160,10 @@ def get_review_stage(client, request_forum):
         review_form_remove_options = []
 
     readers_map = {
-        'Reviews should be immediately revealed to the all paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS,
-        'Reviews should be immediately revealed to the assigned paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED,
-        'Reviews should be immediately revealed only to the reviewers who have already reviewed the paper': openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED,
-        'Review should be only visible to the reviewer, author of the review': openreview.ReviewStage.Readers.REVIEWER_SIGNATURE
+        'Reviews should be immediately revealed to all reviewers': openreview.ReviewStage.Readers.REVIEWERS,
+        'Reviews should be immediately revealed to the paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED,
+        'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED,
+        'Review should not be revealed to any reviewer, except to the author of the review': openreview.ReviewStage.Readers.REVIEWER_SIGNATURE
     }
     reviewer_readers= request_forum.content.get('release_reviews_to_reviewers', '')
 
