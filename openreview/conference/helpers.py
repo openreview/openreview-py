@@ -177,7 +177,7 @@ def get_review_stage(client, request_forum):
         start_date = review_start_date,
         due_date = review_due_date,
         allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
-        public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'),
+        public = (request_forum.content.get('make_reviews_public', None) == 'Yes, reviews should be revealed publicly when they are posted'),
         release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
         email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),
