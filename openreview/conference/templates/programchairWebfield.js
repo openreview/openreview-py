@@ -157,6 +157,14 @@ var main = function() {
       }
     }
 
+    conferenceStatusData.reviewerOptions = _.map(conferenceStatusData.reviewers, function(r) {
+      var profile = findProfile(conferenceStatusData.profiles, r);
+      return {
+        id: r,
+        description: view.prettyId(profile.name) + ' - (' + profile.allEmails + ')'
+      }
+    });
+
     $('.tabs-container .nav-tabs > li').removeClass('loading');
     Webfield.ui.done();
   })
@@ -1771,12 +1779,7 @@ var updateReviewerContainer = function(paperNumber) {
   $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
   var paperForum = $reviewerProgressContainer.data('paperForum');
 
-  var dropdownOptions = conferenceStatusData.reviewers.map(function(member) {
-    return {
-      id: member,
-      description: view.prettyId(member)
-    };
-  });
+  var dropdownOptions = conferenceStatusData.reviewerOptions;
   var filterOptions = function(options, term) {
     return _.filter(options, function(p) {
       return _.includes(p.description.toLowerCase(), term.toLowerCase());
