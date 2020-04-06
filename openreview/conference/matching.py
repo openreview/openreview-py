@@ -418,39 +418,35 @@ class Matching(object):
                         'description': 'Invitation to store conflict scores',
                         'order': 10
                     },
-                    'custom_load_invitation': {
-                        'value': self._get_edge_invitation_id('Custom_Load'),
-                        'required': False,
-                        'description': 'Invitation to store custom loads',
-                        'order': 11
-                    },
                     'assignment_invitation': {
                         'value': self.conference.get_paper_assignment_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store paper user assignments',
-                        'order': 12
+                        'order': 11
                     },
                     'custom_user_demand_invitation': {
                         'description': 'Invitation to store custom max number of users required by papers',
                         'default': self.match_group.id + '/-/Custom_Max_Users',
-                        'order': 13,
+                        'order': 12,
                         'value-regex': self.match_group.id + '/-/.*',
                         'required': False
                     },
                     'custom_max_papers_invitation': {
                         'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
                         'default': self.match_group.id + '/-/Custom_Max_Papers',
-                        "order": 14,
-                        "value-regex": self.match_group.id + '/-/.*',
-                        "required": False
+                        'order': 13,
+                        'value-regex': self.match_group.id + '/-/.*',
+                        'required': False
                     },
                     'config_invitation': {
-                        'value': self._get_edge_invitation_id('Assignment_Configuration')
+                        'value': self._get_edge_invitation_id('Assignment_Configuration'),
+                        'order': 14
                     },
                     'solver': {
                         'value-radio': ['MinMax', 'FairFlow'],
                         'default': 'MinMax',
-                        'required': True
+                        'required': True,
+                        'order': 15
                     },
                     'status': {
                         'default': 'Initialized',
@@ -461,11 +457,13 @@ class Matching(object):
                             'No Solution',
                             'Complete',
                             'Deployed'
-                        ]
+                        ],
+                        'order': 16
                     },
                     'error_message': {
                         'value-regex': '.*',
-                        'required': False
+                        'required': False,
+                        'order': 17
                     }
                 }
             })
