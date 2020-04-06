@@ -159,13 +159,27 @@ def get_review_stage(client, request_forum):
     if not isinstance(review_form_remove_options, list):
         review_form_remove_options = []
 
+    readers_map = {
+        'Reviews should be immediately revealed to the all paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS,
+        'Reviews should be immediately revealed to the assigned paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED,
+        'Reviews should be immediately revealed only to the reviewers who have already reviewed the paper': openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED,
+        'Review should be only visible to the reviewer, author of the review': openreview.ReviewStage.Readers.REVIEWER_SIGNATURE
+    }
+    reviewer_readers= request_forum.content.get('release_reviews_to_reviewers', '')
+
+    #Deprecated
+    if reviewer_readers.startswith('Yes'):
+        release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED
+    else:
+        release_to_reviewers = readers_map.get(reviewer_readers, openreview.ReviewStage.Readers.REVIEWER_SIGNATURE)
+
     return openreview.ReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
         allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
         public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'),
         release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
-        release_to_reviewers = (request_forum.content.get('release_reviews_to_reviewers''').startswith('Yes')),
+        release_to_reviewers = release_to_reviewers,
         email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options

@@ -46,7 +46,7 @@ var getBlindedNotes = function(noteNumbers) {
 
   var noteNumbersStr = noteNumbers.join(',');
 
-  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr })
+  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr, sort:'number:asc' })
     .then(function(result) {
       return result.notes;
     });
@@ -320,11 +320,10 @@ var buildTableRow = function(note, reviewerIds, completedRatings, officialReview
   var invitationUrlParams = {
     id: note.forum,
     noteId: note.id,
-    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number),
-    referrer: referrerUrl
+    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
   };
   var reviewStatus = {
-    invitationUrl: '/forum?' + $.param(invitationUrlParams),
+    invitationUrl: '/forum?' + $.param(invitationUrlParams) + '&referrer=' + referrerUrl,
     invitationName: 'Official Review'
   };
   if (officialReview) {

@@ -24,6 +24,7 @@ class TestECCVConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
+        builder.set_conference_short_name('ECCV 2020')
         builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
@@ -301,7 +302,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'mohit+1@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of  to serve as a reviewer' in text
+        assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
 
         reject_url = re.search('http://.*response=No', text).group(0)
         request_page(selenium, reject_url, alert=True)
@@ -321,10 +322,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(group.members) == 1
         assert 'mohit+1@mail.com' in group.members
 
-        messages = client.get_messages(to='mohit+1@mail.com', subject='[] Reviewer Invitation declined')
+        messages = client.get_messages(to='mohit+1@mail.com', subject='[ECCV 2020] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for .\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+        assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for ECCV 2020.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
         ## Reduce the load of Mohit
         notes = client.get_notes(invitation='thecvf.com/ECCV/2020/Conference/-/Recruit_Reviewers', content={'user': 'mohit+1@mail.com'})
@@ -427,7 +428,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         notes = header.find_elements_by_class_name("description")
         assert notes
         assert len(notes) == 2
-        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
+        assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
         assert notes[1].text == 'You agreed to review up to 7 papers.'
 
         reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
@@ -437,7 +438,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         notes = header.find_elements_by_class_name("description")
         assert notes
         assert len(notes) == 2
-        assert notes[0].text == 'This page provides information and status updates for the . It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
+        assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
         assert notes[1].text == 'You agreed to review up to 4 papers.'
 
         #Area Chairs
@@ -479,7 +480,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = ' has received your submission titled ' + note.content['title'])
+        messages = client.get_messages(subject = 'ECCV 2020 has received your submission titled ' + note.content['title'])
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
@@ -495,7 +496,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[1]['status'] == 'ok'
 
-        messages = client.get_messages(subject = ' has received your submission titled I have been updated')
+        messages = client.get_messages(subject = 'ECCV 2020 has received your submission titled I have been updated')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
@@ -504,11 +505,11 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         tauthor_message = [msg for msg in messages if msg['content']['to'] == note.tauthor][0]
         assert tauthor_message
-        assert tauthor_message['content']['text'] == 'Your submission to  has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id
+        assert tauthor_message['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id
 
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
-        assert other_author_messages[0]['content']['text'] == 'Your submission to  has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
+        assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
 
     def test_revise_additional_files(self, conference, client, test_client):
 
@@ -879,14 +880,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             weight = 1
         ))
 
-    def test_ac_console(self, conference, test_client, helpers, selenium, request_page):
-
-        conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
-        conference.set_assignment('~AreaChair_ECCV_One1', 2, is_area_chair=True)
-
-        conference.set_assignment('~Reviewer_ECCV_One1', 1)
-        conference.set_assignment('~Reviewer_ECCV_One1', 2)
-
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.close_submissions()
@@ -1009,4 +1002,267 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 4
+
+
+    def test_review_stage(self, conference, client, test_client, selenium, request_page):
+
+        conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
+        conference.set_assignment('~AreaChair_ECCV_One1', 2, is_area_chair=True)
+
+        conference.set_assignment('~Reviewer_ECCV_One1', 1)
+        conference.set_assignment('~Reviewer_ECCV_One1', 2)
+        conference.set_assignment('~Reviewer_ECCV_Two1', 1)
+        conference.set_assignment('~Reviewer_ECCV_Two1', 2)
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_review_stage(openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+            additional_fields = {
+                'summary_of_contributions': {
+                    'order': 1,
+                    'description': 'Briefly describe the contributions of the paper in your own words. If necessary, also mention a discrepancy between the contributions claimed by the authors and the contributions from your point of view. This can be elaborated in Strengths and Weaknesses below. Max length: 800',
+                    'value-regex': '[\\S\\s]{0,800}',
+                    'required': True
+                },
+                'strengths': {
+                    'order': 2,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Describe the strengths of the paper in detail. Max length: 5000',
+                    'required': True
+                },
+                'weaknesses': {
+                    'order': 3,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Describe the weaknesses of the paper in detail. Provide solid arguments and evidence for your claims. For instance, it is not okay to say that something has been done before, if you do not provide concrete references. Max length: 5000',
+                    'required': True
+                },
+                'suggestion_to_reviewers': {
+                    'order': 4,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Here you can provide recommendations to the authors how they can improve their manuscript (e.g. typos). They are not relevant for your rating. Max length: 5000',
+                    'required': True
+                },
+                'preliminary_rating': {
+                    'order': 5,
+                    'value-dropdown': [
+                        '6: Strong accept',
+                        '5: Weak accept',
+                        '4: Borderline accept',
+                        '3: Borderline reject',
+                        '2: Weak reject',
+                        '1: Strong reject'
+                    ],
+                    'required': True
+                },
+                'preliminary_rating_justification': {
+                    'order': 6,
+                    'value-regex': '[\\S\\s]{0,1000}',
+                    'description': 'Briefly summarize the strenths and weaknesses and justify your rating. Keep in mind that your rating should not be based on your personal taste, but should be based on scientific arguments as elaborated in strengths and weaknesses. Max length: 1000',
+                    'required': True
+                },
+                'confidence': {
+                    'order': 7,
+                    'value-dropdown': [
+                        '4: High, published similar work',
+                        '3: Medium, published weakly related work',
+                        '2: Low, read similar work',
+                        '1: None, no idea why this paper was assigned to me'
+                    ],
+                    'required': True
+                }
+            },
+            remove_fields = ['title', 'rating', 'review']))
+
+        r1_client = openreview.Client(username='reviewer1@fb.com', password='1234')
+        r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+
+
+        blinded_notes = conference.get_submissions()
+        assert len(blinded_notes) == 3
+
+        review_note = r1_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=blinded_notes[2].id,
+            invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            content={
+                'summary_of_contributions': 'summary_of_contributions',
+                'strengths': 'strengths',
+                'weaknesses': 'weaknesses',
+                'suggestion_to_reviewers': 'suggestion_to_reviewers',
+                'preliminary_rating': '6: Strong accept',
+                'preliminary_rating_justification': 'preliminary_rating_justification',
+                'confidence': '4: High, published similar work'
+            }
+        ))
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[ECCV 2020] Your review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer1@fb.com' in recipients
+
+        ## AC and other reviewers
+        messages =  client.get_messages(subject = '[ECCV 2020] Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac1@eccv.org' in recipients
+
+        ## PCs
+        assert not client.get_messages(subject = '[ECCV 2020] A review has been received on Paper number: 1, Paper title: "Paper title 1"')
+        ## Authors
+        assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
+
+        review_note = r2_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=blinded_notes[2].id,
+            invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            content={
+                'summary_of_contributions': 'summary_of_contributions',
+                'strengths': 'strengths 2',
+                'weaknesses': 'weaknesses 2',
+                'suggestion_to_reviewers': 'suggestion_to_reviewers 2',
+                'preliminary_rating': '5: Weak accept',
+                'preliminary_rating_justification': 'preliminary_rating_justification 2',
+                'confidence': '1: None, no idea why this paper was assigned to me'
+            }
+        ))
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[ECCV 2020] Your review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer1@fb.com' in recipients
+        assert 'reviewer2@google.com' in recipients
+
+        ## AC and other reviewers
+        messages =  client.get_messages(subject = '[ECCV 2020] Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac1@eccv.org' in recipients
+        assert 'ac1@eccv.org' in recipients
+
+        ## PCs
+        assert not client.get_messages(subject = '[ECCV 2020] A review has been received on Paper number: 1, Paper title: "Paper title 1"')
+        ## Authors
+        assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
+
+
+    def test_comment_stage(self, conference, client, test_client, selenium, request_page):
+
+        conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True))
+
+        r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+
+        blinded_notes = conference.get_submissions()
+
+        comment_note = r2_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=blinded_notes[2].id,
+            invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Confidential_Comment',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            content={
+                'title': 'problem with review',
+                'comment': 'This is a comment to the ACs'
+            }
+        ))
+        assert comment_note
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = comment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[ECCV 2020] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac1@eccv.org' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer2@google.com' in recipients
+
+        ## PCs
+        assert not client.get_messages(subject = '[ECCV 2020] A comment was posted. Paper number: 1, Paper title: "Paper title 1"')
+        ## Reviewers
+        assert not client.get_messages(subject = '[ECCV 2020] Comment posted to a paper you are reviewing. Paper number: 1, Paper title: "Paper title 1"')
+        ## Authors
+        assert not client.get_messages(subject = '[ECCV 2020] Your submission has received a comment. Paper number: 1, Paper title: "Paper title 1"')
+
+        now = datetime.datetime.utcnow()
+
+        ## Release reviews to authors and reviewers
+        conference.set_review_stage(openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+            additional_fields = {
+                'summary_of_contributions': {
+                    'order': 1,
+                    'description': 'Briefly describe the contributions of the paper in your own words. If necessary, also mention a discrepancy between the contributions claimed by the authors and the contributions from your point of view. This can be elaborated in Strengths and Weaknesses below. Max length: 800',
+                    'value-regex': '[\\S\\s]{0,800}',
+                    'required': True
+                },
+                'strengths': {
+                    'order': 2,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Describe the strengths of the paper in detail. Max length: 5000',
+                    'required': True
+                },
+                'weaknesses': {
+                    'order': 3,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Describe the weaknesses of the paper in detail. Provide solid arguments and evidence for your claims. For instance, it is not okay to say that something has been done before, if you do not provide concrete references. Max length: 5000',
+                    'required': True
+                },
+                'suggestion_to_reviewers': {
+                    'order': 4,
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'description': 'Here you can provide recommendations to the authors how they can improve their manuscript (e.g. typos). They are not relevant for your rating. Max length: 5000',
+                    'required': True
+                },
+                'preliminary_rating': {
+                    'order': 5,
+                    'value-dropdown': [
+                        '6: Strong accept',
+                        '5: Weak accept',
+                        '4: Borderline accept',
+                        '3: Borderline reject',
+                        '2: Weak reject',
+                        '1: Strong reject'
+                    ],
+                    'required': True
+                },
+                'preliminary_rating_justification': {
+                    'order': 6,
+                    'value-regex': '[\\S\\s]{0,1000}',
+                    'description': 'Briefly summarize the strenths and weaknesses and justify your rating. Keep in mind that your rating should not be based on your personal taste, but should be based on scientific arguments as elaborated in strengths and weaknesses. Max length: 1000',
+                    'required': True
+                },
+                'confidence': {
+                    'order': 7,
+                    'value-dropdown': [
+                        '4: High, published similar work',
+                        '3: Medium, published weakly related work',
+                        '2: Low, read similar work',
+                        '1: None, no idea why this paper was assigned to me'
+                    ],
+                    'required': True
+                }
+            },
+            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
 
