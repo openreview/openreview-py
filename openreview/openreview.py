@@ -745,7 +745,7 @@ class Client(object):
         response = self.__handle_response(response)
         return [Profile.from_json(n) for n in response.json()['docs']]
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None, authorReferent = None):
+    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None, authorReferent=None, predictedId=None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -780,6 +780,9 @@ class Client(object):
             params['original'] = "true"
         if authorReferent != None:
             params['authorReferent'] = authorReferent
+        if predictedId != None:
+            params['predictedId'] = predictedId
+
 
         if trash:
             params['trash'] = trash
@@ -1851,7 +1854,7 @@ class Profile(object):
     :param tauthor: True author
     :type tauthor: str, optional
     """
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, _canopies=None, _=None, authorReferent=None):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, _canopies=None, _=None, authorReferent=None, predictedId=None):
         self.id = id
         self.number = number
         self.tcdate = tcdate
@@ -1870,6 +1873,7 @@ class Profile(object):
         self._canopies = _canopies
         self._ = _
         self.authorReferent = authorReferent
+        self.predictedId = predictedId
         if tauthor:
             self.tauthor = tauthor
 
@@ -1906,7 +1910,8 @@ class Profile(object):
             'password': self.password,
             '_canopies': self._canopies,
             '_': self._,
-            'authorReferent': self.authorReferent
+            'authorReferent': self.authorReferent,
+            'predictedId': self.predictedId
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
@@ -1942,6 +1947,7 @@ class Profile(object):
         tauthor=n.get('tauthor'),
         _canopies=n.get('_canopies'),
         _=n.get('_'),
-        authorReferent=n.get('authorReferent')
+        authorReferent=n.get('authorReferent'),
+        predictedId=n.get('predictedId'),
         )
         return profile
