@@ -161,7 +161,7 @@ var main = function() {
       var profile = findProfile(conferenceStatusData.profiles, r);
       return {
         id: r,
-        description: view.prettyId(profile.name) + ' - (' + profile.allEmails + ')'
+        description: view.prettyId(profile.name) + ' (' + profile.allEmails.join(', ') + ')'
       }
     });
 
@@ -302,9 +302,9 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
         profileMap[profile.id] = {
           id: profile.id,
           name: name,
-          allNames: _.filter(profile.content.names, function(name) { return name.username; }),
-          email: profile.content.preferredEmail || profile.content.emails[0],
-          allEmails: profile.content.emails,
+          allNames: _.map(_.filter(profile.content.names, function(name) { return name.username; }), 'username'),
+          email: profile.content.preferredEmail || profile.content.emailsConfirmed[0],
+          allEmails: profile.content.emailsConfirmed,
           bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
           acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0
         };
@@ -463,16 +463,14 @@ var findProfile = function(profiles, id) {
     return profiles[id];
   }
   var profile = _.find(profiles, function(p) {
-    return _.includes(_.map(p.allNames, 'username'), id) || _.includes(p.allEmails, id);
+    return _.includes(p.allNames, id) || _.includes(p.allEmails, id);
   });
   return profile || {
     id: id,
     name: id.indexOf('~') === 0 ? view.prettyId(id) : id,
     email: id,
     allEmails: [id],
-    allNames: [{
-      username: id
-    }]
+    allNames: [id]
   }
 };
 
@@ -1581,8 +1579,8 @@ var displayReviewerStatusTable = function() {
   var findReview = function(reviews, profile) {
     var found;
     profile.allNames.forEach(function(name) {
-      if (reviews[name.username]) {
-        found = reviews[name.username];
+      if (reviews[name]) {
+        found = reviews[name];
       }
     })
     return found;
@@ -1604,7 +1602,7 @@ var displayReviewerStatusTable = function() {
       var reviewers = reviewerByNote[number];
       for (var revNumber in reviewers) {
         var profile = reviewers[revNumber];
-        if (_.includes(_.map(profile.allNames, 'username'), reviewer) || _.includes(profile.allEmails, reviewer)) {
+        if (_.includes(profile.allNames, reviewer) || _.includes(profile.allEmails, reviewer)) {
           reviewerNum = revNumber;
           break;
         }
@@ -2270,7 +2268,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     membersToDelete.push(email);
   });
   _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allNames, function(name){
-    membersToDelete.push(name.username);
+    membersToDelete.push(name);
   });
 
   Webfield.delete('/groups/members', {
