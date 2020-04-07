@@ -123,21 +123,25 @@ function load() {
 function renderHeader() {
   Webfield.ui.header(HEADER.title, HEADER.instructions);
 
+  var loadingMessage = '<p class="empty-message">Loading...</p>';
   var sections = [
     {
       heading: 'Your Submissions',
       id: 'your-submissions',
+      content: loadingMessage,
+      extraClasses: 'horizontal-scroll',
       active: true
     },
     {
       heading: 'Author Tasks',
-      id: 'author-tasks'
+      id: 'author-tasks',
+      content: loadingMessage
     }
   ];
 
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
-    hidden: true
+    hidden: false
   });
 }
 
