@@ -508,7 +508,7 @@ class Conference(object):
                     self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
                     is_signatory = False)
 
-            # Area Chait Paper group
+            # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
                 self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
 

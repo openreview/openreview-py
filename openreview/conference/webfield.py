@@ -301,9 +301,9 @@ class WebfieldBuilder(object):
     def set_author_page(self, conference, group):
 
         default_header = {
-            'title': 'Authors Console',
+            'title': 'Author Console',
             'instructions': '',
-            'schedule': 'TBD'
+            'schedule': ''
         }
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
@@ -326,10 +326,7 @@ class WebfieldBuilder(object):
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
             progresses, so please check back frequently.</p>',
-            'schedule': '<h4>Coming Soon</h4>\
-            <p>\
-                <em><strong>Please check back later for updates.</strong></em>\
-            </p>'
+            'schedule': ''
         }
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
