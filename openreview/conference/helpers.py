@@ -160,10 +160,10 @@ def get_review_stage(client, request_forum):
         review_form_remove_options = []
 
     readers_map = {
-        'Reviews should be immediately revealed to the all paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS,
-        'Reviews should be immediately revealed to the assigned paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED,
-        'Reviews should be immediately revealed only to the reviewers who have already reviewed the paper': openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED,
-        'Review should be only visible to the reviewer, author of the review': openreview.ReviewStage.Readers.REVIEWER_SIGNATURE
+        'Reviews should be immediately revealed to all reviewers': openreview.ReviewStage.Readers.REVIEWERS,
+        'Reviews should be immediately revealed to the paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED,
+        'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED,
+        'Review should not be revealed to any reviewer, except to the author of the review': openreview.ReviewStage.Readers.REVIEWER_SIGNATURE
     }
     reviewer_readers= request_forum.content.get('release_reviews_to_reviewers', '')
 
@@ -177,7 +177,7 @@ def get_review_stage(client, request_forum):
         start_date = review_start_date,
         due_date = review_due_date,
         allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
-        public = (request_forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.'),
+        public = (request_forum.content.get('make_reviews_public', None) == 'Yes, reviews should be revealed publicly when they are posted'),
         release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
         email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),

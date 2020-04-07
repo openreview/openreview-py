@@ -157,6 +157,14 @@ var main = function() {
       }
     }
 
+    conferenceStatusData.reviewerOptions = _.map(conferenceStatusData.reviewers, function(r) {
+      var profile = findProfile(conferenceStatusData.profiles, r);
+      return {
+        id: r,
+        description: view.prettyId(profile.name) + ' (' + profile.allEmails.join(', ') + ')'
+      }
+    });
+
     $('.tabs-container .nav-tabs > li').removeClass('loading');
     Webfield.ui.done();
   })
@@ -294,9 +302,9 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
         profileMap[profile.id] = {
           id: profile.id,
           name: name,
-          allNames: _.filter(profile.content.names, function(name) { return name.username; }),
-          email: profile.content.preferredEmail || profile.content.emails[0],
-          allEmails: profile.content.emails,
+          allNames: _.map(_.filter(profile.content.names, function(name) { return name.username; }), 'username'),
+          email: profile.content.preferredEmail || profile.content.emailsConfirmed[0],
+          allEmails: profile.content.emailsConfirmed,
           bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
           acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0
         };
@@ -1571,8 +1579,8 @@ var displayReviewerStatusTable = function() {
   var findReview = function(reviews, profile) {
     var found;
     profile.allNames.forEach(function(name) {
-      if (reviews[name.username]) {
-        found = reviews[name.username];
+      if (reviews[name]) {
+        found = reviews[name];
       }
     })
     return found;
@@ -1593,7 +1601,8 @@ var displayReviewerStatusTable = function() {
       var reviewerNum = 0;
       var reviewers = reviewerByNote[number];
       for (var revNumber in reviewers) {
-        if (reviewer == reviewers[revNumber].id) {
+        var profile = reviewers[revNumber];
+        if (_.includes(profile.allNames, reviewer) || _.includes(profile.allEmails, reviewer)) {
           reviewerNum = revNumber;
           break;
         }
@@ -1768,12 +1777,7 @@ var updateReviewerContainer = function(paperNumber) {
   $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
   var paperForum = $reviewerProgressContainer.data('paperForum');
 
-  var dropdownOptions = conferenceStatusData.reviewers.map(function(member) {
-    return {
-      id: member,
-      description: view.prettyId(member)
-    };
-  });
+  var dropdownOptions = conferenceStatusData.reviewerOptions;
   var filterOptions = function(options, term) {
     return _.filter(options, function(p) {
       return _.includes(p.description.toLowerCase(), term.toLowerCase());
@@ -2264,7 +2268,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     membersToDelete.push(email);
   });
   _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allNames, function(name){
-    membersToDelete.push(name.username);
+    membersToDelete.push(name);
   });
 
   Webfield.delete('/groups/members', {
