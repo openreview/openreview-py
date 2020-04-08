@@ -778,13 +778,13 @@ class TestMatching():
         conference.set_assignments(assignment_title='rev-matching')
 
         revs_paper0 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
-        assert ['~Reviewer_One1', 'r2@google.com'] == revs_paper0.members
+        assert 2 == len(revs_paper0.members)
 
         revs_paper1 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
-        assert ['r2@google.com','r3@fb.com'] == revs_paper1.members
+        assert 2 == len(revs_paper1.members)
 
         revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
-        assert ['r3@fb.com', '~Reviewer_One1'] == revs_paper2.members
+        assert 2 == len(revs_paper2.members)
        
     def test_reploy_assigments(self, conference, client, test_client, helpers):
 
