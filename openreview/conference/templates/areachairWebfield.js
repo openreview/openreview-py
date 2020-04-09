@@ -3,6 +3,7 @@ var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
+var PAPER_RANKING_ID = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Ranking';
 var HEADER = {};
 var AREA_CHAIR_NAME = '';
 var REVIEWER_NAME = '';
@@ -108,6 +109,7 @@ var loadData = function(result) {
   var metaReviewsP;
   var allReviewersP;
   var allReviewersWithConflictP;
+  var paperRankingsP;
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
@@ -159,6 +161,15 @@ var loadData = function(result) {
     allReviewersP = $.Deferred().resolve([]);
   }
 
+  if (PAPER_RANKING_ID) {
+    paperRankingsP = Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
+    .then(function (result) {
+      return _.keyBy(result.tags, 'forum');;
+    });
+  } else {
+    paperRankingsP = $.Deferred().resolve({});
+  }
+
   return $.when(
     blindedNotesP,
     getOfficialReviews(noteNumbers),
@@ -167,7 +178,8 @@ var loadData = function(result) {
     invitationsP,
     edgeInvitationsP,
     tagInvitationsP,
-    allReviewersP
+    allReviewersP,
+    paperRankingsP
   );
 };
 
@@ -227,7 +239,7 @@ var getReviewerGroups = function(noteNumbers) {
   });
 };
 
-var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, allReviewers) {
+var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, allReviewers, rankingByPaper) {
   var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
   }, []));
@@ -242,7 +254,8 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, noteToRevi
       noteToReviewerIds: noteToReviewerIds,
       invitations: invitations,
       edgeInvitations: edgeInvitations,
-      tagInvitations: tagInvitations
+      tagInvitations: tagInvitations,
+      rankingByPaper: rankingByPaper
     };
   });
 };
@@ -315,7 +328,7 @@ var renderHeader = function() {
   ]);
 };
 
-var renderStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, container) {
+var renderStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, rankingByPaper, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
@@ -327,7 +340,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
     var metaReviewInvitation = _.find(allInvitations, ['id', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, metaReviewInvitation);
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, metaReviewInvitation, rankingByPaper[note.forum]);
   });
 
   // Sort form handler
@@ -345,6 +358,11 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
     Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
     Meta_Review_Rating: function(row) { return row[4].recommendation ? _.toInteger(row[4].recommendation.split(':')[0]) : 0; }
   };
+
+  if (PAPER_RANKING_ID) {
+    sortOptions.Paper_Ranking = function(row) { return row[1].ranking; }
+  }
+
   var sortResults = function(newOption, switchOrder) {
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
@@ -644,6 +662,7 @@ var renderTableAndTasks = function(fetchedData) {
     fetchedData.officialReviews,
     fetchedData.metaReviews,
     _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
+    fetchedData.rankingByPaper,
     '#assigned-papers'
   );
 
@@ -652,12 +671,15 @@ var renderTableAndTasks = function(fetchedData) {
   Webfield.ui.done();
 }
 
-var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation) {
+var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation, paperRanking) {
   var cellCheck = { selected: false, noteId: note.id };
   var referrerUrl = encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#assigned-papers)');
 
   // Paper number cell
-  var cell0 = { number: note.number};
+  var cell0 = {
+    number: note.number,
+    ranking: paperRanking && paperRanking.tag
+  };
 
   // Note summary cell
   note.content.authors = null;  // Don't display 'Blinded Authors'
