@@ -751,7 +751,7 @@ class Conference(object):
             )
             return result
 
-    def set_assignments(self, assignment_title, is_area_chair=False, clear_assignments=False):
+    def set_assignments(self, assignment_title, is_area_chair=False, overwrite=False):
         if is_area_chair:
             invitation = tools.get_invitation(self.client, self.get_invitation_id(self.meta_review_stage.name))
         else: 
@@ -768,7 +768,7 @@ class Conference(object):
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
         self.set_reviewer_reassignment(enabled=True)
-        return conference_matching.deploy(assignment_title, clear_assignments)
+        return conference_matching.deploy(assignment_title, is_area_chair, overwrite)
 
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options

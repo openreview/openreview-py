@@ -12,6 +12,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+from openreview import tools
+
 class TestMatching():
 
     @pytest.fixture(scope="class")
@@ -41,8 +43,8 @@ class TestMatching():
             </p>'''
         })
         print ('Homepage header set')
-        builder.set_conference_area_chairs_name('Area_Chairs')
-        builder.set_conference_reviewers_name('Reviewers')
+        builder.set_conference_area_chairs_name('Senior_Program_Committee')
+        builder.set_conference_reviewers_name('Program_Committee')
         builder.set_override_homepage(True)
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
@@ -203,26 +205,26 @@ class TestMatching():
         conference.setup_matching(build_conflicts=True)
 
 
-        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Assignment_Configuration')
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Aggregate_Score')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Paper_Assignment')
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment')
 
         # Set up AC matching
         conference.setup_matching(is_area_chair=True, build_conflicts=True)
 
-        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Assignment_Configuration')
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Area_Chairs/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Aggregate_Score')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Paper_Assignment')
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment')
 
         bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -233,37 +235,37 @@ class TestMatching():
         assert 3 == len(bids)
 
         reviewer_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert not reviewer_custom_loads
 
         ac_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
         assert not ac_custom_loads
 
         reviewer_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
             tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict',
             tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
             tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
@@ -277,18 +279,18 @@ class TestMatching():
 
         print(conference.get_reviewers_id())
 
-        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Assignment_Configuration')
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
         assert 'auai.org/UAI/2019/Conference/-/Recommendation' not in invitation.reply['content']['scores_specification']['default']
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Aggregate_Score')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Paper_Assignment')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
 
         # Set up ac matching
         conference.setup_matching(
@@ -296,17 +298,17 @@ class TestMatching():
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
             build_conflicts=True)
 
-        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Assignment_Configuration')
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Area_Chairs/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Area_Chairs/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Area_Chairs/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Aggregate_Score')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Paper_Assignment')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/TPMS_Score')
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Aggregate_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
 
         bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -317,35 +319,35 @@ class TestMatching():
         assert 3 == len(bids)
 
         reviewer_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert not reviewer_custom_loads
 
         ac_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
         assert not ac_custom_loads
 
         reviewer_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict', tail='~AreaChair_One1')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict', tail='~Reviewer_One1')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict', tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict', tail = 'ac2@umass.edu')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail = 'ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Institutional (level 1)'
@@ -355,15 +357,15 @@ class TestMatching():
         assert 3 == len(submissions)
 
         reviewer_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
         assert 9 == len(reviewer_tpms_scores)
 
         ac_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/TPMS_Score')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
         assert 6 == len(ac_tpms_scores)
 
         r3_s0_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[0].id)
         assert r3_s0_tpms_scores
@@ -371,7 +373,7 @@ class TestMatching():
         assert r3_s0_tpms_scores[0].weight == 0.21
 
         r3_s1_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[1].id)
         assert r3_s1_tpms_scores
@@ -379,7 +381,7 @@ class TestMatching():
         assert r3_s1_tpms_scores[0].weight == 0.31
 
         r3_s2_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[2].id)
         assert r3_s2_tpms_scores
@@ -427,14 +429,14 @@ class TestMatching():
 
         print(conference.get_reviewers_id())
 
-        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Assignment_Configuration')
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
 
         # Set up ac matching
         conference.setup_matching(
@@ -442,16 +444,16 @@ class TestMatching():
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
             build_conflicts=True)
 
-        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Assignment_Configuration')
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Area_Chairs/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Area_Chairs/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Area_Chairs/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Reviewers/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
 
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
 
         bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -466,35 +468,35 @@ class TestMatching():
         assert 3 == len(recommendations)
 
         reviewer_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert not reviewer_custom_loads
 
         ac_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
         assert not ac_custom_loads
 
         reviewer_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict', tail='~AreaChair_One1')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict', tail='~Reviewer_One1')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict', tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict', tail='ac2@umass.edu')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Institutional (level 1)'
@@ -504,15 +506,15 @@ class TestMatching():
         assert 3 == len(submissions)
 
         reviewer_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
         assert 9 == len(reviewer_tpms_scores)
 
         ac_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/TPMS_Score')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
         assert 6 == len(ac_tpms_scores)
 
         r3_s0_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[0].id)
         assert r3_s0_tpms_scores
@@ -520,7 +522,7 @@ class TestMatching():
         assert r3_s0_tpms_scores[0].weight == 0.21
 
         r3_s1_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[1].id)
         assert r3_s1_tpms_scores
@@ -528,7 +530,7 @@ class TestMatching():
         assert r3_s1_tpms_scores[0].weight == 0.31
 
         r3_s2_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[2].id)
         assert r3_s2_tpms_scores
@@ -540,7 +542,7 @@ class TestMatching():
 
         blinded_notes = list(conference.get_submissions())
 
-        registration_notes = client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Area_Chairs/-/Form')
+        registration_notes = client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
@@ -550,7 +552,7 @@ class TestMatching():
         ac1_client = helpers.get_user('ac1@cmu.edu')
         ac1_client.post_note(
             openreview.Note(
-                invitation = 'auai.org/UAI/2019/Conference/Area_Chairs/-/Registration',
+                invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration',
                 readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
                 writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
                 signatures = ['~AreaChair_One1'],
@@ -569,16 +571,16 @@ class TestMatching():
         # Set up reviewer matching
         conference.setup_matching(build_conflicts=True)
 
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Subject_Areas_Score')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
 
         # Set up AC matching
         conference.setup_matching(is_area_chair=True, build_conflicts=True)
 
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Subject_Areas_Score')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
-        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
+        assert client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
 
         bids = client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -593,37 +595,37 @@ class TestMatching():
         assert 3 == len(recommendations)
 
         reviewer_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Load')
         assert not reviewer_custom_loads
 
         ac_custom_loads = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Custom_Load')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Load')
         assert not ac_custom_loads
 
         reviewer_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
             tail='~AreaChair_One1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Institutional (level 1)'
 
         r1_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Conflict',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict',
             tail='~Reviewer_One1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Institutional (level 1)'
 
         ac2_conflicts = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Conflict',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
             tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
@@ -634,15 +636,15 @@ class TestMatching():
         assert 3 == len(submissions)
 
         reviewer_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
         assert 9 == len(reviewer_tpms_scores)
 
         ac_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/TPMS_Score')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
         assert 6 == len(ac_tpms_scores)
 
         r3_s0_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[0].id)
         assert r3_s0_tpms_scores
@@ -650,7 +652,7 @@ class TestMatching():
         assert r3_s0_tpms_scores[0].weight == 0.21
 
         r3_s1_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[1].id)
         assert r3_s1_tpms_scores
@@ -658,7 +660,7 @@ class TestMatching():
         assert r3_s1_tpms_scores[0].weight == 0.31
 
         r3_s2_tpms_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/TPMS_Score',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[2].id)
         assert r3_s2_tpms_scores
@@ -666,15 +668,15 @@ class TestMatching():
         assert r3_s2_tpms_scores[0].weight == 0.51
 
         reviewer_subject_area_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Subject_Areas_Score')
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score')
         assert not reviewer_subject_area_scores
 
         ac_subject_areas_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Subject_Areas_Score')
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
         assert 3 == len(ac_subject_areas_scores)
 
         ac1_s0_subject_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Subject_Areas_Score',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
             tail='~AreaChair_One1',
             head=submissions[0].id)
         assert ac1_s0_subject_scores
@@ -682,7 +684,7 @@ class TestMatching():
         assert ac1_s0_subject_scores[0].weight ==  0
 
         ac1_s1_subject_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Subject_Areas_Score',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
             tail='~AreaChair_One1',
             head=submissions[1].id)
         assert ac1_s1_subject_scores
@@ -690,7 +692,7 @@ class TestMatching():
         assert ac1_s1_subject_scores[0].weight ==  0.3333333333333333
 
         ac1_s2_subject_scores = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Subject_Areas_Score',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
             tail='~AreaChair_One1',
             head=submissions[2].id)
         assert ac1_s2_subject_scores
@@ -703,7 +705,7 @@ class TestMatching():
         blinded_notes = list(conference.get_submissions())
 
         edges = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Area_Chairs/-/Paper_Assignment', 
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment', 
             label='ac-matching'
         )
         assert 0 == len(edges)
@@ -770,7 +772,7 @@ class TestMatching():
         ))
 
         edges = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Paper_Assignment', 
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment', 
             label='rev-matching'
         )
         assert 6 == len(edges)
@@ -786,7 +788,7 @@ class TestMatching():
         revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
         assert 2 == len(revs_paper2.members)
        
-    def test_reploy_assigments(self, conference, client, test_client, helpers):
+    def test_redeploy_assigments(self, conference, client, test_client, helpers):
 
         pc_client = openreview.Client(username='pc1@mail.com', password='1234')
         blinded_notes = list(conference.get_submissions())
@@ -823,12 +825,12 @@ class TestMatching():
         ))
 
         edges = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Reviewers/-/Paper_Assignment', 
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment', 
             label='rev-matching-new'
         )
         assert 3 == len(edges)
 
-        conference.set_assignments(assignment_title='rev-matching-new', clear_assignments=True)
+        conference.set_assignments(assignment_title='rev-matching-new', overwrite=True)
 
         revs_paper0 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
@@ -838,3 +840,12 @@ class TestMatching():
 
         revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members
+
+        now = datetime.datetime.now()
+        conference.set_review_stage(openreview.ReviewStage(start_date = now))
+
+        invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/-/Official_Review')
+        assert invitation
+        
+        with pytest.raises(openreview.OpenReviewException, match=r'Review stage has started.'):
+            conference.set_assignments(assignment_title='rev-matching-new2', overwrite=True)

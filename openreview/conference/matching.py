@@ -532,7 +532,7 @@ class Matching(object):
         self._build_config_invitation(score_spec)
 
 
-    def deploy(self, assignment_title, clear_assignments):
+    def deploy(self, assignment_title, is_area_chair, overwrite):
         '''
         WARNING: This function untested
 
@@ -546,14 +546,14 @@ class Matching(object):
             client,
             invitation=self.conference.get_blind_submission_id())
 
-        if clear_assignments:
+        if overwrite:
             groups = []
-            if 'Reviewers' in self.match_group.id:
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/AnonReviewer[0-9]+'))
-            else:
+            if is_area_chair:
                 groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chairs'))
                 groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chair[0-9]+'))
+            else:
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
+                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/AnonReviewer[0-9]+'))
             for group in tqdm(groups, total=len(groups), desc='Deleting groups'):
                 client.delete_group(group.id)
 
