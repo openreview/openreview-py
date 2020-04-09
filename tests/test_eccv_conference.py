@@ -1266,3 +1266,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             },
             remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
 
+
+    def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
+
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
+

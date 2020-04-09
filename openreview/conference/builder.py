@@ -608,9 +608,10 @@ class Conference(object):
         invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.reviewers_name)
         invitations.append(invitation)
 
-        invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_area_chairs_id(), start_date, due_date)
-        invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.area_chairs_name.replace('_', ' '))
-        invitations.append(invitation)
+        if self.use_area_chairs:
+            invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_area_chairs_id(), start_date, due_date)
+            invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.area_chairs_name.replace('_', ' '))
+            invitations.append(invitation)
 
         return invitations
 

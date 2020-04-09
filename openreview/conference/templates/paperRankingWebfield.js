@@ -57,25 +57,28 @@ function load() {
       });
   });
 
-  var tagInvitationsP = Webfield.getAll('/invitations', {id: PAPER_RANKING_ID, type: 'tags'}).then(function(invitations) {
+  var paperRankingInvitationP = Webfield.getAll('/invitations', {id: PAPER_RANKING_ID, type: 'tags'}).then(function(invitations) {
     return invitations.filter(function(invitation) {
       return invitation.invitees.length;
-    });
+    })[0];
   });
 
-  return $.when(notesP, tagInvitationsP);
+  return $.when(notesP, paperRankingInvitationP);
 }
 
 
 // Display the bid interface populated with loaded data
-function renderContent(notes, tagInvitations) {
+function renderContent(notes, paperRankingInvitation) {
+
+
+  paperRankingInvitation.reply.content.tag['value-dropdown'] = paperRankingInvitation.reply.content.tag['value-dropdown'].slice(0, notes.length);
 
   var paperDisplayOptions = {
     pdfLink: true,
     replyCount: true,
     showContents: true,
     showTags: true,
-    tagInvitations: tagInvitations,
+    tagInvitations: [paperRankingInvitation],
     referrer: encodeURIComponent('[Paper Ranking](/invitation?id=' + PAPER_RANKING_ID + ')')
   };
 
