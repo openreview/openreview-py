@@ -608,7 +608,10 @@ var renderTableRows = function(rows, container) {
     },
     Handlebars.templates.noteSummary,
     Handlebars.templates.noteReviewers,
-    Handlebars.templates.noteMetaReviewStatus
+    Handlebars.templates.noteMetaReviewStatus,
+    function(data) {
+      return '<strong class="note-number">' + data.ranking + '</strong>';
+    },
   ];
 
   var rowsHtml = rows.map(function(row) {
@@ -620,7 +623,7 @@ var renderTableRows = function(rows, container) {
   var tableHtml = Handlebars.templates['components/table']({
     headings: [
       '<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
-      'Review Progress', 'Meta Review Status'
+      'Review Progress', 'Meta Review Status', 'Ranking'
     ],
     rows: rowsHtml,
     extraClasses: 'ac-console-table'
@@ -781,7 +784,11 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);
   }
 
-  return [cellCheck, cell0, cell1, cell2, cell3];
+  var cell4 = {
+    ranking: paperRanking && paperRanking.tag
+  }
+
+  return [cellCheck, cell0, cell1, cell2, cell3, cell4];
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
