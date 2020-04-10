@@ -165,7 +165,7 @@ var loadData = function(result) {
 
   var paperRankingsP = Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
   .then(function (result) {
-    return _.keyBy(result.tags, 'forum');;
+    return _.keyBy(result.tags, 'forum');
   });
 
   return $.when(
@@ -642,7 +642,7 @@ var postRenderTable = function(rows) {
     if(row[4].ranking) {
       currentRankings.push(row[4].ranking.tag);
     }
-  })
+  });
   paperRankingInvitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
 
   rows.forEach(function(row) {
@@ -677,7 +677,7 @@ var postRenderTable = function(rows) {
           Webfield.post('/tags', body)
           .then(function(result) {
             row[4].ranking = result; //not sure if this is the best way to do it
-            postRenderTable();
+            postRenderTable(rows);
             done(result);
           })
           .fail(function(error) {
