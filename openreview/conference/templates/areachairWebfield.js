@@ -24,6 +24,7 @@ var allReviewers = [];
 var paperAndReviewersWithConflict ={};
 var paperRankingInvitation = null;
 var showRankings = false;
+var availableOptions = [];
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -364,7 +365,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   };
 
   if (showRankings) {
-    sortOptions.Paper_Ranking = function(row) { return row[4].ranking.tag; }
+    sortOptions.Paper_Ranking = function(row) { return parseInt(row[4].ranking.tag); }
   }
 
   var sortResults = function(newOption, switchOrder) {
@@ -636,6 +637,14 @@ var renderTableRows = function(rows, container) {
 
 var postRenderTable = function(rows) {
 
+  currentRankings = [];
+  rows.forEach(function(row) {
+    if(row[4].ranking) {
+      currentRankings.push(row[4].ranking.tag);
+    }
+  })
+  paperRankingInvitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+
   rows.forEach(function(row) {
     var noteId = row[4].noteId;
     var noteNumber = row[4].paperNumber;
@@ -668,6 +677,7 @@ var postRenderTable = function(rows) {
           Webfield.post('/tags', body)
           .then(function(result) {
             row[4].ranking = result; //not sure if this is the best way to do it
+            postRenderTable();
             done(result);
           })
           .fail(function(error) {
@@ -676,6 +686,7 @@ var postRenderTable = function(rows) {
         }
       }
     );
+    $('.tag-widget', '#' + noteNumber + '-metareview-status').remove();
     $metaReviewStatusContainer.append($tagWidget);
   })
 }
@@ -710,7 +721,7 @@ var renderTableAndTasks = function(fetchedData) {
   })
   if (paperRankingInvitations.length) {
     paperRankingInvitation = paperRankingInvitations[0];
-    paperRankingInvitation.reply.content.tag['value-dropdown'] = paperRankingInvitation.reply.content.tag['value-dropdown'].slice(0, fetchedData.blindedNotes.length);
+    availableOptions = paperRankingInvitation.reply.content.tag['value-dropdown'].slice(0, fetchedData.blindedNotes.length + 1);
   }
 
   if (paperRankingInvitation || Object.keys(fetchedData.rankingByPaper).length) {
