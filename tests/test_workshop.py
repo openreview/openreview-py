@@ -327,7 +327,7 @@ class TestWorkshop():
         })
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED)
         builder.has_area_chairs(False)
         conference = builder.get_result()
 
@@ -369,7 +369,7 @@ class TestWorkshop():
         })
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=True)
+        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED)
         builder.has_area_chairs(False)
         conference = builder.get_result()
         conference.set_reviewers(emails = ['reviewer4@mail.com'])

@@ -3,8 +3,9 @@ var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
+var WITHDRAWN_SUBMISSION_ID = '';
+var DESK_REJECTED_SUBMISSION_ID = '';
 var HEADER = {};
-var SHOW_AC_TAB = false;
 var LEGACY_INVITATION_ID = false;
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
@@ -20,10 +21,12 @@ var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
+var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
+var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAGE_SIZE = 25;
 
@@ -40,34 +43,46 @@ var main = function() {
 
   renderHeader();
 
-  loadConfigurationTab().then(displayConfiguration);
-
   $.when(
     getAllReviewers(),
     getAllAreaChairs(),
     getReviewerGroups(),
     getAreaChairGroups(),
     getBlindedNotes(),
+    getWithdrawnNotesCount(),
+    getDeskRejectedNotesCount(),
     getOfficialReviews(),
     getMetaReviews(),
     getDecisionReviews(),
     getPcAssignmentInvitationsAndTags(),
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
-    getAreaChairRecommendationCounts()
+    getAreaChairRecommendationCounts(),
+    getGroupMembersCount(REVIEWERS_INVITED_ID),
+    getGroupMembersCount(AREA_CHAIRS_INVITED_ID),
+    getRequestForm(),
+    getRegistrationForms(),
+    getWildcardInvitations()
   ).then(function(
     reviewers,
     areaChairs,
     reviewerGroups,
     areaChairGroups,
     blindedNotes,
+    withdrawnNotesCount,
+    deskRejectedNotesCount,
     officialReviews,
     metaReviews,
     decisions,
     pcAssignmentInvitationsAndTags,
     reviewerBidCounts,
     areaChairBidCounts,
-    areaChairRecommendationCounts
+    areaChairRecommendationCounts,
+    reviewersInvitedCount,
+    areaChairsInvitedCount,
+    requestForm,
+    registrationForms,
+    wildcardInvitations
   ) {
     var noteNumbers = blindedNotes.map(function(note) { return note.number; });
     blindedNotes.forEach(function(n) {
@@ -99,11 +114,56 @@ var main = function() {
       pcAssignmentTagInvitations: pcAssignmentInvitationsAndTags.invitations
     };
 
+    var conferenceStats = {
+      blindSubmissionsCount: blindedNotes.length,
+      withdrawnSubmissionsCount: withdrawnNotesCount,
+      deskRejectedSubmissionsCount: deskRejectedNotesCount,
+      reviewersInvitedCount: reviewersInvitedCount,
+      areaChairsInvitedCount: areaChairsInvitedCount,
+      reviewersCount: reviewers.length,
+      areaChairsCount: areaChairs.length,
+      acBidsComplete: calcBidsComplete(areaChairBidCounts, 60),
+      acRecsComplete: calcRecsComplete(areaChairGroupMaps.byAreaChairs, areaChairRecommendationCounts, 7),
+      reviewerBidsComplete: calcBidsComplete(reviewerBidCounts, 40),
+      reviewsCount: officialReviews.length,
+      assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
+      reviewersComplete: calcReviewersComplete(reviewerGroupMaps.byReviewers, officialReviews),
+      paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
+      metaReviewsCount: metaReviews.length,
+      metaReviewersComplete: calcMetaReviewersComplete(areaChairGroupMaps.byAreaChairs, metaReviews),
+    };
+    var conferenceConfig = {
+      requestForm: requestForm,
+      registrationForms: registrationForms,
+      invitations: wildcardInvitations,
+    };
+    displayStatsAndConfiguration(conferenceStats, conferenceConfig);
+
     var uniqueIds = _.union(reviewers, areaChairs);
     return getUserProfiles(uniqueIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts);
   })
   .then(function(profiles) {
     conferenceStatusData.profiles = profiles;
+
+    conferenceStatusData.blindedNotes
+    for (var i = 0; i < conferenceStatusData.blindedNotes.length; i++) {
+      var note = conferenceStatusData.blindedNotes[i];
+      var revIds = conferenceStatusData.reviewerGroups.byNotes[note.number];
+      for (var revNumber in revIds) {
+        var id = revIds[revNumber];
+        if (!id.id) {
+          revIds[revNumber] = findProfile(profiles, id);
+        }
+      }
+    }
+
+    conferenceStatusData.reviewerOptions = _.map(conferenceStatusData.reviewers, function(r) {
+      var profile = findProfile(conferenceStatusData.profiles, r);
+      return {
+        id: r,
+        description: view.prettyId(profile.name) + ' (' + profile.allEmails.join(', ') + ')'
+      }
+    });
 
     $('.tabs-container .nav-tabs > li').removeClass('loading');
     Webfield.ui.done();
@@ -115,29 +175,32 @@ var main = function() {
 
 
 // Ajax functions
-var loadConfigurationTab = function() {
-  var requestFormP = $.Deferred().resolve();
-  if (REQUEST_FORM_ID) {
-    requestFormP = Webfield.get('/notes', { id: REQUEST_FORM_ID }, { handleErrors: false })
-    .then(function(result) {
-      return _.get(result, 'notes[0]', {});
-    })
-    .fail(function() {
-      // Do not fail if config note cannot be loaded
-      return $.Deferred().resolve(null);
-    });
+var getRequestForm = function() {
+  if (!REQUEST_FORM_ID) {
+    return $.Deferred().resolve(null);
   }
 
-  var getInvitationsP = Webfield.getAll('/invitations', {
-    regex: WILDCARD_INVITATION,
-    expired: true
+  return Webfield.get('/notes', { id: REQUEST_FORM_ID, limit: 1 }, { handleErrors: false })
+  .then(function(result) {
+    return _.get(result, 'notes[0]', null);
+  }, function() {
+    // Do not fail if config note cannot be loaded
+    return $.Deferred().resolve(null);
   });
+};
 
-  var getRegistrationFormsP = Webfield.getAll('/notes', {
+var getRegistrationForms = function() {
+  return Webfield.getAll('/notes', {
     invitation: CONFERENCE_ID + '/.*/-/Form'
   });
+};
 
-  return $.when(requestFormP, getInvitationsP, getRegistrationFormsP);
+var getWildcardInvitations = function() {
+  return Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    expired: true,
+    type: 'all'
+  });
 };
 
 var getAllReviewers = function() {
@@ -166,6 +229,28 @@ var getBlindedNotes = function() {
   });
 };
 
+var getWithdrawnNotesCount = function() {
+  if (!WITHDRAWN_SUBMISSION_ID) {
+    return $.Deferred().resolve(0);
+  }
+  return Webfield.get('/notes', {
+    invitation: WITHDRAWN_SUBMISSION_ID, limit: 1
+  }).then(function(result) {
+    return result.count || 0;
+  });
+};
+
+var getDeskRejectedNotesCount = function() {
+  if (!DESK_REJECTED_SUBMISSION_ID) {
+    return $.Deferred().resolve(0);
+  }
+  return Webfield.get('/notes', {
+    invitation: DESK_REJECTED_SUBMISSION_ID, limit: 1
+  }).then(function(result) {
+    return result.count || 0;
+  });
+};
+
 var getOfficialReviews = function() {
   return Webfield.getAll('/notes', {
     invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*')
@@ -187,6 +272,10 @@ var getAreaChairGroups = function() {
 };
 
 var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts) {
+  reviewerBidCounts = reviewerBidCounts || {};
+  areaChairBidCounts = areaChairBidCounts || {};
+  areaChairRecommendationCounts = areaChairRecommendationCounts || {};
+
   var ids = _.filter(userIds, function(id) { return id.charAt(0) === '~'; });
   var emails = _.filter(userIds, function(id) { return id.indexOf('@') > 0; });
 
@@ -213,9 +302,9 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
         profileMap[profile.id] = {
           id: profile.id,
           name: name,
-          allNames: _.filter(profile.content.names, function(name) { return name.username; }),
-          email: profile.content.preferredEmail || profile.content.emails[0],
-          allEmails: profile.content.emails,
+          allNames: _.map(_.filter(profile.content.names, function(name) { return name.username; }), 'username'),
+          email: profile.content.preferredEmail || profile.content.emailsConfirmed[0],
+          allEmails: profile.content.emailsConfirmed,
           bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
           acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0
         };
@@ -225,7 +314,7 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
 };
 
 var getMetaReviews = function() {
-  if (!AREA_CHAIRS_ID) {
+  if (!AREA_CHAIRS_ID ) {
     return $.Deferred().resolve([]);
   }
 
@@ -298,7 +387,7 @@ var getBidCounts = function(bidInvitationGroup) {
 };
 
 var getAreaChairRecommendationCounts = function() {
-  if (!RECOMMENDATION_NAME) {
+  if (!RECOMMENDATION_NAME || !AREA_CHAIRS_ID) {
     return $.Deferred().resolve({});
   }
 
@@ -318,6 +407,21 @@ var getAreaChairRecommendationCounts = function() {
       return profileMap;
     }, {});
   });
+};
+
+var getGroupMembersCount = function(invitationId) {
+  if (!invitationId) {
+    return $.Deferred().resolve(0);
+  }
+
+  return Webfield.get('/groups', { id: invitationId, limit: 1 }, { handleErrors: false })
+    .then(function(result) {
+      var members = _.get(result, 'groups[0].members', []);
+      return members.length;
+    }, function() {
+      // Do not fail if group cannot be retreived
+      return $.Deferred().resolve(0);
+    });
 };
 
 
@@ -416,25 +520,26 @@ var buildOfficialReviewMap = function(noteNumbers, notes) {
   }
 
   var noteMap = buildNoteMap(noteNumbers);
-  var ratingExp = /^(\d+): .*/;
+  if (!notes || !notes.length) {
+    return noteMap;
+  }
 
-  _.forEach(notes, function(n) {
-    if (_.startsWith(n.signatures[0], '~')) {
+  var ratingExp = /^(\d+): .*/;
+  notes.forEach(function(n) {
+    if (n.signatures[0].charAt(0) === '~') {
       var num = getNumberfromGroup(n.invitation, 'Paper');
       var index = n.signatures[0];
     } else {
       var num = getNumberfromGroup(n.signatures[0], 'Paper');
       var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
     }
-    if (num) {
-      if (num in noteMap) {
-        ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
-        n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
-        confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
-        n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
 
-        noteMap[num][index] = n;
-      }
+    if (num && num in noteMap) {
+      ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
+      n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
+      confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
+      n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
+      noteMap[num][index] = n;
     }
   });
 
@@ -483,18 +588,68 @@ var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
     (SCORES_NAME ? ';' + invGroup + '/-/' + SCORES_NAME : '') +
     ';' + invGroup + '/-/Conflict' +
     '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
-}
+};
+
+var calcBidsComplete = function(bidCounts, taskCompletionCount) {
+  // Count how many reviewers or AC have submitted the required number of bids
+  return _.reduce(bidCounts, function(numComplete, bidCount) {
+    return bidCount >= taskCompletionCount ? numComplete + 1 : numComplete;
+  }, 0);
+};
+
+var calcRecsComplete = function(acMap, areaChairRecommendationCounts, taskCompletionCount) {
+  // Count how many ACs have submitted the required number of reviewer recommendations
+  // NOTE: this is not checking that each assigned paper has the required number of rec,
+  // it is just multiplying the number required by the number of assigned papers
+  return _.reduce(areaChairRecommendationCounts, function(numComplete, bidCount, profileId) {
+    return (!acMap[profileId] || bidCount >= acMap[profileId].length * taskCompletionCount)
+      ? numComplete + 1
+      : numComplete;
+  }, 0);
+};
+
+var calcAssignedReviewsCount = function(reviewerMap) {
+  return _.reduce(reviewerMap, function(numComplete, noteNumbers) {
+    return numComplete + noteNumbers.length;
+  }, 0);
+};
+
+var calcReviewersComplete = function(reviewerMap, officialReviews) {
+  return _.reduce(reviewerMap, function(numComplete, noteNumbers) {
+    var allSubmitted = _.every(noteNumbers, function(n) {
+      return _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, n)]);
+    });
+    return allSubmitted ? numComplete + 1 : numComplete;
+  }, 0);
+};
+
+var calcPaperReviewsComplete = function(noteMap, officialReviewMap) {
+  return _.reduce(noteMap, function(numComplete, reviewerMap, n) {
+    var reviewerCount = Object.values(reviewerMap).length;
+    var allSubmitted = officialReviewMap[n] && reviewerCount > 0 && reviewerCount === Object.values(officialReviewMap[n]).length;
+    return allSubmitted ? numComplete + 1 : numComplete;
+  }, 0);
+};
+
+var calcMetaReviewersComplete = function(acMap, metaReviews) {
+  return _.reduce(acMap, function(numComplete, noteNumbers) {
+    var allSubmitted = _.every(noteNumbers, function(n) {
+      return _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, n)]);
+    });
+    return allSubmitted ? numComplete + 1 : numComplete;
+  }, 0);
+};
 
 
 // Render functions
 var renderHeader = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);
-  Webfield.ui.header(HEADER.title, HEADER.instructions);
+  Webfield.ui.header(HEADER.title, '');
 
   var loadingMessage = '<p class="empty-message">Loading...</p>';
   var tabs = [
     {
-      heading: 'Configuration',
+      heading: 'Overview',
       id: 'venue-configuration',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll',
@@ -528,30 +683,35 @@ var renderHeader = function() {
   $('.tabs-container .nav-tabs > li').not(':first-child').addClass('loading');
 };
 
-var displayConfiguration = function(requestForm, invitations, registrationForms) {
+var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs)');
   var formatPeriod = function(invitation) {
     var start;
     var end;
+    var exp = 'never';
     var afterStart = true;
     var beforeEnd = true;
     var now = Date.now();
     if (invitation.cdate) {
       var date = new Date(invitation.cdate);
-      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
       afterStart = now > invitation.cdate;
     }
     if (invitation.duedate) {
       var date = new Date(invitation.duedate);
-      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'});
+      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
       beforeEnd = now < invitation.duedate;
+    }
+    if (invitation.expdate) {
+      var date = new Date(invitation.expdate);
+      exp =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
     }
 
     var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
     if (end) {
-      periodString = periodString + 'until <em>' + end + '</em>';
+      periodString = periodString + 'until <em>' + end + '</em> and expires <em>' + exp + '</em>';
     } else {
-      periodString = periodString + 'no deadline';
+      periodString = periodString + 'no deadline' + ' and expires <em>' + exp + '</em>';
     }
 
     return periodString;
@@ -579,55 +739,132 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
     return description.join('<br>').replace(/should be/g, 'are');
   };
 
-  var invitationMap = {};
-  invitations.forEach(function(invitation) {
-    invitationMap[invitation.id] = invitation;
-  });
+  var renderProgressStat = function(numComplete, numTotal) {
+    if (numTotal === 0) {
+      return '<h3><span style="color: #777;">' + numComplete + ' / 0</span></h3>'
+    }
+    return '<h3>' +
+      _.round((numComplete / numTotal) * 100, 1) + '% &nbsp;' +
+      '<span style="color: #777;">(' + numComplete + ' / ' + numTotal + ')</span>' +
+    '</h3>';
+  };
 
-  var html = '<div><br>'
+  var renderStatContainer = function(title, stat, hint) {
+    return '<div class="col-md-4 col-xs-6">' +
+      '<h4>' + title + '</h4>' +
+      (hint ? '<p class="hint">' + hint + '</p>' : '') + stat +
+      '</div>';
+  };
+
+  // Conference statistics
+  var html = '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Reviewer Recruitment:',
+    '<h3>' + conferenceStats.reviewersCount + ' / ' + conferenceStats.reviewersInvitedCount + '</h3>',
+    'accepted / invited'
+  );
+  html += renderStatContainer(
+    'Area Chair Recruitment:',
+    '<h3>' + conferenceStats.areaChairsCount + ' / ' + conferenceStats.areaChairsInvitedCount + '</h3>',
+    'accepted / invited'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Active Submissions:',
+    '<h3>' + conferenceStats.blindSubmissionsCount + '</h3>'
+  );
+  html += renderStatContainer(
+    'Withdrawn Submissions:',
+    '<h3>' + conferenceStats.withdrawnSubmissionsCount + '</h3>'
+  );
+  html += renderStatContainer(
+    'Desk Rejected Submissions:',
+    '<h3>' + conferenceStats.deskRejectedSubmissionsCount + '</h3>'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  if (BID_NAME) {
+    html += renderStatContainer(
+      'AC Bidding Progress:',
+      renderProgressStat(conferenceStats.acBidsComplete, conferenceStats.areaChairsCount),
+      '% of ACs who have completed the required number of bids'
+    );
+  }
+  if (RECOMMENDATION_NAME) {
+    html += renderStatContainer(
+      'Recommendation Progress:',
+      renderProgressStat(conferenceStats.acRecsComplete, conferenceStats.areaChairsCount),
+      '% of ACs who have completed the required number of reviewer recommendations'
+    );
+  }
+  if (BID_NAME) {
+    html += renderStatContainer(
+      'Reviewer Bidding Progress:',
+      renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
+      '% of Reviewers who have completed the required number of bids'
+    );
+  }
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Review Progress:',
+    renderProgressStat(conferenceStats.reviewsCount, conferenceStats.assignedReviewsCount),
+    '% of all assigned official reviews that have been submitted'
+  );
+  html += renderStatContainer(
+    'Reviewer Progress:',
+    renderProgressStat(conferenceStats.reviewersComplete, conferenceStats.reviewersCount),
+    '% of reviewers who have reviewed all of their assigned papers'
+  );
+  html += renderStatContainer(
+    'Paper Progress:',
+    renderProgressStat(conferenceStats.paperReviewsComplete, conferenceStats.blindSubmissionsCount),
+    '% of papers that have received reviews from all assigned reviewers'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Meta-Review Progress:',
+    renderProgressStat(conferenceStats.metaReviewsCount, conferenceStats.blindSubmissionsCount),
+    '% of papers that have received meta-reviews'
+  );
+  html += renderStatContainer(
+    'AC Meta-Review Progress:',
+    renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.areaChairsCount),
+    '% of area chairs who have completed meta reviews for all their assigned papers'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   // Config
+  var requestForm = conferenceConfig.requestForm;
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   if (requestForm) {
-    html += '<h3>Description:</h3><br>';
+    html += '<div class="col-md-4 col-xs-12">'
+    html += '<h4>Description:</h4>';
     html += '<p style="margin-bottom:2rem"><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
       '<a href="/forum?id=' + requestForm.id + '"><strong>Full Venue Configuration</strong></a>'
       '</p>';
-  }
-
-  // Official Committee
-  html += '<h3>Venue Roles:</h3><br><ul>' +
-    '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
-  if (AREA_CHAIRS_ID) {
-    html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
-  }
-  html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
-    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul><br>';
-
-  if (registrationForms && registrationForms.length) {
-    html += '<h3>Registration Forms:</h3><br><ul>';
-    registrationForms.forEach(function(form) {
-      html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
-    })
-    html += '</ul><br>';
-  }
-
-  // Bids and Recommendations
-  if (BID_NAME) {
-    html += '<h3>Bids & Recommendations:</h3><br><ul>';
-    html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
-    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
-    if (RECOMMENDATION_NAME) {
-      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
-    }
-    html += '</ul><br>';
+    html += '</div>';
   }
 
   // Timeline
-  html += '<h3>Timeline:</h3><br><ul>';
+  var invitationMap = {};
+  conferenceConfig.invitations.forEach(function(invitation) {
+    invitationMap[invitation.id] = invitation;
+  });
+
+  html += '<div class="col-md-8 col-xs-12">'
+  html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
   if (AREA_CHAIRS_ID) {
@@ -640,7 +877,51 @@ var displayConfiguration = function(requestForm, invitations, registrationForms)
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
-  html += '</ul></div>';
+  html += '</ul>';
+  html += '</div>';
+  html += '</div>';
+
+  // Official Committee
+  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += '<div class="col-md-4 col-xs-6">'
+  html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
+    '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
+  if (AREA_CHAIRS_ID) {
+    html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
+  }
+  html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
+    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul>';
+  html += '</div>';
+
+  // Registration Forms
+  var registrationForms = conferenceConfig.registrationForms;
+  if (registrationForms && registrationForms.length) {
+    html += '<div class="col-md-4 col-xs-6">'
+    html += '<h4>Registration Forms:</h4><ul style="padding-left: 15px">';
+    registrationForms.forEach(function(form) {
+      html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
+    })
+    html += '</ul>';
+    html += '</div>';
+  }
+
+  // Bids and Recommendations
+  if (BID_NAME) {
+    html += '<div class="col-md-4 col-xs-6">'
+    html += '<h4>Bids & Recommendations:</h4><ul style="padding-left: 15px">';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
+    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
+    if (RECOMMENDATION_NAME) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+    }
+    html += '</ul>';
+    html += '</div>';
+  }
+  html += '</div>';
 
   $('#venue-configuration').html(html);
 };
@@ -765,16 +1046,8 @@ var displayPaperStatusTable = function() {
 
   var rowData = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number];
-    for (var revNumber in revIds) {
-      var id = revIds[revNumber];
-      if (!id.hasOwnProperty('id')) {
-        revIds[revNumber] = findProfile(profiles, id);
-      }
-    }
-
     var areachairId = areachairIds[note.number][0];
     var areachairProfile = {}
-
     if (areachairId) {
       areachairProfile = findProfile(profiles, areachairId);
     } else {
@@ -785,14 +1058,14 @@ var displayPaperStatusTable = function() {
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
   });
+
   var toNumber = function(value) {
     return value === 'N/A' ? 0 : value;
   }
-
   var order = 'desc';
   var sortOptions = {
     Paper_Number: function(row) { return row.note.number; },
-    Paper_Title: function(row) { return _.toLower(_.trim(row.note.content.title)); },
+    Paper_Title: function(row) { return _.trim(row.note.content.title).toLowerCase(); },
     Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
     Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
     Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
@@ -1193,10 +1466,10 @@ var displayAreaChairsStatusTable = function() {
         return row.summary.completedRecs === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews === 0;
+        return row.reviewProgressData.numCompletedReviews < row.reviewProgressData.numPapers;
       },
       'msg-unsubmitted-metareviews': function(row) {
-        return row.reviewProgressData.numCompletedMetaReviews === 0;
+        return row.reviewProgressData.numCompletedMetaReviews < row.reviewProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -1306,8 +1579,8 @@ var displayReviewerStatusTable = function() {
   var findReview = function(reviews, profile) {
     var found;
     profile.allNames.forEach(function(name) {
-      if (reviews[name.username]) {
-        found = reviews[name.username];
+      if (reviews[name]) {
+        found = reviews[name];
       }
     })
     return found;
@@ -1328,7 +1601,8 @@ var displayReviewerStatusTable = function() {
       var reviewerNum = 0;
       var reviewers = reviewerByNote[number];
       for (var revNumber in reviewers) {
-        if (reviewer == reviewers[revNumber].id) {
+        var profile = reviewers[revNumber];
+        if (_.includes(profile.allNames, reviewer) || _.includes(profile.allEmails, reviewer)) {
           reviewerNum = revNumber;
           break;
         }
@@ -1352,7 +1626,7 @@ var displayReviewerStatusTable = function() {
 
   var order = 'asc';
   var sortOptions = {
-    Reviewer_Name: function(row) { return row.summary.name; },
+    Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
     Bids_Completed: function(row) { return row.summary.completedBids },
     Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
     Papers_with_Reviews_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
@@ -1396,7 +1670,7 @@ var displayReviewerStatusTable = function() {
         return row.summary.completedBids === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews === 0;
+        return row.reviewProgressData.numCompletedReviews < row.reviewProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -1503,12 +1777,7 @@ var updateReviewerContainer = function(paperNumber) {
   $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
   var paperForum = $reviewerProgressContainer.data('paperForum');
 
-  var dropdownOptions = conferenceStatusData.reviewers.map(function(member) {
-    return {
-      id: member,
-      description: view.prettyId(member)
-    };
-  });
+  var dropdownOptions = conferenceStatusData.reviewerOptions;
   var filterOptions = function(options, term) {
     return _.filter(options, function(p) {
       return _.includes(p.description.toLowerCase(), term.toLowerCase());
@@ -1748,8 +2017,8 @@ var buildPCTableRow = function(index, reviewer, papers) {
   }
 
   var reviewProgressData = {
-    numCompletedMetaReviews: _.size(_.filter(papers, function(p) { return p.metaReview; })),
-    numCompletedReviews: _.size(_.filter(papers, function(p) { return p.review; })),
+    numCompletedMetaReviews: _.filter(papers, function(p) { return p.metaReview; }).length,
+    numCompletedReviews: _.filter(papers, function(p) { return p.review; }).length,
     numPapers: papers.length,
     papers: _.sortBy(papers, [function(p) { return p.note.number; }]),
     referrer: pcTableReferrerUrl
@@ -1999,7 +2268,7 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     membersToDelete.push(email);
   });
   _.forEach(reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].allNames, function(name){
-    membersToDelete.push(name.username);
+    membersToDelete.push(name);
   });
 
   Webfield.delete('/groups/members', {

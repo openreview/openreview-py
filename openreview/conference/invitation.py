@@ -4,6 +4,7 @@ import os
 import json
 import datetime
 import openreview
+from tqdm import tqdm
 from .. import invitations
 from .. import tools
 
@@ -348,7 +349,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
 class PaperWithdrawInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs):
 
         content = invitations.withdraw.copy()
 
@@ -396,6 +397,10 @@ class PaperWithdrawInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
+            if email_pcs:
+                file_content = file_content.replace(
+                    'EMAIL_PROGRAM_CHAIRS = False',
+                    'EMAIL_PROGRAM_CHAIRS = True')
             if reveal_authors:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_WITHDRAW = False',
@@ -426,7 +431,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                         ]
                     },
                     'signatures': {
-                        'values-regex': conference.get_authors_id(note.number),
+                        'values': [conference.get_authors_id(note.number)],
                         'description': 'How your identity will be displayed.'
                     },
                     'content': content
@@ -572,7 +577,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                         ]
                     },
                     'signatures': {
-                        'values-regex': conference.get_program_chairs_id(),
+                        'values': [conference.get_program_chairs_id()],
                         'description': 'How your identity will be displayed.'
                     },
                     'content': content
@@ -625,26 +630,27 @@ class OfficialCommentInvitation(openreview.Invitation):
         if comment_stage.allow_public_comments:
             readers.append('everyone')
 
-        if comment_stage.authors:
-            readers.append(conference.get_authors_id(note.number))
-
-        if comment_stage.reader_selection:
-            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
-
-        readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
-
-        if comment_stage.unsubmitted_reviewers:
-            readers.append(conference.get_reviewers_id(note.number))
+        readers.append(conference.get_program_chairs_id())
 
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(note.number))
 
-        readers.append(conference.get_program_chairs_id())
+        if comment_stage.unsubmitted_reviewers:
+            readers.append(conference.get_reviewers_id(note.number))
+        else:
+            readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
+
+        if comment_stage.reader_selection:
+            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
+
+        if comment_stage.authors:
+            readers.append(conference.get_authors_id(note.number))
 
         if comment_stage.reader_selection:
             reply_readers = {
                 'description': 'Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response',
-                'values-dropdown': readers
+                'values-dropdown': readers,
+                'default': [conference.get_program_chairs_id()]
             }
         else:
             reply_readers = {
@@ -726,30 +732,39 @@ class PaperReviewInvitation(openreview.Invitation):
         readers = review_stage.get_readers(conference, note.number)
         nonreaders = review_stage.get_nonreaders(conference, note.number)
 
+        reply = {
+            'forum': note.id,
+            'replyto': note.id,
+            'readers': {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values': readers
+            },
+            'nonreaders': {
+                'values': nonreaders
+            },
+            'writers': {
+                'values-regex': signature_regex,
+                'description': 'How your identity will be displayed.'
+            },
+            'signatures': {
+                'values-regex': signature_regex,
+                'description': 'How your identity will be displayed.'
+            }
+        }
+
+        has_copies = [r for r in readers if r.startswith('{') and r.endswith('}')]
+        if has_copies:
+            reply['readers'] = {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values-copied': readers
+            }
+
         super(PaperReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name, note.number),
             super = conference.get_invitation_id(review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = [conference.get_reviewers_id(number = note.number)],
-            reply = {
-                'forum': note.id,
-                'replyto': note.id,
-                'readers': {
-                    "description": "Select all user groups that should be able to read this comment.",
-                    "values": readers
-                },
-                'nonreaders': {
-                    "values": nonreaders
-                },
-                'writers': {
-                    'values-regex': signature_regex,
-                    'description': 'How your identity will be displayed.'
-                },
-                'signatures': {
-                    'values-regex': signature_regex,
-                    'description': 'How your identity will be displayed.'
-                }
-            }
+            reply = reply
         )
 
 class ReviewRevisionInvitation(openreview.Invitation):
@@ -886,7 +901,7 @@ class DecisionInvitation(openreview.Invitation):
             multiReply = False,
             reply = {
                 'writers': {
-                    'values-regex': [conference.get_program_chairs_id()],
+                    'values': [conference.get_program_chairs_id()],
                     'description': 'How your identity will be displayed.'
                 },
                 'signatures': {
@@ -978,16 +993,16 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(CommentInvitation(conference))
-        for note in notes:
+        for note in tqdm(notes, total=len(notes)):
             invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
 
         if conference.comment_stage.allow_public_comments:
-            for note in notes:
+            for note in tqdm(notes, total=len(notes)):
                 invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
 
         return invitations
 
-    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission):
+    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission, email_pcs):
 
         invitations = []
 
@@ -995,7 +1010,7 @@ class InvitationBuilder(object):
 
         notes = list(conference.get_submissions())
         for note in notes:
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs)))
 
         return invitations
 
@@ -1012,11 +1027,9 @@ class InvitationBuilder(object):
         return invitations
 
     def set_review_invitation(self, conference, notes):
-
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
-
-        for note in notes:
+        for note in tqdm(notes, total=len(notes)):
             invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
             self.__update_readers(invitation)
             invitations.append(invitation)
@@ -1168,7 +1181,7 @@ class InvitationBuilder(object):
 
             return self.client.post_invitation(invitation)
 
-    def set_recommendation_invitation(self, conference, start_date, due_date):
+    def set_recommendation_invitation(self, conference, start_date, due_date, total_recommendations):
 
         recommendation_invitation = openreview.Invitation(
             id = conference.get_recommendation_id(),
@@ -1180,6 +1193,7 @@ class InvitationBuilder(object):
             signatures = [conference.get_id()],
             invitees = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             multiReply = True,
+            taskCompletionCount = total_recommendations,
             reply = {
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',

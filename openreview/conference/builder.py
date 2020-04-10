@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 import datetime
 import re
+from enum import Enum
 from tqdm import tqdm
 from .. import openreview
 from .. import tools
@@ -95,10 +96,10 @@ class Conference(object):
             if bid_invitation:
                 self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id(), self.bid_stage.ac_request_count, self.bid_stage.instructions)
 
-    def __set_recommendation_page(self, assignment_title, score_ids, conflict_id):
+    def __set_recommendation_page(self, assignment_title, score_ids, conflict_id, total_recommendations):
         recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
         if recommendation_invitation:
-            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, assignment_title, score_ids, conflict_id)
+            return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, assignment_title, score_ids, conflict_id, total_recommendations)
 
     def __expire_invitation(self, invitation_id):
         # Get invitation
@@ -454,7 +455,7 @@ class Conference(object):
 
         return invitation
 
-    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False):
+    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False):
 
         if reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
@@ -462,7 +463,7 @@ class Conference(object):
         if not reveal_authors and not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Can not hide authors of single blind submissions')
 
-        return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission)
+        return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_pcs)
 
     def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False):
 
@@ -584,7 +585,7 @@ class Conference(object):
         if self.use_area_chairs:
             self.__expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
-    def open_recommendations(self, assignment_title, start_date = None, due_date = None):
+    def open_recommendations(self, assignment_title, start_date = None, due_date = None, total_recommendations = 7):
 
         score_ids = []
         invitation_ids = [
@@ -597,8 +598,8 @@ class Conference(object):
             if tools.get_invitation(self.client, invitation_id):
                 score_ids.append(invitation_id)
 
-        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date)
-        return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()))
+        self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, total_recommendations)
+        return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()), total_recommendations)
 
     def open_paper_ranking(self, start_date=None, due_date=None):
 
@@ -751,7 +752,7 @@ class Conference(object):
             )
             return result
 
-    def set_assignments(self, assignment_title, is_area_chair=False, overwrite=False):
+    def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
         if is_area_chair:
             invitation = tools.get_invitation(self.client, self.get_invitation_id(self.meta_review_stage.name))
         else: 
@@ -767,8 +768,9 @@ class Conference(object):
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
-        self.set_reviewer_reassignment(enabled=True)
+        self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
         return conference_matching.deploy(assignment_title, is_area_chair, overwrite)
+
 
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
@@ -983,7 +985,25 @@ class BidStage(object):
 
 class ReviewStage(object):
 
-    def __init__(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
+    class Readers(Enum):
+        REVIEWERS = 0
+        REVIEWERS_ASSIGNED = 1
+        REVIEWERS_SUBMITTED = 2
+        REVIEWER_SIGNATURE = 3
+
+    def __init__(self,
+        start_date = None,
+        due_date = None,
+        name = None,
+        allow_de_anonymization = False,
+        public = False,
+        release_to_authors = False,
+        release_to_reviewers = Readers.REVIEWER_SIGNATURE,
+        email_pcs = False,
+        additional_fields = {},
+        remove_fields = []
+    ):
+
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Official_Review'
@@ -997,6 +1017,17 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
 
+    def _get_reviewer_readers(self, conference, number):
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
+            return conference.get_reviewers_id()
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
+            return conference.get_reviewers_id(number = number)
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
+            return conference.get_reviewers_id(number = number) + '/Submitted'
+        if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
+            return '{signatures}'
+        raise openreview.OpenReviewException('Unrecognized readers option')
+
     def get_readers(self, conference, number):
 
         if self.public:
@@ -1007,10 +1038,7 @@ class ReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
-        if self.release_to_reviewers:
-            readers.append(conference.get_reviewers_id(number = number))
-        else:
-            readers.append(conference.get_reviewers_id(number = number) + '/Submitted')
+        readers.append(self._get_reviewer_readers(conference, number))
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
@@ -1253,7 +1281,7 @@ class ConferenceBuilder(object):
     def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions = False, ac_request_count = None):
         self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score, instructions, ac_request_count)
 
-    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = False, email_pcs = False, additional_fields = {}, remove_fields = []):
+    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
 
     def set_comment_stage(self, name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False ):

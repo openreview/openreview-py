@@ -23,12 +23,14 @@ function(){
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 
+      var content = 'To view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id;
+
       if (PROGRAM_CHAIRS_ID) {
         var program_chair_mail = {
           groups: [PROGRAM_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
           subject: '[' + SHORT_PHRASE + '] A review has been received on Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'We have received a review on a submission to ' + SHORT_PHRASE + '.\n\nPaper number: ' + forum.number + ', \n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'We have received a review on a submission to ' + SHORT_PHRASE + '.\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, program_chair_mail, 'POST', token ));
       }
@@ -36,7 +38,7 @@ function(){
       var review_writer_mail = {
         groups: note.signatures,
         subject: '[' + SHORT_PHRASE + '] Your review has been received on your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-        message: 'We have received your review on a submission to ' + SHORT_PHRASE + '.\n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n Review title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        message: 'We have received your review on a submission to ' + SHORT_PHRASE + '.\n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
       };
       promises.push(or3client.or3request( or3client.mailUrl, review_writer_mail, 'POST', token ));
 
@@ -45,7 +47,7 @@ function(){
           groups: [AREA_CHAIR_1_ID],
           ignoreGroups: ignoreGroups,
           subject : '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'A submission to ' + SHORT_PHRASE + ', for which you are an official area chair, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are an official area chair, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token ));
       }
@@ -56,7 +58,7 @@ function(){
           groups: [REVIEWERS_ID],
           ignoreGroups: ignoreGroups,
           subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else if (note.readers.includes(reviewers_submitted)) {
@@ -64,7 +66,7 @@ function(){
           groups: [reviewers_submitted],
           ignoreGroups: ignoreGroups,
           subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\nReview title: ' + note.content.title + '\n\nReview comment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       }
@@ -74,7 +76,7 @@ function(){
           groups: [AUTHORS_ID],
           ignoreGroups: ignoreGroups,
           subject: '[' + SHORT_PHRASE + '] Review posted to your submission - Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'Your submission to ' + SHORT_PHRASE + ' has received a review. \n\nTitle: ' + note.content.title + '\n\nComment: ' + note.content.review + '\n\nTo view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'Your submission to ' + SHORT_PHRASE + ' has received a review. \n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, author_mail, 'POST', token ));
       }
