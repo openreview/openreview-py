@@ -58,9 +58,15 @@ function load() {
   });
 
   var paperRankingInvitationP = Webfield.getAll('/invitations', {id: PAPER_RANKING_ID, type: 'tags'}).then(function(invitations) {
-    return invitations.filter(function(invitation) {
+    var foundInvitations = invitations.filter(function(invitation) {
       return invitation.invitees.length;
-    })[0];
+    });
+
+    if (foundInvitations.length) {
+      return foundInvitations[0];
+    } else {
+      promptError('Invitation not found');
+    }
   });
 
   return $.when(notesP, paperRankingInvitationP);
@@ -69,7 +75,6 @@ function load() {
 
 // Display the bid interface populated with loaded data
 function renderContent(notes, paperRankingInvitation) {
-
 
   paperRankingInvitation.reply.content.tag['value-dropdown'] = paperRankingInvitation.reply.content.tag['value-dropdown'].slice(0, notes.length);
 
