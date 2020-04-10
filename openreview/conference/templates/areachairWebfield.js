@@ -3,7 +3,6 @@ var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
-var PAPER_RANKING_ID = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Ranking';
 var HEADER = {};
 var AREA_CHAIR_NAME = '';
 var REVIEWER_NAME = '';
@@ -18,11 +17,13 @@ var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]+$';
 var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
+var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
 
 var reviewerSummaryMap = {};
 var allReviewers = [];
 var paperAndReviewersWithConflict ={};
 var paperRankingInvitation = null;
+var showRankings = false;
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -110,7 +111,6 @@ var loadData = function(result) {
   var metaReviewsP;
   var allReviewersP;
   var allReviewersWithConflictP;
-  var paperRankingsP;
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
@@ -162,14 +162,10 @@ var loadData = function(result) {
     allReviewersP = $.Deferred().resolve([]);
   }
 
-  if (PAPER_RANKING_ID) {
-    paperRankingsP = Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
-    .then(function (result) {
-      return _.keyBy(result.tags, 'forum');;
-    });
-  } else {
-    paperRankingsP = $.Deferred().resolve({});
-  }
+  var paperRankingsP = Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
+  .then(function (result) {
+    return _.keyBy(result.tags, 'forum');;
+  });
 
   return $.when(
     blindedNotesP,
@@ -331,7 +327,9 @@ var renderHeader = function() {
 
 var renderTable = function(rows, container) {
   renderTableRows(rows, container);
-  postRenderTable(rows);
+  if (showRankings) {
+    postRenderTable(rows);
+  }
 }
 
 var renderStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, rankingByPaper, container) {
@@ -365,7 +363,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
     Meta_Review_Rating: function(row) { return row[4].recommendation ? _.toInteger(row[4].recommendation.split(':')[0]) : 0; }
   };
 
-  if (PAPER_RANKING_ID) {
+  if (showRankings) {
     sortOptions.Paper_Ranking = function(row) { return row[4].ranking.tag; }
   }
 
@@ -669,7 +667,7 @@ var postRenderTable = function(rows) {
           body = view.getCopiedValues(body, paperRankingInvitation.reply);
           Webfield.post('/tags', body)
           .then(function(result) {
-            row[4].ranking = result;
+            row[4].ranking = result; //not sure if this is the best way to do it
             done(result);
           })
           .fail(function(error) {
@@ -712,7 +710,12 @@ var renderTableAndTasks = function(fetchedData) {
   })
   if (paperRankingInvitations.length) {
     paperRankingInvitation = paperRankingInvitations[0];
+    paperRankingInvitation.reply.content.tag['value-dropdown'] = paperRankingInvitation.reply.content.tag['value-dropdown'].slice(0, fetchedData.blindedNotes.length);
   }
+
+  if (paperRankingInvitation || Object.keys(fetchedData.rankingByPaper).length) {
+    showRankings = true;
+  };
 
   renderStatusTable(
     fetchedData.profiles,

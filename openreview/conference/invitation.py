@@ -1255,13 +1255,7 @@ class InvitationBuilder(object):
                     "tag": {
                         "description": "Select value",
                         "order": 1,
-                        "value-dropdown": [
-                            "1 - Best",
-                            "2",
-                            "3",
-                            "4",
-                            "5"
-                        ],
+                        "value-dropdown": [str(e) for e in list(range(1, 31))],
                         "required": True
                     }
                 }
