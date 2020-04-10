@@ -648,7 +648,7 @@ var postRenderTable = function(rows) {
     var $tagWidget = view.mkTagInput(
       'tag',
       paperRankingInvitation && paperRankingInvitation.reply.content.tag,
-      [paperRanking],
+      paperRanking ? [paperRanking] : [],
       {
         forum: noteId,
         placeholder: (paperRankingInvitation && paperRankingInvitation.reply.content.tag.description) || (paperRankingInvitation && prettyId(paperRankingInvitation.id)),
