@@ -22,6 +22,7 @@ var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 var reviewerSummaryMap = {};
 var allReviewers = [];
 var paperAndReviewersWithConflict ={};
+var paperRankingInvitation = null;
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -328,6 +329,11 @@ var renderHeader = function() {
   ]);
 };
 
+var renderTable = function(rows, container) {
+  renderTableRows(rows, container);
+  postRenderTable(rows);
+}
+
 var renderStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, rankingByPaper, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
@@ -360,14 +366,14 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   };
 
   if (PAPER_RANKING_ID) {
-    sortOptions.Paper_Ranking = function(row) { return row[1].ranking; }
+    sortOptions.Paper_Ranking = function(row) { return row[4].ranking.tag; }
   }
 
   var sortResults = function(newOption, switchOrder) {
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    renderTableRows(_.orderBy(rows, sortOptions[newOption], order), container);
+    renderTable(_.orderBy(rows, sortOptions[newOption], order), container);
   }
 
   // Message modal handler
@@ -530,7 +536,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   });
 
   if (rows.length) {
-    renderTableRows(rows, container);
+    renderTable(rows, container);
   } else {
     $(container).empty().append('<p class="empty-message">No assigned papers. ' +
     'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
@@ -608,10 +614,7 @@ var renderTableRows = function(rows, container) {
     },
     Handlebars.templates.noteSummary,
     Handlebars.templates.noteReviewers,
-    Handlebars.templates.noteMetaReviewStatus,
-    function(data) {
-      return '<strong class="note-number">' + data.ranking + '</strong>';
-    },
+    Handlebars.templates.noteMetaReviewStatus
   ];
 
   var rowsHtml = rows.map(function(row) {
@@ -623,7 +626,7 @@ var renderTableRows = function(rows, container) {
   var tableHtml = Handlebars.templates['components/table']({
     headings: [
       '<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
-      'Review Progress', 'Meta Review Status', 'Ranking'
+      'Review Progress', 'Meta Review Status'
     ],
     rows: rowsHtml,
     extraClasses: 'ac-console-table'
@@ -631,6 +634,52 @@ var renderTableRows = function(rows, container) {
 
   $('.table-container', container).remove();
   $(container).append(tableHtml);
+}
+
+var postRenderTable = function(rows) {
+
+  rows.forEach(function(row) {
+    var noteId = row[4].noteId;
+    var noteNumber = row[4].paperNumber;
+    var paperRanking = row[4].ranking;
+    $metaReviewStatusContainer = $('#' + noteNumber + '-metareview-status');
+    if (!$metaReviewStatusContainer.length) {
+      return;
+    }
+
+    var $tagWidget = view.mkTagInput(
+      'tag',
+      paperRankingInvitation && paperRankingInvitation.reply.content.tag,
+      [paperRanking],
+      {
+        forum: noteId,
+        placeholder: (paperRankingInvitation && paperRankingInvitation.reply.content.tag.description) || (paperRankingInvitation && prettyId(paperRankingInvitation.id)),
+        label: paperRankingInvitation && view.prettyInvitationId(paperRankingInvitation.id),
+        readOnly: false,
+        onChange: function(id, value, deleted, done) {
+          var body = {
+            id: id,
+            tag: value,
+            signatures: [user.profile.id],
+            readers: [CONFERENCE_ID],
+            forum: noteId,
+            invitation: paperRankingInvitation.id,
+            ddate: deleted ? Date.now() : null
+          };
+          body = view.getCopiedValues(body, paperRankingInvitation.reply);
+          Webfield.post('/tags', body)
+          .then(function(result) {
+            row[4].ranking = result;
+            done(result);
+          })
+          .fail(function(error) {
+            promptError(error ? error : 'The specified tag could not be updated');
+          });
+        }
+      }
+    );
+    $metaReviewStatusContainer.append($tagWidget);
+  })
 }
 
 var filterFunc = function(inv) {
@@ -658,6 +707,13 @@ var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
 var renderTableAndTasks = function(fetchedData) {
   renderTasks(fetchedData.invitations, fetchedData.edgeInvitations, fetchedData.tagInvitations);
 
+  var paperRankingInvitations = _.filter(fetchedData.tagInvitations, function(invitation) {
+    return invitation.id == PAPER_RANKING_ID;
+  })
+  if (paperRankingInvitations.length) {
+    paperRankingInvitation = paperRankingInvitations[0];
+  }
+
   renderStatusTable(
     fetchedData.profiles,
     fetchedData.blindedNotes,
@@ -680,8 +736,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
 
   // Paper number cell
   var cell0 = {
-    number: note.number,
-    ranking: paperRanking && paperRanking.tag
+    number: note.number
   };
 
   // Note summary cell
@@ -775,7 +830,11 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     invitationId: getInvitationId('Meta_Review', note.number),
     referrer: referrerUrl
   };
-  var cell3 = {};
+  var cell3 = {
+    noteId: note.id,
+    paperNumber: note.number,
+    ranking: paperRanking
+  };
   if (metaReview) {
     cell3.recommendation = metaReview.content.recommendation;
     cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id + '&referrer=' + referrerUrl;
@@ -784,11 +843,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);
   }
 
-  var cell4 = {
-    ranking: paperRanking && paperRanking.tag
-  }
-
-  return [cellCheck, cell0, cell1, cell2, cell3, cell4];
+  return [cellCheck, cell0, cell1, cell2, cell3];
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
