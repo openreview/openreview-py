@@ -365,7 +365,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   };
 
   if (showRankings) {
-    sortOptions.Paper_Ranking = function(row) { return parseInt(row[4].ranking.tag); }
+    sortOptions.Paper_Ranking = function(row) { return parseInt(row[4].ranking && row[4].ranking.tag); }
   }
 
   var sortResults = function(newOption, switchOrder) {
