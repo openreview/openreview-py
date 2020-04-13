@@ -364,7 +364,7 @@ class Matching(object):
                     'user_demand': {
                         'value-regex': '[0-9]+',
                         'required': True,
-                        'description': 'Max number of users that can review a paper',
+                        'description': 'Number of users that can review a paper',
                         'order': 2
                     },
                     'max_papers': {
@@ -425,7 +425,7 @@ class Matching(object):
                         'order': 11
                     },
                     'custom_user_demand_invitation': {
-                        'description': 'Invitation to store custom max number of users required by papers',
+                        'description': 'Invitation to store custom number of users required by papers',
                         'default': self.match_group.id + '/-/Custom_Max_Users',
                         'order': 12,
                         'value-regex': self.match_group.id + '/-/.*',
