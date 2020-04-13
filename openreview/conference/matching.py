@@ -426,7 +426,7 @@ class Matching(object):
                     },
                     'custom_user_demand_invitation': {
                         'description': 'Invitation to store custom number of users required by papers',
-                        'default': self.match_group.id + '/-/Custom_Max_Users',
+                        'default': self.match_group.id + '/-/Custom_User_Demands',
                         'order': 12,
                         'value-regex': self.match_group.id + '/-/.*',
                         'required': False
@@ -598,6 +598,6 @@ class Matching(object):
             if edge.head in paper_by_forum:
                 paper_number = paper_by_forum.get(edge.head).number
                 user = edge.tail
-                new_assigned_group = self.conference.set_assignment(user, paper_number, self.is_area_chair)
+                _ = self.conference.set_assignment(user, paper_number, self.is_area_chair)
             else:
                 print('paper not found', edge.head)
