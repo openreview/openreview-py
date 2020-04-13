@@ -1264,3 +1264,34 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             },
             remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
 
+
+    def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
+
+        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        assert not status.find_elements_by_class_name('tag-widget')
+
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
+
+        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        tag = status.find_element_by_class_name('tag-widget')
+        assert tag
+
+        options = tag.find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 3
+
+        options = tag.find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 3
