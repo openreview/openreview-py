@@ -431,7 +431,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                         ]
                     },
                     'signatures': {
-                        'values-regex': conference.get_authors_id(note.number),
+                        'values': [conference.get_authors_id(note.number)],
                         'description': 'How your identity will be displayed.'
                     },
                     'content': content
@@ -577,7 +577,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                         ]
                     },
                     'signatures': {
-                        'values-regex': conference.get_program_chairs_id(),
+                        'values': [conference.get_program_chairs_id()],
                         'description': 'How your identity will be displayed.'
                     },
                     'content': content
@@ -901,7 +901,7 @@ class DecisionInvitation(openreview.Invitation):
             multiReply = False,
             reply = {
                 'writers': {
-                    'values-regex': [conference.get_program_chairs_id()],
+                    'values': [conference.get_program_chairs_id()],
                     'description': 'How your identity will be displayed.'
                 },
                 'signatures': {
