@@ -639,7 +639,7 @@ var postRenderTable = function(rows) {
 
   currentRankings = [];
   rows.forEach(function(row) {
-    if(row[4].ranking) {
+    if(row[4].ranking && row[4].ranking.tag !== 'No Ranking') {
       currentRankings.push(row[4].ranking.tag);
     }
   });
