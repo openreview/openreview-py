@@ -127,6 +127,7 @@ var main = function() {
       reviewerBidsComplete: calcBidsComplete(reviewerBidCounts, 40),
       reviewsCount: officialReviews.length,
       assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
+      reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
       reviewersComplete: calcReviewersComplete(reviewerGroupMaps.byReviewers, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
       metaReviewsCount: metaReviews.length,
@@ -820,7 +821,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   );
   html += renderStatContainer(
     'Reviewer Progress:',
-    renderProgressStat(conferenceStats.reviewersComplete, conferenceStats.reviewersCount),
+    renderProgressStat(conferenceStats.reviewersComplete, conferenceStats.reviewersWithAssignmentsCount),
     '% of reviewers who have reviewed all of their assigned papers'
   );
   html += renderStatContainer(
@@ -831,19 +832,21 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
-  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-  html += renderStatContainer(
-    'Meta-Review Progress:',
-    renderProgressStat(conferenceStats.metaReviewsCount, conferenceStats.blindSubmissionsCount),
-    '% of papers that have received meta-reviews'
-  );
-  html += renderStatContainer(
-    'AC Meta-Review Progress:',
-    renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.areaChairsCount),
-    '% of area chairs who have completed meta reviews for all their assigned papers'
-  );
-  html += '</div>';
-  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+  if (AREA_CHAIRS_ID) {
+    html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+    html += renderStatContainer(
+      'Meta-Review Progress:',
+      renderProgressStat(conferenceStats.metaReviewsCount, conferenceStats.blindSubmissionsCount),
+      '% of papers that have received meta-reviews'
+    );
+    html += renderStatContainer(
+      'AC Meta-Review Progress:',
+      renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.areaChairsCount),
+      '% of area chairs who have completed meta reviews for all their assigned papers'
+    );
+    html += '</div>';
+    html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+  }
 
   // Config
   var requestForm = conferenceConfig.requestForm;
