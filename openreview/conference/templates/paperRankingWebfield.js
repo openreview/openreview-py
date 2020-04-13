@@ -57,8 +57,8 @@ function load() {
       });
   });
 
-  var paperRankingInvitationP = Webfield.getAll('/invitations', {id: PAPER_RANKING_ID, type: 'tags'}).then(function(invitations) {
-    var foundInvitations = invitations.filter(function(invitation) {
+  var paperRankingInvitationP = Webfield.get('/invitations', {id: PAPER_RANKING_ID, type: 'tags'}).then(function(result) {
+    var foundInvitations = result.invitations.filter(function(invitation) {
       return invitation.invitees.length;
     });
 
