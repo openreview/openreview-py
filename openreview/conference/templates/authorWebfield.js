@@ -218,7 +218,9 @@ function buildTableRow(note, completedReviews, metaReview) {
   var cell0 = { number: note.number };
 
   // Note summary cell
+  var referrerUrl = encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#your-submissions)');
   var cell1 = note;
+  cell1.referrer = referrerUrl;
 
   // Review progress cell
   var ratings = [];
@@ -230,6 +232,7 @@ function buildTableRow(note, completedReviews, metaReview) {
     reviewFormatted.signature = _.startsWith(sig, 'Paper')
       ? sig.split(' ').pop().replace('AnonReviewer', 'Reviewer ')
       : sig;
+    reviewFormatted.referrer = referrerUrl;
 
     // Need to parse rating and confidence strings into ints
     var ratingExp = /^(\d+): .*$/;
@@ -289,15 +292,11 @@ function buildTableRow(note, completedReviews, metaReview) {
 }
 
 function renderReviewSummary(data) {
-  if (!OFFICIAL_REVIEW_NAME) {
-    return '<div class="reviewer-progress"><h4>No Reviewers Assigned</h4></div>';
-  }
-
   var reviews = data.reviews || [];
   var reviewList = reviews.map(function(review) {
     return '<li style="margin-bottom: .25rem;"><strong>' + review.signature + ':</strong> Rating: ' + review.rating +
       (review.confidence ? ' / Confidence: ' + review.confidence : '') +
-      '<br><a href="/forum?id=' + review.forum + '&noteId=' + review.id + '">Read Review</a>' +
+      '<br><a href="/forum?id=' + review.forum + '&noteId=' + review.id + '&referrer=' + review.referrer + '">Read Review</a>' +
       '</li>';
   });
   return '<div class="reviewer-progress">' +

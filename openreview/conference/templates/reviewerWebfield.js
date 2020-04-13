@@ -233,7 +233,6 @@ var buildTableRow = function(note, officialReview) {
   var cell1 = note;
   cell1.content.authors = null;  // Don't display 'Blinded Authors'
   cell1.referrer = referrerUrl;
-  // note.content.authorDomains = domains;
   var summaryHtml = Handlebars.templates.noteSummary(cell1);
 
   // Build Status Cell
