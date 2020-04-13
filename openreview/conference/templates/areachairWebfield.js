@@ -686,7 +686,7 @@ var postRenderTable = function(rows) {
         }
       }
     );
-    $('.tag-widget', '#' + noteNumber + '-metareview-status').remove();
+    $metaReviewStatusContainer.find('.tag-widget').remove();
     $metaReviewStatusContainer.append($tagWidget);
   })
 }
