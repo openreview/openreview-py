@@ -158,26 +158,6 @@ class TestTools():
         results = openreview.tools.parallel_exec(values, do_work)
         assert len(results) == len(values)
 
-    def test_match_authors_to_emails(self):
-        correct_pairs = [
-            ('Ada Lovelace', 'ada@lovelacemanor.org'),
-            ('Alan Turing', 'turing@princeton.edu'),
-            ('Edsger W. Dijkstra', 'ed.dijkstra@uva.nl'),
-            ('Grace Hopper', 'ghopper@yale.edu')
-        ]
-
-        shuffled_names = random.sample(
-            [p[0] for p in correct_pairs], len(correct_pairs))
-
-        shuffled_emails = random.sample(
-            [p[1] for p in correct_pairs], len(correct_pairs))
-
-        result = openreview.tools.match_authors_to_emails(
-            shuffled_names, shuffled_emails)
-
-        for name, email in correct_pairs:
-            assert result[name] == email
-
     def test_subdomains(self):
         # ensure that two part top-level domains are handled appropriately
         # e.g. "edu.cn", "ac.uk"
