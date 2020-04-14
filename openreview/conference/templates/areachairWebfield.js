@@ -21,7 +21,7 @@ var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking
 
 var reviewerSummaryMap = {};
 var allReviewers = [];
-var paperAndReviewersWithConflict ={};
+var paperAndReviewersWithConflict = {};
 var paperRankingInvitation = null;
 var showRankings = false;
 var availableOptions = [];
@@ -636,10 +636,9 @@ var renderTableRows = function(rows, container) {
 }
 
 var postRenderTable = function(rows) {
-
   currentRankings = [];
   rows.forEach(function(row) {
-    if(row[4].ranking && row[4].ranking.tag !== 'No Ranking') {
+    if (row[4].ranking && row[4].ranking.tag !== 'No Ranking') {
       currentRankings.push(row[4].ranking.tag);
     }
   });
@@ -688,8 +687,8 @@ var postRenderTable = function(rows) {
     );
     $metaReviewStatusContainer.find('.tag-widget').remove();
     $metaReviewStatusContainer.append($tagWidget);
-  })
-}
+  });
+};
 
 var filterFunc = function(inv) {
   return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
@@ -716,17 +715,13 @@ var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
 var renderTableAndTasks = function(fetchedData) {
   renderTasks(fetchedData.invitations, fetchedData.edgeInvitations, fetchedData.tagInvitations);
 
-  var paperRankingInvitations = _.filter(fetchedData.tagInvitations, function(invitation) {
-    return invitation.id == PAPER_RANKING_ID;
-  })
-  if (paperRankingInvitations.length) {
-    paperRankingInvitation = paperRankingInvitations[0];
+  paperRankingInvitation = _.find(fetchedData.tagInvitations, ['id', PAPER_RANKING_ID]);
+  if (paperRankingInvitation) {
     availableOptions = paperRankingInvitation.reply.content.tag['value-dropdown'].slice(0, fetchedData.blindedNotes.length + 1);
   }
-
   if (paperRankingInvitation || Object.keys(fetchedData.rankingByPaper).length) {
     showRankings = true;
-  };
+  }
 
   renderStatusTable(
     fetchedData.profiles,

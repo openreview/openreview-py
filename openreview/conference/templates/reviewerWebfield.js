@@ -11,6 +11,7 @@ var REVIEW_LOAD = 0;
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var CUSTOM_LOAD_INVITATION = CONFERENCE_ID + '/-/Reduced_Load';
+var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
 
 var main = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
@@ -30,6 +31,13 @@ var main = function() {
       }
 
       displayStatusTable(blindedNotes, officialReviews);
+
+      var paperRankingInvitation = _.find(tagInvitations, ['id', PAPER_RANKING_ID]);
+      if (paperRankingInvitation) {
+        var paperRankingTags = paperRankingInvitation.details.repliedTags || [];
+        displayPaperRanking(blindedNotes, paperRankingInvitation, paperRankingTags);
+      }
+
       displayTasks(invitations, edgeInvitations, tagInvitations);
       Webfield.ui.done();
     })
@@ -249,6 +257,65 @@ var buildTableRow = function(note, officialReview) {
   var statusHtml = Handlebars.templates.noteReviewStatus(reviewStatus);
 
   return [number, summaryHtml, statusHtml];
+};
+
+var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTags) {
+  var invitation = _.cloneDeep(paperRankingInvitation);
+  var availableOptions = invitation.reply.content.tag['value-dropdown'].slice(0, notes.length + 1);
+  var currentRankings = paperRankingTags.map(function(tag) {
+    if (!tag.tag || tag.tag === 'No Ranking') {
+      return null;
+    }
+    return tag.tag;
+  });
+  invitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+
+  notes.forEach(function(note, i) {
+    $reviewStatusContainer = $('#assigned-papers .console-table tbody > tr:nth-child('+ (i + 1) +') > td:nth-child(3)');
+    if (!$reviewStatusContainer.length) {
+      return;
+    }
+
+    var index = _.findIndex(paperRankingTags, ['forum', note.forum]);
+    var $tagWidget = view.mkTagInput(
+      'tag',
+      invitation.reply.content.tag,
+      index !== -1 ? [paperRankingTags[index]] : [],
+      {
+        forum: note.id,
+        placeholder: (invitation.reply.content.tag.description) || (prettyId(invitation.id)),
+        label: view.prettyInvitationId(invitation.id),
+        readOnly: false,
+        onChange: function(id, value, deleted, done) {
+          var body = {
+            id: id,
+            tag: value,
+            signatures: [user.profile.id],
+            readers: [CONFERENCE_ID],
+            forum: note.id,
+            invitation: invitation.id,
+            ddate: deleted ? Date.now() : null
+          };
+          body = view.getCopiedValues(body, invitation.reply);
+          Webfield.post('/tags', body)
+            .then(function(result) {
+              if (index !== -1) {
+                paperRankingTags.splice(index, 1, result);
+              } else {
+                paperRankingTags.push(result);
+              }
+              displayPaperRanking(notes, paperRankingInvitation, paperRankingTags);
+              done(result);
+            })
+            .fail(function(error) {
+              promptError(error ? error : 'The specified tag could not be updated');
+            });
+        }
+      }
+    );
+    $reviewStatusContainer.find('.tag-widget').remove();
+    $reviewStatusContainer.append($tagWidget);
+  });
 };
 
 var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
