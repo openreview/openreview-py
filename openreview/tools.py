@@ -1374,7 +1374,7 @@ def _fill_str_or_list(template_str_or_list, paper):
     """
     if type(template_str_or_list) == list:
         return [_fill_str(v, paper) for v in template_str_or_list]
-    elif any([type(template_str_or_list) == str]):
+    elif type(template_str_or_list) == str:
         return _fill_str(template_str_or_list, paper)
     elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
         return template_str_or_list
