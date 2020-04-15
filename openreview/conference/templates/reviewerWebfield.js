@@ -296,7 +296,7 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
       index !== -1 ? [paperRankingTags[index]] : [],
       {
         forum: note.id,
-        placeholder: (invitation && invitation.reply.content.tag.description) || view.prettyId(invitationId),
+        placeholder: (invitation && invitation.reply.content.tag.description) || view.prettyInvitationId(invitationId),
         label: view.prettyInvitationId(invitationId),
         readOnly: false,
         onChange: function(id, value, deleted, done) {

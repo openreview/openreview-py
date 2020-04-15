@@ -636,13 +636,16 @@ var renderTableRows = function(rows, container) {
 }
 
 var postRenderTable = function(rows) {
-  currentRankings = [];
-  rows.forEach(function(row) {
-    if (row[4].ranking && row[4].ranking.tag !== 'No Ranking') {
-      currentRankings.push(row[4].ranking.tag);
-    }
-  });
-  paperRankingInvitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+  if (paperRankingInvitation) {
+    currentRankings = [];
+    rows.forEach(function(row) {
+      if (row[4].ranking && row[4].ranking.tag !== 'No Ranking') {
+        currentRankings.push(row[4].ranking.tag);
+      }
+    });
+    paperRankingInvitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+  }
+  var invitationId = paperRankingInvitation ? paperRankingInvitation.id : PAPER_RANKING_ID;
 
   rows.forEach(function(row) {
     var noteId = row[4].noteId;
@@ -659,8 +662,8 @@ var postRenderTable = function(rows) {
       paperRanking ? [paperRanking] : [],
       {
         forum: noteId,
-        placeholder: (paperRankingInvitation && paperRankingInvitation.reply.content.tag.description) || (paperRankingInvitation && prettyId(paperRankingInvitation.id)),
-        label: paperRankingInvitation && view.prettyInvitationId(paperRankingInvitation.id),
+        placeholder: (paperRankingInvitation && paperRankingInvitation.reply.content.tag.description) || view.prettyInvitationId(invitationId),
+        label: view.prettyInvitationId(invitationId),
         readOnly: false,
         onChange: function(id, value, deleted, done) {
           var body = {
@@ -669,7 +672,7 @@ var postRenderTable = function(rows) {
             signatures: [user.profile.id],
             readers: [CONFERENCE_ID],
             forum: noteId,
-            invitation: paperRankingInvitation.id,
+            invitation: invitationId,
             ddate: deleted ? Date.now() : null
           };
           body = view.getCopiedValues(body, paperRankingInvitation.reply);
