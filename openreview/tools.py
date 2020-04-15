@@ -77,7 +77,7 @@ def get_invitation(client, id):
         print('Can not retrieve invitation', e)
     return invitation
 
-def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
+def create_profile(client, email, first, last, middle=None, allow_duplicates=False):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -133,8 +133,8 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
         tilde_id = username_response_full['username']
         if (not profile_exists) or allow_duplicates:
 
-            tilde_group = openreview.Group(id = tilde_id, signatures = [client.profile.id], signatories = [tilde_id], readers = [tilde_id], writers = [client.profile.id], members = [email])
-            email_group = openreview.Group(id = email, signatures = [client.profile.id], signatories = [email], readers = [email], writers = [client.profile.id], members = [tilde_id])
+            tilde_group = openreview.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
+            email_group = openreview.Group(id=email, signatures=[client.profile.id], signatories=[email], readers=[email], writers=[client.profile.id], members=[tilde_id])
             profile_content = {
                 'emails': [email],
                 'preferredEmail': email,
@@ -160,6 +160,59 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
                     first=first, middle=middle, last=last, tilde_id=tilde_id))
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
+
+def create_authorid_profiles(client, note, print=print):
+    # for all submissions get authorids, if in form of email address, try to find associated profile
+    # if profile doesn't exist, create one
+    created_profiles = []
+
+    def clean_name(name):
+        '''
+        Replaces invalid characters with equivalent valid ones.
+        '''
+        return name.replace('’', "'")
+
+    def get_names(author_name):
+        '''
+        Splits a string into first and last (and middle, if applicable) names.
+        '''
+        names = author_name.split(' ')
+        if len(names) > 1:
+            first = names[0]
+            last = names[-1]
+            middle = ' '.join(names[1:-1])
+            return [clean_name(n) for n in [first, last, middle]]
+        else:
+            return []
+
+    if 'authorids' in note.content and 'authors' in note.content:
+        author_names = [a.replace('*', '') for a in note.content['authors']]
+        author_emails = [e for e in note.content['authorids']]
+        if len(author_names) == len(author_emails):
+            # iterate through authorids and authors at the same time
+            for (author_id, author_name) in zip(author_emails, author_names):
+                author_id = author_id.strip()
+                author_name = author_name.strip()
+
+                if '@' in author_id:
+                    names = get_names(author_name)
+                    if names:
+                        try:
+                            profile = create_profile(client=client, email=author_id, first=names[0], last=names[1], middle=names[2])
+                            created_profiles.append(profile)
+                            print('{}: profile created with id {}'.format(note.id, profile.id))
+                        except openreview.OpenReviewException as e:
+                            print('Error while creating profile for note id {}, author {author_id}, '.format(note.id, e))
+                    else:
+                        print('{}: invalid author name {}'.format(note.id, author_name))
+        else:
+            print('{}: length mismatch. authors ({}), authorids ({})'.format(
+                note.id,
+                len(author_names),
+                len(author_emails)
+                ))
+
+    return created_profiles
 
 def get_preferred_name(profile):
     """
@@ -1429,7 +1482,6 @@ def get_conflicts(author_profiles, user_profile):
 
     for profile in author_profiles:
         author_info = get_profile_info(profile)
-
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
@@ -1517,5 +1569,3 @@ def overwrite_pdf(client, note_id, file_path):
                 updated_references.append(client.post_note(reference))
 
     return updated_references
-
-
