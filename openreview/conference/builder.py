@@ -756,7 +756,7 @@ class Conference(object):
     def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
         if is_area_chair:
             invitation = tools.get_invitation(self.client, self.get_invitation_id(self.meta_review_stage.name))
-        else: 
+        else:
             invitation = tools.get_invitation(self.client, self.get_invitation_id(self.review_stage.name))
 
         if invitation:
@@ -907,7 +907,9 @@ class SubmissionStage(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
-            subject_areas=[]
+            subject_areas=[],
+            email_pcs = False,
+            create_groups = False
         ):
 
         self.start_date = start_date
@@ -918,6 +920,8 @@ class SubmissionStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
+        self.email_pcs = email_pcs
+        self.create_groups = create_groups
 
     def get_readers(self, conference):
         if self.double_blind:
@@ -1256,7 +1260,9 @@ class ConferenceBuilder(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
-            subject_areas=[]
+            subject_areas=[],
+            email_pcs = False,
+            create_groups = False
         ):
 
         self.submission_stage = SubmissionStage(
@@ -1267,7 +1273,9 @@ class ConferenceBuilder(object):
             double_blind,
             additional_fields,
             remove_fields,
-            subject_areas
+            subject_areas,
+            email_pcs,
+            create_groups
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):

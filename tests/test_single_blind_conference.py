@@ -24,6 +24,7 @@ class TestSingleBlindConference():
         'location': 'Montreal, Canada',
         'instructions': ''
         })
+        builder.set_conference_program_chairs_ids(['pc2@mail.com'])
         builder.has_area_chairs(True)
 
         conference = builder.get_result()
@@ -145,8 +146,9 @@ class TestSingleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_conference_short_name('MLITS 2018')
         now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True)
+        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True, email_pcs=True)
         builder.has_area_chairs(True)
         builder.set_override_homepage(True)
         conference = builder.get_result()
@@ -176,7 +178,26 @@ class TestSingleBlindConference():
         )
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        test_client.post_note(note)
+        note = test_client.post_note(note)
+
+        time.sleep(2)
+        note = client.get_note(note.id)
+
+        process_logs = client.get_process_logs(id = note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = 'MLITS 2018 has received your submission titled Paper title')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert 'andrew@mail.com' in recipients
+
+        messages = client.get_messages(subject = 'MLITS 2018 has received a new submission titled Paper title')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'pc2@mail.com' in recipients
 
         # Author user
         request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token)
