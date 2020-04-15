@@ -12,7 +12,7 @@ class TestEdges:
         conference = builder.get_result()
 
         # Edge invitation
-        inv1 = openreview.Invitation(id=conference.id + '/-/affinity', reply={
+        inv1 = openreview.Invitation(id=conference.id + '/-/affinity', signatures=['~Super_User1'], reply={
             'content': {
                 'head': {
                     'type': 'Note'
