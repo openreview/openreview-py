@@ -193,7 +193,7 @@ function renderStatusTable(notes, completedReviews, metaReviews, reviewerIds) {
   });
 
   var tableHtml = Handlebars.templates['components/table']({
-    headings: ['#', 'Paper Summary', 'Reviews', 'Meta Review'],
+    headings: ['#', 'Paper Summary', 'Reviews'].concat(OFFICIAL_META_REVIEW_NAME ? 'Meta Review' : []),
     rows: rowsHtml,
     extraClasses: 'console-table'
   });
@@ -201,9 +201,14 @@ function renderStatusTable(notes, completedReviews, metaReviews, reviewerIds) {
   $container.empty().append(tableHtml);
 
   $('#your-submissions .console-table th').eq(0).css('width', '4%');
-  $('#your-submissions .console-table th').eq(1).css('width', '36%');
-  $('#your-submissions .console-table th').eq(2).css('width', '30%');
-  $('#your-submissions .console-table th').eq(3).css('width', '30%');
+  if (OFFICIAL_META_REVIEW_NAME) {
+    $('#your-submissions .console-table th').eq(1).css('width', '36%');
+    $('#your-submissions .console-table th').eq(2).css('width', '30%');
+    $('#your-submissions .console-table th').eq(3).css('width', '30%');
+  } else {
+    $('#your-submissions .console-table th').eq(1).css('width', '46%');
+    $('#your-submissions .console-table th').eq(2).css('width', '50%');
+  }
 }
 
 function buildTableRow(note, completedReviews, metaReview) {
@@ -281,7 +286,7 @@ function buildTableRow(note, completedReviews, metaReview) {
     cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id;
   }
 
-  return [cell0, cell1, cell2, cell3];
+  return [cell0, cell1, cell2].concat(OFFICIAL_META_REVIEW_NAME ? cell3 : []);
 }
 
 function renderReviewSummary(data) {
