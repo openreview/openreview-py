@@ -11,13 +11,6 @@ var OFFICIAL_META_REVIEW_NAME = '';
 var HEADER = {};
 var AUTHOR_NAME = 'Authors';
 
-var paperDisplayOptions = {
-  pdfLink: true,
-  replyCount: true,
-  showActionButtons: true,
-  showContents: true
-};
-
 function main() {
   // In the future this should not be necessary as the group's readers
   // will prevent unauthenticated users
