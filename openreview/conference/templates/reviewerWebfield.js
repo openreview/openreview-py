@@ -32,10 +32,20 @@ var main = function() {
 
       displayStatusTable(blindedNotes, officialReviews);
 
+      // Add paper ranking tag widgets to the table of submissions
+      // If tag invitation does not exist, get existing tags and display read-only
       var paperRankingInvitation = _.find(tagInvitations, ['id', PAPER_RANKING_ID]);
       if (paperRankingInvitation) {
         var paperRankingTags = paperRankingInvitation.details.repliedTags || [];
         displayPaperRanking(blindedNotes, paperRankingInvitation, paperRankingTags);
+      } else {
+        Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
+          .then(function(result) {
+            if (!result.tags || !result.tags.length) {
+              return;
+            }
+            displayPaperRanking(blindedNotes, null, result.tags);
+          });
       }
 
       displayTasks(invitations, edgeInvitations, tagInvitations);
@@ -260,15 +270,18 @@ var buildTableRow = function(note, officialReview) {
 };
 
 var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTags) {
-  var invitation = _.cloneDeep(paperRankingInvitation);
-  var availableOptions = invitation.reply.content.tag['value-dropdown'].slice(0, notes.length + 1);
-  var currentRankings = paperRankingTags.map(function(tag) {
-    if (!tag.tag || tag.tag === 'No Ranking') {
-      return null;
-    }
-    return tag.tag;
-  });
-  invitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+  var invitation = paperRankingInvitation ? _.cloneDeep(paperRankingInvitation) : null;
+  if (invitation) {
+    var availableOptions = invitation.reply.content.tag['value-dropdown'].slice(0, notes.length + 1);
+    var currentRankings = paperRankingTags.map(function(tag) {
+      if (!tag.tag || tag.tag === 'No Ranking') {
+        return null;
+      }
+      return tag.tag;
+    });
+    invitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+  }
+  var invitationId = invitation ? invitation.id : PAPER_RANKING_ID;
 
   notes.forEach(function(note, i) {
     $reviewStatusContainer = $('#assigned-papers .console-table tbody > tr:nth-child('+ (i + 1) +') > td:nth-child(3)');
@@ -279,12 +292,12 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
     var index = _.findIndex(paperRankingTags, ['forum', note.forum]);
     var $tagWidget = view.mkTagInput(
       'tag',
-      invitation.reply.content.tag,
+      invitation && invitation.reply.content.tag,
       index !== -1 ? [paperRankingTags[index]] : [],
       {
         forum: note.id,
-        placeholder: (invitation.reply.content.tag.description) || (prettyId(invitation.id)),
-        label: view.prettyInvitationId(invitation.id),
+        placeholder: (invitation && invitation.reply.content.tag.description) || view.prettyId(invitationId),
+        label: view.prettyInvitationId(invitationId),
         readOnly: false,
         onChange: function(id, value, deleted, done) {
           var body = {
@@ -293,7 +306,7 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
             signatures: [user.profile.id],
             readers: [CONFERENCE_ID],
             forum: note.id,
-            invitation: invitation.id,
+            invitation: invitationId,
             ddate: deleted ? Date.now() : null
           };
           body = view.getCopiedValues(body, invitation.reply);
