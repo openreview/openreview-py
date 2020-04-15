@@ -608,9 +608,10 @@ class Conference(object):
         invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.reviewers_name)
         invitations.append(invitation)
 
-        invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_area_chairs_id(), start_date, due_date)
-        invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.area_chairs_name.replace('_', ' '))
-        invitations.append(invitation)
+        if self.use_area_chairs:
+            invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_area_chairs_id(), start_date, due_date)
+            invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.area_chairs_name.replace('_', ' '))
+            invitations.append(invitation)
 
         return invitations
 
@@ -752,14 +753,25 @@ class Conference(object):
             )
             return result
 
-    def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False):
+    def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
+        if is_area_chair:
+            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.meta_review_stage.name))
+        else: 
+            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.review_stage.name))
+
+        if invitation:
+            activation_date = invitation.cdate or invitation.tcdate
+            if activation_date < tools.datetime_millis(datetime.datetime.now()):
+                raise openreview.OpenReviewException('{} stage has started.'.format('MetaReview' if is_area_chair else 'Review'))
+
         if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
         self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
-        return conference_matching.deploy(assignment_title)
+        return conference_matching.deploy(assignment_title, is_area_chair, overwrite)
+
 
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
