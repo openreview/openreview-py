@@ -95,7 +95,9 @@ def get_conference_builder(client, request_form_id):
         start_date = submission_start_date,
         due_date = submission_due_date,
         additional_fields = submission_additional_options,
-        remove_fields = submission_remove_options
+        remove_fields = submission_remove_options,
+        email_pcs=True,
+        create_groups=(not double_blind)
         )
 
     paper_matching_options = note.content.get('Paper Matching', [])
