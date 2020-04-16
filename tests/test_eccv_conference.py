@@ -1276,6 +1276,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         assert not status.find_elements_by_class_name('tag-widget')
 
+        reviewer_client = openreview.Client(username='reviewer1@fb.com', password='1234')
+        reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        assert not selenium.find_elements_by_class_name('tag-widget')
+
         now = datetime.datetime.utcnow()
         conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
 
@@ -1293,5 +1299,19 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(options) == 3
 
         options = tag.find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 3
+
+        reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        tags = selenium.find_elements_by_class_name('tag-widget')
+        assert tags
+
+        options = tags[0].find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 3
+
+        options = tags[0].find_elements_by_tag_name("a")
         assert options
         assert len(options) == 3
