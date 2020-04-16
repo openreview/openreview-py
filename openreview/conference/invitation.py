@@ -41,10 +41,13 @@ class SubmissionInvitation(openreview.Invitation):
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             if submission_stage.email_pcs:
                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
             if submission_stage.create_groups:
                file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
+            if conference.use_area_chairs:
+               file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
 
             super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
                 cdate = tools.datetime_millis(start_date),

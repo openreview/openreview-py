@@ -1,8 +1,10 @@
 function processUpdate() {
   var or3client = lib.or3client;
 
+  var CONFERENCE_ID = '';
   var SHORT_PHRASE = '';
   var PROGRAM_CHAIRS_ID = '';
+  var AREA_CHAIRS_ID = '';
   var CREATE_GROUPS = false;
 
   var authorSubject = SHORT_PHRASE + ' has received your submission titled ' + note.content.title;
@@ -25,6 +27,71 @@ function processUpdate() {
     message: authorMessage
   };
 
+
+  let createGroups = async function() {
+    if (CREATE_GROUPS && action == 'posted') {
+      let committee = [CONFERENCE_ID];
+      if (AREA_CHAIRS_ID) {
+        committee.push(AREA_CHAIRS_ID);
+      }
+      const paperGroup = {
+        id: CONFERENCE_ID + '/Paper' + note.number,
+        signatures: [CONFERENCE_ID],
+        writers: committee,
+        members: [],
+        readers: committee,
+        signatories: committee
+      };
+
+      await or3client.or3request(or3client.grpUrl, paperGroup, 'POST', token);
+
+      const authorGroupId = paperGroup.id + '/Authors';
+      const authorGroup = {
+        id: authorGroupId,
+        signatures: [CONFERENCE_ID],
+        writers: [CONFERENCE_ID],
+        members: note.content.authorids.concat(note.signatures),
+        readers: [CONFERENCE_ID, authorGroupId],
+        signatories: [CONFERENCE_ID, authorGroupId]
+      };
+
+      await or3client.or3request(or3client.grpUrl, authorGroup, 'POST', token);
+
+      const reviewerGroupId = paperGroup.id + '/Reviewers';
+      const reviewerGroup = {
+        id: reviewerGroupId,
+        signatures: [CONFERENCE_ID],
+        writers: committee,
+        members: [],
+        readers: committee.concat(reviewerGroupId),
+        signatories: committee,
+        nonreaders: [authorGroupId]
+      };
+
+      await or3client.or3request(or3client.grpUrl, reviewerGroup, 'POST', token);
+
+      const reviewerSubmittedGroupId = reviewerGroupId + '/Submitted';
+      const reviewerSubmittedGroup = {
+        id: reviewerSubmittedGroupId,
+        signatures: [CONFERENCE_ID],
+        writers: committee,
+        members: [],
+        readers: committee.concat(reviewerSubmittedGroupId),
+        signatories: committee,
+        nonreaders: [authorGroupId]
+      };
+
+      await or3client.or3request(or3client.grpUrl, reviewerSubmittedGroup, 'POST', token);
+
+    }
+
+    return Promise.resolve();
+  }
+
+
+
+
+
   var promises = [
     or3client.or3request(or3client.mailUrl, authorMail, 'POST', token),
     or3client.or3request(or3client.mailUrl, otherAuthorsMail, 'POST', token)
@@ -44,7 +111,8 @@ function processUpdate() {
     promises.push(or3client.or3request(or3client.mailUrl, pcsMail, 'POST', token));
   }
 
-  Promise.all(promises)
+  createGroups()
+  .then(result => Promise.all(promises))
   .then(result => done())
   .catch(error => done(error));
 
