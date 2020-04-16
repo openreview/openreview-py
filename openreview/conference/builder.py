@@ -509,7 +509,7 @@ class Conference(object):
                     self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
                     is_signatory = False)
 
-            # Area Chait Paper group
+            # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
                 self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
 
@@ -605,12 +605,10 @@ class Conference(object):
 
         invitations = []
         invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_reviewers_id(), start_date, due_date)
-        invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.reviewers_name)
         invitations.append(invitation)
 
         if self.use_area_chairs:
             invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_area_chairs_id(), start_date, due_date)
-            invitation = self.webfield_builder.set_paper_ranking_page(self, invitation, self.area_chairs_name.replace('_', ' '))
             invitations.append(invitation)
 
         return invitations
