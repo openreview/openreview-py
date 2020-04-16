@@ -88,32 +88,31 @@ function processUpdate() {
     return Promise.resolve();
   }
 
+  let sendEmails = function() {
+    var promises = [
+      or3client.or3request(or3client.mailUrl, authorMail, 'POST', token),
+      or3client.or3request(or3client.mailUrl, otherAuthorsMail, 'POST', token)
+    ];
 
+    if (PROGRAM_CHAIRS_ID && action == 'posted') {
+      var pcsMail = {
+        groups: [PROGRAM_CHAIRS_ID],
+        subject: SHORT_PHRASE + ' has received a new submission titled ' + note.content.title,
+        message: `A submission to ${SHORT_PHRASE} has been ${action}.
 
+        Submission Number: ${note.number}
+        Title: ${note.content.title} ${noteAbstract}
 
-
-  var promises = [
-    or3client.or3request(or3client.mailUrl, authorMail, 'POST', token),
-    or3client.or3request(or3client.mailUrl, otherAuthorsMail, 'POST', token)
-  ];
-
-  if (PROGRAM_CHAIRS_ID && action == 'posted') {
-    var pcsMail = {
-      groups: [PROGRAM_CHAIRS_ID],
-      subject: SHORT_PHRASE + ' has received a new submission titled ' + note.content.title,
-      message: `A submission to ${SHORT_PHRASE} has been ${action}.
-
-      Submission Number: ${note.number}
-      Title: ${note.content.title} ${noteAbstract}
-
-      To view the submission, click here: ${baseUrl}/forum?id=${note.forum}`
-    };
-    promises.push(or3client.or3request(or3client.mailUrl, pcsMail, 'POST', token));
+        To view the submission, click here: ${baseUrl}/forum?id=${note.forum}`
+      };
+      promises.push(or3client.or3request(or3client.mailUrl, pcsMail, 'POST', token));
+    }
+    return Promise.all(promises);
   }
 
   createGroups()
-  .then(result => Promise.all(promises))
-  .then(result => done())
+  .then(() => sendEmails())
+  .then(() => done())
   .catch(error => done(error));
 
   return true;
