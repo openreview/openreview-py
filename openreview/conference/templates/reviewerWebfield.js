@@ -1,4 +1,3 @@
-
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
@@ -11,330 +10,68 @@ var REVIEW_LOAD = 0;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
+var CUSTOM_LOAD_INVITATION = CONFERENCE_ID + '/-/Reduced_Load';
+var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
 
-// Ajax functions
-var getNumberfromGroup = function(groupId, name) {
-  var tokens = groupId.split('/');
-  var paper = _.find(tokens, function(token) {
-    return _.startsWith(token, name);
-  });
+var main = function() {
+  Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
-  if (paper) {
-    return parseInt(paper.replace(name, ''), 10);
-  } else {
-    return null;
-  }
-};
+  OpenBanner.venueHomepageLink(CONFERENCE_ID);
 
-var getPaperNumbersfromGroups = function(groups) {
-  return _.filter(_.map(groups, function(group) {
-    return getNumberfromGroup(group.id, 'Paper');
-  }), _.isInteger);
-};
+  displayHeader();
 
-var getInvitationId = function(name, number) {
-  if (LEGACY_INVITATION_ID) {
-    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
-  }
-  return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
-}
+  loadReviewerData()
+    .then(function(
+      blindedNotes, officialReviews, invitations, edgeInvitations, tagInvitations, customLoad
+    ) {
+      if (customLoad > 0) {
+        $('#header .description').append(
+          '<p class="dark">You have agreed to review up to <strong>' + customLoad + ' papers</strong>.</p>'
+        );
+      }
 
-var getBlindedNotes = function(noteNumbers) {
-  if (!noteNumbers.length) {
-    return $.Deferred().resolve([]);
-  }
+      displayStatusTable(blindedNotes, officialReviews);
 
-  var noteNumbersStr = noteNumbers.join(',');
-
-  return $.getJSON('notes', { invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr, sort:'number:asc' })
-    .then(function(result) {
-      return result.notes;
-    });
-};
-
-var getAllRatings = function(callback) {
-  var invitationId = getInvitationId('Review_Rating', '.*');
-  var allNotes = [];
-
-  function getPromise(offset, limit) {
-    return $.getJSON('notes', { invitation: invitationId, offset: offset, limit: limit })
-    .then(function(result) {
-      allNotes = _.union(allNotes, result.notes);
-      if (result.notes.length == limit) {
-        return getPromise(offset + limit, limit);
+      // Add paper ranking tag widgets to the table of submissions
+      // If tag invitation does not exist, get existing tags and display read-only
+      var paperRankingInvitation = _.find(tagInvitations, ['id', PAPER_RANKING_ID]);
+      if (paperRankingInvitation) {
+        var paperRankingTags = paperRankingInvitation.details.repliedTags || [];
+        displayPaperRanking(blindedNotes, paperRankingInvitation, paperRankingTags);
       } else {
-        callback(allNotes);
+        Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
+          .then(function(result) {
+            if (!result.tags || !result.tags.length) {
+              return;
+            }
+            displayPaperRanking(blindedNotes, null, result.tags);
+          });
       }
-    });
-  };
 
-  getPromise(0, 1000);
-
-};
-
-var getReviewRatings = function(noteNumbers) {
-
-  if (!noteNumbers.length) {
-    return $.Deferred().resolve([]);
-  }
-
-  var dfd = $.Deferred();
-
-  var noteMap = buildNoteMap(noteNumbers);
-
-  getAllRatings(function(notes) {
-    _.forEach(notes, function(n) {
-      var paperPart = _.find(n.invitation.split('/'), function(part) {
-        return part.indexOf('Paper') !== -1;
-      });
-      var num = parseInt(paperPart.split('Paper')[1], 10);
-      if (num in noteMap) {
-        noteMap[num][n.forum] = n;
-      }
-    });
-
-    dfd.resolve(noteMap);
-  });
-
-  return dfd.promise();
-};
-
-var getReviewerGroups = function(noteNumbers) {
-
-  if (!noteNumbers.length) {
-    return $.Deferred().resolve({});
-  }
-
-  var noteMap = buildNoteMap(noteNumbers);
-
-  return $.getJSON('groups', { id: ANONREVIEWER_WILDCARD })
-    .then(function(result) {
-
-      _.forEach(result.groups, function(g) {
-        var num = getNumberfromGroup(g.id, 'Paper');
-        var index = getNumberfromGroup(g.id, 'AnonReviewer');
-        if (num) {
-          if ((num in noteMap) && g.members.length) {
-            noteMap[num][index] = g.members[0];
-          }
-        }
-      });
-      return noteMap;
+      displayTasks(invitations, edgeInvitations, tagInvitations);
+      Webfield.ui.done();
     })
     .fail(function(error) {
       displayError();
-      return null;
     });
 };
-
-var getUserProfiles = function(userIds) {
-  if (!userIds.length) {
-    return $.Deferred().resolve([]);
-  }
-
-  return Webfield.post('/user/profiles', { ids: userIds })
-  .then(function(result) {
-    var profileMap = {};
-    if (!result || !result.profiles) {
-      return profileMap;
-    }
-
-    result.profiles.forEach(function(profile) {
-      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
-      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
-      profile.email = profile.content.preferredEmail;
-      profileMap[profile.id] = profile;
-    })
-
-    return profileMap;
-  });
-};
-
-var findProfile = function(profiles, id) {
-  var profile = profiles[id];
-  if (profile) {
-    return profile;
-  } else {
-    return {
-      id: id,
-      name: '',
-      email: id
-    }
-  }
-}
-
-var getOfficialReviews = function(noteNumbers) {
-
-  if (!noteNumbers.length) {
-    return $.Deferred().resolve({});
-  }
-
-  return $.getJSON('notes', { invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true })
-    .then(function(result) {
-      return result.notes;
-    }).fail(function(error) {
-      displayError();
-      return null;
-    });
-};
-
-// Render functions
-var displayHeader = function(headerP) {
-
-  var reducedLoadP = $.Deferred().resolve(0);
-  if (REVIEW_LOAD > 0) {
-    var userIds = _.union(user.profile.usernames, user.profile.emails);
-    reducedLoadP = Webfield.get('/notes', { invitation: CONFERENCE_ID + '/-/Reduced_Load'})
-    .then(function(result) {
-      if (result.notes && result.notes.length) {
-        if (result.notes.length === 1) {
-          return result.notes[0].content.reviewer_load;
-        } else {
-          //If there is more than one there might be a Program Chair
-          var loads = result.notes.filter(function(note) { return userIds.indexOf(note.content.user) >= 0;});
-          return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
-        }
-      } else {
-        return REVIEW_LOAD;
-      }
-    })
-  }
-
-  reducedLoadP
-  .then(function(customLoad) {
-    var customLoadDiv = '';
-    if (customLoad > 0) {
-      customLoadDiv = '<div class="description">You agreed to review up to <b>' + customLoad + ' papers</b>.</div>';
-    }
-    var $panel = $('#group-container');
-    $panel.hide('fast', function() {
-      $panel.prepend('\
-        <div id="header">\
-          <h1>' + HEADER.title + '</h1>\
-          <div class="description">' + HEADER.instructions + '</div>\
-          ' + customLoadDiv + '\
-        </div>\
-        <div id="notes">\
-          <div class="tabs-container"></div>\
-        </div>'
-      );
-
-      var loadingMessage = '<p class="empty-message">Loading...</p>';
-      var tabsData = {
-        sections: [
-          {
-            heading: 'Assigned Papers',
-            id: 'assigned-papers',
-            content: loadingMessage,
-            active: true
-          },
-          // {
-          //   heading: 'Reviewer Schedule',
-          //   id: 'reviewer-schedule',
-          //   content: HEADER.schedule
-          // },
-          {
-            heading: 'Reviewer Tasks',
-            id: 'reviewer-tasks',
-            content: loadingMessage,
-          }
-        ]
-      };
-      $panel.find('.tabs-container').append(Handlebars.templates['components/tabs'](tabsData));
-
-      $panel.show('fast', function() {
-        headerP.resolve(true);
-      });
-    });
-  })
-};
-
-var displayStatusTable = function(profiles, notes, completedRatings, officialReviews, reviewerIds, container, options) {
-  if (Object.keys(reviewerIds).length){
-    var rowData = _.map(notes, function(note) {
-      var revIds = reviewerIds[note.number];
-      for (var revNumber in revIds) {
-        var profile = findProfile(profiles, revIds[revNumber]);
-        revIds[revNumber] = profile;
-      }
-
-      var officialReview = _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]);
-      return buildTableRow(
-        note, revIds, completedRatings[note.number], officialReview
-      );
-    });
-
-    var tableHTML = Handlebars.templates['components/table']({
-      //headings: ['#', 'Paper Summary', 'Status', 'Your Ratings'],
-      headings: ['#', 'Paper Summary', 'Status'],
-      rows: rowData,
-      extraClasses: 'console-table'
-    });
-
-    $(container).empty().append(tableHTML);
-  } else {
-    $(container).empty().append('<p class="empty-message">You have no assigned papers. Please check again after the paper assignment process. ');
-  }
-};
-
-var displayTasks = function(invitations, edgeInvitations, tagInvitations){
-  //  My Tasks tab
-  var tasksOptions = {
-    container: '#reviewer-tasks',
-    emptyMessage: 'No outstanding tasks for this conference',
-    referrer: encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#reviewer-tasks)')
-  }
-  $(tasksOptions.container).empty();
-
-  // Filter out non-reviewer tasks
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) !== -1; });
-  };
-  var reviewerInvitations = _.filter(invitations, filterFunc);
-  var reviewerEdgeInvitations = _.filter(edgeInvitations, filterFunc);
-  var reviewerTagInvitations = _.filter(tagInvitations, filterFunc);
-
-  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations.concat(reviewerTagInvitations), tasksOptions)
-  $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
-}
-
-var displayError = function(message) {
-  message = message || 'The group data could not be loaded.';
-  $('#notes').empty().append('<div class="alert alert-danger"><strong>Error:</strong> ' + message + '</div>');
-};
-
 
 // Helper functions
-var buildTableRow = function(note, reviewerIds, completedRatings, officialReview) {
-  var number = '<strong class="note-number">' + note.number + '</strong>';
-  var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#assigned-papers)');
+var getNumberFromGroup = function(groupId, name) {
+  var paper = groupId.split('/').find(function(token) {
+    return token.indexOf(name) === 0;
+  });
 
-  // Build Note Summary Cell
-  var cell1 = note;
-  cell1.content.authors = null;  // Don't display 'Blinded Authors'
-  cell1.referrer = referrerUrl;
-  //note.content.authorDomains = domains;
-  var summaryHtml = Handlebars.templates.noteSummary(cell1);
-
-  // Build Status Cell
-  var invitationUrlParams = {
-    id: note.forum,
-    noteId: note.id,
-    invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
-  };
-  var reviewStatus = {
-    invitationUrl: '/forum?' + $.param(invitationUrlParams) + '&referrer=' + referrerUrl,
-    invitationName: 'Official Review'
-  };
-  if (officialReview) {
-    reviewStatus.paperRating = officialReview.content.rating;
-    reviewStatus.review = officialReview.content.review;
-    reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id + '&referrer=' + referrerUrl;
+  if (paper) {
+    return parseInt(paper.substring(name.length), 10);
   }
-  var statusHtml = Handlebars.templates.noteReviewStatus(reviewStatus);
+  return null;
+};
 
-  //return [number, summaryHtml, statusHtml, ratingHtml];
-  return [number, summaryHtml, statusHtml];
+var getInvitationId = function(name, number) {
+  return LEGACY_INVITATION_ID
+    ? CONFERENCE_ID + '/-/Paper' + number + '/' + name
+    : CONFERENCE_ID + '/Paper' + number + '/-/' + name;
 };
 
 var buildNoteMap = function(noteNumbers) {
@@ -345,102 +82,286 @@ var buildNoteMap = function(noteNumbers) {
   return noteMap;
 };
 
+// AJAX functions
+var getReviewerNoteNumbers = function() {
+  return Webfield.get('/groups', {
+    regex: ANONREVIEWER_WILDCARD,
+    member: user.id
+  }).then(function(result) {
+    if (!result.groups) {
+      return [];
+    }
+    return _.without(result.groups.map(function(group) {
+      return getNumberFromGroup(group.id, 'Paper');
+    }), null);
+  });
+};
+
+var getBlindedNotes = function(noteNumbers) {
+  if (!noteNumbers || !noteNumbers.length) {
+    return $.Deferred().resolve([]);
+  }
+
+  return Webfield.get('/notes', {
+    invitation: BLIND_SUBMISSION_ID, number: noteNumbers.join(',')
+  }).then(function(result) {
+    return result.notes || [];
+  });
+};
+
+var getOfficialReviews = function(noteNumbers) {
+  if (!noteNumbers || !noteNumbers.length) {
+    return $.Deferred().resolve([]);
+  }
+
+  return Webfield.get('/notes', {
+    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true
+  }).then(function(result) {
+    return result.notes || [];
+  });
+};
+
+var getNoteInvitations = function() {
+  return Webfield.get('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  }).then(function(result) {
+    return result.invitations || [];
+  });
+};
+
+var getEdgeInvitations = function() {
+  return Webfield.get('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges',
+    details: 'repliedEdges'
+  }).then(function(result) {
+    return result.invitations || [];
+  });
+};
+
+var getTagInvitations = function() {
+  return Webfield.get('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  }).then(function(result) {
+    return result.invitations || [];
+  });
+};
+
+var getCustomLoad = function(userIds) {
+  if (REVIEW_LOAD <= 0) {
+    return $.Deferred().resolve(0);
+  }
+
+  return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION })
+    .then(function(result) {
+      if (!result.notes || !result.notes.length) {
+        return REVIEW_LOAD;
+      }
+      if (result.notes.length === 1) {
+        return result.notes[0].content.reviewer_load;
+      } else {
+        // If there is more than one there might be a Program Chair
+        var loads = result.notes.filter(function(note) {
+          return userIds.indexOf(note.content.user) > -1;
+        });
+        return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
+      }
+    });
+};
+
+var loadReviewerData = function() {
+  var userIds = _.union(user.profile.usernames, user.profile.emails);
+
+  return getReviewerNoteNumbers()
+    .then(function(noteNumbers) {
+      return $.when(
+        getBlindedNotes(noteNumbers),
+        getOfficialReviews(noteNumbers),
+        getNoteInvitations(),
+        getEdgeInvitations(),
+        getTagInvitations(),
+        getCustomLoad(userIds)
+      );
+    });
+};
+
+// Render functions
+var displayHeader = function() {
+  Webfield.ui.venueHeader(HEADER);
+
+  var loadingMessage = '<p class="empty-message">Loading...</p>';
+  var tabs = [
+    {
+      heading: 'Assigned Papers',
+      id: 'assigned-papers',
+      content: loadingMessage,
+      active: true
+    },
+    {
+      heading: 'Reviewer Tasks',
+      id: 'reviewer-tasks',
+      content: loadingMessage,
+    }
+  ];
+  Webfield.ui.tabPanel(tabs, {
+    container: '#notes'
+  });
+};
+
+var displayStatusTable = function(notes, officialReviews) {
+  var $container = $('#assigned-papers');
+
+  if (notes.length === 0) {
+    $container.empty().append(
+      '<p class="empty-message">You have no assigned papers. Please check again after the paper assignment process is complete.</p>'
+    );
+    return;
+  }
+
+  var rowData = notes.map(function(note) {
+    var officialReview = _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]);
+    return buildTableRow(note, officialReview);
+  });
+
+  var tableHTML = Handlebars.templates['components/table']({
+    headings: ['#', 'Paper Summary', 'Your Ratings'],
+    rows: rowData,
+    extraClasses: 'console-table'
+  });
+
+  $container.empty().append(tableHTML);
+};
+
+var buildTableRow = function(note, officialReview) {
+  var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#assigned-papers)');
+  var number = '<strong class="note-number">' + note.number + '</strong>';
+
+  // Build Note Summary Cell
+  var cell1 = note;
+  cell1.content.authors = null;  // Don't display 'Blinded Authors'
+  cell1.referrer = referrerUrl;
+  var summaryHtml = Handlebars.templates.noteSummary(cell1);
+
+  // Build Status Cell
+  var invitationId = getInvitationId(OFFICIAL_REVIEW_NAME, note.number);
+  var reviewStatus = {
+    invitationUrl: '/forum?id=' + note.forum + '&noteId=' + note.forum + '&invitationId=' + invitationId + '&referrer=' + referrerUrl,
+    invitationName: 'Official Review'
+  };
+  if (officialReview) {
+    reviewStatus.paperRating = officialReview.content.rating;
+    reviewStatus.review = officialReview.content.review;
+    reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id + '&referrer=' + referrerUrl;
+  }
+  var statusHtml = Handlebars.templates.noteReviewStatus(reviewStatus);
+
+  return [number, summaryHtml, statusHtml];
+};
+
+var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTags) {
+  var invitation = paperRankingInvitation ? _.cloneDeep(paperRankingInvitation) : null;
+  if (invitation) {
+    var availableOptions = invitation.reply.content.tag['value-dropdown'].slice(0, notes.length + 1);
+    var currentRankings = paperRankingTags.map(function(tag) {
+      if (!tag.tag || tag.tag === 'No Ranking') {
+        return null;
+      }
+      return tag.tag;
+    });
+    invitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+  }
+  var invitationId = invitation ? invitation.id : PAPER_RANKING_ID;
+
+  notes.forEach(function(note, i) {
+    $reviewStatusContainer = $('#assigned-papers .console-table tbody > tr:nth-child('+ (i + 1) +') > td:nth-child(3)');
+    if (!$reviewStatusContainer.length) {
+      return;
+    }
+
+    var index = _.findIndex(paperRankingTags, ['forum', note.forum]);
+    var $tagWidget = view.mkTagInput(
+      'tag',
+      invitation && invitation.reply.content.tag,
+      index !== -1 ? [paperRankingTags[index]] : [],
+      {
+        forum: note.id,
+        placeholder: (invitation && invitation.reply.content.tag.description) || view.prettyInvitationId(invitationId),
+        label: view.prettyInvitationId(invitationId),
+        readOnly: false,
+        onChange: function(id, value, deleted, done) {
+          var body = {
+            id: id,
+            tag: value,
+            signatures: [user.profile.id],
+            readers: [CONFERENCE_ID],
+            forum: note.id,
+            invitation: invitationId,
+            ddate: deleted ? Date.now() : null
+          };
+          body = view.getCopiedValues(body, invitation.reply);
+          Webfield.post('/tags', body)
+            .then(function(result) {
+              if (index !== -1) {
+                paperRankingTags.splice(index, 1, result);
+              } else {
+                paperRankingTags.push(result);
+              }
+              displayPaperRanking(notes, paperRankingInvitation, paperRankingTags);
+              done(result);
+            })
+            .fail(function(error) {
+              promptError(error ? error : 'The specified tag could not be updated');
+            });
+        }
+      }
+    );
+    $reviewStatusContainer.find('.tag-widget').remove();
+    $reviewStatusContainer.append($tagWidget);
+  });
+};
+
+var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
+  //  My Tasks tab
+  var tasksOptions = {
+    container: '#reviewer-tasks',
+    emptyMessage: 'You have no outstanding tasks for this conference.',
+    referrer: encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#reviewer-tasks)')
+  }
+  $(tasksOptions.container).empty();
+
+  // Filter out non-reviewer tasks
+  var filterFunc = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) > -1; });
+  };
+  var reviewerInvitations = invitations.filter(filterFunc);
+  var reviewerEdgeInvitations = edgeInvitations.filter(filterFunc);
+  var reviewerTagInvitations = tagInvitations.filter(filterFunc);
+
+  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations.concat(reviewerTagInvitations), tasksOptions)
+  $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
+};
+
+var displayError = function(message) {
+  message = message || 'Reviewer console could not be loaded. Please try again later.';
+  $('#notes').empty().append('<div class="alert alert-danger"><strong>Error:</strong> ' + message + '</div>');
+};
+
 
 // Kick the whole thing off
-var headerLoaded = $.Deferred();
-displayHeader(headerLoaded);
+main();
 
-$.ajaxSetup({
-  contentType: 'application/json; charset=utf-8'
-});
-
-var fetchedData = {};
-controller.addHandler('reviewers', {
-  token: function(token) {
-    var pl = model.tokenPayload(token);
-    var user = pl.user;
-
-    var userReviewerGroupsP = $.getJSON('groups', { member: user.id, regex: ANONREVIEWER_WILDCARD })
-      .then(function(result) {
-        var noteNumbers = getPaperNumbersfromGroups(result.groups);
-        return $.when(
-          getBlindedNotes(noteNumbers),
-          getReviewRatings(noteNumbers),
-          getOfficialReviews(noteNumbers),
-          getReviewerGroups(noteNumbers),
-          Webfield.get('/invitations', {
-            regex: WILDCARD_INVITATION,
-            invitee: true,
-            duedate: true,
-            replyto: true,
-            type: 'notes',
-            details:'replytoNote,repliedNotes'
-          }).then(function(result) {
-            return result.invitations;
-          }),
-          Webfield.get('/invitations', {
-            regex: WILDCARD_INVITATION,
-            invitee: true,
-            duedate: true,
-            type: 'edges',
-            details: 'repliedEdges'
-          }).then(function(result) {
-            return result.invitations;
-          }),
-          Webfield.get('/invitations', {
-            regex: WILDCARD_INVITATION,
-            invitee: true,
-            duedate: true,
-            type: 'tags',
-            details:'repliedTags'
-          }).then(function(result) {
-            return result.invitations;
-          }),
-          headerLoaded
-        );
-      })
-      .then(function(blindedNotes, reviewRatings, officialReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, loaded) {
-        var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
-          return result.concat(_.values(idsObj));
-        }, []));
-
-        return getUserProfiles(uniqueIds)
-        .then(function(profiles) {
-          fetchedData = {
-            profiles: profiles,
-            blindedNotes: blindedNotes,
-            reviewRatings: reviewRatings,
-            officialReviews: officialReviews,
-            noteToReviewerIds: noteToReviewerIds,
-            invitations: invitations,
-            edgeInvitations: edgeInvitations,
-            tagInvitations: tagInvitations
-          }
-          renderTable();
-        });
-
-      })
-      .fail(function(error) {
-        displayError();
-      });
-  }
-});
-
-var renderTable = function() {
-  displayStatusTable(
-    fetchedData.profiles,
-    fetchedData.blindedNotes,
-    fetchedData.reviewRatings,
-    fetchedData.officialReviews,
-    _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
-    '#assigned-papers'
-  );
-
-  displayTasks(fetchedData.invitations, fetchedData.edgeInvitations, fetchedData.tagInvitations);
-
-  Webfield.ui.done();
-}
-
+// Register event handlers
 $('#group-container').on('click', 'a.note-contents-toggle', function(e) {
   var hiddenText = 'Show paper details';
   var visibleText = 'Hide paper details';
@@ -465,5 +386,3 @@ $('#group-container').on('click', 'a.send-reminder-link', function(e) {
     renderTable();
   });
 });
-
-OpenBanner.venueHomepageLink(CONFERENCE_ID);

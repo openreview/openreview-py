@@ -301,9 +301,9 @@ class WebfieldBuilder(object):
     def set_author_page(self, conference, group):
 
         default_header = {
-            'title': 'Authors Console',
+            'title': 'Author Console',
             'instructions': '',
-            'schedule': 'TBD'
+            'schedule': ''
         }
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
@@ -313,6 +313,8 @@ class WebfieldBuilder(object):
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+            content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             group.web = content
             return self.client.post_group(group)
@@ -325,11 +327,8 @@ class WebfieldBuilder(object):
             'title': reviewers_name.replace('_', ' ') + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>',
-            'schedule': '<h4>Coming Soon</h4>\
-            <p>\
-                <em><strong>Please check back later for updates.</strong></em>\
-            </p>'
+            progresses, so please check back frequently.</p>',
+            'schedule': ''
         }
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
@@ -355,7 +354,7 @@ class WebfieldBuilder(object):
             'title': area_chair_name.replace('_', ' ') + ' Console',
             'instructions': '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>',
+            progresses, so please check back frequently.</p>',
             'schedule': '<h4>Coming Soon</h4>\
             <p>\
                 <em><strong>Please check back later for updates.</strong></em>\
@@ -386,7 +385,7 @@ class WebfieldBuilder(object):
 
         instruction_str = '<p class="dark">This page provides information and status \
             updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
-            progresses, so please check back frequently for news and other updates.</p>'
+            progresses, so please check back frequently.</p>'
 
         header = {
             'title': program_chairs_name.replace('_', ' ') + ' Console',
