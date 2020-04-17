@@ -396,7 +396,7 @@ class Matching(object):
                         'value-regex': '.*',
                         'default': self.match_group.id,
                         'required': True,
-                        'description': 'Group id contatining users to be matched',
+                        'description': 'Group id containing users to be matched',
                         'order': 7
                     },
                     'scores_specification': {
@@ -428,14 +428,14 @@ class Matching(object):
                         'description': 'Invitation to store custom number of users required by papers',
                         'default': self.match_group.id + '/-/Custom_User_Demands',
                         'order': 12,
-                        'value-regex': self.match_group.id + '/-/.*',
+                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'custom_max_papers_invitation': {
                         'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
                         'default': self.match_group.id + '/-/Custom_Max_Papers',
                         'order': 13,
-                        'value-regex': self.match_group.id + '/-/.*',
+                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'config_invitation': {
