@@ -34,19 +34,16 @@ class TestTools():
         posted_group = client.add_members_to_group(posted_group, ['test_subject_y1@mail.com', 'test_subject_y2@mail.com'])
         assert posted_group
         assert len(posted_group.members) == 3
-        assert all(list(map(lambda email: email in posted_group.members, ['test_subject_x@mail.com', 'test_subject_y1@mail.com', 'test_subject_y2@mail.com'])))
 
         # Test that add_members_to_group works while passing it a Group id string and one member of type string
         posted_group = client.add_members_to_group(posted_group.id, 'test_subject_x2@mail.com')
         assert posted_group
         assert len(posted_group.members) == 4
-        assert all(list(map(lambda email: email in posted_group.members, ['test_subject_x@mail.com', 'test_subject_y1@mail.com', 'test_subject_y2@mail.com', 'test_subject_x2@mail.com'])))
 
         # Test that add_members_to_group works while passing it a Group id string and a list of members each of type string
         posted_group = client.add_members_to_group(posted_group, ['test_subject_y2_1@mail.com', 'test_subject_y2_2@mail.com'])
         assert posted_group
         assert len(posted_group.members) == 6
-        assert all(list(map(lambda email: email in posted_group.members, ['test_subject_x@mail.com', 'test_subject_y1@mail.com', 'test_subject_y2@mail.com', 'test_subject_x2@mail.com', 'test_subject_y2_1@mail.com', 'test_subject_y2_2@mail.com'])))
 
         # Test that adding an existing member should not have any effect
         posted_group = client.add_members_to_group(posted_group, ['test_subject_y2_1@mail.com', 'test_subject_y2_2@mail.com'])
@@ -84,30 +81,30 @@ class TestTools():
         posted_group = client.add_members_to_group(posted_group.id, ['test_subject_a@mail.com', 'test_subject_b@mail.com', 'test_subject_x@mail.com', 'test_subject_y@mail.com', 'test_subject_z@mail.com'])
         assert posted_group
         assert len(posted_group.members) == 5
-        assert all(list(map(lambda email: email in posted_group.members, ['test_subject_a@mail.com', 'test_subject_b@mail.com', 'test_subject_x@mail.com', 'test_subject_y@mail.com', 'test_subject_z@mail.com'])))
 
         # Test that remove_members_from_group works while passing it a Group id string and one member of type string
         posted_group = client.remove_members_from_group(posted_group.id, 'test_subject_x@mail.com')
         assert posted_group
         assert len(posted_group.members) == 4
         assert 'test_subject_x@mail.com' not in posted_group.members
-        assert all(list(map(lambda email: email in posted_group.members, ['test_subject_a@mail.com', 'test_subject_b@mail.com', 'test_subject_y@mail.com', 'test_subject_z@mail.com'])))
+        assert 'test_subject_a@mail.com' in posted_group.members
+        assert 'test_subject_b@mail.com' in posted_group.members
+        assert 'test_subject_y@mail.com' in posted_group.members
+        assert 'test_subject_z@mail.com' in posted_group.members
 
         # Test that remove_members_from_group works while passing it a Group id string and a list of members each of type string
         posted_group = client.remove_members_from_group(posted_group.id, ['test_subject_y@mail.com', 'test_subject_z@mail.com'])
         assert posted_group
         assert len(posted_group.members) == 2
-        assert 'test_subject_y@mail.com' not in posted_group.members
-        assert 'test_subject_z@mail.com' not in posted_group.members
-        assert all(list(map(lambda email: email in posted_group.members, ['test_subject_a@mail.com', 'test_subject_b@mail.com'])))
+        assert 'test_subject_a@mail.com' in posted_group.members
+        assert 'test_subject_b@mail.com' in posted_group.members
 
         # Test that remove_members_from_group does not affect the group if the input member/members are already not in group.members
         posted_group = client.remove_members_from_group(posted_group.id, ['test_subject_y@mail.com', 'test_subject_z@mail.com'])
         assert posted_group
         assert len(posted_group.members) == 2
-        assert 'test_subject_y@mail.com' not in posted_group.members
-        assert 'test_subject_z@mail.com' not in posted_group.members
-        assert all(list(map(lambda email: email in posted_group.members, ['test_subject_a@mail.com', 'test_subject_b@mail.com'])))
+        assert 'test_subject_a@mail.com' in posted_group.members
+        assert 'test_subject_b@mail.com' in posted_group.members
 
     def test_get_all_venues(self, client):
         venues = openreview.tools.get_all_venues(client)
@@ -171,7 +168,7 @@ class TestTools():
             }
         })
 
-        _ = openreview.tools.create_authorid_profiles(client, note)
+        openreview.tools.create_authorid_profiles(client, note)
 
         for author, email in zip(authors, authorids):
             result = client.search_profiles(term=author)
@@ -198,7 +195,7 @@ class TestTools():
         ))
         assert posted_group
 
-        _ = client.post_profile(openreview.Profile(
+        client.post_profile(openreview.Profile(
             referent='~Test_User1',
             signatures = ['~Test_User1'],
             content={
@@ -211,7 +208,7 @@ class TestTools():
                 ]
             }
         ))
-        
+
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
         assert replaced_group.members == ['~Test_User1']
@@ -229,21 +226,21 @@ class TestTools():
 
     def test_get_conflicts(self, client, helpers):
 
-        _ = helpers.create_user('user@gmail.com', 'First', 'Last')
+        helpers.create_user('user@gmail.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@gmail.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == 'user@gmail.com'
 
-        _ = helpers.create_user('user@qq.com', 'First', 'Last')
+        helpers.create_user('user@qq.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == 'user@qq.com'
 
-        _ = helpers.create_user('user2@qq.com', 'First', 'Last')
+        helpers.create_user('user2@qq.com', 'First', 'Last')
         user2_profile = client.get_profile(email_or_id='user2@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
