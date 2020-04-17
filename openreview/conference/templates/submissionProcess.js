@@ -5,6 +5,7 @@ function processUpdate() {
   var SHORT_PHRASE = '';
   var PROGRAM_CHAIRS_ID = '';
   var AREA_CHAIRS_ID = '';
+  var OFFICIAL_REVIEW_NAME = '';
   var CREATE_GROUPS = false;
 
   var authorSubject = SHORT_PHRASE + ' has received your submission titled ' + note.content.title;
@@ -82,6 +83,32 @@ function processUpdate() {
       };
 
       await or3client.or3request(or3client.grpUrl, reviewerSubmittedGroup, 'POST', token);
+
+      if (OFFICIAL_REVIEW_NAME) {
+        const officialReviewInvitation = {
+          id: paperGroup.id + '/-/' + OFFICIAL_REVIEW_NAME,
+          super: CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME,
+          signatures: [CONFERENCE_ID],
+          writers: [CONFERENCE_ID],
+          invitees: [reviewerGroupId],
+          reply: {
+            forum: note.id,
+            replyto: note.id,
+            readers: {
+              values: ['everyone'],
+              description: "User groups that should be able to read this review."
+            },
+            writers: {
+              'values-regex': paperGroup.id + '/AnonReviewer[0-9]+'
+            },
+            signatures: {
+              'values-regex': paperGroup.id + '/AnonReviewer[0-9]+'
+            }
+          }
+        };
+
+        await or3client.or3request(or3client.inviteUrl, officialReviewInvitation, 'POST', token);
+      }
 
     }
 

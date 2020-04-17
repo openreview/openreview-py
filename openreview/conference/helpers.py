@@ -182,7 +182,7 @@ def get_review_stage(client, request_forum):
         public = (request_forum.content.get('make_reviews_public', None) == 'Yes, reviews should be revealed publicly when they are posted'),
         release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
-        email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),
+        email_pcs = (request_forum.content.get('email_program_chairs_about_reviews', '').startswith('Yes')),
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options
     )

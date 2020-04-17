@@ -43,11 +43,18 @@ class SubmissionInvitation(openreview.Invitation):
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             if submission_stage.email_pcs:
-               file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
             if submission_stage.create_groups:
-               file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
+                file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
+                # Only supported for public reviews
+                if conference.review_stage and conference.review_stage.public:
+                    print('REPLACE OFFICIAL REVIEW')
+                    file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+                else:
+                    print('NONE')
             if conference.use_area_chairs:
-               file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+
 
             super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
                 cdate = tools.datetime_millis(start_date),
