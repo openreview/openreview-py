@@ -427,9 +427,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert header
         notes = header.find_elements_by_class_name("description")
         assert notes
-        assert len(notes) == 2
-        assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
-        assert notes[1].text == 'You agreed to review up to 7 papers.'
+        assert len(notes) == 1
+        assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently.\nYou have agreed to review up to 7 papers.'
 
         reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
         request_page(selenium, 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token)
@@ -437,9 +436,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert header
         notes = header.find_elements_by_class_name("description")
         assert notes
-        assert len(notes) == 2
-        assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently for news and other updates.'
-        assert notes[1].text == 'You agreed to review up to 4 papers.'
+        assert len(notes) == 1
+        assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently.\nYou have agreed to review up to 4 papers.'
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
@@ -1266,3 +1264,54 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             },
             remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
 
+
+    def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
+
+        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        assert not status.find_elements_by_class_name('tag-widget')
+
+        reviewer_client = openreview.Client(username='reviewer1@fb.com', password='1234')
+        reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        assert not selenium.find_elements_by_class_name('tag-widget')
+
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
+
+        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        tag = status.find_element_by_class_name('tag-widget')
+        assert tag
+
+        options = tag.find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 3
+
+        options = tag.find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 3
+
+        reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        tags = selenium.find_elements_by_class_name('tag-widget')
+        assert tags
+
+        options = tags[0].find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 3
+
+        options = tags[0].find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 3
