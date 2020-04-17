@@ -158,26 +158,6 @@ class TestTools():
         results = openreview.tools.parallel_exec(values, do_work)
         assert len(results) == len(values)
 
-    def test_match_authors_to_emails(self):
-        correct_pairs = [
-            ('Ada Lovelace', 'ada@lovelacemanor.org'),
-            ('Alan Turing', 'turing@princeton.edu'),
-            ('Edsger W. Dijkstra', 'ed.dijkstra@uva.nl'),
-            ('Grace Hopper', 'ghopper@yale.edu')
-        ]
-
-        shuffled_names = random.sample(
-            [p[0] for p in correct_pairs], len(correct_pairs))
-
-        shuffled_emails = random.sample(
-            [p[1] for p in correct_pairs], len(correct_pairs))
-
-        result = openreview.tools.match_authors_to_emails(
-            shuffled_names, shuffled_emails)
-
-        for name, email in correct_pairs:
-            assert result[name] == email
-
     def test_create_authorid_profiles(self, client):
         authors = [
             'Ada Lovelace',
@@ -201,8 +181,7 @@ class TestTools():
             }
         })
 
-        profiles_created = openreview.tools.create_authorid_profiles(
-            client, note)
+        openreview.tools.create_authorid_profiles(client, note)
 
         for author, email in zip(authors, authorids):
             result = client.search_profiles(term=author)
@@ -218,7 +197,6 @@ class TestTools():
         assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
         assert openreview.tools.subdomains('   ') == []
 
-
     def test_replace_members_with_ids(self, client, test_client):
 
         posted_group = client.post_group(openreview.Group(id='test.org',
@@ -228,7 +206,6 @@ class TestTools():
             signatories=['~Super_User1'],
             members=['test@mail.com', '~Test_User1', '~Another_Name1']
         ))
-
         assert posted_group
 
         client.post_profile(openreview.Profile(
@@ -247,9 +224,7 @@ class TestTools():
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
-
         assert replaced_group.members == ['~Test_User1']
-
 
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
@@ -258,37 +233,31 @@ class TestTools():
             signatories=['~Super_User1'],
             members=['~Super_User1', '~Another_Name1', 'noprofile@mail.com']
         ))
-
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
-
         assert replaced_group.members == ['~Super_User1', '~Test_User1', 'noprofile@mail.com']
 
     def test_get_conflicts(self, client, helpers):
 
-        user = helpers.create_user('user@gmail.com', 'First', 'Last')
-
+        helpers.create_user('user@gmail.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@gmail.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == 'user@gmail.com'
 
-        user = helpers.create_user('user@qq.com', 'First', 'Last')
-
+        helpers.create_user('user@qq.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
         assert conflicts[0] == 'user@qq.com'
 
-
-        user2 = helpers.create_user('user2@qq.com', 'First', 'Last')
+        helpers.create_user('user2@qq.com', 'First', 'Last')
         user2_profile = client.get_profile(email_or_id='user2@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
-        assert not conflicts
-
+        assert len(conflicts) == 0
 
         profile1 = openreview.Profile(
             id = 'Test_Conflict1',
@@ -317,9 +286,3 @@ class TestTools():
         conflicts = openreview.tools.get_conflicts([profile1], profile2)
         assert len(conflicts) == 1
         assert conflicts[0] == 'cmu.edu'
-
-
-
-
-
-
