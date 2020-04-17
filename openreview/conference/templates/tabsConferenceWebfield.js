@@ -64,14 +64,14 @@ function load() {
   if (PUBLIC) {
     notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
       pageSize: PAGE_SIZE,
-      details: 'replyCount,original',
+      details: 'replyCount,invitation,original',
       includeCount: true
     });
 
     if (WITHDRAWN_SUBMISSION_ID) {
       withdrawnNotesP = Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
         pageSize: PAGE_SIZE,
-        details: 'replyCount,original',
+        details: 'replyCount,invitation,original',
         includeCount: true
       });
     }
@@ -79,7 +79,7 @@ function load() {
     if (DESK_REJECTED_SUBMISSION_ID) {
       deskRejectedNotesP = Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
         pageSize: PAGE_SIZE,
-        details: 'replyCount,original',
+        details: 'replyCount,invitation,original',
         includeCount: true
       });
     }
@@ -88,7 +88,7 @@ function load() {
   if (user && !_.startsWith(user.id, 'guest_')) {
     activityNotesP = Webfield.api.getSubmissions(WILDCARD_INVITATION, {
       pageSize: PAGE_SIZE,
-      details: 'forumContent,writable'
+      details: 'forumContent,invitation,writable'
     });
 
     userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true });
@@ -248,7 +248,7 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
         return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
-          details: 'replyCount,original',
+          details: 'replyCount,invitation,original',
           pageSize: PAGE_SIZE,
           offset: offset
         });
@@ -293,7 +293,7 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
         return Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
-          details: 'replyCount,original',
+          details: 'replyCount,invitation,original',
           pageSize: PAGE_SIZE,
           offset: offset
         });
@@ -321,7 +321,7 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
         return Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
-          details: 'replyCount,original',
+          details: 'replyCount,invitation,original',
           pageSize: PAGE_SIZE,
           offset: offset
         });
