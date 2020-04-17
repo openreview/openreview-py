@@ -127,6 +127,7 @@ var main = function() {
       reviewerBidsComplete: calcBidsComplete(reviewerBidCounts, 40),
       reviewsCount: officialReviews.length,
       assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
+      reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
       reviewersComplete: calcReviewersComplete(reviewerGroupMaps.byReviewers, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
       metaReviewsCount: metaReviews.length,
@@ -763,11 +764,13 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
     '<h3>' + conferenceStats.reviewersCount + ' / ' + conferenceStats.reviewersInvitedCount + '</h3>',
     'accepted / invited'
   );
-  html += renderStatContainer(
-    'Area Chair Recruitment:',
-    '<h3>' + conferenceStats.areaChairsCount + ' / ' + conferenceStats.areaChairsInvitedCount + '</h3>',
-    'accepted / invited'
-  );
+  if (AREA_CHAIRS_ID) {
+    html += renderStatContainer(
+      'Area Chair Recruitment:',
+      '<h3>' + conferenceStats.areaChairsCount + ' / ' + conferenceStats.areaChairsInvitedCount + '</h3>',
+      'accepted / invited'
+    );
+  }
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
@@ -787,30 +790,32 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
-  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-  if (BID_NAME) {
-    html += renderStatContainer(
-      'AC Bidding Progress:',
-      renderProgressStat(conferenceStats.acBidsComplete, conferenceStats.areaChairsCount),
-      '% of ACs who have completed the required number of bids'
-    );
+  if (BID_NAME || RECOMMENDATION_NAME) {
+    html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+    if (BID_NAME) {
+      html += renderStatContainer(
+        'AC Bidding Progress:',
+        renderProgressStat(conferenceStats.acBidsComplete, conferenceStats.areaChairsCount),
+        '% of ACs who have completed the required number of bids'
+      );
+    }
+    if (RECOMMENDATION_NAME) {
+      html += renderStatContainer(
+        'Recommendation Progress:',
+        renderProgressStat(conferenceStats.acRecsComplete, conferenceStats.areaChairsCount),
+        '% of ACs who have completed the required number of reviewer recommendations'
+      );
+    }
+    if (BID_NAME) {
+      html += renderStatContainer(
+        'Reviewer Bidding Progress:',
+        renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
+        '% of Reviewers who have completed the required number of bids'
+      );
+    }
+    html += '</div>';
+    html += '<hr class="spacer" style="margin-bottom: 1rem;">';
   }
-  if (RECOMMENDATION_NAME) {
-    html += renderStatContainer(
-      'Recommendation Progress:',
-      renderProgressStat(conferenceStats.acRecsComplete, conferenceStats.areaChairsCount),
-      '% of ACs who have completed the required number of reviewer recommendations'
-    );
-  }
-  if (BID_NAME) {
-    html += renderStatContainer(
-      'Reviewer Bidding Progress:',
-      renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
-      '% of Reviewers who have completed the required number of bids'
-    );
-  }
-  html += '</div>';
-  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
   html += renderStatContainer(
@@ -820,7 +825,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   );
   html += renderStatContainer(
     'Reviewer Progress:',
-    renderProgressStat(conferenceStats.reviewersComplete, conferenceStats.reviewersCount),
+    renderProgressStat(conferenceStats.reviewersComplete, conferenceStats.reviewersWithAssignmentsCount),
     '% of reviewers who have reviewed all of their assigned papers'
   );
   html += renderStatContainer(
@@ -831,19 +836,21 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
-  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-  html += renderStatContainer(
-    'Meta-Review Progress:',
-    renderProgressStat(conferenceStats.metaReviewsCount, conferenceStats.blindSubmissionsCount),
-    '% of papers that have received meta-reviews'
-  );
-  html += renderStatContainer(
-    'AC Meta-Review Progress:',
-    renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.areaChairsCount),
-    '% of area chairs who have completed meta reviews for all their assigned papers'
-  );
-  html += '</div>';
-  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+  if (AREA_CHAIRS_ID) {
+    html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+    html += renderStatContainer(
+      'Meta-Review Progress:',
+      renderProgressStat(conferenceStats.metaReviewsCount, conferenceStats.blindSubmissionsCount),
+      '% of papers that have received meta-reviews'
+    );
+    html += renderStatContainer(
+      'AC Meta-Review Progress:',
+      renderProgressStat(conferenceStats.metaReviewersComplete, conferenceStats.areaChairsCount),
+      '% of area chairs who have completed meta reviews for all their assigned papers'
+    );
+    html += '</div>';
+    html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+  }
 
   // Config
   var requestForm = conferenceConfig.requestForm;
