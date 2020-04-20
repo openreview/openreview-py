@@ -498,7 +498,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        recruit_invitation = re.search('http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruit_invitation = re.search(r'http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
         recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
         acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 1

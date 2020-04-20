@@ -1,7 +1,4 @@
 import openreview
-import random
-import types
-import sys
 
 def do_work(value):
     return value.id

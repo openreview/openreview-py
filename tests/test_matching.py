@@ -1,16 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
 import pytest
-import requests
 import datetime
-import time
 import os
 import re
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from selenium.common.exceptions import NoSuchElementException
 
 
 class TestMatching():

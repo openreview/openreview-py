@@ -291,6 +291,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert pc_group
         assert pc_group.web
 
+    @pytest.mark.ui_test
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
         result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'])
@@ -357,6 +358,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert group.members[0] == 'mohit+1@mail.com'
         assert group.members[1] == 'test_reviewer_eccv@mail.com'
 
+    @pytest.mark.ui_test
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
         reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
@@ -381,6 +383,7 @@ Papers not automatically included as part of this import process can be uploaded
 
 Please contact info@openreview.net with any questions or concerns about this interface, or about the expertise scoring process.'''
 
+    @pytest.mark.ui_test
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
         reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
@@ -581,6 +584,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         test_client.post_note(note)
 
 
+    @pytest.mark.ui_test
     def test_bid_stage(self, conference, helpers, selenium, request_page):
 
         reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
@@ -610,6 +614,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(notes) == 6
         assert notes[4].text == 'Ensure that you have at least 60 bids, which are "Very High" or "High".'
 
+    @pytest.mark.ui_test
     def test_recommend_reviewers(self, conference, test_client, helpers, selenium, request_page):
 
         r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV_One')
@@ -876,6 +881,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             weight = 1
         ))
 
+    @pytest.mark.ui_test
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.close_submissions()
@@ -941,6 +947,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(papers.find_elements_by_tag_name('tr')) == 5
 
 
+    @pytest.mark.ui_test
     def test_withdraw_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.create_withdraw_invitations(reveal_submission=False)
@@ -1000,6 +1007,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(papers.find_elements_by_tag_name('tr')) == 4
 
 
+    @pytest.mark.ui_test
     def test_review_stage(self, conference, client, test_client, selenium, request_page):
 
         conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
@@ -1159,6 +1167,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
 
 
+    @pytest.mark.ui_test
     def test_comment_stage(self, conference, client, test_client, selenium, request_page):
 
         conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True))
@@ -1263,6 +1272,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
 
 
+    @pytest.mark.ui_test
     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')

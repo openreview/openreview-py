@@ -1,10 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
 import pytest
-import requests
 import datetime
-import os
-import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,6 +10,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestReviewersConference():
 
+    @pytest.mark.ui_test
     def test_set_reviewers_name(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -70,6 +68,7 @@ class TestReviewersConference():
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
 
+    @pytest.mark.ui_test
     def test_allow_review_de_anonymization(self, client, test_client, helpers, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -163,6 +162,3 @@ class TestReviewersConference():
             assert e
 
         assert selenium.find_element_by_link_text('Reviewer Status')
-
-
-

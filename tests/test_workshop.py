@@ -5,7 +5,6 @@ import requests
 import datetime
 import time
 import os
-import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -36,6 +35,7 @@ class TestWorkshop():
         resp = requests.get('http://localhost:3000/groups?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
         assert resp.status_code == 200
 
+    @pytest.mark.ui_test
     def test_enable_submissions(self, client, selenium, request_page):
 
 
@@ -91,6 +91,7 @@ class TestWorkshop():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
 
+    @pytest.mark.ui_test
     def test_post_submissions(self, client, test_client, peter_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -309,6 +310,7 @@ class TestWorkshop():
         assert 'scores_specification' in invitation.reply['content']
         assert not invitation.reply['content']['scores_specification']['default']
 
+    @pytest.mark.ui_test
     def test_set_authors(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -351,6 +353,7 @@ class TestWorkshop():
         assert group
         assert len(group.members) == 3
 
+    @pytest.mark.ui_test
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -430,6 +433,7 @@ class TestWorkshop():
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert len(notes) == 1
 
+    @pytest.mark.ui_test
     def test_open_comments(self, client, test_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -525,6 +529,7 @@ class TestWorkshop():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+    @pytest.mark.ui_test
     def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
@@ -686,6 +691,7 @@ class TestWorkshop():
         notes = conference.get_submissions(accepted=True)
         assert notes
 
+    @pytest.mark.ui_test
     def test_release_decisions(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -738,6 +744,7 @@ class TestWorkshop():
         consoles_tab = selenium.find_element_by_id('your-consoles')
         assert consoles_tab
 
+    @pytest.mark.ui_test
     def test_pc_console(self, client, selenium, request_page):
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')

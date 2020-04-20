@@ -1,9 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
 import pytest
-import requests
 import datetime
-import time
 import os
 
 class TestLegacyInvitations():
