@@ -539,8 +539,6 @@ class TestMatching():
 
     def test_setup_matching_with_subject_areas(self, conference, client, test_client, helpers):
 
-        blinded_notes = list(conference.get_submissions())
-
         registration_notes = client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Form')
         assert registration_notes
         assert len(registration_notes) == 1

@@ -47,7 +47,7 @@ class TestEdges:
 
         # Edges
         edges = []
-        for p in range(1000):
+        for _ in range(1000):
             edge = openreview.Edge(head=note.id, tail='~Super_User1', label='High', weight=0.5,
                 invitation=inv1.id, readers=['everyone'], writers=[conference.id],
                 signatures=['~Super_User1'])

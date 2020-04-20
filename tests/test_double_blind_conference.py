@@ -1295,7 +1295,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
-        conference = builder.get_result()
+        builder.get_result()
 
         #Program chair user
         pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
@@ -1334,7 +1334,7 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         builder.enable_reviewer_reassignment(True)#enable review reassignment so that the assign_Reviewer_Textbox is rendered on page
-        conference = builder.get_result()
+        builder.get_result()
 
         #area chair to reassign reviewer
         ac_client=openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
@@ -1617,13 +1617,13 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
-        conference = builder.get_result()
+        builder.get_result()
 
         builder.set_review_stage(public=True)
         builder.get_result()
 
         reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
-        assert(reviews)
+        assert reviews
         assert len(reviews) == 1
         assert reviews[0].readers == ['everyone']
 

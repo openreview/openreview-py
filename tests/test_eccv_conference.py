@@ -511,8 +511,6 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_revise_additional_files(self, conference, client, test_client):
 
-        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-
         conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
 
         submissions = conference.get_submissions()
