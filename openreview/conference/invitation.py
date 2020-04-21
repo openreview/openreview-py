@@ -641,9 +641,12 @@ class OfficialCommentInvitation(openreview.Invitation):
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
 
         readers = []
+        default = None
         invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors)
         if comment_stage.allow_public_comments:
             readers.append('everyone')
+        else:
+            default = [conference.get_program_chairs_id()]
 
         readers.append(conference.get_program_chairs_id())
 
@@ -665,7 +668,7 @@ class OfficialCommentInvitation(openreview.Invitation):
             reply_readers = {
                 'description': 'Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response',
                 'values-dropdown': readers,
-                'default': [conference.get_program_chairs_id()]
+                'default': default
             }
         else:
             reply_readers = {

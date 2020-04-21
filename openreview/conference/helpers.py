@@ -96,7 +96,7 @@ def get_conference_builder(client, request_form_id):
         due_date = submission_due_date,
         additional_fields = submission_additional_options,
         remove_fields = submission_remove_options,
-        email_pcs=False, ## Need to add this setting to the form
+        email_pcs=True, ## Need to add this setting to the form
         create_groups=(not double_blind),
         create_review_invitation=(not double_blind) and note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.'
         )
