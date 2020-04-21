@@ -10,14 +10,14 @@ Understanding CLI inputs for OpenReview matcher
 To run matcher locally through CLI, use the following command:
 
     >>> python -m matcher \
-	>>> --scores affinity_scores.csv \
-    >>> --constraints conflicts.csv \
-    >>> --max_papers max_papers.csv \
-	>>> --weights 1 \
-	>>> --min_papers_default 1 \
-	>>> --max_papers_default 10 \
-	>>> --num_reviewers 3 \
-	>>> --num_alternates 3
+	...     --scores affinity_scores.csv \
+    ...     --constraints conflicts.csv \
+    ...     --max_papers max_papers.csv \
+	...     --weights 1 \
+	...     --min_papers_default 1 \
+	...     --max_papers_default 10 \
+	...     --num_reviewers 3 \
+	...     --num_alternates 3
 
 To learn about the arguments, run the module with the --help flag like so:
 
@@ -44,14 +44,36 @@ For instance, to download ELMo score edges for ICLR 2020 Conference you can do t
     >>> import openreview
     >>> import csv
     >>> client = openreview.Client(baseurl = 'https://openreview.net', username=<>, password=<>)
-    >>> score_groups = client.get_grouped_edges(invitation='ICLR.cc/2020/Conference/Reviewers/-/ELMo_Score', groupby='head', select='head,tail,weight')
+    >>> all_ELMo_edges = openreview.tools.iterget_edges(client, invitation='ICLR.cc/2020/Conference/Reviewers/-/ELMo_Score')
     >>> with open('ELMo_scores.csv', 'w') as f:
-    >>>     csv_writer = csv.writer(f)
-    >>>     for edge_group in score_group:
-    >>>         for edge in edge_group:
-    >>>             csv_writer.writerow([edge['head], edge['tail], edge['weight]])
+    ...     csv_writer = csv.writer(f)
+    ...     for edge in all_ELMo_edges:
+    ...         csv_writer.writerow([edge.head, edge.tail, edge.weight])
+
+Please note that this is usually a time consuming task as there could be millions of edges for a single type of score (in the order of (# of papers) * (# of reviewers)).
 
 
 Constraints
 --------------
+
+You can use this option to input constraint scores using a file for each type of constraint. This option is commonly used for registering conflicts.
+
+OpenReview stores constraints as edge objects. So, given that you have the necessary permissions to read these edges, you should be able to download these edges and write them into csv files.
+
+To download conflict edges for ICLR 2020 Conference you can do the following:
+
+    >>> import openreview
+    >>> import csv
+    >>> client = openreview.Client(baseurl = 'https://openreview.net', username=<>, password=<>)
+    >>> all_conflict_edges = openreview.tools.iterget_edges(client, invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict')
+    >>> with open('conflict_scores.csv', 'w') as f:
+    ...     csv_writer = csv.writer(f)
+    ...     for edge_group in all_conflict_edges:
+    ...         csv_writer.writerow([edge.head, edge.tail, edge.weight])
+
+
+Custom max papers
+--------------------
+
+The option --max_papers can be used to provide a file containing max number of papers to be assigned to each reviewer.
 
