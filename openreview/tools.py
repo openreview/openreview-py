@@ -3,10 +3,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from deprecated.sphinx import deprecated
 import sys
-if sys.version_info[0] < 3:
-    string_types = [str, unicode]
-else:
-    string_types = [str]
 import openreview
 import re
 import datetime
@@ -16,7 +12,6 @@ from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool
 from tqdm import tqdm
 from ortools.graph import pywrapgraph
-from fuzzywuzzy import fuzz
 import tld
 import urllib.parse as urlparse
 
@@ -82,7 +77,7 @@ def get_invitation(client, id):
         print('Can not retrieve invitation', e)
     return invitation
 
-def create_profile(client, email, first, last, middle = None, allow_duplicates = False):
+def create_profile(client, email, first, last, middle=None, allow_duplicates=False):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -138,8 +133,8 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
         tilde_id = username_response_full['username']
         if (not profile_exists) or allow_duplicates:
 
-            tilde_group = openreview.Group(id = tilde_id, signatures = [client.profile.id], signatories = [tilde_id], readers = [tilde_id], writers = [client.profile.id], members = [email])
-            email_group = openreview.Group(id = email, signatures = [client.profile.id], signatories = [email], readers = [email], writers = [client.profile.id], members = [tilde_id])
+            tilde_group = openreview.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
+            email_group = openreview.Group(id=email, signatures=[client.profile.id], signatories=[email], readers=[email], writers=[client.profile.id], members=[tilde_id])
             profile_content = {
                 'emails': [email],
                 'preferredEmail': email,
@@ -166,7 +161,6 @@ def create_profile(client, email, first, last, middle = None, allow_duplicates =
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
-
 def create_authorid_profiles(client, note, print=print):
     # for all submissions get authorids, if in form of email address, try to find associated profile
     # if profile doesn't exist, create one
@@ -176,14 +170,12 @@ def create_authorid_profiles(client, note, print=print):
         '''
         Replaces invalid characters with equivalent valid ones.
         '''
-
         return name.replace('’', "'")
 
     def get_names(author_name):
         '''
         Splits a string into first and last (and middle, if applicable) names.
         '''
-
         names = author_name.split(' ')
         if len(names) > 1:
             first = names[0]
@@ -197,28 +189,22 @@ def create_authorid_profiles(client, note, print=print):
         author_names = [a.replace('*', '') for a in note.content['authors']]
         author_emails = [e for e in note.content['authorids']]
         if len(author_names) == len(author_emails):
-
-            email_by_authorname = match_authors_to_emails(author_names, author_emails)
-
             # iterate through authorids and authors at the same time
             for (author_id, author_name) in zip(author_emails, author_names):
                 author_id = author_id.strip()
                 author_name = author_name.strip()
 
                 if '@' in author_id:
-                    if email_by_authorname.get(author_name) == author_id:
-                        names = get_names(author_name)
-                        if names:
-                            try:
-                                profile = create_profile(client = client, email = author_id, first = names[0], last = names[1], middle = names[2])
-                                created_profiles.append(profile)
-                                print('{}: profile created with id {}'.format(note.id, profile.id))
-                            except openreview.OpenReviewException as e:
-                                print('{}: {}'.format(note.id, e))
-                        else:
-                            print('{}: invalid author name {}'.format(note.id, author_name))
+                    names = get_names(author_name)
+                    if names:
+                        try:
+                            profile = create_profile(client=client, email=author_id, first=names[0], last=names[1], middle=names[2])
+                            created_profiles.append(profile)
+                            print('{}: profile created with id {}'.format(note.id, profile.id))
+                        except openreview.OpenReviewException as e:
+                            print('Error while creating profile for note id {}, author {author_id}, '.format(note.id, e))
                     else:
-                        print('{}: potential author name/email mismatch: {}/{}'.format(note.id, author_name, author_id))
+                        print('{}: invalid author name {}'.format(note.id, author_name))
         else:
             print('{}: length mismatch. authors ({}), authorids ({})'.format(
                 note.id,
@@ -1441,7 +1427,7 @@ def _fill_str_or_list(template_str_or_list, paper):
     """
     if type(template_str_or_list) == list:
         return [_fill_str(v, paper) for v in template_str_or_list]
-    elif any([type(template_str_or_list) == t for t in string_types]):
+    elif type(template_str_or_list) == str:
         return _fill_str(template_str_or_list, paper)
     elif any([type(template_str_or_list) == t for t in [int, float, type(None), bool]]):
         return template_str_or_list
@@ -1496,7 +1482,6 @@ def get_conflicts(author_profiles, user_profile):
 
     for profile in author_profiles:
         author_info = get_profile_info(profile)
-
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
@@ -1560,112 +1545,6 @@ def post_bulk_edges (client, edges, batch_size = 50000):
         result += batch
     return result
 
-def email_distance(email, author):
-    """
-    Fuzzy matching for calculating string edit distance between two emails.
-
-    Comparing part of email before '@' with both full name of author and with
-    just the initials of author, and taking max value among the two
-    """
-    email_parts = email.split('@')
-
-    parts = author.split(' ')
-    initials = ""
-    for x in parts:
-        if x:
-            initials += x[0]
-
-    fullname_ratio = fuzz.token_set_ratio(email_parts[0], author)
-    initials_ratio = fuzz.token_set_ratio(email_parts[0], initials)
-
-    return 1000 - max(fullname_ratio, initials_ratio)
-
-def match_authors_to_emails(name_list, email_list, verbose=False):
-    """
-    The node number for source, author emails, author names and sink are continuous values starting from 0.
-    The edge capacities are 1. Supply at source is min(number of authors, number of emails), negative of which is
-    demand at sink. Cost of edges from source to author email nodes and from author name nodes to sink are all zero.
-    Cost of edges from emails to names are string edit distance calculated in email_distance function.
-    """
-
-    max_length = max(len(name_list), len(email_list))
-    min_length = min(len(name_list), len(email_list))
-    author_names = name_list + ['']*(max_length-len(name_list))
-    author_emails = email_list + ['']*(max_length-len(email_list))
-
-    matched_emails = []
-    matched_names = []
-    emails_by_authorname = {}
-
-    source_idx = 0
-    sink_idx = 1 + 2 * max_length
-
-    # Edges from source to emails
-    start_nodes = [source_idx for i in author_emails]
-    end_nodes = [i+1 for i, _ in enumerate(author_emails)]
-    costs = [0 for i in author_emails]
-    capacities = [1 for i in author_emails]
-
-    supplies = [min_length] + [0 for i in range(2 * max_length)] + [-min_length]
-
-    # Edges from emails to names
-    for i, email in enumerate(author_emails):
-        email_idx = i + 1
-        for j, name in enumerate(author_names):
-            name_idx = j + 1 + max_length
-            start_nodes.append(email_idx)
-            end_nodes.append(name_idx)
-            capacities.append(1)
-            costs.append(email_distance(email, name))
-
-    # Edges from names to sink
-    for j, name in enumerate(author_names):
-        name_idx = j + 1 + max_length
-        start_nodes.append(name_idx)
-        end_nodes.append(sink_idx)
-        costs.append(0)
-        capacities.append(1)
-
-    # Instantiate a SimpleMinCostFlow solver.
-    min_cost_flow = pywrapgraph.SimpleMinCostFlow()
-
-    # Add each arc.
-    for i in range(len(start_nodes)):
-        min_cost_flow.AddArcWithCapacityAndUnitCost(start_nodes[i], end_nodes[i],
-                                                    capacities[i], costs[i])
-
-    # Add node supplies.
-    for i in range(len(supplies)):
-        min_cost_flow.SetNodeSupply(i, supplies[i])
-
-    # Find the minimum cost flow between source and sink.
-    if min_cost_flow.Solve() == min_cost_flow.OPTIMAL:
-        if verbose: print('Total cost = ', min_cost_flow.OptimalCost())
-
-        for arc in range(min_cost_flow.NumArcs()):
-
-            # Can ignore arcs leading out of source or into sink.
-            if min_cost_flow.Tail(arc) != source_idx and min_cost_flow.Head(arc) != sink_idx:
-
-                # Arcs in the solution have a flow value of 1. Their start and end nodes
-                # give an assignment of worker to task.
-
-                if min_cost_flow.Flow(arc) > 0:
-                    if verbose: print('Email %s | %s  Cost = %d' % (
-                        author_emails[min_cost_flow.Tail(arc) - 1],
-                        author_names[min_cost_flow.Head(arc) - max_length - 1],
-                        min_cost_flow.UnitCost(arc)))
-
-                    # matched_emails.append(author_emails[min_cost_flow.Tail(arc) - 1])
-                    # matched_names.append(author_names[min_cost_flow.Head(arc) - max_length - 1])
-                    authorname = author_names[min_cost_flow.Head(arc) - max_length - 1]
-                    email = author_emails[min_cost_flow.Tail(arc) - 1]
-                    emails_by_authorname[authorname] = email
-    else:
-        print('There was an issue with the min cost flow input.')
-
-    return emails_by_authorname
-
 def overwrite_pdf(client, note_id, file_path):
     """
     Overwrite all the references of a note with the new pdf file.
@@ -1690,5 +1569,3 @@ def overwrite_pdf(client, note_id, file_path):
                 updated_references.append(client.post_note(reference))
 
     return updated_references
-
-
