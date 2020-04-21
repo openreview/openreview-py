@@ -37,14 +37,14 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
-        self.submission_stage = None
-        self.bid_stage = None
-        self.expertise_selection_stage = None
-        self.registration_stage = None
-        self.review_stage = None
-        self.comment_stage = None
-        self.meta_review_stage = None
-        self.decision_stage = None
+        self.submission_stage = SubmissionStage()
+        self.bid_stage = BidStage()
+        self.expertise_selection_stage = ExpertiseSelectionStage()
+        self.registration_stage = RegistrationStage()
+        self.review_stage = ReviewStage()
+        self.comment_stage = CommentStage()
+        self.meta_review_stage = MetaReviewStage()
+        self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
         self.reduced_load_on_decline = []
@@ -208,61 +208,35 @@ class Conference(object):
 
     def set_submission_stage(self, stage):
         self.submission_stage = stage
-        #return self.__create_submission_stage()
+        return self.__create_submission_stage()
 
     def set_expertise_selection_stage(self, stage):
         self.expertise_selection_stage = stage
-        #return self.__create_expertise_selection_stage()
+        return self.__create_expertise_selection_stage()
 
     def set_registration_stage(self, stage):
         self.registration_stage = stage
-        #return self.__create_registration_stage()
+        return self.__create_registration_stage()
 
     def set_bid_stage(self, stage):
         self.bid_stage = stage
-        #return self.__create_bid_stage()
+        return self.__create_bid_stage()
 
     def set_review_stage(self, stage):
         self.review_stage = stage
-        #return self.__create_review_stage()
+        return self.__create_review_stage()
 
     def set_comment_stage(self, stage):
         self.comment_stage = stage
-        #return self.__create_comment_stage()
+        return self.__create_comment_stage()
 
     def set_meta_review_stage(self, stage):
         self.meta_review_stage = stage
-        #return self.__create_meta_review_stage()
+        return self.__create_meta_review_stage()
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
-        #return self.__create_decision_stage()
-
-    def create_stages(self):
-
-        if self.submission_stage:
-            self.__create_submission_stage()
-
-        if self.bid_stage:
-            self.__create_bid_stage()
-
-        if self.expertise_selection_stage:
-            self.__create_expertise_selection_stage()
-
-        if self.registration_stage:
-            self.__create_registration_stage()
-
-        if self.review_stage:
-            self.__create_review_stage()
-
-        if self.meta_review_stage:
-            self.__create_meta_review_stage()
-
-        if self.comment_stage:
-            self.__create_comment_stage()
-
-        if self.decision_stage:
-            self.__create_decision_stage()
+        return self.__create_decision_stage()
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -1190,14 +1164,14 @@ class ConferenceBuilder(object):
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
-        self.submission_stage = SubmissionStage()
+        self.submission_stage = None
         self.expertise_selection_stage = None
         self.registration_stage = None
-        self.bid_stage = BidStage()
-        self.review_stage = ReviewStage()
-        self.comment_stage = CommentStage()
-        self.meta_review_stage = MetaReviewStage()
-        self.decision_stage = DecisionStage()
+        self.bid_stage = None
+        self.review_stage = None
+        self.comment_stage = None
+        self.meta_review_stage = None
+        self.decision_stage = None
         self.program_chairs_ids = []
 
     def __build_groups(self, conference_id):
@@ -1357,27 +1331,6 @@ class ConferenceBuilder(object):
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
 
-        if self.bid_stage:
-            self.conference.set_bid_stage(self.bid_stage)
-
-        if self.expertise_selection_stage:
-            self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
-
-        if self.registration_stage:
-            self.conference.set_registration_stage(self.registration_stage)
-
-        if self.review_stage:
-            self.conference.set_review_stage(self.review_stage)
-
-        if self.comment_stage:
-            self.conference.set_comment_stage(self.comment_stage)
-
-        if self.meta_review_stage:
-            self.conference.set_meta_review_stage(self.meta_review_stage)
-
-        if self.decision_stage:
-            self.conference.set_decision_stage(self.decision_stage)
-
         ## Create committee groups before any other stage that requires them to create groups and/or invitations
         self.conference.set_program_chairs(emails=self.program_chairs_ids)
         self.conference.set_authors()
@@ -1407,6 +1360,25 @@ class ConferenceBuilder(object):
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
 
-        self.conference.create_stages()
+        if self.bid_stage:
+            self.conference.set_bid_stage(self.bid_stage)
+
+        if self.expertise_selection_stage:
+            self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
+
+        if self.registration_stage:
+            self.conference.set_registration_stage(self.registration_stage)
+
+        if self.review_stage:
+            self.conference.set_review_stage(self.review_stage)
+
+        if self.comment_stage:
+            self.conference.set_comment_stage(self.comment_stage)
+
+        if self.meta_review_stage:
+            self.conference.set_meta_review_stage(self.meta_review_stage)
+
+        if self.decision_stage:
+            self.conference.set_decision_stage(self.decision_stage)
 
         return self.conference
