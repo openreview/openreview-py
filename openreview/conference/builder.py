@@ -907,7 +907,9 @@ class SubmissionStage(object):
             remove_fields=[],
             subject_areas=[],
             email_pcs = False,
-            create_groups = False
+            create_groups = False,
+            # We need to assume the Official Review super invitation is already created and active
+            create_review_invitation = False
         ):
 
         self.start_date = start_date
@@ -920,6 +922,7 @@ class SubmissionStage(object):
         self.subject_areas = subject_areas
         self.email_pcs = email_pcs
         self.create_groups = create_groups
+        self.create_review_invitation = create_review_invitation
 
     def get_readers(self, conference):
         if self.double_blind:
@@ -1260,7 +1263,8 @@ class ConferenceBuilder(object):
             remove_fields=[],
             subject_areas=[],
             email_pcs = False,
-            create_groups = False
+            create_groups = False,
+            create_review_invitation = False
         ):
 
         self.submission_stage = SubmissionStage(
@@ -1273,7 +1277,8 @@ class ConferenceBuilder(object):
             remove_fields,
             subject_areas,
             email_pcs,
-            create_groups
+            create_groups,
+            create_review_invitation
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):

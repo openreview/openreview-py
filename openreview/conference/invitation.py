@@ -47,7 +47,7 @@ class SubmissionInvitation(openreview.Invitation):
             if submission_stage.create_groups:
                 file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
                 # Only supported for public reviews
-                if conference.review_stage and conference.review_stage.public:
+                if submission_stage.create_review_invitation:
                     print('REPLACE OFFICIAL REVIEW')
                     file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
                 else:
