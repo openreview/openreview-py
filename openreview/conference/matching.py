@@ -598,6 +598,6 @@ class Matching(object):
             if edge.head in paper_by_forum:
                 paper_number = paper_by_forum.get(edge.head).number
                 user = edge.tail
-                _ = self.conference.set_assignment(user, paper_number, self.is_area_chair)
+                self.conference.set_assignment(user, paper_number, self.is_area_chair)
             else:
                 print('paper not found', edge.head)
