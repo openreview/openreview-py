@@ -1307,8 +1307,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         ac_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
             tag = '1 of 2',
-            readers = ['thecvf.com/ECCV/2020/Conference', '~AreaChair_ECCV_One1'],
-            signatures = ['~AreaChair_ECCV_One1'])
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
+            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'])
         )
 
         reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
@@ -1328,6 +1328,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         reviewer_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
             tag = '2 of 2',
-            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', '~Reviewer_ECCV_One1'],
-            signatures = ['~Reviewer_ECCV_One1'])
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'])
         )
