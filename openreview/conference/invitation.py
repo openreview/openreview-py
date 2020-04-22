@@ -1231,6 +1231,17 @@ class InvitationBuilder(object):
 
     def set_paper_ranking_invitation(self, conference, group_id, start_date, due_date):
 
+        readers = {
+            'description': 'The users who will be allowed to read the above content.',
+            'values-copied': [conference.get_id(), '{signatures}']
+        }
+
+        if group_id == conference.get_reviewers_id() and conference.use_area_chairs:
+            readers = {
+                'description': 'The users who will be allowed to read the above content.',
+                'values-regex': conference.get_id() + '|' + conference.get_area_chairs_id(number='.*') + '|~.*'
+            }
+
         reviewer_paper_ranking_invitation = openreview.Invitation(
             id = conference.get_invitation_id('Paper_Ranking', prefix=group_id),
             cdate = tools.datetime_millis(start_date),
@@ -1243,10 +1254,7 @@ class InvitationBuilder(object):
             multiReply = True,
             reply = {
                 "invitation": conference.get_submission_id(),
-                'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [conference.get_id(), '{signatures}']
-                },
+                'readers': readers,
                 'signatures': {
                     'description': 'How your identity will be displayed with the above content.',
                     'values-regex': '~.*'

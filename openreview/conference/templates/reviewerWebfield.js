@@ -4,6 +4,7 @@ var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var REVIEWER_NAME = '';
+var AREACHAIR_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var LEGACY_INVITATION_ID = false;
 var REVIEW_LOAD = 0;
@@ -304,12 +305,11 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
             id: id,
             tag: value,
             signatures: [user.profile.id],
-            readers: [CONFERENCE_ID],
+            readers: [CONFERENCE_ID, CONFERENCE_ID + '/Paper' + note.number + '/' + AREACHAIR_NAME, user.profile.id],
             forum: note.id,
             invitation: invitationId,
             ddate: deleted ? Date.now() : null
           };
-          body = view.getCopiedValues(body, invitation.reply);
           Webfield.post('/tags', body)
             .then(function(result) {
               if (index !== -1) {
