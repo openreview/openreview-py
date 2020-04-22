@@ -1475,8 +1475,6 @@ class Invitation(object):
     :type expdate: int, optional
     :param cdate: Creation date
     :type cdate: int, optional
-    :param rdate: This field is never used
-    :type rdate: int, optional
     :param ddate: Deletion date
     :type ddate: int, optional
     :param tcdate: True creation date
@@ -1508,7 +1506,6 @@ class Invitation(object):
         duedate = None,
         expdate = None,
         cdate = None,
-        rdate = None,
         ddate = None,
         tcdate = None,
         tmdate = None,
@@ -1520,7 +1517,6 @@ class Invitation(object):
         self.id = id
         self.super = super
         self.cdate = cdate
-        self.rdate = rdate
         self.ddate = ddate
         self.duedate = duedate
         self.expdate = expdate
@@ -1570,7 +1566,6 @@ class Invitation(object):
             'id': self.id,
             'super': self.super,
             'cdate': self.cdate,
-            'rdate': self.rdate,
             'ddate': self.ddate,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
@@ -1611,7 +1606,6 @@ class Invitation(object):
         invitation = Invitation(i['id'],
             super = i.get('super'),
             cdate = i.get('cdate'),
-            rdate = i.get('rdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),
             tmdate = i.get('tmdate'),
