@@ -1263,7 +1263,7 @@ class InvitationBuilder(object):
                     "tag": {
                         "description": "Select value",
                         "order": 1,
-                        "value-dropdown": ['No Ranking'] + [str(e) for e in list(range(1, 31))],
+                        "value-regex": 'No Ranking|[0-9]+\sof\s[0-9]+',
                         "required": True
                     }
                 }

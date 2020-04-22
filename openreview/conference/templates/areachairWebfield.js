@@ -720,7 +720,10 @@ var renderTableAndTasks = function(fetchedData) {
 
   paperRankingInvitation = _.find(fetchedData.tagInvitations, ['id', PAPER_RANKING_ID]);
   if (paperRankingInvitation) {
-    availableOptions = paperRankingInvitation.reply.content.tag['value-dropdown'].slice(0, fetchedData.blindedNotes.length + 1);
+    availableOptions = ['No Ranking'];
+    fetchedData.blindedNotes.forEach(function(note, index) {
+      availableOptions.push((index + 1) + ' of ' + fetchedData.blindedNotes.length );
+    })
   }
   if (paperRankingInvitation || Object.keys(fetchedData.rankingByPaper).length) {
     showRankings = true;

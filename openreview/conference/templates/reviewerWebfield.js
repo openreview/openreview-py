@@ -273,7 +273,10 @@ var buildTableRow = function(note, officialReview) {
 var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTags) {
   var invitation = paperRankingInvitation ? _.cloneDeep(paperRankingInvitation) : null;
   if (invitation) {
-    var availableOptions = invitation.reply.content.tag['value-dropdown'].slice(0, notes.length + 1);
+    var availableOptions = ['No Ranking'];
+    notes.forEach(function(note, index) {
+      availableOptions.push((index + 1) + ' of ' + notes.length );
+    })
     var currentRankings = paperRankingTags.map(function(tag) {
       if (!tag.tag || tag.tag === 'No Ranking') {
         return null;
