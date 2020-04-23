@@ -37,7 +37,7 @@ function load() {
   var authorNotesP = Webfield.get('/notes', {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
-    details: 'overwriting'
+    details: 'invitation,overwriting'
   }).then(function(result) {
     //Get the blind submissions to have backward compatibility with the paper number
     var originalNotes = result.notes;

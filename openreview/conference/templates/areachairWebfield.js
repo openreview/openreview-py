@@ -120,8 +120,12 @@ var loadData = function(result) {
     var noteNumbersStr = noteNumbers.join(',');
 
     blindedNotesP = Webfield.getAll('/notes', {
-      invitation: BLIND_SUBMISSION_ID, number: noteNumbersStr
-    }).then(function(notes) { return _.sortBy(notes, 'number'); });
+      invitation: BLIND_SUBMISSION_ID,
+      number: noteNumbersStr,
+      details: 'invitation'
+    }).then(function(notes) {
+      return _.sortBy(notes, 'number');
+    });
 
     var noteNumberRegex = noteNumbers.join('|');
     metaReviewsP = Webfield.getAll('/notes', {
