@@ -684,8 +684,8 @@ var postRenderTable = function(rows) {
           var body = {
             id: id,
             tag: value,
-            signatures: [user.profile.id],
-            readers: [CONFERENCE_ID],
+            signatures: [CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
+            readers: [CONFERENCE_ID, CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
             forum: noteId,
             invitation: invitationId,
             ddate: deleted ? Date.now() : null

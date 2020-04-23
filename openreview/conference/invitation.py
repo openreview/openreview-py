@@ -1236,11 +1236,14 @@ class InvitationBuilder(object):
             'values-copied': [conference.get_id(), '{signatures}']
         }
 
+        signatures_regex = conference.get_id() + '/Paper.*/Area_Chair[0-9]+'
+
         if group_id == conference.get_reviewers_id() and conference.use_area_chairs:
             readers = {
                 'description': 'The users who will be allowed to read the above content.',
                 'values-regex': conference.get_id() + '|' + conference.get_area_chairs_id(number='.*') + '|~.*'
             }
+            signatures_regex = conference.get_id() + '/Paper.*/AnonReviewer[0-9]+'
 
         reviewer_paper_ranking_invitation = openreview.Invitation(
             id = conference.get_invitation_id('Paper_Ranking', prefix=group_id),
@@ -1257,7 +1260,7 @@ class InvitationBuilder(object):
                 'readers': readers,
                 'signatures': {
                     'description': 'How your identity will be displayed with the above content.',
-                    'values-regex': '~.*'
+                    'values-regex': signatures_regex
                 },
                 'content': {
                     "tag": {

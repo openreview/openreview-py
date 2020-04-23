@@ -92,9 +92,6 @@ var getReviewerNoteNumbers = function() {
     if (!result.groups) {
       return [];
     }
-    // return _.without(result.groups.map(function(group) {
-    //   return getNumberFromGroup(group.id, 'Paper');
-    // }), null);
     return result.groups.reduce(function(groupByNumber, group) {
       var number = getNumberFromGroup(group.id, 'Paper');
       if (number) {
