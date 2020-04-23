@@ -226,7 +226,9 @@ var getAllAreaChairs = function() {
 
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, sort: 'number:asc'
+    invitation: BLIND_SUBMISSION_ID,
+    details: 'invitation',
+    sort: 'number:asc'
   });
 };
 

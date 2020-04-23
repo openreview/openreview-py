@@ -68,6 +68,7 @@ function getPapersSortedByAffinity(offset) {
       } else {
         return Webfield.get('/notes', {
           invitation: BLIND_SUBMISSION_ID,
+          details: 'invitation',
           offset: offset,
           limit: 50
         })
@@ -80,6 +81,7 @@ function getPapersSortedByAffinity(offset) {
   } else {
     return Webfield.get('/notes', {
       invitation: BLIND_SUBMISSION_ID,
+      details: 'invitation',
       offset: offset,
       limit: 50
     })

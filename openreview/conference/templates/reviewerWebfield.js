@@ -103,7 +103,9 @@ var getBlindedNotes = function(noteNumbers) {
   }
 
   return Webfield.get('/notes', {
-    invitation: BLIND_SUBMISSION_ID, number: noteNumbers.join(',')
+    invitation: BLIND_SUBMISSION_ID,
+    number: noteNumbers.join(','),
+    details: 'invitation'
   }).then(function(result) {
     return result.notes || [];
   });
