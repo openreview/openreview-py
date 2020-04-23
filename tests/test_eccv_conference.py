@@ -1069,7 +1069,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review']))
+            remove_fields = ['title', 'rating', 'review'],
+            rating_field_name = 'preliminary_rating'))
 
         r1_client = openreview.Client(username='reviewer1@fb.com', password='1234')
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')

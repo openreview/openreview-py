@@ -6,6 +6,7 @@ var HEADER = {};
 var REVIEWER_NAME = '';
 var AREACHAIR_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
+var REVIEW_RATING_NAME = 'rating';
 var LEGACY_INVITATION_ID = false;
 var REVIEW_LOAD = 0;
 
@@ -267,7 +268,7 @@ var buildTableRow = function(note, officialReview) {
     invitationName: 'Official Review'
   };
   if (officialReview) {
-    reviewStatus.paperRating = officialReview.content.rating;
+    reviewStatus.paperRating = officialReview.content[REVIEW_RATING_NAME];
     reviewStatus.review = officialReview.content.review;
     reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id + '&referrer=' + referrerUrl;
   }
