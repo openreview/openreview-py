@@ -147,7 +147,14 @@ class Conference(object):
     def __create_review_stage(self):
 
         notes = list(self.get_submissions())
-        return self.invitation_builder.set_review_invitation(self, notes)
+        invitations = self.invitation_builder.set_review_invitation(self, notes)
+        if self.review_stage.rating_field_name:
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_program_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
+            if self.use_area_chairs:
+                self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_area_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_reviewers_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
+        return invitations
 
     def __create_comment_stage(self):
 
@@ -1007,7 +1014,8 @@ class ReviewStage(object):
         release_to_reviewers = Readers.REVIEWER_SIGNATURE,
         email_pcs = False,
         additional_fields = {},
-        remove_fields = []
+        remove_fields = [],
+        rating_field_name = None
     ):
 
         self.start_date = start_date
@@ -1022,6 +1030,7 @@ class ReviewStage(object):
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
+        self.rating_field_name = rating_field_name
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
