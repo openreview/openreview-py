@@ -478,6 +478,7 @@ def replace_members_with_ids(client, group):
     """
     ids = []
     emails = []
+    invalid_ids = []
     for member in group.members:
         if '~' not in member:
             try:
@@ -489,9 +490,16 @@ def replace_members_with_ids(client, group):
                 else:
                     raise e
         else:
-            profile = client.get_profile(member)
-            ids.append(profile.id)
+            try:
+                profile = client.get_profile(member)
+                ids.append(profile.id)
+            except openreview.OpenReviewException as e:
+                if 'Profile not found' in e.args[0][0]:
+                    invalid_ids.append(member)
+                else:
+                    raise e
 
+    print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
     group.members = ids + emails
     return client.post_group(group)
 
