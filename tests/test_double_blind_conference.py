@@ -1673,3 +1673,37 @@ class TestDoubleBlindConference():
         assert decisions[0].readers == ['everyone']
         assert decisions[1].readers == ['everyone']
         assert decisions[2].readers == ['everyone']
+
+    def test_release_accepted_notes(self, client, request_page, selenium):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_decision_stage(public=True)
+        conference = builder.get_result()
+
+        conference.set_homepage_decisions(release_accepted_notes={ 'conference_title': 'Automated Knowledge Base Construction Conference', 'conference_year': '2019'})
+
+        request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference")
+        assert "AKBC 2019 Conference | OpenReview" in selenium.title
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert "AKBC.ws/2019/Conference" == header.find_element_by_tag_name("h1").text
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        with pytest.raises(NoSuchElementException):
+            notes_panel.find_element_by_class_name('spinner-container')
+        assert tabs.find_element_by_id('accept-oral')
+        assert tabs.find_element_by_id('accept-poster')
+        assert tabs.find_element_by_id('reject')
