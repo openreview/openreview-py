@@ -491,7 +491,9 @@ def replace_members_with_ids(client, group):
                     raise e
         else:
             profile = get_profile(client, member)
-            if not profile:
+            if profile:
+                ids.append(profile.id)
+            else:
                 invalid_ids.append(member)
 
     print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
