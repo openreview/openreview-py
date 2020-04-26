@@ -8,6 +8,8 @@ var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var OFFICIAL_REVIEW_NAME = '';
 var OFFICIAL_META_REVIEW_NAME = '';
+var REVIEW_RATING_NAME = 'rating';
+var REVIEW_CONFIDENCE_NAME = 'confidence';
 var HEADER = {};
 var AUTHOR_NAME = 'Authors';
 
@@ -234,13 +236,13 @@ function buildTableRow(note, completedReviews, metaReview) {
 
     // Need to parse rating and confidence strings into ints
     var ratingExp = /^(\d+): .*$/;
-    var ratingMatch = review.content.rating && review.content.rating.match(ratingExp);
+    var ratingMatch = review.content[REVIEW_RATING_NAME] && review.content[REVIEW_RATING_NAME].match(ratingExp);
     var rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
     if (rating) {
       ratings.push(rating);
       reviewFormatted.rating = rating;
     }
-    var confidenceMatch = review.content.confidence && review.content.confidence.match(ratingExp);
+    var confidenceMatch = review.content[REVIEW_CONFIDENCE_NAME] && review.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
     var confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
     if (confidence) {
       confidences.push(confidence);
