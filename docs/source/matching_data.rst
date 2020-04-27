@@ -1,8 +1,10 @@
-Retrieve OpenReview data to run OpenReview Matcher locally using CLI
+OpenReview Matcher
 =========================================================================
 
-To be able to run matching locally, you would require the package openreview-matcher (https://github.com/openreview/openreview-matcher) installed on your local development environment.
+OpenReview Matcher is a tool for computing optimal paper-reviewer matches for peer review, subject to constraints and affinity scores. This tool comes with a simple web server designed for integration with the OpenReview server application. The tool also allows you to execute these matches locally on your setup. For more details about the tool itself refer to https://github.com/openreview/openreview-matcher.
 
+To be able to run matching locally, you would require the package openreview-matcher installed on your local development environment.
+Next, if the data needed to run the matcher locally is available in OpenReview, you can use the OpenReview-py API to download this data.
 
 Understanding CLI inputs for OpenReview matcher
 --------------------------------------------------
@@ -11,8 +13,8 @@ To run matcher locally through CLI, use the following command:
 
     >>> python -m matcher \
 	...     --scores affinity_scores.csv \
-    ...     --constraints conflicts.csv \
-    ...     --max_papers max_papers.csv \
+        ...     --constraints conflicts.csv \
+        ...     --max_papers max_papers.csv \
 	...     --weights 1 \
 	...     --min_papers_default 1 \
 	...     --max_papers_default 10 \
@@ -24,9 +26,11 @@ To learn about the arguments, run the module with the --help flag like so:
     >>> python -m matcher --help
 
 The matcher accepts files for these arguments:
+
 1. scores - expected format: each line having comma-separated paperID, userID, score in this order)
 2. constraints - expected format: each line having comma-separated paperID, reviewerID, constraint_value in this order where the constraint_value must be -1 (conflict), 1 (forced assignment), or 0 (no effect))
 3. max_papers - expected format: each line having comma-separated userID, max_paper in this order
+
 
 Following are instructions on how you can download this data from OpenReview.
 
