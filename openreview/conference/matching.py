@@ -361,23 +361,23 @@ class Matching(object):
                         'description': 'Title of the configuration.',
                         'order': 1
                     },
-                    'max_users': {
+                    'user_demand': {
                         'value-regex': '[0-9]+',
                         'required': True,
-                        'description': 'Max number of reviewers that can review a paper',
+                        'description': 'Number of users that can review a paper',
                         'order': 2
                     },
                     'max_papers': {
                         'value-regex': '[0-9]+',
                         'required': True,
-                        'description': 'Max number of reviews a person has to do',
-                        'order': 4
+                        'description': 'Max number of reviews a user has to do',
+                        'order': 3
                     },
                     'min_papers': {
                         'value-regex': '[0-9]+',
                         'required': True,
-                        'description': 'Min number of reviews a person should do',
-                        'order': 5
+                        'description': 'Min number of reviews a user should do',
+                        'order': 4
                     },
                     'alternates': {
                         'value-regex': '[0-9]+',
@@ -396,7 +396,7 @@ class Matching(object):
                         'value-regex': '.*',
                         'default': self.match_group.id,
                         'required': True,
-                        'description': 'Invitation to get the configuration note',
+                        'description': 'Group id containing users to be matched',
                         'order': 7
                     },
                     'scores_specification': {
@@ -415,28 +415,38 @@ class Matching(object):
                     'conflicts_invitation': {
                         'value': self.conference.get_conflict_score_id(self.match_group.id),
                         'required': True,
-                        'description': 'Invitation to store aggregated scores',
+                        'description': 'Invitation to store conflict scores',
                         'order': 10
-                    },
-                    'custom_load_invitation': {
-                        'value': self._get_edge_invitation_id('Custom_Load'),
-                        'required': True,
-                        'description': 'Invitation to store aggregated scores',
-                        'order': 11
                     },
                     'assignment_invitation': {
                         'value': self.conference.get_paper_assignment_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store paper user assignments',
-                        'order': 12
+                        'order': 11
+                    },
+                    'custom_user_demand_invitation': {
+                        'description': 'Invitation to store custom number of users required by papers',
+                        'default': self.match_group.id + '/-/Custom_User_Demands',
+                        'order': 12,
+                        'value-regex': self.conference.id + '/.*/-/.*',
+                        'required': False
+                    },
+                    'custom_max_papers_invitation': {
+                        'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
+                        'default': self.match_group.id + '/-/Custom_Max_Papers',
+                        'order': 13,
+                        'value-regex': self.conference.id + '/.*/-/.*',
+                        'required': False
                     },
                     'config_invitation': {
-                        'value': self._get_edge_invitation_id('Assignment_Configuration')
+                        'value': self._get_edge_invitation_id('Assignment_Configuration'),
+                        'order': 14
                     },
                     'solver': {
                         'value-radio': ['MinMax', 'FairFlow'],
                         'default': 'MinMax',
-                        'required': True
+                        'required': True,
+                        'order': 15
                     },
                     'status': {
                         'default': 'Initialized',
@@ -447,11 +457,13 @@ class Matching(object):
                             'No Solution',
                             'Complete',
                             'Deployed'
-                        ]
+                        ],
+                        'order': 16
                     },
                     'error_message': {
                         'value-regex': '.*',
-                        'required': False
+                        'required': False,
+                        'order': 17
                     }
                 }
             })
@@ -586,6 +598,6 @@ class Matching(object):
             if edge.head in paper_by_forum:
                 paper_number = paper_by_forum.get(edge.head).number
                 user = edge.tail
-                new_assigned_group = self.conference.set_assignment(user, paper_number, self.is_area_chair)
+                self.conference.set_assignment(user, paper_number, self.is_area_chair)
             else:
                 print('paper not found', edge.head)

@@ -8,6 +8,8 @@ var DESK_REJECTED_SUBMISSION_ID = '';
 var HEADER = {};
 var LEGACY_INVITATION_ID = false;
 var OFFICIAL_REVIEW_NAME = '';
+var REVIEW_RATING_NAME = 'rating';
+var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
 var DECISION_NAME = '';
 var BID_NAME = '';
@@ -226,7 +228,9 @@ var getAllAreaChairs = function() {
 
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, sort: 'number:asc'
+    invitation: BLIND_SUBMISSION_ID,
+    details: 'invitation',
+    sort: 'number:asc'
   });
 };
 
@@ -536,9 +540,9 @@ var buildOfficialReviewMap = function(noteNumbers, notes) {
     }
 
     if (num && num in noteMap) {
-      ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
+      ratingMatch = n.content[REVIEW_RATING_NAME] && n.content[REVIEW_RATING_NAME].match(ratingExp);
       n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
-      confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
+      confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
       n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
       noteMap[num][index] = n;
     }
