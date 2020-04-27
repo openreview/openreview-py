@@ -1,5 +1,5 @@
-Downloading data from OpenReview to run matching locally from CLI
-======================================================================
+Retrieve OpenReview data to run OpenReview Matcher locally using CLI
+=========================================================================
 
 To be able to run matching locally, you would require the package openreview-matcher (https://github.com/openreview/openreview-matcher) installed on your local development environment.
 
@@ -26,12 +26,12 @@ To learn about the arguments, run the module with the --help flag like so:
 The matcher accepts files for these arguments:
 1. scores - expected format: each line having comma-separated paperID, userID, score in this order)
 2. constraints - expected format: each line having comma-separated paperID, reviewerID, constraint_value in this order where the constraint_value must be -1 (conflict), 1 (forced assignment), or 0 (no effect))
-3. max_papers - expected format: each line having comma-separated paperID, max_paper in this order
+3. max_papers - expected format: each line having comma-separated userID, max_paper in this order
 
 Following are instructions on how you can download this data from OpenReview.
 
-Scores
----------
+Downloading Scores
+---------------------
 
 Multiple type of affinity scores can be input using a file for each type of score. Some common score types are OpenReview affinity scores, TPMS scores, bid scores, AC recommendations, subject area overlap scores, etc.
 
@@ -53,10 +53,10 @@ For instance, to download ELMo score edges for ICLR 2020 Conference you can do t
 Please note that this is usually a time consuming task as there could be millions of edges for a single type of score (in the order of (# of papers) * (# of reviewers)).
 
 
-Constraints
---------------
+Downloading Constraints
+-------------------------
 
-You can use this option to input constraint scores using a file for each type of constraint. This option is commonly used for registering conflicts.
+You can use this option to input constraint scores using a file for each type of constraint. This is the option used to input conflicts.
 
 OpenReview stores constraints as edge objects. So, given that you have the necessary permissions to read these edges, you should be able to download these edges and write them into csv files.
 
@@ -72,8 +72,18 @@ To download conflict edges for ICLR 2020 Conference you can do the following:
     ...         csv_writer.writerow([edge.head, edge.tail, edge.weight])
 
 
-Custom max papers
---------------------
+Downloading Custom max papers
+--------------------------------
 
-The option --max_papers can be used to provide a file containing max number of papers to be assigned to each reviewer.
+The option --max_papers can be used to optionally provide a file containing max number of papers to be assigned to each user(reviewer or Area Chair).
 
+If this data is available in OpenReview, it would be as edge objects with an invitation like "ICLR.cc/2020/Conference/Reviewers/-/Custom_Max_Papers".
+
+    >>> import openreview
+    >>> import csv
+    >>> client = openreview.Client(baseurl = 'https://openreview.net', username=<>, password=<>)
+    >>> all_max_paper_edges = openreview.tools.iterget_edges(client, invitation='ICLR.cc/2020/Conference/Reviewers/-/Custom_Max_Papers')
+    >>> with open('max_papers.csv', 'w') as f:
+    ...     csv_writer = csv.writer(f)
+    ...     for edge_group in all_max_paper_edges:
+    ...         csv_writer.writerow([edge.tail, edge.weight])
