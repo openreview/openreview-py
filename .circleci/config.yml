@@ -1,4 +1,6 @@
 version: 2
+orbs:
+  codecov: codecov/codecov@1.0.2
 jobs:
   build:
     working_directory: ~/openreview-py-repo
@@ -59,13 +61,13 @@ jobs:
             sudo pip3 install codecov
             sudo pip3 install -e .
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report term-missing --cov=./
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report xml:cov.xml --cov=./
+      - codecov/upload:
+          file: "~/openreview/coverage/cov.xml"
       - store_test_results:
           path: test-reports
       - store_artifacts:
           path: test-reports
-      - codecov/upload:
-          file: "~/openreview/coverage/lcov.info"
   deploy:
     working_directory: ~/openreview-py-repo
     docker:
