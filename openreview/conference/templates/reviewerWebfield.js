@@ -4,7 +4,9 @@ var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
 var REVIEWER_NAME = '';
+var AREACHAIR_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
+var REVIEW_RATING_NAME = 'rating';
 var LEGACY_INVITATION_ID = false;
 var REVIEW_LOAD = 0;
 
@@ -22,7 +24,7 @@ var main = function() {
 
   loadReviewerData()
     .then(function(
-      blindedNotes, officialReviews, invitations, edgeInvitations, tagInvitations, customLoad
+      blindedNotes, officialReviews, invitations, edgeInvitations, tagInvitations, customLoad, groupByNumber
     ) {
       if (customLoad > 0) {
         $('#header .description').append(
@@ -37,14 +39,14 @@ var main = function() {
       var paperRankingInvitation = _.find(tagInvitations, ['id', PAPER_RANKING_ID]);
       if (paperRankingInvitation) {
         var paperRankingTags = paperRankingInvitation.details.repliedTags || [];
-        displayPaperRanking(blindedNotes, paperRankingInvitation, paperRankingTags);
+        displayPaperRanking(blindedNotes, paperRankingInvitation, paperRankingTags, groupByNumber);
       } else {
         Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
           .then(function(result) {
             if (!result.tags || !result.tags.length) {
               return;
             }
-            displayPaperRanking(blindedNotes, null, result.tags);
+            displayPaperRanking(blindedNotes, null, result.tags, groupByNumber);
           });
       }
 
@@ -91,9 +93,13 @@ var getReviewerNoteNumbers = function() {
     if (!result.groups) {
       return [];
     }
-    return _.without(result.groups.map(function(group) {
-      return getNumberFromGroup(group.id, 'Paper');
-    }), null);
+    return result.groups.reduce(function(groupByNumber, group) {
+      var number = getNumberFromGroup(group.id, 'Paper');
+      if (number) {
+        groupByNumber[number] = group.id;
+      }
+      return groupByNumber;
+    }, {});
   });
 };
 
@@ -103,7 +109,9 @@ var getBlindedNotes = function(noteNumbers) {
   }
 
   return Webfield.get('/notes', {
-    invitation: BLIND_SUBMISSION_ID, number: noteNumbers.join(',')
+    invitation: BLIND_SUBMISSION_ID,
+    number: noteNumbers.join(','),
+    details: 'invitation'
   }).then(function(result) {
     return result.notes || [];
   });
@@ -184,14 +192,16 @@ var loadReviewerData = function() {
   var userIds = _.union(user.profile.usernames, user.profile.emails);
 
   return getReviewerNoteNumbers()
-    .then(function(noteNumbers) {
+    .then(function(groupByNumber) {
+      var noteNumbers = Object.keys(groupByNumber);
       return $.when(
         getBlindedNotes(noteNumbers),
         getOfficialReviews(noteNumbers),
         getNoteInvitations(),
         getEdgeInvitations(),
         getTagInvitations(),
-        getCustomLoad(userIds)
+        getCustomLoad(userIds),
+        groupByNumber
       );
     });
 };
@@ -260,7 +270,7 @@ var buildTableRow = function(note, officialReview) {
     invitationName: 'Official Review'
   };
   if (officialReview) {
-    reviewStatus.paperRating = officialReview.content.rating;
+    reviewStatus.paperRating = officialReview.content[REVIEW_RATING_NAME];
     reviewStatus.review = officialReview.content.review;
     reviewStatus.editUrl = '/forum?id=' + note.forum + '&noteId=' + officialReview.id + '&referrer=' + referrerUrl;
   }
@@ -269,10 +279,13 @@ var buildTableRow = function(note, officialReview) {
   return [number, summaryHtml, statusHtml];
 };
 
-var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTags) {
+var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTags, groupByNumber) {
   var invitation = paperRankingInvitation ? _.cloneDeep(paperRankingInvitation) : null;
   if (invitation) {
-    var availableOptions = invitation.reply.content.tag['value-dropdown'].slice(0, notes.length + 1);
+    var availableOptions = ['No Ranking'];
+    notes.forEach(function(note, index) {
+      availableOptions.push((index + 1) + ' of ' + notes.length );
+    })
     var currentRankings = paperRankingTags.map(function(tag) {
       if (!tag.tag || tag.tag === 'No Ranking') {
         return null;
@@ -303,13 +316,12 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
           var body = {
             id: id,
             tag: value,
-            signatures: [user.profile.id],
-            readers: [CONFERENCE_ID],
+            signatures: [groupByNumber[note.number]],
+            readers: [CONFERENCE_ID, CONFERENCE_ID + '/Paper' + note.number + '/' + AREACHAIR_NAME, groupByNumber[note.number]],
             forum: note.id,
             invitation: invitationId,
             ddate: deleted ? Date.now() : null
           };
-          body = view.getCopiedValues(body, invitation.reply);
           Webfield.post('/tags', body)
             .then(function(result) {
               if (index !== -1) {
@@ -317,7 +329,7 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
               } else {
                 paperRankingTags.push(result);
               }
-              displayPaperRanking(notes, paperRankingInvitation, paperRankingTags);
+              displayPaperRanking(notes, paperRankingInvitation, paperRankingTags, groupByNumber);
               done(result);
             })
             .fail(function(error) {
