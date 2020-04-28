@@ -3,6 +3,7 @@ OpenReview Python library
 
 [![CircleCI](https://circleci.com/gh/openreview/openreview-py.svg?style=svg)](https://circleci.com/gh/openreview/openreview-py)
 [![Documentation Status](https://readthedocs.org/projects/openreview-py/badge/?version=latest)](https://openreview-py.readthedocs.io/en/latest/?badge=latest)
+[![CodeCov](hhttps://codecov.io/gh/openreview/openreview-pyranch/master/graph/badge.svg)](https://circleci.com/gh/openreview/openreview-py)
 
 Prerequisites
 -------------
@@ -25,10 +26,11 @@ $ pip install -e .
 Run Tests
 ----------
 
-Before you can run the tests you have to have ```pytest``` along with ```pytest-selenium``` installed.
+Before you can run the tests you have to have ```pytest``` along with ```pytest-selenium``` and ```pytest-cov``` installed.
 ```
 $ pip install pytest
 $ pip install pytest-selenium
+$ pip install pytest-cov
 ```
 
 Download the corresponding Firefox Selenium driver for your OS from this [link](https://github.com/mozilla/geckodriver/releases). Under ```openreview-py/tests/``` create a ```drivers``` directory and place the ```geckodriver``` inside that folder. Your folder structure should look like this:

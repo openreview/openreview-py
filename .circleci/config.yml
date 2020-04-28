@@ -54,9 +54,10 @@ jobs:
             sudo pip3 install -U pytest
             sudo pip3 install selenium
             sudo pip3 install pytest-selenium
+            sudo pip3 install pytest-cov
             sudo pip3 install -e .
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report term-missing --cov=./
       - store_test_results:
           path: test-reports
       - store_artifacts:
