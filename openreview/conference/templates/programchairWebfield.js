@@ -626,8 +626,8 @@ var calcReviewersComplete = function(reviewerMap, officialReviews) {
 
 var calcPaperReviewsComplete = function(noteMap, officialReviewMap) {
   return _.reduce(noteMap, function(numComplete, reviewerMap, n) {
-    var reviewerCount = Object.values(reviewerMap).length;
-    var allSubmitted = officialReviewMap[n] && reviewerCount > 0 && reviewerCount === Object.values(officialReviewMap[n]).length;
+    var reviewerCount = _.values(reviewerMap).length;
+    var allSubmitted = officialReviewMap[n] && reviewerCount > 0 && reviewerCount === _.values(officialReviewMap[n]).length;
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
 };
@@ -1148,7 +1148,7 @@ var displayPaperStatusTable = function() {
         }
         return rev;
       });
-      var users = Object.values(reviewers);
+      var users = _.values(reviewers);
       if (filter === 'msg-submitted-reviewers') {
         users = users.filter(function(u) {
           return u.completedReview;
@@ -1313,7 +1313,7 @@ var displayPaperStatusTable = function() {
       $(this).prop('checked', selectedNotesById[noteId]);
     });
 
-    var allSelected = _.every(Object.values(selectedNotesById));
+    var allSelected = _.every(_.values(selectedNotesById));
     $(container + ' .console-table #select-all-papers').prop('checked', allSelected);
   };
 
@@ -2408,7 +2408,7 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
   var isSelected = $(this).prop('checked');
   selectedNotesById[noteId] = isSelected;
 
-  var totalNumSelected = Object.values(selectedNotesById).reduce(function(numSelected, val) {
+  var totalNumSelected = _.values(selectedNotesById).reduce(function(numSelected, val) {
     return numSelected + (val ? 1 : 0);
   }, 0)
   if (totalNumSelected) {
