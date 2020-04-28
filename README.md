@@ -3,7 +3,7 @@ OpenReview Python library
 
 [![CircleCI](https://circleci.com/gh/openreview/openreview-py.svg?style=svg)](https://circleci.com/gh/openreview/openreview-py)
 [![Documentation Status](https://readthedocs.org/projects/openreview-py/badge/?version=latest)](https://openreview-py.readthedocs.io/en/latest/?badge=latest)
-[![CodeCov](hhttps://codecov.io/gh/openreview/openreview-pyranch/master/graph/badge.svg)](https://circleci.com/gh/openreview/openreview-py)
+[![CodeCov](hhttps://codecov.io/gh/openreview-py/openreview-py/branch/master/graph/badge.svg)](https://circleci.com/gh/openreview/openreview-py)
 
 Prerequisites
 -------------
