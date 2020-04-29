@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import time
 import datetime
 import re
@@ -8,11 +6,14 @@ from tqdm import tqdm
 from .. import openreview
 from .. import tools
 from . import webfield
-from . import invitation
+from . import invitation as invitation_factory
 from . import matching
 
 
-class Conference(object):
+class Conference():
+    '''
+    Defines all the properties of a Venue hosted in OpenReview
+    '''
 
     def __init__(self, client):
         self.client = client
@@ -30,7 +31,7 @@ class Conference(object):
         self.areachairpage_header = {}
         self.expertise_selection_page_header = {}
         self.bidpage_header = {}
-        self.invitation_builder = invitation.InvitationBuilder(client)
+        self.invitation_builder = invitation_factory.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.authors_name = 'Authors'
         self.reviewers_name = 'Reviewers'
@@ -70,27 +71,37 @@ class Conference(object):
 
     def __set_author_page(self):
         authors_group = tools.get_group(self.client, self.get_authors_id())
+        result = None
         if authors_group:
-            return self.webfield_builder.set_author_page(self, authors_group)
+            result = self.webfield_builder.set_author_page(self, authors_group)
+        return result
 
     def __set_reviewer_page(self):
-        reviewers_group = tools.get_group(self.client, self.get_reviewers_id())
+        reviewers_group = tools.get_group(
+            self.client,
+            self.get_reviewers_id())
+        result = None
         if reviewers_group:
-            return self.webfield_builder.set_reviewer_page(self, reviewers_group)
+            result = self.webfield_builder.set_reviewer_page(self, reviewers_group)
+        return result
 
     def __set_area_chair_page(self):
         area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
+        result = None
         if area_chairs_group:
-            return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
+            result = self.webfield_builder.set_area_chair_page(self, area_chairs_group)
+        return result
 
     def __set_expertise_selection_page(self):
         expertise_selection_invitation = tools.get_invitation(
             self.client,
             self.get_expertise_selection_id())
+        result = None
         if expertise_selection_invitation:
-            return self.webfield_builder.set_expertise_selection_page(
+            result = self.webfield_builder.set_expertise_selection_page(
                 self,
                 expertise_selection_invitation)
+        return result
 
     def __set_bid_page(self):
         """
@@ -129,19 +140,20 @@ class Conference(object):
         recommendation_invitation = tools.get_invitation(
             self.client,
             self.get_recommendation_id())
+        result = None
         if recommendation_invitation:
-            return self.webfield_builder.set_recommendation_page(
+            result = self.webfield_builder.set_recommendation_page(
                 self,
                 recommendation_invitation,
                 assignment_title,
                 score_ids,
                 conflict_id,
                 total_recommendations)
+        return result
 
     def __expire_invitation(self, invitation_id):
         # Get invitation
         invitation = tools.get_invitation(self.client, id=invitation_id)
-
         if invitation:
             # Force the expdate
             now = round(time.time() * 1000)
@@ -150,7 +162,7 @@ class Conference(object):
                 invitation.duedate = now
                 invitation = self.client.post_invitation(invitation)
 
-            return invitation
+        return invitation
 
     ## TODO: use a super invitation here
     def __expire_invitations(self, name):
@@ -412,7 +424,7 @@ class Conference(object):
         else:
             invitation_id = invitation_id + '/-/'
 
-        invitation_id =  invitation_id + name
+        invitation_id = invitation_id + name
         return invitation_id
 
     def set_conference_groups(self, groups):
@@ -453,6 +465,7 @@ class Conference(object):
     def set_areachairpage_header(self, header):
         if not self.use_area_chairs:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
+        self.areachairpage_header = header
         return self.__set_area_chair_page()
 
     def get_areachairpage_header(self):
@@ -598,24 +611,24 @@ class Conference(object):
             details='original')
         author_group_ids = []
 
-        for n in notes_iterator:
+        for note in notes_iterator:
             # Paper group
             self.__create_group(
                 group_id='{conference_id}/Paper{number}'.format(
                     conference_id=self.id,
-                    number=n.number),
-                group_owner_id=self.get_area_chairs_id(number=n.number) \
+                    number=note.number),
+                group_owner_id=self.get_area_chairs_id(number=note.number) \
                 if self.use_area_chairs else self.id,
                 is_signatory=False
             )
 
             # Author Paper group
             if authors:
-                authorids = n.content.get('authorids')
-                if n.details and n.details.get('original'):
-                    authorids = n.details['original']['content']['authorids']
+                authorids = note.content.get('authorids')
+                if note.details and note.details.get('original'):
+                    authorids = note.details['original']['content']['authorids']
                 author_paper_group = self.__create_group(
-                    self.get_authors_id(n.number),
+                    self.get_authors_id(note.number),
                     self.id,
                     authorids)
                 author_group_ids.append(author_paper_group.id)
@@ -623,19 +636,19 @@ class Conference(object):
             # Reviewers Paper group
             if reviewers:
                 self.__create_group(
-                    self.get_reviewers_id(number=n.number),
-                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
+                    self.get_reviewers_id(number=note.number),
+                    self.get_area_chairs_id(number=note.number) if self.use_area_chairs else self.id,
                     is_signatory=False)
 
                 # Reviewers Submitted Paper group
                 self.__create_group(
-                    self.get_reviewers_id(number=n.number) + '/Submitted',
-                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
+                    self.get_reviewers_id(number=note.number) + '/Submitted',
+                    self.get_area_chairs_id(number=note.number) if self.use_area_chairs else self.id,
                     is_signatory=False)
 
             # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
-                self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
+                self.__create_group(self.get_area_chairs_id(number=note.number), self.id)
 
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
@@ -870,7 +883,7 @@ class Conference(object):
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)
 
-    def set_program_chairs(self, emails = []):
+    def set_program_chairs(self, emails=[]):
         pcs = self.__create_group(
             self.get_program_chairs_id(),
             self.id,
@@ -1137,11 +1150,11 @@ class Conference(object):
                 set(reviewers_declined_group.members) - \
                 set(reviewers_accepted_group.members))
 
-            print ('Sending reminders for recruitment invitations')
+            print('Sending reminders for recruitment invitations')
             for reviewer_id in tqdm(remind_reviewers):
                 reviewer_name = 'invitee'
-                if reviewer_id.startswith('~') :
-                    reviewer_name =  re.sub(
+                if reviewer_id.startswith('~'):
+                    reviewer_name = re.sub(
                         '[0-9]+',
                         '',
                         reviewer_id.replace('~', '').replace('_', ' '))
@@ -1160,7 +1173,7 @@ class Conference(object):
                     verbose=False,
                     baseurl=baseurl)
 
-        print ('Sending recruitment invitations')
+        print('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees)):
             if email not in set(reviewers_invited_group.members):
                 name = invitee_names[index] \
@@ -1218,7 +1231,7 @@ class Conference(object):
             layout='decisions',
             options=options)
 
-class SubmissionStage(object):
+class SubmissionStage():
 
     def __init__(
                 self,
@@ -1302,7 +1315,7 @@ class SubmissionStage(object):
             name='Desk_Rejected_Submission'):
         return conference.get_invitation_id(name)
 
-class ExpertiseSelectionStage(object):
+class ExpertiseSelectionStage():
 
     def __init__(
             self,
@@ -1312,7 +1325,7 @@ class ExpertiseSelectionStage(object):
         self.due_date = due_date
         self.name = 'Expertise_Selection'
 
-class BidStage(object):
+class BidStage():
 
     def __init__(
             self,
@@ -1328,10 +1341,10 @@ class BidStage(object):
         self.name = 'Bid'
         self.request_count = request_count
         self.use_affinity_score = use_affinity_score
-        self.instructions=instructions
-        self.ac_request_count=ac_request_count if ac_request_count else request_count
+        self.instructions = instructions
+        self.ac_request_count = ac_request_count if ac_request_count else request_count
 
-class ReviewStage(object):
+class ReviewStage():
 
     class Readers(Enum):
         REVIEWERS = 0
@@ -1425,7 +1438,7 @@ class ReviewStage(object):
 
         return signature_regex
 
-class CommentStage(object):
+class CommentStage():
 
     def __init__(
             self,
@@ -1449,7 +1462,7 @@ class CommentStage(object):
         self.email_pcs = email_pcs
         self.authors = authors
 
-class MetaReviewStage(object):
+class MetaReviewStage():
 
     def __init__(
             self,
@@ -1483,8 +1496,7 @@ class MetaReviewStage(object):
 
         return readers
 
-
-class DecisionStage(object):
+class DecisionStage():
 
     def __init__(
             self,
@@ -1510,7 +1522,7 @@ class DecisionStage(object):
         if self.public:
             return ['everyone']
 
-        readers = [ conference.get_program_chairs_id()]
+        readers = [conference.get_program_chairs_id()]
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number=number))
 
@@ -1532,7 +1544,7 @@ class DecisionStage(object):
 
         return [conference.get_authors_id(number=number)]
 
-class RegistrationStage(object):
+class RegistrationStage():
 
     def __init__(
             self,
@@ -1552,8 +1564,7 @@ class RegistrationStage(object):
         self.instructions = instructions
         self.ac_instructions = ac_instructions
 
-
-class ConferenceBuilder(object):
+class ConferenceBuilder():
 
     def __init__(
             self,
@@ -1579,18 +1590,18 @@ class ConferenceBuilder(object):
         paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
         groups = []
 
-        for p in paths:
-            group = tools.get_group(self.client, id=p)
+        for path in paths:
+            group = tools.get_group(self.client, id=path)
             if group is None:
                 group = self.client.post_group(openreview.Group(
-                    id=p,
+                    id=path,
                     readers=['everyone'],
                     nonreaders=[],
-                    writers=[p],
-                    signatories=[p],
+                    writers=[path],
+                    signatories=[path],
                     signatures=['~Super_User1'],
                     members=[],
-                    details={ 'writable': True }))
+                    details={'writable': True}))
                 self.conference.new = True
 
             groups.append(group)
@@ -1726,7 +1737,7 @@ class ConferenceBuilder(object):
             conference_id=self.conference.get_id())
         reviewer_instructions = instructions if instructions else default_instructions
         ac_instructions = ac_instructions if ac_instructions else default_instructions
-        self.registration_stage=RegistrationStage(
+        self.registration_stage = RegistrationStage(
             name,
             start_date,
             due_date,
@@ -1844,13 +1855,13 @@ class ConferenceBuilder(object):
 
         id = self.conference.get_id()
         groups = self.__build_groups(id)
-        for g in groups[:-1]:
+        for group in groups[:-1]:
             # set a landing page only where there is not special webfield
-            writable = g.details.get('writable') if g.details else True
-            if writable and (not g.web or 'VENUE_LINKS' in g.web):
-                self.webfield_builder.set_landing_page(g)
+            writable = group.details.get('writable') if group.details else True
+            if writable and (not group.web or 'VENUE_LINKS' in group.web):
+                self.webfield_builder.set_landing_page(group)
 
-        host = self.client.get_group(id = 'host')
+        host = self.client.get_group(id='host')
         root_id = groups[0].id
         if root_id == root_id.lower():
             root_id = groups[1].id

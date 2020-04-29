@@ -30,10 +30,10 @@ def get_profile(client, value):
     profile = None
     try:
         profile = client.get_profile(value)
-    except openreview.OpenReviewException as e:
+    except openreview.OpenReviewException as exc:
         # throw an error if it is something other than "not found"
-        if e.args[0][0] != 'Profile not found':
-            raise e
+        if exc.args[0][0] != 'Profile not found':
+            raise exc
     return profile
 
 def get_group(client, id):
@@ -50,12 +50,12 @@ def get_group(client, id):
     """
     group = None
     try:
-        group = client.get_group(id = id)
-    except openreview.OpenReviewException as e:
+        group = client.get_group(id=id)
+    except openreview.OpenReviewException as exc:
         # throw an error if it is something other than "not found"
-        error = e.args[0][0]
+        error = exc.args[0][0]
         if not error.startswith('Group Not Found'):
-            raise e
+            raise exc
     return group
 
 def get_invitation(client, id):
@@ -72,12 +72,18 @@ def get_invitation(client, id):
     """
     invitation = None
     try:
-        invitation = client.get_invitation(id = id)
-    except openreview.OpenReviewException as e:
-        print('Can not retrieve invitation', e)
+        invitation = client.get_invitation(id=id)
+    except openreview.OpenReviewException as exc:
+        print('Can not retrieve invitation', exc)
     return invitation
 
-def create_profile(client, email, first, last, middle=None, allow_duplicates=False):
+def create_profile(
+        client,
+        email,
+        first,
+        last,
+        middle=None,
+        allow_duplicates=False):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -108,7 +114,7 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
         # this is so that we catch more potential collisions;
         # let the caller decide what to do with false positives.
 
-        username_response_FL_only = client.get_tildeusername(
+        username_response_fl_only = client.get_tildeusername(
             first,
             last,
             None
@@ -122,10 +128,10 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
 
         # the username in each response will end with 1
         # if profiles don't exist for those names
-        username_FL_unclaimed = username_response_FL_only['username'].endswith('1')
+        username_fl_unclaimed = username_response_fl_only['username'].endswith('1')
         username_full_unclaimed = username_response_full['username'].endswith('1')
 
-        if all([username_FL_unclaimed, username_full_unclaimed]):
+        if all([username_fl_unclaimed, username_full_unclaimed]):
             profile_exists = False
         else:
             profile_exists = True
@@ -161,11 +167,12 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
     else:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
-def create_authorid_profiles(client, note, print=print):
-    # for all submissions get authorids, if in form of email address, try to find associated profile
-    # if profile doesn't exist, create one
+def create_authorid_profiles(client, note):
+    '''
+    for all submissions get authorids, if in form of email address, try to find associated profile
+    if profile doesn't exist, create one
+    '''
     created_profiles = []
-
     def clean_name(name):
         '''
         Replaces invalid characters with equivalent valid ones.
@@ -201,8 +208,8 @@ def create_authorid_profiles(client, note, print=print):
                             profile = create_profile(client=client, email=author_id, first=names[0], last=names[1], middle=names[2])
                             created_profiles.append(profile)
                             print('{}: profile created with id {}'.format(note.id, profile.id))
-                        except openreview.OpenReviewException as e:
-                            print('Error while creating profile for note id {}, author {author_id}, '.format(note.id, e))
+                        except openreview.OpenReviewException as exc:
+                            print('Error while creating profile for note id {}, author {}, error {}'.format(note.id, author_id, exc))
                     else:
                         print('{}: invalid author name {}'.format(note.id, author_name))
         else:
@@ -297,18 +304,26 @@ def post_group_parents(client, group, overwrite_parents=False):
     groups = build_groups(group.id)
 
     posted_groups = []
-    for g in groups:
-        if g.id == group.id:
+    for group in groups:
+        if group.id == group.id:
             posted_groups.append(client.post_group(group))
         else:
-            if not client.exists(g.id) or overwrite_parents:
-                posted_groups.append(client.post_group(g))
+            if not client.exists(group.id) or overwrite_parents:
+                posted_groups.append(client.post_group(group))
             else:
-                posted_groups.append(g)
+                posted_groups.append(group)
 
     return posted_groups
 
-def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
+def get_bibtex(
+        note,
+        venue_fullname,
+        year,
+        url_forum=None,
+        accepted=False,
+        anonymous=True,
+        names_reversed=False,
+        baseurl='https://openreview.net'):
     """
     Generates a bibtex field for a given Note.
 
@@ -335,12 +350,12 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     def capitalize_title(title):
         capitalization_regex = re.compile('[A-Z]{2,}')
-        words = re.split('(\W)', title)
+        words = re.split(r'(\W)', title)
         for idx, word in enumerate(words):
-            m = capitalization_regex.search(word)
-            if m:
-                new_word = '{' + word[m.start():m.end()] + '}'
-                words[idx] = words[idx].replace(word[m.start():m.end()], new_word)
+            part = capitalization_regex.search(word)
+            if part:
+                new_word = '{' + word[part.start():part.end()] + '}'
+                words[idx] = words[idx].replace(word[part.start():part.end()], new_word)
         return ''.join(words)
 
 
@@ -454,13 +469,13 @@ def get_paperhash(first_author, title):
     """
 
     title = title.strip()
-    strip_punctuation = '[^A-zÀ-ÿ\d\s]'
+    strip_punctuation = r'[^A-zÀ-ÿ\d\s]'
     title = re.sub(strip_punctuation, '', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     first_author = first_author.split(' ').pop()
     title = re.sub(strip_punctuation, '', title)
-    title = re.sub('\r|\n', '', title)
-    title = re.sub('\s+', '_', title)
+    title = re.sub(r'\r|\n', '', title)
+    title = re.sub(r'\s+', '_', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     return (first_author + '|' + title).lower()
 
@@ -483,11 +498,11 @@ def replace_members_with_ids(client, group):
             try:
                 profile = client.get_profile(member.lower())
                 ids.append(profile.id)
-            except openreview.OpenReviewException as e:
-                if 'Profile not found' in e.args[0][0]:
+            except openreview.OpenReviewException as exc:
+                if 'Profile not found' in exc.args[0][0]:
                     emails.append(member.lower())
                 else:
-                    raise e
+                    raise exc
         else:
             profile = client.get_profile(member)
             ids.append(profile.id)
@@ -495,7 +510,7 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
     return client.post_group(group)
 
-class iterget:
+class Iterget:
     """
     This class can create an iterator from a getter method that returns a list. Below all the iterators that can be created from a getter method:
 
@@ -556,7 +571,13 @@ class iterget:
 
     next = __next__
 
-def iterget_tags(client, id = None, invitation = None, forum = None, signature = None, tag = None):
+def iterget_tags(
+        client,
+        id=None,
+        invitation=None,
+        forum=None,
+        signature=None,
+        tag=None):
     """
     Returns an iterator over Tags ignoring API limit.
 
@@ -574,49 +595,49 @@ def iterget_tags(client, id = None, invitation = None, forum = None, signature =
     :type invitation: str, optional
 
     :return: Iterator over Tags filtered by the provided parameters
-    :rtype: iterget
+    :rtype: Iterget
     """
     params = {}
 
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if forum != None:
+    if forum is not None:
         params['forum'] = forum
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if signature != None:
+    if signature is not None:
         params['signature'] = signature
-    if tag != None:
+    if tag is not None:
         params['tag'] = tag
 
-    return iterget(client.get_tags, **params)
+    return Iterget(client.get_tags, **params)
 
-def iterget_edges (client,
-                   invitation = None,
-                   head = None,
-                   tail = None,
-                   label = None,
-                   limit = None):
+def iterget_edges(
+        client,
+        invitation=None,
+        head=None,
+        tail=None,
+        label=None,
+        limit=None):
     params = {}
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if head != None:
+    if head is not None:
         params['head'] = head
-    if tail != None:
+    if tail is not None:
         params['tail'] = tail
-    if label != None:
+    if label is not None:
         params['label'] = label
-    if limit != None:
+    if limit is not None:
         params['limit'] = limit
-    return iterget(client.get_edges, **params)
+
+    return Iterget(client.get_edges, **params)
 
 def iterget_grouped_edges(
         client,
         invitation=None,
         groupby='head',
-        select='id,tail,label,weight',
-        logger=None
-    ):
+        select='id,tail,label,weight'):
     '''Helper function for retrieving and parsing all edges in bulk'''
 
     ## Backend has pagination temporally disabled, it returns all the groups now so we need to do one iteration.
@@ -639,21 +660,22 @@ def iterget_grouped_edges(
         yield group_edges
 
 
-def iterget_notes(client,
-    id = None,
-    paperhash = None,
-    forum = None,
-    invitation = None,
-    replyto = None,
-    tauthor = None,
-    signature = None,
-    writer = None,
-    trash = None,
-    number = None,
-    mintcdate = None,
-    content = None,
-    details = None,
-    sort = None):
+def iterget_notes(
+        client,
+        id=None,
+        paperhash=None,
+        forum=None,
+        invitation=None,
+        replyto=None,
+        tauthor=None,
+        signature=None,
+        writer=None,
+        trash=None,
+        number=None,
+        mintcdate=None,
+        content=None,
+        details=None,
+        sort=None):
     """
     Returns an iterator over Notes filtered by the provided parameters ignoring API limit.
 
@@ -687,40 +709,44 @@ def iterget_notes(client,
     :type details: str, optional
 
     :return: Iterator over Notes filtered by the provided parameters
-    :rtype: iterget
+    :rtype: Iterget
     """
     params = {}
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if paperhash != None:
+    if paperhash is not None:
         params['paperhash'] = paperhash
-    if forum != None:
+    if forum is not None:
         params['forum'] = forum
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if replyto != None:
+    if replyto is not None:
         params['replyto'] = replyto
-    if tauthor != None:
+    if tauthor is not None:
         params['tauthor'] = tauthor
-    if signature != None:
+    if signature is not None:
         params['signature'] = signature
-    if writer != None:
+    if writer is not None:
         params['writer'] = writer
-    if trash == True:
-        params['trash']=True
-    if number != None:
+    if trash:
+        params['trash'] = True
+    if number is not None:
         params['number'] = number
-    if mintcdate != None:
+    if mintcdate is not None:
         params['mintcdate'] = mintcdate
-    if content != None:
+    if content is not None:
         params['content'] = content
-    if details != None:
+    if details is not None:
         params['details'] = details
     params['sort'] = sort
 
-    return iterget(client.get_notes, **params)
+    return Iterget(client.get_notes, **params)
 
-def iterget_references(client, referent = None, invitation = None, mintcdate = None):
+def iterget_references(
+        client,
+        referent=None,
+        invitation=None,
+        mintcdate=None):
     """
     Returns an iterator over references filtered by the provided parameters ignoring API limit.
 
@@ -734,20 +760,35 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
     :type mintcdate: int, optional
 
     :return: Iterator over references filtered by the provided parameters
-    :rtype: iterget
+    :rtype: Iterget
     """
 
     params = {}
-    if referent != None:
+    if referent is not None:
         params['referent'] = referent
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if mintcdate != None:
+    if mintcdate is not None:
         params['mintcdate'] = mintcdate
 
-    return iterget(client.get_references, **params)
+    return Iterget(client.get_references, **params)
 
-def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None, expired = None):
+def iterget_invitations(
+        client,
+        id=None,
+        invitee=None,
+        regex=None,
+        tags=None,
+        minduedate=None,
+        duedate=None,
+        pastdue=None,
+        replytoNote=None,
+        replyForum=None,
+        signature=None,
+        note=None,
+        replyto=None,
+        details=None,
+        expired=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -783,41 +824,47 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     :type expired: bool, optional
 
     :return: Iterator over Invitations filtered by the provided parameters
-    :rtype: iterget
+    :rtype: Iterget
     """
 
     params = {}
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if invitee != None:
+    if invitee is not None:
         params['invitee'] = invitee
-    if regex != None:
+    if regex is not None:
         params['regex'] = regex
-    if tags != None:
+    if tags is not None:
         params['tags'] = tags
-    if minduedate != None:
+    if minduedate is not None:
         params['minduedate'] = minduedate
-    if duedate != None:
+    if duedate is not None:
         params['duedate'] = duedate
-    if pastdue != None:
+    if pastdue is not None:
         params['pastdue'] = pastdue
-    if details != None:
+    if details is not None:
         params['details'] = details
-    if replytoNote != None:
+    if replytoNote is not None:
         params['replytoNote'] = replytoNote
-    if replyForum != None:
+    if replyForum is not None:
         params['replyForum'] = replyForum
-    if signature != None:
+    if signature is not None:
         params['signature'] = signature
-    if note != None:
+    if note is not None:
         params['note'] = note
-    if replyto != None:
+    if replyto is not None:
         params['replyto'] = replyto
     params['expired'] = expired
 
-    return iterget(client.get_invitations, **params)
+    return Iterget(client.get_invitations, **params)
 
-def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
+def iterget_groups(
+        client,
+        id=None,
+        regex=None,
+        member=None,
+        host=None,
+        signatory=None):
     """
     Returns an iterator over groups filtered by the provided parameters ignoring API limit.
 
@@ -835,24 +882,27 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
     :type signatory: str, optional
 
     :return: Iterator over Groups filtered by the provided parameters
-    :rtype: iterget
+    :rtype: Iterget
     """
 
     params = {}
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if regex != None:
+    if regex is not None:
         params['regex'] = regex
-    if member != None:
+    if member is not None:
         params['member'] = member
-    if host != None:
+    if host is not None:
         params['host'] = host
-    if signatory != None:
+    if signatory is not None:
         params['signatory'] = signatory
 
-    return iterget(client.get_groups, **params)
+    return Iterget(client.get_groups, **params)
 
-def parallel_exec(values, func, processes = None):
+def parallel_exec(
+        values,
+        func,
+        processes=None):
     """
     Returns a list of results given for each func value execution. It shows a progress bar to know the progress of the task.
 
@@ -866,12 +916,15 @@ def parallel_exec(values, func, processes = None):
     :return: A list of results given for each func value execution
     :rtype: list
     """
-    pool = Pool(processes = processes)
+    pool = Pool(processes=processes)
     results = pool.map(func, tqdm(values))
     pool.close()
     return results
 
-def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
+def next_individual_suffix(
+        unassigned_individual_groups,
+        individual_groups,
+        individual_label):
     """
     Gets an individual group's suffix (e.g. AnonReviewer1). The suffix will be the next available empty group or will be the suffix of the largest indexed group +1
 
@@ -902,7 +955,13 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
     else:
         return '{}1'.format(individual_label)
 
-def get_reviewer_groups(client, paper_number, conference, group_params, parent_label, individual_label):
+def get_reviewer_groups(
+        client,
+        paper_number,
+        conference,
+        group_params,
+        parent_label,
+        individual_label):
 
     """
     This is only intended to be used as a local helper function for :func:`tools.add_assignment`
@@ -940,8 +999,8 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
             group_params = group_params_default
 
             parent_group = client.post_group(openreview.Group(
-                id = '{}/Paper{}/{}'.format(conference, paper_number, parent_label),
-                nonreaders = ['{}/Paper{}/Authors'.format(conference, paper_number)],
+                id='{}/Paper{}/{}'.format(conference, paper_number, parent_label),
+                nonreaders=['{}/Paper{}/Authors'.format(conference, paper_number)],
                 **group_params
             ))
         else:
@@ -959,17 +1018,25 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
         individual groups AND the parent group.
     """
 
-    individual_groups = client.get_groups(regex = '{}/Paper{}/{}[0-9]+$'.format(conference, paper_number, individual_label))
+    individual_groups = client.get_groups(
+        regex='{}/Paper{}/{}[0-9]+$'.format(
+            conference,
+            paper_number,
+            individual_label))
     individual_groups = [g for g in individual_groups if g.id != parent_group.id]
-    unassigned_individual_groups = sorted([ a for a in individual_groups if a.members == [] ], key=lambda x: x.id)
+    unassigned_individual_groups = sorted([a for a in individual_groups if a.members == []], key=lambda x: x.id)
     return [parent_group, individual_groups, unassigned_individual_groups]
 
-def add_assignment(client, paper_number, conference, reviewer,
-    parent_group_params = {},
-    individual_group_params = {},
-    parent_label = 'Reviewers',
-    individual_label = 'AnonReviewer',
-    use_profile = True):
+def add_assignment(
+        client,
+        paper_number,
+        conference,
+        reviewer,
+        parent_group_params={},
+        individual_group_params={},
+        parent_label='Reviewers',
+        individual_label='AnonReviewer',
+        use_profile=True):
 
     """
     Assigns a reviewer to a paper.
@@ -1052,13 +1119,13 @@ def add_assignment(client, paper_number, conference, reviewer,
         signatures = individual_group_params.get('signatures', default_signatures)[:]
 
         individual_group = openreview.Group(
-            id = anonreviewer_id,
-            readers = readers,
-            nonreaders = nonreaders,
-            writers = writers,
-            members = members,
-            signatories = signatories,
-            signatures = signatures)
+            id=anonreviewer_id,
+            readers=readers,
+            nonreaders=nonreaders,
+            writers=writers,
+            members=members,
+            signatories=signatories,
+            signatures=signatures)
 
         client.post_group(individual_group)
         affected_groups.add(individual_group.id)
@@ -1067,13 +1134,16 @@ def add_assignment(client, paper_number, conference, reviewer,
         for g in assigned_individual_groups:
             affected_groups.add(g.id)
 
-    return (user,list(affected_groups))
+    return (user, list(affected_groups))
 
-def remove_assignment(client, paper_number, conference, reviewer,
-    parent_group_params = {},
-    parent_label = 'Reviewers',
-    individual_label = 'AnonReviewer'):
-
+def remove_assignment(
+        client,
+        paper_number,
+        conference,
+        reviewer,
+        parent_group_params={},
+        parent_label='Reviewers',
+        individual_label='AnonReviewer'):
     """
     |  Un-assigns a reviewer from a paper.
     |  Removes the given user from the parent group, and any assigned individual groups.
@@ -1137,17 +1207,19 @@ def remove_assignment(client, paper_number, conference, reviewer,
     return (user, list(affected_groups))
 
 @deprecated(version='0.9.5')
-def assign(client, paper_number, conference,
-    parent_group_params = {},
-    individual_group_params = {},
-    reviewer_to_add = None,
-    reviewer_to_remove = None,
-    parent_label = 'Reviewers',
-    individual_label = 'AnonReviewer',
-    use_profile = True):
+def assign(
+        client,
+        paper_number,
+        conference,
+        parent_group_params={},
+        individual_group_params={},
+        reviewer_to_add=None,
+        reviewer_to_remove=None,
+        parent_label='Reviewers',
+        individual_label='AnonReviewer',
+        use_profile=True):
 
     """
-
     Either assigns or unassigns a reviewer to a paper.
     TODO: Is this function really necessary?
 
@@ -1188,20 +1260,36 @@ def assign(client, paper_number, conference,
     user = ""
 
     if reviewer_to_remove:
-        user, changed_groups = remove_assignment(client, paper_number, conference, reviewer_to_remove,
-                          parent_group_params, parent_label, individual_label)
+        user, changed_groups = remove_assignment(
+            client,
+            paper_number,
+            conference,
+            reviewer_to_remove,
+            parent_group_params,
+            parent_label,
+            individual_label)
 
     if reviewer_to_add:
-        user, changed_groups = add_assignment(client, paper_number, conference, reviewer_to_add,
-                        parent_group_params,
-                        individual_group_params,
-                        parent_label,
-                        individual_label,
-                        use_profile = use_profile)
+        user, changed_groups = add_assignment(
+            client,
+            paper_number,
+            conference,
+            reviewer_to_add,
+            parent_group_params,
+            individual_group_params,
+            parent_label,
+            individual_label,
+            use_profile=use_profile)
 
     return (user, changed_groups)
 
-def timestamp_GMT(year, month, day, hour=0, minute=0, second=0):
+def timestamp_GMT(
+        year,
+        month,
+        day,
+        hour=0,
+        minute=0,
+        second=0):
     """
     Given year, month, day, and (optionally) hour, minute, second in GMT time zone:
     returns the number of milliseconds between this date and Epoch Time (Jan 1, 1970).
@@ -1244,14 +1332,17 @@ def datetime_millis(dt):
 
     return dt
 
-def recruit_reviewer(client, user, first,
-    hash_seed,
-    recruit_reviewers_id,
-    recruit_message,
-    recruit_message_subj,
-    reviewers_invited_id,
-    verbose=True,
-    baseurl = ''):
+def recruit_reviewer(
+        client,
+        user,
+        first,
+        hash_seed,
+        recruit_reviewers_id,
+        recruit_message,
+        recruit_message_subj,
+        reviewers_invited_id,
+        verbose=True,
+        baseurl=''):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1284,17 +1375,17 @@ def recruit_reviewer(client, user, first,
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
-        baseurl = baseurl if baseurl else client.baseurl,
-        recruitment_inv = recruit_reviewers_id,
-        user = urlparse.quote(user),
-        hashkey = hashkey
+        baseurl=baseurl if baseurl else client.baseurl,
+        recruitment_inv=recruit_reviewers_id,
+        user=urlparse.quote(user),
+        hashkey=hashkey
     )
 
     # format the message defined above
     personalized_message = recruit_message.format(
-        name = first,
-        accept_url = url + "Yes",
-        decline_url = url + "No"
+        name=first,
+        accept_url=url + "Yes",
+        decline_url=url + "No"
     )
 
     # send the email through openreview
@@ -1307,7 +1398,11 @@ def recruit_reviewer(client, user, first,
         print("Sent to the following: ", response)
         print(personalized_message)
 
-def post_submission_groups(client, conference_id, submission_invite, chairs):
+def post_submission_groups(
+        client,
+        conference_id,
+        submission_invite,
+        chairs):
     """
     Create paper group, authors group, reviewers group, review non-readers group
     for all notes returned by the submission_invite.
@@ -1388,8 +1483,10 @@ def get_submission_invitations(client, open_only=False):
 
     #Calculate the epoch for current timestamp
     now = int(time.time()*1000)
-    duedate = now if open_only==True else None
-    invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=duedate)
+    duedate = now if open_only == True else None
+    invitations = client.get_invitations(
+        regex='.*/-/.*[sS]ubmission.*',
+        minduedate=duedate)
 
     # For each group in the list, append the invitation id to a list
     invitation_ids = [inv.id for inv in invitations]
@@ -1533,10 +1630,9 @@ def get_profile_info(profile):
         'id': profile.id,
         'domains': domains,
         'emails': emails,
-        'relations': relations
-    }
+        'relations': relations}
 
-def post_bulk_edges (client, edges, batch_size = 50000):
+def post_bulk_edges(client, edges, batch_size=50000):
     num_edges = len(edges)
     result = []
     for i in tqdm(range(0, num_edges, batch_size), total=(num_edges // batch_size + 1)):

@@ -1,3 +1,6 @@
+'''
+Setup for openreview-py
+'''
 from setuptools import setup
 
 setup(name='openreview-py',

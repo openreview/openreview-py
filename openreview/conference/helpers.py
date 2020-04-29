@@ -1,6 +1,6 @@
-import openreview
 import datetime
 import json
+import openreview
 
 def get_conference(client, request_form_id):
 
@@ -90,20 +90,19 @@ def get_conference_builder(client, request_form_id):
     submission_remove_options = note.content.get('remove_submission_options', [])
 
     builder.set_submission_stage(
-        double_blind = double_blind,
-        public = public,
-        start_date = submission_start_date,
-        due_date = submission_due_date,
-        additional_fields = submission_additional_options,
-        remove_fields = submission_remove_options
-        )
+        double_blind=double_blind,
+        public=public,
+        start_date=submission_start_date,
+        due_date=submission_due_date,
+        additional_fields=submission_additional_options,
+        remove_fields=submission_remove_options)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
-        builder.set_expertise_selection_stage(due_date = submission_due_date)
+        builder.set_expertise_selection_stage(due_date=submission_due_date)
 
     if 'Organizers will assign papers manually' in paper_matching_options:
-        builder.enable_reviewer_reassignment(enable = True)
+        builder.enable_reviewer_reassignment(enable=True)
 
     ## Contact Emails is deprecated
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
@@ -111,7 +110,7 @@ def get_conference_builder(client, request_form_id):
 
     return builder
 
-def get_bid_stage(client, request_forum):
+def get_bid_stage(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
     if bid_start_date:
         try:
@@ -130,9 +129,9 @@ def get_bid_stage(client, request_forum):
     else:
         bid_due_date = None
 
-    return openreview.BidStage(start_date = bid_start_date, due_date = bid_due_date, request_count = request_forum.content.get('bid_count', 50))
+    return openreview.BidStage(start_date=bid_start_date, due_date=bid_due_date, request_count=request_forum.content.get('bid_count', 50))
 
-def get_review_stage(client, request_forum):
+def get_review_stage(request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
     if review_start_date:
         try:
@@ -165,7 +164,7 @@ def get_review_stage(client, request_forum):
         'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED,
         'Review should not be revealed to any reviewer, except to the author of the review': openreview.ReviewStage.Readers.REVIEWER_SIGNATURE
     }
-    reviewer_readers= request_forum.content.get('release_reviews_to_reviewers', '')
+    reviewer_readers = request_forum.content.get('release_reviews_to_reviewers', '')
 
     #Deprecated
     if reviewer_readers.startswith('Yes'):
@@ -174,18 +173,18 @@ def get_review_stage(client, request_forum):
         release_to_reviewers = readers_map.get(reviewer_readers, openreview.ReviewStage.Readers.REVIEWER_SIGNATURE)
 
     return openreview.ReviewStage(
-        start_date = review_start_date,
-        due_date = review_due_date,
-        allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
-        public = (request_forum.content.get('make_reviews_public', None) == 'Yes, reviews should be revealed publicly when they are posted'),
-        release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
-        release_to_reviewers = release_to_reviewers,
-        email_pcs = (request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),
-        additional_fields = review_form_additional_options,
-        remove_fields = review_form_remove_options
+        start_date=review_start_date,
+        due_date=review_due_date,
+        allow_de_anonymization=(request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
+        public=(request_forum.content.get('make_reviews_public', None) == 'Yes, reviews should be revealed publicly when they are posted'),
+        release_to_authors=(request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
+        release_to_reviewers=release_to_reviewers,
+        email_pcs=(request_forum.content.get('email_program_Chairs_about_reviews', '').startswith('Yes')),
+        additional_fields=review_form_additional_options,
+        remove_fields=review_form_remove_options
     )
 
-def get_meta_review_stage(client, request_forum):
+def get_meta_review_stage(request_forum):
     meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()
     if meta_review_start_date:
         try:
@@ -207,18 +206,19 @@ def get_meta_review_stage(client, request_forum):
     additional_fields = {}
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
-        additional_fields = {'recommendation': {
-            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]},
+        additional_fields = {
+            'recommendation': {
+                'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]},
             'required': True}
 
     return openreview.MetaReviewStage(
-        start_date = meta_review_start_date,
-        due_date = meta_review_due_date,
-        public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
-        additional_fields = additional_fields
+        start_date=meta_review_start_date,
+        due_date=meta_review_due_date,
+        public=request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
+        additional_fields=additional_fields
     )
 
-def get_decision_stage(client, request_forum):
+def get_decision_stage(request_forum):
     decision_start_date = request_forum.content.get('decision_start_date', '').strip()
     if decision_start_date:
         try:
@@ -241,16 +241,16 @@ def get_decision_stage(client, request_forum):
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
         return openreview.DecisionStage(
-            options = decision_options,
-            start_date = decision_start_date,
-            due_date = decision_due_date,
-            public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
-            release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
-            release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))
+            options=decision_options,
+            start_date=decision_start_date,
+            due_date=decision_due_date,
+            public=request_forum.content.get('make_decisions_public', '').startswith('Yes'),
+            release_to_authors=request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
+            release_to_reviewers=request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))
     else:
         return openreview.DecisionStage(
-            start_date = decision_start_date,
-            due_date = decision_due_date,
-            public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
-            release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
-            release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))
+            start_date=decision_start_date,
+            due_date=decision_due_date,
+            public=request_forum.content.get('make_decisions_public', '').startswith('Yes'),
+            release_to_authors=request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
+            release_to_reviewers=request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))
