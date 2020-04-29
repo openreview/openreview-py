@@ -1,0 +1,18 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
+    // Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.linting.lintOnSave": true,
+    "python.linting.maxNumberOfProblems": 20,
+    "files.trimTrailingWhitespace": true,
+    "recommendations": [
+        "ms-python.python",
+        "dbaeumer.vscode-eslint",
+        "msjsdiag.debugger-for-chrome",
+        "brainfit.vscode-coverage-highlighter"
+    ],
+    "unwantedRecommendations": [
+
+    ]
+}
