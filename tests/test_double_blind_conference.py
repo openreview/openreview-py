@@ -1707,3 +1707,19 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('accept-oral')
         assert tabs.find_element_by_id('accept-poster')
         assert tabs.find_element_by_id('reject')
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        valid_bibtex = '''@inproceedings{
+user2019paper,
+title={Paper title {\{}REVISED{\}}},
+author={Test User and Peter User and Andrew Mc},
+booktitle={Automated Knowledge Base Construction Conference},
+year={2019},
+url={'''
+        valid_bibtex = valid_bibtex+'https://openreview.net/forum?id='+note.forum+'''}
+}'''
+        assert note.content['_bibtex'] == valid_bibtex
