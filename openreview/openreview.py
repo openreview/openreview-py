@@ -1256,12 +1256,12 @@ class Client():
                 return Group.from_json(response.json())
             return group
 
-        member_type = type(members)
-        if member_type == str:
+        if isinstance(members, str):
             return add_member(group, [members])
-        if member_type == list:
+        if isinstance(members, list):
             return add_member(group, members)
-        raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list, but got " + repr(member_type) + " instead")
+
+        raise OpenReviewException("add_members_to_group()- members '" + str(members) + "' (" + str(type(members))+") must be a str or list, but got " + repr(type(members)) + " instead")
 
     def remove_members_from_group(self, group, members):
         """
@@ -1281,10 +1281,12 @@ class Client():
             response = self.__handle_response(response)
             return Group.from_json(response.json())
 
-        if isinstance(group, str):
+        if isinstance(members, str):
             return remove_member(group, [members])
-        if isinstance(group, list):
+        if isinstance(members, list):
             return remove_member(group, members)
+
+        raise OpenReviewException("remove_members_from_group()- members '" + str(members) + "' (" + str(type(members))+") must be a str or list, but got " + repr(type(members)) + " instead")
 
     def search_notes(
             self,
