@@ -237,6 +237,15 @@ class TestTools():
         assert replaced_group
         assert replaced_group.members == ['~Super_User1', '~Test_User1', 'noprofile@mail.com']
 
+        # Test to assert that member is removed while running replace members on a group has a member that is an invalid profile
+        invalid_member_group = client.add_members_to_group(replaced_group, '~Invalid_Profile1')
+        assert len(invalid_member_group.members) == 4
+        assert '~Invalid_Profile1' in invalid_member_group.members
+
+        replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
+        assert len(replaced_group.members) == 3
+        assert '~Invalid_Profile1' not in invalid_member_group.members
+
     def test_get_conflicts(self, client, helpers):
 
         helpers.create_user('user@gmail.com', 'First', 'Last')
