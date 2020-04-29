@@ -1249,7 +1249,7 @@ class Client():
         :rtype: Group
         """
         def add_member(group, members):
-            group_id = group if isinstance(group) == str else group.id
+            group_id = group if isinstance(group, str) else group.id
             if members:
                 response = requests.put(self.groups_url + '/members', json={'id': group_id, 'members': members}, headers=self.headers)
                 response = self.__handle_response(response)
@@ -1276,15 +1276,14 @@ class Client():
         :type: Group
         """
         def remove_member(group, members):
-            group_id = group if isinstance(group) == str else group.id
+            group_id = group if isinstance(group, str) else group.id
             response = requests.delete(self.groups_url + '/members', json={'id': group_id, 'members': members}, headers=self.headers)
             response = self.__handle_response(response)
             return Group.from_json(response.json())
 
-        member_type = isinstance(members)
-        if member_type == str:
+        if isinstance(group, str):
             return remove_member(group, [members])
-        if member_type == list:
+        if isinstance(group, list):
             return remove_member(group, members)
 
     def search_notes(
@@ -1514,7 +1513,7 @@ class Group():
         :return: Group with the new member added
         :rtype: Group
         """
-        if isinstance(member) is Group:
+        if isinstance(member, Group):
             self.members.append(member.id)
         else:
             self.members.append(str(member))
@@ -1530,7 +1529,7 @@ class Group():
         :return: Group after the member was removed
         :rtype: Group
         """
-        if isinstance(member) is Group:
+        if isinstance(member, Group):
             try:
                 self.members.remove(member.id)
             except ValueError:
