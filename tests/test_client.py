@@ -147,15 +147,15 @@ class TestClient():
             'preferredEmail': 'mbok@mail.com'
             })
         assert res, "Res i none"
-        group = guest.get_group(id = 'mbok@mail.com')
+        group = guest.get_group(id='mbok@mail.com')
         assert group
         assert group.members == ['~Melisa_Bok1']
 
     def test_get_invitations_by_invitee(self, client):
-        invitations = client.get_invitations(invitee = '~', pastdue = False)
+        invitations = client.get_invitations(invitee='~', pastdue=False)
         assert len(invitations) == 0
 
-        invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
+        invitations = client.get_invitations(invitee=True, duedate=True, details='replytoNote,repliedNotes')
         assert len(invitations) == 0
 
         invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')

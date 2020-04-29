@@ -16,20 +16,22 @@ class WebfieldBuilder(object):
         for k in default:
             merged_options[k] = default[k]
 
-        for o in options:
-            merged_options[o] = options[o]
+        for opt in options:
+            merged_options[opt] = options[opt]
 
         return merged_options
 
-    def set_landing_page(self, group, options = {}):
-        # sets webfield to show links to child groups
+    def set_landing_page(self, group, options={}):
+        '''
+        sets webfield to show links to child groups
+        '''
 
-        children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
+        children_groups = self.client.get_groups(regex=group.id + '/[^/]+/?$')
 
         links = []
         for children in children_groups:
             if not group.web or (group.web and children.id not in group.web):
-                links.append({ 'url': '/group?id=' + children.id, 'name': children.id})
+                links.append({'url': '/group?id=' + children.id, 'name': children.id})
 
         if not group.web:
             # create new webfield using template
@@ -39,8 +41,8 @@ class WebfieldBuilder(object):
             }
             header = self.__build_options(default_header, options)
 
-            with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
-                content = f.read()
+            with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f_handle:
+                content = f_handle.read()
                 content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
@@ -57,7 +59,7 @@ class WebfieldBuilder(object):
             return self.client.post_group(group)
 
 
-    def set_home_page(self, group, layout, options = {}):
+    def set_home_page(self, group, layout, options={}):
 
         default_header = {
             'title': group.id,
@@ -79,8 +81,8 @@ class WebfieldBuilder(object):
         if layout == 'decisions':
             template_name = 'tabsConferenceDecisionsWebfield.js'
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/' + template_name)) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/' + template_name)) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + group.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + options.get('reviewers_name', '') + "';")
@@ -126,8 +128,8 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_expertise_selection_page_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/expertiseBidWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/expertiseBidWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
@@ -190,8 +192,8 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_bidpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/bidWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/bidWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
@@ -228,8 +230,8 @@ class WebfieldBuilder(object):
         edit_param = invitation.id
         browse_param = ';'.join(score_ids)
         params = 'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recommendationWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recommendationWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
@@ -240,8 +242,8 @@ class WebfieldBuilder(object):
     def set_paper_ranking_page(self, conference, invitation, group_name):
 
         header = {}
-        with open(os.path.join(os.path.dirname(__file__), 'templates/paperRankingWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paperRankingWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var PAPER_RANKING_ID = '';", "var PAPER_RANKING_ID = '" + invitation.id + "';")
@@ -254,7 +256,7 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_reduced_load_page(self, conference_id, invitation, options = {}):
+    def set_reduced_load_page(self, conference_id, invitation, options={}):
 
         default_header = {
             'title': conference_id,
@@ -268,14 +270,14 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadWeb.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadWeb.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_recruit_page(self, conference_id, invitation, options = {}):
+    def set_recruit_page(self, conference_id, invitation, options={}):
 
         default_header = {
             'title': conference_id,
@@ -289,8 +291,8 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, options)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitResponseWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitResponseWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var REDUCED_LOAD_INVITATION_NAME = '';", "var REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load';")
@@ -308,8 +310,8 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/authorWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/authorWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
@@ -333,8 +335,8 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
@@ -364,8 +366,8 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_areachairpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/areachairWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/areachairWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
@@ -397,8 +399,8 @@ class WebfieldBuilder(object):
         if conference.get_submissions():
             submission_id = conference.get_blind_submission_id()
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f:
-            content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f_handle:
+            content = f_handle.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
@@ -434,5 +436,5 @@ class WebfieldBuilder(object):
     def edit_web_string_value(self, group, global_name, new_value):
         # replaces a string by adding the quotes
         old_value = re.search("var "+global_name+" = .*;", group.web)
-        group.web = group.web.replace(old_value.group(),"var " + global_name + " = '" + new_value + "';")
+        group.web = group.web.replace(old_value.group(), "var " + global_name + " = '" + new_value + "';")
         return self.client.post_group(group)

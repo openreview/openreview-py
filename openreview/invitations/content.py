@@ -1,4 +1,8 @@
-bid = {
+'''
+Content templates for standard openreview invitations
+'''
+
+BID = {
     'tag': {
         'description': 'Bid description',
         'order': 1,
@@ -14,7 +18,7 @@ bid = {
     }
 }
 
-comment = {
+COMMENT = {
     'title': {
         'order': 0,
         'value-regex': '.{1,500}',
@@ -29,7 +33,7 @@ comment = {
     }
 }
 
-withdraw = {
+WITHDRAW = {
     'title': {
         'value': 'Submission Withdrawn by the Authors',
         'order': 1
@@ -44,7 +48,7 @@ withdraw = {
     }
 }
 
-desk_reject = {
+DESK_REJECT = {
     'title': {
         'value': 'Submission Desk Rejected by Program Chairs',
         'order': 1
@@ -58,7 +62,7 @@ desk_reject = {
 }
 
 
-review_rating = {
+REVIEW_RATING = {
     'title': {
         'order': 1,
         'value': 'Review Rating',
@@ -79,7 +83,7 @@ review_rating = {
 
 }
 
-review = {
+REVIEW = {
     'title': {
         'order': 1,
         'value-regex': '.{0,500}',
@@ -121,7 +125,7 @@ review = {
     }
 }
 
-meta_review = {
+META_REVIEW = {
     'metareview': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
@@ -150,7 +154,7 @@ meta_review = {
     }
 }
 
-submission = {
+SUBMISSION = {
     'title': {
         'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'order': 1,
@@ -166,7 +170,7 @@ submission = {
     'authorids': {
         'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile.',
         'order': 3,
-        'values-regex': "([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+        'values-regex': r'([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
         'required':True
     },
     'keywords': {
@@ -197,7 +201,7 @@ submission = {
     }
 }
 
-recruitment = {
+RECRUITMENT = {
     'title': {
         'description': '',
         'order': 1,

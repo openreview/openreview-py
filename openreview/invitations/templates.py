@@ -4,20 +4,23 @@ Invitation templates and tools.
 Most classes extend
 '''
 from __future__ import absolute_import, division, print_function, unicode_literals
-import sys
-if sys.version_info[0] < 3:
-    string_types = [str, unicode]
-else:
-    string_types = [str]
-
 from .. import openreview
 from . import content
-import re
 
 class Submission(openreview.Invitation):
-    def __init__(self, conference_id = None, id = None,
-        duedate = None, process = None, inv_params = {},
-        reply_params = {}, content_params = {}, mask = {}):
+    '''
+    Defines submission invitation
+    '''
+    def __init__(
+            self,
+            conference_id=None,
+            id=None,
+            duedate=None,
+            process=None,
+            inv_params=None,
+            reply_params=None,
+            content_params=None,
+            mask={}):
 
         self.conference_id = conference_id
 
@@ -52,19 +55,19 @@ class Submission(openreview.Invitation):
             }
         }
 
-        self.content_params = {}
-        self.content_params.update(content.submission)
+        self.content_params = content_params if content_params else {}
+        self.content_params.update(content.SUBMISSION)
         self.content_params.update(content_params)
 
         if mask:
             self.content_params = mask
 
-        self.reply_params = {}
+        self.reply_params = reply_params if reply_params else {}
         self.reply_params.update(default_reply_params)
         self.reply_params.update(reply_params)
         self.reply_params['content'] = self.content_params
 
-        self.inv_params = {}
+        self.inv_params = inv_params if inv_params else {}
         self.inv_params.update(default_inv_params)
         self.inv_params.update(inv_params)
         self.inv_params['reply'] = self.reply_params
@@ -72,12 +75,21 @@ class Submission(openreview.Invitation):
         super(Submission, self).__init__(**self.inv_params)
 
     def add_process(self, process):
+        '''
+        Method to add a process to submission invitation
+        '''
         self.process = process.render()
 
 class AddBid(openreview.Invitation):
-    def __init__(self, conference_id, id = None,
-        duedate = None, completion_count = 50, inv_params = {},
-        reply_params = {}, content_params = {}):
+    def __init__(
+            self,
+            conference_id,
+            id=None,
+            duedate=None,
+            completion_count=50,
+            inv_params={},
+            reply_params={},
+            content_params={}):
 
         self.conference_id = conference_id
 
@@ -112,7 +124,7 @@ class AddBid(openreview.Invitation):
         }
 
         self.content_params = {}
-        self.content_params.update(content.bid)
+        self.content_params.update(content.BID)
         self.content_params.update(content_params)
 
         self.reply_params = {}
@@ -128,9 +140,16 @@ class AddBid(openreview.Invitation):
         super(AddBid, self).__init__(**self.inv_params)
 
 class Comment(openreview.Invitation):
-    def __init__(self, conference_id, id = None,
-        duedate = 0, process = None, invitation = None,
-        inv_params = {}, reply_params = {}, content_params = {}):
+    def __init__(
+            self,
+            conference_id,
+            id=None,
+            duedate=0,
+            process=None,
+            invitation=None,
+            inv_params={},
+            reply_params={},
+            content_params={}):
 
         self.conference_id = conference_id
 
@@ -167,7 +186,7 @@ class Comment(openreview.Invitation):
         }
 
         self.content_params = {}
-        self.content_params.update(content.comment)
+        self.content_params.update(content.COMMENT)
         self.content_params.update(content_params)
 
         self.reply_params = {}
@@ -186,16 +205,23 @@ class Comment(openreview.Invitation):
         self.process = process.render()
 
 class RecruitReviewers(openreview.Invitation):
-    def __init__(self, conference_id, id = None,
-        duedate = 0, process = None, web = None,
-        inv_params = {}, reply_params = {}, content_params = {}):
+    def __init__(
+            self,
+            conference_id,
+            id=None,
+            duedate=0,
+            process=None,
+            web=None,
+            inv_params={},
+            reply_params={},
+            content_params={}):
+
+        self.conference_id = conference_id
 
         if id:
             self.id = id
         else:
             self.id = '/'.join([self.conference_id, '-', 'Recruit_Reviewers'])
-
-        self.conference_id = conference_id
 
         default_inv_params = {
             'id': self.id,
@@ -223,7 +249,7 @@ class RecruitReviewers(openreview.Invitation):
         }
 
         self.content_params = {}
-        self.content_params.update(content.recruitment)
+        self.content_params.update(content.RECRUITMENT)
         self.content_params.update(content_params)
 
         self.reply_params = {}

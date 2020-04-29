@@ -22,7 +22,7 @@ class SubmissionInvitation(openreview.Invitation):
         due_date = submission_stage.due_date
         readers = submission_stage.get_readers(conference)
 
-        content = invitations.submission.copy()
+        content = invitations.SUBMISSION.copy()
 
         if submission_stage.subject_areas:
             content['subject_areas'] = {
@@ -265,7 +265,7 @@ class CommentInvitation(openreview.Invitation):
 
     def __init__(self, conference):
 
-        content = invitations.comment.copy()
+        content = invitations.COMMENT.copy()
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f_handle:
             file_content = f_handle.read()
@@ -355,7 +355,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
     def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs):
 
-        content = invitations.withdraw.copy()
+        content = invitations.WITHDRAW.copy()
 
         withdraw_process_file = 'templates/withdraw_process.py'
 
@@ -504,7 +504,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
 
     def __init__(self, conference, note, reveal_authors, reveal_submission):
 
-        content = invitations.desk_reject.copy()
+        content = invitations.DESK_REJECT.copy()
 
         desk_reject_process_file = 'templates/desk_reject_process.py'
 
@@ -689,7 +689,7 @@ class ReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference):
         review_stage = conference.review_stage
-        content = invitations.review.copy()
+        content = invitations.REVIEW.copy()
 
         for key in review_stage.additional_fields:
             content[key] = review_stage.additional_fields[key]
@@ -808,7 +808,7 @@ class ReviewRevisionInvitation(openreview.Invitation):
 class MetaReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference):
-        content = invitations.meta_review.copy()
+        content = invitations.META_REVIEW.copy()
         meta_review_stage = conference.meta_review_stage
         additional_fields = meta_review_stage.additional_fields
         start_date = meta_review_stage.start_date
@@ -951,7 +951,7 @@ class PaperDecisionInvitation(openreview.Invitation):
             }
         )
 
-class InvitationBuilder(object):
+class InvitationBuilder():
 
     def __init__(self, client):
         self.client = client

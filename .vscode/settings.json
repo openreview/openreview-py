@@ -4,7 +4,7 @@
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
     "python.linting.lintOnSave": true,
-    "python.linting.maxNumberOfProblems": 20,
+    "python.linting.maxNumberOfProblems": 50,
     "files.trimTrailingWhitespace": true,
     "recommendations": [
         "ms-python.python",

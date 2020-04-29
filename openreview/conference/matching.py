@@ -4,10 +4,10 @@ A module containing tools for matching and and main Matching instance class
 
 from __future__ import division
 import csv
-import openreview
-import tld
 import re
 from tqdm import tqdm
+import openreview
+from .. import tools
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -475,9 +475,9 @@ class Matching(object):
         '''
         score_spec = {}
 
-        try:
-            invitation = self.client.get_invitation(self.conference.get_bid_id(self.match_group.id))
-            score_spec[invitation.id] = {
+        bid_invitation = self.client.get_invitation(self.conference.get_bid_id(self.match_group.id))
+        if bid_invitation:
+            score_spec[bid_invitation.id] = {
                 'weight': 1,
                 'default': 0,
                 'translate_map' : {
@@ -488,16 +488,18 @@ class Matching(object):
                     'Very Low': -1.0
                 }
             }
-        except:
+        else:
             print('Bid invitation not found')
 
-        try:
-            invitation = self.client.get_invitation(self.conference.get_recommendation_id())
-            score_spec[invitation.id] = {
+        recommendation_invitation = tools.get_invitation(
+            self.client,
+            self.conference.get_recommendation_id())
+        if recommendation_invitation:
+            score_spec[recommendation_invitation.id] = {
                 'weight': 1,
                 'default': 0
             }
-        except:
+        else:
             print('Recommendation invitation not found')
 
         # The reviewers are all emails so convert to tilde ids

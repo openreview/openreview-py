@@ -2,22 +2,18 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from deprecated.sphinx import deprecated
 import sys
-if sys.version_info[0] < 3:
-    string_types = [str, unicode]
-else:
-    string_types = [str]
-
 import requests
 import pprint
 import os
 import re
 
-
 class OpenReviewException(Exception):
-    pass
+    '''
+    Class defining OpenReview exception
+    '''
 
-class Client(object):
-    """
+class Client():
+    '''
     :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
@@ -26,12 +22,17 @@ class Client(object):
     :type password: str, optional
     :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
-    """
-    def __init__(self, baseurl = None, username = None, password = None, token= None):
+    '''
+    def __init__(
+            self,
+            baseurl=None,
+            username=None,
+            password=None,
+            token=None):
 
         self.baseurl = baseurl
         if not self.baseurl:
-           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
+            self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -82,22 +83,22 @@ class Client(object):
 
     def __handle_token(self, response):
         self.token = str(response['token'])
-        self.profile = Profile( id = response['user']['profile']['id'] )
-        self.headers['Authorization'] ='Bearer ' + self.token
+        self.profile = Profile(id=response['user']['profile']['id'])
+        self.headers['Authorization'] = 'Bearer ' + self.token
         return response
 
-    def __handle_response(self,response):
+    def __handle_response(self, response):
         try:
             response.raise_for_status()
 
-            if("application/json" in response.headers['content-type']):
+            if "application/json" in response.headers['content-type']:
                 if 'errors' in response.json():
                     raise OpenReviewException(response.json()['errors'])
                 if 'error' in response.json():
                     raise OpenReviewException(response.json()['error'])
 
             return response
-        except requests.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError:
             if 'errors' in response.json():
                 raise OpenReviewException(response.json()['errors'])
             else:
@@ -105,7 +106,10 @@ class Client(object):
 
     ## PUBLIC FUNCTIONS
 
-    def login_user(self,username=None, password=None):
+    def login_user(
+            self,
+            username=None,
+            password=None):
         """
         Logs in a registered user
 
@@ -117,14 +121,20 @@ class Client(object):
         :return: Dictionary containing user information and the authentication token
         :rtype: dict
         """
-        user = { 'id': username, 'password': password }
+        user = {'id': username, 'password': password}
         response = requests.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
         return json_response
 
-    def register_user(self, email = None, first = None, last = None, middle = '', password = None):
+    def register_user(
+            self,
+            email=None,
+            first=None,
+            last=None,
+            middle='',
+            password=None):
         """
         Registers a new user
 
@@ -144,10 +154,10 @@ class Client(object):
         """
         register_payload = {
             'email': email,
-            'name': {   'first': first, 'last': last, 'middle': middle},
+            'name': {'first': first, 'last': last, 'middle': middle},
             'password': password
         }
-        response = requests.post(self.register_url, json = register_payload, headers = self.headers)
+        response = requests.post(self.register_url, json=register_payload, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -177,15 +187,15 @@ class Client(object):
             'preferredEmail': 'new@user.com'
             })
         """
-        response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
+        response = requests.put(self.baseurl + '/activate/' + token, json={'content': content}, headers=self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
 
         return json_response
 
-    def get_activatable(self, token = None):
-        response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
+    def get_activatable(self, token=None):
+        response = requests.get(self.baseurl + '/activatable/' + token, params={}, headers=self.headers)
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
         return self.token
@@ -204,10 +214,10 @@ class Client(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.groups_url, params={'id':id}, headers=self.headers)
         response = self.__handle_response(response)
-        g = response.json()['groups'][0]
-        return Group.from_json(g)
+        group = response.json()['groups'][0]
+        return Group.from_json(group)
 
     def get_invitation(self, id):
         """
@@ -219,7 +229,7 @@ class Client(object):
         :return: Invitation matching the passed id
         :rtype: Invitation
         """
-        response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.invitations_url, params={'id': id}, headers=self.headers)
         response = self.__handle_response(response)
         i = response.json()['invitations'][0]
         return Invitation.from_json(i)
@@ -234,10 +244,10 @@ class Client(object):
         :return: Note matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.notes_url, params={'id':id}, headers=self.headers)
         response = self.__handle_response(response)
-        n = response.json()['notes'][0]
-        return Note.from_json(n)
+        note = response.json()['notes'][0]
+        return Note.from_json(note)
 
     def get_tag(self, id):
         """
@@ -249,10 +259,10 @@ class Client(object):
         :return: Tag with the Tag information
         :rtype: Tag
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.tags_url, params={'id': id}, headers=self.headers)
         response = self.__handle_response(response)
-        t = response.json()['tags'][0]
-        return Tag.from_json(t)
+        tag = response.json()['tags'][0]
+        return Tag.from_json(tag)
 
     def get_edge(self, id):
         """
@@ -264,7 +274,7 @@ class Client(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.tags_url, params={'id': id}, headers=self.headers)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:
@@ -272,7 +282,7 @@ class Client(object):
         else:
             raise OpenReviewException('Edge not found')
 
-    def get_profile(self, email_or_id = None):
+    def get_profile(self, email_or_id=None):
         """
         Get a single Profile by id, if available
 
@@ -290,7 +300,7 @@ class Client(object):
             else:
                 att = 'email'
             params[att] = email_or_id
-        response = requests.get(self.profiles_url, params = params, headers = self.headers)
+        response = requests.get(self.profiles_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
@@ -299,7 +309,14 @@ class Client(object):
             raise OpenReviewException(['Profile not found'])
 
     @deprecated(version='0.9.20', reason="Use search_profiles instead")
-    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
+    def get_profiles(
+            self,
+            email_or_id_list=None,
+            id=None,
+            email=None,
+            first=None,
+            middle=None,
+            last=None):
         """
         Gets a list of profiles
 
@@ -326,15 +343,15 @@ class Client(object):
             pure_emails = all(['@' in i for i in email_or_id_list])
 
             def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
+                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers=self.headers)
                 response = self.__handle_response(response)
                 return [Profile.from_json(p) for p in response.json()['profiles']]
 
             def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
+                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers=self.headers)
                 response = self.__handle_response(response)
-                return { p['email'] : Profile.from_json(p['profile'])
-                    for p in response.json()['profiles'] }
+                return {p['email'] : Profile.from_json(p['profile']) \
+                    for p in response.json()['profiles']}
 
             if pure_tilde_ids:
                 get_response = get_ids_response
@@ -360,11 +377,18 @@ class Client(object):
 
             return result
 
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
+        response = requests.get(self.profiles_url, params={'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last}, headers=self.headers)
         response = self.__handle_response(response)
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
-    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(
+            self,
+            emails=None,
+            ids=None,
+            term=None,
+            first=None,
+            middle=None,
+            last=None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
@@ -398,14 +422,14 @@ class Client(object):
                 yield batch
 
         if term:
-            response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
+            response = requests.get(self.profiles_search_url, params={'term': term}, headers=self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
         if emails:
             full_response = []
             for email_batch in batches(emails):
-                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = requests.post(self.profiles_search_url, json={'emails': email_batch}, headers=self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
@@ -414,17 +438,16 @@ class Client(object):
         if ids:
             full_response = []
             for id_batch in batches(ids):
-                response = requests.post(self.profiles_search_url, json = {'ids': id_batch}, headers = self.headers)
+                response = requests.post(self.profiles_search_url, json={'ids': id_batch}, headers=self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
             return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
-            response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = requests.get(self.profiles_url, params={'first': first, 'middle': middle, 'last': last}, headers=self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
-
 
         return []
 
@@ -458,7 +481,7 @@ class Client(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        response = requests.get(url, params = params, headers = headers)
+        response = requests.get(url, params=params, headers=headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -475,9 +498,9 @@ class Client(object):
         """
         headers = self.headers.copy()
 
-        with open(fname, 'rb') as f:
+        with open(fname, 'rb') as f_handle:
             headers['content-type'] = 'application/pdf'
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+            response = requests.put(self.pdf_url, files={'data': f_handle}, headers=headers)
 
         response = self.__handle_response(response)
         return response.json()['url']
@@ -499,12 +522,12 @@ class Client(object):
 
         headers = self.headers.copy()
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, 'rb') as f_handle:
             response = requests.put(self.baseurl + '/attachment', files=(
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
-                ('file', (file_path, f))
-            ), headers = headers)
+                ('file', (file_path, f_handle))
+            ), headers=headers)
 
         response = self.__handle_response(response)
         return response.json()['url']
@@ -521,37 +544,43 @@ class Client(object):
         """
         response = requests.post(
             self.profiles_url,
-            json = profile.to_json(),
-            headers = self.headers)
+            json=profile.to_json(),
+            headers=self.headers)
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def merge_profiles(self, profileTo, profileFrom):
+    def merge_profiles(self, profile_to, profile_from):
         """
         Merges two Profiles
 
-        :param profileTo: Profile object to merge to
-        :type profileTo: Profile
-        :param profileFrom: Profile object to merge from (this profile will be deleted)
-        :type: profileFrom: Profile
+        :param profile_to: Profile object to merge to
+        :type profile_to: Profile
+        :param profile_from: Profile object to merge from (this profile will be deleted)
+        :type: profile_from: Profile
 
         :return: The new updated Profile
         :rtype: Profile
         """
         response = requests.post(
             self.profiles_merge_url,
-            json = {
-                'to': profileTo,
-                'from': profileFrom
-            },
-            headers = self.headers)
+            json={
+                'to': profile_to,
+                'from': profile_from},
+            headers=self.headers)
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, limit = None, offset = None):
+    def get_groups(
+            self,
+            id=None,
+            regex=None,
+            member=None,
+            signatory=None,
+            limit=None,
+            offset=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -572,19 +601,40 @@ class Client(object):
         :rtype: list[Group]
         """
         params = {}
-        if id != None: params['id'] = id
-        if regex != None: params['regex'] = regex
-        if member != None: params['member'] = member
-        if signatory != None: params['signatory'] = signatory
+        if id is not None:
+            params['id'] = id
+        if regex is not None:
+            params['regex'] = regex
+        if member is not None:
+            params['member'] = member
+        if signatory is not None:
+            params['signatory'] = signatory
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.groups_url, params = params, headers = self.headers)
+        response = requests.get(self.groups_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None, expired = None):
+    def get_invitations(
+            self,
+            id=None,
+            invitee=None,
+            replytoNote=None,
+            replyForum=None,
+            signature=None,
+            note=None,
+            regex=None,
+            tags=None,
+            limit=None,
+            offset=None,
+            minduedate=None,
+            duedate=None,
+            pastdue=None,
+            replyto=None,
+            details=None,
+            expired=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -625,18 +675,18 @@ class Client(object):
         :rtype: list[Invitation]
         """
         params = {}
-        if id!=None:
+        if id is not None:
             params['id'] = id
-        if invitee!=None:
+        if invitee is not None:
             params['invitee'] = invitee
-        if replytoNote!=None:
+        if replytoNote is not None:
             params['replytoNote'] = replytoNote
-        if replyForum!=None:
+        if replyForum is not None:
             params['replyForum'] = replyForum
-        if signature!=None:
+        if signature is not None:
             params['signature'] = signature
-        if note!=None:
-            params['note']=note
+        if note is not None:
+            params['note'] = note
         if regex:
             params['regex'] = regex
         if tags:
@@ -657,23 +707,25 @@ class Client(object):
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         return invitations
 
-    def get_notes(self, id = None,
-            paperhash = None,
-            forum = None,
-            original = None,
-            invitation = None,
-            replyto = None,
-            tauthor = None,
-            signature = None,
-            writer = None,
-            trash = None,
-            number = None,
-            content = None,
-            limit = None,
-            offset = None,
-            mintcdate = None,
-            details = None,
-            sort = None):
+    def get_notes(
+            self,
+            id=None,
+            paperhash=None,
+            forum=None,
+            original=None,
+            invitation=None,
+            replyto=None,
+            tauthor=None,
+            signature=None,
+            writer=None,
+            trash=None,
+            number=None,
+            content=None,
+            limit=None,
+            offset=None,
+            mintcdate=None,
+            details=None,
+            sort=None):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
@@ -720,41 +772,41 @@ class Client(object):
         :rtype: list[Note]
         """
         params = {}
-        if id != None:
+        if id is not None:
             params['id'] = id
-        if paperhash != None:
+        if paperhash is not None:
             params['paperhash'] = paperhash
-        if forum != None:
+        if forum is not None:
             params['forum'] = forum
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if replyto != None:
+        if replyto is not None:
             params['replyto'] = replyto
-        if tauthor != None:
+        if tauthor is not None:
             params['tauthor'] = tauthor
-        if signature != None:
+        if signature is not None:
             params['signature'] = signature
-        if writer != None:
+        if writer is not None:
             params['writer'] = writer
-        if trash == True:
-            params['trash']=True
-        if number != None:
+        if trash:
+            params['trash'] = True
+        if number is not None:
             params['number'] = number
-        if content != None:
+        if content is not None:
             for k in content:
                 params['content.' + k] = content[k]
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
-        if mintcdate != None:
+        if mintcdate is not None:
             params['mintcdate'] = mintcdate
-        if details != None:
+        if details is not None:
             params['details'] = details
         params['sort'] = sort
         params['original'] = original
 
-        response = requests.get(self.notes_url, params = params, headers = self.headers)
+        response = requests.get(self.notes_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
         return [Note.from_json(n) for n in response.json()['notes']]
@@ -769,12 +821,20 @@ class Client(object):
         :return: reference matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.reference_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.reference_url, params={'id':id}, headers=self.headers)
         response = self.__handle_response(response)
-        n = response.json()['references'][0]
-        return Note.from_json(n)
+        ref = response.json()['references'][0]
+        return Note.from_json(ref)
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
+    def get_references(
+            self,
+            referent=None,
+            invitation=None,
+            mintcdate=None,
+            limit=None,
+            offset=None,
+            original=False,
+            trash=None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -795,27 +855,35 @@ class Client(object):
         :rtype: list[Note]
         """
         params = {}
-        if referent != None:
+        if referent is not None:
             params['referent'] = referent
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if mintcdate != None:
+        if mintcdate is not None:
             params['mintcdate'] = mintcdate
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
-        if original == True:
+        if original:
             params['original'] = "true"
         if trash:
             params['trash'] = trash
 
-        response = requests.get(self.reference_url, params = params, headers = self.headers)
+        response = requests.get(self.reference_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
         return [Note.from_json(n) for n in response.json()['references']]
 
-    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
+    def get_tags(
+            self,
+            id=None,
+            invitation=None,
+            forum=None,
+            signature=None,
+            tag=None,
+            limit=None,
+            offset=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -831,27 +899,35 @@ class Client(object):
         """
         params = {}
 
-        if id != None:
+        if id is not None:
             params['id'] = id
-        if forum != None:
+        if forum is not None:
             params['forum'] = forum
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if signature != None:
+        if signature is not None:
             params['signature'] = signature
-        if tag != None:
+        if tag is not None:
             params['tag'] = tag
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.tags_url, params = params, headers = self.headers)
+        response = requests.get(self.tags_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+    def get_edges(
+            self,
+            id=None,
+            invitation=None,
+            head=None,
+            tail=None,
+            label=None,
+            limit=None,
+            offset=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -871,12 +947,18 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
         return [Edge.from_json(t) for t in response.json()['edges']]
 
-    def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
+    def get_edges_count(
+            self,
+            id=None,
+            invitation=None,
+            head=None,
+            tail=None,
+            label=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -896,12 +978,21 @@ class Client(object):
         params['limit'] = 1
         params['offset'] = 0
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()['count']
 
-    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select='tail', limit=None, offset=None):
+    def get_grouped_edges(
+            self,
+            invitation=None,
+            head=None,
+            tail=None,
+            label=None,
+            groupby='head',
+            select='tail',
+            limit=None,
+            offset=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
@@ -925,13 +1016,13 @@ class Client(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
 
-    def post_group(self, group, overwrite = True):
+    def post_group(self, group, overwrite=True):
         """
         Posts the group. If the group is unsigned, signs it using the client's default signature.
 
@@ -943,9 +1034,11 @@ class Client(object):
         :return: The posted Group
         :rtype: Group
         """
-        if overwrite or not self.exists(group.id):
-            if not group.signatures: group.signatures = [self.profile.id]
-            if not group.writers: group.writers = [self.profile.id]
+        if overwrite or not group.id:
+            if not group.signatures:
+                group.signatures = [self.profile.id]
+            if not group.writers:
+                group.writers = [self.profile.id]
             response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
             response = self.__handle_response(response)
 
@@ -961,7 +1054,7 @@ class Client(object):
         :return: The posted Invitation
         :rtype: Invitation
         """
-        response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
+        response = requests.post(self.invitations_url, json=invitation.to_json(), headers=self.headers)
         response = self.__handle_response(response)
 
         return Invitation.from_json(response.json())
@@ -976,7 +1069,8 @@ class Client(object):
         :return: The posted Note
         :rtype: Note
         """
-        if not note.signatures: note.signatures = [self.profile.id]
+        if not note.signatures:
+            note.signatures = [self.profile.id]
         response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
         response = self.__handle_response(response)
 
@@ -991,7 +1085,7 @@ class Client(object):
 
         :return Tag: The posted Tag
         """
-        response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
+        response = requests.post(self.tags_url, json=tag.to_json(), headers=self.headers)
         response = self.__handle_response(response)
 
         return Tag.from_json(response.json())
@@ -1000,17 +1094,17 @@ class Client(object):
         """
         Posts the edge. Upon success, returns the posted Edge object.
         """
-        response = requests.post(self.edges_url, json = edge.to_json(), headers = self.headers)
+        response = requests.post(self.edges_url, json=edge.to_json(), headers=self.headers)
         response = self.__handle_response(response)
 
         return Edge.from_json(response.json())
 
-    def post_edges (self, edges):
+    def post_edges(self, edges):
         '''
         Posts the list of Edges.   Returns a list Edge objects updated with their ids.
         '''
         send_json = [edge.to_json() for edge in edges]
-        response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
+        response = requests.post(self.bulk_edges_url, json=send_json, headers=self.headers)
         response = self.__handle_response(response)
         received_json_array = response.json()
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
@@ -1026,7 +1120,7 @@ class Client(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
+        response = requests.delete(self.edges_url, json={'invitation': invitation}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1040,7 +1134,7 @@ class Client(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.notes_url, json = {'id': note_id}, headers = self.headers)
+        response = requests.delete(self.notes_url, json={'id': note_id}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1055,7 +1149,7 @@ class Client(object):
         :rtype: dict
         '''
 
-        response = requests.delete(self.profiles_url + '/reference', json = {'id': reference_id}, headers = self.headers)
+        response = requests.delete(self.profiles_url + '/reference', json={'id': reference_id}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1069,10 +1163,9 @@ class Client(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.groups_url, json = {'id': group_id}, headers = self.headers)
+        response = requests.delete(self.groups_url, json={'id': group_id}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
-
 
     def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None):
         """
@@ -1088,13 +1181,13 @@ class Client(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.messages_url, json = {
+        response = requests.post(self.messages_url, json={
             'groups': recipients,
-            'subject': subject ,
+            'subject': subject,
             'message': message,
             'ignoreGroups': ignoreRecipients,
             'from': sender
-            }, headers = self.headers)
+            }, headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1113,12 +1206,12 @@ class Client(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.messages_direct_url, json = {
+        response = requests.post(self.messages_direct_url, json={
             'groups': recipients,
-            'subject': subject ,
+            'subject': subject,
             'message': message,
             'from': sender
-            }, headers = self.headers)
+            }, headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1138,7 +1231,7 @@ class Client(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
+        response = requests.post(self.mail_url, json={'groups': recipients, 'subject': subject, 'message': message}, headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1156,15 +1249,15 @@ class Client(object):
         :rtype: Group
         """
         def add_member(group, members):
-            group_id = group if type(group) in string_types else group.id
+            group_id = group if isinstance(group) == str else group.id
             if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
+                response = requests.put(self.groups_url + '/members', json={'id': group_id, 'members': members}, headers=self.headers)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())
             return group
 
         member_type = type(members)
-        if member_type in string_types:
+        if member_type == str:
             return add_member(group, [members])
         if member_type == list:
             return add_member(group, members)
@@ -1183,18 +1276,25 @@ class Client(object):
         :type: Group
         """
         def remove_member(group, members):
-            group_id = group if type(group) in string_types else group.id
-            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
+            group_id = group if isinstance(group) == str else group.id
+            response = requests.delete(self.groups_url + '/members', json={'id': group_id, 'members': members}, headers=self.headers)
             response = self.__handle_response(response)
             return Group.from_json(response.json())
 
-        member_type = type(members)
-        if member_type in string_types:
+        member_type = isinstance(members)
+        if member_type == str:
             return remove_member(group, [members])
         if member_type == list:
             return remove_member(group, members)
 
-    def search_notes(self, term, content = 'all', group = 'all', source='all', limit = None, offset = None):
+    def search_notes(
+            self,
+            term,
+            content='all',
+            group='all',
+            source='all',
+            limit=None,
+            offset=None):
         """
         Searches notes based on term, content, group and source as the criteria. Unlike :meth:`~openreview.Client.get_notes`, this method uses Elasticsearch to retrieve the Notes
 
@@ -1221,16 +1321,16 @@ class Client(object):
             'source': source
         }
 
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
+        response = requests.get(self.notes_url + '/search', params=params, headers=self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_tildeusername(self, first, last, middle = None):
+    def get_tildeusername(self, first, last, middle=None):
         """
         Gets next possible tilde user name corresponding to the specified first, middle and last name
 
@@ -1245,11 +1345,16 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = requests.get(self.tilde_url, params={'first': first, 'last': last, 'middle': middle}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, offset = None, limit = None):
+    def get_messages(
+            self,
+            to=None,
+            subject=None,
+            offset=None,
+            limit=None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1262,11 +1367,11 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'offset': offset, 'limit': limit }, headers = self.headers)
+        response = requests.get(self.messages_url, params={'to': to, 'subject': subject, 'offset': offset, 'limit': limit}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 
-    def get_process_logs(self, id = None, invitation = None):
+    def get_process_logs(self, id=None, invitation=None):
         """
         **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
 
@@ -1279,12 +1384,12 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
+        response = requests.get(self.process_logs_url, params={'id': id, 'invitation': invitation}, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
 
 
-class Group(object):
+class Group():
     """
     When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
 
@@ -1311,21 +1416,33 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
+    def __init__(
+            self,
+            id,
+            readers,
+            writers,
+            signatories,
+            signatures,
+            cdate=None,
+            ddate=None,
+            members=None,
+            nonreaders=None,
+            web=None,
+            details=None):
         # post attributes
-        self.id=id
+        self.id = id
         self.cdate = cdate
         self.ddate = ddate
         self.writers = writers
-        self.members = [] if members==None else members
+        self.members = [] if members is None else members
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
         self.signatories = signatories
-        self.web=None
-        if web != None:
-            with open(web) as f:
-                self.web = f.read()
+        self.web = None
+        if web is not None:
+            with open(web) as f_handle:
+                self.web = f_handle.read()
         self.details = details
 
     def __repr__(self):
@@ -1362,7 +1479,7 @@ class Group(object):
         return body
 
     @classmethod
-    def from_json(Group,g):
+    def from_json(cls, g):
         """
         Creates a Group object from a dictionary that contains keys values equivalent to the name of the instance variables of the Group class
 
@@ -1372,16 +1489,17 @@ class Group(object):
         :return: Group whose instance variables contain the values from the dictionary
         :rtype: Group
         """
-        group = Group(g['id'],
-            cdate = g.get('cdate'),
-            ddate = g.get('ddate'),
-            writers = g.get('writers'),
-            members = g.get('members'),
-            readers = g.get('readers'),
-            nonreaders = g.get('nonreaders'),
-            signatories = g.get('signatories'),
-            signatures = g.get('signatures'),
-            details = g.get('details'))
+        group = cls(
+            g['id'],
+            cdate=g.get('cdate'),
+            ddate=g.get('ddate'),
+            writers=g.get('writers'),
+            members=g.get('members'),
+            readers=g.get('readers'),
+            nonreaders=g.get('nonreaders'),
+            signatories=g.get('signatories'),
+            signatures=g.get('signatures'),
+            details=g.get('details'))
         if 'web' in g:
             group.web = g['web']
         return group
@@ -1396,7 +1514,7 @@ class Group(object):
         :return: Group with the new member added
         :rtype: Group
         """
-        if type(member) is Group:
+        if isinstance(member) is Group:
             self.members.append(member.id)
         else:
             self.members.append(str(member))
@@ -1412,15 +1530,15 @@ class Group(object):
         :return: Group after the member was removed
         :rtype: Group
         """
-        if type(member) is Group:
+        if isinstance(member) is Group:
             try:
                 self.members.remove(member.id)
-            except(ValueError):
+            except ValueError:
                 pass
         else:
             try:
                 self.members.remove(str(member))
-            except(ValueError):
+            except ValueError:
                 pass
         return self
 
@@ -1431,8 +1549,8 @@ class Group(object):
         :param web: Path to the file that contains the webfield
         :type web: str
         """
-        with open(web) as f:
-            self.web = f.read()
+        with open(web) as f_handle:
+            self.web = f_handle.read()
 
     def post(self, client):
         """
@@ -1443,7 +1561,7 @@ class Group(object):
         """
         client.post_group(self)
 
-class Invitation(object):
+class Invitation():
     """
     :param id: Invitation id
     :type id: str
@@ -1490,29 +1608,30 @@ class Invitation(object):
     :param details:
     :type details: dict, optional
     """
-    def __init__(self,
-        id,
-        readers = None,
-        writers = None,
-        invitees = None,
-        signatures = None,
-        reply = None,
-        super = None,
-        noninvitees = None,
-        nonreaders = None,
-        web = None,
-        process = None,
-        process_string = None,
-        duedate = None,
-        expdate = None,
-        cdate = None,
-        ddate = None,
-        tcdate = None,
-        tmdate = None,
-        multiReply = None,
-        taskCompletionCount = None,
-        transform = None,
-        details = None):
+    def __init__(
+            self,
+            id,
+            readers=None,
+            writers=None,
+            invitees=None,
+            signatures=None,
+            reply=None,
+            super=None,
+            noninvitees=None,
+            nonreaders=None,
+            web=None,
+            process=None,
+            process_string=None,
+            duedate=None,
+            expdate=None,
+            cdate=None,
+            ddate=None,
+            tcdate=None,
+            tmdate=None,
+            multiReply=None,
+            taskCompletionCount=None,
+            transform=None,
+            details=None):
 
         self.id = id
         self.super = super
@@ -1534,16 +1653,16 @@ class Invitation(object):
         self.details = details
         self.web = None
         self.process = None
-        if web != None:
-            with open(web) as f:
-                self.web = f.read()
-        if process != None:
-            with open(process) as f:
-                self.process = f.read()
+        if web is not None:
+            with open(web) as f_handle:
+                self.web = f_handle.read()
+        if process is not None:
+            with open(process) as f_handle:
+                self.process = f_handle.read()
         self.transform = None
-        if transform != None:
-            with open(transform) as f:
-                self.transform = f.read()
+        if transform is not None:
+            with open(transform) as f_handle:
+                self.transform = f_handle.read()
         if process_string:
             self.process = process_string
 
@@ -1586,14 +1705,14 @@ class Invitation(object):
             'details': self.details
         }
 
-        if hasattr(self,'web'):
-            body['web']=self.web
-        if hasattr(self,'process'):
-            body['process']=self.process
+        if hasattr(self, 'web'):
+            body['web'] = self.web
+        if hasattr(self, 'process'):
+            body['process'] = self.process
         return body
 
     @classmethod
-    def from_json(Invitation,i):
+    def from_json(cls, i):
         """
         Creates an Invitation object from a dictionary that contains keys values equivalent to the name of the instance variables of the Invitation class
 
@@ -1603,25 +1722,25 @@ class Invitation(object):
         :return: Invitation whose instance variables contain the values from the dictionary
         :rtype: Invitation
         """
-        invitation = Invitation(i['id'],
-            super = i.get('super'),
-            cdate = i.get('cdate'),
-            ddate = i.get('ddate'),
-            tcdate = i.get('tcdate'),
-            tmdate = i.get('tmdate'),
-            duedate = i.get('duedate'),
-            expdate = i.get('expdate'),
-            readers = i.get('readers'),
-            nonreaders = i.get('nonreaders'),
-            writers = i.get('writers'),
-            invitees = i.get('invitees'),
-            noninvitees = i.get('noninvitees'),
-            signatures = i.get('signatures'),
-            multiReply = i.get('multiReply'),
-            taskCompletionCount = i.get('taskCompletionCount'),
-            reply = i.get('reply'),
-            details = i.get('details')
-            )
+        invitation = cls(
+            i['id'],
+            super=i.get('super'),
+            cdate=i.get('cdate'),
+            ddate=i.get('ddate'),
+            tcdate=i.get('tcdate'),
+            tmdate=i.get('tmdate'),
+            duedate=i.get('duedate'),
+            expdate=i.get('expdate'),
+            readers=i.get('readers'),
+            nonreaders=i.get('nonreaders'),
+            writers=i.get('writers'),
+            invitees=i.get('invitees'),
+            noninvitees=i.get('noninvitees'),
+            signatures=i.get('signatures'),
+            multiReply=i.get('multiReply'),
+            taskCompletionCount=i.get('taskCompletionCount'),
+            reply=i.get('reply'),
+            details=i.get('details'))
         if 'web' in i:
             invitation.web = i['web']
         if 'process' in i:
@@ -1630,7 +1749,7 @@ class Invitation(object):
             invitation.transform = i['transform']
         return invitation
 
-class Note(object):
+class Note():
     """
     :param invitation: Invitation id
     :type invitation: str
@@ -1669,25 +1788,26 @@ class Note(object):
     :param tauthor: True author
     :type tauthor: str, optional
     """
-    def __init__(self,
-        invitation,
-        readers,
-        writers,
-        signatures,
-        content,
-        id=None,
-        original=None,
-        number=None,
-        cdate=None,
-        tcdate=None,
-        tmdate=None,
-        ddate=None,
-        forum=None,
-        referent=None,
-        replyto=None,
-        nonreaders=None,
-        details = None,
-        tauthor=None):
+    def __init__(
+            self,
+            invitation,
+            readers,
+            writers,
+            signatures,
+            content,
+            id=None,
+            original=None,
+            number=None,
+            cdate=None,
+            tcdate=None,
+            tmdate=None,
+            ddate=None,
+            forum=None,
+            referent=None,
+            replyto=None,
+            nonreaders=None,
+            details=None,
+            tauthor=None):
 
         self.id = id
         self.original = original
@@ -1702,7 +1822,7 @@ class Note(object):
         self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
         self.writers = writers
         self.number = number
@@ -1742,7 +1862,6 @@ class Note(object):
             'nonreaders': self.nonreaders,
             'signatures': self.signatures,
             'writers': self.writers,
-            'number': self.number,
             'details': self.details
         }
         if hasattr(self, 'tauthor'):
@@ -1750,7 +1869,7 @@ class Note(object):
         return body
 
     @classmethod
-    def from_json(Note,n):
+    def from_json(cls, n):
         """
         Creates a Note object from a dictionary that contains keys values equivalent to the name of the instance variables of the Note class
 
@@ -1760,29 +1879,28 @@ class Note(object):
         :return: Note whose instance variables contain the values from the dictionary
         :rtype: Note
         """
-        note = Note(
-        id = n.get('id'),
-        original = n.get('original'),
-        number = n.get('number'),
-        cdate = n.get('cdate'),
-        tcdate = n.get('tcdate'),
-        tmdate =n.get('tmdate'),
-        ddate=n.get('ddate'),
-        content=n.get('content'),
-        forum=n.get('forum'),
-        referent=n.get('referent'),
-        invitation=n.get('invitation'),
-        replyto=n.get('replyto'),
-        readers=n.get('readers'),
-        nonreaders=n.get('nonreaders'),
-        signatures=n.get('signatures'),
-        writers=n.get('writers'),
-        details=n.get('details'),
-        tauthor=n.get('tauthor')
-        )
+        note = cls(
+            id=n.get('id'),
+            original=n.get('original'),
+            number=n.get('number'),
+            cdate=n.get('cdate'),
+            tcdate=n.get('tcdate'),
+            tmdate=n.get('tmdate'),
+            ddate=n.get('ddate'),
+            content=n.get('content'),
+            forum=n.get('forum'),
+            referent=n.get('referent'),
+            invitation=n.get('invitation'),
+            replyto=n.get('replyto'),
+            readers=n.get('readers'),
+            nonreaders=n.get('nonreaders'),
+            signatures=n.get('signatures'),
+            writers=n.get('writers'),
+            details=n.get('details'),
+            tauthor=n.get('tauthor'))
         return note
 
-class Tag(object):
+class Tag():
     """
     :param tag: Content of the tag
     :type tag: str
@@ -1817,7 +1935,7 @@ class Tag(object):
         self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders == None else nonreaders
         self.signatures = signatures
 
     def to_json(self):
@@ -1842,7 +1960,7 @@ class Tag(object):
         }
 
     @classmethod
-    def from_json(Tag, t):
+    def from_json(cls, t):
         """
         Creates a Tag object from a dictionary that contains keys values equivalent to the name of the instance variables of the Tag class
 
@@ -1852,18 +1970,18 @@ class Tag(object):
         :return: Tag whose instance variables contain the values from the dictionary
         :rtype: Tag
         """
-        tag = Tag(
-            id = t.get('id'),
-            cdate = t.get('cdate'),
-            tcdate = t.get('tcdate'),
-            ddate = t.get('ddate'),
-            tag = t.get('tag'),
-            forum = t.get('forum'),
-            invitation = t.get('invitation'),
-            replyto = t.get('replyto'),
-            readers = t.get('readers'),
-            nonreaders = t.get('nonreaders'),
-            signatures = t.get('signatures'),
+        tag = cls(
+            id=t.get('id'),
+            cdate=t.get('cdate'),
+            tcdate=t.get('tcdate'),
+            ddate=t.get('ddate'),
+            tag=t.get('tag'),
+            forum=t.get('forum'),
+            invitation=t.get('invitation'),
+            replyto=t.get('replyto'),
+            readers=t.get('readers'),
+            nonreaders=t.get('nonreaders'),
+            signatures=t.get('signatures'),
         )
         return tag
 
@@ -1875,7 +1993,7 @@ class Tag(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
-class Edge(object):
+class Edge():
     def __init__(self, head, tail, invitation, readers, writers, signatures, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
         self.id = id
         self.invitation = invitation
@@ -1914,28 +2032,28 @@ class Edge(object):
         }
 
     @classmethod
-    def from_json(Edge, e):
+    def from_json(cls, e):
         '''
         Returns a deserialized object from a json string
 
         :arg t: The json string consisting of a serialized object of type "Edge"
         '''
-        edge = Edge(
-            id = e.get('id'),
-            cdate = e.get('cdate'),
-            tcdate = e.get('tcdate'),
-            tmdate = e.get('tmdate'),
-            ddate = e.get('ddate'),
-            tddate = e.get('tddate'),
-            invitation = e.get('invitation'),
-            readers = e.get('readers'),
-            nonreaders = e.get('nonreaders'),
-            writers = e.get('writers'),
-            signatures = e.get('signatures'),
-            head = e.get('head'),
-            tail = e.get('tail'),
-            weight = e.get('weight'),
-            label = e.get('label')
+        edge = cls(
+            id=e.get('id'),
+            cdate=e.get('cdate'),
+            tcdate=e.get('tcdate'),
+            tmdate=e.get('tmdate'),
+            ddate=e.get('ddate'),
+            tddate=e.get('tddate'),
+            invitation=e.get('invitation'),
+            readers=e.get('readers'),
+            nonreaders=e.get('nonreaders'),
+            writers=e.get('writers'),
+            signatures=e.get('signatures'),
+            head=e.get('head'),
+            tail=e.get('tail'),
+            weight=e.get('weight'),
+            label=e.get('label')
         )
         return edge
 
@@ -1947,8 +2065,7 @@ class Edge(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
-
-class Profile(object):
+class Profile():
     """
     :param id: Profile id
     :type id: str, optional
@@ -2037,7 +2154,7 @@ class Profile(object):
         return body
 
     @classmethod
-    def from_json(Profile,n):
+    def from_json(cls, n):
         """
         Creates a Profile object from a dictionary that contains keys values equivalent to the name of the instance variables of the Profile class
 
@@ -2047,23 +2164,21 @@ class Profile(object):
         :return: Profile whose instance variables contain the values from the dictionary
         :rtype: Profile
         """
-        profile = Profile(
-        id = n.get('id'),
-        active = n.get('active'),
-        password = n.get('password'),
-        number = n.get('number'),
-        tcdate = n.get('tcdate'),
-        tmdate=n.get('tmdate'),
-        referent=n.get('referent'),
-        packaging=n.get('packaging'),
-        invitation=n.get('invitation'),
-        readers=n.get('readers'),
-        nonreaders=n.get('nonreaders'),
-        signatures=n.get('signatures'),
-        writers=n.get('writers'),
-        content=n.get('content'),
-        metaContent=n.get('metaContent'),
-        tauthor=n.get('tauthor')
-        )
+        profile = cls(
+            id=n.get('id'),
+            active=n.get('active'),
+            password=n.get('password'),
+            number=n.get('number'),
+            tcdate=n.get('tcdate'),
+            tmdate=n.get('tmdate'),
+            referent=n.get('referent'),
+            packaging=n.get('packaging'),
+            invitation=n.get('invitation'),
+            readers=n.get('readers'),
+            nonreaders=n.get('nonreaders'),
+            signatures=n.get('signatures'),
+            writers=n.get('writers'),
+            content=n.get('content'),
+            metaContent=n.get('metaContent'),
+            tauthor=n.get('tauthor'))
         return profile
-
