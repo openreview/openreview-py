@@ -511,7 +511,7 @@ class Matching(object):
 
         self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
-        self._create_edge_invitation(self._get_edge_invitation_id('Custom_Load'))
+        self._create_edge_invitation(self._get_edge_invitation_id('Custom_Max_Papers'))
 
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client,
