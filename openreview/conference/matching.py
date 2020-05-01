@@ -115,7 +115,7 @@ class Matching(object):
         edge_head_query = {
             'invitation' : self.conference.get_blind_submission_id()
         }
-        if 'Custom_Load' in edge_id:
+        if 'Custom_Max_Papers' in edge_id:
             edge_head_type = 'Group'
             edge_head_query = {
                 'id' : edge_id.split('/-/')[0]
