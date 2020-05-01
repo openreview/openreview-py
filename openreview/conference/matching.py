@@ -115,7 +115,7 @@ class Matching(object):
         edge_head_query = {
             'invitation' : self.conference.get_blind_submission_id()
         }
-        if 'Custom_Load' in edge_id:
+        if 'Custom_Max_Papers' in edge_id:
             edge_head_type = 'Group'
             edge_head_query = {
                 'id' : edge_id.split('/-/')[0]
@@ -511,7 +511,7 @@ class Matching(object):
 
         self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
-        self._create_edge_invitation(self._get_edge_invitation_id('Custom_Load'))
+        self._create_edge_invitation(self._get_edge_invitation_id('Custom_Max_Papers'))
 
         submissions = list(openreview.tools.iterget_notes(
             self.conference.client,
