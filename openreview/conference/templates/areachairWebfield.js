@@ -23,7 +23,7 @@ var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking
 var REVIEWER_PAPER_RANKING_ID = REVIEWER_GROUP + '/-/Paper_Ranking';
 
 var reviewerSummaryMap = {};
-var allReviewers = [];
+var reviewerOptions = [];
 var paperAndReviewersWithConflict = {};
 var paperRankingInvitation = null;
 var showRankings = false;
@@ -59,6 +59,7 @@ var findProfile = function(profiles, id) {
       id: id,
       name: '',
       email: id,
+      allEmails: [id],
       content: {
         names: [{ username: id }]
       }
@@ -164,7 +165,7 @@ var loadData = function(result) {
   if (ENABLE_REVIEWER_REASSIGNMENT) {
     allReviewersP = Webfield.get('/groups', { id: REVIEWER_GROUP })
     .then(function(result) {
-      allReviewers = result.groups[0].members;
+      return result.groups[0].members;
     });
   } else {
     allReviewersP = $.Deferred().resolve([]);
@@ -258,12 +259,21 @@ var getReviewerGroups = function(noteNumbers) {
 };
 
 var formatData = function(blindedNotes, officialReviews, metaReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, allReviewers, acRankingByPaper, reviewerRankingByPaper) {
-  var uniqueIds = _.uniq(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
+  var uniqueIds = _.uniq(_.concat(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
-  }, []));
+  }, []), allReviewers));
 
   return getUserProfiles(uniqueIds)
   .then(function(profiles) {
+
+    reviewerOptions = _.map(allReviewers, function(r) {
+      var profile = findProfile(profiles, r);
+      return {
+        id: r,
+        description: view.prettyId(profile.name) + ' (' + profile.allEmails.join(', ') + ')'
+      }
+    });
+
     return {
       profiles: profiles,
       blindedNotes: blindedNotes,
@@ -307,6 +317,7 @@ var getUserProfiles = function(userIds) {
       var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
       profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
       profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profile.allEmails = profile.content.emailsConfirmed;
       profileMap[profile.id] = profile;
     };
     _.forEach(searchResults, function(result) {
@@ -572,17 +583,14 @@ var updateReviewerContainer = function (paperNumber, renderEmptyDropdown) {
   var paperNoteId = reviewerSummaryMap[paperNumber].noteId;
   var dropdownOptions = [];
   if (!renderEmptyDropdown) {
-    var reviewersToRender = allReviewers;
+    var reviewersToRender = reviewerOptions;
     var reviewerWithConflictForThisPaper = paperAndReviewersWithConflict[paperNumber];
-    if (reviewerWithConflictForThisPaper) reviewersToRender = allReviewers.filter(function (reviewer) {
-      return reviewerWithConflictForThisPaper.indexOf(reviewer) === -1;
-    })
-    dropdownOptions = _.map(reviewersToRender, function (member) {
-      return {
-        id: member,
-        description: view.prettyId(member)
-      };
-    });
+    if (reviewerWithConflictForThisPaper) {
+      reviewersToRender = reviewerOptions.filter(function (reviewerOption) {
+        return reviewerWithConflictForThisPaper.indexOf(reviewerOption.id) === -1;
+      })
+    };
+    dropdownOptions = reviewersToRender;
   }
 
   var filterOptions = function(options, term) {
@@ -1002,12 +1010,16 @@ var registerEventHandlers = function() {
       return false;
     }
 
-    if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS && //check only if reassign to outside is disabled
-      (_.includes(allReviewers, userToAdd) === false)) { // not in allreviewers means is a outside reviewer
-      promptError('Please choose only reviewers from the dropdown');
-      $currDiv.find('input').val('');
-      $currDiv.find('input').attr('value_id', '');
-      return false;
+    if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS) { //check only if reassign to outside is disabled
+      var insideReviewer = reviewerOptions.find(function (reviewerOption) {
+        return reviewerOption.id === userToAdd;
+      })
+      if (!insideReviewer) { // not in allreviewers means is a outside reviewer
+        promptError('Please choose only reviewers from the dropdown');
+        $currDiv.find('input').val('');
+        $currDiv.find('input').attr('value_id', '');
+        return false;
+      }
     }
 
     if (!_.startsWith(userToAdd, '~')) {
