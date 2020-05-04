@@ -41,6 +41,18 @@ class SubmissionInvitation(openreview.Invitation):
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            if submission_stage.email_pcs:
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+            if submission_stage.create_groups:
+                file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
+                # Only supported for public reviews
+                if submission_stage.create_review_invitation:
+                    file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+            if conference.use_area_chairs:
+                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+
+
             super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
                 cdate = tools.datetime_millis(start_date),
                 duedate = tools.datetime_millis(due_date),
@@ -626,9 +638,12 @@ class OfficialCommentInvitation(openreview.Invitation):
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
 
         readers = []
+        default = None
         invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors)
         if comment_stage.allow_public_comments:
             readers.append('everyone')
+        else:
+            default = [conference.get_program_chairs_id()]
 
         readers.append(conference.get_program_chairs_id())
 
@@ -650,7 +665,7 @@ class OfficialCommentInvitation(openreview.Invitation):
             reply_readers = {
                 'description': 'Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response',
                 'values-dropdown': readers,
-                'default': [conference.get_program_chairs_id()]
+                'default': default
             }
         else:
             reply_readers = {
@@ -890,6 +905,15 @@ class DecisionInvitation(openreview.Invitation):
             }
         }
 
+        file_content = None
+        if decision_stage.email_authors:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/decisionProcess.js')) as f:
+                file_content = f.read()
+
+                file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+                file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+                file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+
         super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
@@ -909,7 +933,8 @@ class DecisionInvitation(openreview.Invitation):
                     'description': 'How your identity will be displayed.'
                 },
                 'content': content
-            }
+            },
+            process_string=file_content
         )
 
 class PaperDecisionInvitation(openreview.Invitation):
@@ -1254,7 +1279,7 @@ class InvitationBuilder(object):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = [conference.get_program_chairs_id(), group_id],
-            multiReply = True,
+            multiReply = False,
             reply = {
                 "invitation": conference.get_submission_id(),
                 'readers': readers,

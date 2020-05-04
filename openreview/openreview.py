@@ -1799,8 +1799,7 @@ class Note(object):
             'nonreaders': self.nonreaders,
             'signatures': self.signatures,
             'writers': self.writers,
-            'number': self.number,
-            'details': self.details
+            'number': self.number
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
