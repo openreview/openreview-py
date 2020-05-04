@@ -796,21 +796,21 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
 
   if (BID_NAME || RECOMMENDATION_NAME) {
     html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-    if (BID_NAME) {
+    if (BID_NAME && AREA_CHAIRS_ID) {
       html += renderStatContainer(
         'AC Bidding Progress:',
         renderProgressStat(conferenceStats.acBidsComplete, conferenceStats.areaChairsCount),
         '% of ACs who have completed the required number of bids'
       );
     }
-    if (RECOMMENDATION_NAME) {
+    if (RECOMMENDATION_NAME && AREA_CHAIRS_ID) {
       html += renderStatContainer(
         'Recommendation Progress:',
         renderProgressStat(conferenceStats.acRecsComplete, conferenceStats.areaChairsCount),
         '% of ACs who have completed the required number of reviewer recommendations'
       );
     }
-    if (BID_NAME) {
+    if (BID_NAME && REVIEWERS_ID) {
       html += renderStatContainer(
         'Reviewer Bidding Progress:',
         renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
@@ -925,9 +925,11 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
     html += '<div class="col-md-4 col-xs-6">'
     html += '<h4>Bids & Recommendations:</h4><ul style="padding-left: 15px">';
     html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
-    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
-    if (RECOMMENDATION_NAME) {
-      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+    if (AREA_CHAIRS_ID) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
+      if (RECOMMENDATION_NAME) {
+        html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+      }
     }
     html += '</ul>';
     html += '</div>';
