@@ -883,7 +883,7 @@ class Conference(object):
 
         return self.client.get_group(id = reviewers_invited_id)
 
-    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
+    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None, release_accepted_notes = None):
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
         options['blind_submission_id'] = self.get_blind_submission_id()
@@ -900,6 +900,22 @@ class Conference(object):
         options['decision_heading_map'] = decision_heading_map
 
         self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
+
+        if release_accepted_notes:
+            accepted_submissions = self.get_submissions(accepted=True, details='original')
+
+            for submission in accepted_submissions:
+                submission.content = {
+                    '_bibtex': tools.get_bibtex(
+                        openreview.Note.from_json(submission.details['original']),
+                        release_accepted_notes.get('conference_title', 'unknown'),
+                        release_accepted_notes.get('conference_year', 'unknown'),
+                        url_forum=submission.forum,
+                        accepted=True,
+                        anonymous=False)
+                }
+                self.client.post_note(submission)
+
 
 class SubmissionStage(object):
 
