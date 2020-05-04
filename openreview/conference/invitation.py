@@ -1279,7 +1279,7 @@ class InvitationBuilder(object):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = [conference.get_program_chairs_id(), group_id],
-            multiReply = True,
+            multiReply = False,
             reply = {
                 "invitation": conference.get_submission_id(),
                 'readers': readers,
