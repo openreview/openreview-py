@@ -1263,7 +1263,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
+            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True ))
+
+
+        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , test_client.token)
+        notes = selenium.find_elements_by_class_name('note_with_children')
+        assert len(notes) == 2
 
 
     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
@@ -1332,3 +1337,20 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'])
         )
+
+    def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page):
+
+        blinded_notes = conference.get_submissions()
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40)))
+        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , test_client.token)
+        notes = selenium.find_elements_by_class_name('note_with_children')
+        assert len(notes) == 2
+
+        button = notes[0].find_element_by_class_name('btn')
+        assert button
+
+        button = notes[1].find_element_by_class_name('btn')
+        assert button

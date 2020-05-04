@@ -42,6 +42,7 @@ class Conference(object):
         self.expertise_selection_stage = ExpertiseSelectionStage()
         self.registration_stage = RegistrationStage()
         self.review_stage = ReviewStage()
+        self.review_rebuttal_stage = None
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
@@ -156,6 +157,11 @@ class Conference(object):
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
         return invitations
 
+    def __create_review_rebuttal_stage(self):
+        invitation = self.get_invitation_id(self.review_stage.name, '.*')
+        review_iterator = tools.iterget_notes(self.client, invitation = invitation)
+        return self.invitation_builder.set_review_rebuttal_invitation(self, review_iterator)
+
     def __create_comment_stage(self):
 
         ## Create comment invitations per paper
@@ -232,6 +238,10 @@ class Conference(object):
     def set_review_stage(self, stage):
         self.review_stage = stage
         return self.__create_review_stage()
+
+    def set_review_rebuttal_stage(self, stage):
+        self.review_rebuttal_stage = stage
+        return self.__create_review_rebuttal_stage()
 
     def set_comment_stage(self, stage):
         self.comment_stage = stage
@@ -1071,6 +1081,15 @@ class ReviewStage(object):
 
         return signature_regex
 
+class ReviewRebuttalStage(object):
+
+    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name
+        self.email_pcs = email_pcs
+        self.additional_fields = additional_fields
+
 
 class CommentStage(object):
 
@@ -1174,6 +1193,7 @@ class ConferenceBuilder(object):
         self.registration_stage = None
         self.bid_stage = None
         self.review_stage = None
+        self.review_rebuttal_stage = None
         self.comment_stage = None
         self.meta_review_stage = None
         self.decision_stage = None
@@ -1292,6 +1312,9 @@ class ConferenceBuilder(object):
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
 
+    def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
+        self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
+
     def set_comment_stage(self, name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False ):
         self.comment_stage = CommentStage(name, start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
 
@@ -1372,6 +1395,9 @@ class ConferenceBuilder(object):
 
         if self.review_stage:
             self.conference.set_review_stage(self.review_stage)
+
+        if self.review_rebuttal_stage:
+            self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)
 
         if self.comment_stage:
             self.conference.set_comment_stage(self.comment_stage)
