@@ -1338,6 +1338,22 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'])
         )
 
+        reviewer2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+        reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '1 of 2',
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+            reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
+                forum = blinded_notes[-1].id,
+                tag = '1 of 2',
+                readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+                signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
+            )
+
     def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page):
 
         blinded_notes = conference.get_submissions()
