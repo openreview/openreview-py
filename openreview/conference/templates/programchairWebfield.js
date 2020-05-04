@@ -56,7 +56,8 @@ var main = function() {
     getOfficialReviews(),
     getMetaReviews(),
     getDecisionReviews(),
-    getPcAssignmentInvitationsAndTags(),
+    getInvitations(),
+    getPcAssignmentTags(),
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
     getAreaChairRecommendationCounts(),
@@ -76,7 +77,8 @@ var main = function() {
     officialReviews,
     metaReviews,
     decisions,
-    pcAssignmentInvitationsAndTags,
+    invitationMap,
+    pcAssignmentTags,
     reviewerBidCounts,
     areaChairBidCounts,
     areaChairRecommendationCounts,
@@ -97,7 +99,7 @@ var main = function() {
     var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, reviewerGroups);
     var officialReviewMap = buildOfficialReviewMap(noteNumbers, officialReviews);
 
-    pcAssignmentInvitationsAndTags.tags.forEach(function(tag) {
+    pcAssignmentTags.forEach(function(tag) {
       if (!(tag.forum in pcTags)) {
         pcTags[tag.forum] = [];
       }
@@ -113,7 +115,7 @@ var main = function() {
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
       decisions: decisions,
-      pcAssignmentTagInvitations: pcAssignmentInvitationsAndTags.invitations
+      pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION]
     };
 
     var conferenceStats = {
@@ -124,9 +126,19 @@ var main = function() {
       areaChairsInvitedCount: areaChairsInvitedCount,
       reviewersCount: reviewers.length,
       areaChairsCount: areaChairs.length,
-      acBidsComplete: calcBidsComplete(areaChairBidCounts, 60),
-      acRecsComplete: calcRecsComplete(areaChairGroupMaps.byAreaChairs, areaChairRecommendationCounts, 7),
-      reviewerBidsComplete: calcBidsComplete(reviewerBidCounts, 40),
+      acBidsComplete: calcBidsComplete(
+        areaChairBidCounts,
+        invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME]
+      ),
+      acRecsComplete: calcRecsComplete(
+        areaChairGroupMaps.byAreaChairs,
+        areaChairRecommendationCounts,
+        invitationMap[REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME]
+      ),
+      reviewerBidsComplete: calcBidsComplete(
+        reviewerBidCounts,
+        invitationMap[REVIEWERS_ID + '/-/' + BID_NAME]
+      ),
       reviewsCount: officialReviews.length,
       assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
       reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
@@ -334,25 +346,25 @@ var getDecisionReviews = function() {
   });
 };
 
-var getPcAssignmentInvitationsAndTags = function() {
-  var invitationsAndTags = { invitations: [], tags: [] };
+var getInvitations = function() {
+  invitationsToLoad = [PC_PAPER_TAG_INVITATION];
+  if (BID_NAME) invitationsToLoad.push(REVIEWERS_ID + '/-/' + BID_NAME);
+  if (BID_NAME && AREA_CHAIRS_ID) invitationsToLoad.push(AREA_CHAIRS_ID + '/-/' + BID_NAME);
+  if (RECOMMENDATION_NAME && AREA_CHAIRS_ID) invitationsToLoad.push(REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME);
 
-  return Webfield.getAll('/invitations', {
-    regex: PC_PAPER_TAG_INVITATION, tags: true
+  return Webfield.get('/invitations', {
+    ids: invitationsToLoad
   })
-  .then(function(invitations) {
-    invitationsAndTags.invitations = invitations;
-
-    if (!invitations.length) {
-      return $.Deferred().resolve([]);
-    }
-    return Webfield.getAll('/tags', { invitation: PC_PAPER_TAG_INVITATION })
-  })
-  .then(function(tags) {
-    invitationsAndTags.tags = tags;
-    return invitationsAndTags;
+  .then(function(result) {
+    return _.keyBy(result.invitations, 'id');
   });
 };
+
+var getPcAssignmentTags = function() {
+  return Webfield.getAll('/tags', {
+    invitation: PC_PAPER_TAG_INVITATION
+  });
+}
 
 var postReviewerEmails = function(postData) {
   var formttedData = _.pick(postData, ['groups', 'subject', 'message']);
@@ -595,16 +607,20 @@ var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
     '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
 };
 
-var calcBidsComplete = function(bidCounts, taskCompletionCount) {
+var calcBidsComplete = function(bidCounts, invitation) {
+  var taskCompletionCount = parseInt(invitation ? invitation.taskCompletionCount : 0, 10) || 0;
+
   // Count how many reviewers or AC have submitted the required number of bids
   return _.reduce(bidCounts, function(numComplete, bidCount) {
     return bidCount >= taskCompletionCount ? numComplete + 1 : numComplete;
   }, 0);
 };
 
-var calcRecsComplete = function(acMap, areaChairRecommendationCounts, taskCompletionCount) {
+var calcRecsComplete = function(acMap, areaChairRecommendationCounts, invitation) {
+  var taskCompletionCount = parseInt(invitation ? invitation.taskCompletionCount : 0, 10) || 0;
+
   // Count how many ACs have submitted the required number of reviewer recommendations
-  // NOTE: this is not checking that each assigned paper has the required number of rec,
+  // NOTE: this is not checking that each assigned paper has the required number of recs,
   // it is just multiplying the number required by the number of assigned papers
   return _.reduce(areaChairRecommendationCounts, function(numComplete, bidCount, profileId) {
     return (!acMap[profileId] || bidCount >= acMap[profileId].length * taskCompletionCount)
