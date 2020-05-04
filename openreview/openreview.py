@@ -62,6 +62,7 @@ class Client(object):
 
         if self.token:
             self.headers['Authorization'] = self.token
+            self.cookies = {'openreview.accessToken': self.token}
             try:
                 self.profile = self.get_profile()
             except:
@@ -79,10 +80,14 @@ class Client(object):
 
 
     ## PRIVATE FUNCTIONS
+    def __refresh_token(self, response):
+        pass
 
-    def __handle_token(self, response):
-        self.token = str(response['token'])
-        self.profile = Profile( id = response['user']['profile']['id'] )
+    def __handle_tokens(self, response):
+        self.cookies = response.cookies
+        json_response = response.json()
+        self.token = str(json_response['token'])
+        self.profile = Profile(id=json_response['user']['profile']['id'])
         self.headers['Authorization'] ='Bearer ' + self.token
         return response
 
@@ -120,9 +125,8 @@ class Client(object):
         user = { 'id': username, 'password': password }
         response = requests.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
-        json_response = response.json()
-        self.__handle_token(json_response)
-        return json_response
+        self.__handle_tokens(response)
+        return response.json()
 
     def register_user(self, email = None, first = None, last = None, middle = '', password = None):
         """
@@ -179,16 +183,14 @@ class Client(object):
         """
         response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
-        json_response = response.json()
-        self.__handle_token(json_response)
-
-        return json_response
+        self.__handle_tokens(response)
+        return response.json()
 
     def get_activatable(self, token = None):
-        response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
+        response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
-        self.__handle_token(response.json()['activatable'])
-        return self.token
+        self.__handle_tokens(response.json()['activatable'])
+        # return self.token
 
     def get_group(self, id):
         """
@@ -204,7 +206,7 @@ class Client(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         return Group.from_json(g)
@@ -219,7 +221,7 @@ class Client(object):
         :return: Invitation matching the passed id
         :rtype: Invitation
         """
-        response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         i = response.json()['invitations'][0]
         return Invitation.from_json(i)
@@ -234,7 +236,7 @@ class Client(object):
         :return: Note matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         n = response.json()['notes'][0]
         return Note.from_json(n)
@@ -249,7 +251,7 @@ class Client(object):
         :return: Tag with the Tag information
         :rtype: Tag
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         t = response.json()['tags'][0]
         return Tag.from_json(t)
@@ -264,7 +266,7 @@ class Client(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:
@@ -290,7 +292,7 @@ class Client(object):
             else:
                 att = 'email'
             params[att] = email_or_id
-        response = requests.get(self.profiles_url, params = params, headers = self.headers)
+        response = requests.get(self.profiles_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
@@ -326,12 +328,12 @@ class Client(object):
             pure_emails = all(['@' in i for i in email_or_id_list])
 
             def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
+                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers, cookies=self.cookies)
                 response = self.__handle_response(response)
                 return [Profile.from_json(p) for p in response.json()['profiles']]
 
             def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
+                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers, cookies=self.cookies)
                 response = self.__handle_response(response)
                 return { p['email'] : Profile.from_json(p['profile'])
                     for p in response.json()['profiles'] }
@@ -360,7 +362,7 @@ class Client(object):
 
             return result
 
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
+        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -398,14 +400,14 @@ class Client(object):
                 yield batch
 
         if term:
-            response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
+            response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers, cookies=self.cookies)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
         if emails:
             full_response = []
             for email_batch in batches(emails):
-                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers, cookies=self.cookies)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
@@ -414,14 +416,14 @@ class Client(object):
         if ids:
             full_response = []
             for id_batch in batches(ids):
-                response = requests.post(self.profiles_search_url, json = {'ids': id_batch}, headers = self.headers)
+                response = requests.post(self.profiles_search_url, json = {'ids': id_batch}, headers = self.headers, cookies=self.cookies)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
             return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
-            response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers, cookies=self.cookies)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -458,7 +460,7 @@ class Client(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        response = requests.get(url, params = params, headers = headers)
+        response = requests.get(url, params = params, headers = headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.content
 
@@ -477,7 +479,7 @@ class Client(object):
 
         with open(fname, 'rb') as f:
             headers['content-type'] = 'application/pdf'
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
+            response = requests.put(self.pdf_url, files={'data': f}, headers = headers, cookies=self.cookies)
 
         response = self.__handle_response(response)
         return response.json()['url']
@@ -504,7 +506,7 @@ class Client(object):
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
                 ('file', (file_path, f))
-            ), headers = headers)
+            ), headers = headers, cookies=self.cookies)
 
         response = self.__handle_response(response)
         return response.json()['url']
@@ -522,7 +524,7 @@ class Client(object):
         response = requests.post(
             self.profiles_url,
             json = profile.to_json(),
-            headers = self.headers)
+            headers = self.headers, cookies=self.cookies)
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
@@ -545,7 +547,7 @@ class Client(object):
                 'to': profileTo,
                 'from': profileFrom
             },
-            headers = self.headers)
+            headers = self.headers, cookies=self.cookies)
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
@@ -579,7 +581,7 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.groups_url, params = params, headers = self.headers)
+        response = requests.get(self.groups_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
@@ -651,7 +653,7 @@ class Client(object):
         params['offset'] = offset
         params['expired'] = expired
 
-        response = requests.get(self.invitations_url, params=params, headers=self.headers)
+        response = requests.get(self.invitations_url, params=params, headers=self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
@@ -754,7 +756,7 @@ class Client(object):
         params['sort'] = sort
         params['original'] = original
 
-        response = requests.get(self.notes_url, params = params, headers = self.headers)
+        response = requests.get(self.notes_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return [Note.from_json(n) for n in response.json()['notes']]
@@ -769,7 +771,7 @@ class Client(object):
         :return: reference matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.reference_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.reference_url, params = {'id':id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         n = response.json()['references'][0]
         return Note.from_json(n)
@@ -810,7 +812,7 @@ class Client(object):
         if trash:
             params['trash'] = trash
 
-        response = requests.get(self.reference_url, params = params, headers = self.headers)
+        response = requests.get(self.reference_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return [Note.from_json(n) for n in response.json()['references']]
@@ -846,7 +848,7 @@ class Client(object):
         if offset != None:
             params['offset'] = offset
 
-        response = requests.get(self.tags_url, params = params, headers = self.headers)
+        response = requests.get(self.tags_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return [Tag.from_json(t) for t in response.json()['tags']]
@@ -871,7 +873,7 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return [Edge.from_json(t) for t in response.json()['edges']]
@@ -896,7 +898,7 @@ class Client(object):
         params['limit'] = 1
         params['offset'] = 0
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return response.json()['count']
@@ -925,7 +927,7 @@ class Client(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
@@ -946,7 +948,7 @@ class Client(object):
         if overwrite or not self.exists(group.id):
             if not group.signatures: group.signatures = [self.profile.id]
             if not group.writers: group.writers = [self.profile.id]
-            response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
+            response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers, cookies=self.cookies)
             response = self.__handle_response(response)
 
         return Group.from_json(response.json())
@@ -961,7 +963,7 @@ class Client(object):
         :return: The posted Invitation
         :rtype: Invitation
         """
-        response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
+        response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return Invitation.from_json(response.json())
@@ -977,7 +979,7 @@ class Client(object):
         :rtype: Note
         """
         if not note.signatures: note.signatures = [self.profile.id]
-        response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
+        response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return Note.from_json(response.json())
@@ -991,7 +993,7 @@ class Client(object):
 
         :return Tag: The posted Tag
         """
-        response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
+        response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return Tag.from_json(response.json())
@@ -1000,7 +1002,7 @@ class Client(object):
         """
         Posts the edge. Upon success, returns the posted Edge object.
         """
-        response = requests.post(self.edges_url, json = edge.to_json(), headers = self.headers)
+        response = requests.post(self.edges_url, json = edge.to_json(), headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return Edge.from_json(response.json())
@@ -1010,7 +1012,7 @@ class Client(object):
         Posts the list of Edges.   Returns a list Edge objects updated with their ids.
         '''
         send_json = [edge.to_json() for edge in edges]
-        response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
+        response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         received_json_array = response.json()
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
@@ -1026,7 +1028,7 @@ class Client(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
+        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1040,7 +1042,7 @@ class Client(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.notes_url, json = {'id': note_id}, headers = self.headers)
+        response = requests.delete(self.notes_url, json = {'id': note_id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1055,7 +1057,7 @@ class Client(object):
         :rtype: dict
         '''
 
-        response = requests.delete(self.profiles_url + '/reference', json = {'id': reference_id}, headers = self.headers)
+        response = requests.delete(self.profiles_url + '/reference', json = {'id': reference_id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1069,7 +1071,7 @@ class Client(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.groups_url, json = {'id': group_id}, headers = self.headers)
+        response = requests.delete(self.groups_url, json = {'id': group_id}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1094,7 +1096,7 @@ class Client(object):
             'message': message,
             'ignoreGroups': ignoreRecipients,
             'from': sender
-            }, headers = self.headers)
+            }, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1118,7 +1120,7 @@ class Client(object):
             'subject': subject ,
             'message': message,
             'from': sender
-            }, headers = self.headers)
+            }, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1138,7 +1140,7 @@ class Client(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
+        response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1158,7 +1160,7 @@ class Client(object):
         def add_member(group, members):
             group_id = group if type(group) in string_types else group.id
             if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
+                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers, cookies=self.cookies)
                 response = self.__handle_response(response)
                 return Group.from_json(response.json())
             return group
@@ -1184,7 +1186,7 @@ class Client(object):
         """
         def remove_member(group, members):
             group_id = group if type(group) in string_types else group.id
-            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
+            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers, cookies=self.cookies)
             response = self.__handle_response(response)
             return Group.from_json(response.json())
 
@@ -1226,7 +1228,7 @@ class Client(object):
         if offset != None:
             params['offset'] = offset
 
-        response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
+        response = requests.get(self.notes_url + '/search', params = params, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
@@ -1245,7 +1247,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1262,7 +1264,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'offset': offset, 'limit': limit }, headers = self.headers)
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'offset': offset, 'limit': limit }, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.json()['messages']
 
@@ -1279,7 +1281,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
+        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers, cookies=self.cookies)
         response = self.__handle_response(response)
         return response.json()['logs']
 
