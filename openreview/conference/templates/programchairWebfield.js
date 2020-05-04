@@ -8,6 +8,8 @@ var DESK_REJECTED_SUBMISSION_ID = '';
 var HEADER = {};
 var LEGACY_INVITATION_ID = false;
 var OFFICIAL_REVIEW_NAME = '';
+var REVIEW_RATING_NAME = 'rating';
+var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
 var DECISION_NAME = '';
 var BID_NAME = '';
@@ -226,7 +228,9 @@ var getAllAreaChairs = function() {
 
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID, sort: 'number:asc'
+    invitation: BLIND_SUBMISSION_ID,
+    details: 'invitation',
+    sort: 'number:asc'
   });
 };
 
@@ -536,9 +540,9 @@ var buildOfficialReviewMap = function(noteNumbers, notes) {
     }
 
     if (num && num in noteMap) {
-      ratingMatch = n.content.rating && n.content.rating.match(ratingExp);
+      ratingMatch = n.content[REVIEW_RATING_NAME] && n.content[REVIEW_RATING_NAME].match(ratingExp);
       n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
-      confidenceMatch = n.content.confidence && n.content.confidence.match(ratingExp);
+      confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
       n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
       noteMap[num][index] = n;
     }
@@ -792,21 +796,21 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
 
   if (BID_NAME || RECOMMENDATION_NAME) {
     html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
-    if (BID_NAME) {
+    if (BID_NAME && AREA_CHAIRS_ID) {
       html += renderStatContainer(
         'AC Bidding Progress:',
         renderProgressStat(conferenceStats.acBidsComplete, conferenceStats.areaChairsCount),
         '% of ACs who have completed the required number of bids'
       );
     }
-    if (RECOMMENDATION_NAME) {
+    if (RECOMMENDATION_NAME && AREA_CHAIRS_ID) {
       html += renderStatContainer(
         'Recommendation Progress:',
         renderProgressStat(conferenceStats.acRecsComplete, conferenceStats.areaChairsCount),
         '% of ACs who have completed the required number of reviewer recommendations'
       );
     }
-    if (BID_NAME) {
+    if (BID_NAME && REVIEWERS_ID) {
       html += renderStatContainer(
         'Reviewer Bidding Progress:',
         renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
@@ -921,9 +925,11 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
     html += '<div class="col-md-4 col-xs-6">'
     html += '<h4>Bids & Recommendations:</h4><ul style="padding-left: 15px">';
     html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
-    html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
-    if (RECOMMENDATION_NAME) {
-      html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+    if (AREA_CHAIRS_ID) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
+      if (RECOMMENDATION_NAME) {
+        html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, RECOMMENDATION_NAME) + '">Area Chair Reviewer Recommendations</a></li>';
+      }
     }
     html += '</ul>';
     html += '</div>';

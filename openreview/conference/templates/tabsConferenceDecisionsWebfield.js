@@ -39,17 +39,17 @@ function main() {
 function load() {
   var notesP = Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'replyCount,original'
+    details: 'replyCount,invitation,original'
   });
 
   var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.getAll('/notes', {
     invitation: WITHDRAWN_SUBMISSION_ID,
-    details: 'replyCount,original'
+    details: 'replyCount,invitation,original'
   }) : $.Deferred().resolve([]);
 
   var deskRejectedNotesP = DESK_REJECTED_SUBMISSION_ID ? Webfield.getAll('/notes', {
     invitation: DESK_REJECTED_SUBMISSION_ID,
-    details: 'replyCount,original'
+    details: 'replyCount,invitation,original'
   }) : $.Deferred().resolve([]);
 
   var decisionNotesP = Webfield.getAll('/notes', {

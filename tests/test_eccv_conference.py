@@ -1069,7 +1069,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review']))
+            remove_fields = ['title', 'rating', 'review'],
+            rating_field_name = 'preliminary_rating'))
 
         r1_client = openreview.Client(username='reviewer1@fb.com', password='1234')
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
@@ -1302,6 +1303,15 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert options
         assert len(options) == 3
 
+        blinded_notes = conference.get_submissions()
+
+        ac_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '1 of 2',
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
+            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'])
+        )
+
         reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token)
 
@@ -1315,3 +1325,10 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         options = tags[0].find_elements_by_tag_name("a")
         assert options
         assert len(options) == 3
+
+        reviewer_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '2 of 2',
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'])
+        )

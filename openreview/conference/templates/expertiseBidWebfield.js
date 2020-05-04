@@ -45,6 +45,7 @@ function load() {
 
   var authoredNotesP = Webfield.getAll('/notes', {
     'content.authorids': user.profile.id,
+    details: 'invitation',
     sort: 'cdate'
   })
   .then(function(notes){
