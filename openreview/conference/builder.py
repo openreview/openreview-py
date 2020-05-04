@@ -912,7 +912,11 @@ class SubmissionStage(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
-            subject_areas=[]
+            subject_areas=[],
+            email_pcs = False,
+            create_groups = False,
+            # We need to assume the Official Review super invitation is already created and active
+            create_review_invitation = False
         ):
 
         self.start_date = start_date
@@ -923,6 +927,9 @@ class SubmissionStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
+        self.email_pcs = email_pcs
+        self.create_groups = create_groups
+        self.create_review_invitation = create_review_invitation
 
     def get_readers(self, conference):
         if self.double_blind:
@@ -1112,7 +1119,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -1122,6 +1129,7 @@ class DecisionStage(object):
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
+        self.email_authors = email_authors
 
     def get_readers(self, conference, number):
 
@@ -1263,7 +1271,10 @@ class ConferenceBuilder(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
-            subject_areas=[]
+            subject_areas=[],
+            email_pcs = False,
+            create_groups = False,
+            create_review_invitation = False
         ):
 
         self.submission_stage = SubmissionStage(
@@ -1274,7 +1285,10 @@ class ConferenceBuilder(object):
             double_blind,
             additional_fields,
             remove_fields,
-            subject_areas
+            subject_areas,
+            email_pcs,
+            create_groups,
+            create_review_invitation
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
@@ -1298,8 +1312,8 @@ class ConferenceBuilder(object):
     def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
         self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields, process)
 
-    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False):
-        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers)
+    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
+        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
