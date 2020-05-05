@@ -1370,3 +1370,46 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         button = notes[1].find_element_by_class_name('btn')
         assert button
+
+        reviews = test_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 2
+
+        rebuttal_note = test_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=reviews[1].id,
+            invitation=reviews[1].signatures[0] + '/-/Rebuttal',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            content={
+                'rebuttal': 'this is the rebuttal `print(\'hello\')`'
+            }
+        ))
+        assert rebuttal_note
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = rebuttal_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[ECCV 2020] Your rebuttal has been received on your submission - Paper number: 1, Paper Title: "Paper title 1"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your review submitted - Paper number: 1, Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer2@google.com' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your assigned Paper number: 1, Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer1@fb.com' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your assigned Paper number: 1, Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'ac1@eccv.org' in recipients

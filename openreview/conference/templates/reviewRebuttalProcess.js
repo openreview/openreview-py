@@ -4,15 +4,15 @@ function(){
     var CONFERENCE_ID = '';
     var SHORT_PHRASE = '';
     var AUTHORS_NAME = '';
-    var REVIEWERS_NAME = '';
-    var AREA_CHAIRS_NAME = '';
     var PROGRAM_CHAIRS_ID = '';
     var USE_AREA_CHAIRS = false;
 
     var forumNote = or3client.or3request(or3client.notesUrl+'?id='+note.forum, {}, 'GET', token);
+    var reviewNote = or3client.or3request(or3client.notesUrl+'?id='+note.replyto, {}, 'GET', token);
 
-    forumNote.then(function(result) {
-      var forum = result.notes[0];
+    Promise.all([forumNote, reviewNote]).then(function([result1, result2]) {
+      var forum = result1.notes[0];
+      var review = result2.notes[0];
       var promises = [];
 
       var AUTHORS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + AUTHORS_NAME;
@@ -23,31 +23,31 @@ function(){
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 
-      var content = 'To view the review, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id;
+      var content = 'To view the rebuttal, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id;
 
       if (PROGRAM_CHAIRS_ID) {
         var program_chair_mail = {
           groups: [PROGRAM_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] A review has been received on Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'We have received a review on a submission to ' + SHORT_PHRASE + '.\n\n' + content
+          subject: '[' + SHORT_PHRASE + '] A rebuttal has been received on Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          message: 'We have received a review rebuttal on a submission to ' + SHORT_PHRASE + '.\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, program_chair_mail, 'POST', token ));
       }
 
-      var review_writer_mail = {
+      var authors_writer_mail = {
         groups: note.signatures,
-        subject: '[' + SHORT_PHRASE + '] Your review has been received on your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-        message: 'We have received your review on a submission to ' + SHORT_PHRASE + '.\n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
+        subject: '[' + SHORT_PHRASE + '] Your rebuttal has been received on your submission - Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+        message: 'We have received your rebuttal on your submission to ' + SHORT_PHRASE + '.\n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
       };
-      promises.push(or3client.or3request( or3client.mailUrl, review_writer_mail, 'POST', token ));
+      promises.push(or3client.or3request( or3client.mailUrl, authors_writer_mail, 'POST', token ));
 
       if (USE_AREA_CHAIRS && (note.readers.includes('everyone') || note.readers.includes(AREA_CHAIRS_ID))) {
         var areachair_mail = {
           groups: [AREA_CHAIR_1_ID],
           ignoreGroups: ignoreGroups,
-          subject : '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'A submission to ' + SHORT_PHRASE + ', for which you are an official area chair, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
+          subject : '[' + SHORT_PHRASE + '] Rebuttal posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are an official area chair, has received a rebuttal. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token ));
       }
@@ -56,35 +56,29 @@ function(){
       if (note.readers.includes('everyone') || note.readers.includes(REVIEWERS_ID)) {
         var reviewer_mail = {
           groups: [REVIEWERS_ID],
-          ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
+          ignoreGroups: review.signatures,
+          subject: '[' + SHORT_PHRASE + '] Rebuttal posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a rebuttal. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else if (note.readers.includes(reviewers_submitted)) {
         var reviewer_mail = {
           groups: [reviewers_submitted],
-          ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] Review posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
+          ignoreGroups: review.signatures,
+          subject: '[' + SHORT_PHRASE + '] Rebuttal posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a rebuttal. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       }
 
-      if (note.readers.includes('everyone') || note.readers.includes(AUTHORS_ID)) {
-        var author_mail = {
-          groups: [AUTHORS_ID],
-          ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] Review posted to your submission - Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
-          message: 'Your submission to ' + SHORT_PHRASE + ' has received a review. \n\n' + content
-        };
-        promises.push(or3client.or3request( or3client.mailUrl, author_mail, 'POST', token ));
-      }
+      var review_signature_mail = {
+        groups: review.signatures,
+        subject : '[' + SHORT_PHRASE + '] Rebuttal posted to your review submitted - Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+        message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a rebuttal. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
+      };
+      promises.push(or3client.or3request( or3client.mailUrl, review_signature_mail, 'POST', token ));
 
-      return Promise.all(promises)
-      .then(function(result) {
-        return or3client.addGroupMember(reviewers_submitted, note.signatures[0], token);
-      })
+      return Promise.all(promises);
     })
     .then(result => done())
     .catch(error => done(error));
