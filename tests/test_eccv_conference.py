@@ -1394,22 +1394,18 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[ECCV 2020] Your rebuttal has been received on your submission - Paper number: 1, Paper Title: "Paper title 1"')
+        messages = client.get_messages(subject = '[ECCV 2020] Your rebuttal has been received on your submission - Paper number: 1, Paper title: "Paper title 1"')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
 
-        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your review submitted - Paper number: 1, Paper Title: "Paper title 1"')
+        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your review submitted - Paper number: 1, Paper title: "Paper title 1"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer2@google.com' in recipients
 
-        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your assigned Paper number: 1, Paper Title: "Paper title 1"')
-        assert len(messages) == 1
+        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 2
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer1@fb.com' in recipients
-
-        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your assigned Paper number: 1, Paper Title: "Paper title 1"')
-        assert len(messages) == 1
-        recipients = [m['content']['to'] for m in messages]
         assert 'ac1@eccv.org' in recipients
