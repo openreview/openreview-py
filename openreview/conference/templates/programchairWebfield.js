@@ -64,7 +64,7 @@ var main = function() {
     getGroupMembersCount(AREA_CHAIRS_INVITED_ID),
     getRequestForm(),
     getRegistrationForms(),
-    getWildcardInvitations()
+    getInvitationMap()
   ).then(function(
     reviewers,
     areaChairs,
@@ -84,11 +84,8 @@ var main = function() {
     areaChairsInvitedCount,
     requestForm,
     registrationForms,
-    wildcardInvitations
+    invitationMap
   ) {
-
-    var invitationMap = _.keyBy(wildcardInvitations, 'id');
-
     var noteNumbers = blindedNotes.map(function(note) { return note.number; });
     blindedNotes.forEach(function(n) {
       selectedNotesById[n.id] = false;
@@ -211,11 +208,14 @@ var getRegistrationForms = function() {
   });
 };
 
-var getWildcardInvitations = function() {
+var getInvitationMap = function() {
   return Webfield.getAll('/invitations', {
     regex: WILDCARD_INVITATION,
     expired: true,
     type: 'all'
+  })
+  .then(function(wildcardInvitations) {
+    return _.keyBy(wildcardInvitations, 'id');
   });
 };
 
@@ -609,8 +609,8 @@ var calcRecsComplete = function(acMap, areaChairRecommendationCounts, invitation
   // Count how many ACs have submitted the required number of reviewer recommendations
   // NOTE: this is not checking that each assigned paper has the required number of recs,
   // it is just multiplying the number required by the number of assigned papers
-  return _.reduce(areaChairRecommendationCounts, function(numComplete, bidCount, profileId) {
-    return (!acMap[profileId] || bidCount >= acMap[profileId].length * taskCompletionCount)
+  return _.reduce(areaChairRecommendationCounts, function(numComplete, recCount, profileId) {
+    return (!acMap[profileId] || recCount >= acMap[profileId].length * taskCompletionCount)
       ? numComplete + 1
       : numComplete;
   }, 0);
