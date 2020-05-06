@@ -23,7 +23,7 @@ var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs)?/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs|/Program_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
@@ -56,7 +56,6 @@ var main = function() {
     getOfficialReviews(),
     getMetaReviews(),
     getDecisionReviews(),
-    getInvitations(),
     getPcAssignmentTags(),
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
@@ -77,7 +76,6 @@ var main = function() {
     officialReviews,
     metaReviews,
     decisions,
-    invitationMap,
     pcAssignmentTags,
     reviewerBidCounts,
     areaChairBidCounts,
@@ -88,6 +86,9 @@ var main = function() {
     registrationForms,
     wildcardInvitations
   ) {
+
+    var invitationMap = _.keyBy(wildcardInvitations, 'id');
+
     var noteNumbers = blindedNotes.map(function(note) { return note.number; });
     blindedNotes.forEach(function(n) {
       selectedNotesById[n.id] = false;
@@ -150,7 +151,7 @@ var main = function() {
     var conferenceConfig = {
       requestForm: requestForm,
       registrationForms: registrationForms,
-      invitations: wildcardInvitations,
+      invitationMap: invitationMap,
     };
     displayStatsAndConfiguration(conferenceStats, conferenceConfig);
 
@@ -343,20 +344,6 @@ var getMetaReviews = function() {
 var getDecisionReviews = function() {
   return Webfield.getAll('/notes', {
     invitation: getInvitationId(DECISION_NAME, '.*')
-  });
-};
-
-var getInvitations = function() {
-  invitationsToLoad = [PC_PAPER_TAG_INVITATION];
-  if (BID_NAME) invitationsToLoad.push(REVIEWERS_ID + '/-/' + BID_NAME);
-  if (BID_NAME && AREA_CHAIRS_ID) invitationsToLoad.push(AREA_CHAIRS_ID + '/-/' + BID_NAME);
-  if (RECOMMENDATION_NAME && AREA_CHAIRS_ID) invitationsToLoad.push(REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME);
-
-  return Webfield.get('/invitations', {
-    ids: invitationsToLoad
-  })
-  .then(function(result) {
-    return _.keyBy(result.invitations, 'id');
   });
 };
 
@@ -885,10 +872,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   }
 
   // Timeline
-  var invitationMap = {};
-  conferenceConfig.invitations.forEach(function(invitation) {
-    invitationMap[invitation.id] = invitation;
-  });
+  var invitationMap = conferenceConfig.invitationMap;
 
   html += '<div class="col-md-8 col-xs-12">'
   html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
