@@ -349,13 +349,15 @@ class Client(object):
             pure_emails = all(['@' in i for i in email_or_id_list])
 
             def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers=self.headers, cookies=self.cookies)
-                response = self.__handle_response(response)
+                request = lambda headers, cookies: requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers=headers, cookies=cookies)
+                response = request(self.headers, self.cookies)
+                response = self.__handle_response(response, request=request)
                 return [Profile.from_json(p) for p in response.json()['profiles']]
 
             def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers=self.headers, cookies=self.cookies)
-                response = self.__handle_response(response)
+                request = lambda headers, cookies: requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers=headers, cookies=cookies)
+                response = request(self.headers, self.cookies)
+                response = self.__handle_response(response, request=request)
                 return { p['email'] : Profile.from_json(p['profile'])
                     for p in response.json()['profiles'] }
 
@@ -383,8 +385,9 @@ class Client(object):
 
             return result
 
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers=self.headers, cookies=self.cookies)
-        response = self.__handle_response(response)
+        request = lambda headers, cookies: requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers=headers, cookies=cookies)
+        response = request(self.headers, self.cookies)
+        response = self.__handle_response(response, request=request)
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
     def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
@@ -484,7 +487,7 @@ class Client(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        request = lambda headers, cookies: requests.get(url, params = params, headers = headers, cookies=self.cookies)
+        request = lambda headers, cookies: requests.get(url, params = params, headers=headers, cookies=cookies)
         response = request(self.headers, self.cookies)
         response = self.__handle_response(response, request=request)
         return response.content
@@ -504,9 +507,10 @@ class Client(object):
 
         with open(fname, 'rb') as f:
             headers['content-type'] = 'application/pdf'
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers, cookies=self.cookies)
+            request = lambda headers, cookies: requests.put(self.pdf_url, files={'data': f}, headers=headers, cookies=cookies)
+            response = request(self.headers, self.cookies)
 
-        response = self.__handle_response(response)
+        response = self.__handle_response(response, request=request)
         return response.json()['url']
 
     def put_attachment(self, file_path, invitation, name):
@@ -531,7 +535,7 @@ class Client(object):
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
                 ('file', (file_path, f))
-            ), headers = headers, cookies=self.cookies)
+            ), headers=headers, cookies=cookies)
             response = request(self.headers, self.cookies)
 
         response = self.__handle_response(response, request=request)
@@ -683,7 +687,7 @@ class Client(object):
         params['offset'] = offset
         params['expired'] = expired
 
-        request = lambda headers, cookies: requests.get(self.invitations_url, params=params, headers=self.headers, cookies=self.cookies)
+        request = lambda headers, cookies: requests.get(self.invitations_url, params=params, headers=headers, cookies=cookies)
         response = request(self.headers, self.cookies)
         response = self.__handle_response(response, request=request)
 
@@ -986,7 +990,7 @@ class Client(object):
         if overwrite or not self.exists(group.id):
             if not group.signatures: group.signatures = [self.profile.id]
             if not group.writers: group.writers = [self.profile.id]
-            request = lambda headers, cookies: requests.post(self.groups_url, json=group.to_json(), headers=self.headers, cookies=self.cookies)
+            request = lambda headers, cookies: requests.post(self.groups_url, json=group.to_json(), headers=headers, cookies=cookies)
             response = request(self.headers, self.cookies)
             response = self.__handle_response(response, request=request)
 
@@ -1019,7 +1023,7 @@ class Client(object):
         :rtype: Note
         """
         if not note.signatures: note.signatures = [self.profile.id]
-        request = lambda headers, cookies: requests.post(self.notes_url, json=note.to_json(), headers=self.headers, cookies=self.cookies)
+        request = lambda headers, cookies: requests.post(self.notes_url, json=note.to_json(), headers=headers, cookies=cookies)
         response = request(self.headers, self.cookies)
         response = self.__handle_response(response, request=request)
 
@@ -1189,7 +1193,8 @@ class Client(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers=headers, cookies=cookies)
+        request = lambda headers, cookies: requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers=headers, cookies=cookies)
+        response = request(self.headers, self.cookies)
         response = self.__handle_response(response)
 
         return response.json()
