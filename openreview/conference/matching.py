@@ -422,8 +422,7 @@ class Matching(object):
                         'order': 10
                     },
                     'assignment_invitation': {
-                        'value-regex': '.*',
-                        'default': self.conference.get_paper_assignment_id(self.match_group.id),
+                        'value': self.conference.get_paper_assignment_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store paper user assignments',
                         'order': 11
