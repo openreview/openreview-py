@@ -843,7 +843,7 @@ class PaperReviewRebuttalInvitation(openreview.Invitation):
             'replyto': review.id,
             'readers': {
                 'description': 'This rating is only visible to the program chairs.',
-                'values': [conference.get_program_chairs_id(), paper_group + '/Area_Chairs', paper_group + '/Reviewers/Submitted', paper_group + '/Authors']
+                'values': review.readers
             },
             'signatures': {
                 'description': 'How your identity will be displayed with the above content.',
