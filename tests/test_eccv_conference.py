@@ -677,7 +677,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert custom_user_demand_invitation
         assert custom_user_demand_invitation.get_attribute('value') == 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Custom_User_Demands'
 
-        custom_max_papers_invitation = selenium.find_element_by_name('custom_user_demand_invitation')
+        custom_max_papers_invitation = selenium.find_element_by_name('custom_max_papers_invitation')
         assert custom_max_papers_invitation
         assert custom_max_papers_invitation.get_attribute('value') == 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Custom_Max_Papers'
 
