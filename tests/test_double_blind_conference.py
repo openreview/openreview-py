@@ -656,7 +656,7 @@ class TestDoubleBlindConference():
         result = conference.set_program_chairs(['pc@mail.com', 'pc2@mail.com'])
         assert result
         assert result.members
-        assert ['akbc_pc_1@akbc.ws', 'pc@mail.com', 'pc2@mail.com'] == result.members
+        assert ['AKBC.ws/2019/Conference', 'akbc_pc_1@akbc.ws', 'pc@mail.com', 'pc2@mail.com'] == result.members
 
         #Sign up as Program Chair
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
