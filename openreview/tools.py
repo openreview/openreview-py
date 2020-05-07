@@ -493,6 +493,7 @@ def replace_members_with_ids(client, group):
     """
     ids = []
     emails = []
+    invalid_ids = []
     for member in group.members:
         if '~' not in member:
             try:
@@ -504,9 +505,13 @@ def replace_members_with_ids(client, group):
                 else:
                     raise exc
         else:
-            profile = client.get_profile(member)
-            ids.append(profile.id)
+            profile = get_profile(client, member)
+            if profile:
+                ids.append(profile.id)
+            else:
+                invalid_ids.append(member)
 
+    print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
     group.members = ids + emails
     return client.post_group(group)
 

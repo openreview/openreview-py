@@ -858,7 +858,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
 
         ### Custom loads
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Max_Papers', prefix=conference.get_reviewers_id()),
             readers = [conference.id],
             nonreaders = [],
             writers = [conference.id],
@@ -868,7 +868,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             weight = 2
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Max_Papers', prefix=conference.get_reviewers_id()),
             readers = [conference.id],
             nonreaders = [],
             writers = [conference.id],
@@ -1332,3 +1332,19 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'])
         )
+
+        reviewer2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+        reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '1 of 2',
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+            reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
+                forum = blinded_notes[-1].id,
+                tag = '1 of 2',
+                readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+                signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
+            )

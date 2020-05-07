@@ -90,12 +90,16 @@ def get_conference_builder(client, request_form_id):
     submission_remove_options = note.content.get('remove_submission_options', [])
 
     builder.set_submission_stage(
-        double_blind=double_blind,
-        public=public,
-        start_date=submission_start_date,
-        due_date=submission_due_date,
-        additional_fields=submission_additional_options,
-        remove_fields=submission_remove_options)
+        double_blind = double_blind,
+        public = public,
+        start_date = submission_start_date,
+        due_date = submission_due_date,
+        additional_fields = submission_additional_options,
+        remove_fields = submission_remove_options,
+        email_pcs=True, ## Need to add this setting to the form
+        create_groups=(not double_blind),
+        create_review_invitation=(not double_blind) and note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.'
+        )
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
@@ -129,7 +133,7 @@ def get_bid_stage(request_forum):
     else:
         bid_due_date = None
 
-    return openreview.BidStage(start_date=bid_start_date, due_date=bid_due_date, request_count=request_forum.content.get('bid_count', 50))
+    return openreview.BidStage(start_date=bid_start_date, due_date=bid_due_date, request_count=int(request_forum.content.get('bid_count', 50)))
 
 def get_review_stage(request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
@@ -246,11 +250,13 @@ def get_decision_stage(request_forum):
             due_date=decision_due_date,
             public=request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors=request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
-            release_to_reviewers=request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))
+            release_to_reviewers=request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
+            email_authors=request_forum.content.get('notify_to_authors', '').startswith('Yes'))
     else:
         return openreview.DecisionStage(
             start_date=decision_start_date,
             due_date=decision_due_date,
             public=request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors=request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
-            release_to_reviewers=request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'))
+            release_to_reviewers=request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
+            email_authors=request_forum.content.get('notify_to_authors', '').startswith('Yes'))

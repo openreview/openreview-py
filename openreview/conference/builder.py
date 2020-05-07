@@ -1203,7 +1203,8 @@ class Conference():
     def set_homepage_decisions(
             self,
             invitation_name='Decision',
-            decision_heading_map=None):
+            decision_heading_map=None,
+            release_accepted_notes=None):
 
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
@@ -1231,18 +1232,39 @@ class Conference():
             layout='decisions',
             options=options)
 
-class SubmissionStage():
+        if release_accepted_notes:
+            accepted_submissions = self.get_submissions(accepted=True, details='original')
+
+            for submission in accepted_submissions:
+                submission.content = {
+                    '_bibtex': tools.get_bibtex(
+                        openreview.Note.from_json(submission.details['original']),
+                        release_accepted_notes.get('conference_title', 'unknown'),
+                        release_accepted_notes.get('conference_year', 'unknown'),
+                        url_forum=submission.forum,
+                        accepted=True,
+                        anonymous=False)
+                }
+                self.client.post_note(submission)
+
+
+class SubmissionStage(object):
 
     def __init__(
-                self,
-                name='Submission',
-                start_date=None,
-                due_date=None,
-                public=False,
-                double_blind=False,
-                additional_fields={},
-                remove_fields=[],
-                subject_areas=[]):
+            self,
+            name='Submission',
+            start_date=None,
+            due_date=None,
+            public=False,
+            double_blind=False,
+            additional_fields={},
+            remove_fields=[],
+            subject_areas=[],
+            email_pcs = False,
+            create_groups = False,
+            # We need to assume the Official Review super invitation is already created and active
+            create_review_invitation = False
+        ):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1252,6 +1274,9 @@ class SubmissionStage():
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.subject_areas = subject_areas
+        self.email_pcs = email_pcs
+        self.create_groups = create_groups
+        self.create_review_invitation = create_review_invitation
 
     def get_readers(self, conference):
         if self.double_blind:
@@ -1505,7 +1530,8 @@ class DecisionStage():
             due_date=None,
             public=False,
             release_to_authors=False,
-            release_to_reviewers=False):
+            release_to_reviewers=False,
+            email_authors = False):
 
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
@@ -1516,6 +1542,7 @@ class DecisionStage():
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
+        self.email_authors = email_authors
 
     def get_readers(self, conference, number):
 
@@ -1699,7 +1726,11 @@ class ConferenceBuilder():
             double_blind=False,
             additional_fields={},
             remove_fields=[],
-            subject_areas=[]):
+            subject_areas=[],
+            email_pcs = False,
+            create_groups = False,
+            create_review_invitation = False
+        ):
 
         self.submission_stage = SubmissionStage(
             name,
@@ -1709,7 +1740,10 @@ class ConferenceBuilder():
             double_blind,
             additional_fields,
             remove_fields,
-            subject_areas
+            subject_areas,
+            email_pcs,
+            create_groups,
+            create_review_invitation
         )
 
     def set_expertise_selection_stage(
@@ -1824,22 +1858,8 @@ class ConferenceBuilder():
             additional_fields,
             process)
 
-    def set_decision_stage(
-            self,
-            options=['Accept (Oral)', 'Accept (Poster)', 'Reject'],
-            start_date=None,
-            due_date=None,
-            public=False,
-            release_to_authors=False,
-            release_to_reviewers=False):
-
-        self.decision_stage = DecisionStage(
-            options,
-            start_date,
-            due_date,
-            public,
-            release_to_authors,
-            release_to_reviewers)
+    def set_decision_stage(self, options=['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date=None, due_date=None, public=False, release_to_authors=False, release_to_reviewers=False, email_authors=False):
+        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
