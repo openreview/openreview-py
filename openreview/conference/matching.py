@@ -96,7 +96,7 @@ class Matching(object):
         readers.append(tail)
         return readers
 
-    def _create_edge_invitation(self, edge_id):
+    def _create_edge_invitation(self, edge_id, delete_existing_edges=True):
         '''
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
@@ -159,14 +159,15 @@ class Matching(object):
             })
 
         invitation = self.client.post_invitation(invitation)
-        self.client.delete_edges(invitation.id)
+        if delete_existing_edges:
+            self.client.delete_edges(invitation.id)
         return invitation
 
-    def _build_conflicts(self, submissions, user_profiles):
+    def _build_conflicts(self, submissions, user_profiles, delete_existing_conflicts):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
-        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
+        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id), delete_existing_edges=delete_existing_conflicts)
         # Get profile info from the match group
         user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
 
@@ -407,35 +408,38 @@ class Matching(object):
                         'default': scores_specification
                     },
                     'aggregate_score_invitation': {
-                        'value': self._get_edge_invitation_id('Aggregate_Score'),
+                        'value-regex': '.*',
+                        'default': self._get_edge_invitation_id('Aggregate_Score'),
                         'required': True,
                         'description': 'Invitation to store aggregated scores',
                         'order': 9
                     },
                     'conflicts_invitation': {
-                        'value': self.conference.get_conflict_score_id(self.match_group.id),
+                        'value-regex': '.*',
+                        'default': self.conference.get_conflict_score_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store conflict scores',
                         'order': 10
                     },
                     'assignment_invitation': {
-                        'value': self.conference.get_paper_assignment_id(self.match_group.id),
+                        'value-regex': '.*',
+                        'default': self.conference.get_paper_assignment_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store paper user assignments',
                         'order': 11
                     },
                     'custom_user_demand_invitation': {
+                        'value-regex': '{}/.*/-/Custom_User_Demands$'.format(self.conference.id),
+                        'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
                         'description': 'Invitation to store custom number of users required by papers',
-                        'default': self.match_group.id + '/-/Custom_User_Demands',
                         'order': 12,
-                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'custom_max_papers_invitation': {
+                        'value-regex': '{}/.*/-/Custom_Max_Papers$'.format(self.conference.id),
+                        'default': '{}/-/Custom_Max_Papers'.format(self.match_group.id),
                         'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
-                        'default': self.match_group.id + '/-/Custom_Max_Papers',
                         'order': 13,
-                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'config_invitation': {
@@ -469,7 +473,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False, delete_existing_conflicts=True):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -556,7 +560,7 @@ class Matching(object):
             }
 
         if build_conflicts:
-            self._build_conflicts(submissions, user_profiles)
+            self._build_conflicts(submissions, user_profiles, delete_existing_conflicts)
 
         self._build_config_invitation(score_spec)
 
