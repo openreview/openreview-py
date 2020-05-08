@@ -43,6 +43,7 @@ class Conference(object):
         self.registration_stage = RegistrationStage()
         self.review_stage = ReviewStage()
         self.review_rebuttal_stage = None
+        self.review_revision_stage = None
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
@@ -162,6 +163,11 @@ class Conference(object):
         review_iterator = tools.iterget_notes(self.client, invitation = invitation)
         return self.invitation_builder.set_review_rebuttal_invitation(self, review_iterator)
 
+    def __create_review_revision_stage(self):
+        invitation = self.get_invitation_id(self.review_stage.name, '.*')
+        review_iterator = tools.iterget_notes(self.client, invitation = invitation)
+        return self.invitation_builder.set_review_revision_invitation(self, review_iterator)
+
     def __create_comment_stage(self):
 
         ## Create comment invitations per paper
@@ -242,6 +248,10 @@ class Conference(object):
     def set_review_rebuttal_stage(self, stage):
         self.review_rebuttal_stage = stage
         return self.__create_review_rebuttal_stage()
+
+    def set_review_revision_stage(self, stage):
+        self.review_revision_stage = stage
+        return self.__create_review_revision_stage()
 
     def set_comment_stage(self, stage):
         self.comment_stage = stage
@@ -662,10 +672,10 @@ class Conference(object):
             notes = self.get_submissions(accepted=only_accepted)
             return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
 
-    def open_revise_reviews(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
-        invitation = self.get_invitation_id(self.review_stage.name, '.*')
-        review_iterator = tools.iterget_notes(self.client, invitation = invitation)
-        return self.invitation_builder.set_revise_review_invitation(self, review_iterator, name, start_date, due_date, additional_fields, remove_fields)
+    ## Deprecated
+    def open_revise_reviews(self, name = 'Review_Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
+        self.review_revision_stage = ReviewRevisionStage(name=name, start_date=start_date, due_date=due_date, additional_fields=additional_fields, remove_fields=remove_fields)
+        return self.__create_review_revision_stage()
 
     def close_revise_submissions(self, name):
         return self.__expire_invitations(name)
@@ -1113,6 +1123,15 @@ class ReviewRebuttalStage(object):
         self.name = name
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
+
+class ReviewRevisionStage(object):
+
+    def __init__(self, start_date = None, due_date = None, name = 'Review_Revision', additional_fields = {}, remove_fields = []):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
 
 
 class CommentStage(object):
