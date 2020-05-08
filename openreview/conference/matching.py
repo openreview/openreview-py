@@ -159,15 +159,14 @@ class Matching(object):
             })
 
         invitation = self.client.post_invitation(invitation)
-        if delete_existing_edges:
-            self.client.delete_edges(invitation.id)
+        self.client.delete_edges(invitation.id)
         return invitation
 
-    def _build_conflicts(self, submissions, user_profiles, delete_existing_conflicts):
+    def _build_conflicts(self, submissions, user_profiles):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
-        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id), delete_existing_edges=delete_existing_conflicts)
+        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
         user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
 
@@ -472,7 +471,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False, delete_existing_conflicts=True):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -559,7 +558,7 @@ class Matching(object):
             }
 
         if build_conflicts:
-            self._build_conflicts(submissions, user_profiles, delete_existing_conflicts)
+            self._build_conflicts(submissions, user_profiles)
 
         self._build_config_invitation(score_spec)
 
