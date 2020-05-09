@@ -858,7 +858,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
 
         ### Custom loads
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Max_Papers', prefix=conference.get_reviewers_id()),
             readers = [conference.id],
             nonreaders = [],
             writers = [conference.id],
@@ -868,7 +868,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             weight = 2
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Load', prefix=conference.get_reviewers_id()),
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_invitation_id(name='Custom_Max_Papers', prefix=conference.get_reviewers_id()),
             readers = [conference.id],
             nonreaders = [],
             writers = [conference.id],
