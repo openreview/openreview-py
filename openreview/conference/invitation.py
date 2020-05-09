@@ -887,7 +887,7 @@ class ReviewRevisionInvitation(openreview.Invitation):
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
             file_content = file_content.replace("var PROGRAM_CHAIRS_NAME = '';", "var PROGRAM_CHAIRS_NAME = '" + conference.program_chairs_name + "';")
 
-            super(ReviewRevisionInvitation, self).__init__(id = conference.get_invitation_id('Review_Revision'),
+            super(ReviewRevisionInvitation, self).__init__(id = conference.get_invitation_id(review_revision_stage.name),
                 cdate = tools.datetime_millis(review_revision_stage.start_date),
                 duedate = tools.datetime_millis(review_revision_stage.due_date),
                 expdate = tools.datetime_millis(review_revision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if review_revision_stage.due_date else None,
@@ -925,16 +925,75 @@ class PaperReviewRevisionInvitation(openreview.Invitation):
                 'description': 'How your identity will be displayed.'
             },
             'signatures': {
-                'values-regex': review.writers,
+                'values-regex': review.signatures,
                 'description': 'How your identity will be displayed.'
             }
         }
 
         super(PaperReviewRevisionInvitation, self).__init__(id = review.signatures[0] + '/-/' + review_revision_stage.name,
-            super = conference.get_invitation_id('Review_Revision'),
+            super = conference.get_invitation_id(review_revision_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
             invitees = review.signatures,
+            reply = reply
+        )
+
+class ReviewRatingInvitation(openreview.Invitation):
+
+    def __init__(self, conference):
+
+        review_rating_stage = conference.review_rating_stage
+        content = invitations.review_rating.copy()
+
+        for key in review_rating_stage.additional_fields:
+            content[key] = review_rating_stage.additional_fields[key]
+
+        for field in review_rating_stage.remove_fields:
+            if field in content:
+                del content[field]
+
+        super(ReviewRatingInvitation, self).__init__(id = conference.get_invitation_id(review_rating_stage.name),
+            cdate = tools.datetime_millis(review_rating_stage.start_date),
+            duedate = tools.datetime_millis(review_rating_stage.due_date),
+            expdate = tools.datetime_millis(review_rating_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if review_rating_stage.due_date else None,
+            readers = ['everyone'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            multiReply = False,
+            reply = {
+                'content': content
+            }
+        )
+
+class PaperReviewRatingInvitation(openreview.Invitation):
+
+    def __init__(self, conference, review):
+
+        review_rating_stage = conference.review_rating_stage
+        paper_group = review.invitation.split('/-/')[0]
+
+        reply = {
+            'forum': review.forum,
+            'replyto': review.id,
+            'readers': {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values': [conference.get_program_chairs_id(), paper_group + '/Area_Chairs', paper_group + '/Reviewers/Submitted']
+            },
+            'writers': {
+                'values-regex': paper_group + '/Area_Chair[0-9]+',
+                'description': 'How your identity will be displayed.'
+            },
+            'signatures': {
+                'values-regex': paper_group + '/Area_Chair[0-9]+',
+                'description': 'How your identity will be displayed.'
+            }
+        }
+
+        super(PaperReviewRatingInvitation, self).__init__(id = review.signatures[0] + '/-/' + review_rating_stage.name,
+            super = conference.get_invitation_id(review_rating_stage.name),
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = [paper_group + '/Area_Chairs'],
             reply = reply
         )
 
@@ -1204,6 +1263,15 @@ class InvitationBuilder(object):
         self.client.post_invitation(ReviewRevisionInvitation(conference))
         for note in tqdm(reviews):
             invitation = self.client.post_invitation(PaperReviewRevisionInvitation(conference, note))
+            invitations.append(invitation)
+
+        return invitations
+
+    def set_review_rating_invitation(self, conference, reviews):
+        invitations = []
+        self.client.post_invitation(ReviewRatingInvitation(conference))
+        for note in tqdm(reviews):
+            invitation = self.client.post_invitation(PaperReviewRatingInvitation(conference, note))
             invitations.append(invitation)
 
         return invitations

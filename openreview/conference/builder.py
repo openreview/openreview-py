@@ -44,6 +44,7 @@ class Conference(object):
         self.review_stage = ReviewStage()
         self.review_rebuttal_stage = None
         self.review_revision_stage = None
+        self.review_rating_stage = None
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
@@ -168,6 +169,11 @@ class Conference(object):
         review_iterator = tools.iterget_notes(self.client, invitation = invitation)
         return self.invitation_builder.set_review_revision_invitation(self, review_iterator)
 
+    def __create_review_rating_stage(self):
+        invitation = self.get_invitation_id(self.review_stage.name, '.*')
+        review_iterator = tools.iterget_notes(self.client, invitation = invitation)
+        return self.invitation_builder.set_review_rating_invitation(self, review_iterator)
+
     def __create_comment_stage(self):
 
         ## Create comment invitations per paper
@@ -252,6 +258,10 @@ class Conference(object):
     def set_review_revision_stage(self, stage):
         self.review_revision_stage = stage
         return self.__create_review_revision_stage()
+
+    def set_review_rating_stage(self, stage):
+        self.review_rating_stage = stage
+        return self.__create_review_rating_stage()
 
     def set_comment_stage(self, stage):
         self.comment_stage = stage
@@ -1127,6 +1137,15 @@ class ReviewRebuttalStage(object):
 class ReviewRevisionStage(object):
 
     def __init__(self, start_date = None, due_date = None, name = 'Review_Revision', additional_fields = {}, remove_fields = []):
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
+
+class ReviewRatingStage(object):
+
+    def __init__(self, start_date = None, due_date = None, name = 'Review_Rating', additional_fields = {}, remove_fields = []):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name

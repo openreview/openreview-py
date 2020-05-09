@@ -1488,3 +1488,54 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer1@fb.com' in recipients
         assert 'ac1@eccv.org' in recipients
+
+    def test_review_rating_stage(self, conference, client, test_client, selenium, request_page):
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_review_rating_stage(openreview.ReviewRatingStage(due_date = now + datetime.timedelta(minutes = 40), additional_fields = {
+            'rating': {
+                'order': 1,
+                'required': True,
+                'value-radio': ['-1: useless', '1: normal, valuable review', '2: exceptional, top 10% of my reviews']
+            },
+            'rating_justification': {
+                'order': 2,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Justification of the rating. Max length: 5000',
+                'required': False
+            }
+        }, remove_fields = ['title', 'novelty', 'soundness']))
+
+        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+
+        blinded_notes = conference.get_submissions()
+
+        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , ac_client.token)
+        notes = selenium.find_elements_by_class_name('note_with_children')
+        assert len(notes) == 4
+
+        buttons = notes[0].find_elements_by_class_name('btn')
+        assert len(buttons) == 2
+
+        buttons = notes[1].find_elements_by_class_name('btn')
+        assert len(buttons) == 5
+
+        reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 2
+
+        review_rating_note = ac_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=reviews[1].id,
+            invitation=reviews[1].signatures[0] + '/-/Review_Rating',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
+            content={
+                'rating': '-1: useless',
+                'rating_justification': 'bad review'
+            }
+        ))
+        assert review_rating_note
