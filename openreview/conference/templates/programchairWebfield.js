@@ -562,13 +562,11 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
         var reviewer = g.members[0];
         if ((num in noteMap)) {
           noteMap[num][index] = reviewer;
+          if (!(reviewer in reviewerMap)) {
+            reviewerMap[reviewer] = [];
+          }
+          reviewerMap[reviewer].push(num);
         }
-
-        if (!(reviewer in reviewerMap)) {
-          reviewerMap[reviewer] = [];
-        }
-
-        reviewerMap[reviewer].push(num);
       }
     }
   });
