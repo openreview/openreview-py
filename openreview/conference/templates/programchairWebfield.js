@@ -30,6 +30,7 @@ var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
+var PAPER_REVIEWS_COMPLETE_THRESHOLD = 3;
 var PAGE_SIZE = 25;
 
 // Page State
@@ -635,8 +636,17 @@ var calcReviewersComplete = function(reviewerGroupMaps, officialReviews) {
 
 var calcPaperReviewsComplete = function(noteMap, officialReviewMap) {
   return _.reduce(noteMap, function(numComplete, reviewerMap, n) {
-    var reviewerCount = Object.values(reviewerMap).length;
-    var allSubmitted = officialReviewMap[n] && reviewerCount > 0 && reviewerCount === Object.values(officialReviewMap[n]).length;
+    var allSubmitted;
+    if (officialReviewMap[n]) {
+      var completedReviewsCount = Object.values(officialReviewMap[n]).length;
+      var assignedReviewerCount = Object.values(reviewerMap).length;
+      allSubmitted = PAPER_REVIEWS_COMPLETE_THRESHOLD
+        ? assignedReviewerCount > 0 && completedReviewsCount >= PAPER_REVIEWS_COMPLETE_THRESHOLD
+        : assignedReviewerCount > 0 && completedReviewsCount >= assignedReviewerCount;
+    } else {
+      allSubmitted = false;
+    }
+
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
 };
