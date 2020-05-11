@@ -159,7 +159,6 @@ var main = function() {
   .then(function(profiles) {
     conferenceStatusData.profiles = profiles;
 
-    conferenceStatusData.blindedNotes
     for (var i = 0; i < conferenceStatusData.blindedNotes.length; i++) {
       var note = conferenceStatusData.blindedNotes[i];
       var revIds = conferenceStatusData.reviewerGroups.byNotes[note.number];
