@@ -1032,9 +1032,7 @@ class Client(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        delete_query = {}
-        if invitation:
-            delete_query['invitation'] = invitation
+        delete_query = {'invitation': invitation}
         if label:
             delete_query['label'] = label
         if head:
