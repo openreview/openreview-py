@@ -624,7 +624,7 @@ var calcReviewersComplete = function(reviewerGroupMaps, officialReviews) {
   return _.reduce(reviewerGroupMaps.byReviewers, function(numComplete, noteNumbers, reviewer) {
     var allSubmitted = _.every(noteNumbers, function(n) {
       var assignedReviewers = reviewerGroupMaps.byNotes[n];
-      var anonGroupNumber = _.findKey(assignedReviewers, function(v) { return v == reviewer});
+      var anonGroupNumber = _.findKey(assignedReviewers, function(v) { return v === reviewer; });
       return _.find(officialReviews, function(r) {
         return r.signatures[0] == CONFERENCE_ID + '/Paper' + n + '/AnonReviewer' + anonGroupNumber;
       });
