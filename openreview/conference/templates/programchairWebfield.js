@@ -140,7 +140,7 @@ var main = function() {
       reviewsCount: officialReviews.length,
       assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
       reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
-      reviewersComplete: calcReviewersComplete(reviewerGroupMaps.byReviewers, officialReviews),
+      reviewersComplete: calcReviewersComplete(reviewerGroupMaps, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
       metaReviewsCount: metaReviews.length,
       metaReviewersComplete: calcMetaReviewersComplete(areaChairGroupMaps.byAreaChairs, metaReviews),
@@ -562,13 +562,11 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
         var reviewer = g.members[0];
         if ((num in noteMap)) {
           noteMap[num][index] = reviewer;
+          if (!(reviewer in reviewerMap)) {
+            reviewerMap[reviewer] = [];
+          }
+          reviewerMap[reviewer].push(num);
         }
-
-        if (!(reviewer in reviewerMap)) {
-          reviewerMap[reviewer] = [];
-        }
-
-        reviewerMap[reviewer].push(num);
       }
     }
   });
@@ -622,10 +620,14 @@ var calcAssignedReviewsCount = function(reviewerMap) {
   }, 0);
 };
 
-var calcReviewersComplete = function(reviewerMap, officialReviews) {
-  return _.reduce(reviewerMap, function(numComplete, noteNumbers) {
+var calcReviewersComplete = function(reviewerGroupMaps, officialReviews) {
+  return _.reduce(reviewerGroupMaps.byReviewers, function(numComplete, noteNumbers, reviewer) {
     var allSubmitted = _.every(noteNumbers, function(n) {
-      return _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, n)]);
+      var assignedReviewers = reviewerGroupMaps.byNotes[n];
+      var anonGroupNumber = _.findKey(assignedReviewers, function(v) { return v === reviewer; });
+      return _.find(officialReviews, function(r) {
+        return r.signatures[0] === CONFERENCE_ID + '/Paper' + n + '/AnonReviewer' + anonGroupNumber;
+      });
     });
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
