@@ -175,7 +175,7 @@ var main = function() {
       return {
         id: r,
         description: view.prettyId(profile.name) + ' (' + profile.allEmails.join(', ') + ')'
-      }
+      };
     });
 
     $('.tabs-container .nav-tabs > li').removeClass('loading');
@@ -849,7 +849,9 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += renderStatContainer(
     'Paper Progress:',
     renderProgressStat(conferenceStats.paperReviewsComplete, conferenceStats.blindSubmissionsCount),
-    '% of papers that have received reviews from all assigned reviewers'
+    '% of papers that have received ' + (PAPER_REVIEWS_COMPLETE_THRESHOLD
+      ? 'at least ' + PAPER_REVIEWS_COMPLETE_THRESHOLD + ' reviews'
+      : 'reviews from all assigned reviewers')
   );
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
