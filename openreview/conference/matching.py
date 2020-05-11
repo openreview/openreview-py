@@ -96,7 +96,7 @@ class Matching(object):
         readers.append(tail)
         return readers
 
-    def _create_edge_invitation(self, edge_id, delete_existing_edges=True):
+    def _create_edge_invitation(self, edge_id):
         '''
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
