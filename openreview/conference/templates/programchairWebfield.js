@@ -626,7 +626,7 @@ var calcReviewersComplete = function(reviewerGroupMaps, officialReviews) {
       var assignedReviewers = reviewerGroupMaps.byNotes[n];
       var anonGroupNumber = _.findKey(assignedReviewers, function(v) { return v === reviewer; });
       return _.find(officialReviews, function(r) {
-        return r.signatures[0] == CONFERENCE_ID + '/Paper' + n + '/AnonReviewer' + anonGroupNumber;
+        return r.signatures[0] === CONFERENCE_ID + '/Paper' + n + '/AnonReviewer' + anonGroupNumber;
       });
     });
     return allSubmitted ? numComplete + 1 : numComplete;
