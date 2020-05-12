@@ -1040,7 +1040,7 @@ class Client(object):
         if tail:
             delete_query['tail'] = tail
 
-        response = requests.delete(self.edges_url, json = {'query': delete_query}, headers = self.headers)
+        response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
