@@ -1,4 +1,6 @@
-version: 2
+version: 2.1
+orbs:
+  codecov: codecov/codecov@1.0.5
 jobs:
   build:
     working_directory: ~/openreview-py-repo
@@ -19,6 +21,7 @@ jobs:
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments
       - run: mkdir ~/openreview/files/pdfs
+      - run: mkdir ~/openreview-py-repo/coverage
       - run:
           name: install app
           command: |
@@ -54,9 +57,13 @@ jobs:
             sudo pip3 install -U pytest
             sudo pip3 install selenium
             sudo pip3 install pytest-selenium
+            sudo pip3 install pytest-cov
+            sudo pip3 install codecov
             sudo pip3 install -e .
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report xml:~/openreview-py-repo/coverage/cov.xml --cov=./
+      - codecov/upload:
+          file: "~/openreview-py-repo/coverage/cov.xml"
       - store_test_results:
           path: test-reports
       - store_artifacts:
