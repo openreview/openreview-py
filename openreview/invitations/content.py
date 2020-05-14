@@ -24,7 +24,7 @@ comment = {
     'comment': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Your comment or reply (max 5000 characters). Write rebuttal using Markdown and Latex formulas, more information: https://openreview.net/faq',
+        'description': 'Your comment or reply (max 5000 characters). Write comment using Markdown and Latex formulas, more information: https://openreview.net/faq',
         'required': True,
         'markdown': True
     }
@@ -127,7 +127,7 @@ meta_review = {
     'metareview': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Write metareview using Markdown and Latex formulas, more information: https://openreview.net/faq',
         'required': True,
         'markdown': True
     },
