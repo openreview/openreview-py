@@ -24,8 +24,9 @@ comment = {
     'comment': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Your comment or reply (max 5000 characters). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-        'required': True
+        'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+        'required': True,
+        'markdown': True
     }
 }
 
@@ -89,8 +90,9 @@ review = {
     'review': {
         'order': 2,
         'value-regex': '[\\S\\s]{1,200000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-        'required': True
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+        'required': True,
+        'markdown': True
     },
     'rating': {
         'order': 3,
@@ -125,8 +127,9 @@ meta_review = {
     'metareview': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-        'required': True
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+        'required': True,
+        'markdown': True
     },
     'recommendation': {
         'order': 2,
@@ -161,12 +164,13 @@ submission = {
         'description': 'Comma separated list of author names.',
         'order': 2,
         'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
-        'required':True
+        'required':True,
+        'hidden': True,
     },
     'authorids': {
         'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile.',
         'order': 3,
-        'values-regex': "([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+        'values-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
         'required':True
     },
     'keywords': {
