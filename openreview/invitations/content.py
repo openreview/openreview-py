@@ -24,7 +24,7 @@ comment = {
     'comment': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Your comment or reply (max 5000 characters). Write comment using Markdown and Latex formulas, more information: https://openreview.net/faq',
+        'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
         'required': True,
         'markdown': True
     }
@@ -90,7 +90,7 @@ review = {
     'review': {
         'order': 2,
         'value-regex': '[\\S\\s]{1,200000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Write review using Markdown and Latex formulas, more information: https://openreview.net/faq',
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
         'required': True,
         'markdown': True
     },
@@ -127,7 +127,7 @@ meta_review = {
     'metareview': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Write metareview using Markdown and Latex formulas, more information: https://openreview.net/faq',
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
         'required': True,
         'markdown': True
     },
