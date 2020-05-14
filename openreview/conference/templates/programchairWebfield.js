@@ -139,7 +139,7 @@ var main = function() {
         invitationMap[REVIEWERS_ID + '/-/' + BID_NAME]
       ),
       reviewsCount: officialReviews.length,
-      assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
+      assignedReviewsCount: PAPER_REVIEWS_COMPLETE_THRESHOLD ? (blindedNotes.length * PAPER_REVIEWS_COMPLETE_THRESHOLD) : calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
       reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
       reviewersComplete: calcReviewersComplete(reviewerGroupMaps, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
