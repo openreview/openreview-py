@@ -24,7 +24,7 @@ comment = {
     'comment': {
         'order': 1,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Your comment or reply (max 5000 characters). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+        'description': 'Your comment or reply (max 5000 characters). Write rebuttal using Markdown and Latex formulas, more information: https://openreview.net/faq',
         'required': True,
         'markdown': True
     }
@@ -90,7 +90,7 @@ review = {
     'review': {
         'order': 2,
         'value-regex': '[\\S\\s]{1,200000}',
-        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Write review using Markdown and Latex formulas, more information: https://openreview.net/faq',
         'required': True,
         'markdown': True
     },
@@ -188,8 +188,7 @@ submission = {
         'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'order': 8,
         'value-regex': '[\\S\\s]{1,5000}',
-        'required':True,
-        'markdown': True
+        'required':True
     },
     'pdf': {
         'description': 'Upload a PDF file that ends with .pdf',
