@@ -30,6 +30,7 @@ var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
+var PAPER_REVIEWS_COMPLETE_THRESHOLD = 3;
 var PAGE_SIZE = 25;
 
 // Page State
@@ -140,7 +141,7 @@ var main = function() {
       reviewsCount: officialReviews.length,
       assignedReviewsCount: calcAssignedReviewsCount(reviewerGroupMaps.byReviewers),
       reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
-      reviewersComplete: calcReviewersComplete(reviewerGroupMaps.byReviewers, officialReviews),
+      reviewersComplete: calcReviewersComplete(reviewerGroupMaps, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
       metaReviewsCount: metaReviews.length,
       metaReviewersComplete: calcMetaReviewersComplete(areaChairGroupMaps.byAreaChairs, metaReviews),
@@ -158,7 +159,6 @@ var main = function() {
   .then(function(profiles) {
     conferenceStatusData.profiles = profiles;
 
-    conferenceStatusData.blindedNotes
     for (var i = 0; i < conferenceStatusData.blindedNotes.length; i++) {
       var note = conferenceStatusData.blindedNotes[i];
       var revIds = conferenceStatusData.reviewerGroups.byNotes[note.number];
@@ -175,7 +175,7 @@ var main = function() {
       return {
         id: r,
         description: view.prettyId(profile.name) + ' (' + profile.allEmails.join(', ') + ')'
-      }
+      };
     });
 
     $('.tabs-container .nav-tabs > li').removeClass('loading');
@@ -562,13 +562,11 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
         var reviewer = g.members[0];
         if ((num in noteMap)) {
           noteMap[num][index] = reviewer;
+          if (!(reviewer in reviewerMap)) {
+            reviewerMap[reviewer] = [];
+          }
+          reviewerMap[reviewer].push(num);
         }
-
-        if (!(reviewer in reviewerMap)) {
-          reviewerMap[reviewer] = [];
-        }
-
-        reviewerMap[reviewer].push(num);
       }
     }
   });
@@ -622,10 +620,14 @@ var calcAssignedReviewsCount = function(reviewerMap) {
   }, 0);
 };
 
-var calcReviewersComplete = function(reviewerMap, officialReviews) {
-  return _.reduce(reviewerMap, function(numComplete, noteNumbers) {
+var calcReviewersComplete = function(reviewerGroupMaps, officialReviews) {
+  return _.reduce(reviewerGroupMaps.byReviewers, function(numComplete, noteNumbers, reviewer) {
     var allSubmitted = _.every(noteNumbers, function(n) {
-      return _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, n)]);
+      var assignedReviewers = reviewerGroupMaps.byNotes[n];
+      var anonGroupNumber = _.findKey(assignedReviewers, function(v) { return v === reviewer; });
+      return _.find(officialReviews, function(r) {
+        return r.signatures[0] === CONFERENCE_ID + '/Paper' + n + '/AnonReviewer' + anonGroupNumber;
+      });
     });
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
@@ -633,8 +635,17 @@ var calcReviewersComplete = function(reviewerMap, officialReviews) {
 
 var calcPaperReviewsComplete = function(noteMap, officialReviewMap) {
   return _.reduce(noteMap, function(numComplete, reviewerMap, n) {
-    var reviewerCount = Object.values(reviewerMap).length;
-    var allSubmitted = officialReviewMap[n] && reviewerCount > 0 && reviewerCount === Object.values(officialReviewMap[n]).length;
+    var allSubmitted;
+    if (officialReviewMap[n]) {
+      var completedReviewsCount = Object.values(officialReviewMap[n]).length;
+      var assignedReviewerCount = Object.values(reviewerMap).length;
+      allSubmitted = PAPER_REVIEWS_COMPLETE_THRESHOLD
+        ? assignedReviewerCount > 0 && completedReviewsCount >= PAPER_REVIEWS_COMPLETE_THRESHOLD
+        : assignedReviewerCount > 0 && completedReviewsCount >= assignedReviewerCount;
+    } else {
+      allSubmitted = false;
+    }
+
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
 };
@@ -838,7 +849,9 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += renderStatContainer(
     'Paper Progress:',
     renderProgressStat(conferenceStats.paperReviewsComplete, conferenceStats.blindSubmissionsCount),
-    '% of papers that have received reviews from all assigned reviewers'
+    '% of papers that have received ' + (PAPER_REVIEWS_COMPLETE_THRESHOLD
+      ? 'at least ' + PAPER_REVIEWS_COMPLETE_THRESHOLD + ' reviews'
+      : 'reviews from all assigned reviewers')
   );
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
