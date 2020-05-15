@@ -5,6 +5,12 @@ def process_update(client, note, invitation, existing_note):
     support = 'OpenReview.net/Support'
     article_group_id = invitation.id.split('/-/')[0]
     reviewers_group_id = '{}/Reviewers'.format(article_group_id)
+
+    existent_group = openreview.tools.get_group(client, reviewers_group_id)
+    existent_reviewers = []
+    if existent_group:
+        existent_reviewers = existent_group.members
+
     reviewers_group = openreview.Group(
         id=reviewers_group_id,
         readers=['everyone'],
@@ -15,12 +21,25 @@ def process_update(client, note, invitation, existing_note):
     )
     client.post_group(reviewers_group)
 
-    assgined_reviewers = set(note.content.get('assigned_reviewers', [])) - set(article.content.get('assigned_reviewers')))
+    new_reviewers = list(set(note.content.get('assigned_reviewers', [])) - set(existent_reviewers))
 
-    if assgined_reviewers:
-        client.post_message(subject='[Agora/Covid-19] You have been assigend to review the paper title: {title}'.format(title=article.content.get('title')),
-            recipients=list(assgined_reviewers),
-            message='Congratulations, your submission has been released to the public.\n\nTo view your article, click here: https://openreview.net/forum?id={forum}'.format(forum=article.forum),
+    if new_reviewers:
+
+        client.post_message(subject='[Agora/Covid-19] You have been assigned as reviewer of the article titled "{title}"'.format(title=article.content['title']),
+            recipients=new_reviewers,
+            message='''You have been assigned as a reviewer of the paper titled "{title}" by {signature}, the editor of this article.
+Your can start reviewing the article now.
+
+To view the article, click here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
+            ignoreRecipients=None,
+            sender=None
+        )
+
+        client.post_message(subject='[Agora/Covid-19] A reviewer has been assigned to your article titled "{title}"'.format(title=article.content['title']),
+            recipients=article.content['authorids'],
+            message='''A new reviewer/s have been assigned to your paper titled "{title}" by {signature}, the editor of this article.
+
+To view the article, click here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
             sender=None
         )

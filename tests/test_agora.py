@@ -147,4 +147,74 @@ class TestAgora():
         messages = client.get_messages(subject = '[Agora/Covid-19] You have been assigned as editor of the article titled "Paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
+        assert 'article_editor@agora.net' in recipients
+
+
+    def test_assign_reviewer(self, client, helpers):
+
+        article_editor_client = helpers.create_user(email = 'article_editor@agora.net', first = 'ArticleEditor', last = 'One')
+
+        articles = article_editor_client.get_notes(invitation='-Agora/Covid-19/-/Article')
+        assert articles
+
+        note = openreview.Note(invitation = '-Agora/Covid-19/Article1/-/Assign_Reviewer',
+            readers = ['everyone'],
+            writers = ['openreview.net/Support', '-Agora/Covid-19/Article1/Editors'],
+            signatures = ['~ArticleEditor_One1'],
+            forum = articles[0].id,
+            referent = articles[0].id,
+            content = {
+                'assigned_reviewers': ['reviewer@agora.net'],
+            }
+        )
+
+        posted_note = article_editor_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        group = client.get_group('-Agora/Covid-19/Article1/Reviewers')
+        assert group
+        assert group.members == ['reviewer@agora.net']
+
+        messages = client.get_messages(subject = '[Agora/Covid-19] A reviewer has been assigned to your article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
+
+        messages = client.get_messages(subject = '[Agora/Covid-19] You have been assigned as reviewer of the article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer@agora.net' in recipients
+
+        note = openreview.Note(invitation = '-Agora/Covid-19/Article1/-/Assign_Reviewer',
+            readers = ['everyone'],
+            writers = ['openreview.net/Support', '-Agora/Covid-19/Article1/Editors'],
+            signatures = ['~ArticleEditor_One1'],
+            forum = articles[0].id,
+            referent = articles[0].id,
+            content = {
+                'assigned_reviewers': ['reviewer@agora.net', 'reviewer2@agora.net'],
+            }
+        )
+
+        posted_note = article_editor_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        group = client.get_group('-Agora/Covid-19/Article1/Reviewers')
+        assert group
+        assert group.members == ['reviewer@agora.net', 'reviewer2@agora.net']
+
+        messages = client.get_messages(subject = '[Agora/Covid-19] You have been assigned as reviewer of the article titled "Paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer@agora.net' in recipients
+        assert 'reviewer2@agora.net' in recipients

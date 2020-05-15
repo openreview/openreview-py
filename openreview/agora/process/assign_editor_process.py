@@ -5,6 +5,12 @@ def process_update(client, note, invitation, existing_note):
     support = 'OpenReview.net/Support'
     article_group_id = invitation.id.split('/-/')[0]
     editors_group_id = '{}/Editors'.format(article_group_id)
+
+    existent_group = openreview.tools.get_group(client, editors_group_id)
+    existent_editors = []
+    if existent_group:
+        existent_editors = existent_group.members
+
     editors_group = openreview.Group(
         id=editors_group_id,
         readers=['everyone'],
@@ -15,14 +21,12 @@ def process_update(client, note, invitation, existing_note):
     )
     client.post_group(editors_group)
 
-    assigned_editors = note.content.get('assigned_editors', [])
-    if existing_note:
-        assigned_editors = list(set(note.content.get('assigned_editors', [])) - set(existing_note.content.get('assigned_editors')))
+    new_editors = list(set(note.content.get('assigned_editors', [])) - set(existent_editors))
 
-    if assigned_editors:
+    if new_editors:
 
-        client.post_message(subject='[Agora/Covid-19] You have been assigned as editor of the article titled "{title}"',
-            recipients=assigned_editors,
+        client.post_message(subject='[Agora/Covid-19] You have been assigned as editor of the article titled "{title}"'.format(title=article.content['title']),
+            recipients=new_editors,
             message='''You have been assigned as an editor of the paper titled "{title}" by {signature}, the Editor-in-Chief of this venue.
 Your can start assigning reviewers now.
 
@@ -31,7 +35,7 @@ To view the article, click here: https://openreview.net/forum?id={forum}'''.form
             sender=None
         )
 
-        client.post_message(subject='[Agora/Covid-19] An editor has been assigned to your article titled "{title}"',
+        client.post_message(subject='[Agora/Covid-19] An editor has been assigned to your article titled "{title}"'.format(title=article.content['title']),
             recipients=article.content['authorids'],
             message='''A new editor/s have been assigned to your paper titled "{title}" by {signature}, the Editor-in-Chief of this venue.
 
