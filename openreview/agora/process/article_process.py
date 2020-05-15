@@ -80,7 +80,7 @@ def process_update(client, note, invitation, existing_note):
                 'values': [editor, support]
             },
             'signatures': {
-                'values-regex': '{}|{}'.format(editor, support)
+                'values-regex': '~.*|{}'.format(support)
             }
         }
     )
@@ -99,7 +99,7 @@ def process_update(client, note, invitation, existing_note):
                 'values': [editors_group_id, support]
             },
             'signatures': {
-                'values-regex': '{}|{}'.format(editors_group_id, support)
+                'values-regex': '~.*|{}'.format(support)
             }
         }
     )

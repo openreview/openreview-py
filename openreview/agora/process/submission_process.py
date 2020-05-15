@@ -9,9 +9,8 @@ def process_update(client, note, invitation, existing_note):
     author_message = '''Your submission to Agora Covid-19 has been {action}.
 
 Title: {title}
-To view your submission, click here: https://openreview.net/forum?id={forum}
-
-'''.format(action=action, number=note.number, title=note.content['title'], forum=note.forum)
+Your submission will be examined by the Editor-in-Chief of the venue and then you will receive an email with a response.
+To view your submission, click here: https://openreview.net/forum?id={forum}'''.format(action=action, title=note.content['title'], forum=note.forum)
 
     coauthor_message = author_message + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {tauthor}'.format(tauthor=note.tauthor)
 
@@ -33,9 +32,9 @@ To view your submission, click here: https://openreview.net/forum?id={forum}
     editor = '-Agora/Covid-19/Editors'
     superuser = 'OpenReview.net'
 
-    client.post_message(subject='Submission {action} to Agora Covid-10'.format(action=action),
+    client.post_message(subject='Agora Covid-19 has received a submission titled "{title}"'.format(title=note.content['title']),
         recipients=[editor, support],
-        message='https://openreview.net/forum?id={forum}'.format(forum=note.forum),
+        message=author_message,
         ignoreRecipients=None,
         sender=None
     )

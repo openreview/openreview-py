@@ -5,7 +5,7 @@ import json
 
 class Agora(object):
 
-    def __init__(self, client, support_group_id, superuser):
+    def __init__(self, client, support_group_id, superuser, editor_id):
 
         venue_group = openreview.Group(
             id='-Agora',
@@ -73,7 +73,7 @@ class Agora(object):
             writers=[support_group_id],
             signatures=[support_group_id],
             signatories=['-Agora/Covid-19/Editors'],
-            members=[],
+            members=[editor_id],
         )
         client.post_group(covid_group_editor)
 

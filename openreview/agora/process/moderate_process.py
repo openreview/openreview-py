@@ -1,19 +1,22 @@
 def process(client, note, invitation):
 
-
+    support = 'OpenReview.net/Support'
     submission = client.get_note(note.forum)
 
     if 'Accept' in note.content.get('resolution', ''):
 
         submission.readers = ['everyone']
-        submission.writers = ['OpenReview.net/Support']
+        submission.writers = [support]
         submission.invitation = '-Agora/Covid-19/-/Article'
 
         client.post_note(submission)
 
         client.post_message(subject='[Agora/Covid-19] Your submission has been accepted',
             recipients=submission.content['authorids'],
-            message='Congratulations, your submission has been released to the public.\n\nTo view your article, click here: https://openreview.net/forum?id={forum}'.format(forum=note.forum),
+            message='''Congratulations, your submission has been accepted by {signature}, the Editor-in-Chief of this venue.
+Your article is now visible to the public and an editor will be assigned soon based on your suggestions.
+
+To view your article, click here: https://openreview.net/forum?id={forum}'''.format(signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
             sender=None
         )
