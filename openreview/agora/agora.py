@@ -171,7 +171,9 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/submission_process.py')) as f:
-            submission_invitation.process = f.read()
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            submission_invitation.process = file_content
             client.post_invitation(submission_invitation)
 
         moderate_invitation = openreview.Invitation(
@@ -199,7 +201,9 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/moderate_process.py')) as f:
-            moderate_invitation.process = f.read()
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            moderate_invitation.process = file_content
             client.post_invitation(moderate_invitation)
 
         article_invitation = openreview.Invitation(
@@ -224,7 +228,9 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/article_process.py')) as f:
-            article_invitation.process = f.read()
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            article_invitation.process = file_content
             client.post_invitation(article_invitation)
 
         desk_reject_invitation = openreview.Invitation(
@@ -275,7 +281,9 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/revision_process.py')) as f:
-            revision_invitation.process = f.read()
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            revision_invitation.process = file_content
             client.post_invitation(revision_invitation)
 
         assign_editor_invitation = openreview.Invitation(
@@ -298,8 +306,9 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/assign_editor_process.py')) as f:
-            content = f.read()
-            assign_editor_invitation.process = content
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            assign_editor_invitation.process = file_content
             client.post_invitation(assign_editor_invitation)
 
         assign_reviewer_invitation = openreview.Invitation(
@@ -322,7 +331,9 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/assign_reviewer_process.py')) as f:
-            assign_reviewer_invitation.process = f.read()
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            assign_reviewer_invitation.process = file_content
             client.post_invitation(assign_reviewer_invitation)
 
         review_invitation = openreview.Invitation(
@@ -351,6 +362,7 @@ class Agora(object):
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/review_process.py')) as f:
             file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
             review_invitation.process = file_content
             client.post_invitation(review_invitation)
 
@@ -379,6 +391,7 @@ class Agora(object):
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/suggest_reviewer_process.py')) as f:
             file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
             suggest_reviewer_invitation.process = file_content
             client.post_invitation(suggest_reviewer_invitation)
 
@@ -408,5 +421,6 @@ class Agora(object):
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/comment_process.py')) as f:
             file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
             comment_invitation.process = file_content
             client.post_invitation(comment_invitation)
