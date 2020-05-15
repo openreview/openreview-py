@@ -1,7 +1,7 @@
 def process_update(client, note, invitation, existing_note):
 
     ## Notify authors and editor
-    author_subject = 'Agora Covid-19 has received your submission titled ' + note.content['title']
+    author_subject = 'Agora Covid-19 has received your submission titled "{title}"'.format(title=note.content['title'])
     action = 'posted'
     if existing_note:
         action = 'deleted' if note.ddate else 'updated'
@@ -31,6 +31,7 @@ To view your submission, click here: https://openreview.net/forum?id={forum}
 
     support = 'OpenReview.net/Support'
     editor = '-Agora/Covid-19/Editors'
+    superuser = 'OpenReview.net'
 
     client.post_message(subject='Submission {action} to Agora Covid-10'.format(action=action),
         recipients=[editor, support],
@@ -65,7 +66,7 @@ To view your submission, click here: https://openreview.net/forum?id={forum}
         id = '{}/-/Moderate'.format(submission_group.id),
         super = '-Agora/Covid-19/-/Moderate',
         writers = [support],
-        signatures = ['OpenReview.net'],
+        signatures = [superuser],
         reply = {
             'forum': note.forum,
             'replyto': note.forum,

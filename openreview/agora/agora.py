@@ -5,7 +5,7 @@ import json
 
 class Agora(object):
 
-    def __init__(self, client, support_group_id):
+    def __init__(self, client, support_group_id, superuser):
 
         venue_group = openreview.Group(
             id='-Agora',
@@ -173,6 +173,7 @@ class Agora(object):
         with open(os.path.join(os.path.dirname(__file__), 'process/submission_process.py')) as f:
             file_content = f.read()
             file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            file_content = file_content.replace("superuser = 'OpenReview.net'", "superuser = '" + superuser + "'")
             submission_invitation.process = file_content
             client.post_invitation(submission_invitation)
 
