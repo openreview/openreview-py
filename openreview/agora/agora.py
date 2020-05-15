@@ -258,7 +258,6 @@ class Agora(object):
                 'content': content
             }
         )
-        desk_reject_invitation.process = content
         client.post_invitation(desk_reject_invitation)
 
 
@@ -351,8 +350,8 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/review_process.py')) as f:
-            content = f.read()
-            review_invitation.process = content
+            file_content = f.read()
+            review_invitation.process = file_content
             client.post_invitation(review_invitation)
 
         suggest_reviewer_invitation = openreview.Invitation(
@@ -379,8 +378,8 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/suggest_reviewer_process.py')) as f:
-            content = f.read()
-            suggest_reviewer_invitation.process = content
+            file_content = f.read()
+            suggest_reviewer_invitation.process = file_content
             client.post_invitation(suggest_reviewer_invitation)
 
         comment_invitation = openreview.Invitation(
@@ -408,6 +407,6 @@ class Agora(object):
             }
         )
         with open(os.path.join(os.path.dirname(__file__), 'process/comment_process.py')) as f:
-            content = f.read()
-            comment_invitation.process = content
+            file_content = f.read()
+            comment_invitation.process = file_content
             client.post_invitation(comment_invitation)
