@@ -192,13 +192,13 @@ class TestClient():
         assert note
 
         notes = client.get_notes(content = { 'title': 'Paper title'})
-        assert len(notes) == 3
+        assert len(notes) == 4
 
         notes = client.get_notes(content = { 'title': 'Paper title3333'})
         assert len(notes) == 0
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title'}))
-        assert len(notes) == 3
+        assert len(notes) == 4
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
