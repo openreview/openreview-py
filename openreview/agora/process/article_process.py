@@ -122,7 +122,7 @@ def process_update(client, note, invitation, existing_note):
                 #     editors_group_id,
                 #     reviewers_group_id
                 # ],
-                # Temporally use everyone only.
+                # Temporarily use everyone only.
                 'values': ['everyone'],
                 'default': ['everyone']
             },

@@ -65,7 +65,7 @@ class TestAgora():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
-        assert messages[0]['content']['text'] == 'Your submission to Agora COVID-19 has been posted.\n\nTitle: Paper title\nYour submission will be examined by the Editor-in-Chief of the venue and then you will receive an email with a response.\nTo view your submission, click here: https://openreview.net/forum?id=' + posted_note.id
+        assert messages[0]['content']['text'] == 'Your submission to Agora COVID-19 has been posted.\n\nTitle: Paper title\nYour submission will be examined by the Editor-in-Chief of the venue and you will receive an email with their response shortly.\nTo your submission can be viewed on OpenReview here: https://openreview.net/forum?id=' + posted_note.id
 
         messages = client.get_messages(subject = 'Agora COVID-19 has received a submission titled "Paper title"')
         assert len(messages) == 1
@@ -106,7 +106,7 @@ class TestAgora():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
-        assert messages[0]['content']['text'] == 'Congratulations, your submission has been accepted by ~Editor_One1, the Editor-in-Chief of this venue.\nYour article is now visible to the public and an editor will be assigned soon based on your suggestions.\n\nTo view your article, click here: https://openreview.net/forum?id=' + submissions[0].id
+        assert messages[0]['content']['text'] == 'Congratulations, your submission has been accepted by ~Editor_One1, the Editor-in-Chief of this venue.\nYour article is now visible to the public and an editor will be assigned soon based on your suggestions.\n\nThe article can be viewed on OpenReview here: https://openreview.net/forum?id=' + submissions[0].id
 
 
     def test_assign_editor(self, client, helpers):
@@ -144,7 +144,7 @@ class TestAgora():
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
 
-        messages = client.get_messages(subject = '[Agora/COVID-19] You have been assigned as editor of the article titled "Paper title"')
+        messages = client.get_messages(subject = '[Agora/COVID-19] You have been assigned to be an editor of the article titled "Paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'article_editor@agora.net' in recipients

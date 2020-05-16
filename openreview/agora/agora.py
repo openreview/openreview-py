@@ -385,7 +385,7 @@ class Agora(object):
                         'required':True
                     },
                     'comment': {
-                        'description': 'Why are you suggesting?',
+                        'description': 'Why are you suggesting this reviewer?',
                         'order': 2,
                         'value-regex': "[\\S\\s]{1,5000}",
                         'required':True
