@@ -59,10 +59,8 @@ class Agora(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '-Agora/COVID-19';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '-Agora/COVID-19/-/Submission';")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '-Agora/COVID-19/-/Submission';")
-
-            content = content.replace("var PUBLIC = false;", "var PUBLIC = true;")
-
+            content = content.replace("var ARTICLE_ID = '';", "var ARTICLE_ID = '-Agora/COVID-19/-/Article';")
+            content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '-Agora/COVID-19/-/Desk_Rejected';")
 
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             covid_group.web = content

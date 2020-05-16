@@ -8,17 +8,9 @@
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
-var BLIND_SUBMISSION_ID = '';
-var WITHDRAWN_SUBMISSION_ID = '';
+var ARTICLE_ID = '';
 var DESK_REJECTED_SUBMISSION_ID = '';
-var REVIEWERS_NAME = '';
-var AREA_CHAIRS_NAME = '';
-var AREA_CHAIRS_ID = '';
-var REVIEWERS_ID = '';
-var PROGRAM_CHAIRS_ID = '';
-var AUTHORS_ID = '';
 var HEADER = {};
-var PUBLIC = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var BUFFER = 0;  // deprecated
@@ -54,52 +46,33 @@ function main() {
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
 
-  var notesP = $.Deferred().resolve([]);
+  var articleNotesP = Webfield.api.getSubmissions(ARTICLE_ID, {
+    pageSize: PAGE_SIZE,
+    details: 'replyCount,invitation',
+    includeCount: true
+  });
+
+  var submissionNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
+    pageSize: PAGE_SIZE,
+    details: 'replyCount,invitation',
+    includeCount: true
+  });
+
+  var deskRejectedNotesP = Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
+    pageSize: PAGE_SIZE,
+    details: 'replyCount,invitation',
+    includeCount: true
+  });
+
   var activityNotesP = $.Deferred().resolve([]);
-  var authorNotesP = $.Deferred().resolve([]);
-  var userGroupsP = $.Deferred().resolve([]);
-  var withdrawnNotesP = $.Deferred().resolve([]);
-  var deskRejectedNotesP = $.Deferred().resolve([]);
-
-  if (PUBLIC) {
-    notesP = Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
-      pageSize: PAGE_SIZE,
-      details: 'replyCount,invitation,original',
-      includeCount: true
-    });
-
-    if (WITHDRAWN_SUBMISSION_ID) {
-      withdrawnNotesP = Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
-        pageSize: PAGE_SIZE,
-        details: 'replyCount,invitation,original',
-        includeCount: true
-      });
-    }
-
-    if (DESK_REJECTED_SUBMISSION_ID) {
-      deskRejectedNotesP = Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
-        pageSize: PAGE_SIZE,
-        details: 'replyCount,invitation,original',
-        includeCount: true
-      });
-    }
-  }
-
   if (user && !_.startsWith(user.id, 'guest_')) {
     activityNotesP = Webfield.api.getSubmissions(WILDCARD_INVITATION, {
       pageSize: PAGE_SIZE,
       details: 'forumContent,invitation,writable'
     });
-
-    userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true });
-
-    authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
-      pageSize: PAGE_SIZE,
-      'content.authorids': user.profile.id
-    });
   }
 
-  return $.when(notesP, userGroupsP, activityNotesP, authorNotesP, withdrawnNotesP, deskRejectedNotesP);
+  return $.when(articleNotesP, submissionNotesP, deskRejectedNotesP, activityNotesP);
 }
 
 // Render functions
@@ -115,13 +88,7 @@ function renderSubmissionButton() {
       Webfield.ui.submissionButton(invitation, user, {
         onNoteCreated: function() {
           // Callback funtion to be run when a paper has successfully been submitted (required)
-          if (PUBLIC) {
-            promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
-            'A list of all submissions will be available after the deadline.');
-          } else {
-            promptMessage('Your submission is complete. Check your inbox for a confirmation email. ' +
-            'The author console page for managing your submissions will be available soon.');
-          }
+          promptMessage('Your submission is complete. Check your inbox for a confirmation email. ');
 
           load().then(renderContent).then(function() {
             $('.tabs-container a[href="#your-consoles"]').click();
@@ -132,37 +99,23 @@ function renderSubmissionButton() {
 }
 
 function renderConferenceTabs() {
-  var sections = [
-    {
-      heading: 'Your Consoles',
-      id: 'your-consoles',
-    }
-  ];
 
-  if (PUBLIC) {
-    sections.push({
-      heading: 'All Submissions',
-      id: 'all-submissions',
-    });
-    if (WITHDRAWN_SUBMISSION_ID) {
-      sections.push({
-        heading: 'Withdrawn Submissions',
-        id: 'withdrawn-submissions',
-      })
-    }
-    if (DESK_REJECTED_SUBMISSION_ID) {
-      sections.push({
-        heading: 'Desk Rejected Submissions',
-        id: 'desk-rejected-submissions',
-      })
-    }
-  }
-
-  sections.push({
+  var sections = [{
+    heading: 'Articles',
+    id: 'articles',
+  },
+  {
+    heading: 'Submissions',
+    id: 'submissions',
+  },
+  {
+    heading: 'Desk Rejected Submissions',
+    id: 'desk-rejected-submissions',
+  },
+  {
     heading: 'Recent Activity',
     id: 'recent-activity',
-  }
-)
+  }];
 
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
@@ -170,76 +123,32 @@ function renderConferenceTabs() {
   });
 }
 
-function createConsoleLinks(allGroups) {
-  var uniqueGroups = _.sortBy(_.uniq(allGroups));
-  var links = [];
-  uniqueGroups.forEach(function(group) {
-    var groupName = group.split('/').pop();
-    if (groupName.slice(-1) === 's') {
-      groupName = groupName.slice(0, -1);
-    }
-    links.push(
-      [
-        '<li class="note invitation-link">',
-        '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
-        '</li>'
-      ].join('')
-    );
-  });
+function renderContent(articlesResponse, submissionsResponse, deskRejectedResponse, activityNotes) {
 
-  $('#your-consoles .submissions-list').append(links);
-}
+  var notes = articlesResponse.notes || [];
+  var noteCount = articlesResponse.count || 0;
 
-function renderContent(notesResponse, userGroups, activityNotes, authorNotes, withdrawnNotes, deskRejectedNotes) {
-
-  // Your Consoles tab
-  if (userGroups.length || authorNotes.length) {
-
-    var $container = $('#your-consoles').empty();
-    $container.append('<ul class="list-unstyled submissions-list">');
-
-    var allConsoles = [];
-    if (authorNotes.length) {
-      allConsoles.push(AUTHORS_ID);
-    }
-    userGroups.forEach(function(group) {
-      allConsoles.push(group.id);
-    });
-
-    // Render all console links for the user
-    createConsoleLinks(allConsoles);
-
-    $('.tabs-container a[href="#your-consoles"]').parent().show();
-  } else {
-    $('.tabs-container a[href="#your-consoles"]').parent().hide();
-  }
-
-
-  // All Submitted Papers tab
-  var notes = notesResponse.notes || [];
-  var noteCount = notesResponse.count || 0;
-
-  $('#all-submissions').empty();
+  $('#articles').empty();
 
   if (noteCount) {
     var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
-      container: '#all-submissions',
+      container: '#articles',
       autoLoad: false
     });
 
     Webfield.ui.submissionList(notes, {
       heading: null,
-      container: '#all-submissions',
+      container: '#articles',
       search: {
         enabled: true,
         localSearch: false,
-        invitation: BLIND_SUBMISSION_ID,
+        invitation: ARTICLE_ID,
         onResults: function(searchResults) {
           Webfield.ui.searchResults(searchResults, searchResultsListOptions);
         },
         onReset: function() {
           Webfield.ui.searchResults(notes, searchResultsListOptions);
-          $('#all-submissions').append(view.paginationLinks(noteCount, PAGE_SIZE, 1));
+          $('#articles').append(view.paginationLinks(noteCount, PAGE_SIZE, 1));
         }
       },
       displayOptions: paperDisplayOptions,
@@ -247,8 +156,8 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
       noteCount: noteCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
-          details: 'replyCount,invitation,original',
+        return Webfield.api.getSubmissions(ARTICLE_ID, {
+          details: 'replyCount,invitation',
           pageSize: PAGE_SIZE,
           offset: offset
         });
@@ -256,7 +165,7 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
       fadeIn: false
     });
   } else {
-    $('.tabs-container a[href="#all-submissions"]').parent().hide();
+    $('.tabs-container a[href="#articles"]').parent().hide();
   }
 
   // Activity Tab
@@ -276,24 +185,24 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
     $('.tabs-container a[href="#recent-activity"]').parent().hide();
   }
 
-  var withdrawnNotesCount = withdrawnNotes.count || 0;
-  if (withdrawnNotesCount) {
-    $('#withdrawn-submissions').empty();
+  var submissionNotesCount = submissionsResponse.count || 0;
+  if (submissionNotesCount) {
+    $('#submissions').empty();
 
-    var withdrawnNotesArray = withdrawnNotes.notes || [];
-    Webfield.ui.submissionList(withdrawnNotesArray, {
+    var notes = submissionsResponse.notes || [];
+    Webfield.ui.submissionList(notes, {
       heading: null,
-      container: '#withdrawn-submissions',
+      container: '#submissions',
       search: {
         enabled: false
       },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
-      noteCount: withdrawnNotesCount,
+      noteCount: submissionNotesCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissions(WITHDRAWN_SUBMISSION_ID, {
-          details: 'replyCount,invitation,original',
+        return Webfield.api.getSubmissions(SUBMISSION_ID, {
+          details: 'replyCount,invitation',
           pageSize: PAGE_SIZE,
           offset: offset
         });
@@ -301,14 +210,14 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
       fadeIn: false
     });
   } else {
-    $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
+    $('.tabs-container a[href="#submissions"]').parent().hide();
   }
 
-  var deskRejectedNotesCount = deskRejectedNotes.count || 0;
+  var deskRejectedNotesCount = deskRejectedResponse.count || 0;
   if (deskRejectedNotesCount) {
     $('#desk-rejected-submissions').empty();
 
-    var deskRejectedNotesArray = deskRejectedNotes.notes || [];
+    var deskRejectedNotesArray = deskRejectedResponse.notes || [];
     Webfield.ui.submissionList(deskRejectedNotesArray, {
       heading: null,
       container: '#desk-rejected-submissions',
@@ -321,7 +230,7 @@ function renderContent(notesResponse, userGroups, activityNotes, authorNotes, wi
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
         return Webfield.api.getSubmissions(DESK_REJECTED_SUBMISSION_ID, {
-          details: 'replyCount,invitation,original',
+          details: 'replyCount,invitation',
           pageSize: PAGE_SIZE,
           offset: offset
         });

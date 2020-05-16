@@ -24,7 +24,7 @@ The article can be viewed on OpenReview here: https://openreview.net/forum?id={f
 
     if 'Desk-Reject' in note.content.get('resolution', ''):
 
-        submission.invitation = '{}/-/Desk-Reject'.format(covid_group_id)
+        submission.invitation = '{}/-/Desk_Rejected'.format(covid_group_id)
 
         client.post_note(submission)
 
