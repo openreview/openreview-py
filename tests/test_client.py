@@ -153,16 +153,16 @@ class TestClient():
 
     def test_get_invitations_by_invitee(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
-        assert len(invitations) == 0
+        assert invitations
 
         invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
-        assert len(invitations) == 0
+        assert invitations
 
         invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
-        assert len(invitations) == 0
+        assert invitations
 
         invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
-        assert len(invitations) == 0
+        assert invitations
 
     def test_get_notes_by_content(self, client):
 
