@@ -27,35 +27,44 @@ class Agora(object):
             signatories=[],
             members=[],
         )
+
+        covid_editors = '{}/Editors'.format(covid_group_id)
+
         header = {
             "title": "Agora COVID-19",
-            "subtitle": "OpenReview COVID-19 public space",
+            "subtitle": "OpenReview public space for COVID-19 related articles",
             "location": "Amherst, MA",
             "date": "Ongoing",
             "website": "https://openreview.net",
             "instructions": '''
             <p>
+                <strong>Editor-in-chief:</strong><br>
+                This venue is managed by a group of Editors-in-Chief who do desk rejects, and determine the editors for each submitted article.
+                To see the list of members, click <a href="https://openreview.net/group?id={covid_editors}">here</a>
+            </p>
+            <p>
                 <strong>Submission:</strong><br>
-                Any logged-in OpenReview user can submit a paper.  The paper submission form also allows the authors to suggest one or multiple “editors” by specifying their OpenReview tilde-name-identity (e.g. “~Samy_Bengio1”)
+                <p>Any logged-in OpenReview user can submit a paper.  The paper submission form also allows the authors to suggest one or multiple “editors” by specifying their OpenReview tilde-name-identity (e.g. “~Samy_Bengio1”).</p>
+                <p>The paper is not immediately visible to the public through the OpenReview website, but goes to the Editor-in-Chief, who examines it briefly, checking for spam, but not checking for scientific validity.  If not spam, the paper is made visible, and editors as assigned to the paper.</p>
+                <p>Authors can upload a revision to any part of their submission at any time.  The full history of past uploads will still be available.</p>
             </p>
-            <p><strong>Moderation:</strong><br>
-                The paper is not immediately visible to the public through the OpenReview website, but goes to the Editor-in-Chief, who examines it briefly, checking for spam, but not checking for scientific validity.  If not spam, the paper is made visible, and editors as assigned to the paper.
+            <p>
+                <strong>Editor:</strong><br>
+                The Editor-in-Chief decides on assigned editors, perhaps following the suggestions of the authors, or perhaps making their own choices.  The editor assignments are non-anonymous.  Editors could be any OpenReview user with a Profile, not merely from a closed list.  (If the Editor -in-Chief wants to assign some it already in the OpenReview system, ask by email the person to sign up.) They aren’t asked if they accept this assignment.
+                The paper authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove Editors for the paper.
             </p>
-            <p><strong>Editor-in-chief:</strong><br>
-                Each venue has a group of Editors-in-Chief who do desk rejects, and determine the editors for each submitted article.
+            <p>
+                <strong>Reviewing:</strong><br>
+                Only assigned reviewers can review or comment on the article. Reviews and reviewers identity are public.
+                Any of the editors can add (or remove) people to the group of reviewers by adding/removing their OpenReview tilde-name-ids to the Reviewers field of the paper (ensuring non-anonymity).
+                Anyone can suggest reviewers for this article. Assigned editor will decide to assign them or not.
             </p>
-            <p><strong>Editor assignment:</strong><br>
-            The Editor-in-Chief decides on assigned editors, perhaps following the suggestions of the authors, or perhaps making their own choices.  The editor assignments are non-anonymous.  Editors could be any OpenReview user with a Profile, not merely from a closed list.  (If the Editor -in-Chief wants to assign some it already in the OpenReview system, ask by email the person to sign up.) They aren’t asked if they accept this assignment.
+            <p>
+                <strong>Questions or Concerns:</strong><br>
+                Please contact the OpenReview support team at
+                <a href="mailto:info@openreview.net">info@openreview.net</a> with any questions or concerns.
             </p>
-            <p><strong>Adding Editors:</strong><br>
-            The paper authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove Editors for the paper.
-            </p>
-            <p><strong>Questions or Concerns:</strong><br>
-            Please contact the OpenReview support team at
-            <a href="mailto:info@openreview.net">info@openreview.net</a> with any questions or concerns.
-        </br>
-        </p>
-            ''',
+            '''.format(covid_editors=covid_editors),
             "deadline": "",
             "contact": "info@openreview.net"
         }
@@ -71,7 +80,7 @@ class Agora(object):
             covid_group.web = content
             client.post_group(covid_group)
 
-        covid_editors = '{}/Editors'.format(covid_group_id)
+
 
         covid_group_editor = openreview.Group(
             id=covid_editors,
