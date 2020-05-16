@@ -38,7 +38,7 @@ The article can be viewed on OpenReview here: https://openreview.net/forum?id={f
             recipients=article.content['authorids'],
             message='''A new reviewer has been assigned to your paper titled "{title}" by {signature}, the editor of this article.
 
-To view the article, click here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
+The article can be viewed on OpenReview here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
             sender=None
         )
