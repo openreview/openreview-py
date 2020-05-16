@@ -37,7 +37,7 @@ The paper can be viewed on OpenReview here: https://openreview.net/forum?id={for
 
         client.post_message(subject='[Agora/COVID-19] An editor has been assigned to your article titled "{title}"'.format(title=article.content['title']),
             recipients=article.content['authorids'],
-            message='''A new editor/s have been assigned to your paper titled "{title}" by {signature}, the Editor-in-Chief of this venue.
+            message='''A new editor has been assigned to your paper titled "{title}" by {signature}, Editor-in-Chief of the Agora COVID-19 venue.
 
 To view the article, click here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
