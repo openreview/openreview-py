@@ -16,7 +16,7 @@ def process(client, note, invitation):
             message='''Congratulations, your submission has been accepted by {signature}, the Editor-in-Chief of this venue.
 Your article is now visible to the public and an editor will be assigned soon based on your suggestions.
 
-To view your article, click here: https://openreview.net/forum?id={forum}'''.format(signature=note.signatures[0], forum=note.forum),
+The article can be viewed on OpenReview here: https://openreview.net/forum?id={forum}'''.format(signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
             sender=None
         )
