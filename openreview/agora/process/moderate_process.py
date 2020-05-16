@@ -27,9 +27,9 @@ The article can be viewed on OpenReview here: https://openreview.net/forum?id={f
 
         client.post_note(submission)
 
-        client.post_message(subject='[Agora/Covid-19] Your submission has been desk-rejected',
+        client.post_message(subject='[Agora/Covid-19] Your submission has been rejected',
             recipients=submission.content['authorids'],
-            message='Unfortunately your submission has been desk-rejected.\n\nTo read the reason, click here: https://openreview.net/forum?id={forum}&noteId={id}'.format(forum=note.forum, id=note.id),
+            message='Unfortunately your submission has been desk-rejected by the Editor-in-Chief of this venue.\n\nFor more information, see their comment on the OpenReview submission forum here: https://openreview.net/forum?id={forum}&noteId={id}'.format(forum=note.forum, id=note.id),
             ignoreRecipients=None,
             sender=None
         )
