@@ -18,8 +18,9 @@ class Agora(object):
         )
         client.post_group(venue_group)
 
+        covid_group_id = '-Agora/COVID-19'
         covid_group = openreview.Group(
-            id='-Agora/Covid-19',
+            id=covid_group_id,
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
@@ -27,7 +28,7 @@ class Agora(object):
             members=[],
         )
         header = {
-            "title": "Agora Covid-19",
+            "title": "Agora COVID-19",
             "subtitle": "OpenReview Preprint Server",
             "location": "Amherst, MA",
             "date": "Ongoing",
@@ -56,9 +57,9 @@ class Agora(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '-Agora/Covid-19';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '-Agora/Covid-19/-/Submission';")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '-Agora/Covid-19/-/Submission';")
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '-Agora/COVID-19';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '-Agora/COVID-19/-/Submission';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '-Agora/COVID-19/-/Submission';")
 
             content = content.replace("var PUBLIC = false;", "var PUBLIC = true;")
 
@@ -67,21 +68,23 @@ class Agora(object):
             covid_group.web = content
             client.post_group(covid_group)
 
+        covid_editors = '{}/Editors'.format(covid_group_id)
+
         covid_group_editor = openreview.Group(
-            id='-Agora/Covid-19/Editors',
+            id=covid_editors,
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            signatories=['-Agora/Covid-19/Editors'],
+            signatories=[covid_editors],
             members=[editor_id],
         )
         client.post_group(covid_group_editor)
 
 
         covid_group_editor = openreview.Group(
-            id='-Agora/Covid-19/Blocked',
+            id='{}/Blocked'.format(covid_group_id),
             readers=['everyone'],
-            writers=[support_group_id, '-Agora/Covid-19/Editors'],
+            writers=[support_group_id, covid_editors],
             signatures=[support_group_id],
             signatories=[],
             members=[],
@@ -139,7 +142,7 @@ class Agora(object):
         }
 
         submission_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Submission',
+            id = '{}/-/Submission'.format(covid_group_id),
             duedate = 2556143999000, # Saturday, December 31, 2050 11:59:59 PM,
             readers = ['everyone'],
             writers = [support_group_id],
@@ -151,7 +154,7 @@ class Agora(object):
                 'readers': {
                     'values-copied': [
                         support_group_id,
-                        '-Agora/Covid-19/Editors',
+                        covid_editors,
                         '{content.authorids}',
                         '{signatures}'
                     ]
@@ -159,13 +162,13 @@ class Agora(object):
                 'writers': {
                     'values-copied': [
                         support_group_id,
-                        '-Agora/Covid-19/Editors',
+                        covid_editors,
                         '{content.authorids}',
                         '{signatures}'
                     ]
                 },
                 'signatures': {
-                    'values-regex': '~.*|OpenReview.net/Support|-Agora/Covid-19/Editors'
+                    'values-regex': '~.*|{}|{}'.format(support_group_id, covid_editors)
                 },
                 'content': content
             }
@@ -178,8 +181,8 @@ class Agora(object):
             client.post_invitation(submission_invitation)
 
         moderate_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Moderate',
-            invitees = ['-Agora/Covid-19/Editors'],
+            id = '{}/-/Moderate'.format(covid_group_id),
+            invitees = [covid_editors],
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = ['openreview.net'],
@@ -208,7 +211,7 @@ class Agora(object):
             client.post_invitation(moderate_invitation)
 
         article_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Article',
+            id = '{}/-/Article'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -223,7 +226,7 @@ class Agora(object):
                     'values': [support_group_id]
                 },
                 'signatures': {
-                    'values-regex': '~.*|'+support_group_id+'|-Agora/Covid-19/Editor'
+                    'values-regex': '~.*|{}|{}'.format(support_group_id, covid_editors)
                 },
                 'content': content
             }
@@ -235,7 +238,7 @@ class Agora(object):
             client.post_invitation(article_invitation)
 
         desk_reject_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Desk_Reject',
+            id = '{}/-/Desk_Reject'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -246,7 +249,7 @@ class Agora(object):
                 'readers': {
                     'values-copied': [
                         support_group_id,
-                        '-Agora/Covid-19/Editors',
+                        covid_editors,
                         '{content.authorids}',
                         'signatures'
                     ]
@@ -254,13 +257,13 @@ class Agora(object):
                 'writers': {
                     'values-copied': [
                         support_group_id,
-                        '-Agora/Covid-19/Editors',
+                        covid_editors,
                         '{content.authorids}',
                         'signatures'
                     ]
                 },
                 'signatures': {
-                    'values-regex': '~.*|'+support_group_id+'|-Agora/Covid-19/Editors'
+                    'values-regex': '~.*|{}|{}'.format(support_group_id, covid_editors)
                 },
                 'content': content
             }
@@ -270,7 +273,7 @@ class Agora(object):
 
         ##Super invitations
         revision_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Revision',
+            id = '{}/-/Revision'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -288,7 +291,7 @@ class Agora(object):
             client.post_invitation(revision_invitation)
 
         assign_editor_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Assign_Editor',
+            id = '{}/-/Assign_Editor'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -313,7 +316,7 @@ class Agora(object):
             client.post_invitation(assign_editor_invitation)
 
         assign_reviewer_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Assign_Reviewer',
+            id = '{}/-/Assign_Reviewer'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -338,7 +341,7 @@ class Agora(object):
             client.post_invitation(assign_reviewer_invitation)
 
         review_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Review',
+            id = '{}/-/Review'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -368,7 +371,7 @@ class Agora(object):
             client.post_invitation(review_invitation)
 
         suggest_reviewer_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Suggest_Reviewer',
+            id = '{}/-/Suggest_Reviewer'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -397,7 +400,7 @@ class Agora(object):
             client.post_invitation(suggest_reviewer_invitation)
 
         comment_invitation = openreview.Invitation(
-            id = '-Agora/Covid-19/-/Comment',
+            id = '{}/-/Comment'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],

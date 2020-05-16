@@ -1,5 +1,6 @@
 def process(client, note, invitation):
 
+    covid_group_id = '-Agora/COVID-19'
     support = 'OpenReview.net/Support'
     submission = client.get_note(note.forum)
 
@@ -7,11 +8,11 @@ def process(client, note, invitation):
 
         submission.readers = ['everyone']
         submission.writers = [support]
-        submission.invitation = '-Agora/Covid-19/-/Article'
+        submission.invitation = '{}/-/Article'.format(covid_group_id)
 
         client.post_note(submission)
 
-        client.post_message(subject='[Agora/Covid-19] Your submission has been accepted',
+        client.post_message(subject='[Agora/COVID-19] Your submission has been accepted',
             recipients=submission.content['authorids'],
             message='''Congratulations, your submission has been accepted by {signature}, the Editor-in-Chief of this venue.
 Your article is now visible to the public and an editor will be assigned soon based on your suggestions.
@@ -23,11 +24,11 @@ To view your article, click here: https://openreview.net/forum?id={forum}'''.for
 
     if 'Desk-Reject' in note.content.get('resolution', ''):
 
-        submission.invitation = '-Agora/Covid-19/-/Desk-Reject'
+        submission.invitation = '{}/-/Desk-Reject'.format(covid_group_id)
 
         client.post_note(submission)
 
-        client.post_message(subject='[Agora/Covid-19] Your submission has been desk-rejected',
+        client.post_message(subject='[Agora/COVID-19] Your submission has been desk-rejected',
             recipients=submission.content['authorids'],
             message='Unfortunately your submission has been desk-rejected.\n\nTo read the reason, click here: https://openreview.net/forum?id={forum}&noteId={id}'.format(forum=note.forum, id=note.id),
             ignoreRecipients=None,

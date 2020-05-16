@@ -1,11 +1,12 @@
 def process_update(client, note, invitation, existing_note):
 
+    covid_group_id = '-Agora/COVID-19'
     support = 'OpenReview.net/Support'
-    editor = '-Agora/Covid-19/Editors'
+    editor = '{}/Editors'.format(covid_group_id)
 
     ## Create article groups
     article_group = openreview.Group(
-        id='-Agora/Covid-19/Article{}'.format(note.number),
+        id='{}/Article{}'.format(covid_group_id, note.number),
         readers=['everyone'],
         writers=[support],
         signatures=[support],
@@ -50,7 +51,7 @@ def process_update(client, note, invitation, existing_note):
     ## Create invitations
     revision_invitation = openreview.Invitation(
         id = '{}/-/Revision'.format(article_group.id),
-        super = '-Agora/Covid-19/-/Revision',
+        super = '{}/-/Revision'.format(covid_group_id),
         invitees = [authors_group_id, support],
         writers = [support],
         signatures = [support],
@@ -69,7 +70,7 @@ def process_update(client, note, invitation, existing_note):
 
     assign_editor_invitation = openreview.Invitation(
         id = '{}/-/Assign_Editor'.format(article_group.id),
-        super = '-Agora/Covid-19/-/Assign_Editor',
+        super = '{}/-/Assign_Editor'.format(covid_group_id),
         invitees = [editor, support],
         writers = [support],
         signatures = [support],
@@ -88,7 +89,7 @@ def process_update(client, note, invitation, existing_note):
 
     assign_reviewer_invitation = openreview.Invitation(
         id = '{}/-/Assign_Reviewer'.format(article_group.id),
-        super = '-Agora/Covid-19/-/Assign_Reviewer',
+        super = '{}/-/Assign_Reviewer'.format(covid_group_id),
         invitees = [editors_group_id, support],
         writers = [support],
         signatures = [support],
@@ -107,7 +108,7 @@ def process_update(client, note, invitation, existing_note):
 
     review_invitation = openreview.Invitation(
         id = '{}/-/Review'.format(article_group.id),
-        super = '-Agora/Covid-19/-/Review',
+        super = '{}/-/Review'.format(covid_group_id),
         invitees = [reviewers_group_id, support],
         writers = [support],
         signatures = [support],
@@ -137,7 +138,7 @@ def process_update(client, note, invitation, existing_note):
 
     suggest_reviewer_invitation = openreview.Invitation(
         id = '{}/-/Suggest_Reviewer'.format(article_group.id),
-        super = '-Agora/Covid-19/-/Suggest_Reviewer',
+        super = '{}/-/Suggest_Reviewer'.format(covid_group_id),
         invitees = ['~'],
         writers = [support],
         signatures = [support],
@@ -159,7 +160,7 @@ def process_update(client, note, invitation, existing_note):
 
     comment_invitation = openreview.Invitation(
         id = '{}/-/Comment'.format(article_group.id),
-        super = '-Agora/Covid-19/-/Comment',
+        super = '{}/-/Comment'.format(covid_group_id),
         invitees = [support, editor, editors_group_id, reviewers_group_id],
         writers = [support],
         signatures = [support],

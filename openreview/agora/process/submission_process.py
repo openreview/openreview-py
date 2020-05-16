@@ -1,12 +1,12 @@
 def process_update(client, note, invitation, existing_note):
 
     ## Notify authors and editor
-    author_subject = 'Agora Covid-19 has received your submission titled "{title}"'.format(title=note.content['title'])
+    author_subject = 'Agora COVID-19 has received your submission titled "{title}"'.format(title=note.content['title'])
     action = 'posted'
     if existing_note:
         action = 'deleted' if note.ddate else 'updated'
 
-    author_message = '''Your submission to Agora Covid-19 has been {action}.
+    author_message = '''Your submission to Agora COVID-19 has been {action}.
 
 Title: {title}
 Your submission will be examined by the Editor-in-Chief of the venue and then you will receive an email with a response.
@@ -28,11 +28,12 @@ To view your submission, click here: https://openreview.net/forum?id={forum}'''.
         sender=None
     )
 
+    covid_group_id = '-Agora/COVID-19'
     support = 'OpenReview.net/Support'
-    editor = '-Agora/Covid-19/Editors'
+    editor = '{}/Editors'.format(covid_group_id)
     superuser = 'OpenReview.net'
 
-    client.post_message(subject='Agora Covid-19 has received a submission titled "{title}"'.format(title=note.content['title']),
+    client.post_message(subject='Agora COVID-19 has received a submission titled "{title}"'.format(title=note.content['title']),
         recipients=[editor, support],
         message=author_message,
         ignoreRecipients=None,
@@ -41,7 +42,7 @@ To view your submission, click here: https://openreview.net/forum?id={forum}'''.
 
     ## Create submission groups
     submission_group = openreview.Group(
-        id='-Agora/Covid-19/Submission{}'.format(note.number),
+        id='{}/Submission{}'.format(covid_group_id, note.number),
         readers=['everyone'],
         writers=[support],
         signatures=[support],
@@ -63,7 +64,7 @@ To view your submission, click here: https://openreview.net/forum?id={forum}'''.
 
     moderate_invitation = openreview.Invitation(
         id = '{}/-/Moderate'.format(submission_group.id),
-        super = '-Agora/Covid-19/-/Moderate',
+        super = '{}/-/Moderate'.format(covid_group_id),
         writers = [support],
         signatures = [superuser],
         reply = {

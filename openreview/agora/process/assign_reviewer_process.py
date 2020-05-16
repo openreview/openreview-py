@@ -25,7 +25,7 @@ def process_update(client, note, invitation, existing_note):
 
     if new_reviewers:
 
-        client.post_message(subject='[Agora/Covid-19] You have been assigned as reviewer of the article titled "{title}"'.format(title=article.content['title']),
+        client.post_message(subject='[Agora/COVID-19] You have been assigned as reviewer of the article titled "{title}"'.format(title=article.content['title']),
             recipients=new_reviewers,
             message='''You have been assigned as a reviewer of the paper titled "{title}" by {signature}, the editor of this article.
 Your can start reviewing the article now.
@@ -35,7 +35,7 @@ To view the article, click here: https://openreview.net/forum?id={forum}'''.form
             sender=None
         )
 
-        client.post_message(subject='[Agora/Covid-19] A reviewer has been assigned to your article titled "{title}"'.format(title=article.content['title']),
+        client.post_message(subject='[Agora/COVID-19] A reviewer has been assigned to your article titled "{title}"'.format(title=article.content['title']),
             recipients=article.content['authorids'],
             message='''A new reviewer/s have been assigned to your paper titled "{title}" by {signature}, the editor of this article.
 
