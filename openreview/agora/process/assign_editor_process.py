@@ -39,7 +39,7 @@ The paper can be viewed on OpenReview here: https://openreview.net/forum?id={for
             recipients=article.content['authorids'],
             message='''A new editor has been assigned to your paper titled "{title}" by {signature}, Editor-in-Chief of the Agora COVID-19 venue.
 
-To view the article, click here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
+Your paper can be viewed on OpenReview here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
             sender=None
         )
