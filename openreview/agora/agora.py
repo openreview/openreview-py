@@ -29,22 +29,27 @@ class Agora(object):
         )
         header = {
             "title": "Agora COVID-19",
-            "subtitle": "OpenReview Preprint Server",
+            "subtitle": "OpenReview COVID-19 public space",
             "location": "Amherst, MA",
             "date": "Ongoing",
             "website": "https://openreview.net",
             "instructions": '''
-        <p>
-            <strong>Important Information about Anonymity:</strong><br>
-            When you post a submission to this anonymous preprint server, please provide the real names and email addresses of authors in the submission form below.
-            An anonymous record of your paper will appear in the list below, and will be visible to the public.
-            The real name(s) are privately revealed to you and all the co-authors.
-            The PDF in your submission should not contain the names of the authors. </p>
-            <p><strong>Revise your paper:</strong><br>
-            To add a new version of your paper, go to the forum page of your paper and click on the "Revision" button.
-            <p><strong>Withdraw your paper:</strong><br>
-            To withdraw your paper, navigate to the forum page and click on the "Withdraw" button. You will be asked to confirm your withdrawal.
-            Withdrawn submissions will be removed from the system entirely.
+            <p>
+                <strong>Submission:</strong><br>
+                Any logged-in OpenReview user can submit a paper.  The paper submission form also allows the authors to suggest one or multiple “editors” by specifying their OpenReview tilde-name-identity (e.g. “~Samy_Bengio1”)
+            </p>
+            <p><strong>Moderation:</strong><br>
+                The paper is not immediately visible to the public through the OpenReview website, but goes to the Editor-in-Chief, who examines it briefly, checking for spam, but not checking for scientific validity.  If not spam, the paper is made visible, and editors as assigned to the paper.
+            </p>
+            <p><strong>Editor-in-chief:</strong><br>
+                Each venue has a group of Editors-in-Chief who do desk rejects, and determine the editors for each submitted article.
+            </p>
+            <p><strong>Editor assignment:</strong><br>
+            The Editor-in-Chief decides on assigned editors, perhaps following the suggestions of the authors, or perhaps making their own choices.  The editor assignments are non-anonymous.  Editors could be any OpenReview user with a Profile, not merely from a closed list.  (If the Editor -in-Chief wants to assign some it already in the OpenReview system, ask by email the person to sign up.) They aren’t asked if they accept this assignment.
+            </p>
+            <p><strong>Adding Editors:</strong><br>
+            The paper authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove Editors for the paper.
+            </p>
             <p><strong>Questions or Concerns:</strong><br>
             Please contact the OpenReview support team at
             <a href="mailto:info@openreview.net">info@openreview.net</a> with any questions or concerns.
