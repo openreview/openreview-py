@@ -106,7 +106,7 @@ class TestAgora():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
-        assert messages[0]['content']['text'] == 'Congratulations, your submission has been accepted by ~Editor_One1, the Editor-in-Chief of this venue.\nYour article is now visible to the public and an editor will be assigned soon based on your suggestions.\n\nThe article can be viewed on OpenReview here: https://openreview.net/forum?id=' + submissions[0].id
+        assert messages[0]['content']['text'] == 'Congratulations, your submission titled "Paper title" has been accepted by ~Editor_One1, the Editor-in-Chief of this venue.\nYour article is now visible to the public and an editor will be assigned soon based on your suggestions.\n\nThe article can be viewed on OpenReview here: https://openreview.net/forum?id=' + submissions[0].id
 
 
     def test_assign_editor(self, client, helpers):

@@ -27,19 +27,19 @@ def process_update(client, note, invitation, existing_note):
 
         client.post_message(subject='[Agora/COVID-19] You have been assigned to be an editor of the article titled "{title}"'.format(title=article.content['title']),
             recipients=new_editors,
-            message='''You have been assigned to be an editor of the paper titled "{title}" by {signature}, Editor-in-Chief of the Agora COVID-19 venue.
+            message='''You have been assigned to be an editor of the article titled "{title}" by {signature}, Editor-in-Chief of the Agora COVID-19 venue.
 You may start assigning reviewers now.
 
-The paper can be viewed on OpenReview here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
+The article can be viewed on OpenReview here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
             sender=None
         )
 
         client.post_message(subject='[Agora/COVID-19] An editor has been assigned to your article titled "{title}"'.format(title=article.content['title']),
             recipients=article.content['authorids'],
-            message='''A new editor has been assigned to your paper titled "{title}" by {signature}, Editor-in-Chief of the Agora COVID-19 venue.
+            message='''A new editor has been assigned to your article titled "{title}" by {signature}, Editor-in-Chief of the Agora COVID-19 venue.
 
-Your paper can be viewed on OpenReview here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
+Your article can be viewed on OpenReview here: https://openreview.net/forum?id={forum}'''.format(title=article.content['title'], signature=note.signatures[0], forum=note.forum),
             ignoreRecipients=None,
             sender=None
         )
