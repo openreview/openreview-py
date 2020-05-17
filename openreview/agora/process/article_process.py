@@ -3,6 +3,7 @@ def process_update(client, note, invitation, existing_note):
     covid_group_id = '-Agora/COVID-19'
     support = 'OpenReview.net/Support'
     editor = '{}/Editors'.format(covid_group_id)
+    blocked = '{}/Blocked'.format(covid_group_id)
 
     ## Create article groups
     article_group = openreview.Group(
@@ -90,7 +91,7 @@ def process_update(client, note, invitation, existing_note):
     assign_reviewer_invitation = openreview.Invitation(
         id = '{}/-/Assign_Reviewer'.format(article_group.id),
         super = '{}/-/Assign_Reviewer'.format(covid_group_id),
-        invitees = [editors_group_id, support],
+        invitees = [editor, editors_group_id, support],
         writers = [support],
         signatures = [support],
         reply = {
@@ -140,6 +141,7 @@ def process_update(client, note, invitation, existing_note):
         id = '{}/-/Suggest_Reviewers'.format(article_group.id),
         super = '{}/-/Suggest_Reviewers'.format(covid_group_id),
         invitees = ['~'],
+        noninvitees = [blocked],
         writers = [support],
         signatures = [support],
         reply = {
@@ -162,6 +164,7 @@ def process_update(client, note, invitation, existing_note):
         id = '{}/-/Comment'.format(article_group.id),
         super = '{}/-/Comment'.format(covid_group_id),
         invitees = [support, editor, editors_group_id, reviewers_group_id],
+        noninvitees = [blocked],
         writers = [support],
         signatures = [support],
         reply = {

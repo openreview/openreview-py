@@ -39,25 +39,25 @@ class Agora(object):
             "instructions": '''
             <p>
                 <strong>Editor-in-chief:</strong><br>
-                This venue is managed by a group of Editors-in-Chief who do desk rejects, and determine the editors for each submitted article.
-                To see the list of members, click <a href="https://openreview.net/group?id={covid_editors}">here</a>
+                <p>This venue is managed by a group of Editors-in-Chief who check every submission and decides to release it to the public or not. The Editors-in-Chief determine the editors for each submitted article.
+                To see the list of members, click <a href="https://openreview.net/group?id={covid_editors}">here</a></p>
             </p>
             <p>
                 <strong>Submission:</strong><br>
-                <p>Any logged-in OpenReview user can submit a paper.  The paper submission form also allows the authors to suggest one or multiple “editors” by specifying their OpenReview tilde-name-identity (e.g. “~Samy_Bengio1”).</p>
-                <p>The paper is not immediately visible to the public through the OpenReview website, but goes to the Editor-in-Chief, who examines it briefly, checking for spam, but not checking for scientific validity.  If not spam, the paper is made visible, and editors as assigned to the paper.</p>
-                <p>Authors can upload a revision to any part of their submission at any time.  The full history of past uploads will still be available.</p>
+                <p>Any logged-in user can submit an article.  The article submission form also allows the authors to suggest one or multiple "editors" by specifying their OpenReview tilde-name-identity (e.g. "~Samy_Bengio1").
+                The article is not immediately visible to the public, but goes to the Editor-in-Chief, who examines it briefly, checking for spam, but not checking for scientific validity.  If not spam, the article is made visible, and editors are assigned to the paper.
+                Authors can upload a revision to any part of their submission at any time.  The full history of past uploads will still be available through the "Show Revisions" option.</p>
             </p>
             <p>
                 <strong>Editor:</strong><br>
-                The Editor-in-Chief decides on assigned editors, perhaps following the suggestions of the authors, or perhaps making their own choices.  The editor assignments are non-anonymous.  Editors could be any OpenReview user with a Profile, not merely from a closed list.  (If the Editor -in-Chief wants to assign some it already in the OpenReview system, ask by email the person to sign up.) They aren’t asked if they accept this assignment.
-                The paper authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove Editors for the paper.
+                <p>The Editor-in-Chief decides on assigned editors, following the suggestions of the authors or making their own choices.  The editor assignments are non-anonymous.
+                The article authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove editors for the article at any time.</p>
             </p>
             <p>
-                <strong>Reviewing:</strong><br>
-                Only assigned reviewers can review or comment on the article. Reviews and reviewers identity are public.
-                Any of the editors can add (or remove) people to the group of reviewers by adding/removing their OpenReview tilde-name-ids to the Reviewers field of the paper (ensuring non-anonymity).
-                Anyone can suggest reviewers for this article. Assigned editor will decide to assign them or not.
+                <strong>Reviewers:</strong><br>
+                <p>Only assigned reviewers can review or comment on the article. Reviews are public and reviewers are non-anonymous.
+                Any of the editors can add (or remove) people to the group of reviewers by adding/removing their OpenReview tilde-name-ids to the'Assigned Reviewers' field of the article.
+                Any logged-in user can suggest reviewers for this article. Assigned editor will decide to assign them or not.</p>
             </p>
             <p>
                 <strong>Questions or Concerns:</strong><br>
@@ -313,7 +313,7 @@ class Agora(object):
                 },
                 'content': {
                     'assigned_editors': {
-                        'description': 'Comma separated list of editor email addresses or OpenReview profile ids',
+                        'description': 'Comma separated list of editor email addresses or OpenReview profile ids. Append the new editors to the list.',
                         'order': 1,
                         'values-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
                         'required':True
@@ -338,7 +338,7 @@ class Agora(object):
                 },
                 'content': {
                     'assigned_reviewers': {
-                        'description': 'Comma separated list of editor email addresses or OpenReview profile ids',
+                        'description': 'Comma separated list of reviewer email addresses or OpenReview profile ids. Append the new reviewers to the list.',
                         'order': 1,
                         'values-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
                         'required':True

@@ -294,31 +294,32 @@ class TestAgora():
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
 
-        messages = client.get_messages(subject = '[Agora/COVID-19] Your comment has been posted on your assigned article titled "Paper title"')
+        messages = client.get_messages(subject = '[Agora/COVID-19] Your comment has been posted on the article titled "Paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer@agora.net' in recipients
 
         messages = client.get_messages(subject = '[Agora/COVID-19] A comment has been posted on the article titled "Paper title"')
-        assert len(messages) == 1
+        assert len(messages) == 2
         recipients = [m['content']['to'] for m in messages]
         assert 'article_editor@agora.net' in recipients
+        assert 'reviewer2@agora.net' in recipients
 
     def test_suggest_reviewer(self, client, helpers):
 
-        melisa_client = helpers.create_user(email = 'melisa@mail.com', first = 'Melisa', last = 'Bok')
+        melisa_client = helpers.create_user(email = 'melisa@mail.com', first = 'Melisa', last = 'Agora')
 
         articles = melisa_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
         note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Suggest_Reviewers',
             readers = ['everyone'],
-            writers = ['openreview.net/Support', '~Melisa_Bok1'],
-            signatures = ['~Melisa_Bok1'],
+            writers = ['openreview.net/Support', '~Melisa_Agora1'],
+            signatures = ['~Melisa_Agora1'],
             forum = articles[0].forum,
             replyto = articles[0].id,
             content = {
-                'suggested_reviewers': ['~Melisa_Bok1'],
+                'suggested_reviewers': ['~Melisa_Agora1'],
                 'comment': 'I think I can review this paper'
             }
         )
@@ -340,3 +341,47 @@ class TestAgora():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'article_editor@agora.net' in recipients
+
+
+    def test_add_revision(self, client, helpers):
+
+        author_client = openreview.Client(username = 'author@agora.net', password = '1234')
+
+        articles = author_client.get_notes(invitation='-Agora/COVID-19/-/Article')
+        assert articles
+
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Revision',
+            readers = ['everyone'],
+            writers = ['openreview.net/Support', '-Agora/COVID-19/Article1/Authors'],
+            signatures = ['-Agora/COVID-19/Article1/Authors'],
+            forum = articles[0].forum,
+            referent = articles[0].id,
+            content = {
+                'title': 'Paper title',
+                'abstract': 'This is an abstract',
+                'authorids': ['~Author_One1'],
+                'authors': ['Author One'],
+                'pdf': 'https://openreview.net',
+                'requested_editors': ['editor-submission@agora.net', 'editor-submission-2@agora.net']
+            }
+        )
+
+        posted_note = author_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] Your revision has been posted on your article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author@agora.net' in recipients
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] A revision has been posted on the article titled "Paper title"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'article_editor@agora.net' in recipients
+        assert 'reviewer@agora.net' in recipients
+        assert 'reviewer2@agora.net' in recipients
