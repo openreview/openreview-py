@@ -218,3 +218,45 @@ class TestAgora():
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer@agora.net' in recipients
         assert 'reviewer2@agora.net' in recipients
+
+    def test_post_review(self, client, helpers):
+
+        reviewer_client = helpers.create_user(email = 'reviewer@agora.net', first = 'ArticleReviewer', last = 'One')
+
+        articles = reviewer_client.get_notes(invitation='-Agora/COVID-19/-/Article')
+        assert articles
+
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Review',
+            readers = ['everyone'],
+            writers = ['openreview.net/Support', '~ArticleReviewer_One1'],
+            signatures = ['~ArticleReviewer_One1'],
+            forum = articles[0].id,
+            replyto = articles[0].id,
+            content = {
+                'title': 'review title',
+                'review': 'excelent paper'
+            }
+        )
+
+        posted_note = reviewer_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] Review posted to your article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author@agora.net' in recipients
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] Your review has been posted on your assigned article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer@agora.net' in recipients
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] A review has been posted on the article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'article_editor@agora.net' in recipients

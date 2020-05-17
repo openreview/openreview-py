@@ -387,7 +387,7 @@ class Agora(object):
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
-            multiReply = False,
+            multiReply = True,
             reply = {
                 'content': {
                     'suggested_reviewer': {
