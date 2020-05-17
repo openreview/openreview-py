@@ -383,17 +383,17 @@ class Agora(object):
             client.post_invitation(review_invitation)
 
         suggest_reviewer_invitation = openreview.Invitation(
-            id = '{}/-/Suggest_Reviewer'.format(covid_group_id),
+            id = '{}/-/Suggest_Reviewers'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
             multiReply = True,
             reply = {
                 'content': {
-                    'suggested_reviewer': {
-                        'description': '',
-                        'order': 2,
-                        'value-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+                    'suggested_reviewers': {
+                        'description': 'Comma separated list of reviewer email addresses or OpenReview profile ids',
+                        'order': 1,
+                        'values-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
                         'required':True
                     },
                     'comment': {

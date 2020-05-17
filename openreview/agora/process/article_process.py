@@ -137,8 +137,8 @@ def process_update(client, note, invitation, existing_note):
     client.post_invitation(review_invitation)
 
     suggest_reviewer_invitation = openreview.Invitation(
-        id = '{}/-/Suggest_Reviewer'.format(article_group.id),
-        super = '{}/-/Suggest_Reviewer'.format(covid_group_id),
+        id = '{}/-/Suggest_Reviewers'.format(article_group.id),
+        super = '{}/-/Suggest_Reviewers'.format(covid_group_id),
         invitees = ['~'],
         writers = [support],
         signatures = [support],
