@@ -31,16 +31,16 @@ class Agora(object):
         covid_editors = '{}/Editors'.format(covid_group_id)
 
         header = {
-            "title": "Agora COVID-19",
+            "title": "Agora(ἀγορά) COVID-19",
             "subtitle": "OpenReview public space for COVID-19 related articles",
-            "location": "Amherst, MA",
+            "location": "Everywhere",
             "date": "Ongoing",
             "website": "https://openreview.net",
             "instructions": '''
             <p>
                 <strong>Editor-in-chief:</strong><br>
                 <p>This venue is managed by a group of Editors-in-Chief who check every submission and decides to release it to the public or not. The Editors-in-Chief determine the editors for each submitted article.
-                To see the list of members, click <a href="https://openreview.net/group?id={covid_editors}">here</a></p>
+                To see the list of members, click <a href="https://openreview.net/group?id={covid_editors}">here</a>.</p>
             </p>
             <p>
                 <strong>Submission:</strong><br>
@@ -56,7 +56,7 @@ class Agora(object):
             <p>
                 <strong>Reviewers:</strong><br>
                 <p>Only assigned reviewers can review or comment on the article. Reviews are public and reviewers are non-anonymous.
-                Any of the editors can add (or remove) people to the group of reviewers by adding/removing their OpenReview tilde-name-ids to the'Assigned Reviewers' field of the article.
+                Any of the editors can add (or remove) people to the group of reviewers by adding/removing their OpenReview tilde-name-ids to the "Assigned Reviewers" field of the article.
                 Any logged-in user can suggest reviewers for this article. Assigned editor will decide to assign them or not.</p>
             </p>
             <p>
