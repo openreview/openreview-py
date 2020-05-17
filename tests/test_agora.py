@@ -100,7 +100,8 @@ class TestAgora():
         assert process_logs[0]['status'] == 'ok'
 
         assert not editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
-        assert editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
+        assert len(editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')) == 1
+        assert len(editor_client.get_notes(invitation='-Agora/COVID-19/-/Desk_Rejected')) == 0
 
         messages = client.get_messages(subject = '[Agora/COVID-19] Your submission has been accepted')
         assert len(messages) == 1
@@ -307,19 +308,19 @@ class TestAgora():
 
     def test_suggest_reviewer(self, client, helpers):
 
-        melisa_client = helpers.create_user(email = 'melisa@mail.com', first = 'Melisa', last = 'Agora')
+        melisa_client = helpers.create_user(email = 'melisa@mail.com', first = 'Melissa', last = 'Agora')
 
         articles = melisa_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
         note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Suggest_Reviewers',
             readers = ['everyone'],
-            writers = ['openreview.net/Support', '~Melisa_Agora1'],
-            signatures = ['~Melisa_Agora1'],
+            writers = ['openreview.net/Support', '~Melissa_Agora1'],
+            signatures = ['~Melissa_Agora1'],
             forum = articles[0].forum,
             replyto = articles[0].id,
             content = {
-                'suggested_reviewers': ['~Melisa_Agora1'],
+                'suggested_reviewers': ['~Melissa_Agora1'],
                 'comment': 'I think I can review this paper'
             }
         )
@@ -385,3 +386,64 @@ class TestAgora():
         assert 'article_editor@agora.net' in recipients
         assert 'reviewer@agora.net' in recipients
         assert 'reviewer2@agora.net' in recipients
+
+    def test_desk_reject(self, client, helpers):
+
+        author_client = openreview.Client(username = 'author@agora.net', password = '1234')
+
+        note = openreview.Note(invitation = '-Agora/COVID-19/-/Submission',
+            readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '~Author_One1'],
+            writers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '~Author_One1'],
+            signatures = ['~Author_One1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'This is an abstract 2',
+                'authorids': ['~Author_One1'],
+                'authors': ['Author One'],
+                'pdf': 'https://openreview.net',
+                'requested_editors': ['editor-submission@agora.net']
+            }
+        )
+
+        posted_note = author_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        editor_client = openreview.Client(username='editor@agora.net', password='1234')
+
+        submissions = editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
+        assert submissions
+
+        note = openreview.Note(invitation = '-Agora/COVID-19/Submission2/-/Moderate',
+            readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '-Agora/COVID-19/Submission2/Authors'],
+            writers = ['openreview.net/Support'],
+            signatures = ['~Editor_One1'],
+            forum = submissions[0].id,
+            replyto = submissions[0].id,
+            content = {
+                'resolution': 'Desk-Reject',
+                'comment': 'This is not good'
+            }
+        )
+
+        posted_note = editor_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        assert not editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
+        assert len(editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')) == 1
+        assert len(editor_client.get_notes(invitation='-Agora/COVID-19/-/Desk_Rejected')) == 1
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] Your submission has been rejected')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author@agora.net' in recipients
+        assert messages[0]['content']['text'] == 'Unfortunately your submission has been desk-rejected by the Editor-in-Chief of this venue.\n\nFor more information, see their comment on the OpenReview submission forum here: https://openreview.net/forum?id=' + submissions[0].id + '&noteId=' + posted_note.id

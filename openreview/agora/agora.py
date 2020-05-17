@@ -250,7 +250,7 @@ class Agora(object):
             client.post_invitation(article_invitation)
 
         desk_reject_invitation = openreview.Invitation(
-            id = '{}/-/Desk_Reject'.format(covid_group_id),
+            id = '{}/-/Desk_Rejected'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
