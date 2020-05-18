@@ -39,7 +39,7 @@ class Agora(object):
             "instructions": '''
             <p>
                 <strong>Editor-in-chief:</strong><br>
-                <p>This venue is managed by a group of Editors-in-Chief who check every submission and decides to release it to the public or not. The Editors-in-Chief determine the editors for each submitted article.
+                <p>This venue is managed by a group of Editors-in-Chief who check each submission and decide whether to release it to the public or not. The Editors-in-Chief determine the editors for each submitted article.
                 To see the list of members, click <a href="https://openreview.net/group?id={covid_editors}">here</a>.</p>
             </p>
             <p>
