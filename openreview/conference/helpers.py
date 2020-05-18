@@ -90,7 +90,7 @@ def get_conference_builder(client, request_form_id):
     submission_remove_options = note.content.get('remove_submission_options', [])
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
-    create_review_invitation = (not double_blind) and note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.' and request_forum.content.get('make_reviews_public', None)
+    create_review_invitation = (not double_blind) and note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.' and note.content.get('make_reviews_public', None)
 
     builder.set_submission_stage(
         double_blind = double_blind,
