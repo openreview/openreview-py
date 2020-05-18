@@ -44,7 +44,7 @@ class Agora(object):
             </p>
             <p>
                 <strong>Submission:</strong><br>
-                <p>Any logged-in user can submit an article.  The article submission form also allows the authors to suggest one or multiple "editors" by specifying their OpenReview tilde-name-identity (e.g. "~Samy_Bengio1").
+                <p>Anyone with an OpenReview profile can submit an article. The article submission form also allows the authors to suggest one or more "editors" by specifying their OpenReview usernames (e.g. "~Jane_Doe1").
                 The article is not immediately visible to the public, but goes to the Editor-in-Chief, who examines it briefly, checking for spam, but not checking for scientific validity.  If not spam, the article is made visible, and editors are assigned to the paper.
                 Authors can upload a revision to any part of their submission at any time.  The full history of past uploads will still be available through the "Show Revisions" option.</p>
             </p>
