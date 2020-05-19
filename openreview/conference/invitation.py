@@ -842,7 +842,7 @@ class PaperReviewRebuttalInvitation(openreview.Invitation):
             'forum': review.forum,
             'replyto': review.id,
             'readers': {
-                'description': 'This rating is only visible to the program chairs.',
+                'description': 'All user groups that should be able to read this rebuttal.',
                 'values': review.readers
             },
             'signatures': {
