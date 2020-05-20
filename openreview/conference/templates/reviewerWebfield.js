@@ -283,10 +283,15 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
   var invitation = paperRankingInvitation ? _.cloneDeep(paperRankingInvitation) : null;
   if (invitation) {
     var availableOptions = ['No Ranking'];
+    var validTags = [];
     notes.forEach(function(note, index) {
       availableOptions.push((index + 1) + ' of ' + notes.length );
+      noteTags = paperRankingTags.filter(function(tag) { return tag.forum == note.forum; })
+      if (noteTags.length) {
+        validTags.push(noteTags[0]);
+      }
     })
-    var currentRankings = paperRankingTags.map(function(tag) {
+    var currentRankings = validTags.map(function(tag) {
       if (!tag.tag || tag.tag === 'No Ranking') {
         return null;
       }
@@ -302,11 +307,11 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
       return;
     }
 
-    var index = _.findIndex(paperRankingTags, ['forum', note.forum]);
+    var index = _.findIndex(validTags, ['forum', note.forum]);
     var $tagWidget = view.mkTagInput(
       'tag',
       invitation && invitation.reply.content.tag,
-      index !== -1 ? [paperRankingTags[index]] : [],
+      index !== -1 ? [validTags[index]] : [],
       {
         forum: note.id,
         placeholder: (invitation && invitation.reply.content.tag.description) || view.prettyInvitationId(invitationId),
@@ -322,14 +327,15 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
             invitation: invitationId,
             ddate: deleted ? Date.now() : null
           };
+          $('.tag-widget').find('button').attr('disabled', true);
           Webfield.post('/tags', body)
             .then(function(result) {
               if (index !== -1) {
-                paperRankingTags.splice(index, 1, result);
+                validTags.splice(index, 1, result);
               } else {
-                paperRankingTags.push(result);
+                validTags.push(result);
               }
-              displayPaperRanking(notes, paperRankingInvitation, paperRankingTags, groupByNumber);
+              displayPaperRanking(notes, paperRankingInvitation, validTags, groupByNumber);
               done(result);
             })
             .fail(function(error) {
