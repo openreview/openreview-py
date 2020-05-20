@@ -158,7 +158,7 @@ class Agora(object):
             duedate = 2556143999000, # Saturday, December 31, 2050 11:59:59 PM,
             readers = ['everyone'],
             writers = [support_group_id],
-            signatures = ['openreview.net'],
+            signatures = [superuser],
             invitees = ['~'],
             reply = {
                 'forum': None,
@@ -197,7 +197,7 @@ class Agora(object):
             invitees = [covid_editors],
             readers = ['everyone'],
             writers = [support_group_id],
-            signatures = ['openreview.net'],
+            signatures = [superuser],
             multiReply = False,
             reply = {
                 'content': {
