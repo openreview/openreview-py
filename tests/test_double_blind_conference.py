@@ -1237,7 +1237,7 @@ class TestDoubleBlindConference():
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
-            nonreaders = ['AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
+            nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
@@ -1253,41 +1253,17 @@ class TestDoubleBlindConference():
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
-            forum = submission.id,
-            replyto = submission.id,
-            readers = ['everyone'],
-            writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
-            signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
-            content = {
-                'title': 'Paper Decision',
-                'decision': 'Accept (Oral)',
-                'comment': 'Great!',
-            }
-        )
-
-        meta_review_note = pc_client.post_note(note)
-        assert meta_review_note
+        decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
+        assert decisions
+        assert decisions[0].readers == ['everyone']
 
         builder.set_decision_stage(release_to_authors=True)
         conference = builder.get_result()
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
-            forum = submission.id,
-            replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
-            'AKBC.ws/2019/Conference/Paper' + str(submission.number) + '/Authors'],
-            writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
-            signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
-            content = {
-                'title': 'Paper Decision',
-                'decision': 'Accept (Oral)',
-                'comment': 'Great!',
-            }
-        )
 
-        meta_review_note = pc_client.post_note(note)
-        assert meta_review_note
+        decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
+        assert decisions
+        assert decisions[0].readers == ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Authors']
 
         notes = conference.get_submissions(accepted=True)
         assert notes
@@ -1675,10 +1651,8 @@ class TestDoubleBlindConference():
 
         decisions = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Decision')
         assert(decisions)
-        assert len(decisions) == 3
+        assert len(decisions) == 1
         assert decisions[0].readers == ['everyone']
-        assert decisions[1].readers == ['everyone']
-        assert decisions[2].readers == ['everyone']
 
     def test_release_accepted_notes(self, client, request_page, selenium):
 
