@@ -306,6 +306,40 @@ class TestAgora():
         assert 'article_editor@agora.net' in recipients
         assert 'reviewer2@agora.net' in recipients
 
+        author_client = openreview.Client(username = 'author@agora.net', password = '1234')
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Comment',
+            readers = ['everyone'],
+            writers = ['openreview.net/Support', '-Agora/COVID-19/Article1/Authors'],
+            signatures = ['-Agora/COVID-19/Article1/Authors'],
+            forum = reviews[0].forum,
+            replyto = reviews[0].id,
+            content = {
+                'title': 'review title',
+                'comment': 'comment on a review'
+            }
+        )
+
+        posted_note = author_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] Your comment has been posted on the article titled "Paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer@agora.net' in recipients
+        assert 'author@agora.net' in recipients
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] A comment has been posted on the article titled "Paper title"')
+        assert len(messages) == 5
+        recipients = [m['content']['to'] for m in messages]
+        assert 'article_editor@agora.net' in recipients
+        assert 'reviewer2@agora.net' in recipients
+        assert 'reviewer@agora.net' in recipients
+
     def test_suggest_reviewer(self, client, helpers):
 
         melisa_client = helpers.create_user(email = 'melisa@mail.com', first = 'Melissa', last = 'Agora')

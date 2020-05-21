@@ -163,7 +163,7 @@ def process_update(client, note, invitation, existing_note):
     comment_invitation = openreview.Invitation(
         id = '{}/-/Comment'.format(article_group.id),
         super = '{}/-/Comment'.format(covid_group_id),
-        invitees = [support, editor, editors_group_id, reviewers_group_id],
+        invitees = [support, editor, editors_group_id, reviewers_group_id, authors_group_id],
         noninvitees = [blocked],
         writers = [support],
         signatures = [support],
@@ -176,7 +176,7 @@ def process_update(client, note, invitation, existing_note):
                 'values-copied': ['{signatures}', support]
             },
             'signatures': {
-                'values-regex': '~.*|{}'.format(support)
+                'values-regex': '~.*|{}|{}'.format(support, authors_group_id)
             }
         }
     )
