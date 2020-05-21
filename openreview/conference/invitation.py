@@ -790,7 +790,7 @@ class RebuttalInvitation(openreview.Invitation):
             'rebuttal': {
                 'order': 1,
                 'value-regex': '[\\S\\s]{0,2500}',
-                'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq. Max length: 2500',
+                'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 2500',
                 'required': True,
                 'markdown': True
             }
