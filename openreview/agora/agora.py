@@ -367,7 +367,7 @@ class Agora(object):
                         'required':True
                     },
                     'review': {
-                        'description': 'Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                        'description': 'You can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 5000',
                         'order': 2,
                         'value-regex': "[\\S\\s]{1,5000}",
                         'required':True,
@@ -426,7 +426,7 @@ class Agora(object):
                         'required':True
                     },
                     'comment': {
-                        'description': 'Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                        'description': 'You can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 5000',
                         'order': 2,
                         'value-regex': "[\\S\\s]{1,5000}",
                         'required':True,
