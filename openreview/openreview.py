@@ -1325,11 +1325,13 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
         self.ddate = ddate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.writers = writers
         self.members = [] if members==None else members
         self.readers = readers
@@ -1389,6 +1391,8 @@ class Group(object):
         group = Group(g['id'],
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
+            tcdate = g.get('tcdate'),
+            tmdate = g.get('tmdate'),
             writers = g.get('writers'),
             members = g.get('members'),
             readers = g.get('readers'),
