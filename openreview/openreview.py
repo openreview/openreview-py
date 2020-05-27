@@ -1322,10 +1322,12 @@ class Group(object):
     :type nonreaders: list[str], optional
     :param web: Path to a file that contains the webfield
     :type web: optional
+    :param web_string: String containing the webfield for this Group
+    :type web_string: str, optional
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, web_string=None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
@@ -1340,6 +1342,10 @@ class Group(object):
         if web != None:
             with open(web) as f:
                 self.web = f.read()
+
+        if web_string:
+            self.web = web_string
+
         self.details = details
 
     def __repr__(self):
@@ -1371,8 +1377,7 @@ class Group(object):
             'web': self.web,
             'details': self.details
         }
-        # if self.web !=None:
-        #     body['web']=self.web
+        
         return body
 
     @classmethod
@@ -1481,7 +1486,7 @@ class Invitation(object):
     :type web: str, optional
     :param process: Path to a file containing the process function
     :type process: str, optional
-    :param process_string: String containin the process function
+    :param process_string: String containing the process function
     :type process_string: str, optional
     :param duedate: Due date
     :type duedate: int, optional
