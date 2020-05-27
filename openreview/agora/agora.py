@@ -31,7 +31,7 @@ class Agora(object):
         covid_editors = '{}/Editors'.format(covid_group_id)
 
         header = {
-            "title": "Agora(ἀγορά) COVID-19",
+            "title": "Agora (ἀγορά) COVID-19",
             "subtitle": "OpenReview public space for COVID-19 related articles",
             "location": "Everywhere",
             "date": "Ongoing",
