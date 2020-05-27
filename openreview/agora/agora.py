@@ -46,7 +46,7 @@ class Agora(object):
                 <strong>Submission:</strong><br>
                 <p>Anyone with an OpenReview profile can submit an article. The article submission form also allows the authors to suggest one or more "editors" by specifying their OpenReview usernames (e.g. "~Jane_Doe1").
                 Before the submitted article is made visible to the public, it goes to the Editor-in-Chief who examines it briefly, checking for spam but not for scientific validity. If it is not spam, the article is made visible, and editors are assigned to the paper.
-                Authors can upload a revision to any part of their submission at any time.  The full history of past uploads will still be available through the "Show Revisions" option.</p>
+                Authors can upload a revision to any part of their submission at any time.  The full history of past uploads will always be available through the "Show Revisions" option.</p>
             </p>
             <p>
                 <strong>Editor:</strong><br>
