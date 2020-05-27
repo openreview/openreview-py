@@ -65,7 +65,8 @@ var instructionDetails = [
 ];
 
 // Constants
-var CONFERENCE = "OpenReview.net/Support";
+var CONFERENCE = "OpenReview.net";
+var SUPPORT_GROUP = CONFERENCE + '/Support';
 var SUBMISSION = CONFERENCE + '/-/Request_Form';
 
 var SUBJECT_AREAS = [

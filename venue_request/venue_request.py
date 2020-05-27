@@ -4,23 +4,23 @@ import os
 
 class VenueRequest():
     
-    def __init__(self, client):
-        self._base_group = 'openreview.net'
-        self._support_group_id = self._base_group + '/Support'
-        self.support_group = openreview.tools.get_group(client, self._support_group_id)
+    def __init__(self, client, support_group_id, super_user):
+        self.support_group_id = support_group_id
+        self.support_group = openreview.tools.get_group(client, self.support_group_id)
 
         if not self.support_group:
-            support_group = openreview.Group(
-                id=self._support_group_id,
-                readers=['everyone'],
-                writers=[self._support_group_id],
-                signatures=[self._base_group],
-                signatories=[self._support_group_id],
-                members=[],
-                web=os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')
-            )
-            print(support_group)
-            self.support_group = client.post_group(support_group)
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
+                file_content = f.read()
+                file_content = file_content.replace('var CONFERENCE = "OpenReview.net";', 'var CONFERENCE = "' + self.support_group_id + '";')
+                support_group = openreview.Group(
+                    id=self.support_group_id,
+                    readers=['everyone'],
+                    writers=[self.support_group_id],
+                    signatures=[super_user],
+                    signatories=[self.support_group_id],
+                    members=[],
+                    web_string=file_content)
+                self.support_group = client.post_group(support_group)
 
         self.request_content = {
             'title': {
@@ -144,23 +144,23 @@ class VenueRequest():
         }
 
         self.request_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Request_Form',
+            id=self.support_group_id + '/-/Request_Form',
             readers=['everyone'],
             writers=[],
-            signatures=[self._base_group],
+            signatures=[super_user],
             invitees=['everyone'],
             process=os.path.join(os.path.dirname(__file__), 'process/supportProcess.js'),
             reply={
                 'readers': {
                     'values-copied': [
-                        self._support_group_id,
+                        self.support_group_id,
                         '{signatures}',
                         '{content["program_chair_emails"]}'
                     ]
                 },
                 'writers': {
                     'values-copied': [
-                        self._support_group_id,
+                        self.support_group_id,
                         '{signatures}',
                         '{content["program_chair_emails"]}'
                     ]
@@ -173,10 +173,10 @@ class VenueRequest():
         ))
 
         self.comment_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Comment',
+            id=self.support_group_id + '/-/Comment',
             readers=['everyone'],
-            writers=[self._support_group_id],
-            signatures=[self._support_group_id],
+            writers=[self.support_group_id],
+            signatures=[self.support_group_id],
             invitees=['everyone'],
             process=os.path.join(os.path.dirname(__file__), 'process/commentProcess.js'),
             reply={
@@ -184,7 +184,7 @@ class VenueRequest():
                 'replyto': None,
                 'readers': {
                     'description': 'Select all user groups that should be able to read this comment.',
-                    'values': [self._support_group_id]
+                    'values': [self.support_group_id]
                 },
                 'writers': {
                     'values-copied': [
@@ -231,17 +231,17 @@ class VenueRequest():
         }
 
         self.revision_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Revision',
+            id=self.support_group_id + '/-/Revision',
             readers=['everyone'],
             writers=[],
-            signatures=[self._base_group],
+            signatures=[super_user],
             invitees=['everyone'],
             multiReply=True,
             process=os.path.join(os.path.dirname(__file__), 'process/revisionProcess.py'),
             reply={
                 'readers': {
                     'values-copied': [
-                        self._support_group_id,
+                        self.support_group_id,
                         '{content["program_chair_emails"]}'
                     ]
                 },
@@ -264,22 +264,22 @@ class VenueRequest():
         }
 
         self.deploy_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Deploy',
+            id=self.support_group_id + '/-/Deploy',
             readers=['everyone'],
             writers=[],
-            signatures=[self._support_group_id],
-            invitees=[self._support_group_id],
+            signatures=[self.support_group_id],
+            invitees=[self.support_group_id],
             process=os.path.join(os.path.dirname(__file__), 'process/deployProcess.py'),
             multiReply=False,
             reply={
                 'readers': {
-                    'values': [self._support_group_id]
+                    'values': [self.support_group_id]
                 },
                 'writers': {
                     'values-regex': '~.*'
                 },
                 'signatures': {
-                    'values': [self._support_group_id]
+                    'values': [self.support_group_id]
                 },
                 'content': self.deploy_content
             }
@@ -346,11 +346,11 @@ class VenueRequest():
         }
 
         self.recruitment_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Recruitment',
+            id=self.support_group_id + '/-/Recruitment',
             readers=['everyone'],
             writers=[],
-            signatures=[self._support_group_id],
-            invitees=[self._support_group_id],
+            signatures=[self.support_group_id],
+            invitees=[self.support_group_id],
             process=os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py'),
             multiReply=True,
             reply={
@@ -384,17 +384,17 @@ class VenueRequest():
         }
 
         self.bid_stage_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Bid_Stage',
+            id=self.support_group_id + '/-/Bid_Stage',
             readers=['everyone'],
-            writers=[self._support_group_id],
-            signatures=[self._support_group_id],
+            writers=[self.support_group_id],
+            signatures=[self.support_group_id],
             invitees=['everyone'],
             multiReply=True,
             process=os.path.join(os.path.dirname(__file__), 'process/revisionProcess.py'),
             reply={
                 'readers': {
                     'values-copied': [
-                        self._support_group_id,
+                        self.support_group_id,
                         '{content["program_chair_emails"]}'
                     ]
                 },
@@ -476,17 +476,17 @@ class VenueRequest():
         }
 
         self.review_stage_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Review_Stage',
+            id=self.support_group_id + '/-/Review_Stage',
             readers=['everyone'],
-            writers=[self._support_group_id],
-            signatures=[self._base_group],
+            writers=[self.support_group_id],
+            signatures=[super_user],
             invitees=['everyone'],
             multiReply=True,
             process=os.path.join(os.path.dirname(__file__), 'process/revisionProcess.py'),
             reply={
                 'readers': {
                     'values-copied': [
-                        self._support_group_id,
+                        self.support_group_id,
                         '{content["program_chair_emails"]}'
                     ]
                 },
@@ -529,17 +529,17 @@ class VenueRequest():
         }
 
         self.meta_review_stage_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Meta_Review_Stage',
+            id=self.support_group_id + '/-/Meta_Review_Stage',
             readers=['everyone'],
             writers=[],
-            signatures=[self._base_group],
+            signatures=[super_user],
             invitees=['everyone'],
             multiReply=True,
             process=os.path.join(os.path.dirname(__file__), 'process/revisionProcess.py'),
             reply={
                 'readers': {
                     'values-copied': [
-                        self._support_group_id,
+                        self.support_group_id,
                         '{content["program_chair_emails"]}'
                     ]
                 },
@@ -611,17 +611,17 @@ class VenueRequest():
         }
 
         self.decision_stage_super_invitation = client.post_invitation(openreview.Invitation(
-            id=self._support_group_id + '/-/Decision_Stage',
+            id=self.support_group_id + '/-/Decision_Stage',
             readers=['everyone'],
             writers=[],
-            signatures=[self._base_group],
+            signatures=[super_user],
             invitees=['everyone'],
             multiReply=True,
             process=os.path.join(os.path.dirname(__file__), 'process/revisionProcess.py'),
             reply={
                 'readers': {
                     'values-copied': [
-                        self._support_group_id,
+                        self.support_group_id,
                         '{content["program_chair_emails"]}'
                     ]
                 },
