@@ -51,7 +51,7 @@ class Agora(object):
             <p>
                 <strong>Editor:</strong><br>
                 <p>The Editor-in-Chief decides on assigned editors, following the suggestions of the authors or making their own choices.  The editor assignments are non-anonymous.
-                The article authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove editors for the article at any time.</p>
+                The article authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove editors from the article at any time.</p>
             </p>
             <p>
                 <strong>Reviewers:</strong><br>
