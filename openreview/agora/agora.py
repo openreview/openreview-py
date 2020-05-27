@@ -56,7 +56,7 @@ class Agora(object):
             <p>
                 <strong>Reviewers:</strong><br>
                 <p>Only assigned reviewers can review or comment on the article. Reviews are public and reviewers are non-anonymous.
-                Any of the editors can add (or remove) people to the group of reviewers by adding/removing their OpenReview tilde-name-ids to the "Assigned Reviewers" field of the article.
+                Editors of the article can add (or remove) people from the reviewers group by adding/removing their OpenReview usernames to the "Assigned Reviewers" field of the article.
                 Any logged-in user can suggest reviewers for this article. Assigned editor will decide to assign them or not.</p>
             </p>
             <p>
