@@ -1,7 +1,9 @@
 function(){
     var or3client = lib.or3client;
+    var GROUP_PREFIX = '';
+    var SUPPORT_GROUP = GROUP_PREFIX + '/Support';
     var baseUrl = 'https://openreview.net'
-
+    
     var adminMessage = 'A request for service has been submitted. Check it here: ' + baseUrl + '/forum?id=' + note.forum + '\n'
 
     for (key in note.content) {
@@ -9,7 +11,7 @@ function(){
     }
 
     var openreviewMailPayload = {
-      groups: ['OpenReview.net/Support'],
+      groups: [SUPPORT_GROUP],
       subject: 'A request for service has been submitted',
       message: adminMessage
     };
@@ -21,28 +23,28 @@ function(){
     };
 
     var commentInvitation = {
-      id: 'OpenReview.net/Support/-/Request' + note.number + '/Comment',
-      super: 'OpenReview.net/Support/-/Comment',
+      id: SUPPORT_GROUP + '/-/Request' + note.number + '/Comment',
+      super: SUPPORT_GROUP + '/-/Comment',
       reply: {
         forum: note.forum,
         replyto: null,
         readers: {
-            values: note.content['program_chair_emails'].concat(['OpenReview.net/Support'])
+            values: note.content['program_chair_emails'].concat([SUPPORT_GROUP])
         }
       },
-      writers: ['OpenReview.net/Support'],
-      signatures: ['OpenReview.net/Support']
+      writers: [SUPPORT_GROUP],
+      signatures: [SUPPORT_GROUP]
     }
 
     var deployInvitation = {
-      id: 'OpenReview.net/Support/-/Request' + note.number + '/Deploy',
-      super: 'OpenReview.net/Support/-/Deploy',
+      id: SUPPORT_GROUP + '/-/Request' + note.number + '/Deploy',
+      super: SUPPORT_GROUP + '/-/Deploy',
       reply: {
         referent: note.forum,
         forum: note.forum
       },
-      writers: ['OpenReview.net/Support'],
-      signatures: ['OpenReview.net']
+      writers: [SUPPORT_GROUP],
+      signatures: [GROUP_PREFIX]
     }
 
     or3client.or3request(or3client.mailUrl, openreviewMailPayload, 'POST', token)

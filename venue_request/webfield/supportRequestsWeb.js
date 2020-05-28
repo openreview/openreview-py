@@ -65,9 +65,9 @@ var instructionDetails = [
 ];
 
 // Constants
-var CONFERENCE = "OpenReview.net";
-var SUPPORT_GROUP = CONFERENCE + '/Support';
-var SUBMISSION = CONFERENCE + '/-/Request_Form';
+var GROUP_PREFIX = '';
+var SUPPORT_GROUP = GROUP_PREFIX + '/Support';
+var SUBMISSION = SUPPORT_GROUP + '/-/Request_Form';
 
 var SUBJECT_AREAS = [
   // Add conference specific subject areas here
@@ -83,7 +83,7 @@ var paperDisplayOptions = {
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
-  Webfield.ui.setup('#group-container', CONFERENCE);  // required
+  Webfield.ui.setup('#group-container', GROUP_PREFIX);  // required
 
   renderConferenceHeader();
 

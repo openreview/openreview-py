@@ -1,21 +1,20 @@
 def process(client, note, invitation):
-    print('client:', client.baseurl)
-    print('note:', note.id)
-    print('invitation:', invitation.id)
+    GROUP_PREFIX = ''
+    SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum)
     conference_group = client.get_group(conference.get_id())
-    print(conference_group.id)
-    client.add_members_to_group(conference_group, "OpenReview.net/Support")
+    
+    client.add_members_to_group(conference_group, SUPPORT_GROUP)
 
     forum = client.get_note(id=note.forum)
-    comment_readers = forum.content.get('Contact Emails', []) + forum.content.get('program_chair_emails', []) + ['OpenReview.net/Support']
+    comment_readers = forum.content.get('Contact Emails', []) + forum.content.get('program_chair_emails', []) + [SUPPORT_GROUP]
     comment_note = openreview.Note(
-        invitation = 'OpenReview.net/Support/-/Request' + str(forum.number) + '/Comment',
+        invitation = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
         forum = forum.id,
         replyto = forum.id,
         readers = comment_readers,
-        writers = ['OpenReview.net/Support'],
-        signatures = ['OpenReview.net/Support'],
+        writers = [SUPPORT_GROUP],
+        signatures = [SUPPORT_GROUP],
         content = {
             'title': 'Your venue is available in OpenReview',
             'comment': '''
@@ -45,11 +44,11 @@ OpenReview Team
     forum.writers = []
     forum = client.post_note(forum)
 
-    readers = [conference.get_program_chairs_id(), 'OpenReview.net/Support']
+    readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
 
-    revision_invitation = client.post_invitation(openreview.Invitation(
-        id = 'OpenReview.net/Support/-/Request' + str(forum.number) + '/Revision',
-        super = 'OpenReview.net/Support/-/Revision',
+    client.post_invitation(openreview.Invitation(
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Revision',
+        super = SUPPORT_GROUP + '/-/Revision',
         invitees = readers,
         reply = {
             'forum': forum.id,
@@ -59,7 +58,7 @@ OpenReview Team
                 'values' : readers
             }
         },
-        signatures = ['OpenReview.net/Support']
+        signatures = [SUPPORT_GROUP]
     ))
 
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
@@ -90,8 +89,8 @@ Cheers!
 Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
 
     recruitment_invitation = openreview.Invitation(
-        id = 'OpenReview.net/Support/-/Request' + str(forum.number) + '/Recruitment',
-        super = 'OpenReview.net/Support/-/Recruitment',
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Recruitment',
+        super = SUPPORT_GROUP + '/-/Recruitment',
         invitees = readers,
         reply = {
             'forum': forum.id,
@@ -143,12 +142,12 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
         recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
 
-    posted_recruitment_invitation = client.post_invitation(recruitment_invitation)
+    client.post_invitation(recruitment_invitation)
 
     if 'Reviewer Bid Scores' in forum.content.get('Paper Matching', []):
-        bid_stage_invitation = client.post_invitation(openreview.Invitation(
-            id = 'OpenReview.net/Support/-/Request' + str(forum.number) + '/Bid_Stage',
-            super = 'OpenReview.net/Support/-/Bid_Stage',
+        client.post_invitation(openreview.Invitation(
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Bid_Stage',
+            super = SUPPORT_GROUP + '/-/Bid_Stage',
             invitees = readers,
             reply = {
                 'forum': forum.id,
@@ -158,7 +157,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values' : readers
                 }
             },
-            signatures = ['OpenReview.net/Support']
+            signatures = [SUPPORT_GROUP]
         ))
 
     review_stage_content = None
@@ -166,12 +165,12 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         review_stage_content = {
             'review_start_date': {
                 'description': 'When does reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': '^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 10
             },
             'review_deadline': {
                 'description': 'When does reviewing of submissions end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': '^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
                 'order': 11
             },
@@ -222,15 +221,15 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             },
             'remove_review_form_options': {
                 'order': 29,
-                'value-regex': '^[^,]+(,\s*[^,]*)*$',
+                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
             }
         }
 
-    review_stage_invitation = client.post_invitation(openreview.Invitation(
-        id = 'OpenReview.net/Support/-/Request' + str(forum.number) + '/Review_Stage',
-        super = 'OpenReview.net/Support/-/Review_Stage',
+    client.post_invitation(openreview.Invitation(
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Review_Stage',
+        super = SUPPORT_GROUP + '/-/Review_Stage',
         invitees = readers,
         reply = {
             'forum': forum.id,
@@ -241,13 +240,13 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             },
             'content': review_stage_content
         },
-        signatures = ['OpenReview.net/Support']
+        signatures = [SUPPORT_GROUP]
     ))
 
     if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
-        metareview_stage_invitation = client.post_invitation(openreview.Invitation(
-            id = 'OpenReview.net/Support/-/Request' + str(forum.number) + '/Meta_Review_Stage',
-            super = 'OpenReview.net/Support/-/Meta_Review_Stage',
+        client.post_invitation(openreview.Invitation(
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Meta_Review_Stage',
+            super = SUPPORT_GROUP + '/-/Meta_Review_Stage',
             invitees = readers,
             reply = {
                 'forum': forum.id,
@@ -261,8 +260,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         ))
 
     decision_stage_invitation = client.post_invitation(openreview.Invitation(
-        id = 'OpenReview.net/Support/-/Request' + str(forum.number) + '/Decision_Stage',
-        super = 'OpenReview.net/Support/-/Decision_Stage',
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Decision_Stage',
+        super = SUPPORT_GROUP + '/-/Decision_Stage',
         invitees = readers,
         reply = {
             'forum': forum.id,
@@ -272,5 +271,5 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'values' : readers
             }
         },
-        signatures = ['OpenReview.net/Support']
+        signatures = [SUPPORT_GROUP]
     ))

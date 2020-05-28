@@ -8,9 +8,11 @@ class TestVenueRequest():
 
     def test_venue_request_setup(self, client):
         
-        venue = VenueRequest(client, 'openreview.net/Support', 'openreview.net')
+        super_id = 'openreview.net'
+        support_group_id = super_id + '/Support'
+        venue = VenueRequest(client, support_group_id=support_group_id, super_user='openreview.net')
 
-        assert venue.support_group
+        assert venue.support_group.id == support_group_id
         assert venue.bid_stage_super_invitation
         assert venue.decision_stage_super_invitation
         assert venue.meta_review_stage_super_invitation
@@ -21,9 +23,11 @@ class TestVenueRequest():
         assert venue.comment_super_invitation
         assert venue.recruitment_super_invitation
 
-    def test_post_venue_request(self, client, selenium, request_page):
+    def test_post_deploy_venue_request(self, client, selenium, request_page, helpers):
         
-        venue = VenueRequest(client, 'openreview.net/Support', 'openreview.net')
+        super_id = 'openreview.net'
+        support_group_id = super_id + '/Support'
+        venue = VenueRequest(client, support_group_id, super_id)
         request_page(selenium, "http://localhost:3000/group?id=" + venue.support_group.id, client.token)
 
         header_div = selenium.find_element_by_id('header')
@@ -40,3 +44,52 @@ class TestVenueRequest():
 
         request_form_div = selenium.find_element_by_class_name('note_editor')
         assert request_form_div
+
+        helpers.create_user('test_user@mail.com', 'Test', 'User')
+        request_form_note = client.post_note(openreview.Note(
+            invitation=support_group_id +'/-/Request_Form',
+            signatures=['~Test_User1'],
+            readers=[
+                support_group_id,
+                '~Test_User1',
+                'test_user@mail.com',
+                'tom@mail.com'
+            ],
+            writers=[],
+            content={
+                'title': 'Test 2021 Venue',
+                'Official Venue Name': 'Test 2021 Venue',
+                'Abbreviated Venue Name': 'TestVenue@OR2021',
+                'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
+                'program_chair_emails': [
+                    'test_user@mail.com',
+                    'tom@mail.com'],
+                'contact_email': 'test_user@mail.com',
+                'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
+                'Venue Start Date': '2020/02/01',
+                'Submission Deadline': '2025/09/30',
+                'Location': 'Virtual',
+                'Paper Matching': [
+                    'Reviewer Bid Scores',
+                    'Reviewer Recommendation Scores'],
+                'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
+                'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'Public Commentary': 'Yes, allow members of the public to comment non-anonymously.',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            }))
+        
+        assert request_form_note
+        request_page(selenium, "http://localhost:3000/forum?id=" + request_form_note.forum, client.token)
+
+        deploy_note = client.post_note(openreview.Note(
+            content={'venue_id': 'TEST.cc/2021/Conference'},
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number),
+            readers=[support_group_id],
+            referent=request_form_note.forum,
+            replyto=request_form_note.forum,
+            signatures=[support_group_id],
+            writers=['~Super_User1']
+        ))
+        assert deploy_note

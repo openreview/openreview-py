@@ -1,10 +1,13 @@
 def process(client, note, invitation):
     import datetime
+    GROUP_PREFIX = ''
+    SUPPORT_GROUP = GROUP_PREFIX + '/Support'
+
     conference = openreview.helpers.get_conference(client, note.forum)
     forum_note = client.get_note(note.forum)
 
-    comment_readers = forum_note.content['program_chair_emails'] + ['OpenReview.net/Support']
-    comment_invitation = client.get_invitation('OpenReview.net/Support/-/Request' + str(forum_note.number) + '/Comment')
+    comment_readers = forum_note.content['program_chair_emails'] + [SUPPORT_GROUP]
+    comment_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment')
     if comment_readers != comment_invitation.reply['readers']['values']:
         comment_invitation.reply['readers']['values'] = comment_readers
         client.post_invitation(comment_invitation)
