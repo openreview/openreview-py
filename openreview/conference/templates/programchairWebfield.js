@@ -1612,10 +1612,22 @@ var displayReviewerStatusTable = function() {
     return found;
   }
 
+  // Reviewer group map can have either reviewer id or reviewer email as key.
+  // Have to check all possible keys to get note numbers assigned to reviewer
+  var getReviewerNoteNumbers = function(reviewerProfile) {
+    var keyOptions = reviewerProfile.allNames.concat(reviewerProfile.allEmails);
+    for (var i = 0; i < keyOptions.length; i++) {
+      var numbers = reviewerById[keyOptions[i]];
+      if (numbers) {
+        return numbers;
+      }
+    }
+  }
+
   var rowData = [];
   _.forEach(conferenceStatusData.reviewers, function(reviewer, index) {
-    var numbers = reviewerById[reviewer];
     var reviewerProfile = findProfile(conferenceStatusData.profiles, reviewer);
+    var numbers = getReviewerNoteNumbers(reviewerProfile);
 
     var papers = [];
     _.forEach(numbers, function(number) {

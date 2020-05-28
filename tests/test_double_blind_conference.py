@@ -656,7 +656,7 @@ class TestDoubleBlindConference():
         result = conference.set_program_chairs(['pc@mail.com', 'pc2@mail.com'])
         assert result
         assert result.members
-        assert ['akbc_pc_1@akbc.ws', 'pc@mail.com', 'pc2@mail.com'] == result.members
+        assert ['AKBC.ws/2019/Conference', 'akbc_pc_1@akbc.ws', 'pc@mail.com', 'pc2@mail.com'] == result.members
 
         #Sign up as Program Chair
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
@@ -1089,7 +1089,7 @@ class TestDoubleBlindConference():
         now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 100))
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Official_Review/AnonReviewer1/Revision',
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/AnonReviewer1/-/Review_Revision',
             forum = submission.id,
             referent = review.id,
             replyto=review.replyto,
@@ -1123,10 +1123,16 @@ class TestDoubleBlindConference():
         assert 'andrew@mail.com' in recipients
 
         messages = client.get_messages(subject = '[AKBC 2019] Revised review posted to your assigned paper: "New paper title"')
-        assert len(messages) == 2
+        assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[AKBC 2019] Your revised review has been received on your assigned Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
         assert 'reviewer2@mail.com' in recipients
+
+
 
     def test_open_meta_reviews(self, client, test_client, selenium, request_page, helpers):
 
