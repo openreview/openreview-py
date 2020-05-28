@@ -23,12 +23,12 @@ class TestVenueRequest():
         assert venue.comment_super_invitation
         assert venue.recruitment_super_invitation
 
-    def test_post_deploy_venue_request(self, client, selenium, request_page, helpers):
+    def test_venue_request_post_deploy_revise(self, client, selenium, request_page, helpers):
         
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         venue = VenueRequest(client, support_group_id, super_id)
-        request_page(selenium, "http://localhost:3000/group?id=" + venue.support_group.id, client.token)
+        request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(venue.support_group.id), client.token)
 
         header_div = selenium.find_element_by_id('header')
         assert header_div
@@ -80,8 +80,9 @@ class TestVenueRequest():
             }))
         
         assert request_form_note
-        request_page(selenium, "http://localhost:3000/forum?id=" + request_form_note.forum, client.token)
+        request_page(selenium, 'http://localhost:3000/forum?id=' + request_form_note.forum, client.token)
 
+        # Test Deploy
         deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2021/Conference'},
             forum=request_form_note.forum,
@@ -93,3 +94,47 @@ class TestVenueRequest():
             writers=['~Super_User1']
         ))
         assert deploy_note
+
+        # Test Revision
+        time.sleep(2)
+        request_page(selenium, 'http://localhost:3000/group?id=TEST.cc/2021/Conference', client.token)
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        title_tag = header_div.find_element_by_tag_name('h1')
+        assert title_tag
+        assert title_tag.text == 'Test 2021 Venue'
+
+        revision_note = client.post_note(openreview.Note(
+            content={
+                'title': 'Test 2021 Venue Updated',
+                'Official Venue Name': 'Test 2021 Venue Updated',
+                'Abbreviated Venue Name': 'TestVenue@OR2021',
+                'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
+                'program_chair_emails': [
+                    'test_user@mail.com',
+                    'tom@mail.com'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline': '2025/09/30',
+                'Venue Start Date': '2020/02/01',
+                'contact_email': 'test_user@mail.com',
+                'remove_submission_options': []
+            },
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number),
+            readers=['TEST.cc/2021/Conference/Program_Chairs', support_group_id],
+            referent=request_form_note.forum,
+            replyto=request_form_note.forum,
+            signatures=['~Super_User1'],
+            writers=['~Super_User1']
+        ))
+        assert revision_note
+
+        time.sleep(2)
+        request_page(selenium, 'http://localhost:3000/group?id=TEST.cc/2021/Conference', client.token)
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        title_tag = header_div.find_element_by_tag_name('h1')
+        assert title_tag
+        assert title_tag.text == 'Test 2021 Venue Updated'
