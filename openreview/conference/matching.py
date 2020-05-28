@@ -393,7 +393,7 @@ class Matching(object):
                         'order': 6
                     },
                     'match_group': {
-                        'value-regex': '.*',
+                        'value-regex': '{}/.*'.format(self.conference.id),
                         'default': self.match_group.id,
                         'required': True,
                         'description': 'Group id containing users to be matched',
@@ -407,13 +407,15 @@ class Matching(object):
                         'default': scores_specification
                     },
                     'aggregate_score_invitation': {
-                        'value': self._get_edge_invitation_id('Aggregate_Score'),
+                        'value-regex': '{}/.*'.format(self.conference.id),
+                        'default': self._get_edge_invitation_id('Aggregate_Score'),
                         'required': True,
                         'description': 'Invitation to store aggregated scores',
                         'order': 9
                     },
                     'conflicts_invitation': {
-                        'value': self.conference.get_conflict_score_id(self.match_group.id),
+                        'value-regex': '{}/.*'.format(self.conference.id),
+                        'default': self.conference.get_conflict_score_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store conflict scores',
                         'order': 10
@@ -425,17 +427,17 @@ class Matching(object):
                         'order': 11
                     },
                     'custom_user_demand_invitation': {
+                        'value-regex': '{}/.*/-/Custom_User_Demands$'.format(self.conference.id),
+                        'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
                         'description': 'Invitation to store custom number of users required by papers',
-                        'default': self.match_group.id + '/-/Custom_User_Demands',
                         'order': 12,
-                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'custom_max_papers_invitation': {
+                        'value-regex': '{}/.*/-/Custom_Max_Papers$'.format(self.conference.id),
+                        'default': '{}/-/Custom_Max_Papers'.format(self.match_group.id),
                         'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
-                        'default': self.match_group.id + '/-/Custom_Max_Papers',
                         'order': 13,
-                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'config_invitation': {

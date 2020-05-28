@@ -1016,17 +1016,31 @@ class Client(object):
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
 
-    def delete_edges(self, invitation):
+    def delete_edges(self, invitation, label=None, head=None, tail=None):
         """
-        Deletes edges by invitation.
+        Deletes edges by a combination of invitation id and one or more of the optional filters.
 
         :param invitation: an invitation ID
         type invitation: str
+        :param label: a matching label ID
+        type label: str, optional
+        :param head: id of the edge head (head type defined by the edge invitation)
+        type head: str, optional
+        :param tail: id of the edge tail (tail type defined by the edge invitation)
+        type tail: str, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
+        delete_query = {'invitation': invitation}
+        if label:
+            delete_query['label'] = label
+        if head:
+            delete_query['head'] = head
+        if tail:
+            delete_query['tail'] = tail
+
+        response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
