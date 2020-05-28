@@ -28,6 +28,8 @@ class TestVenueRequest():
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         venue = VenueRequest(client, support_group_id, super_id)
+        time.sleep(5)
+        
         request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(venue.support_group.id), client.token)
 
         header_div = selenium.find_element_by_id('header')
