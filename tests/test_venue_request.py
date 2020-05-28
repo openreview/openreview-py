@@ -27,34 +27,34 @@ class TestVenueRequest():
         
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
-        venue = VenueRequest(client, support_group_id, super_id)
-        time.sleep(5)
+        VenueRequest(client, support_group_id, super_id)
         
-        request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(venue.support_group.id), client.token)
+        # time.sleep(5)
+        # request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(venue.support_group.id), client.token)
 
-        header_div = selenium.find_element_by_id('header')
-        assert header_div
-        assert header_div.find_element_by_tag_name("h1").text == 'Host a Venue'
+        # header_div = selenium.find_element_by_id('header')
+        # assert header_div
+        # assert header_div.find_element_by_tag_name("h1").text == 'Host a Venue'
 
-        request_invitation_div = selenium.find_element_by_id('invitation')
-        assert request_invitation_div
-        request_button_panel = request_invitation_div.find_element_by_tag_name('div')
-        request_button = request_button_panel.find_element_by_class_name('btn')
-        assert request_button.text == 'Support Request Form'
+        # request_invitation_div = selenium.find_element_by_id('invitation')
+        # assert request_invitation_div
+        # request_button_panel = request_invitation_div.find_element_by_tag_name('div')
+        # request_button = request_button_panel.find_element_by_class_name('btn')
+        # assert request_button.text == 'Support Request Form'
 
-        request_button.click()
+        # request_button.click()
 
-        request_form_div = selenium.find_element_by_class_name('note_editor')
-        assert request_form_div
+        # request_form_div = selenium.find_element_by_class_name('note_editor')
+        # assert request_form_div
 
-        helpers.create_user('test_user@mail.com', 'Test', 'User')
+        helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
-            signatures=['~Test_User1'],
+            signatures=['~Newtest_User1'],
             readers=[
                 support_group_id,
-                '~Test_User1',
-                'test_user@mail.com',
+                '~Newtest_User1',
+                'new_test_user@mail.com',
                 'tom@mail.com'
             ],
             writers=[],
@@ -64,9 +64,9 @@ class TestVenueRequest():
                 'Abbreviated Venue Name': 'TestVenue@OR2021',
                 'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
                 'program_chair_emails': [
-                    'test_user@mail.com',
+                    'new_test_user@mail.com',
                     'tom@mail.com'],
-                'contact_email': 'test_user@mail.com',
+                'contact_email': 'new_test_user@mail.com',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': '2020/02/01',
                 'Submission Deadline': '2025/09/30',
@@ -113,14 +113,14 @@ class TestVenueRequest():
                 'Abbreviated Venue Name': 'TestVenue@OR2021',
                 'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
                 'program_chair_emails': [
-                    'test_user@mail.com',
+                    'new_test_user@mail.com',
                     'tom@mail.com'],
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
                 'Submission Deadline': '2025/09/30',
                 'Venue Start Date': '2020/02/01',
-                'contact_email': 'test_user@mail.com',
+                'contact_email': 'new_test_user@mail.com',
                 'remove_submission_options': []
             },
             forum=request_form_note.forum,
