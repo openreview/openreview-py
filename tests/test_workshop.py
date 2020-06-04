@@ -558,7 +558,7 @@ class TestWorkshop():
 
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review/AnonReviewer1/Revision',
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1/-/Review_Revision',
             forum = submission.id,
             referent = review.id,
             replyto=review.replyto,
@@ -591,7 +591,7 @@ class TestWorkshop():
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Revised review posted to your assigned paper')
+        messages = client.get_messages(subject = '[ICAPS HSDIP 2019] Your revised review has been received on your assigned Paper number: 1, Paper title: "Paper title"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer4@mail.com' in recipients
