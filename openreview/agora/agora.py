@@ -308,7 +308,7 @@ class Agora(object):
             client.post_invitation(revision_invitation)
 
         assign_editor_invitation = openreview.Invitation(
-            id = '{}/-/Assign_Editor'.format(covid_group_id),
+            id = '{}/-/Editors_Assignment'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -333,7 +333,7 @@ class Agora(object):
             client.post_invitation(assign_editor_invitation)
 
         assign_reviewer_invitation = openreview.Invitation(
-            id = '{}/-/Assign_Reviewer'.format(covid_group_id),
+            id = '{}/-/Reviewers_Assignment'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -388,7 +388,7 @@ class Agora(object):
             client.post_invitation(review_invitation)
 
         suggest_reviewer_invitation = openreview.Invitation(
-            id = '{}/-/Suggest_Reviewers'.format(covid_group_id),
+            id = '{}/-/Reviewers_Suggestion'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -397,15 +397,15 @@ class Agora(object):
                 'content': {
                     'suggested_reviewers': {
                         'description': 'Comma separated list of reviewer email addresses or OpenReview profile ids',
-                        'order': 1,
+                        'order': 2,
                         'values-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
                         'required':True
                     },
                     'comment': {
                         'description': 'Why are you suggesting this reviewer?',
-                        'order': 2,
-                        'value-regex': "[\\S\\s]{1,5000}",
-                        'required':True
+                        'order': 3,
+                        'value-regex': "[\\S\\s]{1,200}",
+                        'required':False
                     }
                 }
             }

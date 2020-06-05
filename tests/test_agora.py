@@ -117,7 +117,7 @@ class TestAgora():
         articles = editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Assign_Editor',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Editors_Assignment',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '-Agora/COVID-19/Editors'],
             signatures = ['~Editor_One1'],
@@ -158,7 +158,7 @@ class TestAgora():
         articles = article_editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Assign_Reviewer',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Reviewers_Assignment',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '-Agora/COVID-19/Article1/Editors'],
             signatures = ['~ArticleEditor_One1'],
@@ -191,7 +191,7 @@ class TestAgora():
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer@agora.net' in recipients
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Assign_Reviewer',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Reviewers_Assignment',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '-Agora/COVID-19/Article1/Editors'],
             signatures = ['~ArticleEditor_One1'],
@@ -347,7 +347,7 @@ class TestAgora():
         articles = melisa_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Suggest_Reviewers',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Reviewers_Suggestion',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '~Melissa_Agora1'],
             signatures = ['~Melissa_Agora1'],
