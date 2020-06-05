@@ -137,6 +137,29 @@ def process_update(client, note, invitation, existing_note):
     )
     client.post_invitation(review_invitation)
 
+    meta_review_invitation = openreview.Invitation(
+        id = '{}/-/Meta_Review'.format(article_group.id),
+        super = '{}/-/Meta_Review'.format(covid_group_id),
+        invitees = [editors_group_id, support],
+        writers = [support],
+        signatures = [support],
+        reply = {
+            'forum': note.forum,
+            'replyto': note.forum,
+            'readers': {
+                'values': ['everyone'],
+                'default': ['everyone']
+            },
+            'writers': {
+                'values-copied': ['{signatures}', support]
+            },
+            'signatures': {
+                'values-regex': '~.*|{}'.format(support)
+            }
+        }
+    )
+    client.post_invitation(meta_review_invitation)
+
     suggest_reviewer_invitation = openreview.Invitation(
         id = '{}/-/Reviewers_Suggestion'.format(article_group.id),
         super = '{}/-/Reviewers_Suggestion'.format(covid_group_id),

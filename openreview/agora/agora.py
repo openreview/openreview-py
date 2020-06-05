@@ -387,6 +387,44 @@ class Agora(object):
             review_invitation.process = file_content
             client.post_invitation(review_invitation)
 
+        meta_review_invitation = openreview.Invitation(
+            id = '{}/-/Meta_Review'.format(covid_group_id),
+            readers = ['everyone'],
+            writers = [support_group_id],
+            signatures = [support_group_id],
+            multiReply = False,
+            reply = {
+                'content': {
+                    'title': {
+                        'description': 'Brief summary of your meta review.',
+                        'order': 1,
+                        'value-regex': ".{0,500}",
+                        'required':True
+                    },
+                    'metareview': {
+                        'description': 'You can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 5000',
+                        'order': 2,
+                        'value-regex': "[\\S\\s]{1,5000}",
+                        'required':True,
+                        'markdown':True
+                    },
+                    'recommendation': {
+                        'order': 3,
+                        'value-dropdown': [
+                            'Accept',
+                            'Needs more work'
+                        ],
+                        'required': True
+                    }
+                }
+            }
+        )
+        with open(os.path.join(os.path.dirname(__file__), 'process/meta_review_process.py')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            meta_review_invitation.process = file_content
+            client.post_invitation(meta_review_invitation)
+
         suggest_reviewer_invitation = openreview.Invitation(
             id = '{}/-/Reviewers_Suggestion'.format(covid_group_id),
             readers = ['everyone'],
