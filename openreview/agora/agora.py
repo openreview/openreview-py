@@ -198,7 +198,7 @@ class Agora(object):
             client.post_invitation(submission_invitation)
 
         moderate_invitation = openreview.Invitation(
-            id = '{}/-/Moderate'.format(covid_group_id),
+            id = '{}/-/Moderation'.format(covid_group_id),
             invitees = [covid_editors],
             readers = ['everyone'],
             writers = [support_group_id],

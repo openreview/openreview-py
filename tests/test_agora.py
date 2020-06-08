@@ -79,7 +79,7 @@ class TestAgora():
         submissions = editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
         assert submissions
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Submission1/-/Moderate',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Submission1/-/Moderation',
             readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '-Agora/COVID-19/Submission1/Authors'],
             writers = ['openreview.net/Support'],
             signatures = ['~Editor_One1'],
@@ -496,7 +496,7 @@ class TestAgora():
         submissions = editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
         assert submissions
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Submission2/-/Moderate',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Submission2/-/Moderation',
             readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '-Agora/COVID-19/Submission2/Authors'],
             writers = ['openreview.net/Support'],
             signatures = ['~Editor_One1'],
