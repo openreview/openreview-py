@@ -5,8 +5,8 @@ import json
 import datetime
 import openreview
 from tqdm import tqdm
-from .. import invitations
-from .. import tools
+from openreview import invitations
+from openreview import tools
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10

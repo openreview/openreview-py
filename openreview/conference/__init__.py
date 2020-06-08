@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from .builder import *
-from .webfield import *
-from .helpers import *
+from openreview.conference.builder import *
+from openreview.conference.webfield import *
+from openreview.conference.helpers import *
 

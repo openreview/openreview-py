@@ -859,7 +859,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -884,7 +884,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -1021,13 +1021,13 @@ class Client(object):
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
         :param invitation: an invitation ID
-        type invitation: str
+        :type invitation: str
         :param label: a matching label ID
-        type label: str, optional
+        :type label: str, optional
         :param head: id of the edge head (head type defined by the edge invitation)
-        type head: str, optional
+        :type head: str, optional
         :param tail: id of the edge tail (tail type defined by the edge invitation)
-        type tail: str, optional
+        :type tail: str, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
@@ -1296,7 +1296,6 @@ class Client(object):
         response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
-
 
 class Group(object):
     """
@@ -1959,7 +1958,6 @@ class Edge(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
-
 
 class Profile(object):
     """

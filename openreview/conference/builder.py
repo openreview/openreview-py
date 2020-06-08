@@ -9,9 +9,8 @@ from tqdm import tqdm
 from . import webfield
 from . import invitation
 from . import matching
-sys.path.insert(1, os.path.realpath(os.path.pardir))
-from .. import openreview
-from .. import tools
+import openreview
+from openreview import tools
 
 class Conference(object):
 

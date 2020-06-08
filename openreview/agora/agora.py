@@ -1,4 +1,4 @@
-from .. import openreview
+import openreview
 
 import os
 import json

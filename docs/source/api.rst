@@ -5,7 +5,7 @@ API Documentation
 Client
 -------
 
-.. automodule:: openreview
+.. automodule:: openreview_api
 
 .. autoclass:: Client
    :members:
@@ -29,14 +29,14 @@ Client
 Tools
 -------
 
-.. automodule:: tools
+.. automodule:: openreview.tools
    :members:
 
 
 Conference Builder
 -------------------
 
-.. automodule:: conference.builder
+.. automodule:: openreview.conference.builder
 
 .. autoclass:: Conference
    :members:
