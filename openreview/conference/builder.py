@@ -3,14 +3,15 @@ from __future__ import absolute_import
 import time
 import datetime
 import re
+import os, sys
 from enum import Enum
 from tqdm import tqdm
-from .. import openreview
-from .. import tools
 from . import webfield
 from . import invitation
 from . import matching
-
+sys.path.insert(1, os.path.realpath(os.path.pardir))
+from .. import openreview
+from .. import tools
 
 class Conference(object):
 
