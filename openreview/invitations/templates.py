@@ -10,7 +10,7 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
-import openreview
+from .. import openreview
 from . import content
 import re
 

@@ -5,11 +5,11 @@ import datetime
 import re
 from enum import Enum
 from tqdm import tqdm
+from .. import openreview
+from .. import tools
 from . import webfield
 from . import invitation
 from . import matching
-import openreview
-from openreview import tools
 
 class Conference(object):
 
