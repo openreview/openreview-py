@@ -29,23 +29,26 @@ class TestVenueRequest():
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
         
-        # time.sleep(5)
-        # request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(venue.support_group.id), client.token)
+        time.sleep(5)
+        request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(support_group_id), client.token)
 
-        # header_div = selenium.find_element_by_id('header')
-        # assert header_div
-        # assert header_div.find_element_by_tag_name("h1").text == 'Host a Venue'
+        time.sleep(2)
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        assert header_div.find_element_by_tag_name("h1").text == 'Host a Venue'
 
-        # request_invitation_div = selenium.find_element_by_id('invitation')
-        # assert request_invitation_div
-        # request_button_panel = request_invitation_div.find_element_by_tag_name('div')
-        # request_button = request_button_panel.find_element_by_class_name('btn')
-        # assert request_button.text == 'Support Request Form'
+        request_invitation_div = selenium.find_element_by_id('invitation')
+        assert request_invitation_div
+        request_button_panel = request_invitation_div.find_element_by_tag_name('div')
+        request_button = request_button_panel.find_element_by_class_name('btn')
+        assert request_button.text == 'Support Request Form'
 
-        # request_button.click()
+        request_button.click()
 
-        # request_form_div = selenium.find_element_by_class_name('note_editor')
-        # assert request_form_div
+        time.sleep(2)
+
+        request_form_div = selenium.find_element_by_class_name('note_editor')
+        assert request_form_div
 
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
         request_form_note = client.post_note(openreview.Note(
