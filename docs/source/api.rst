@@ -5,7 +5,7 @@ API Documentation
 Client
 -------
 
-.. automodule:: openreview_api
+.. automodule:: openreview
 
 .. autoclass:: Client
    :members:
