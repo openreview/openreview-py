@@ -1590,7 +1590,7 @@ var displayAreaChairsStatusTable = function() {
         (BID_NAME ? '<li><a class="msg-no-bids">Area Chairs with 0 bids</a></li>' : '') +
         (RECOMMENDATION_NAME ? '<li><a class="msg-no-recs">Area Chairs with 0 recommendations</a></li>' : '') +
         '<li><a class="msg-unsubmitted-reviews">Area Chairs with unsubmitted reviews</a></li>' +
-        '<li><a class="msg-submitted-none-metareviews">Area Chairs 0 submitted meta reviews</a></li>' +
+        '<li><a class="msg-submitted-none-metareviews">Area Chairs with 0 submitted meta reviews</a></li>' +
         '<li><a class="msg-unsubmitted-metareviews">Area Chairs with unsubmitted meta reviews</a></li>' +
       '</ul>' +
     '</div>'
