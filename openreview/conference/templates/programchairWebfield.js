@@ -1498,7 +1498,7 @@ var displayAreaChairsStatusTable = function() {
         return row.reviewProgressData.numCompletedMetaReviews < row.reviewProgressData.numPapers;
       },
       'msg-submitted-none-metareviews': function(row) {
-        return row.reviewProgressData.numCompletedMetaReviews == 0 && row.reviewProgressData.numPapers;
+        return row.reviewProgressData.numCompletedMetaReviews === 0 && row.reviewProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
