@@ -56,7 +56,7 @@ Like comments and submissions, reviews are also usually represented as Notes. Co
 For example, the reviews in ICLR 2019 all have invitations with the following pattern::
 
 
-	>>> ICLR.cc/2019/Conference/-/Paper.*/Official_Review
+	ICLR.cc/2019/Conference/-/Paper.*/Official_Review
 
 To retrieve the Official Reviews for a given ICLR 2019 paper, do the following::
 
@@ -73,9 +73,9 @@ The specific structure of the review's ``content`` field is determined by the co
 Conferences as large as ICLR 2019 will often have a number of reviews that exceeds the default API limit. To retrieve all Official Reviews for all ICLR 2019 papers, create an iterator over reviews by doing the following::
 
 
-	>>> review_iterator = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Paper.*/Official_Review')
-	>>> for review in review_iterator:
-	>>>     #do something
+	review_iterator = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Paper.*/Official_Review')
+	for review in review_iterator:
+	    #do something
 
 Retrieving all accepted Submissions for a conference (Single-blind)
 -------------------------------------------------------------------
@@ -102,21 +102,21 @@ This is very similar to the previous example. The only difference is that we nee
 
 Retrieve Submissions and Decisions.
 
-	>>> blind_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Blind_Submission', details='original')}
+	blind_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Blind_Submission', details='original')}
 
-	>>> all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Paper.*/Decision')
+	all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Paper.*/Decision')
 
 We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
 
-	>>> accepted_submissions = [blind_notes[decision_note.forum].details['original'] for decision_note in all_decision_notes if 'Accept' in decision_note.content['decision']]
+	accepted_submissions = [blind_notes[decision_note.forum].details['original'] for decision_note in all_decision_notes if 'Accept' in decision_note.content['decision']]
 
 Retrieving all the author names and e-mails from accepted Submissions
 ---------------------------------------------------------------------
 First we need to retrieve the Accepted Submissions. Please refer to 'Retrieving all accepted Submissions for a conference'. Once we get the Accepted Submissions we can easily extract the author's information from them.
 
-	>>> author_emails = []
-	>>> author_names = []
-	>>> for submission in accepted_submissions:
+	author_emails = []
+	author_names = []
+	for submission in accepted_submissions:
 	... 	author_emails += submission['content']['authorids']
 	... 	author_names += submission['content']['authors']
 
@@ -125,19 +125,19 @@ Retrieving comments made on a forum
 
 All comments made on a particular forum/submission can be extracted like this::
 
-	>>>iclr19_forum_comments = client.get_notes(forum="<forum-id>")
+	iclr19_forum_comments = client.get_notes(forum="<forum-id>")
 
 Also, the public comments on a particular forum can be extracted like this::
 
-	>>>iclr19_forum_public_comments = client.get_notes(forum="<forum-id>", invitation="ICLR.cc/2019/Conference/-/Paper.*/Public_Comment")
+	iclr19_forum_public_comments = client.get_notes(forum="<forum-id>", invitation="ICLR.cc/2019/Conference/-/Paper.*/Public_Comment")
 
 Accessing data in comments
 ------------------------------
 
 The data in a comment, or basically Notes objects, can be accessed like this::
 
-	>>>print(iclr19_forum_public_comments[0].content["title"])
-	>>>print(iclr19_forum_public_comments[0].content["comment"])
+	print(iclr19_forum_public_comments[0].content["title"])
+	print(iclr19_forum_public_comments[0].content["comment"])
 
 
 Getting ICLR 2019 data
@@ -241,5 +241,5 @@ The following example script can be used to retrieve all ICLR 2019 metadata and 
 
 You can also call this script with the `openreview` package::
 
-	>>> python -m openreview.scripts.download_iclr19 --get_pdfs
+	 python -m openreview.scripts.download_iclr19 --get_pdfs
 
