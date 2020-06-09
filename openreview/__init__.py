@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from openreview.openreview import *
-from openreview import tools
-from openreview import invitations
-from openreview.conference import *
-from openreview.agora import *
+from .openreview import *
+from . import tools
+from . import invitations
+from .conference import *
+from .agora import *

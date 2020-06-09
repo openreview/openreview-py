@@ -5,7 +5,7 @@ API Documentation
 Client
 -------
 
-.. automodule:: openreview
+.. automodule:: openreview.openreview
 
 .. autoclass:: Client
    :members:
@@ -45,3 +45,9 @@ Conference Builder
    :members:
 
 
+Agora
+-------
+
+.. automodule:: agora
+
+.. autoclass:: Agora
