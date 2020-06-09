@@ -32,39 +32,44 @@ class Agora(object):
 
         header = {
             "title": "Agora (ἀγορά) COVID-19",
-            "subtitle": "OpenReview public space for COVID-19 related articles",
+            "subtitle": "A venue for open discussion of research articles related to COVID-19",
             "location": "Everywhere",
             "date": "Ongoing",
             "website": "https://openreview.net",
             "instructions": '''
             <p>
-                <strong>Editor-in-chief:</strong><br>
-                <p>This venue is managed by a group of Editors-in-Chief who check each submission and decide whether to release it to the public or not. The Editors-in-Chief determine the editors for each submitted article.
-                To see the list of members, click <a href="https://openreview.net/group?id={covid_editors}">here</a>.</p>
+                <strong>Editor-in-chief:</strong> {editor_id}
             </p>
             <p>
-                <strong>Submission:</strong><br>
-                <p>Anyone with an OpenReview profile can submit an article. The article submission form also allows the authors to suggest one or more "editors" by specifying their OpenReview usernames (e.g. "~Jane_Doe1").
-                Before the submitted article is made visible to the public, it goes to the Editor-in-Chief who examines it briefly, checking for spam but not for scientific validity. If it is not spam, the article is made visible, and editors are assigned to the paper.
-                Authors can upload a revision to any part of their submission at any time.  The full history of past uploads will always be available through the "Show Revisions" option.</p>
+                <strong>Submission, Reviewing, Commenting, and Approval Workflow:</strong><br>
+                <p>Any OpenReview logged-in user may submit an article. The article submission form allows the Authors to suggest for their article one or
+                multiple Editors (from among people who have created OpenReview profiles). The article is not immediately visible to the public, but is sent
+                to the Editors-in-Chief, any of whom may perform a basic evaluation of the submission (e.g. checking for spam). If not immediately rejected
+                at this step, an Editor-in-Chief assigns one or more Editors to the article (perhaps from the authors’ suggestions, perhaps from their own choices),
+                and the article is made visible to the public. Authors may upload revisions to any part of their submission at any time. (The full history of past
+                revisions is  available through the "Show Revisions" link.)</p>
             </p>
             <p>
-                <strong>Editor:</strong><br>
-                <p>The Editor-in-Chief decides on assigned editors, following the suggestions of the authors or making their own choices.  The editor assignments are non-anonymous.
-                The article authors can edit their list of requested editors by revising their submission. The Editor-in-Chief can add or remove editors from the article at any time.</p>
+                Assigned Editors are non-anonymous. The article Authors may revise their list of requested editors by revising their submission. The Editors-in-Chief
+                may add or remove Editors for the article at any time.
             </p>
             <p>
-                <strong>Reviewers:</strong><br>
-                <p>Only assigned reviewers can review or comment on the article. Reviews are public and reviewers are non-anonymous.
-                Editors of the article can add (or remove) people from the reviewers group by adding/removing their OpenReview usernames to the "Assigned Reviewers" field of the article.
-                Any logged-in user can suggest reviewers for an article and an assigned editor will decide to add them to the reviewers group them or not.</p>
+                Reviewers are assigned to the article by any of the Editors of the article.  Any of the Editors can add (or remove) Reviewers at any time. Any logged-in
+                user can suggest additional Reviewers for this article; these suggestions are public and non-anonymous.  (Thus the public may apply social pressure on
+                the Editors for diversity of views in reviewing and commenting.) To avoid spam, only assigned Reviewers, Editors and the Editors-in-Chief can contribute
+                comments (or reviews) on the article.  Such comments are public and associated with their non-anonymous reviewers.  There are no system-enforced deadlines
+                for any of the above steps, (although social pressure may be applied out-of-band).
             </p>
             <p>
-                <strong>Questions or Concerns:</strong><br>
-                Please contact the OpenReview support team at
-                <a href="mailto:info@openreview.net">info@openreview.net</a> with any questions or concerns.
+                At some point, any of the Editors may contribute a meta-review, making an Approval recommendation to the Editors-in-Chief.  Any of the Editors-in-Chief may
+                 at any time add or remove the venue’s Approval from the article (indicating a kind of “acceptance” of the article).
             </p>
-            '''.format(covid_editors=covid_editors),
+            <p>
+                For questions about editorial content and process, email the Editors-in-Chief.<br>
+                For questions about software infrastructure or profiles, email the OpenReview support team at
+                <a href="mailto:info@openreview.net">info@openreview.net</a>.
+            </p>
+            '''.format(editor_id=editor_id),
             "deadline": "",
             "contact": "info@openreview.net"
         }
@@ -193,7 +198,7 @@ class Agora(object):
             client.post_invitation(submission_invitation)
 
         moderate_invitation = openreview.Invitation(
-            id = '{}/-/Moderate'.format(covid_group_id),
+            id = '{}/-/Moderation'.format(covid_group_id),
             invitees = [covid_editors],
             readers = ['everyone'],
             writers = [support_group_id],
@@ -303,7 +308,7 @@ class Agora(object):
             client.post_invitation(revision_invitation)
 
         assign_editor_invitation = openreview.Invitation(
-            id = '{}/-/Assign_Editor'.format(covid_group_id),
+            id = '{}/-/Editors_Assignment'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -328,7 +333,7 @@ class Agora(object):
             client.post_invitation(assign_editor_invitation)
 
         assign_reviewer_invitation = openreview.Invitation(
-            id = '{}/-/Assign_Reviewer'.format(covid_group_id),
+            id = '{}/-/Reviewers_Assignment'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -382,8 +387,46 @@ class Agora(object):
             review_invitation.process = file_content
             client.post_invitation(review_invitation)
 
+        meta_review_invitation = openreview.Invitation(
+            id = '{}/-/Meta_Review'.format(covid_group_id),
+            readers = ['everyone'],
+            writers = [support_group_id],
+            signatures = [support_group_id],
+            multiReply = False,
+            reply = {
+                'content': {
+                    'title': {
+                        'description': 'Brief summary of your meta review.',
+                        'order': 1,
+                        'value-regex': ".{0,500}",
+                        'required':True
+                    },
+                    'metareview': {
+                        'description': 'You can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 5000',
+                        'order': 2,
+                        'value-regex': "[\\S\\s]{1,5000}",
+                        'required':True,
+                        'markdown':True
+                    },
+                    'recommendation': {
+                        'order': 3,
+                        'value-dropdown': [
+                            'Accept',
+                            'Needs more work'
+                        ],
+                        'required': True
+                    }
+                }
+            }
+        )
+        with open(os.path.join(os.path.dirname(__file__), 'process/meta_review_process.py')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("support = 'OpenReview.net/Support'", "support = '" + support_group_id + "'")
+            meta_review_invitation.process = file_content
+            client.post_invitation(meta_review_invitation)
+
         suggest_reviewer_invitation = openreview.Invitation(
-            id = '{}/-/Suggest_Reviewers'.format(covid_group_id),
+            id = '{}/-/Reviewers_Suggestion'.format(covid_group_id),
             readers = ['everyone'],
             writers = [support_group_id],
             signatures = [support_group_id],
@@ -392,15 +435,15 @@ class Agora(object):
                 'content': {
                     'suggested_reviewers': {
                         'description': 'Comma separated list of reviewer email addresses or OpenReview profile ids',
-                        'order': 1,
+                        'order': 2,
                         'values-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
                         'required':True
                     },
                     'comment': {
                         'description': 'Why are you suggesting this reviewer?',
-                        'order': 2,
-                        'value-regex': "[\\S\\s]{1,5000}",
-                        'required':True
+                        'order': 3,
+                        'value-regex': "[\\S\\s]{1,200}",
+                        'required':False
                     }
                 }
             }

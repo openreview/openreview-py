@@ -123,7 +123,7 @@ var loadData = function(result) {
     blindedNotesP = Webfield.getAll('/notes', {
       invitation: BLIND_SUBMISSION_ID,
       number: noteNumbersStr,
-      details: 'invitation'
+      details: 'invitation,replyCount'
     }).then(function(notes) {
       return _.sortBy(notes, 'number');
     });
@@ -385,6 +385,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   var sortOptions = {
     Paper_Number: function(row) { return row[1].number; },
     Paper_Title: function(row) { return _.toLower(_.trim(row[2].content.title)); },
+    Number_of_Forum_Replies: function(row) { return row[3].forumReplyCount; },
     Number_of_Reviews_Submitted: function(row) { return row[3].numSubmittedReviews; },
     Number_of_Reviews_Missing: function(row) { return row[3].numReviewers - row[3].numSubmittedReviews; },
     Average_Rating: function(row) { return row[3].averageRating === 'N/A' ? 0 : row[3].averageRating; },
@@ -854,6 +855,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   var cell2 = {
     noteId: note.id,
     paperNumber: note.number,
+    forumReplyCount: note.details['replyCount'],
     numSubmittedReviews: Object.keys(completedReviews).length,
     numReviewers: Object.keys(reviewerIds).length,
     reviewers: combinedObj,
