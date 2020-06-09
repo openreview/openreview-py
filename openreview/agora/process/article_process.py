@@ -70,8 +70,8 @@ def process_update(client, note, invitation, existing_note):
     client.post_invitation(revision_invitation)
 
     assign_editor_invitation = openreview.Invitation(
-        id = '{}/-/Assign_Editor'.format(article_group.id),
-        super = '{}/-/Assign_Editor'.format(covid_group_id),
+        id = '{}/-/Editors_Assignment'.format(article_group.id),
+        super = '{}/-/Editors_Assignment'.format(covid_group_id),
         invitees = [editor, support],
         writers = [support],
         signatures = [support],
@@ -89,8 +89,8 @@ def process_update(client, note, invitation, existing_note):
     client.post_invitation(assign_editor_invitation)
 
     assign_reviewer_invitation = openreview.Invitation(
-        id = '{}/-/Assign_Reviewer'.format(article_group.id),
-        super = '{}/-/Assign_Reviewer'.format(covid_group_id),
+        id = '{}/-/Reviewers_Assignment'.format(article_group.id),
+        super = '{}/-/Reviewers_Assignment'.format(covid_group_id),
         invitees = [editor, editors_group_id, support],
         writers = [support],
         signatures = [support],
@@ -137,9 +137,32 @@ def process_update(client, note, invitation, existing_note):
     )
     client.post_invitation(review_invitation)
 
+    meta_review_invitation = openreview.Invitation(
+        id = '{}/-/Meta_Review'.format(article_group.id),
+        super = '{}/-/Meta_Review'.format(covid_group_id),
+        invitees = [editors_group_id, support],
+        writers = [support],
+        signatures = [support],
+        reply = {
+            'forum': note.forum,
+            'replyto': note.forum,
+            'readers': {
+                'values': ['everyone'],
+                'default': ['everyone']
+            },
+            'writers': {
+                'values-copied': ['{signatures}', support]
+            },
+            'signatures': {
+                'values-regex': '~.*|{}'.format(support)
+            }
+        }
+    )
+    client.post_invitation(meta_review_invitation)
+
     suggest_reviewer_invitation = openreview.Invitation(
-        id = '{}/-/Suggest_Reviewers'.format(article_group.id),
-        super = '{}/-/Suggest_Reviewers'.format(covid_group_id),
+        id = '{}/-/Reviewers_Suggestion'.format(article_group.id),
+        super = '{}/-/Reviewers_Suggestion'.format(covid_group_id),
         invitees = ['everyone'],
         noninvitees = [blocked],
         writers = [support],
