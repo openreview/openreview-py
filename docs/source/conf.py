@@ -14,11 +14,11 @@
 #
 import os
 import sys
-sys.path.append(os.path.abspath('.'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview/conference'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview/invitations'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview/agora'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview'))
+sys.path.insert(0, os.path.abspath('../..'))
+# sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview/conference'))
+# sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview/invitations'))
+# sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview/agora'))
+# sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview'))
 
 # -- Project information -----------------------------------------------------
 
