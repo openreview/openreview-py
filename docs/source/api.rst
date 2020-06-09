@@ -29,14 +29,14 @@ Client
 Tools
 -------
 
-.. automodule:: tools
+.. automodule:: openreview.tools
    :members:
 
 
 Conference Builder
 -------------------
 
-.. automodule:: conference.builder
+.. automodule:: openreview.conference.builder
 
 .. autoclass:: Conference
    :members:
@@ -48,6 +48,6 @@ Conference Builder
 Agora
 -------
 
-.. automodule:: agora
+.. automodule:: openreview.agora
 
 .. autoclass:: Agora
