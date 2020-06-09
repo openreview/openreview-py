@@ -29,7 +29,7 @@ Client
 Tools
 -------
 
-.. automodule:: tools
+.. automodule:: openreview.tools
    :members:
 
 
