@@ -12,7 +12,6 @@ Users can query for notes using the ID of the Invitation that it responds to.
 
 Consider the following example which gets the public `Notes` that represent the 11th through 20th submissions to ICLR 2019::
 
-
 	blind_submissions = client.get_notes(
 		invitation='ICLR.cc/2019/Conference/-/Blind_Submission',
 		limit=10,
@@ -56,7 +55,8 @@ Like comments and submissions, reviews are also usually represented as Notes. Co
 
 For example, the reviews in ICLR 2019 all have invitations with the following pattern::
 
-	ICLR.cc/2019/Conference/-/Paper.*/Official_Review
+
+	>>> ICLR.cc/2019/Conference/-/Paper.*/Official_Review
 
 To retrieve the Official Reviews for a given ICLR 2019 paper, do the following::
 
@@ -65,11 +65,13 @@ To retrieve the Official Reviews for a given ICLR 2019 paper, do the following::
 
 The specific structure of the review's ``content`` field is determined by the conference, but a typical review's content will include fields like ``title``, ``review``, ``rating``, and ``confidence``::
 
-	>>> review0 = paper123_reviews[0]
-	>>> print(review0.content['rating'])
+
+	review0 = paper123_reviews[0]
+	print(review0.content['rating'])
 	'8: Top 50% of accepted papers, clear accept'
 
 Conferences as large as ICLR 2019 will often have a number of reviews that exceeds the default API limit. To retrieve all Official Reviews for all ICLR 2019 papers, create an iterator over reviews by doing the following::
+
 
 	>>> review_iterator = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Paper.*/Official_Review')
 	>>> for review in review_iterator:
@@ -81,17 +83,18 @@ Since the Submissions do not contain the decisions, we first need to retrieve al
 
 Retrieve Submissions and Decisions.
 
-	>>> id_to_submission = {
-        	note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Full_Submission')
-		}
 
-	>>> all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Paper.*/Decision')
+	id_to_submission = {
+    	note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Full_Submission')
+	}
+	all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Paper.*/Decision')
 
 It is convenient to place all the submissions in a dictionary with their id as the key so that we can retrieve an accepted submission using its id.
 
 We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
 
-	>>> accepted_submissions = [id_to_submission[note.forum] for note in all_decision_notes if note.content['decision'] == 'Accept']
+
+	accepted_submissions = [id_to_submission[note.forum] for note in all_decision_notes if note.content['decision'] == 'Accept']
 
 Retrieving all accepted Submissions for a conference (Double-blind)
 -------------------------------------------------------------------
