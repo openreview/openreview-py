@@ -43,11 +43,3 @@ Conference Builder
 
 .. autoclass:: ConferenceBuilder
    :members:
-
-
-Agora
--------
-
-.. automodule:: openreview.agora
-
-.. autoclass:: Agora

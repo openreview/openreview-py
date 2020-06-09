@@ -3,10 +3,9 @@ from __future__ import absolute_import
 import os
 import json
 import datetime
-import openreview
 from tqdm import tqdm
-from openreview import invitations
-from openreview import tools
+import openreview
+from openreview import tools, invitations
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
