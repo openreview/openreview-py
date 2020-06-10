@@ -358,15 +358,7 @@ var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  // Filter out non-reviewer tasks
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) > -1; });
-  };
-  var reviewerInvitations = invitations.filter(filterFunc);
-  var reviewerEdgeInvitations = edgeInvitations.filter(filterFunc);
-  var reviewerTagInvitations = tagInvitations.filter(filterFunc);
-
-  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations.concat(reviewerTagInvitations), tasksOptions)
+  Webfield.ui.newTaskList(invitations, edgeInvitations.concat(tagInvitations), tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
 };
 

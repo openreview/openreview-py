@@ -1280,7 +1280,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, release_to_authors = True ))
+            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True ))
+
+
+        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , test_client.token)
+        notes = selenium.find_elements_by_class_name('note_with_children')
+        assert len(notes) == 2
 
 
     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
@@ -1365,3 +1370,189 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
                 signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
             )
+
+    def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page):
+
+        blinded_notes = conference.get_submissions()
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40)))
+        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , test_client.token)
+        notes = selenium.find_elements_by_class_name('note_with_children')
+        assert len(notes) == 2
+
+        button = notes[0].find_element_by_class_name('btn')
+        assert button
+
+        button = notes[1].find_element_by_class_name('btn')
+        assert button
+
+        reviews = test_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 2
+
+        rebuttal_note = test_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=reviews[1].id,
+            invitation=reviews[1].signatures[0] + '/-/Rebuttal',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            content={
+                'rebuttal': 'this is the rebuttal `print(\'hello\')`'
+            }
+        ))
+        assert rebuttal_note
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = rebuttal_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[ECCV 2020] Your rebuttal has been received on your submission - Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your review submitted - Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer2@google.com' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Rebuttal posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer1@fb.com' in recipients
+        assert 'ac1@eccv.org' in recipients
+
+    def test_revise_review_stage(self, conference, client, test_client, selenium, request_page):
+
+        blinded_notes = conference.get_submissions()
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_review_revision_stage(openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 40), additional_fields = {
+            'final_rating': {
+                'order': 1,
+                'value-dropdown': [
+                    '6: Strong accept',
+                    '5: Weak accept',
+                    '4: Borderline accept',
+                    '3: Borderline reject',
+                    '2: Weak reject',
+                    '1: Strong reject'
+                ],
+                'required': True
+            },
+            'final_rating_justification': {
+                'order': 2,
+                'value-regex': '[\\S\\s]{0,1000}',
+                'description': 'Indicate that you have read the author rebuttal and argue in which sense the rebuttal or the discussion with the other reviewers has changed your initial rating or why you want to keep your rating. Max length: 1000',
+                'required': True
+            }
+        }, remove_fields = ['title', 'rating', 'review', 'confidence']))
+
+        reviewer_client = openreview.Client(username='reviewer2@google.com', password='1234')
+
+        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , reviewer_client.token)
+        notes = selenium.find_elements_by_class_name('note_with_children')
+        assert len(notes) == 4
+
+        buttons = notes[0].find_elements_by_class_name('btn')
+        assert len(buttons) == 4
+
+        buttons = notes[1].find_elements_by_class_name('btn')
+        assert len(buttons) == 7
+
+        reviews = reviewer_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 2
+
+        review_revision_note = reviewer_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            referent=reviews[1].id,
+            invitation=reviews[1].signatures[0] + '/-/Review_Revision',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            content={
+                'final_rating': '5: Weak accept',
+                'final_rating_justification': 'rebuttal was good'
+            }
+        ))
+        assert review_revision_note
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[ECCV 2020] Revised review posted to your submission: "Paper title 1"')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'test@mail.com' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Your revised review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer2@google.com' in recipients
+
+        messages = client.get_messages(subject = '[ECCV 2020] Revised review posted to your assigned paper: "Paper title 1"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer1@fb.com' in recipients
+        assert 'ac1@eccv.org' in recipients
+
+    def test_review_rating_stage(self, conference, client, test_client, selenium, request_page):
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_review_rating_stage(openreview.ReviewRatingStage(due_date = now + datetime.timedelta(minutes = 40), additional_fields = {
+            'rating': {
+                'order': 1,
+                'required': True,
+                'value-radio': ['-1: useless', '1: normal, valuable review', '2: exceptional, top 10% of my reviews']
+            },
+            'rating_justification': {
+                'order': 2,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Justification of the rating. Max length: 5000',
+                'required': False
+            }
+        }, remove_fields = ['title', 'novelty', 'soundness']))
+
+        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+
+        blinded_notes = conference.get_submissions()
+
+        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , ac_client.token)
+        notes = selenium.find_elements_by_class_name('note_with_children')
+        assert len(notes) == 4
+
+        buttons = notes[0].find_elements_by_class_name('btn')
+        assert len(buttons) == 2
+
+        buttons = notes[1].find_elements_by_class_name('btn')
+        assert len(buttons) == 5
+
+        reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 2
+
+        review_rating_note = ac_client.post_note(openreview.Note(
+            forum=blinded_notes[2].id,
+            replyto=reviews[1].id,
+            invitation=reviews[1].signatures[0] + '/-/Review_Rating',
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
+            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted'],
+            writers=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
+            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
+            content={
+                'rating': '-1: useless',
+                'rating_justification': 'bad review'
+            }
+        ))
+        assert review_rating_note
