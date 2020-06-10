@@ -862,7 +862,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -887,7 +887,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -1024,13 +1024,13 @@ class Client(object):
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
         :param invitation: an invitation ID
-        type invitation: str
+        :type invitation: str
         :param label: a matching label ID
-        type label: str, optional
+        :type label: str, optional
         :param head: id of the edge head (head type defined by the edge invitation)
-        type head: str, optional
+        :type head: str, optional
         :param tail: id of the edge tail (tail type defined by the edge invitation)
-        type tail: str, optional
+        :type tail: str, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
@@ -1300,7 +1300,6 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-
 class Group(object):
     """
     When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
@@ -1319,6 +1318,10 @@ class Group(object):
     :type cdate: int, optional
     :param ddate: Deletion date of the Group
     :type ddate: int, optional
+    :param tcdate: true creation date of the Group
+    :type tcdate: int, optional
+    :param tmdate: true modification date of the Group
+    :type tmdate: int, optional
     :param members: List of members in the Group, each member is a Group id
     :type members: list[str], optional
     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
@@ -1328,11 +1331,13 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
         self.ddate = ddate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.writers = writers
         self.members = [] if members==None else members
         self.readers = readers
@@ -1392,6 +1397,8 @@ class Group(object):
         group = Group(g['id'],
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
+            tcdate = g.get('tcdate'),
+            tmdate = g.get('tmdate'),
             writers = g.get('writers'),
             members = g.get('members'),
             readers = g.get('readers'),
@@ -1962,7 +1969,6 @@ class Edge(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
-
 
 class Profile(object):
     """

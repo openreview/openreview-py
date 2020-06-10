@@ -11,7 +11,6 @@ from . import webfield
 from . import invitation
 from . import matching
 
-
 class Conference(object):
 
     def __init__(self, client):
