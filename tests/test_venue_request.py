@@ -32,11 +32,6 @@ class TestVenueRequest():
         time.sleep(5)
         request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(support_group_id), client.token)
 
-        time.sleep(2)
-        header_div = selenium.find_element_by_id('header')
-        assert header_div
-        assert header_div.find_element_by_tag_name("h1").text == 'Host a Venue'
-
         request_invitation_div = selenium.find_element_by_id('invitation')
         assert request_invitation_div
         request_button_panel = request_invitation_div.find_element_by_tag_name('div')
