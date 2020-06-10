@@ -8,7 +8,7 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 86, 'missing groups'
+        assert groups, 'missing groups'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -153,7 +153,7 @@ class TestClient():
 
     def test_get_invitations_by_invitee(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
-        assert len(invitations) == 0
+        assert invitations
 
         invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
         assert len(invitations) == 0
@@ -192,13 +192,13 @@ class TestClient():
         assert note
 
         notes = client.get_notes(content = { 'title': 'Paper title'})
-        assert len(notes) == 3
+        assert len(notes) == 4
 
         notes = client.get_notes(content = { 'title': 'Paper title3333'})
         assert len(notes) == 0
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title'}))
-        assert len(notes) == 3
+        assert len(notes) == 4
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0

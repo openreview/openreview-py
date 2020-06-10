@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='openreview-py',
-      version='1.0.12',
+      version='1.0.14',
       description='OpenReview client library',
       url='https://github.com/openreview/openreview-py',
       author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
@@ -10,7 +10,8 @@ setup(name='openreview-py',
       packages=[
           'openreview',
           'openreview/conference',
-          'openreview/invitations'
+          'openreview/invitations',
+          'openreview/agora'
       ],
       install_requires=[
           'pycryptodome',

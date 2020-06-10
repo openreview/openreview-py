@@ -496,7 +496,8 @@ def replace_members_with_ids(client, group):
             else:
                 invalid_ids.append(member)
 
-    print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
+    if invalid_ids:
+        print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
     group.members = ids + emails
     return client.post_group(group)
 
@@ -980,9 +981,9 @@ def add_assignment(client, paper_number, conference, reviewer,
     Assigns a reviewer to a paper.
     Also adds the given user to the parent and individual groups defined by the paper number, conference, and labels
     "individual groups" are groups with a single member;
-        e.g. conference.org/Paper1/AnonReviewer1
+    e.g. conference.org/Paper1/AnonReviewer1
     "parent group" is the group that contains the individual groups;
-        e.g. conference.org/Paper1/Reviewers
+    e.g. conference.org/Paper1/Reviewers
 
     :param client: Client used to add the assignment
     :type client: Client
