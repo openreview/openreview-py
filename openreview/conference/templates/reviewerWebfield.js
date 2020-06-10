@@ -286,7 +286,7 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
     var validTags = [];
     notes.forEach(function(note, index) {
       availableOptions.push((index + 1) + ' of ' + notes.length );
-      noteTags = paperRankingTags.filter(function(tag) { return tag.forum == note.forum; })
+      noteTags = paperRankingTags.filter(function(tag) { return tag.forum === note.forum; })
       if (noteTags.length) {
         validTags.push(noteTags[0]);
       }
@@ -327,7 +327,7 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
             invitation: invitationId,
             ddate: deleted ? Date.now() : null
           };
-          $('.tag-widget').find('button').attr('disabled', true);
+          $('.tag-widget button').attr('disabled', true);
           Webfield.post('/tags', body)
             .then(function(result) {
               if (index !== -1) {

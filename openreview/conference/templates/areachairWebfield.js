@@ -706,7 +706,7 @@ var postRenderTable = function(rows) {
             ddate: deleted ? Date.now() : null
           };
           body = view.getCopiedValues(body, paperRankingInvitation.reply);
-          $('.tag-widget').find('button').attr('disabled', true);
+          $('.tag-widget button').attr('disabled', true);
           Webfield.post('/tags', body)
           .then(function(result) {
             row[4].ranking = result; //not sure if this is the best way to do it
