@@ -293,8 +293,7 @@ Since most of the common tasks performed using `Edges` require `Edges` to be gro
 	>>> grouped_conflict_edges = client.get_grouped_edges(
 		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
 		groupby='head',
-		select='tail,weight,label'
-		)
+		select='tail,weight,label')
 
 Consider the following example that gets all papers grouped by reviewers they have conflicts with for the ICLR 2020 Conference ::
 
@@ -302,7 +301,6 @@ Consider the following example that gets all papers grouped by reviewers they ha
 	>>> grouped_conflict_edges = client.get_grouped_edges(
 		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
 		groupby='tail',
-		select='head,weight,label'
-		)
+		select='head,weight,label')
 
 To group `Edges`, one must already know what the `edge.head` and `edge.tail` represent in an `Edge` and that information can be seen from the `Edge`'s invitation.
