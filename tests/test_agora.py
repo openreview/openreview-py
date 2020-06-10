@@ -13,11 +13,10 @@ class TestAgora():
         support_group = openreview.Group(
             id='openreview.net/Support',
             readers=['everyone'],
-            writers=['openreview.net'],
+            writers=['openreview.net/Support'],
             signatures=['openreview.net'],
             signatories=['openreview.net/Support'],
             members=[],
-
         )
         client.post_group(support_group)
 
