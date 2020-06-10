@@ -1318,6 +1318,10 @@ class Group(object):
     :type cdate: int, optional
     :param ddate: Deletion date of the Group
     :type ddate: int, optional
+    :param tcdate: true creation date of the Group
+    :type tcdate: int, optional
+    :param tmdate: true modification date of the Group
+    :type tmdate: int, optional
     :param members: List of members in the Group, each member is a Group id
     :type members: list[str], optional
     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
