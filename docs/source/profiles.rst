@@ -49,7 +49,7 @@ Getting coauthorship relations from Notes:
 
 
 Finding conflicts of interest between users
-----------------------------------------
+---------------------------------------------
 
 One of the ways that OpenReview computes conflicts-of-interest is by using relations between profiles. The simplest and fastest way of computing these conflicts is by using the `get_conflicts` function in `openreview.tools`:
 
