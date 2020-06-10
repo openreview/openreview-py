@@ -243,3 +243,67 @@ You can also call this script with the `openreview` package::
 
 	 python -m openreview.scripts.download_iclr19 --get_pdfs
 
+
+Edges
+---------------------
+
+Bids, assignments, affinity scores, conflicts, etc. are saved as `Edges` in OpenReview.
+
+Simply speaking, `Edges` are links between two OpenReview entities (`Notes`, `Groups`, `Profiles`, etc.).
+
+Besides the fields that define user permissions, an `Edge` would usually contain these fields: `head`, `tail`, `weight`, `label`.
+
+For example, a OpenReview affinity score edge for a paper-reviewer pair may have the reviewer's `Profile` id set in the `edge.head` field, paper id set in the `edge.tail` field, and OpenReview affinity score set in the `edge.weight` field.
+
+All `Edges` respond to some OpenReview `Invitation`, which specifies the possible content and permissions that an `Edge` is required to contain.
+
+Users can query for edges using any combination of the following fields:
+* the ID of the `Invitation` that it responds to
+* head
+* tail
+* label
+
+Consider the following example which gets the first 10 `Edges` representing the "Personal" conflicts in ICLR 2020::
+
+
+	>>> conflict_edges = client.get_edges(
+		invitation='ICLR.cc/2020/Conference/-/Conflict',
+		label='Personal',
+		limit=10)
+
+Note that since conflict data is sensitive, you may not have permissions to access conflict edges mentioned in the above example.
+
+By default, `get_edges` will return up to the first 1000 corresponding `Edges` (`limit=1000`). To retrieve `Edges` beyond the first 1000, you can adjust the `offset` parameter, or use the function `tools.iterget_edges` which returns an iterator over all corresponding `Edges`::
+
+
+	>>> conflict_edges_iterator = openreview.tools.iterget_edges(
+		client, 
+		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
+		label='Personal')
+
+
+Since edges usually are very large in numbers, it is possible to get just the count of edges by using the function `client.get_edges_count`
+
+
+	>>> conflict_edges_count = client.get_edges_count(
+		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
+		label='Personal')
+
+
+Since most of the common tasks performed using `Edges` require `Edges` to be grouped, it's also possible to query for already grouped `Edges`. Consider the following example that gets all reviewers grouped by papers they have conflicts with for the ICLR 2020 Conference ::
+
+
+	>>> grouped_conflict_edges = client.get_grouped_edges(
+		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
+		groupby='head',
+		select='tail,weight,label')
+
+Consider the following example that gets all papers grouped by reviewers they have conflicts with for the ICLR 2020 Conference ::
+
+
+	>>> grouped_conflict_edges = client.get_grouped_edges(
+		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
+		groupby='tail',
+		select='head,weight,label')
+
+To group `Edges`, one must already know what the `edge.head` and `edge.tail` represent in an `Edge` and that information can be seen from the `Edge`'s invitation.

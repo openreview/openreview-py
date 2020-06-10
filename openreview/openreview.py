@@ -1318,6 +1318,10 @@ class Group(object):
     :type cdate: int, optional
     :param ddate: Deletion date of the Group
     :type ddate: int, optional
+    :param tcdate: true creation date of the Group
+    :type tcdate: int, optional
+    :param tmdate: true modification date of the Group
+    :type tmdate: int, optional
     :param members: List of members in the Group, each member is a Group id
     :type members: list[str], optional
     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
@@ -1329,11 +1333,13 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, web_string=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
         self.ddate = ddate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.writers = writers
         self.members = [] if members==None else members
         self.readers = readers
@@ -1396,6 +1402,8 @@ class Group(object):
         group = Group(g['id'],
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
+            tcdate = g.get('tcdate'),
+            tmdate = g.get('tmdate'),
             writers = g.get('writers'),
             members = g.get('members'),
             readers = g.get('readers'),
