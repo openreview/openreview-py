@@ -69,6 +69,12 @@ class TestVenueRequest():
         assert request_form_note
         request_page(selenium, 'http://localhost:3000/forum?id=' + request_form_note.forum, client.token)
 
+        messages = client.get_messages(
+            to='new_test_user@mail.com',
+            subject='Your request for OpenReview service has been received.')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'You recently requested conference management services from OpenReview. A member of our support team will contact you shortly. You can view the request here: https://openreview.net/forum?id=' + request_form_note.forum
+
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2021/Conference'},
@@ -90,6 +96,12 @@ class TestVenueRequest():
         title_tag = header_div.find_element_by_tag_name('h1')
         assert title_tag
         assert title_tag.text == 'Test 2021 Venue'
+
+        messages = client.get_messages(subject='Comment posted to your request for service: Test 2021 Venue')
+        assert messages and len(messages) == 2
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'new_test_user@mail.com' in recipients
+        assert 'tom@mail.com' in recipients
 
         revision_note = client.post_note(openreview.Note(
             content={
