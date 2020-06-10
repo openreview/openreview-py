@@ -774,7 +774,7 @@ class Client(object):
         n = response.json()['references'][0]
         return Note.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
+    def get_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -801,6 +801,9 @@ class Client(object):
             params['invitation'] = invitation
         if mintcdate != None:
             params['mintcdate'] = mintcdate
+        if content != None:
+            for k in content:
+                params['content.' + k] = content[k]
         if limit != None:
             params['limit'] = limit
         if offset != None:
@@ -859,7 +862,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -884,7 +887,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -1021,13 +1024,13 @@ class Client(object):
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
         :param invitation: an invitation ID
-        type invitation: str
+        :type invitation: str
         :param label: a matching label ID
-        type label: str, optional
+        :type label: str, optional
         :param head: id of the edge head (head type defined by the edge invitation)
-        type head: str, optional
+        :type head: str, optional
         :param tail: id of the edge tail (tail type defined by the edge invitation)
-        type tail: str, optional
+        :type tail: str, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
@@ -1296,7 +1299,6 @@ class Client(object):
         response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
-
 
 class Group(object):
     """
@@ -1963,7 +1965,6 @@ class Edge(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
-
 
 class Profile(object):
     """

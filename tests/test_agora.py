@@ -79,7 +79,7 @@ class TestAgora():
         submissions = editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
         assert submissions
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Submission1/-/Moderate',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Submission1/-/Moderation',
             readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '-Agora/COVID-19/Submission1/Authors'],
             writers = ['openreview.net/Support'],
             signatures = ['~Editor_One1'],
@@ -117,7 +117,7 @@ class TestAgora():
         articles = editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Assign_Editor',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Editors_Assignment',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '-Agora/COVID-19/Editors'],
             signatures = ['~Editor_One1'],
@@ -158,7 +158,7 @@ class TestAgora():
         articles = article_editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Assign_Reviewer',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Reviewers_Assignment',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '-Agora/COVID-19/Article1/Editors'],
             signatures = ['~ArticleEditor_One1'],
@@ -191,7 +191,7 @@ class TestAgora():
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer@agora.net' in recipients
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Assign_Reviewer',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Reviewers_Assignment',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '-Agora/COVID-19/Article1/Editors'],
             signatures = ['~ArticleEditor_One1'],
@@ -347,7 +347,7 @@ class TestAgora():
         articles = melisa_client.get_notes(invitation='-Agora/COVID-19/-/Article')
         assert articles
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Suggest_Reviewers',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Reviewers_Suggestion',
             readers = ['everyone'],
             writers = ['openreview.net/Support', '~Melissa_Agora1'],
             signatures = ['~Melissa_Agora1'],
@@ -421,6 +421,50 @@ class TestAgora():
         assert 'reviewer@agora.net' in recipients
         assert 'reviewer2@agora.net' in recipients
 
+    def test_post_metareview(self, client, helpers):
+
+        article_editor_client = openreview.Client(username='article_editor@agora.net', password='1234')
+
+        articles = article_editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')
+        assert articles
+
+        note = openreview.Note(invitation = '-Agora/COVID-19/Article1/-/Meta_Review',
+            readers = ['everyone'],
+            writers = ['openreview.net/Support', '~ArticleEditor_One1'],
+            signatures = ['~ArticleEditor_One1'],
+            forum = articles[0].id,
+            replyto = articles[0].id,
+            content = {
+                'title': 'review title',
+                'metareview': 'excelent paper',
+                'recommendation': 'Accept'
+            }
+        )
+
+        posted_note = article_editor_client.post_note(note)
+
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] Meta Review posted to your article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'author@agora.net' in recipients
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] Your meta review has been posted on your assigned article titled "Paper title"')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert 'article_editor@agora.net' in recipients
+
+        messages = client.get_messages(subject = '[Agora/COVID-19] A meta review has been posted on the article titled "Paper title"')
+        assert len(messages) == 2
+        recipients = [m['content']['to'] for m in messages]
+        assert 'reviewer@agora.net' in recipients
+        assert 'reviewer2@agora.net' in recipients
+
     def test_desk_reject(self, client, helpers):
 
         author_client = openreview.Client(username = 'author@agora.net', password = '1234')
@@ -452,7 +496,7 @@ class TestAgora():
         submissions = editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
         assert submissions
 
-        note = openreview.Note(invitation = '-Agora/COVID-19/Submission2/-/Moderate',
+        note = openreview.Note(invitation = '-Agora/COVID-19/Submission2/-/Moderation',
             readers = ['openreview.net/Support', '-Agora/COVID-19/Editors', '-Agora/COVID-19/Submission2/Authors'],
             writers = ['openreview.net/Support'],
             signatures = ['~Editor_One1'],

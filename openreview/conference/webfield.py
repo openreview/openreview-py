@@ -4,7 +4,6 @@ import os
 import json
 import re
 
-
 class WebfieldBuilder(object):
 
     def __init__(self, client):
