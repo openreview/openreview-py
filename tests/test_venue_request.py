@@ -32,19 +32,6 @@ class TestVenueRequest():
         time.sleep(5)
         request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(support_group_id), client.token)
 
-        request_invitation_div = selenium.find_element_by_id('invitation')
-        assert request_invitation_div
-        request_button_panel = request_invitation_div.find_element_by_tag_name('div')
-        request_button = request_button_panel.find_element_by_class_name('btn')
-        assert request_button.text == 'Support Request Form'
-
-        request_button.click()
-
-        time.sleep(2)
-
-        request_form_div = selenium.find_element_by_class_name('note_editor')
-        assert request_form_div
-
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
