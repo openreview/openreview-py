@@ -1,5 +1,5 @@
 import argparse
-import openreview
+from .. import openreview
 import os
 
 class VenueRequest():
