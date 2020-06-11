@@ -20,11 +20,11 @@ def process(client, note, invitation):
             'comment': '''
 Hi Program Chairs,
 
-Thanks for submitting a venue request.
+Thank you for choosing OpenReview to host your upcoming venue.
 
 We have set up the venue based on the information that you provided here: {baseurl}/forum?id={noteId}
 
-You can use the following links to access to the venue:
+You can use the following links to access the venue:
 
 Venue home page: {baseurl}/group?id={conference_id}
 Venue Program Chairs console: {baseurl}/group?id={program_chairs_id}
@@ -33,9 +33,9 @@ If you need to make a change to the information provided in your request form, p
 
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
 
-Thanks!
+Best,
 
-OpenReview Team
+The OpenReview Team
             '''.format(baseurl = client.baseurl, noteId = forum.id, conference_id = conference.get_id(), program_chairs_id = conference.get_program_chairs_id())
         }
     )
