@@ -78,7 +78,7 @@ class TestVenueRequest():
             to='new_test_user@mail.com',
             subject='Your request for OpenReview service has been received.')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == 'You recently requested conference management services from OpenReview. A member of our support team will contact you shortly. You can view the request here: https://openreview.net/forum?id=' + request_form_note.forum
+        assert messages[0]['content']['text'] == 'You recently requested OpenReview to host a venue. We will review your request and a comment will be posted when the venue is deployed. You can view the request here: https://openreview.net/forum?id=' + request_form_note.forum
 
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
