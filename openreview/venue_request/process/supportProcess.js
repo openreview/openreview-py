@@ -19,7 +19,7 @@ function(){
     var programchairMailPayload = {
       groups: note.content['program_chair_emails'],
       subject: 'Your request for OpenReview service has been received.',
-      message: 'You recently requested conference management services from OpenReview. A member of our support team will contact you shortly. You can view the request here: ' + baseUrl + '/forum?id=' + note.forum
+      message: 'You recently requested OpenReview to host a venue. We will review your request and a comment will be posted when the venue is deployed. You can view the request here: ' + baseUrl + '/forum?id=' + note.forum
     };
 
     var commentInvitation = {
