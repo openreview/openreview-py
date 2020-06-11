@@ -1,1 +1,1 @@
-from .venue_request import VenueRequest
+from .venue_request import *

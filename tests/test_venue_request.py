@@ -1,8 +1,9 @@
 import openreview
 import pytest
 import time
+import datetime
 from selenium.common.exceptions import NoSuchElementException
-from venue_request import VenueRequest
+from openreview import VenueRequest
 
 class TestVenueRequest():
 
@@ -33,6 +34,10 @@ class TestVenueRequest():
         request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(support_group_id), client.token)
 
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
+        
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(minutes = 30)
+        
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~Newtest_User1'],
@@ -53,8 +58,8 @@ class TestVenueRequest():
                     'tom@mail.com'],
                 'contact_email': 'new_test_user@mail.com',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
-                'Venue Start Date': '2020/02/01',
-                'Submission Deadline': '2025/09/30',
+                'Venue Start Date': now.strftime("%Y/%m/%d"),
+                'Submission Deadline': due_date.strftime("%Y/%m/%d"),
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
@@ -88,8 +93,13 @@ class TestVenueRequest():
         ))
         assert deploy_note
 
-        # Test Revision
         time.sleep(2)
+        process_logs = client.get_process_logs(id = deploy_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
+
+        # Test Revision
         request_page(selenium, 'http://localhost:3000/group?id=TEST.cc/2021/Conference', client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
@@ -115,8 +125,8 @@ class TestVenueRequest():
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
-                'Submission Deadline': '2025/09/30',
-                'Venue Start Date': '2020/02/01',
+                'Submission Deadline': due_date.strftime("%Y/%m/%d"),
+                'Venue Start Date': now.strftime("%Y/%m/%d"),
                 'contact_email': 'new_test_user@mail.com',
                 'remove_submission_options': []
             },
@@ -131,6 +141,11 @@ class TestVenueRequest():
         assert revision_note
 
         time.sleep(2)
+        process_logs = client.get_process_logs(id = revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number)
+
         request_page(selenium, 'http://localhost:3000/group?id=TEST.cc/2021/Conference', client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
