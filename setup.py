@@ -22,7 +22,6 @@ setup(
         'tqdm',
         'Deprecated',
         'pylatexenc',
-        'ortools',
         'tld==0.10'
     ],
     extras_require={
