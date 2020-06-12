@@ -34,6 +34,13 @@ class TestVenueRequest():
         request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(support_group_id), client.token)
 
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
+        helpers.create_user('support_user@mail.com', 'Support', 'User')
+
+        support_group = client.get_group(support_group_id)
+        client.add_members_to_group(group=support_group, members=['~Support_User1'])
+
+        support_members = client.get_group(support_group_id).members
+        assert support_members and len(support_members) == 1
         
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(minutes = 30)
@@ -80,6 +87,13 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == 'Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum when the venue is deployed. You can access the request forum here: https://openreview.net/forum?id=' + request_form_note.forum
 
+        messages = client.get_messages(
+            to='support_user@mail.com',
+            subject='A request for service has been submitted'
+        )
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'].startswith('A request for service has been submitted. Check it here')
+
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2021/Conference'},
@@ -89,7 +103,7 @@ class TestVenueRequest():
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
             signatures=[support_group_id],
-            writers=['~Super_User1']
+            writers=['~Support_User1']
         ))
         assert deploy_note
 
@@ -135,8 +149,8 @@ class TestVenueRequest():
             readers=['TEST.cc/2021/Conference/Program_Chairs', support_group_id],
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
-            signatures=['~Super_User1'],
-            writers=['~Super_User1']
+            signatures=['~Newtest_User1'],
+            writers=['~Newtest_User1']
         ))
         assert revision_note
 
