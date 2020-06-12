@@ -18,6 +18,7 @@ class Conference(object):
         self.request_form_id = None
         self.new = False
         self.use_area_chairs = False
+        self.use_secondary_area_chairs = False
         self.legacy_invitation_id = False
         self.groups = []
         self.name = ''
@@ -282,10 +283,10 @@ class Conference(object):
             raise openreview.OpenReviewException('Venue\'s "has_area_chairs" setting is disabled')
 
     def set_secondary_area_chairs_name(self, name):
-        if self.use_area_chairs:
+        if self.use_secondary_area_chairs:
             self.secondary_area_chairs_name = name
         else:
-            raise openreview.OpenReviewException('Venue\'s "has_area_chairs" setting is disabled')
+            raise openreview.OpenReviewException('Venue\'s "has_secondary_area_chairs" setting is disabled')
 
     def set_program_chairs_name(self, name):
         self.program_chairs_name = name
@@ -314,8 +315,8 @@ class Conference(object):
 
     def get_secondary_area_chairs_name(self, pretty=True):
         if pretty:
-            return self.secondary_area_chairs_name.replace('_', ' ')
-        return self.area_chairs_name
+            return self.use_secondary_area_chairs.replace('_', ' ')
+        return self.use_secondary_area_chairs
 
     def get_authors_id(self, number = None):
         authors_id = self.id + '/'
@@ -334,14 +335,13 @@ class Conference(object):
             area_chairs_id = area_chairs_id + self.area_chairs_name
         return area_chairs_id
 
-    def get_secondary_area_chairs_id(self, number = None):
-        sec_area_chairs_id = self.id + '/'
+    def get_secondary_area_chairs_id(self, number=None):
+        secondary_area_chairs_id = self.id + '/'
         if number:
-            # TODO: Remove the "Area_Chairs" label from the end of this group as this forces individual groups to be "PaperX/Area_Chairs"
-            sec_area_chairs_id = sec_area_chairs_id + 'Paper' + str(number) + '/Secondary_Area_Chair'
+            secondary_area_chairs_id = ''.join([secondary_area_chairs_id, 'Paper', str(number), '/Secondary_Area_Chair'])
         else:
-            sec_area_chairs_id = sec_area_chairs_id + self.secondary_area_chairs_name
-        return sec_area_chairs_id
+            secondary_area_chairs_id = ''.join([secondary_area_chairs_id, self.secondary_area_chairs_name])
+        return secondary_area_chairs_id
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
         committee = []
@@ -467,6 +467,9 @@ class Conference(object):
                 self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', self.get_area_chairs_id())
             else:
                 self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', '')
+
+    def has_secondary_area_chairs(self, has_secondary_area_chairs):
+        self.use_secondary_area_chairs = has_secondary_area_chairs
 
     def get_homepage_options(self):
         options = {}
@@ -730,10 +733,10 @@ class Conference(object):
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
     def set_secondary_area_chairs(self):
-        if self.use_area_chairs:
+        if self.use_secondary_area_chairs:
             self.__create_group(self.get_secondary_area_chairs_id(), self.id)
         else:
-            raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
+            raise openreview.OpenReviewException('Conference "has_secondary_area_chairs" setting is disabled')
 
     def set_area_chair_recruitment_groups(self):
         if self.use_area_chairs:
