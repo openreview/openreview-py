@@ -11,7 +11,6 @@ from pylatexenc.latexencode import utf8tolatex
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool
 from tqdm import tqdm
-from ortools.graph import pywrapgraph
 import tld
 import urllib.parse as urlparse
 
