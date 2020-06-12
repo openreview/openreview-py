@@ -1019,7 +1019,7 @@ class Client(object):
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1031,6 +1031,8 @@ class Client(object):
         :type head: str, optional
         :param tail: id of the edge tail (tail type defined by the edge invitation)
         :type tail: str, optional
+        :param wait_to_finish: True if execution should pause until deletion of edges is finished
+        :type wait_to_finish: bool, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
@@ -1042,6 +1044,8 @@ class Client(object):
             delete_query['head'] = head
         if tail:
             delete_query['tail'] = tail
+
+        delete_query['waitToFinish'] = wait_to_finish
 
         response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
