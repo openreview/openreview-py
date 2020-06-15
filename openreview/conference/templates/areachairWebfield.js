@@ -624,7 +624,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   }
 };
 
-var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, container) {
+var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, acRankingByPaper, reviewerRankingByPaper, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
@@ -635,7 +635,7 @@ var renderSecondaryStatusTable = function(profiles, notes, allInvitations, compl
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, {}, {}, 'secondary');
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}, 'secondary');
   });
 
   var order = 'desc';
@@ -875,7 +875,7 @@ var renderTableAndTasks = function(fetchedData) {
   renderStatusTable(
     fetchedData.profiles,
     primaryAssignments,
-    _.filter(fetchedData.invitations, filterFunc),
+    fetchedData.invitations,
     fetchedData.officialReviews,
     fetchedData.metaReviews,
     _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
@@ -892,6 +892,8 @@ var renderTableAndTasks = function(fetchedData) {
       fetchedData.officialReviews,
       fetchedData.metaReviews,
       _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
+      fetchedData.acRankingByPaper,
+      fetchedData.reviewerRankingByPaper,
       '#secondary-papers'
     );
   }
