@@ -843,10 +843,6 @@ var postRenderTable = function(rows) {
   });
 };
 
-var filterFunc = function(inv) {
-  return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
-};
-
 var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
@@ -856,12 +852,7 @@ var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  // filter out non-areachair tasks
-  var areachairInvitations = _.filter(invitations, filterFunc);
-  var areachairTagInvitations = _.filter(tagInvitations, filterFunc);
-  var areachairEdgeInvitations = _.filter(edgeInvitations, filterFunc);
-
-  Webfield.ui.newTaskList(areachairInvitations, areachairTagInvitations.concat(areachairEdgeInvitations), tasksOptions);
+  Webfield.ui.newTaskList(invitations, tagInvitations.concat(edgeInvitations), tasksOptions);
   $('.tabs-container a[href="#areachair-tasks"]').parent().show();
 }
 
