@@ -971,6 +971,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
   $(container).html(
     '<form class="form-inline search-form clearfix" role="search">' +
       '<div class="pull-left"></div>' +
+      '<div class="pull-middle"></div>' +
       '<div class="pull-right">' +
         searchBarHtml +
         sortDropdownHtml +
@@ -1349,6 +1350,7 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>');
+    $(container).find('form.search-form .pull-middle').html('<div><button class="btn btn-export-data">Export</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -2458,4 +2460,54 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
     $msgReviewerButton.attr('disabled', true);
     $superCheckBox.prop('checked', false);
   }
+});
+
+var buildCSV = function(){
+  var profiles = conferenceStatusData.profiles;
+  var notes = conferenceStatusData.blindedNotes;
+  var completedReviews = conferenceStatusData.officialReviews;
+  var metaReviews = conferenceStatusData.metaReviews;
+  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+  var decisions = conferenceStatusData.decisions;
+
+  var rowData = [];
+  rowData.push(['id', 'number', 'title', 'num reviewers', 'min rating', 'max rating', 'average rating', 'min confidence', 'max confidence', 'ac recommendation'].join(',') + '\n');
+
+  _.forEach(notes, function(note) {
+    var revIds = reviewerIds[note.number];
+    var areachairId = areachairIds[note.number][0];
+    var areachairProfile = {}
+    if (areachairId) {
+      areachairProfile = findProfile(profiles, areachairId);
+    } else {
+      areachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfile.email = '-';
+    }
+    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
+    var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
+
+    var title = paperTableRow.note.content.title.replace(/"/g, '""');
+    rowData.push([paperTableRow.note.id,
+    paperTableRow.note.number,
+    '"' + title + '"',
+    paperTableRow.reviewProgressData.numReviewers,
+    paperTableRow.reviewProgressData.minRating,
+    paperTableRow.reviewProgressData.maxRating,
+    paperTableRow.reviewProgressData.averageRating,
+    paperTableRow.reviewProgressData.minConfidence,
+    paperTableRow.reviewProgressData.maxConfidence,
+    paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation
+    ].join(',') + '\n');
+  });
+
+  console.log(rowData);
+
+  return [rowData.join('')];
+};
+
+$('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
+  var blob = new Blob(buildCSV(), {type: 'text/plain;charset=utf-8'});
+  saveAs(blob, SHORT_PHRASE.replace(' ', '_') + 'paper_status.csv',);
 });
