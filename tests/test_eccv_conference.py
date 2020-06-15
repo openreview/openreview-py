@@ -447,7 +447,6 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         assert selenium.find_element_by_link_text('Area Chair Profile Confirmation')
 
-
     def test_submission_additional_files(self, conference, test_client):
 
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
@@ -510,8 +509,6 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
 
     def test_revise_additional_files(self, conference, client, test_client):
-
-        pc_client = openreview.Client(username='pc@eccv.org', password='1234')
 
         conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
 
@@ -581,7 +578,6 @@ Please contact info@openreview.net with any questions or concerns about this int
         )
         note.content['supplementary_material'] = url
         test_client.post_note(note)
-
 
     def test_bid_stage(self, conference, helpers, selenium, request_page):
 
@@ -663,16 +659,16 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
-        
+
         request_page(selenium, url='http://localhost:3000/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token)
         new_assignment_btn = selenium.find_element_by_id('new-configuration-button')
         assert new_assignment_btn
         new_assignment_btn.click()
-        
+
         pop_up_div = selenium.find_element_by_id('note-editor-modal')
         assert pop_up_div
         assert pop_up_div.get_attribute('class') == 'modal fade in'
-        
+
         custom_user_demand_invitation = selenium.find_element_by_name('custom_user_demand_invitation')
         assert custom_user_demand_invitation
         assert custom_user_demand_invitation.get_attribute('value') == 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Custom_User_Demands'
@@ -959,7 +955,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 5
 
-
     def test_withdraw_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.create_withdraw_invitations(reveal_submission=False)
@@ -1017,7 +1012,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 4
-
 
     def test_review_stage(self, conference, client, test_client, selenium, request_page):
 
@@ -1178,7 +1172,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         ## Authors
         assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
 
-
     def test_comment_stage(self, conference, client, test_client, selenium, request_page):
 
         conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True))
@@ -1286,7 +1279,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , test_client.token)
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 2
-
 
     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
 
@@ -1556,3 +1548,51 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
         assert review_rating_note
+
+    def test_secondary_assignments(self, conference, client, test_client, selenium, request_page):
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_meta_review_stage(openreview.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
+
+        ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
+        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        # Check that Secondary AC Assignments tab is not visible
+        notes_div = selenium.find_element_by_id('notes')
+        assert notes_div.find_element_by_link_text('Assigned Papers')
+        assert notes_div.find_element_by_link_text('Area Chair Tasks')
+        with pytest.raises(NoSuchElementException):
+            notes_div.find_element_by_link_text('Secondary AC Assignments')
+
+        # Enable secondary area chairs tab in AC console
+        conference.has_secondary_area_chairs(True)
+        conference.set_area_chairs()
+
+        # Assign AreaChair_ECCV_Two1 as primary AC on paper 3 and as secondary AC on paper 1 and 2
+        conference.set_assignment('~AreaChair_ECCV_Two1', 3, is_area_chair=True)
+
+        for i in range(1,3):
+            secondary_group = client.post_group(openreview.Group(
+                id='{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i),
+                signatures=[],
+                signatories=['{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i)],
+                readers=['{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i)],
+                writers=['{}/Paper{}/Secondary_Area_Chair'.format(conference.id, i)],
+                members=['~AreaChair_ECCV_Two1']))
+            ac_group = client.get_group(conference.get_area_chairs_id(number=i))
+            client.add_members_to_group(ac_group, secondary_group.id)
+
+        # Check that Secondary AC Assignments tab is visible after it is enabled
+        ac_client2 = openreview.Client(username='ac2@eccv.org', password='1234')
+        request_page(selenium, ac_url, ac_client2.token)
+
+        notes_div = selenium.find_element_by_id('notes')
+        assert notes_div.find_element_by_link_text('Assigned Papers')
+        assert notes_div.find_element_by_link_text('Area Chair Tasks')
+        assert notes_div.find_element_by_link_text('Secondary AC Assignments')
+
+        secondary_assignments_div = selenium.find_element_by_id('secondary-papers')
+        for i in range(1,3):
+            assert secondary_assignments_div.find_elements_by_id('note-summary-{}'.format(i))
