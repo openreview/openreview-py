@@ -357,6 +357,7 @@ var displayHeader = function() {
   });
 
   Webfield.ui.tabPanel(tabs);
+  $('#invitation').append('<button class="btn btn-xs btn-export-data">Export</button>'); 
 };
 
 var buildConfiguration = function() {
@@ -1852,6 +1853,43 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
     $msgReviewerButton.attr('disabled', true);
     $superCheckBox.prop('checked', false);
   }
+});
+
+var buildCSV = function(){
+  var profiles = conferenceStatusData.profiles;
+  var notes = conferenceStatusData.blindedNotes;
+  var completedReviews = conferenceStatusData.officialReviews;
+  var metaReviews = conferenceStatusData.metaReviews;
+  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+  var decisions = conferenceStatusData.decisions;
+
+  var data = [];
+  data.push('Id,Number,Title,MetaReview,Area Chair,Decision, Reviewer,Rating,Confidence\n');
+
+  _.forEach(notes, function(note) {
+    var dataRow = []
+    var paperTitle = '"'+note.content.title+'"';
+    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+
+    dataRow.push(note.id, note.number, paperTitle);
+    dataRow.push(metaReview ? metaReview.content.recommendation : 'No Meta Review');
+    if(AREA_CHAIRS_ID){
+      var areachairId = areachairIds[note.number][0];
+      dataRow.push(areachairId);
+    }
+    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
+    dataRow.push(decision ? decision.content.decision : 'No Decision');
+    
+    data.push(dataRow.join(',')+'\n');
+  });
+  return [data.join('')];
+};
+
+$('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
+  console.log('Export data!!!');
+  var blob = new Blob(buildCSV(), {type: 'text/plain;charset=utf-8'});
+  saveAs(blob, 'pcConsole_data.csv',);
 });
 
 var postReviewerEmails = function(postData) {
