@@ -2472,7 +2472,7 @@ var buildCSV = function(){
   var decisions = conferenceStatusData.decisions;
 
   var rowData = [];
-  rowData.push(['id', 'number', 'title', 'num reviewers', 'min rating', 'max rating', 'average rating', 'min confidence', 'max confidence', 'ac recommendation'].join(',') + '\n');
+  rowData.push(['id', 'number', 'title', 'num reviewers', 'min rating', 'max rating', 'average rating', 'min confidence', 'max confidence', 'average confidence', 'ac recommendation'].join(',') + '\n');
 
   _.forEach(notes, function(note) {
     var revIds = reviewerIds[note.number];
@@ -2498,6 +2498,7 @@ var buildCSV = function(){
     paperTableRow.reviewProgressData.averageRating,
     paperTableRow.reviewProgressData.minConfidence,
     paperTableRow.reviewProgressData.maxConfidence,
+    paperTableRow.reviewProgressData.averageConfidence,
     paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation
     ].join(',') + '\n');
   });
