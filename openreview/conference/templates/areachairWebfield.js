@@ -403,7 +403,7 @@ var renderHeader = function() {
       content: loadingMessage
     }
   );
-  
+
   Webfield.ui.tabPanel(tabsList);
 };
 
@@ -443,7 +443,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
     Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
     Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
     Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
-    Meta_Review_Rating: function(row) { return row[4].recommendation ? _.toInteger(row[4].recommendation.split(':')[0]) : 0; }
+    Meta_Review_Recommendation: function(row) { return row[4].recommendation; }
   };
 
   if (showRankings) {
@@ -624,7 +624,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   }
 };
 
-var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, secondaryMetaReviews, reviewerIds, container) {
+var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
@@ -632,17 +632,59 @@ var renderSecondaryStatusTable = function(profiles, notes, allInvitations, compl
       revIds[revNumber] = findProfile(profiles, uId);
     }
 
-    secondaryMetaReviews = _.find(secondaryMetaReviews, ['invitation', getInvitationId(OFFICIAL_SECONDARY_META_REVIEW_NAME, note.number)]);
+    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
-    var secondaryMetaReviewInvitation = _.find(allInvitations, ['id', getInvitationId(OFFICIAL_SECONDARY_META_REVIEW_NAME, note.number)]);
 
-    return buildTableRow(note, revIds, noteCompletedReviews, secondaryMetaReviews, secondaryMetaReviewInvitation, {}, {}, 'secondary');
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, {}, {}, 'secondary');
   });
 
-  var sortBarHtml = '<form class="form-inline search-form clearfix" role="search">' + '</form>';
+  var order = 'desc';
+  var sortOptions = {
+    Paper_Number: function(row) { return row[1].number; },
+    Paper_Title: function(row) { return _.toLower(_.trim(row[2].content.title)); },
+    Number_of_Forum_Replies: function(row) { return row[3].forumReplyCount; },
+    Number_of_Reviews_Submitted: function(row) { return row[3].numSubmittedReviews; },
+    Number_of_Reviews_Missing: function(row) { return row[3].numReviewers - row[3].numSubmittedReviews; },
+    Average_Rating: function(row) { return row[3].averageRating === 'N/A' ? 0 : row[3].averageRating; },
+    Max_Rating: function(row) { return row[3].maxRating === 'N/A' ? 0 : row[3].maxRating; },
+    Min_Rating: function(row) { return row[3].minRating === 'N/A' ? 0 : row[3].minRating; },
+    Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
+    Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
+    Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
+    Meta_Review_Recommendation: function(row) { return row[4].recommendation; }
+  };
+
+  var sortResults = function(newOption, switchOrder) {
+    if (switchOrder) {
+      order = order === 'asc' ? 'desc' : 'asc';
+    }
+    renderTable(_.orderBy(rows, sortOptions[newOption], order), container, true);
+  }
+
+  var sortOptionHtml = Object.keys(sortOptions).map(function(option) {
+    return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
+  }).join('\n');
+
+  var sortBarHtml = '<form class="form-inline search-form clearfix" role="search">' +
+    '<div class="pull-right">' +
+      '<strong>Sort By:</strong> ' +
+      '<select id="form-sort-secondary" class="form-control">' + sortOptionHtml + '</select>' +
+      '<button id="form-order-secondary" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
+    '</div>' +
+  '</form>';
   if (rows.length) {
     $(container).empty().append(sortBarHtml);
   }
+
+  // Need to add event handlers for these controls inside this function so they have access to row
+  // data
+  $('#form-sort-secondary').on('change', function(e) {
+    sortResults($(e.target).val(), false);
+  });
+  $('#form-order-secondary').on('click', function(e) {
+    sortResults($(this).prev().val(), true);
+    return false;
+  });
 
   if (rows.length) {
     renderTable(rows, container, true);
@@ -709,12 +751,6 @@ var updateReviewerContainer = function (paperNumber, renderEmptyDropdown) {
 }
 
 var renderTableRows = function(rows, container, secondary_meta) {
-  var formatMetaReviewData = function(data) {
-    if (secondary_meta) {
-      return data.invitationUrl ? (data.editUrl ? '<h4><a href="' + data.editUrl + '" target="_blank">Read/Edit</a></h4>' : '<h4><a href="' + data.invitationUrl + '" target="_blank">Submit</a></h4>') : '<h4>Not Available</h4>';
-    }
-    return Handlebars.templates.noteMetaReviewStatus(data);
-  };
   var templateFuncs = [
     function(data) {
       var checked = data.selected ? 'checked="checked"' : '';
@@ -726,7 +762,7 @@ var renderTableRows = function(rows, container, secondary_meta) {
     },
     Handlebars.templates.noteSummary,
     Handlebars.templates.noteReviewers,
-    formatMetaReviewData
+    Handlebars.templates.noteMetaReviewStatus
   ];
 
   var rowsHtml = rows.map(function(row) {
@@ -735,11 +771,10 @@ var renderTableRows = function(rows, container, secondary_meta) {
     });
   });
 
-  var meta_review_col_heading = secondary_meta ? 'Secondary Meta Review Status' : 'Meta Review Status';
   var tableHtml = Handlebars.templates['components/table']({
     headings: [
       '<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
-      'Review Progress', meta_review_col_heading
+      'Review Progress', 'Meta Review Status'
     ],
     rows: rowsHtml,
     extraClasses: 'ac-console-table'
@@ -837,7 +872,7 @@ var renderTableAndTasks = function(fetchedData) {
   var primaryAssignments = _.filter(fetchedData.blindedNotes, function(note) { return fetchedData.acPapers.indexOf(note.number) > -1; });
   if (paperRankingInvitation) {
     availableOptions = ['No Ranking'];
-    
+
     primaryAssignments.forEach(function(note, index) {
       availableOptions.push((index + 1) + ' of ' + primaryAssignments.length );
     })
@@ -864,7 +899,7 @@ var renderTableAndTasks = function(fetchedData) {
       _.filter(fetchedData.blindedNotes, function(note) { return fetchedData.secondaryAcPapers.indexOf(note.number) > -1; }),
       fetchedData.invitations,
       fetchedData.officialReviews,
-      fetchedData.secondaryMetaReviews,
+      fetchedData.metaReviews,
       _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
       '#secondary-papers'
     );
@@ -973,18 +1008,23 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   reviewerSummaryMap[note.number] = cell2;
 
   // Status cell
-  var cell3InvitationId = typeMetaReviewer === 'secondary' ? getInvitationId('Secondary_Meta_Review', note.number) : getInvitationId('Meta_Review', note.number);
+  var invitationUrlParams = {
+    id: note.forum,
+    noteId: note.id,
+    invitationId: getInvitationId('Meta_Review', note.number),
+    referrer: referrerUrl
+  };
   var cell3 = {
     noteId: note.id,
     paperNumber: note.number,
     ranking: acPaperRanking
   };
   if (metaReview) {
-    cell3.recommendation = typeMetaReviewer === 'secondary' ? metaReview.content.agreement : metaReview.content.recommendation;
+    cell3.recommendation = metaReview.content.recommendation;
     cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id + '&referrer=' + referrerUrl;
   }
   if (metaReviewInvitation) {
-    cell3.invitationUrl = '/forum?id=' + note.forum + '&invitationId=' + cell3InvitationId + '&referrer=' + referrerUrl;
+    cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);;
   }
 
   return [cellCheck, cell0, cell1, cell2, cell3];
