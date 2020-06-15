@@ -2503,8 +2503,6 @@ var buildCSV = function(){
     ].join(',') + '\n');
   });
 
-  console.log(rowData);
-
   return [rowData.join('')];
 };
 
