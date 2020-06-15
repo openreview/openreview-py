@@ -6,6 +6,7 @@ function(){
     var AUTHORS_NAME = '';
     var REVIEWERS_NAME = '';
     var AREA_CHAIRS_NAME = '';
+    var SECONDARY_AREA_CHAIR_NAME = '';
     var PROGRAM_CHAIRS_ID = '';
     var USE_AREA_CHAIRS = false;
 
@@ -18,6 +19,7 @@ function(){
       var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Reviewers';
       var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chairs';
       var AREA_CHAIR_1_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chair1';
+      var AREA_CHAIR_2_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/' + SECONDARY_AREA_CHAIR_NAME;
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 
@@ -26,6 +28,13 @@ function(){
         ignoreGroups: ignoreGroups,
         subject: '[' + SHORT_PHRASE + '] Comment posted to a paper in your area. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
         message: 'A comment was posted to a paper for which you are serving as Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+      };
+
+      var ac2_mail = {
+        groups: [AREA_CHAIR_2_ID],
+        ignoreGroups: ignoreGroups,
+        subject: '[' + SHORT_PHRASE + '] Comment posted to a paper in your area. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
+        message: 'A comment was posted to a paper for which you are serving as secondary Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
       };
 
       var comment_author_mail = {
@@ -81,6 +90,10 @@ function(){
 
       if(USE_AREA_CHAIRS && (note.readers.includes(AREA_CHAIRS_ID) || note.readers.includes('everyone'))){
         promises.push(or3client.or3request(or3client.mailUrl, ac_mail, 'POST', token));
+
+        if (SECONDARY_AREA_CHAIR_NAME) {
+          promises.push(or3client.or3request(or3client.mailUrl, ac2_mail, 'POST', token));
+        }
       }
 
       if(PROGRAM_CHAIRS_ID && (note.readers.includes(PROGRAM_CHAIRS_ID) || note.readers.includes('everyone'))){

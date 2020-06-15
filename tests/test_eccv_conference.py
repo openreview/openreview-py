@@ -659,16 +659,16 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
-        
+
         request_page(selenium, url='http://localhost:3000/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token)
         new_assignment_btn = selenium.find_element_by_id('new-configuration-button')
         assert new_assignment_btn
         new_assignment_btn.click()
-        
+
         pop_up_div = selenium.find_element_by_id('note-editor-modal')
         assert pop_up_div
         assert pop_up_div.get_attribute('class') == 'modal fade in'
-        
+
         custom_user_demand_invitation = selenium.find_element_by_name('custom_user_demand_invitation')
         assert custom_user_demand_invitation
         assert custom_user_demand_invitation.get_attribute('value') == 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Custom_User_Demands'
@@ -1550,6 +1550,10 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert review_rating_note
 
     def test_secondary_assignments(self, conference, client, test_client, selenium, request_page):
+
+        now = datetime.datetime.utcnow()
+
+        conference.set_meta_review_stage(openreview.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
         ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
