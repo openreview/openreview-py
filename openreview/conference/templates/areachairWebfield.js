@@ -470,9 +470,12 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
     var metaReviewInvitation = _.find(allInvitations, ['id', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var secondaryAC = findProfile(profiles, noteToACIds[note.number]);
+    var secondaryAC = null;
+    if (noteToACIds[note.number]) {
+      secondaryAC = findProfile(profiles, noteToACIds[note.number]);
+    }
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, metaReviewInvitation, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}, secondaryAC.id && secondaryAC);
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, metaReviewInvitation, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}, secondaryAC);
   });
 
   // Sort form handler
