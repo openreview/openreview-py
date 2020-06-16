@@ -229,7 +229,8 @@ var loadData = function(acPapers, secondaryAcPapers) {
     acPaperRankingsP,
     reviewerPaperRankingsP,
     acPapers,
-    secondaryAcPapers
+    secondaryAcPapers,
+    getPrimaryACGroups(secondaryAcPapers)
   );
 };
 
@@ -289,10 +290,30 @@ var getReviewerGroups = function(noteNumbers) {
   });
 };
 
-var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryMetaReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers) {
+var getPrimaryACGroups = function(noteNumbers) {
+  if (!noteNumbers.length) {
+    return $.Deferred().resolve({});
+  };
+
+  var noteMap = buildNoteMap(noteNumbers);
+
+  return Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/Paper.*/Area_Chair1' })
+  .then(function(groups) {
+    _.forEach(groups, function(g) {
+      var num = getNumberfromGroup(g.id, 'Paper');
+      if (num) {
+        noteMap[num] = g.members[0];
+      }
+    });
+
+    return noteMap;
+  });
+};
+
+var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryMetaReviews, noteToReviewerIds, invitations, edgeInvitations, tagInvitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers, noteToACIds) {
   var uniqueIds = _.uniq(_.concat(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
-  }, []), allReviewers));
+  }, []), allReviewers, _.values(noteToACIds)));
 
   return getUserProfiles(uniqueIds)
   .then(function(profiles) {
@@ -319,6 +340,7 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryM
       reviewerRankingByPaper: reviewerRankingByPaper,
       acPapers: acPapers,
       secondaryAcPapers: secondaryAcPapers,
+      noteToACIds: noteToACIds
     };
   });
 };
@@ -624,7 +646,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   }
 };
 
-var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, acRankingByPaper, reviewerRankingByPaper, container) {
+var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, acRankingByPaper, reviewerRankingByPaper, noteToACIds, container) {
   var rows = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number] || Object.create(null);
     for (var revNumber in revIds) {
@@ -634,8 +656,9 @@ var renderSecondaryStatusTable = function(profiles, notes, allInvitations, compl
 
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
+    var primaryAC = findProfile(profiles, noteToACIds[note.number]);
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}, 'secondary');
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}, { name: primaryAC }, 'secondary');
   });
 
   var order = 'desc';
@@ -651,7 +674,7 @@ var renderSecondaryStatusTable = function(profiles, notes, allInvitations, compl
     Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
     Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
     Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
-    Meta_Review_Recommendation: function(row) { return row[4].recommendation; }
+    Meta_Review_Recommendation: function(row) { return row[4].metaReview && row[4].metaReview.content.recommendation; }
   };
 
   var sortResults = function(newOption, switchOrder) {
@@ -762,7 +785,7 @@ var renderTableRows = function(rows, container, secondary_meta) {
     },
     Handlebars.templates.noteSummary,
     Handlebars.templates.noteReviewers,
-    Handlebars.templates.noteMetaReviewStatus
+    secondary_meta ? Handlebars.templates.noteAreaChairs : Handlebars.templates.noteMetaReviewStatus
   ];
 
   var rowsHtml = rows.map(function(row) {
@@ -894,6 +917,7 @@ var renderTableAndTasks = function(fetchedData) {
       _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
       fetchedData.acRankingByPaper,
       fetchedData.reviewerRankingByPaper,
+      fetchedData.noteToACIds,
       '#secondary-papers'
     );
   }
@@ -903,7 +927,7 @@ var renderTableAndTasks = function(fetchedData) {
   Webfield.ui.done();
 }
 
-var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation, acPaperRanking, reviewerPaperRanking, typeMetaReviewer) {
+var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation, acPaperRanking, reviewerPaperRanking, primaryAC, typeMetaReviewer) {
   var cellCheck = { selected: false, noteId: note.id };
   var referrerContainer = typeMetaReviewer === 'secondary' ? '#secondary-papers' : '#assigned-papers' ;
   var referrerUrl = encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + referrerContainer + ')');
@@ -1020,7 +1044,13 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);;
   }
 
-  return [cellCheck, cell0, cell1, cell2, cell3];
+  var areachairProgressData = {
+    numMetaReview: metaReview ? 'One' : 'No',
+    areachair: primaryAC,
+    metaReview: metaReview
+  };
+
+  return [cellCheck, cell0, cell1, cell2, typeMetaReviewer === 'secondary' ? areachairProgressData : cell3];
 };
 
 var findNextAnonGroupNumber = function(paperNumber){
