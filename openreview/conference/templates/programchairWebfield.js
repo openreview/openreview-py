@@ -41,6 +41,8 @@ var selectedNotesById = {};
 var matchingNoteIds = [];
 var paperStatusNeedsRerender = false;
 
+$.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
+
 var main = function() {
   OpenBanner.venueHomepageLink(CONFERENCE_ID);
 
@@ -105,6 +107,16 @@ var main = function() {
       pcTags[tag.forum].push(tag);
     });
 
+    var acRankingByPaper = {};
+    blindedNotes.forEach(function(n) {
+      var tags = n.details['tags'];
+      tags.forEach(function(t) {
+        if (t.invitation === AREA_CHAIRS_ID + '/-/Paper_Ranking') {
+          acRankingByPaper[n.forum] = t;
+        }
+      })
+    });
+
     conferenceStatusData = {
       reviewers: reviewers,
       areaChairs: areaChairs,
@@ -114,7 +126,8 @@ var main = function() {
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
       decisions: decisions,
-      pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION]
+      pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION],
+      acRankingByPaper: acRankingByPaper
     };
 
     var conferenceStats = {
@@ -242,7 +255,7 @@ var getAllAreaChairs = function() {
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'invitation',
+    details: 'invitation,tags',
     sort: 'number:asc'
   });
 };
@@ -2470,9 +2483,22 @@ var buildCSV = function(){
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
   var decisions = conferenceStatusData.decisions;
+  var acRankingByPaper = conferenceStatusData.acRankingByPaper;
 
   var rowData = [];
-  rowData.push(['id', 'number', 'title', 'num reviewers', 'min rating', 'max rating', 'average rating', 'min confidence', 'max confidence', 'average confidence', 'ac recommendation'].join(',') + '\n');
+  rowData.push(['number',
+  'forum',
+  'title',
+  'num reviewers',
+  'min rating',
+  'max rating',
+  'average rating',
+  'min confidence',
+  'max confidence',
+  'average confidence',
+  'ac recommendation',
+  'ac profile id',
+  'ac ranking'].join(',') + '\n');
 
   _.forEach(notes, function(note) {
     var revIds = reviewerIds[note.number];
@@ -2489,8 +2515,8 @@ var buildCSV = function(){
     var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
-    rowData.push([paperTableRow.note.id,
-    paperTableRow.note.number,
+    rowData.push([paperTableRow.note.number,
+    '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
     '"' + title + '"',
     paperTableRow.reviewProgressData.numReviewers,
     paperTableRow.reviewProgressData.minRating,
@@ -2499,7 +2525,9 @@ var buildCSV = function(){
     paperTableRow.reviewProgressData.minConfidence,
     paperTableRow.reviewProgressData.maxConfidence,
     paperTableRow.reviewProgressData.averageConfidence,
-    paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation
+    paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
+    areachairProfile.id,
+    acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag
     ].join(',') + '\n');
   });
 
@@ -2508,5 +2536,5 @@ var buildCSV = function(){
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/plain;charset=utf-8'});
-  saveAs(blob, SHORT_PHRASE.replace(' ', '_') + 'paper_status.csv',);
+  saveAs(blob, SHORT_PHRASE.replace(' ', '_') + '_paper_status.csv',);
 });
