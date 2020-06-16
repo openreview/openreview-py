@@ -296,7 +296,7 @@ var getPrimaryACGroups = function(noteNumbers) {
     return $.Deferred().resolve({});
   };
 
-  var noteMap = buildNoteMap(noteNumbers);
+  var noteMap = {};
 
   return Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/Paper.*/Area_Chair1' })
   .then(function(groups) {
