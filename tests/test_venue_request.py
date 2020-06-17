@@ -19,6 +19,7 @@ class TestVenueRequest():
         assert venue.meta_review_stage_super_invitation
         assert venue.review_stage_super_invitation
         assert venue.meta_review_stage_super_invitation
+        assert venue.submission_revision_invitation
 
         assert venue.deploy_super_invitation
         assert venue.comment_super_invitation
@@ -145,7 +146,7 @@ class TestVenueRequest():
                 'remove_submission_options': []
             },
             forum=request_form_note.forum,
-            invitation='{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number),
+            invitation='{}/-/Request{}/Venue_Revision'.format(support_group_id, request_form_note.number),
             readers=['TEST.cc/2021/Conference/Program_Chairs', support_group_id],
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
@@ -158,7 +159,7 @@ class TestVenueRequest():
         process_logs = client.get_process_logs(id = revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number)
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Venue_Revision'.format(support_group_id, request_form_note.number)
 
         request_page(selenium, 'http://localhost:3000/group?id=TEST.cc/2021/Conference', client.token)
         header_div = selenium.find_element_by_id('header')

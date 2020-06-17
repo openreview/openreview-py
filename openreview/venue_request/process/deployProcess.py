@@ -47,8 +47,8 @@ The OpenReview Team
     readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
 
     client.post_invitation(openreview.Invitation(
-        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Revision',
-        super = SUPPORT_GROUP + '/-/Revision',
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Venue_Revision',
+        super = SUPPORT_GROUP + '/-/Venue_Revision',
         invitees = readers,
         reply = {
             'forum': forum.id,
@@ -259,11 +259,12 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             signatures = [conference.get_program_chairs_id()]
         ))
 
-    decision_stage_invitation = client.post_invitation(openreview.Invitation(
-        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Decision_Stage',
-        super = SUPPORT_GROUP + '/-/Decision_Stage',
-        invitees = readers,
-        reply = {
+    # submission_revision_stage_invitation
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
+        super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',
+        invitees=readers,
+        reply={
             'forum': forum.id,
             'referent': forum.id,
             'readers' : {
@@ -271,5 +272,21 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'values' : readers
             }
         },
-        signatures = [SUPPORT_GROUP]
+        signatures=[SUPPORT_GROUP]
+    ))
+
+    # decision_stage_invitation
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Decision_Stage',
+        super=SUPPORT_GROUP + '/-/Decision_Stage',
+        invitees=readers,
+        reply={
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            }
+        },
+        signatures=[SUPPORT_GROUP]
     ))

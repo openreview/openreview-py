@@ -13,88 +13,6 @@ class VenueFeatures():
                 "GROUP_PREFIX = ''",
                  "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
 
-    def setup_venue_recruitment(self):
-        recruitment_content = {
-            'title': {
-                'value': 'Recruitment',
-                'required': True,
-                'order': 1
-            },
-            'invitee_role': {
-                'description': 'Please select the role of the invitees in the venue.',
-                'value-radio': ['reviewer', 'area chair'],
-                'default': 'reviewer',
-                'required': True,
-                'order': 2
-            },
-            'invitee_details': {
-                'value-regex': '[\\S\\s]{1,50000}',
-                'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
-                'required': True,
-                'order': 3
-            },
-            'invitation_email_subject': {
-                'value-regex': '.*',
-                'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 4,
-                'required': True,
-                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
-            },
-            'invitation_email_content': {
-                'value-regex': '[\\S\\s]{1,10000}',
-                'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 5,
-                'required': True,
-                'default': '''Dear {name},
-
-        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
-
-        You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
-
-        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
-
-        To ACCEPT the invitation, please click on the following link:
-
-        {accept_url}
-
-        To DECLINE the invitation, please click on the following link:
-
-        {decline_url}
-
-        Please answer within 10 days.
-
-        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
-
-        If you have any questions, please contact us at info@openreview.net.
-
-        Cheers!
-
-        Program Chairs
-        '''
-        }}
-
-        return self.venue_request.client.post_invitation(openreview.Invitation(
-            id=self.venue_request.support_group.id + '/-/Recruitment',
-            readers=['everyone'],
-            writers=[],
-            signatures=[self.venue_request.support_group.id],
-            invitees=[self.venue_request.support_group.id],
-            process=os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py'),
-            multiReply=True,
-            reply={
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
-                },
-                'content': recruitment_content
-            }
-        ))
-
     def setup_venue_revision(self):
 
         remove_fields = ['Area Chairs (Metareviewers)', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Public Commentary', 'Paper Matching']
@@ -116,7 +34,7 @@ class VenueFeatures():
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
-            id='{}/-/Revision'.format(self.venue_request.support_group.id),
+            id='{}/-/Venue_Revision'.format(self.venue_request.support_group.id),
             readers=['everyone'],
             writers=[],
             signatures=[self.venue_request.super_user],
@@ -329,6 +247,46 @@ class VenueFeatures():
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
                 },
                 'content': meta_review_stage_content
+            }
+        ))
+
+    def setup_submission_revision_stage(self):
+
+        submission_revision_stage_content = {
+            'submission_revision_start_date': {
+                'description': 'When does the meta reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 35
+            },
+            'submission_revision_deadline': {
+                'description': 'By when should the meta-reviews be in the system? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 36
+            }
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Submission_Revision_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values-copied': ['{signatures}'],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                },
+                'content': submission_revision_stage_content
             }
         ))
 
@@ -670,10 +628,91 @@ class VenueRequest():
                 }
             ))
 
+        self.recruitment_content = {
+            'title': {
+                'value': 'Recruitment',
+                'required': True,
+                'order': 1
+            },
+            'invitee_role': {
+                'description': 'Please select the role of the invitees in the venue.',
+                'value-radio': ['reviewer', 'area chair'],
+                'default': 'reviewer',
+                'required': True,
+                'order': 2
+            },
+            'invitee_details': {
+                'value-regex': '[\\S\\s]{1,50000}',
+                'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
+                'required': True,
+                'order': 3
+            },
+            'invitation_email_subject': {
+                'value-regex': '.*',
+                'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
+                'order': 4,
+                'required': True,
+                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
+            },
+            'invitation_email_content': {
+                'value-regex': '[\\S\\s]{1,10000}',
+                'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
+                'order': 5,
+                'required': True,
+                'default': '''Dear {name},
+
+        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+
+        You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
+
+        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+        To ACCEPT the invitation, please click on the following link:
+
+        {accept_url}
+
+        To DECLINE the invitation, please click on the following link:
+
+        {decline_url}
+
+        Please answer within 10 days.
+
+        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+        If you have any questions, please contact us at info@openreview.net.
+
+        Cheers!
+
+        Program Chairs
+        '''
+        }}
+
+        self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+            id=self.support_group.id + '/-/Recruitment',
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.support_group.id],
+            invitees=[self.support_group.id],
+            process=os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py'),
+            multiReply=True,
+            reply={
+                'readers': {
+                    'values': ['everyone']
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.support_group.id)
+                },
+                'content': self.recruitment_content
+            }
+        ))
+
         venue_features = VenueFeatures(venue_request=self)
-        self.recruitment_super_invitation = venue_features.setup_venue_recruitment()
         self.venue_revision_invitation = venue_features.setup_venue_revision()
         self.bid_stage_super_invitation = venue_features.setup_bidding_stage()
         self.review_stage_super_invitation = venue_features.setup_review_stage()
         self.meta_review_stage_super_invitation = venue_features.setup_meta_review_stage()
+        self.submission_revision_invitation = venue_features.setup_submission_revision_stage()
         self.decision_stage_super_invitation = venue_features.setup_decision_stage()
