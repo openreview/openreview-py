@@ -2,7 +2,7 @@ import argparse
 from .. import openreview
 import os
 
-class VenueFeatures():
+class VenueStages():
 
     def __init__(self, venue_request):
 
@@ -266,7 +266,7 @@ class VenueFeatures():
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
-            id='{}/-/Submission_Revision_Stage'.format(self.venue_request.support_group.id),
+            id='{}/-/Revision_Stage'.format(self.venue_request.support_group.id),
             readers=['everyone'],
             writers=[],
             signatures=[self.venue_request.super_user],
@@ -397,6 +397,27 @@ class VenueRequest():
                     web_string=file_content)
                 self.support_group = client.post_group(support_group)
 
+        self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
+        self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
+        self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
+
+        # Setup for actions on the venue form
+        self.setup_request_form()
+        self.setup_venue_comments()
+        self.setup_venue_deployment()
+        self.setup_venue_recruitment()
+        
+        # Setup for venue stages 
+        venue_stages = VenueStages(venue_request=self)
+        self.venue_revision_invitation = venue_stages.setup_venue_revision()
+        self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
+        self.review_stage_super_invitation = venue_stages.setup_review_stage()
+        self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
+        self.submission_revision_invitation = venue_stages.setup_submission_revision_stage()
+        self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
+
+    def setup_request_form(self):
+
         self.request_content = {
             'title': {
                 'value-copied': '{content[\'Official Venue Name\']}',
@@ -518,14 +539,14 @@ class VenueRequest():
             }
         }
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/supportProcess.js'), 'r') as f:
+        with open(self.support_process, 'r') as f:
             file_content = f.read()
-            file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
-            self.request_invitation = client.post_invitation(openreview.Invitation(
+            file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
+            self.request_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Request_Form',
                 readers=['everyone'],
                 writers=[],
-                signatures=[super_user],
+                signatures=[self.super_user],
                 invitees=['everyone'],
                 process_string=file_content,
                 reply={
@@ -550,11 +571,13 @@ class VenueRequest():
                 }
             ))
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/commentProcess.js'), 'r') as f:
-            file_content = f.read()
-            file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
+    def setup_venue_comments(self):
 
-            self.comment_super_invitation = client.post_invitation(openreview.Invitation(
+        with open(self.comment_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
+
+            self.comment_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Comment',
                 readers=['everyone'],
                 writers=[self.support_group.id],
@@ -594,7 +617,9 @@ class VenueRequest():
                 }
             ))
 
-        self.deploy_content = {
+    def setup_venue_deployment(self):
+
+        deploy_content = {
             'venue_id': {
                 'value-regex': '.*',
                 'required': True,
@@ -602,11 +627,11 @@ class VenueRequest():
             }
         }
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/deployProcess.py'), 'r') as f:
+        with open(self.deploy_process, 'r') as f:
             file_content = f.read()
-            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + super_user + "'")
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
-            self.deploy_super_invitation = client.post_invitation(openreview.Invitation(
+            self.deploy_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Deploy',
                 readers=['everyone'],
                 writers=[],
@@ -624,11 +649,13 @@ class VenueRequest():
                     'signatures': {
                         'values': [self.support_group.id]
                     },
-                    'content': self.deploy_content
+                    'content': deploy_content
                 }
             ))
 
-        self.recruitment_content = {
+    def setup_venue_recruitment(self):
+
+        recruitment_content = {
             'title': {
                 'value': 'Recruitment',
                 'required': True,
@@ -687,32 +714,27 @@ class VenueRequest():
         '''
         }}
 
-        self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
-            id=self.support_group.id + '/-/Recruitment',
-            readers=['everyone'],
-            writers=[],
-            signatures=[self.support_group.id],
-            invitees=[self.support_group.id],
-            process=os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py'),
-            multiReply=True,
-            reply={
-                'readers': {
-                    'values': ['everyone']
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values-regex': '~.*|{}'.format(self.support_group.id)
-                },
-                'content': self.recruitment_content
-            }
-        ))
-
-        venue_features = VenueFeatures(venue_request=self)
-        self.venue_revision_invitation = venue_features.setup_venue_revision()
-        self.bid_stage_super_invitation = venue_features.setup_bidding_stage()
-        self.review_stage_super_invitation = venue_features.setup_review_stage()
-        self.meta_review_stage_super_invitation = venue_features.setup_meta_review_stage()
-        self.submission_revision_invitation = venue_features.setup_submission_revision_stage()
-        self.decision_stage_super_invitation = venue_features.setup_decision_stage()
+        with open(self.deploy_process, 'r') as f:
+            file_content = f.read()
+            
+            self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Recruitment',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values':[],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': recruitment_content
+                }
+            ))

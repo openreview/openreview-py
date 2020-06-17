@@ -261,8 +261,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
 
     # submission_revision_stage_invitation
     client.post_invitation(openreview.Invitation(
-        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
-        super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Revision_Stage',
+        super=SUPPORT_GROUP + '/-/Revision_Stage',
         invitees=readers,
         reply={
             'forum': forum.id,
