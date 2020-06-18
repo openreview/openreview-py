@@ -7,7 +7,73 @@ from openreview import VenueRequest
 
 class TestVenueRequest():
 
-    def test_venue_request_setup(self, client):
+    @pytest.fixture(scope="class")
+    def venue(self, client, support_client, test_client):
+        super_id = 'openreview.net'
+        support_group_id = super_id + '/Support'
+        VenueRequest(client, support_group_id, super_id)
+        
+        time.sleep(2)
+        
+        support_group = client.get_group(support_group_id)
+        client.add_members_to_group(group=support_group, members=['~Support_User1'])
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(minutes = 30)
+        
+        request_form_note = test_client.post_note(openreview.Note(
+            invitation=support_group_id +'/-/Request_Form',
+            signatures=['~Test_User1'],
+            readers=[
+                support_group_id,
+                '~Test_User1',
+                'test_user@mail.com',
+                'tom@mail.com'
+            ],
+            writers=[],
+            content={
+                'title': 'Test 2030 Venue',
+                'Official Venue Name': 'Test 2030 Venue',
+                'Abbreviated Venue Name': 'TestVenue@OR2030',
+                'Official Website URL': 'https://testvenue2030.gitlab.io/venue/',
+                'program_chair_emails': [
+                    'test_user@mail.com',
+                    'tom@mail.com'],
+                'contact_email': 'test_user@mail.com',
+                'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
+                'Venue Start Date': now.strftime("%Y/%m/%d"),
+                'Submission Deadline': due_date.strftime("%Y/%m/%d"),
+                'Location': 'Virtual',
+                'Paper Matching': [
+                    'Reviewer Bid Scores',
+                    'Reviewer Recommendation Scores'],
+                'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
+                'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'Public Commentary': 'Yes, allow members of the public to comment non-anonymously.',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            }))
+        time.sleep(2)
+
+        client.post_note(openreview.Note(
+            content={'venue_id': 'TEST.cc/2030/Conference'},
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number),
+            readers=[support_group_id],
+            referent=request_form_note.forum,
+            replyto=request_form_note.forum,
+            signatures=[support_group_id],
+            writers=['~Support_User1']
+        ))
+
+        venue_details = {
+            'request_form_note': request_form_note,
+            'support_group_id': support_group_id,
+            'venue_id': 'TEST.cc/2030/Conference'
+        }
+        return venue_details
+
+    def test_venue_setup(self, client):
         
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
@@ -25,17 +91,16 @@ class TestVenueRequest():
         assert venue.comment_super_invitation
         assert venue.recruitment_super_invitation
 
-    def test_venue_request_post_deploy_revise(self, client, selenium, request_page, helpers):
+    def test_venue_deployment(self, client, selenium, request_page, helpers, support_client):
         
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
         
-        time.sleep(5)
+        time.sleep(2)
         request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(support_group_id), client.token)
 
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
-        helpers.create_user('support_user@mail.com', 'Support', 'User')
 
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -114,44 +179,47 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
+    def test_venue_revision(self, client, test_client, selenium, request_page, helpers, venue):
+
         # Test Revision
-        request_page(selenium, 'http://localhost:3000/group?id=TEST.cc/2021/Conference', client.token)
+        request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
         assert title_tag
-        assert title_tag.text == 'Test 2021 Venue'
+        assert title_tag.text == venue['request_form_note'].content['title']
 
-        messages = client.get_messages(subject='Comment posted to your request for service: Test 2021 Venue')
+        messages = client.get_messages(subject='Comment posted to your request for service: {}'.format(venue['request_form_note'].content['title']))
         assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
-        assert 'new_test_user@mail.com' in recipients
+        assert 'test_user@mail.com' in recipients
         assert 'tom@mail.com' in recipients
 
-        revision_note = client.post_note(openreview.Note(
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(minutes = 30)
+
+        revision_note = test_client.post_note(openreview.Note(
             content={
-                'title': 'Test 2021 Venue Updated',
-                'Official Venue Name': 'Test 2021 Venue Updated',
-                'Abbreviated Venue Name': 'TestVenue@OR2021',
-                'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
-                'program_chair_emails': [
-                    'new_test_user@mail.com',
-                    'tom@mail.com'],
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
                 'Submission Deadline': due_date.strftime("%Y/%m/%d"),
                 'Venue Start Date': now.strftime("%Y/%m/%d"),
-                'contact_email': 'new_test_user@mail.com',
+                'contact_email': venue['request_form_note'].content['contact_email'],
                 'remove_submission_options': []
             },
-            forum=request_form_note.forum,
-            invitation='{}/-/Request{}/Venue_Revision'.format(support_group_id, request_form_note.number),
-            readers=['TEST.cc/2021/Conference/Program_Chairs', support_group_id],
-            referent=request_form_note.forum,
-            replyto=request_form_note.forum,
-            signatures=['~Newtest_User1'],
-            writers=['~Newtest_User1']
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Venue_Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
         ))
         assert revision_note
 
@@ -159,11 +227,11 @@ class TestVenueRequest():
         process_logs = client.get_process_logs(id = revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/-/Request{}/Venue_Revision'.format(support_group_id, request_form_note.number)
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Venue_Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        request_page(selenium, 'http://localhost:3000/group?id=TEST.cc/2021/Conference', client.token)
+        request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
         assert title_tag
-        assert title_tag.text == 'Test 2021 Venue Updated'
+        assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
