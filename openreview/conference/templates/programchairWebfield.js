@@ -1358,8 +1358,8 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
-      '</div>' +
-      '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
+    '</div>' +
+    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
