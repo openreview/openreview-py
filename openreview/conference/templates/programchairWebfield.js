@@ -90,8 +90,15 @@ var main = function() {
     invitationMap
   ) {
     var noteNumbers = blindedNotes.map(function(note) { return note.number; });
+    var acRankingByPaper = {};
     blindedNotes.forEach(function(n) {
       selectedNotesById[n.id] = false;
+      var tags = n.details['tags'];
+      tags.forEach(function(t) {
+        if (t.invitation === AREA_CHAIRS_ID + '/-/Paper_Ranking') {
+          acRankingByPaper[n.forum] = t;
+        }
+      })
     });
 
     reviewerSummaryMap = buildNoteMap(noteNumbers);
@@ -105,16 +112,6 @@ var main = function() {
         pcTags[tag.forum] = [];
       }
       pcTags[tag.forum].push(tag);
-    });
-
-    var acRankingByPaper = {};
-    blindedNotes.forEach(function(n) {
-      var tags = n.details['tags'];
-      tags.forEach(function(t) {
-        if (t.invitation === AREA_CHAIRS_ID + '/-/Paper_Ranking') {
-          acRankingByPaper[n.forum] = t;
-        }
-      })
     });
 
     conferenceStatusData = {
@@ -984,7 +981,6 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
   $(container).html(
     '<form class="form-inline search-form clearfix" role="search">' +
       '<div class="pull-left"></div>' +
-      '<div class="pull-middle"></div>' +
       '<div class="pull-right">' +
         searchBarHtml +
         sortDropdownHtml +
@@ -1362,8 +1358,8 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
-    '</div>');
-    $(container).find('form.search-form .pull-middle').html('<div><button class="btn btn-export-data">Export</button></div>');
+      '</div>' +
+      '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -2535,6 +2531,6 @@ var buildCSV = function(){
 };
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
-  var blob = new Blob(buildCSV(), {type: 'text/plain;charset=utf-8'});
-  saveAs(blob, SHORT_PHRASE.replace(' ', '_') + '_paper_status.csv',);
+  var blob = new Blob(buildCSV(), {type: 'text/csv'});
+  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv',);
 });
