@@ -331,7 +331,7 @@ class TestVenueRequest():
         assert review_stage_note
 
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
-        client.add_members_to_group(reviewer_group, 'Venue_Reviewer2')
+        client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
 
         openreview.tools.assign(client, paper_number=1, conference=venue['venue_id'], reviewer_to_add='~Venue_Reviewer2')
 
