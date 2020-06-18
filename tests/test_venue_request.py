@@ -19,7 +19,7 @@ class TestVenueRequest():
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
         now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(minutes = 30)
+        due_date = now + datetime.timedelta(days=3)
         
         request_form_note = test_client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
@@ -47,9 +47,9 @@ class TestVenueRequest():
                 'Paper Matching': [
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores'],
-                'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
+                'Author and Reviewer Anonymity': 'Double-blind',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
-                'Public Commentary': 'Yes, allow members of the public to comment non-anonymously.',
+                'Public Commentary': 'No, do not allow public commentary.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
@@ -196,7 +196,7 @@ class TestVenueRequest():
         assert 'tom@mail.com' in recipients
 
         now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(minutes = 30)
+        due_date = now + datetime.timedelta(days = 3)
 
         revision_note = test_client.post_note(openreview.Note(
             content={
@@ -211,7 +211,7 @@ class TestVenueRequest():
                 'Submission Deadline': due_date.strftime("%Y/%m/%d"),
                 'Venue Start Date': now.strftime("%Y/%m/%d"),
                 'contact_email': venue['request_form_note'].content['contact_email'],
-                'remove_submission_options': []
+                'remove_submission_options': ['pdf']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Venue_Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -275,3 +275,72 @@ class TestVenueRequest():
 
         request_page(selenium, reviewer_url, reviewer_client.token)
         assert selenium.find_element_by_link_text('Reviewer Bid')
+
+    def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        author_client = helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
+        reviewer_client = helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
+
+        submission = author_client.post_note(openreview.Note(
+            invitation='{}/-/Submission'.format(venue['venue_id']),
+            readers=[
+                venue['venue_id'],
+                '~Venue_Author1'],
+            writers=[
+                '~Venue_Author1',
+                venue['venue_id']
+            ],
+            signatures=['~Venue_Author1'],
+            content={
+                'title': 'test submission',
+                'authorids': ['~Venue_Author1'],
+                'authors': ["Venue Author"],
+                'abstract': 'test abstract'
+            }
+        ))
+
+        assert submission
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.close_submissions()
+        conference.create_blind_submissions()
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 1
+
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days = 3)
+        review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'review_start_date': now.strftime("%Y/%m/%d"),
+                'review_deadline': due_date.strftime("%Y/%m/%d"),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert review_stage_note
+
+        reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
+        client.add_members_to_group(reviewer_group, 'Venue_Reviewer2')
+
+        openreview.tools.assign(client, paper_number=1, conference=venue['venue_id'], reviewer_to_add='~Venue_Reviewer2')
+
+        reviewer_group = client.get_group('{}/Paper1/AnonReviewer1'.format(venue['venue_id']))
+        assert reviewer_group and len(reviewer_group.members) == 2
+
+        reviewer_page_url = 'http://localhost:3000/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
+        request_page(selenium, reviewer_page_url, token=reviewer_client.token)
+
+        note_div = selenium.find_element_by_id('note-summary-1')
+        assert note_div
+        assert 'test submission' == note_div.find_element_by_link_text('test submission').text
