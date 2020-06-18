@@ -235,3 +235,43 @@ class TestVenueRequest():
         title_tag = header_div.find_element_by_tag_name('h1')
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
+
+    def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        reviewer_client = helpers.create_user('venue_reviewer1@mail.com', 'Venue', 'Reviewer')
+
+        reviewer_group_id = '{}/Reviewers'.format(venue['venue_id'])
+        reviewer_group = client.get_group(reviewer_group_id)
+        client.add_members_to_group(reviewer_group, '~Venue_Reviewer1')
+
+        reviewer_url = 'http://localhost:3000/group?id={}#reviewer-tasks'.format(reviewer_group_id)
+        request_page(selenium, reviewer_url, reviewer_client.token)
+        with pytest.raises(NoSuchElementException):
+            assert selenium.find_element_by_link_text('Reviewer Bid')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days = 3)
+
+        bid_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': now.strftime("%Y/%m/%d"),
+                'bid_due_date': due_date.strftime("%Y/%m/%d")
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            referent=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert bid_revision_note
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id=bid_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
+        assert process_logs[0]['status'] == 'ok'
+
+        request_page(selenium, reviewer_url, reviewer_client.token)
+        assert selenium.find_element_by_link_text('Reviewer Bid')
