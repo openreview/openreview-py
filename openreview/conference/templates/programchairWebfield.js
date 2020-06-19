@@ -22,6 +22,9 @@ var AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
+var SECONDARY_AREA_CHAIR_NAME = '';
+var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';
+var SECONDARY_AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/' + SECONDARY_AREA_CHAIR_NAME + '$';
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs|/Program_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
@@ -51,11 +54,13 @@ var main = function() {
     getAllAreaChairs(),
     getReviewerGroups(),
     getAreaChairGroups(),
+    getSecondaryAreaChairGroups(),
     getBlindedNotes(),
     getWithdrawnNotesCount(),
     getDeskRejectedNotesCount(),
     getOfficialReviews(),
     getMetaReviews(),
+    getSecondaryMetaReviews(),
     getDecisionReviews(),
     getPcAssignmentTags(),
     getBidCounts(REVIEWERS_ID),
@@ -71,11 +76,13 @@ var main = function() {
     areaChairs,
     reviewerGroups,
     areaChairGroups,
+    secondaryAreaChairGroups,
     blindedNotes,
     withdrawnNotesCount,
     deskRejectedNotesCount,
     officialReviews,
     metaReviews,
+    secondaryMetaReviews,
     decisions,
     pcAssignmentTags,
     reviewerBidCounts,
@@ -95,6 +102,7 @@ var main = function() {
     reviewerSummaryMap = buildNoteMap(noteNumbers);
 
     var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, areaChairGroups);
+    var secondaryAreaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, secondaryAreaChairGroups);
     var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, reviewerGroups);
     var officialReviewMap = buildOfficialReviewMap(noteNumbers, officialReviews);
 
@@ -111,8 +119,10 @@ var main = function() {
       blindedNotes: blindedNotes,
       officialReviews: officialReviewMap,
       metaReviews: metaReviews,
+      secondaryMetaReviews: secondaryMetaReviews,
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
+      secondaryAreaChairGroups: secondaryAreaChairGroupMaps,
       decisions: decisions,
       pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION]
     };
@@ -289,6 +299,16 @@ var getAreaChairGroups = function() {
   });
 };
 
+var getSecondaryAreaChairGroups = function() {
+  if (!SECONDARY_AREA_CHAIR_NAME) {
+    return $.Deferred().resolve([]);
+  }
+
+  return Webfield.getAll('/groups', {
+    id: SECONDARY_AREACHAIR_WILDCARD
+  });
+};
+
 var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts) {
   reviewerBidCounts = reviewerBidCounts || {};
   areaChairBidCounts = areaChairBidCounts || {};
@@ -338,6 +358,16 @@ var getMetaReviews = function() {
 
   return Webfield.getAll('/notes', {
     invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, '.*')
+  });
+};
+
+var getSecondaryMetaReviews = function() {
+  if (!SECONDARY_AREA_CHAIR_NAME ) {
+    return $.Deferred().resolve([]);
+  }
+
+  return Webfield.getAll('/notes', {
+    invitation: getInvitationId(OFFICIAL_SECONDARY_META_REVIEW_NAME, '.*')
   });
 };
 
@@ -1065,8 +1095,10 @@ var displayPaperStatusTable = function() {
   var notes = conferenceStatusData.blindedNotes;
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
+  var secondaryMetaReviews = conferenceStatusData.secondaryMetaReviews;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+  var secondaryAreachairIds = conferenceStatusData.secondaryAreaChairGroups.byNotes;
   var decisions = conferenceStatusData.decisions;
   var pcAssignmentTagInvitations = conferenceStatusData.pcAssignmentTagInvitations;
 
@@ -1080,9 +1112,18 @@ var displayPaperStatusTable = function() {
       areachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
       areachairProfile.email = '-';
     }
+    var secondaryAreachairId = secondaryAreachairIds[note.number][0];
+    var secondaryAreachairProfile = {}
+    if (secondaryAreachairId) {
+      secondaryAreachairProfile = findProfile(profiles, secondaryAreachairId);
+    } else {
+      secondaryAreachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/' + SECONDARY_AREA_CHAIR_NAME);
+      secondaryAreachairProfile.email = '-';
+    }
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var secondaryMetaReview = _.find(secondaryMetaReviews, ['forum', note.forum]);
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
-    return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
+    return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, secondaryMetaReview, secondaryAreachairProfile, decision);
   });
 
   var toNumber = function(value) {
@@ -1242,6 +1283,16 @@ var displayPaperStatusTable = function() {
 
       var rows = [checked, numberHtml, summaryHtml, reviewHtml];
       if (AREA_CHAIRS_ID) {
+        if (SECONDARY_AREA_CHAIR_NAME && d.areachairProgressData.secondaryAreachair) {
+          secondary_html = '<br><p><strong>Secondary Area Chair: </strong><br>' + d.areachairProgressData.secondaryAreachair.name + '<span class="text-muted">(' + d.areachairProgressData.secondaryAreachair.email + ')</span>' +
+          '<br><strong>Secondary Meta Review: </strong>';
+          if (d.areachairProgressData.secondaryMetaReview) {
+            secondary_html = secondary_html + '<a href="/forum?id=' + d.areachairProgressData.secondaryMetaReview.forum + '&noteId=' + d.areachairProgressData.secondaryMetaReview.id + '" target="_blank">Agreement (' + d.areachairProgressData.secondaryMetaReview.content.agreement + ')</a></p>';
+          } else {
+            secondary_html = secondary_html + 'No meta review</p>';
+          }
+          areachairHtml = areachairHtml + secondary_html
+        }
         rows.push(areachairHtml);
       }
       rows.push(decisionHtml);
@@ -1864,7 +1915,7 @@ var updateReviewerContainer = function(paperNumber) {
 // Helper functions
 var paperTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
 
-var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
+var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, secondaryMetaReview, secondaryAreachairProfile, decision) {
   // Checkbox for selecting each row
   var cellCheck = { selected: false, noteId: note.id };
 
@@ -1961,7 +2012,9 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     numMetaReview: metaReview ? 'One' : 'No',
     areachair: areachairProfile,
     metaReview: metaReview,
-    referrer: paperTableReferrerUrl
+    referrer: paperTableReferrerUrl,
+    secondaryMetaReview: secondaryMetaReview,
+    secondaryAreachair: secondaryAreachairProfile
   };
 
   return {
