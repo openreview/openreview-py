@@ -2494,6 +2494,7 @@ var buildCSV = function(){
   'average confidence',
   'ac recommendation',
   'ac profile id',
+  'ac email',
   'ac ranking'].join(',') + '\n');
 
   _.forEach(notes, function(note) {
@@ -2523,6 +2524,7 @@ var buildCSV = function(){
     paperTableRow.reviewProgressData.averageConfidence,
     paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
     areachairProfile.id,
+    areachairProfile.email,
     acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag
     ].join(',') + '\n');
   });
