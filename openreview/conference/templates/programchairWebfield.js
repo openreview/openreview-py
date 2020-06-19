@@ -1123,12 +1123,9 @@ var displayPaperStatusTable = function() {
       areachairProfile.email = '-';
     }
     var secondaryAreachairId = secondaryAreachairIds[note.number][0];
-    var secondaryAreachairProfile = {}
+    var secondaryAreachairProfile = null
     if (secondaryAreachairId) {
       secondaryAreachairProfile = findProfile(profiles, secondaryAreachairId);
-    } else {
-      secondaryAreachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/' + SECONDARY_AREA_CHAIR_NAME);
-      secondaryAreachairProfile.email = '-';
     }
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var secondaryMetaReview = _.find(secondaryMetaReviews, ['forum', note.forum]);
@@ -1155,6 +1152,9 @@ var displayPaperStatusTable = function() {
   };
   if (AREA_CHAIRS_ID) {
     sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
+    if (SECONDARY_AREA_CHAIR_NAME) {
+      sortOptions['Secondary_Meta_Review_Agreement'] = function(row) { return row.areachairProgressData.secondaryMetaReview && row.areachairProgressData.secondaryMetaReview.content.agreement; }
+    }
   }
   sortOptions['Decision'] = function(row) { return row.decision ? row.decision.content.decision : 'No Decision'; }
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
@@ -2529,13 +2529,15 @@ var buildCSV = function(){
   var notes = conferenceStatusData.blindedNotes;
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
+  var secondaryMetaReviews = conferenceStatusData.secondaryMetaReviews;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+  var secondaryAreachairIds = conferenceStatusData.secondaryAreaChairGroups.byNotes;
   var decisions = conferenceStatusData.decisions;
   var acRankingByPaper = conferenceStatusData.acRankingByPaper;
 
   var rowData = [];
-  rowData.push(['number',
+  var headers = ['number',
   'forum',
   'title',
   'num reviewers',
@@ -2548,7 +2550,15 @@ var buildCSV = function(){
   'ac recommendation',
   'ac profile id',
   'ac email',
-  'ac ranking'].join(',') + '\n');
+  'ac ranking'];
+
+  if (SECONDARY_AREA_CHAIR_NAME) {
+    headers.push('secondary confirmation');
+    headers.push('secondary id');
+    headers.push('secondary email');
+  }
+
+  rowData.push(headers.join(',') + '\n');
 
   _.forEach(notes, function(note) {
     var revIds = reviewerIds[note.number];
@@ -2560,26 +2570,39 @@ var buildCSV = function(){
       areachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
       areachairProfile.email = '-';
     }
+    var secondaryAreachairId = secondaryAreachairIds[note.number][0];
+    var secondaryAreachairProfile = null;
+    if (secondaryAreachairId) {
+      secondaryAreachairProfile = findProfile(profiles, secondaryAreachairId);
+    }
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var secondaryMetaReview = _.find(secondaryMetaReviews, ['forum', note.forum]);
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
-    var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
+    var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, secondaryMetaReview, secondaryAreachairProfile, decision);
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
-    rowData.push([paperTableRow.note.number,
-    '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
-    '"' + title + '"',
-    paperTableRow.reviewProgressData.numReviewers,
-    paperTableRow.reviewProgressData.minRating,
-    paperTableRow.reviewProgressData.maxRating,
-    paperTableRow.reviewProgressData.averageRating,
-    paperTableRow.reviewProgressData.minConfidence,
-    paperTableRow.reviewProgressData.maxConfidence,
-    paperTableRow.reviewProgressData.averageConfidence,
-    paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
-    areachairProfile.id,
-    areachairProfile.email,
-    acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag
-    ].join(',') + '\n');
+    var values = [paperTableRow.note.number,
+      '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
+      '"' + title + '"',
+      paperTableRow.reviewProgressData.numReviewers,
+      paperTableRow.reviewProgressData.minRating,
+      paperTableRow.reviewProgressData.maxRating,
+      paperTableRow.reviewProgressData.averageRating,
+      paperTableRow.reviewProgressData.minConfidence,
+      paperTableRow.reviewProgressData.maxConfidence,
+      paperTableRow.reviewProgressData.averageConfidence,
+      paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
+      areachairProfile.id,
+      areachairProfile.email,
+      acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag
+      ];
+    if (SECONDARY_AREA_CHAIR_NAME && paperTableRow.areachairProgressData.secondaryAreachair) {
+      values.push(paperTableRow.areachairProgressData.secondaryMetaReview && paperTableRow.areachairProgressData.secondaryMetaReview.content.agreement);
+      values.push(paperTableRow.areachairProgressData.secondaryAreachair.id);
+      values.push(paperTableRow.areachairProgressData.secondaryAreachair.email);
+    }
+
+    rowData.push(values.join(',') + '\n');
   });
 
   return [rowData.join('')];
