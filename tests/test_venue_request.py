@@ -333,6 +333,11 @@ class TestVenueRequest():
         ))
         assert review_stage_note
 
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
 
@@ -378,6 +383,27 @@ class TestVenueRequest():
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 2
 
+        # Assert that ACs do not see the Submit button for meta reviews at this point
+        meta_reviewer_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
+        client.add_members_to_group(meta_reviewer_group, '~Venue_Ac1')
+
+        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
+        openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
+
+        ac_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
+        assert ac_group and len(ac_group.members) == 1
+
+        ac_page_url = 'http://localhost:3000/group?id={}/Area_Chairs'.format(venue['venue_id'])
+        request_page(selenium, ac_page_url, token=meta_reviewer_client.token)
+        
+        submit_div_1 = selenium.find_element_by_id('1-metareview-status')
+        with pytest.raises(NoSuchElementException):
+            assert submit_div_1.find_element_by_link_text('Submit')
+
+        submit_div_2 = selenium.find_element_by_id('2-metareview-status')
+        with pytest.raises(NoSuchElementException):
+            assert submit_div_2.find_element_by_link_text('Submit')
+        
         # Post a meta review stage note
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -396,17 +422,13 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert meta_review_stage_note
+        time.sleep(2)
 
-        meta_reviewer_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
-        client.add_members_to_group(meta_reviewer_group, '~Venue_Ac1')
+        process_logs = client.get_process_logs(id = meta_review_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
-        openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
-
-        ac_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
-        assert ac_group and len(ac_group.members) == 1
-
-        ac_page_url = 'http://localhost:3000/group?id={}/Area_Chairs'.format(venue['venue_id'])
+        # Assert that AC now see the Submit button for assigned papers
         request_page(selenium, ac_page_url, token=meta_reviewer_client.token)
 
         note_div_1 = selenium.find_element_by_id('note-summary-1')
@@ -421,3 +443,51 @@ class TestVenueRequest():
 
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
+
+    def test_venue_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        # Assert that PCs do not see a Decision button on the submissions
+        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert submissions and len(submissions) == 2
+
+        paper_url = 'http://localhost:3000/forum?id={}'.format(submissions[0].forum)
+        request_page(selenium, paper_url, token=test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert reply_row
+        with pytest.raises(NoSuchElementException):
+            assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
+
+        # Post a decision stage note
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': now.strftime("%Y/%m/%d"),
+                'decision_deadline': due_date.strftime("%Y/%m/%d"),
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decision_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'notify_to_authors': 'No, I will send the emails to the authors'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert decision_stage_note
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        # Assert that PC now sees the Decision button
+        request_page(selenium, paper_url, token=test_client.token)
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert reply_row
+        assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
