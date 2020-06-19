@@ -30,8 +30,12 @@ function render() {
       $response.append([
         '<div class="panel">',
           '<div class="row">',
-            '<p>If you do not already have an OpenReview account, please sign up <a style="font-weight:bold;" href="/signup">here</a>.</p>',
-            '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit">profile page</a> and has been confirmed.</p>',
+            '<h4>Please complete the following steps now:</h4>',
+              '<ol>',
+                '<li><p>Log in to your OpenReview account (if you do not already have an OpenReview account, you can sign up <a style="font-weight:bold;" href="/signup">here</a>).</p></li>',
+                '<li><p>Ensure that the email address that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit">profile page</a> and has been confirmed.</p></li>',
+                '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks">tasks</a> for ' + HEADER.subtitle + '.</p></li>',
+              '</ol>',
           '</div>',
         '</div>'
       ].join('\n'));
