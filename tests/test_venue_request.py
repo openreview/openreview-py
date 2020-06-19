@@ -15,19 +15,21 @@ class TestVenueRequest():
         
         time.sleep(2)
         
+        # Add support group user to the support group object
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
         
+        # Post the request form note
         request_form_note = test_client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~Test_User1'],
             readers=[
                 support_group_id,
                 '~Test_User1',
-                'test_user@mail.com',
+                'test@mail.com',
                 'tom@mail.com'
             ],
             writers=[],
@@ -37,9 +39,9 @@ class TestVenueRequest():
                 'Abbreviated Venue Name': 'TestVenue@OR2030',
                 'Official Website URL': 'https://testvenue2030.gitlab.io/venue/',
                 'program_chair_emails': [
-                    'test_user@mail.com',
+                    'test@mail.com',
                     'tom@mail.com'],
-                'contact_email': 'test_user@mail.com',
+                'contact_email': 'test@mail.com',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'Venue Start Date': now.strftime("%Y/%m/%d"),
                 'Submission Deadline': due_date.strftime("%Y/%m/%d"),
@@ -55,6 +57,7 @@ class TestVenueRequest():
             }))
         time.sleep(2)
 
+        # Post a deploy note
         client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2030/Conference'},
             forum=request_form_note.forum,
@@ -66,6 +69,7 @@ class TestVenueRequest():
             writers=['~Support_User1']
         ))
 
+        # Return venue details as a dict
         venue_details = {
             'request_form_note': request_form_note,
             'support_group_id': support_group_id,
@@ -192,7 +196,7 @@ class TestVenueRequest():
         messages = client.get_messages(subject='Comment posted to your request for service: {}'.format(venue['request_form_note'].content['title']))
         assert messages and len(messages) == 2
         recipients = [msg['content']['to'] for msg in messages]
-        assert 'test_user@mail.com' in recipients
+        assert 'test@mail.com' in recipients
         assert 'tom@mail.com' in recipients
 
         now = datetime.datetime.utcnow()
@@ -302,8 +306,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.close_submissions()
-        conference.create_blind_submissions()
+        conference.create_blind_submissions(force=True)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 1
@@ -333,7 +336,7 @@ class TestVenueRequest():
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
 
-        openreview.tools.assign(client, paper_number=1, conference=venue['venue_id'], reviewer_to_add='~Venue_Reviewer2')
+        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Reviewer2')
 
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         assert reviewer_group and len(reviewer_group.members) == 2
@@ -344,3 +347,77 @@ class TestVenueRequest():
         note_div = selenium.find_element_by_id('note-summary-1')
         assert note_div
         assert 'test submission' == note_div.find_element_by_link_text('test submission').text
+
+    def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        author_client = helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
+        meta_reviewer_client = helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
+
+        submission = author_client.post_note(openreview.Note(
+            invitation='{}/-/Submission'.format(venue['venue_id']),
+            readers=[
+                venue['venue_id'],
+                '~Venue_Author2'],
+            writers=[
+                '~Venue_Author2',
+                venue['venue_id']
+            ],
+            signatures=['~Venue_Author2'],
+            content={
+                'title': 'test submission 2',
+                'authorids': ['~Venue_Author2'],
+                'authors': ["Venue Author"],
+                'abstract': 'test abstract 2'
+            }
+        ))
+        assert submission
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.create_blind_submissions(force=True)
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 2
+
+        # Post a meta review stage note
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        meta_review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': now.strftime("%Y/%m/%d"),
+                'meta_review_deadline': due_date.strftime("%Y/%m/%d")
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert meta_review_stage_note
+
+        meta_reviewer_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
+        client.add_members_to_group(meta_reviewer_group, '~Venue_Ac1')
+
+        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
+        openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
+
+        ac_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
+        assert ac_group and len(ac_group.members) == 1
+
+        ac_page_url = 'http://localhost:3000/group?id={}/Area_Chairs'.format(venue['venue_id'])
+        request_page(selenium, ac_page_url, token=meta_reviewer_client.token)
+
+        note_div_1 = selenium.find_element_by_id('note-summary-1')
+        assert note_div_1
+        note_div_2 = selenium.find_element_by_id('note-summary-2')
+        assert note_div_2
+        assert 'test submission' == note_div_1.find_element_by_link_text('test submission').text
+        assert 'test submission 2' == note_div_2.find_element_by_link_text('test submission 2').text
+
+        submit_div_1 = selenium.find_element_by_id('1-metareview-status')
+        assert submit_div_1.find_element_by_link_text('Submit')
+
+        submit_div_2 = selenium.find_element_by_id('2-metareview-status')
+        assert submit_div_2.find_element_by_link_text('Submit')
