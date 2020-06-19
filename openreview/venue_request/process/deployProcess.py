@@ -256,7 +256,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values' : readers
                 }
             },
-            signatures = [conference.get_program_chairs_id()]
+            signatures = [SUPPORT_GROUP]
         ))
 
     # submission_revision_stage_invitation
