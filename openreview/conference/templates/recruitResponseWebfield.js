@@ -26,6 +26,7 @@ function render() {
       // Display response text
       var message = 'Thank you for accepting this invitation from ' + HEADER.title;
       $response.append('<div class="panel"><div class="row"><h3 style="line-height:normal;">' + message + '</h3></div></div>');
+      var email = args.user.indexOf('@') > -1 ? '(<strong>' + args.user + '</strong>) ' : '';
 
       $response.append([
         '<div class="panel">',
@@ -33,8 +34,8 @@ function render() {
             '<h4>Please complete the following steps now:</h4>',
               '<ol>',
                 '<li><p>Log in to your OpenReview account (if you do not already have an OpenReview account, you can sign up <a style="font-weight:bold;" href="/signup">here</a>).</p></li>',
-                '<li><p>Ensure that the email address that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit">profile page</a> and has been confirmed.</p></li>',
-                '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks">tasks</a> for ' + HEADER.subtitle + '.</p></li>',
+                '<li><p>Ensure that the email address ' + email + 'that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit">profile page</a> and has been confirmed.</p></li>',
+                '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks">tasks</a> (if any) for ' + HEADER.subtitle + '.</p></li>',
               '</ol>',
           '</div>',
         '</div>'
