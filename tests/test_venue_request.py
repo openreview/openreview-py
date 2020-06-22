@@ -7,7 +7,7 @@ from openreview import VenueRequest
 
 class TestVenueRequest():
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope='class')
     def venue(self, client, support_client, test_client):
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
@@ -43,8 +43,8 @@ class TestVenueRequest():
                     'tom@mail.com'],
                 'contact_email': 'test@mail.com',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
-                'Venue Start Date': now.strftime("%Y/%m/%d"),
-                'Submission Deadline': due_date.strftime("%Y/%m/%d"),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
@@ -89,7 +89,7 @@ class TestVenueRequest():
         assert venue.meta_review_stage_super_invitation
         assert venue.review_stage_super_invitation
         assert venue.meta_review_stage_super_invitation
-        assert venue.submission_revision_invitation
+        assert venue.submission_revision_stage_super_invitation
 
         assert venue.deploy_super_invitation
         assert venue.comment_super_invitation
@@ -135,8 +135,8 @@ class TestVenueRequest():
                     'tom@mail.com'],
                 'contact_email': 'new_test_user@mail.com',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
-                'Venue Start Date': now.strftime("%Y/%m/%d"),
-                'Submission Deadline': due_date.strftime("%Y/%m/%d"),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
@@ -183,7 +183,7 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-    def test_venue_revision(self, client, test_client, selenium, request_page, helpers, venue):
+    def test_venue_update(self, client, test_client, selenium, request_page, venue):
 
         # Test Revision
         request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
@@ -202,7 +202,7 @@ class TestVenueRequest():
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days = 3)
 
-        revision_note = test_client.post_note(openreview.Note(
+        venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
                 'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -212,26 +212,26 @@ class TestVenueRequest():
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
-                'Submission Deadline': due_date.strftime("%Y/%m/%d"),
-                'Venue Start Date': now.strftime("%Y/%m/%d"),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'remove_submission_options': ['pdf']
             },
             forum=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Venue_Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            invitation='{}/-/Request{}/Venue_Update'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
             writers=['~Test_User1']
         ))
-        assert revision_note
+        assert venue_revision_note
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = revision_note.id)
+        process_logs = client.get_process_logs(id = venue_revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/-/Request{}/Venue_Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Venue_Update'.format(venue['support_group_id'], venue['request_form_note'].number)
 
         request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
         header_div = selenium.find_element_by_id('header')
@@ -256,10 +256,10 @@ class TestVenueRequest():
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days = 3)
 
-        bid_revision_note = test_client.post_note(openreview.Note(
+        bid_stage_note = test_client.post_note(openreview.Note(
             content={
-                'bid_start_date': now.strftime("%Y/%m/%d"),
-                'bid_due_date': due_date.strftime("%Y/%m/%d")
+                'bid_start_date': now.strftime('%Y/%m/%d'),
+                'bid_due_date': due_date.strftime('%Y/%m/%d')
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -269,10 +269,10 @@ class TestVenueRequest():
             signatures=['~Test_User1'],
             writers=['~Test_User1']
         ))
-        assert bid_revision_note
+        assert bid_stage_note
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id=bid_revision_note.id)
+        process_logs = client.get_process_logs(id=bid_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
         assert process_logs[0]['status'] == 'ok'
@@ -298,7 +298,7 @@ class TestVenueRequest():
             content={
                 'title': 'test submission',
                 'authorids': ['~Venue_Author1'],
-                'authors': ["Venue Author"],
+                'authors': ['Venue Author'],
                 'abstract': 'test abstract'
             }
         ))
@@ -316,8 +316,8 @@ class TestVenueRequest():
         due_date = now + datetime.timedelta(days = 3)
         review_stage_note = test_client.post_note(openreview.Note(
             content={
-                'review_start_date': now.strftime("%Y/%m/%d"),
-                'review_deadline': due_date.strftime("%Y/%m/%d"),
+                'review_start_date': now.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
@@ -371,7 +371,7 @@ class TestVenueRequest():
             content={
                 'title': 'test submission 2',
                 'authorids': ['~Venue_Author2'],
-                'authors': ["Venue Author"],
+                'authors': ['Venue Author'],
                 'abstract': 'test abstract 2'
             }
         ))
@@ -410,8 +410,8 @@ class TestVenueRequest():
         meta_review_stage_note = test_client.post_note(openreview.Note(
             content={
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
-                'meta_review_start_date': now.strftime("%Y/%m/%d"),
-                'meta_review_deadline': due_date.strftime("%Y/%m/%d")
+                'meta_review_start_date': now.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d')
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -444,7 +444,7 @@ class TestVenueRequest():
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
 
-    def test_venue_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
+    def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue):
 
         # Assert that PCs do not see a Decision button on the submissions
         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
@@ -463,8 +463,8 @@ class TestVenueRequest():
         due_date = now + datetime.timedelta(days=3)
         decision_stage_note = test_client.post_note(openreview.Note(
             content={
-                'decision_start_date': now.strftime("%Y/%m/%d"),
-                'decision_deadline': due_date.strftime("%Y/%m/%d"),
+                'decision_start_date': now.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decision_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
@@ -491,3 +491,67 @@ class TestVenueRequest():
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert reply_row
         assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
+
+    def test_venue_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        author_client = helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
+        submission = author_client.post_note(openreview.Note(
+            invitation='{}/-/Submission'.format(venue['venue_id']),
+            readers=[
+                venue['venue_id'],
+                '~Venue_Author3'
+            ],
+            writers=[
+                '~Venue_Author3',
+                venue['venue_id']
+            ],
+            signatures=['~Venue_Author3'],
+            content={
+                'title': 'test submission 3',
+                'authorids': ['~Venue_Author3'],
+                'authors': ['Venue Author'],
+                'abstract': 'test abstract 3'
+            }
+        ))
+
+        assert submission
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.create_blind_submissions(force=True)
+
+        blind_submissions = client.get_notes(
+            invitation='{}/-/Blind_Submission'.format(venue['venue_id']),
+            number=3)
+        assert blind_submissions and len(blind_submissions) == 1
+
+        # Post a revision stage note
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days = 3)
+        revision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'submission_revision_start_date': now.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_revision_remove_options': ['keywords', 'pdf']
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert revision_stage_note
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id=revision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        author_page_url = 'http://localhost:3000/forum?id={}'.format(blind_submissions[0].forum)
+        request_page(selenium, author_page_url, token=author_client.token)
+
+        meta_actions = selenium.find_element_by_class_name('meta_actions')
+        assert meta_actions
+        assert 'Revision' == meta_actions.find_element_by_class_name('edit_button').text

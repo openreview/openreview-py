@@ -46,6 +46,7 @@ class Conference(object):
         self.review_rebuttal_stage = None
         self.review_revision_stage = None
         self.review_rating_stage = None
+        self.submission_revision_stage = None
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
@@ -191,6 +192,13 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
 
+    def __create_submission_revision_stage(self):
+
+        invitation = tools.get_invitation(self.client, self.get_submission_id())
+        if invitation:
+            notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted)
+            return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
+
     def set_reviewer_reassignment(self, enabled = True):
         self.enable_reviewer_reassignment = enabled
 
@@ -271,6 +279,10 @@ class Conference(object):
     def set_meta_review_stage(self, stage):
         self.meta_review_stage = stage
         return self.__create_meta_review_stage()
+
+    def set_submission_revision_stage(self, stage):
+        self.submission_revision_stage = stage
+        return self.__create_submission_revision_stage()
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
@@ -1071,6 +1083,15 @@ class BidStage(object):
         self.instructions=instructions
         self.ac_request_count=ac_request_count if ac_request_count else request_count
 
+class SubmissionRevisionStage():
+    
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
+        self.name = name
+        self.start_date = start_date
+        self.due_date = due_date
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
+        self.only_accepted = only_accepted
 
 class ReviewStage(object):
 
@@ -1421,6 +1442,9 @@ class ConferenceBuilder(object):
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
+
+    def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
+        self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted)
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id

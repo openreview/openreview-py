@@ -47,8 +47,8 @@ The OpenReview Team
     readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
 
     client.post_invitation(openreview.Invitation(
-        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Venue_Revision',
-        super = SUPPORT_GROUP + '/-/Venue_Revision',
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Venue_Update',
+        super = SUPPORT_GROUP + '/-/Venue_Update',
         invitees = readers,
         reply = {
             'forum': forum.id,
@@ -259,7 +259,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             signatures = [SUPPORT_GROUP]
         ))
 
-    # submission_revision_stage_invitation
+    # revision_stage_invitation
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Revision_Stage',
         super=SUPPORT_GROUP + '/-/Revision_Stage',

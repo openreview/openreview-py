@@ -118,50 +118,6 @@ class BlindSubmissionsInvitation(openreview.Invitation):
             }
         )
 
-class SubmissionRevisionInvitation(openreview.Invitation):
-
-    def __init__(self, conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields):
-
-        content = submission_content.copy()
-        referent = note.original if conference.submission_stage.double_blind else note.id
-
-        for field in remove_fields:
-            del content[field]
-
-        for order, key in enumerate(additional_fields, start=10):
-            value = additional_fields[key]
-            value['order'] = order
-            content[key] = value
-
-        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
-            super(SubmissionRevisionInvitation, self).__init__(id = conference.get_invitation_id(name, note.number),
-                cdate = tools.datetime_millis(start_date),
-                duedate = tools.datetime_millis(due_date),
-                readers = ['everyone'],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                invitees = note.content['authorids'] + note.signatures,
-                reply = {
-                    'forum': referent,
-                    'referent': referent,
-                    'readers': readers,
-                    'writers': {
-                        'values-copied': [
-                            conference.get_id(),
-                            '{content.authorids}',
-                            '{signatures}'
-                        ]
-                    },
-                    'signatures': {
-                        'values-regex': '~.*'
-                    },
-                    'content': content
-                },
-                process_string = file_content
-            )
-
 class BidInvitation(openreview.Invitation):
     def __init__(self, conference, match_group_id, request_count):
 
@@ -597,6 +553,79 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 process_string=file_content
             )
 
+class SubmissionRevisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, submission_content):
+
+        submission_revision_stage = conference.submission_revision_stage
+        content = submission_content.copy()
+
+        for field in submission_revision_stage.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for order, key in enumerate(submission_revision_stage.additional_fields, start=10):
+            value = submission_revision_stage.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            super(SubmissionRevisionInvitation, self).__init__(
+                id=conference.get_invitation_id(submission_revision_stage.name),
+                cdate=tools.datetime_millis(submission_revision_stage.start_date) if submission_revision_stage.start_date else None,
+                duedate=tools.datetime_millis(submission_revision_stage.due_date) if submission_revision_stage.due_date else None,
+                readers=['everyone'],
+                writers=[conference.get_id()],
+                signatures=[conference.get_id()],
+                reply={
+                    'content': content
+                },
+                process_string=file_content
+            )
+
+class PaperSubmissionRevisionInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note, submission_content):
+
+        submission_revision_stage = conference.submission_revision_stage
+        referent = note.original if conference.submission_stage.double_blind else note.id
+
+        reply = {
+            'forum': referent,
+            'referent': referent,
+            'readers': conference.submission_stage.get_readers(conference),
+            'writers': {
+                'values-copied': [
+                    conference.get_id(),
+                    '{content.authorids}',
+                    '{signatures}'
+                ]
+            },
+            'signatures': {
+                'values-regex': '~.*'
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            super(PaperSubmissionRevisionInvitation, self).__init__(
+                id=conference.get_invitation_id(submission_revision_stage.name, note.number),
+                super=conference.get_invitation_id(submission_revision_stage.name),
+                cdate=tools.datetime_millis(submission_revision_stage.start_date),
+                duedate=tools.datetime_millis(submission_revision_stage.due_date),
+                readers=['everyone'],
+                writers=[conference.get_id()],
+                signatures=[conference.get_id()],
+                invitees=note.content['authorids'] + note.signatures,
+                reply=reply,
+                process_string=file_content
+            )
+
 class PublicCommentInvitation(openreview.Invitation):
 
     def __init__(self, conference, note):
@@ -828,7 +857,6 @@ class RebuttalInvitation(openreview.Invitation):
                 },
                 process_string = file_content
             )
-
 
 class PaperReviewRebuttalInvitation(openreview.Invitation):
 
@@ -1298,12 +1326,12 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_revise_submission_invitation(self, conference, notes, name, start_date, due_date, submission_content, additional_fields, remove_fields):
+    def set_revise_submission_invitation(self, conference, notes, content):
 
         invitations = []
-        readers  = conference.submission_stage.get_readers(conference)
+        self.client.post_invitation(SubmissionRevisionInvitation(conference, content))
         for note in notes:
-            invitations.append(self.client.post_invitation(SubmissionRevisionInvitation(conference, name, note, start_date, due_date, readers, submission_content, additional_fields, remove_fields)))
+            invitations.append(self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content)))
 
         return invitations
 

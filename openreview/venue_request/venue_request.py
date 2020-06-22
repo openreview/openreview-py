@@ -13,7 +13,7 @@ class VenueStages():
                 "GROUP_PREFIX = ''",
                  "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
 
-    def setup_venue_revision(self):
+    def setup_venue_update(self):
 
         remove_fields = ['Area Chairs (Metareviewers)', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Public Commentary', 'Paper Matching']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
@@ -34,7 +34,7 @@ class VenueStages():
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
-            id='{}/-/Venue_Revision'.format(self.venue_request.support_group.id),
+            id='{}/-/Venue_Update'.format(self.venue_request.support_group.id),
             readers=['everyone'],
             writers=[],
             signatures=[self.venue_request.super_user],
@@ -254,14 +254,35 @@ class VenueStages():
 
         submission_revision_stage_content = {
             'submission_revision_start_date': {
-                'description': 'When does the meta reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
+                'description': 'When should the authors start revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 35
             },
             'submission_revision_deadline': {
-                'description': 'By when should the meta-reviews be in the system? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
+                'description': 'By when should the authors finish revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True,
                 'order': 36
+            },
+            'accepted_submissions_only': {
+                'description': 'Choose option for enabling submission revisions',
+                'value-radio': [
+                    'Enable revision for accepted submissions only',
+                    'Enable revision for all submissions'
+                ],
+                'default': 'Enable revision for all submissions',
+                'required': True,
+                'order': 37
+            },
+            'submission_revision_additional_options': {
+                'order': 38,
+                'value-dict': {},
+                'description': 'Configure additional options in the revision. Valid JSON expected.'
+            },
+            'submission_revision_remove_options': {
+                'order': 39,
+                'values-dropdown': ['keywords', 'pdf', 'TL;DR'],
+                'description': 'Fields that should not be available during revision: keywords, pdf, TL;DR'
             }
         }
 
@@ -409,11 +430,11 @@ class VenueRequest():
         
         # Setup for venue stages 
         venue_stages = VenueStages(venue_request=self)
-        self.venue_revision_invitation = venue_stages.setup_venue_revision()
+        self.venue_update_invitation = venue_stages.setup_venue_update()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
         self.review_stage_super_invitation = venue_stages.setup_review_stage()
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
-        self.submission_revision_invitation = venue_stages.setup_submission_revision_stage()
+        self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
 
     def setup_request_form(self):

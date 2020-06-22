@@ -262,3 +262,39 @@ def get_decision_stage(client, request_forum):
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
             email_authors = request_forum.content.get('notify_to_authors', '').startswith('Yes'))
+
+def get_submission_revision_stage(client, request_forum):
+    submission_revision_start_date = request_forum.content.get('submission_revision_start_date', '').strip()
+    if submission_revision_start_date:
+        try:
+            submission_revision_start_date = datetime.datetime.strptime(submission_revision_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_revision_start_date = datetime.datetime.strptime(submission_revision_start_date, '%Y/%m/%d')
+    else:
+        submission_revision_start_date = None
+
+    submission_revision_due_date = request_forum.content.get('submission_revision_due_date', '').strip()
+    if submission_revision_due_date:
+        try:
+            submission_revision_due_date = datetime.datetime.strptime(submission_revision_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_revision_due_date = datetime.datetime.strptime(submission_revision_due_date, '%Y/%m/%d')
+    else:
+        submission_revision_due_date = None
+
+    submission_revision_additional_options = request_forum.content.get('submission_revision_additional_options', {})
+    if isinstance(submission_revision_additional_options, str):
+        submission_revision_additional_options = json.loads(submission_revision_additional_options.strip())
+
+    submission_revision_remove_options = request_forum.content.get('submission_revision_remove_options', [])
+
+    only_accepted = False
+    if request_forum.content.get('accepted_submissions_only', '') == 'Enable revision for accepted submissions only':
+        only_accepted = True
+
+    return openreview.SubmissionRevisionStage(
+        start_date=submission_revision_start_date, 
+        due_date=submission_revision_due_date,
+        additional_fields=submission_revision_additional_options,
+        remove_fields=submission_revision_remove_options,
+        only_accepted=only_accepted)
