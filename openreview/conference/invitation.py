@@ -560,6 +560,9 @@ class SubmissionRevisionInvitation(openreview.Invitation):
         submission_revision_stage = conference.submission_revision_stage
         content = submission_content.copy()
 
+        start_date = submission_revision_stage.start_date
+        due_date = submission_revision_stage.due_date
+
         for field in submission_revision_stage.remove_fields:
             if field in content:
                 del content[field]
@@ -576,8 +579,9 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
             super(SubmissionRevisionInvitation, self).__init__(
                 id=conference.get_invitation_id(submission_revision_stage.name),
-                cdate=tools.datetime_millis(submission_revision_stage.start_date) if submission_revision_stage.start_date else None,
-                duedate=tools.datetime_millis(submission_revision_stage.due_date) if submission_revision_stage.due_date else None,
+                cdate=tools.datetime_millis(start_date) if start_date else None,
+                duedate=tools.datetime_millis(due_date) if due_date else None,
+                expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=[conference.get_id()],
@@ -593,6 +597,9 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
 
         submission_revision_stage = conference.submission_revision_stage
         referent = note.original if conference.submission_stage.double_blind else note.id
+
+        start_date = submission_revision_stage.start_date
+        due_date = submission_revision_stage.due_date
 
         reply = {
             'forum': referent,
@@ -616,8 +623,9 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             super(PaperSubmissionRevisionInvitation, self).__init__(
                 id=conference.get_invitation_id(submission_revision_stage.name, note.number),
                 super=conference.get_invitation_id(submission_revision_stage.name),
-                cdate=tools.datetime_millis(submission_revision_stage.start_date),
-                duedate=tools.datetime_millis(submission_revision_stage.due_date),
+                cdate=tools.datetime_millis(start_date) if start_date else None,
+                duedate=tools.datetime_millis(due_date) if due_date else None,
+                expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=[conference.get_id()],

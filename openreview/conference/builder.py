@@ -712,10 +712,8 @@ class Conference(object):
         return self.__create_decision_stage()
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
-        invitation = tools.get_invitation(self.client, self.get_submission_id())
-        if invitation:
-            notes = self.get_submissions(accepted=only_accepted)
-            return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        self.submission_revision_stage = SubmissionRevisionStage(name=name, start_date=start_date, due_date=due_date, additional_fields=additional_fields, remove_fields=remove_fields, only_accepted=only_accepted)
+        return self.__create_submission_revision_stage()
 
     ## Deprecated
     def open_revise_reviews(self, name = 'Review_Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
