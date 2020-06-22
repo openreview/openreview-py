@@ -115,16 +115,6 @@ class VenueStages():
                 'required': True,
                 'order': 11
             },
-            'make_reviews_public': {
-                'description': 'Should the reviews be made public immediately upon posting? Default is "No, reviews should NOT be revealed publicly when they are posted".',
-                'value-radio': [
-                    'Yes, reviews should be revealed publicly when they are posted',
-                    'No, reviews should NOT be revealed publicly when they are posted'
-                ],
-                'required': True,
-                'default': 'No, reviews should NOT be revealed publicly when they are posted',
-                'order': 24
-            },
             'release_reviews_to_authors': {
                 'description': 'Should the reviews be visible to paper\'s authors immediately upon posting? Default is "No, reviews should NOT be revealed when they are posted to the paper\'s authors".',
                 'value-radio': [

@@ -929,8 +929,6 @@ class ReviewRevisionInvitation(openreview.Invitation):
                 process_string = file_content
             )
 
-
-
 class PaperReviewRevisionInvitation(openreview.Invitation):
 
     def __init__(self, conference, review):
@@ -1025,7 +1023,6 @@ class PaperReviewRatingInvitation(openreview.Invitation):
             reply = reply
         )
 
-
 class MetaReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference):
@@ -1052,7 +1049,6 @@ class MetaReviewInvitation(openreview.Invitation):
             },
             process_string = process
         )
-
 
 class PaperMetaReviewInvitation(openreview.Invitation):
 
