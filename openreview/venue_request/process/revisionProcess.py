@@ -14,8 +14,11 @@ def process(client, note, invitation):
 
     invitation_type = invitation.id.split('/')[-1]
     if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage']:
-        if conference.submission_stage.double_blind and conference.submission_stage.due_date < datetime.datetime.now():
-            conference.create_blind_submissions()
+        if conference.submission_stage.due_date < datetime.datetime.now():
+            if conference.submission_stage.double_blind:
+                conference.create_blind_submissions()
+            else:
+                conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.set_authors()
         conference.set_reviewers()
         if conference.use_area_chairs:
