@@ -1132,8 +1132,6 @@ class TestDoubleBlindConference():
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer2@mail.com' in recipients
 
-
-
     def test_open_meta_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
@@ -1338,7 +1336,6 @@ class TestDoubleBlindConference():
         dropdown_Options=selenium.find_element_by_xpath('//*[@id="1-add-reviewer"]/div/div')
         assert len(dropdown_Options.find_elements_by_xpath('//*[@id="1-add-reviewer"]/div/div/div'))==2
 
-
     def test_open_revise_submissions(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1461,7 +1458,6 @@ class TestDoubleBlindConference():
         assert len(author_group.members) == 2
         assert 'AKBC.ws/2019/Conference/Paper3/Authors' not in author_group.members
 
-
     def test_desk_reject_submission(self, client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1546,7 +1542,6 @@ class TestDoubleBlindConference():
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
         request_page(selenium, "http://localhost:3000/invitation?id=AKBC.ws/2019/Conference/Reviewer/-/Paper_Ranking", reviewer_client.token)
-
 
     def test_edit_revision_as_pc(self, client, test_client, helpers):
 
