@@ -518,6 +518,10 @@ Please contact info@openreview.net with any questions or concerns about this int
         note = submissions[0]
         now = datetime.datetime.utcnow()
 
+        # check if conference is added in active_venues
+        active_venues = client.get_group('active_venues')
+        assert conference.id in active_venues.members
+
         for submission in submissions:
             id = conference.get_invitation_id('Supplementary_Material', submission.number)
             invitation = openreview.Invitation(

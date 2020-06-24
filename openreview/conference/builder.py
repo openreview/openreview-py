@@ -576,6 +576,9 @@ class Conference(object):
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
 
+        # Add this group to active_venues
+        active_venues = self.client.get_group('active_venues')
+        self.client.add_members_to_group(active_venues, self.id)
 
     def create_blind_submissions(self, force=False, hide_fields=[]):
 
