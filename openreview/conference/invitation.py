@@ -758,7 +758,7 @@ class PaperReviewInvitation(openreview.Invitation):
                 'values': nonreaders
             },
             'writers': {
-                'values-regex': signature_regex,
+                'values-copied': [conference.get_id(), '{signatures}'],
                 'description': 'How your identity will be displayed.'
             },
             'signatures': {
@@ -858,7 +858,7 @@ class PaperReviewRebuttalInvitation(openreview.Invitation):
         super(PaperReviewRebuttalInvitation, self).__init__(id = signature + '/-/' + review_rebuttal_stage.name,
             super = conference.get_invitation_id(review_rebuttal_stage.name),
             writers = [conference.id],
-            signatures = [conference.id],
+            signatures = [conference.get_program_chairs_id()],
             invitees = [paper_group + '/Authors'],
             reply = reply
         )
