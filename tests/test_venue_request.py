@@ -335,6 +335,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert review_stage_note
+        time.sleep(2)
 
         process_logs = client.get_process_logs(id = review_stage_note.id)
         assert len(process_logs) == 1
