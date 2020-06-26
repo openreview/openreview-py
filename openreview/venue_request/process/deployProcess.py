@@ -1,7 +1,7 @@
 def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
-    conference = openreview.helpers.get_conference(client, note.forum)
+    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
     conference_group = client.get_group(conference.get_id())
     
     client.add_members_to_group(conference_group, SUPPORT_GROUP)
@@ -98,7 +98,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             'readers' : {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            },'writers': {
+            },
+            'writers': {
                 'values':[],
             },
             'content': {

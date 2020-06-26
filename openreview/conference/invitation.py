@@ -60,7 +60,7 @@ class SubmissionInvitation(openreview.Invitation):
                 readers = ['everyone'],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
-                invitees = ['~'],
+                invitees = ['~', conference.support_user],
                 reply = {
                     'forum': None,
                     'replyto': None,
@@ -101,7 +101,7 @@ class BlindSubmissionsInvitation(openreview.Invitation):
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = ['~'],
+            invitees = ['~', conference.support_user],
             reply = {
                 'forum': None,
                 'replyto': None,
@@ -130,7 +130,7 @@ class BidInvitation(openreview.Invitation):
             match_group_id
         ]
 
-        invitees = [match_group_id]
+        invitees = [match_group_id, conference.support_user]
 
         values_copied = [conference.get_id()]
         if match_group_id == conference.get_reviewers_id():
@@ -190,7 +190,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
             conference.get_reviewers_id()
         ]
 
-        invitees = [ conference.get_reviewers_id() ]
+        invitees = [conference.get_reviewers_id(), conference.support_user]
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id())
             invitees.append(conference.get_area_chairs_id())
@@ -383,7 +383,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
                 duedate = None,
                 expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
-                invitees=[conference.get_authors_id(note.number)],
+                invitees=[conference.get_authors_id(note.number), conference.support_user],
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=['~Super_User1'],
@@ -529,7 +529,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
                 duedate = None,
                 expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
-                invitees=[conference.get_program_chairs_id()],
+                invitees=[conference.get_program_chairs_id(), conference.support_user],
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=['~Super_User1'],
@@ -617,6 +617,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             }
         }
 
+        invitees = note.content['authorids'] + note.signatures + [conference.support_user]
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
@@ -629,7 +630,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=[conference.get_id()],
-                invitees=note.content['authorids'] + note.signatures,
+                invitees=invitees,
                 reply=reply,
                 process_string=file_content
             )
@@ -676,7 +677,7 @@ class OfficialCommentInvitation(openreview.Invitation):
 
         readers = []
         default = None
-        invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors)
+        invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors) + [conference.support_user]
         if comment_stage.allow_public_comments:
             readers.append('everyone')
         else:
@@ -815,7 +816,7 @@ class PaperReviewInvitation(openreview.Invitation):
             super = conference.get_invitation_id(review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [conference.get_reviewers_id(number = note.number)],
+            invitees = [conference.get_reviewers_id(number = note.number), conference.support_user],
             reply = reply
         )
 
@@ -895,7 +896,7 @@ class PaperReviewRebuttalInvitation(openreview.Invitation):
             super = conference.get_invitation_id(review_rebuttal_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [paper_group + '/Authors'],
+            invitees = [paper_group + '/Authors', conference.support_user],
             reply = reply
         )
 
@@ -968,7 +969,7 @@ class PaperReviewRevisionInvitation(openreview.Invitation):
             super = conference.get_invitation_id(review_revision_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = review.signatures,
+            invitees = review.signatures + [conference.support_user],
             reply = reply
         )
 
@@ -1027,7 +1028,7 @@ class PaperReviewRatingInvitation(openreview.Invitation):
             super = conference.get_invitation_id(review_rating_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [paper_group + '/Area_Chairs'],
+            invitees = [paper_group + '/Area_Chairs', conference.support_user],
             reply = reply
         )
 
@@ -1079,7 +1080,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
             super = conference.get_invitation_id(meta_review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = invitees,
+            invitees = invitees + [conference.support_user],
             noninvitees = [conference.get_authors_id(number = note.number), conference.id + '/Paper'+ str(note.number) + '/Secondary_Area_Chair'],
             reply = {
                 'forum': note.id,
@@ -1141,7 +1142,7 @@ class DecisionInvitation(openreview.Invitation):
             readers = ['everyone'],
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [conference.get_program_chairs_id()],
+            invitees = [conference.get_program_chairs_id(), conference.support_user],
             multiReply = False,
             reply = {
                 'writers': {
@@ -1458,7 +1459,7 @@ class InvitationBuilder(object):
             readers = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = [conference.get_program_chairs_id(), conference.get_area_chairs_id()],
+            invitees = [conference.get_program_chairs_id(), conference.get_area_chairs_id(), conference.support_user],
             multiReply = True,
             taskCompletionCount = total_recommendations,
             reply = {
@@ -1520,7 +1521,7 @@ class InvitationBuilder(object):
             readers = [conference.get_program_chairs_id(), group_id],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = [conference.get_program_chairs_id(), group_id],
+            invitees = [conference.get_program_chairs_id(), group_id, conference.support_user],
             multiReply = False,
             reply = {
                 "invitation": conference.get_submission_id(),
@@ -1544,7 +1545,7 @@ class InvitationBuilder(object):
 
     def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, instructions, committee_id, committee_name):
 
-        invitees = [committee_id]
+        invitees = [committee_id, conference.support_user]
         readers = [conference.id, committee_id]
 
         # Create super invitation with a webfield

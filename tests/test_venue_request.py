@@ -401,7 +401,7 @@ class TestVenueRequest():
 
         ac_page_url = 'http://localhost:3000/group?id={}/Area_Chairs'.format(venue['venue_id'])
         request_page(selenium, ac_page_url, token=meta_reviewer_client.token)
-        
+
         submit_div_1 = selenium.find_element_by_id('1-metareview-status')
         with pytest.raises(NoSuchElementException):
             assert submit_div_1.find_element_by_link_text('Submit')
@@ -409,7 +409,7 @@ class TestVenueRequest():
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         with pytest.raises(NoSuchElementException):
             assert submit_div_2.find_element_by_link_text('Submit')
-        
+
         # Post a meta review stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -500,15 +500,26 @@ class TestVenueRequest():
         assert reply_row
         assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
 
+        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert submissions and len(submissions) == 2
+
         # Post a decision note using pc test_client
+        submission = submissions[0]
+        program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
+        area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
         decision_note = test_client.post_note(openreview.Note(
-            invitation='',
-            writers=[],
-            readers=[],
-            signatures=[],
-            content={},
-            forum='',
-            replyto=''
+            invitation='{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number),
+            writers=[program_chairs],
+            readers=[program_chairs, area_chairs],
+            nonreaders=['{}/Paper{}/Authors'.format(venue['venue_id'], submission.number)],
+            signatures=[program_chairs],
+            content={
+                'title': 'Paper Decision',
+                'decision': 'Accept (Oral)',
+                'comment':  'Good paper. I like!'
+            },
+            forum=submission.forum,
+            replyto=submission.forum
         ))
 
         assert decision_note
@@ -516,7 +527,7 @@ class TestVenueRequest():
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['status'] == 'ok'        
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -545,9 +556,8 @@ class TestVenueRequest():
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.create_blind_submissions(force=True)
 
-        blind_submissions = client.get_notes(
-            invitation='{}/-/Blind_Submission'.format(venue['venue_id']),
-            number=3)
+        blind_submissions = author_client.get_notes(
+            invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 1
 
         # Post a revision stage note
@@ -576,9 +586,46 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        blind_submissions = author_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+
         author_page_url = 'http://localhost:3000/forum?id={}'.format(blind_submissions[0].forum)
+        print('checkig url: {}'.format(author_page_url))
         request_page(selenium, author_page_url, token=author_client.token)
 
         meta_actions = selenium.find_element_by_class_name('meta_actions')
         assert meta_actions
         assert 'Revision' == meta_actions.find_element_by_class_name('edit_button').text
+
+        # Post revision note for a submission
+        revision_note = author_client.post_note(openreview.Note(
+            invitation='{}/Paper{}/-/Revision'.format(venue['venue_id'], blind_submissions[0].number),
+            forum=blind_submissions[0].original,
+            referent=blind_submissions[0].original,
+            replyto=blind_submissions[0].original,
+            readers=[venue['venue_id'], '~Venue_Author3'],
+            writers=['~Venue_Author3', venue['venue_id']],
+            signatures=['~Venue_Author3'],
+            content={
+                'title': 'revised test submission 3',
+                'abstract': 'revised abstract 3',
+                'authors': ['Venue Author'],
+                'authorids': ['~Venue_Author3']
+            }
+        ))
+        assert revision_note
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id=revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        updated_note = author_client.get_note(id=blind_submissions[0].forum)
+        assert updated_note
+        assert updated_note.content['title'] == 'revised test submission 3'
+        assert updated_note.content['abstract'] == 'revised abstract 3'
+        assert updated_note.content['authors'] == blind_submissions[0].content['authors']
+        assert updated_note.content['authorids'] == blind_submissions[0].content['authorids']
+
+        messages = client.get_messages(subject='{} has received a new revision of your submission titled revised test submission 3'.format(venue['request_form_note'].content['Abbreviated Venue Name']))
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['to'] == 'venue_author3@mail.com'

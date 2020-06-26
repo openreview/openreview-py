@@ -16,6 +16,7 @@ class Conference(object):
     def __init__(self, client):
         self.client = client
         self.request_form_id = None
+        self.support_user = 'OpenReview.net/Support'
         self.new = False
         self.use_area_chairs = False
         self.use_secondary_area_chairs = False
@@ -356,7 +357,7 @@ class Conference(object):
         return secondary_area_chairs_id
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
-        committee = []
+        committee = [self.get_id()]
 
         if with_authors:
             committee.append(self.get_authors_id(number))
@@ -984,7 +985,6 @@ class Conference(object):
                 }
                 self.client.post_note(submission)
 
-
 class SubmissionStage(object):
 
     def __init__(
@@ -1198,7 +1198,6 @@ class ReviewRatingStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
 
-
 class CommentStage(object):
 
     def __init__(self, official_comment_name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
@@ -1235,7 +1234,6 @@ class MetaReviewStage(object):
         readers.append(conference.get_program_chairs_id())
 
         return readers
-
 
 class DecisionStage(object):
 
@@ -1289,10 +1287,9 @@ class RegistrationStage(object):
         self.instructions = instructions
         self.ac_instructions = ac_instructions
 
-
 class ConferenceBuilder(object):
 
-    def __init__(self, client):
+    def __init__(self, client, support_user=None):
         self.client = client
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
@@ -1307,6 +1304,8 @@ class ConferenceBuilder(object):
         self.meta_review_stage = None
         self.decision_stage = None
         self.program_chairs_ids = []
+
+        self.set_conference_support_user(support_user)
 
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
@@ -1332,9 +1331,12 @@ class ConferenceBuilder(object):
 
         return groups
 
-
     def set_conference_id(self, id):
         self.conference.set_id(id)
+
+    def set_conference_support_user(self, user):
+        if user:
+            self.conference.support_user = user
 
     def set_conference_name(self, name):
         self.conference.set_name(name)

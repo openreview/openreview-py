@@ -9,6 +9,8 @@ build/
 pytest_report.xml
 *.log
 drivers/
-tests/data/reviewer_affinity_scores.csv
 cov.xml
 .coverage
+tests/data/reviewer_affinity_scores.csv
+tests/data/ac_affinity_scores.csv
+tests/data/temp.csv

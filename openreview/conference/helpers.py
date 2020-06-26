@@ -2,12 +2,12 @@ import openreview
 import datetime
 import json
 
-def get_conference(client, request_form_id):
+def get_conference(client, request_form_id, support_user=None):
 
-    builder = get_conference_builder(client, request_form_id)
+    builder = get_conference_builder(client, request_form_id, support_user)
     return builder.get_result()
 
-def get_conference_builder(client, request_form_id):
+def get_conference_builder(client, request_form_id, support_user):
 
     note = client.get_note(request_form_id)
 
@@ -17,7 +17,7 @@ def get_conference_builder(client, request_form_id):
     if not note.content.get('venue_id') and not note.content.get('conference_id'):
         raise openreview.OpenReviewException('venue_id is not set')
 
-    builder = openreview.conference.ConferenceBuilder(client)
+    builder = openreview.conference.ConferenceBuilder(client, support_user)
     builder.set_request_form_id(request_form_id)
 
     conference_start_date_str = 'TBD'
