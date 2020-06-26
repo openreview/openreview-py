@@ -1100,7 +1100,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
             nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
-            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
             signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
             content={
                 'summary_of_contributions': 'summary_of_contributions',
@@ -1140,7 +1140,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
             nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
-            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
             signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
             content={
                 'summary_of_contributions': 'summary_of_contributions',
@@ -1473,7 +1473,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',
             'thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
-            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
             signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
             content={
                 'final_rating': '5: Weak accept',

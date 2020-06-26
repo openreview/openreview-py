@@ -721,10 +721,8 @@ class Conference(object):
         # if first time, add PC console
         if not pcs.web:
             self.webfield_builder.set_program_chair_page(self, pcs)
-        ## Give program chairs admin permissions and viceversa
+        ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
-        self.__create_group(pcs.id, '~Super_User1', [self.id])
-
         return pcs
 
     def set_area_chairs(self, emails = []):
