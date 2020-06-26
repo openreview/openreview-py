@@ -88,12 +88,12 @@ class TestVenueRequest():
         assert venue.decision_stage_super_invitation
         assert venue.meta_review_stage_super_invitation
         assert venue.review_stage_super_invitation
-        assert venue.meta_review_stage_super_invitation
         assert venue.submission_revision_stage_super_invitation
 
         assert venue.deploy_super_invitation
         assert venue.comment_super_invitation
         assert venue.recruitment_super_invitation
+        assert venue.venue_revision_invitation
 
     def test_venue_deployment(self, client, selenium, request_page, helpers, support_client):
         
@@ -184,7 +184,7 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-    def test_venue_update(self, client, test_client, selenium, request_page, venue):
+    def test_venue_revision(self, client, test_client, selenium, request_page, venue):
 
         # Test Revision
         request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
@@ -220,7 +220,7 @@ class TestVenueRequest():
                 'remove_submission_options': ['pdf']
             },
             forum=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Venue_Update'.format(venue['support_group_id'], venue['request_form_note'].number),
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -233,7 +233,7 @@ class TestVenueRequest():
         process_logs = client.get_process_logs(id = venue_revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/-/Request{}/Venue_Update'.format(venue['support_group_id'], venue['request_form_note'].number)
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
         request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
         header_div = selenium.find_element_by_id('header')
@@ -517,7 +517,7 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-    def test_venue_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
+    def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         author_client = helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
         submission = author_client.post_note(openreview.Note(
@@ -561,7 +561,7 @@ class TestVenueRequest():
                 'submission_revision_remove_options': ['keywords', 'pdf']
             },
             forum=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,

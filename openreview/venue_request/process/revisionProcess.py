@@ -13,7 +13,7 @@ def process(client, note, invitation):
         client.post_invitation(comment_invitation)
 
     invitation_type = invitation.id.split('/')[-1]
-    if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage']:
+    if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage']:
         if conference.submission_stage.double_blind and conference.submission_stage.due_date < datetime.datetime.now():
             conference.create_blind_submissions()
         conference.set_authors()

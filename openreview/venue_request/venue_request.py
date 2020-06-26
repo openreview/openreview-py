@@ -13,7 +13,7 @@ class VenueStages():
                 "GROUP_PREFIX = ''",
                  "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
 
-    def setup_venue_update(self):
+    def setup_venue_revision(self):
 
         remove_fields = ['Area Chairs (Metareviewers)', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Public Commentary', 'Paper Matching']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
@@ -34,7 +34,7 @@ class VenueStages():
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
-            id='{}/-/Venue_Update'.format(self.venue_request.support_group.id),
+            id='{}/-/Revision'.format(self.venue_request.support_group.id),
             readers=['everyone'],
             writers=[],
             signatures=[self.venue_request.super_user],
@@ -277,7 +277,7 @@ class VenueStages():
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
-            id='{}/-/Revision_Stage'.format(self.venue_request.support_group.id),
+            id='{}/-/Submission_Revision_Stage'.format(self.venue_request.support_group.id),
             readers=['everyone'],
             writers=[],
             signatures=[self.venue_request.super_user],
@@ -420,7 +420,7 @@ class VenueRequest():
         
         # Setup for venue stages 
         venue_stages = VenueStages(venue_request=self)
-        self.venue_update_invitation = venue_stages.setup_venue_update()
+        self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
         self.review_stage_super_invitation = venue_stages.setup_review_stage()
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
