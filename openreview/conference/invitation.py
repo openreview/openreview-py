@@ -795,7 +795,7 @@ class PaperReviewInvitation(openreview.Invitation):
                 'values': nonreaders
             },
             'writers': {
-                'values-regex': signature_regex,
+                'values-copied': [conference.get_id(), '{signatures}'],
                 'description': 'How your identity will be displayed.'
             },
             'signatures': {
