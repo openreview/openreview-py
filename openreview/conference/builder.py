@@ -642,13 +642,13 @@ class Conference(object):
         return blinded_notes
 
     def setup_venue_papers(self):
-        if self.submission_stage.due_date < datetime.datetime.now():
+        if not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
             # Due date is in the past
             if self.submission_stage.double_blind:
                 # Double Blind venue
                 self.create_blind_submissions()
             else:
-                # Single Blind OR Open venue
+                # Single Blind or Open venue
                 self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
             
             reveal_authors = False
