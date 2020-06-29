@@ -504,6 +504,7 @@ class Conference(object):
 
         # Expire invitation
         invitation = self.__expire_invitation(self.get_submission_id())
+
         # update submission due date
         if self.submission_stage.due_date and (
             tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
@@ -521,7 +522,7 @@ class Conference(object):
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
 
         if not reveal_authors and not self.submission_stage.double_blind:
-            raise openreview.OpenReviewException('Can not hide authors of single blind submissions')
+            raise openreview.OpenReviewException('Can not hide authors of submissions in single blind or open venue')
 
         return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_pcs)
 
@@ -531,7 +532,7 @@ class Conference(object):
             raise openreview.OpenReviewException('Can not reveal desk-rejected submissions that are not originally public')
 
         if not reveal_authors and not self.submission_stage.double_blind:
-            raise openreview.OpenReviewException('Can not hide authors of single blind submissions')
+            raise openreview.OpenReviewException('Can not hide authors of submissions in single blind or open venue')
 
         return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission)
 
@@ -542,7 +543,7 @@ class Conference(object):
 
         for n in notes_iterator:
             # Paper group
-            group = self.__create_group(
+            self.__create_group(
                 group_id = '{conference_id}/Paper{number}'.format(conference_id=self.id, number=n.number),
                 group_owner_id = self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
                 is_signatory = False
@@ -619,8 +620,9 @@ class Conference(object):
                 blind_note = self.client.post_note(blind_note)
 
                 if self.submission_stage.public:
-                    blind_content['_bibtex'] = tools.get_bibtex(note = note,
-                        venue_fullname = self.name,
+                    blind_content['_bibtex'] = tools.get_bibtex(
+                        note=note,
+                        venue_fullname=self.name,
                         url_forum=blind_note.id,
                         year=str(self.get_year()),
                         baseurl=self.client.baseurl)
@@ -638,6 +640,22 @@ class Conference(object):
         self.webfield_builder.edit_web_string_value(pc_group, 'BLIND_SUBMISSION_ID', self.get_blind_submission_id())
 
         return blinded_notes
+
+    def setup_venue_papers(self):
+        if self.submission_stage.due_date < datetime.datetime.now():
+            # Due date is in the past
+            if self.submission_stage.double_blind:
+                # Double Blind venue
+                self.create_blind_submissions()
+            else:
+                # Single Blind OR Open venue
+                self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+            
+            reveal_authors = False
+            if not self.submission_stage.double_blind:
+                reveal_authors = True
+            self.create_withdraw_invitations(reveal_authors=reveal_authors, reveal_submission=False)
+            self.create_desk_reject_invitations(reveal_authors=reveal_authors, reveal_submission=False)
 
     ## Deprecated
     def open_bids(self):
@@ -747,9 +765,12 @@ class Conference(object):
             parent_group_accepted_id = parent_group_id
 
             pcs_id = self.get_program_chairs_id()
-            parent_group_accepted_group = self.__create_group(parent_group_accepted_id, pcs_id)
-            parent_group_declined_group = self.__create_group(parent_group_declined_id, pcs_id)
-            parent_group_invited_group = self.__create_group(parent_group_invited_id, pcs_id)
+            # parent_group_accepted_group
+            self.__create_group(parent_group_accepted_id, pcs_id)
+            # parent_group_declined_group
+            self.__create_group(parent_group_declined_id, pcs_id)
+            # parent_group_invited_group
+            self.__create_group(parent_group_invited_id, pcs_id)
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
