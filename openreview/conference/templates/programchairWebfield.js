@@ -41,6 +41,8 @@ var selectedNotesById = {};
 var matchingNoteIds = [];
 var paperStatusNeedsRerender = false;
 
+$.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
+
 var main = function() {
   OpenBanner.venueHomepageLink(CONFERENCE_ID);
 
@@ -88,8 +90,15 @@ var main = function() {
     invitationMap
   ) {
     var noteNumbers = blindedNotes.map(function(note) { return note.number; });
+    var acRankingByPaper = {};
     blindedNotes.forEach(function(n) {
       selectedNotesById[n.id] = false;
+      var tags = n.details['tags'];
+      tags.forEach(function(t) {
+        if (t.invitation === AREA_CHAIRS_ID + '/-/Paper_Ranking') {
+          acRankingByPaper[n.forum] = t;
+        }
+      })
     });
 
     reviewerSummaryMap = buildNoteMap(noteNumbers);
@@ -114,7 +123,8 @@ var main = function() {
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
       decisions: decisions,
-      pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION]
+      pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION],
+      acRankingByPaper: acRankingByPaper
     };
 
     var conferenceStats = {
@@ -242,7 +252,7 @@ var getAllAreaChairs = function() {
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'invitation',
+    details: 'invitation,tags',
     sort: 'number:asc'
   });
 };
@@ -1348,7 +1358,8 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
-    '</div>');
+    '</div>' +
+    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -1496,6 +1507,9 @@ var displayAreaChairsStatusTable = function() {
       },
       'msg-unsubmitted-metareviews': function(row) {
         return row.reviewProgressData.numCompletedMetaReviews < row.reviewProgressData.numPapers;
+      },
+      'msg-submitted-none-metareviews': function(row) {
+        return row.reviewProgressData.numCompletedMetaReviews === 0 && row.reviewProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -1587,6 +1601,7 @@ var displayAreaChairsStatusTable = function() {
         (BID_NAME ? '<li><a class="msg-no-bids">Area Chairs with 0 bids</a></li>' : '') +
         (RECOMMENDATION_NAME ? '<li><a class="msg-no-recs">Area Chairs with 0 recommendations</a></li>' : '') +
         '<li><a class="msg-unsubmitted-reviews">Area Chairs with unsubmitted reviews</a></li>' +
+        '<li><a class="msg-submitted-none-metareviews">Area Chairs with 0 submitted meta reviews</a></li>' +
         '<li><a class="msg-unsubmitted-metareviews">Area Chairs with unsubmitted meta reviews</a></li>' +
       '</ul>' +
     '</div>'
@@ -2454,4 +2469,70 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
     $msgReviewerButton.attr('disabled', true);
     $superCheckBox.prop('checked', false);
   }
+});
+
+var buildCSV = function(){
+  var profiles = conferenceStatusData.profiles;
+  var notes = conferenceStatusData.blindedNotes;
+  var completedReviews = conferenceStatusData.officialReviews;
+  var metaReviews = conferenceStatusData.metaReviews;
+  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+  var decisions = conferenceStatusData.decisions;
+  var acRankingByPaper = conferenceStatusData.acRankingByPaper;
+
+  var rowData = [];
+  rowData.push(['number',
+  'forum',
+  'title',
+  'num reviewers',
+  'min rating',
+  'max rating',
+  'average rating',
+  'min confidence',
+  'max confidence',
+  'average confidence',
+  'ac recommendation',
+  'ac profile id',
+  'ac email',
+  'ac ranking'].join(',') + '\n');
+
+  _.forEach(notes, function(note) {
+    var revIds = reviewerIds[note.number];
+    var areachairId = areachairIds[note.number][0];
+    var areachairProfile = {}
+    if (areachairId) {
+      areachairProfile = findProfile(profiles, areachairId);
+    } else {
+      areachairProfile.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfile.email = '-';
+    }
+    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
+    var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
+
+    var title = paperTableRow.note.content.title.replace(/"/g, '""');
+    rowData.push([paperTableRow.note.number,
+    '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
+    '"' + title + '"',
+    paperTableRow.reviewProgressData.numReviewers,
+    paperTableRow.reviewProgressData.minRating,
+    paperTableRow.reviewProgressData.maxRating,
+    paperTableRow.reviewProgressData.averageRating,
+    paperTableRow.reviewProgressData.minConfidence,
+    paperTableRow.reviewProgressData.maxConfidence,
+    paperTableRow.reviewProgressData.averageConfidence,
+    paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
+    areachairProfile.id,
+    areachairProfile.email,
+    acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag
+    ].join(',') + '\n');
+  });
+
+  return [rowData.join('')];
+};
+
+$('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
+  var blob = new Blob(buildCSV(), {type: 'text/csv'});
+  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv',);
 });

@@ -63,8 +63,8 @@ To your submission can be viewed on OpenReview here: https://openreview.net/foru
     client.post_group(authors_group)
 
     moderate_invitation = openreview.Invitation(
-        id = '{}/-/Moderate'.format(submission_group.id),
-        super = '{}/-/Moderate'.format(covid_group_id),
+        id = '{}/-/Moderation'.format(submission_group.id),
+        super = '{}/-/Moderation'.format(covid_group_id),
         writers = [support],
         signatures = [superuser],
         reply = {

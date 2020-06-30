@@ -11,7 +11,7 @@ def get_conference_builder(client, request_form_id):
 
     note = client.get_note(request_form_id)
 
-    if note.invitation not in 'OpenReview.net/Support/-/Request_Form':
+    if not note.invitation.lower() == 'OpenReview.net/Support/-/Request_Form'.lower():
         raise openreview.OpenReviewException('Invalid request form invitation')
 
     if not note.content.get('venue_id') and not note.content.get('conference_id'):

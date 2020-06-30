@@ -774,7 +774,7 @@ class Client(object):
         n = response.json()['references'][0]
         return Note.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
+    def get_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -801,6 +801,9 @@ class Client(object):
             params['invitation'] = invitation
         if mintcdate != None:
             params['mintcdate'] = mintcdate
+        if content != None:
+            for k in content:
+                params['content.' + k] = content[k]
         if limit != None:
             params['limit'] = limit
         if offset != None:
@@ -859,7 +862,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -884,7 +887,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -1016,18 +1019,20 @@ class Client(object):
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
         :param invitation: an invitation ID
-        type invitation: str
+        :type invitation: str
         :param label: a matching label ID
-        type label: str, optional
+        :type label: str, optional
         :param head: id of the edge head (head type defined by the edge invitation)
-        type head: str, optional
+        :type head: str, optional
         :param tail: id of the edge tail (tail type defined by the edge invitation)
-        type tail: str, optional
+        :type tail: str, optional
+        :param wait_to_finish: True if execution should pause until deletion of edges is finished
+        :type wait_to_finish: bool, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
@@ -1039,6 +1044,8 @@ class Client(object):
             delete_query['head'] = head
         if tail:
             delete_query['tail'] = tail
+
+        delete_query['waitToFinish'] = wait_to_finish
 
         response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
@@ -1297,7 +1304,6 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-
 class Group(object):
     """
     When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
@@ -1316,20 +1322,28 @@ class Group(object):
     :type cdate: int, optional
     :param ddate: Deletion date of the Group
     :type ddate: int, optional
+    :param tcdate: true creation date of the Group
+    :type tcdate: int, optional
+    :param tmdate: true modification date of the Group
+    :type tmdate: int, optional
     :param members: List of members in the Group, each member is a Group id
     :type members: list[str], optional
     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
     :type nonreaders: list[str], optional
     :param web: Path to a file that contains the webfield
     :type web: optional
+    :param web_string: String containing the webfield for this Group
+    :type web_string: str, optional
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
         self.ddate = ddate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.writers = writers
         self.members = [] if members==None else members
         self.readers = readers
@@ -1340,6 +1354,10 @@ class Group(object):
         if web != None:
             with open(web) as f:
                 self.web = f.read()
+
+        if web_string:
+            self.web = web_string
+
         self.details = details
 
     def __repr__(self):
@@ -1371,8 +1389,7 @@ class Group(object):
             'web': self.web,
             'details': self.details
         }
-        # if self.web !=None:
-        #     body['web']=self.web
+        
         return body
 
     @classmethod
@@ -1389,6 +1406,8 @@ class Group(object):
         group = Group(g['id'],
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
+            tcdate = g.get('tcdate'),
+            tmdate = g.get('tmdate'),
             writers = g.get('writers'),
             members = g.get('members'),
             readers = g.get('readers'),
@@ -1481,7 +1500,7 @@ class Invitation(object):
     :type web: str, optional
     :param process: Path to a file containing the process function
     :type process: str, optional
-    :param process_string: String containin the process function
+    :param process_string: String containing the process function
     :type process_string: str, optional
     :param duedate: Due date
     :type duedate: int, optional
@@ -1959,7 +1978,6 @@ class Edge(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
-
 
 class Profile(object):
     """

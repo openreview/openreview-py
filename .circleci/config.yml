@@ -6,9 +6,12 @@ jobs:
     working_directory: ~/openreview-py-repo
     docker:
       - image: circleci/node:12.13.1
-      - image: circleci/redis:3-stretch
-      - image: circleci/mongo:3.6-stretch
-      - image: elastic/elasticsearch:6.2.2
+      - image: circleci/redis:6.0.0
+      - image: circleci/mongo:3.6.4
+      - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+        environment:
+          xpack.security.enabled: false
+          transport.host: localhost
     steps:
       - checkout
       - run: sudo apt-get update
