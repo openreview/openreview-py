@@ -51,6 +51,7 @@ class Client(object):
         self.messages_url = self.baseurl + '/messages'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.venues_url = self.baseurl + '/venues'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.token = token
@@ -461,6 +462,33 @@ class Client(object):
         response = requests.get(url, params = params, headers = headers)
         response = self.__handle_response(response)
         return response.content
+
+    def get_venues(self, id=None, ids=None, invitations=None):
+        """
+        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
+
+        :param id: a Venue ID. If provided, returns Notes whose ID matches the given ID.
+        :type id: str, optional
+        :param ids: A list of Venue IDs. If provided, returns Notes containing these IDs.
+        :type ids: list, optional
+        :param invitations: A list of Invitation IDs. If provided, returns Venues whose "invitation" field is this Invitation ID.
+        :type invitations: list, optional
+
+        :return: List of Venues
+        :rtype: list[dict]
+        """
+        params = {}
+        if id != None:
+            params['id'] = id
+        if ids != None:
+            params['ids'] = ','.join(ids)
+        if invitations != None:
+            params['invitations'] = ','.join(invitations)
+
+        response = requests.get(self.venues_url, params=params, headers=self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['venues']
 
     @deprecated(version='1.0.3', reason="Use put_attachment instead")
     def put_pdf(self, fname):
@@ -1019,6 +1047,16 @@ class Client(object):
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
 
+    def post_venue(self, venue):
+        """
+        Posts the venue. Upon success, returns the posted Venue object.
+        """
+
+        response = requests.post(self.venues_url, json=venue, headers=self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
     def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
@@ -1389,7 +1427,7 @@ class Group(object):
             'web': self.web,
             'details': self.details
         }
-        
+
         return body
 
     @classmethod

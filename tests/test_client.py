@@ -225,7 +225,77 @@ class TestClient():
         merged_profile.id == '~Melissa_Bok1'
 
 
+    def test_post_venue(self, client):
+        os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
+        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        super_user = openreview.Client()
+        assert '~Super_User1' == super_user.profile.id
 
+        venueId = '.HCOMP/2013';
+        invitation = 'Venue/-/Conference/Occurrence'
+        venue = {
+            'id': venueId,
+            'invitations': [ invitation ],
+            'readers': [ 'everyone' ],
+            'nonreaders': [],
+            'writers': [ 'Venue' ],
+            'content': {
+                'name': 'The 4th Human Computation Workshop',
+                'location': 'Toronto, Ontario, Canada',
+                'year': '2012',
+                'parents': [ '.HCOMP', '.AAAI/2012' ],
+                'program_chairs': [ '~Yiling_Chen1', 'Panagiotis_G._Ipeirotis1' ],
+                'area_chairs': 'HCOMP.org/2020/ACs',
+                'publisher': 'AAAI Press',
+                'url': 'http://www.aaai.org/Library/Workshops/ws12-08.php',
+                'dblp_url': 'db/conf/hcomp/hcomp2012.html'
+            }
+        }
 
+        venueRes = super_user.post_venue(venue)
+        assert venue == venueRes
 
+    def test_get_venues(self, client):
+        os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
+        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        super_user = openreview.Client()
+        assert '~Super_User1' == super_user.profile.id
+
+        venueId = '.HCOMP/2012';
+        invitation = 'Venue/-/Conference/Occurrence'
+        venue = {
+            'id': venueId,
+            'invitations': [ invitation ],
+            'readers': [ 'everyone' ],
+            'nonreaders': [],
+            'writers': [ 'Venue' ],
+            'content': {
+                'name': 'The 4th Human Computation Workshop',
+                'location': 'Toronto, Ontario, Canada',
+                'year': '2012',
+                'parents': [ '.HCOMP', '.AAAI/2012' ],
+                'program_chairs': [ '~Yiling_Chen1', 'Panagiotis_G._Ipeirotis1' ],
+                'area_chairs': 'HCOMP.org/2020/ACs',
+                'publisher': 'AAAI Press',
+                'url': 'http://www.aaai.org/Library/Workshops/ws12-08.php',
+                'dblp_url': 'db/conf/hcomp/hcomp2012.html'
+            }
+        }
+
+        venueRes = super_user.post_venue(venue)
+        assert venue == venueRes
+
+        venueRes = super_user.get_venues(id=venueId)
+        assert len(venueRes) == 1
+        assert venueRes == [venue]
+
+        venues = super_user.get_venues(ids=[venueId, '.HCOMP/2013'])
+        assert len(venues) == 2
+        assert venues[0].get('id') == venue.get('id')
+        assert venues[1].get('id') == '.HCOMP/2013'
+
+        venues = super_user.get_venues(invitations=['Venue/-/Conference/Occurrence'])
+        assert len(venues) == 2
+        assert venues[0].get('id') == '.HCOMP/2013'
+        assert venues[1].get('id') == venue.get('id')
 
