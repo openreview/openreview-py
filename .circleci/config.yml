@@ -52,6 +52,7 @@ jobs:
             export NEXT_PORT=3030
             cp .env.sample .env
             npm run dev
+          background: true
       - run:
           shell: /bin/sh
           command: |
