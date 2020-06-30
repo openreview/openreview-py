@@ -19,21 +19,22 @@ jobs:
       - run: curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
       - run: sudo python3 get-pip.py
       - run: sudo pip3 install ~/openreview-py-repo
-      - run: git clone https://$OPENREVIEW_GITHUB@github.com/iesl/openreview.git ~/openreview
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
       - run: mkdir ~/openreview/logs
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments
       - run: mkdir ~/openreview/files/pdfs
       - run: mkdir ~/openreview-py-repo/coverage
       - run:
-          name: install app
+          name: install api
           command: |
             cd ~/openreview
             npm install
             sudo npm install -g grunt-cli
             grunt regen
       - run:
-          name: run app
+          name: run api
           command: |
             cd ~/openreview
             NODE_ENV=circleci node scripts/clean_start_app.js
@@ -42,6 +43,19 @@ jobs:
           shell: /bin/sh
           command: |
             wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3000
+            :
+      - run:
+          name: install web-app
+          command: |
+            cd ~/openreview-web
+            npm install
+            export NEXT_PORT=3030
+            cp .env.sample .env
+            npm run dev
+      - run:
+          shell: /bin/sh
+          command: |
+            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3030
             :
       - run:
           name: install firefox driver

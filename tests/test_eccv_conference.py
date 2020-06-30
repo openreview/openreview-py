@@ -304,7 +304,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
 
-        reject_url = re.search('http://.*response=No', text).group(0)
+        reject_url = re.search('http://.*response=No', text).group(0).replace('localhost:3000', 'localhost:3030')
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -360,12 +360,12 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
         reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
-        reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
         assert selenium.find_element_by_link_text('Expertise Selection')
 
-        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token)
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token)
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_class_name("description")
@@ -1520,7 +1520,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         blinded_notes = conference.get_submissions()
 
-        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , ac_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , ac_client.token)
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 4
 
@@ -1556,7 +1556,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         conference.set_meta_review_stage(openreview.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
-        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
         # Check that Secondary AC Assignments tab is not visible
