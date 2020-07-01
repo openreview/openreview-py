@@ -348,7 +348,7 @@ class TestSingleBlindConference():
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        reviewer_client = openreview.Client(baseurl = 'http://localhost:3030')
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert reviewer_client is not None, "Client is none"
         res = reviewer_client.register_user(email = 'reviewer@mail.com', first = 'Reviewer', last = 'Test', password = '1234')
         assert res, "Res i none"
@@ -559,7 +559,7 @@ class TestSingleBlindConference():
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Reviewer user
-        reviewer_client = openreview.Client(baseurl = 'http://localhost:3030', username='reviewer@mail.com', password='1234')
+        reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer@mail.com', password='1234')
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", reviewer_client.token)
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel

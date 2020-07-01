@@ -240,7 +240,7 @@ class TestCommentNotification():
         assert messages[0]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[1]['content']['subject'] == '[MIDL 2019] A comment was posted. Paper Number: 1, Paper Title: "Paper title"'
 
-        pc_client = openreview.Client(baseurl = 'http://localhost:3030')
+        pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
         res = pc_client.register_user(email = 'programchair@midl.io', first = 'Program', last = 'Chair', password = '1234')
         assert res, "Res i none"
