@@ -11,4 +11,4 @@ pytest_report.xml
 drivers/
 tests/data/reviewer_affinity_scores.csv
 cov.xml
-.coverage
+.coverage*
