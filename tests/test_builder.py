@@ -127,7 +127,7 @@ class TestBuilder():
 
         conference.set_assignment('reviewer_test1@mail.com', blind_submissions[0].number)
 
-        request_page(selenium, "http://localhost:3030/forum?id=" + blind_submissions[0].id, reviewer_client.token)
+        request_page(selenium=selenium, url="http://localhost:3030/forum?id=" + blind_submissions[0].id, token=reviewer_client.token, wait_for_element='note_{}'.format(blind_submissions[0].id))
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
@@ -220,7 +220,7 @@ class TestBuilder():
         conference.create_blind_submissions()
 
         pc_client = helpers.create_user('pc_testconsole1@mail.com', 'Test', 'PCConsole')
-        request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token, wait_for_element='venue-configuration')
 
         assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert selenium.find_element_by_xpath('//div[@id="venue-configuration"]//h3')
@@ -241,7 +241,7 @@ class TestBuilder():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token, wait_for_element='paper-status')
 
         expected_options.append('Meta Review Missing')
         for option in expected_options:
