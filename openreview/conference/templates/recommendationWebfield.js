@@ -23,7 +23,7 @@ function load() {
 
 function renderContent() {
   var params = EDGE_BROWSER_PARAMS.replace('{userId}', user.profile.id);
-  var browseUrl = window.location.origin + '/edge/browse?' + params;
+  var browseUrl = location.origin + '/edge/browse?' + params;
 
   $('#content').removeClass('legacy-styles');
   $('#notes').empty().append(
