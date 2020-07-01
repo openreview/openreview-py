@@ -10,7 +10,7 @@ pytest_report.xml
 *.log
 drivers/
 cov.xml
-.coverage
 tests/data/reviewer_affinity_scores.csv
 tests/data/ac_affinity_scores.csv
 tests/data/temp.csv
+.coverage*
