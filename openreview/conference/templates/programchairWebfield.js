@@ -786,7 +786,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   };
 
   // Conference statistics
-  var html = '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  var html = '<div class="row" style="margin-top: .5rem;">';
   html += renderStatContainer(
     'Reviewer Recruitment:',
     '<h3>' + conferenceStats.reviewersCount + ' / ' + conferenceStats.reviewersInvitedCount + '</h3>',
@@ -802,7 +802,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
-  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += '<div class="row" style="margin-top: .5rem;">';
   html += renderStatContainer(
     'Active Submissions:',
     '<h3>' + conferenceStats.blindSubmissionsCount + '</h3>'
@@ -819,7 +819,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   if (BID_NAME || RECOMMENDATION_NAME) {
-    html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+    html += '<div class="row" style="margin-top: .5rem;">';
     if (BID_NAME && AREA_CHAIRS_ID) {
       html += renderStatContainer(
         'AC Bidding Progress:',
@@ -845,7 +845,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
     html += '<hr class="spacer" style="margin-bottom: 1rem;">';
   }
 
-  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += '<div class="row" style="margin-top: .5rem;">';
   html += renderStatContainer(
     'Review Progress:',
     renderProgressStat(conferenceStats.reviewsCount, conferenceStats.assignedReviewsCount),
@@ -867,7 +867,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
   if (AREA_CHAIRS_ID) {
-    html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+    html += '<div class="row" style="margin-top: .5rem;">';
     html += renderStatContainer(
       'Meta-Review Progress:',
       renderProgressStat(conferenceStats.metaReviewsCount, conferenceStats.blindSubmissionsCount),
@@ -884,7 +884,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
 
   // Config
   var requestForm = conferenceConfig.requestForm;
-  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += '<div class="row" style="margin-top: .5rem;">';
   if (requestForm) {
     html += '<div class="col-md-4 col-xs-12">'
     html += '<h4>Description:</h4>';
@@ -916,7 +916,7 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '</div>';
 
   // Official Committee
-  html += '<div class="row" style="margin-left: -15px; margin-right: -15px; margin-top: .5rem;">';
+  html += '<div class="row" style="margin-top: .5rem;">';
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
