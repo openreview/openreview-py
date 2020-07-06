@@ -163,20 +163,20 @@ submission = {
     'authors': {
         'description': 'Comma separated list of author names.',
         'order': 2,
-        'values-regex': "[^;,\\n]+(,[^,\\n]+)*",
+        'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
         'required':True,
         'hidden': True,
     },
     'authorids': {
         'description': 'Comma separated list of author email addresses, lowercased, in the same order as above. For authors with existing OpenReview accounts, please make sure that the provided email address(es) match those listed in the author\'s profile.',
         'order': 3,
-        'values-regex': "~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})",
+        'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
         'required':True
     },
     'keywords': {
         'description': 'Comma separated list of keywords.',
         'order': 6,
-        'values-regex': "(^$)|[^;,\\n]+(,[^,\\n]+)*"
+        'values-regex': '(^$)|[^;,\\n]+(,[^,\\n]+)*'
     },
     'TL;DR': {
         'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
