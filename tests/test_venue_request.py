@@ -55,7 +55,7 @@ class TestVenueRequest():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
-        time.sleep(2)
+        time.sleep(5)
 
         # Post a deploy note
         client.post_note(openreview.Note(
@@ -178,8 +178,8 @@ class TestVenueRequest():
         ))
         assert deploy_note
 
-        time.sleep(2)
-        process_logs = client.get_process_logs(id = deploy_note.id)
+        time.sleep(5)
+        process_logs = client.get_process_logs(id=deploy_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
@@ -229,8 +229,8 @@ class TestVenueRequest():
         ))
         assert venue_revision_note
 
-        time.sleep(2)
-        process_logs = client.get_process_logs(id = venue_revision_note.id)
+        time.sleep(5)
+        process_logs = client.get_process_logs(id=venue_revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
@@ -274,7 +274,7 @@ class TestVenueRequest():
         ))
         assert bid_stage_note
 
-        time.sleep(2)
+        time.sleep(5)
         process_logs = client.get_process_logs(id=bid_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
@@ -335,7 +335,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert review_stage_note
-        time.sleep(2)
+        time.sleep(5)
 
         process_logs = client.get_process_logs(id = review_stage_note.id)
         assert len(process_logs) == 1
@@ -429,7 +429,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert meta_review_stage_note
-        time.sleep(2)
+        time.sleep(5)
 
         process_logs = client.get_process_logs(id = meta_review_stage_note.id)
         assert len(process_logs) == 1
@@ -487,7 +487,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert decision_stage_note
-        time.sleep(2)
+        time.sleep(5)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -523,7 +523,7 @@ class TestVenueRequest():
         ))
 
         assert decision_note
-        time.sleep(2)
+        time.sleep(5)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -581,7 +581,7 @@ class TestVenueRequest():
         ))
         assert revision_stage_note
 
-        time.sleep(2)
+        time.sleep(5)
         process_logs = client.get_process_logs(id=revision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -614,7 +614,7 @@ class TestVenueRequest():
         ))
         assert revision_note
 
-        time.sleep(2)
+        time.sleep(5)
         process_logs = client.get_process_logs(id=revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
