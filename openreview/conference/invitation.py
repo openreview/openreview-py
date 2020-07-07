@@ -445,35 +445,34 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
     def __init__(self, conference, reveal_authors, reveal_submission):
 
-        content = {
-            'authorids': {
-                'values-regex': '.*',
-                'required': False,
-                'order': 3
-            },
-            'authors': {
-                'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                'required': False,
-                'order': 2
-            }
-        }
+        signatures = {'values-regex': '~.*'}
+        writers = {'values-regex': '.*'}
+        content = {}
 
-        if (conference.submission_stage.double_blind and not reveal_authors):
-            content['authors'] = {
-                'values': ['Anonymous']
+        if conference.submission_stage.double_blind:
+            signatures = {'values': [conference.get_id()]}
+            writers = {'values': [conference.get_id()]}
+            content = {
+                'authorids': {
+                    'values-regex': '.*',
+                    'required': False,
+                    'order': 3
+                },
+                'authors': {
+                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                    'required': False,
+                    'order': 2
+                }
             }
-            content['authorids'] = {
-                'values-regex': '.*'
-            }
-
-        if reveal_submission:
-            readers = {
-                'values': ['everyone']
-            }
+            if not reveal_authors:
+                content['authors'] = {'values': ['Anonymous']}
+                content['authorids'] = {'values-regex': '.*'}
         else:
-            readers = {
-                'values-regex': '.*'
-            }
+            content = invitations.submission.copy()
+
+        readers = {'values-regex': '.*'}
+        if reveal_submission:
+            readers = {'values': ['everyone']}
 
         super(DeskRejectedSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_desk_rejected_submission_id(conference),
@@ -485,16 +484,8 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 'forum': None,
                 'replyto': None,
                 'readers': readers,
-                'writers': {
-                    'values': [
-                        conference.get_id()
-                    ]
-                },
-                'signatures': {
-                    'values': [
-                        conference.get_id()
-                    ]
-                },
+                'writers': writers,
+                'signatures': signatures,
                 'content': content
             }
         )
