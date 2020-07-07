@@ -22,10 +22,8 @@ def process(client, note, invitation):
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
 
     original_note = None
-    if forum_note.content['authors'] == ['Anonymous'] and REVEAL_AUTHORS_ON_WITHDRAW:
-        original_note = client.get_note(forum_note.original)
-
-    note = original_note if original_note else forum_note
+    if forum_note.content['authors'] == ['Anonymous'] and forum_note.original:
+        original_note = client.get_note(id=forum_note.original)
 
     if REVEAL_SUBMISSIONS_ON_WITHDRAW:
         forum_note.readers = ['everyone']
@@ -33,7 +31,7 @@ def process(client, note, invitation):
         forum_note.readers = committee
 
     bibtex = openreview.tools.get_bibtex(
-        note=note, 
+        note=original_note if original_note is not None else forum_note, 
         venue_fullname=CONFERENCE_NAME, 
         url_forum=forum_note.id, 
         year=CONFERENCE_YEAR, 
