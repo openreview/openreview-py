@@ -838,7 +838,7 @@ class TestDoubleBlindConference():
         assert blind_submissions[0].id == blind_submissions_3[0].id
         assert blind_submissions_3[2].readers == ['everyone']
 
-    def test_setup_venue_papers(self, client, helpers, test_client, selenium, request_page):
+    def test_setup_post_submission_stage(self, client, helpers, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -866,7 +866,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind=True, public=True, additional_fields=additional_fields)
         conference = builder.get_result()
 
-        conference.setup_venue_papers()
+        conference.setup_post_submission_stage()
         blind_submissions = conference.get_submissions()
         assert not blind_submissions
 
@@ -894,7 +894,7 @@ class TestDoubleBlindConference():
         note.content['pdf'] = url
         client.post_note(note)
 
-        conference.setup_venue_papers()
+        conference.setup_post_submission_stage()
         blind_submissions_2 = conference.get_submissions()
         assert blind_submissions_2
         assert len(blind_submissions_2) == 1
@@ -921,7 +921,7 @@ class TestDoubleBlindConference():
 
         builder.set_submission_stage(public=True, double_blind=True)
         conference = builder.get_result()
-        conference.setup_venue_papers()
+        conference.setup_post_submission_stage()
         blind_submissions_3 = conference.get_submissions()
         assert blind_submissions_3
         assert len(blind_submissions_3) == 2

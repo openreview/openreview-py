@@ -14,11 +14,8 @@ def process(client, note, invitation):
 
     invitation_type = invitation.id.split('/')[-1]
     if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage']:
-        conference.setup_venue_papers()
-        conference.set_authors()
-        conference.set_reviewers()
-        if conference.use_area_chairs:
-            conference.set_area_chairs()
+        conference.setup_post_submission_stage()
+        
         if invitation_type == 'Bid_Stage':
             conference.setup_matching(build_conflicts=True)
             if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':

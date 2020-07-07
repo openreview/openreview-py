@@ -641,7 +641,7 @@ class Conference(object):
 
         return blinded_notes
 
-    def setup_venue_papers(self):
+    def setup_post_submission_stage(self):
         if not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
             # Due date is in the past
             if self.submission_stage.double_blind:
@@ -656,6 +656,11 @@ class Conference(object):
                 reveal_authors = True
             self.create_withdraw_invitations(reveal_authors=reveal_authors, reveal_submission=False)
             self.create_desk_reject_invitations(reveal_authors=reveal_authors, reveal_submission=False)
+
+            self.set_authors()
+            self.set_reviewers()
+            if self.use_area_chairs:
+                self.set_area_chairs()
 
     ## Deprecated
     def open_bids(self):
