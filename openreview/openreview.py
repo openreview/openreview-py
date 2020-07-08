@@ -1143,6 +1143,12 @@ class Client(object):
         :type recipients: list[str]
         :param message: Message in the e-mail
         :type message: str
+        :param ignoreRecipients: List of groups ids to be ignored from the recipient list
+        :type subject: list[str]
+        :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
+        :type sender: dict
+        :param replyTo: e-mail address to the reply the sent message
+        :type replyTo: str
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
@@ -1317,6 +1323,8 @@ class Client(object):
         :type to: list[str], optional
         :param subject: Subject of the e-mail
         :type subject: str, optional
+        :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
+        :type status: str, optional
 
         :return: Messages that match the passed parameters
         :rtype: dict

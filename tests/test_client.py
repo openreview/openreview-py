@@ -299,3 +299,14 @@ class TestClient():
         assert venues[0].get('id') == '.HCOMP/2013'
         assert venues[1].get('id') == venue.get('id')
 
+    def test_get_messages(self, client):
+
+        messages = client.get_messages()
+        assert messages
+
+        messages = client.get_messages(status='delivered')
+        assert messages
+
+        messages = openreview.tools.iterget_messages(client, status='delivered')
+        assert messages
+
