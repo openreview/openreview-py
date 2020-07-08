@@ -304,7 +304,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
 
-        reject_url = re.search('http://.*response=No', text).group(0).replace('localhost:3000', 'localhost:3030')
+        reject_url = re.search('http://.*response=No', text).group(0)
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes

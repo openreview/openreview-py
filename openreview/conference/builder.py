@@ -13,8 +13,9 @@ from . import matching
 
 class Conference(object):
 
-    def __init__(self, client):
+    def __init__(self, client, webUrl='http://localhost:3030'):
         self.client = client
+        self.webUrl = webUrl
         self.request_form_id = None
         self.new = False
         self.use_area_chairs = False
@@ -838,7 +839,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], baseurl = ''):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -921,7 +922,7 @@ class Conference(object):
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False,
-                    baseurl = baseurl)
+                    baseurl = self.webUrl)
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees)):
@@ -936,7 +937,7 @@ class Conference(object):
                     recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False,
-                    baseurl = baseurl)
+                    baseurl = self.webUrl)
 
         return self.client.get_group(id = reviewers_invited_id)
 
