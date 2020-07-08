@@ -299,3 +299,56 @@ class TestClient():
         assert venues[0].get('id') == '.HCOMP/2013'
         assert venues[1].get('id') == venue.get('id')
 
+    def test_delete_venues(self, client):
+        os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
+        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        super_user = openreview.Client()
+        assert '~Super_User1' == super_user.profile.id
+
+        venueId = '.HCOMP/2014';
+        invitation = 'Venue/-/Conference/Occurrence'
+        venue = {
+            'id': venueId,
+            'invitations': [ invitation ],
+            'readers': [ 'everyone' ],
+            'nonreaders': [],
+            'writers': [ 'Venue' ],
+            'content': {
+                'name': 'The 4th Human Computation Workshop',
+                'location': 'Toronto, Ontario, Canada',
+                'year': '2012',
+                'parents': [ '.HCOMP', '.AAAI/2012' ],
+                'program_chairs': [ '~Yiling_Chen1', 'Panagiotis_G._Ipeirotis1' ],
+                'area_chairs': 'HCOMP.org/2020/ACs',
+                'publisher': 'AAAI Press',
+                'url': 'http://www.aaai.org/Library/Workshops/ws12-08.php',
+                'dblp_url': 'db/conf/hcomp/hcomp2012.html'
+            }
+        }
+
+        venueRes = super_user.post_venue(venue)
+        assert venue == venueRes
+
+        venueRes = super_user.get_venues(id=venueId)
+        assert len(venueRes) == 1
+        assert venueRes == [venue]
+
+        venueRes = super_user.delete_venues(id=venueId)
+        assert venueRes == {'status': 'ok'}
+
+        venueRes = super_user.get_venues(id=venueId)
+        assert len(venueRes) == 0
+
+        venueRes = super_user.delete_venues(ids=['.HCOMP/2013'])
+        assert venueRes == {'status': 'ok'}
+
+        venues = super_user.get_venues(ids=['.HCOMP/2012', '.HCOMP/2013'])
+        assert len(venues) == 1
+        assert venues[0].get('id') == '.HCOMP/2012'
+
+        venueRes = super_user.delete_venues(invitations=['Venue/-/Conference/Occurrence'])
+        assert venueRes == {'status': 'ok'}
+
+        venues = super_user.get_venues(invitations=['Venue/-/Conference/Occurrence'])
+        assert len(venues) == 0
+

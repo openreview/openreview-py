@@ -465,11 +465,11 @@ class Client(object):
 
     def get_venues(self, id=None, ids=None, invitations=None):
         """
-        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
+        Gets list of Venue objects based on the filters provided. The Venues that will be returned match all the criteria passed in the parameters.
 
-        :param id: a Venue ID. If provided, returns Notes whose ID matches the given ID.
+        :param id: a Venue ID. If provided, returns Venues whose ID matches the given ID.
         :type id: str, optional
-        :param ids: A list of Venue IDs. If provided, returns Notes containing these IDs.
+        :param ids: A list of Venue IDs. If provided, returns Venues containing these IDs.
         :type ids: list, optional
         :param invitations: A list of Invitation IDs. If provided, returns Venues whose "invitation" field is this Invitation ID.
         :type invitations: list, optional
@@ -1053,6 +1053,33 @@ class Client(object):
         """
 
         response = requests.post(self.venues_url, json=venue, headers=self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def delete_venues(self, id=None, ids=None, invitations=None):
+        """
+        Deletes Venue objects that match the query filters.
+
+        :param id: a Venue ID. If provided, deletes Venues whose ID matches the given ID.
+        :type id: str, optional
+        :param ids: A list of Venue IDs. If provided, deletes Venues containing these IDs.
+        :type ids: list, optional
+        :param invitations: A list of Invitation IDs. If provided, deletes Venues whose "invitation" field is this Invitation ID.
+        :type invitations: list, optional
+
+        :return: Ok message
+        :rtype: dict
+        """
+        params = {}
+        if id != None:
+            params['id'] = id
+        if ids != None:
+            params['ids'] = ','.join(ids)
+        if invitations != None:
+            params['invitations'] = ','.join(invitations)
+
+        response = requests.delete(self.venues_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()
