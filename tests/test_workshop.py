@@ -248,6 +248,7 @@ class TestWorkshop():
         assert blind_submissions[0].id == blind_submissions_2[0].id
         assert blind_submissions_2[1].readers == [
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors',
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'
         ]
@@ -504,24 +505,24 @@ class TestWorkshop():
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
 
+        random_user = helpers.create_user(email='random_user1@mail.co', first='Random', last='User')
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Public_Comment',
             forum = submission.id,
             replyto = review.id,
             readers = ['everyone'],
-            writers = ['~Reviewer_Four1'],
-            signatures = ['~Reviewer_Four1'],
+            writers = ['~Random_User1'],
+            signatures = ['~Random_User1'],
             content = {
                 'title': 'Comment title',
                 'comment': 'Paper is very good!'
             }
         )
-        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
-        review_note = reviewer_client.post_note(note)
-        assert review_note
+        public_comment_note = random_user.post_note(note)
+        assert public_comment_note
 
         time.sleep(2)
 
-        process_logs = client.get_process_logs(id = review_note.id)
+        process_logs = client.get_process_logs(id = public_comment_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
