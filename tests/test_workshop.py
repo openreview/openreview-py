@@ -248,6 +248,7 @@ class TestWorkshop():
         assert blind_submissions[0].id == blind_submissions_2[0].id
         assert blind_submissions_2[1].readers == [
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors',
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'
         ]

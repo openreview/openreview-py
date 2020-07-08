@@ -1,7 +1,7 @@
 def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
-    conference = openreview.helpers.get_conference(client, note.forum)
+    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
     conference_group = client.get_group(conference.get_id())
     
     client.add_members_to_group(conference_group, SUPPORT_GROUP)
@@ -29,7 +29,7 @@ You can use the following links to access the venue:
 Venue home page: {baseurl}/group?id={conference_id}
 Venue Program Chairs console: {baseurl}/group?id={program_chairs_id}
 
-If you need to make a change to the information provided in your request form, please feel free to revise it directly. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
+If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
 
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
 
@@ -98,7 +98,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             'readers' : {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            },'writers': {
+            },
+            'writers': {
                 'values':[],
             },
             'content': {
@@ -256,14 +257,15 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values' : readers
                 }
             },
-            signatures = [conference.get_program_chairs_id()]
+            signatures = [SUPPORT_GROUP]
         ))
 
-    decision_stage_invitation = client.post_invitation(openreview.Invitation(
-        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Decision_Stage',
-        super = SUPPORT_GROUP + '/-/Decision_Stage',
-        invitees = readers,
-        reply = {
+    # revision_stage_invitation
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
+        super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',
+        invitees=readers,
+        reply={
             'forum': forum.id,
             'referent': forum.id,
             'readers' : {
@@ -271,5 +273,21 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'values' : readers
             }
         },
-        signatures = [SUPPORT_GROUP]
+        signatures=[SUPPORT_GROUP]
+    ))
+
+    # decision_stage_invitation
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Decision_Stage',
+        super=SUPPORT_GROUP + '/-/Decision_Stage',
+        invitees=readers,
+        reply={
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            }
+        },
+        signatures=[SUPPORT_GROUP]
     ))
