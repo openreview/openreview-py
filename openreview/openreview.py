@@ -1133,7 +1133,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1152,7 +1152,8 @@ class Client(object):
             'subject': subject ,
             'message': message,
             'ignoreGroups': ignoreRecipients,
-            'from': sender
+            'from': sender,
+            'replyTo': replyTo
             }, headers = self.headers)
         response = self.__handle_response(response)
 
