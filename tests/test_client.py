@@ -304,9 +304,9 @@ class TestClient():
         messages = client.get_messages()
         assert messages
 
-        messages = client.get_messages(status='delivered')
+        messages = client.get_messages(status='sent')
         assert messages
 
-        messages = openreview.tools.iterget_messages(client, status='delivered')
+        messages = openreview.tools.iterget_messages(client, status='sent')
         assert messages
 
