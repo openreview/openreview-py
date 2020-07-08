@@ -903,7 +903,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Desk_Reject',
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
-            readers = ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
+            readers = ['thecvf.com/ECCV/2020/Conference',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
@@ -933,7 +934,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(desk_rejected_notes) == 1
         assert desk_rejected_notes[0].content['authors'] == ['Anonymous']
         assert desk_rejected_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors']
-        assert desk_rejected_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
+        assert desk_rejected_notes[0].readers == [
+            'thecvf.com/ECCV/2020/Conference/Paper5/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs']
@@ -966,10 +968,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation = 'thecvf.com/ECCV/2020/Conference/Paper4/-/Withdraw',
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
-            readers = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
-            'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
-            'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
+            readers = [
+                'thecvf.com/ECCV/2020/Conference',
+                'thecvf.com/ECCV/2020/Conference/Paper4/Authors',
+                'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
+                'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
+                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             content = {
@@ -995,7 +999,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].content['authors'] == ['Anonymous']
         assert withdrawn_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors']
-        assert withdrawn_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
+        assert withdrawn_notes[0].readers == [
+            'thecvf.com/ECCV/2020/Conference/Paper4/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs']
