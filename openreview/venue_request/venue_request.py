@@ -411,6 +411,7 @@ class VenueRequest():
         self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
+        self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -725,7 +726,7 @@ class VenueRequest():
         '''
         }}
 
-        with open(self.deploy_process, 'r') as f:
+        with open(self.recruitment_process, 'r') as f:
             file_content = f.read()
             
             self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
