@@ -411,6 +411,7 @@ class VenueRequest():
         self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
+        self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -533,20 +534,48 @@ class VenueRequest():
                 ],
                 'order': 20
             },
+            'withdrawn_submissions_visibility': {
+                'description': 'Would you like to make withdrawn submissions public? Default is "No".',
+                'value-radio': [
+                    'Yes, withdrawn submissions should be made public', 
+                    'No, withdrawn submissions should not be made public'],
+                'order': 21
+            },
+            'withdrawn_submissions_author_anonymity': {
+                'description': 'Would you like to make authors of withdrawn papers anonymous? Default is "Yes".',
+                'value-radio': [
+                    'Yes, authors of withdrawn submissions should be anonymized', 
+                    'No, authors of withdrawn submissions should not be anonymized'],
+                'order': 22
+            },
+            'desk_rejected_submissions_visibility': {
+                'description': 'Would you like to make desk rejected submissions public?',
+                'value-radio': [
+                    'Yes, desk rejected submissions should be made public', 
+                    'No, desk rejected submissions should not be made public'],
+                'order': 23
+            },
+            'desk_rejected_submissions_author_anonymity': {
+                'description': 'Would you like to make authors of desk rejected papers anonymous?',
+                'value-radio': [
+                    'Yes, desk rejected submissions should be made public', 
+                    'No, desk rejected submissions should not be made public'],
+                'order': 24
+            },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 21
+                'order': 25
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 22
+                'order': 26
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 23
+                'order': 27
             }
         }
 
@@ -725,7 +754,7 @@ class VenueRequest():
         '''
         }}
 
-        with open(self.deploy_process, 'r') as f:
+        with open(self.recruitment_process, 'r') as f:
             file_content = f.read()
             
             self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
