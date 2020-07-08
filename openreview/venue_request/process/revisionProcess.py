@@ -3,7 +3,7 @@ def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
 
-    conference = openreview.helpers.get_conference(client, note.forum)
+    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
     forum_note = client.get_note(note.forum)
 
     comment_readers = forum_note.content['program_chair_emails'] + [SUPPORT_GROUP]
@@ -13,9 +13,8 @@ def process(client, note, invitation):
         client.post_invitation(comment_invitation)
 
     invitation_type = invitation.id.split('/')[-1]
-    if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage']:
+    if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage']:
         conference.setup_post_submission_stage()
-        
         if invitation_type == 'Bid_Stage':
             conference.setup_matching(build_conflicts=True)
             if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
@@ -32,5 +31,8 @@ def process(client, note, invitation):
 
     elif invitation_type == 'Decision_Stage':
         conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
+
+    elif invitation_type == 'Submission_Revision_Stage':
+        conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
     print('Conference: ', conference.get_id())

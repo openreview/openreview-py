@@ -123,7 +123,7 @@ class Matching(object):
 
         invitation = openreview.Invitation(
             id=edge_id,
-            invitees=[self.conference.get_id()],
+            invitees=[self.conference.get_id(), self.conference.support_user],
             readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
@@ -343,7 +343,7 @@ class Matching(object):
         '''
         config_inv = openreview.Invitation(
             id='{}/-/{}'.format(self.match_group.id, 'Assignment_Configuration'),
-            invitees=[self.conference.get_id()],
+            invitees=[self.conference.get_id(), self.conference.support_user],
             readers=[self.conference.get_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
