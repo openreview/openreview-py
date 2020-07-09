@@ -585,7 +585,7 @@ class TestDoubleBlindConference():
 
     def test_recruit_reviewers_use_different_baseurl(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, 'https://testme_1234.com')
         assert builder, 'builder is None'
 
         builder.set_conference_id('ABCD.ws/2020/Conference')
@@ -593,7 +593,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         conference = builder.get_result()
-        result = conference.recruit_reviewers(['test_subject+1@mail.com', 'test_subject2@mail.com', '~AKBC_PCOne1'], baseurl = 'https://testme_1234.com')
+        result = conference.recruit_reviewers(['test_subject+1@mail.com', 'test_subject2@mail.com', '~AKBC_PCOne1'])
         assert result
         assert result.id == 'ABCD.ws/2020/Conference/Reviewers/Invited'
         assert 'test_subject+1@mail.com' in result.members
@@ -635,7 +635,7 @@ class TestDoubleBlindConference():
 
         # Test if the reminder mail has "Dear invitee" for unregistered users in case the name is not provided to recruit_reviewers
         # In the same test, check if recruitment link baseurl has been overridden
-        result = conference.recruit_reviewers(remind = True, invitees = ['test_subject+1@mail.com'], baseurl = 'https://testme_1234.com')
+        result = conference.recruit_reviewers(remind = True, invitees = ['test_subject+1@mail.com'])
         messages = client.get_messages(to = 'test_subject+1@mail.com', subject = 'Reminder: ABCD.ws/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
