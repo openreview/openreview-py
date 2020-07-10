@@ -502,11 +502,11 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         tauthor_message = [msg for msg in messages if msg['content']['to'] == note.tauthor][0]
         assert tauthor_message
-        assert tauthor_message['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id
+        assert tauthor_message['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id
 
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
-        assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
+        assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
 
     def test_revise_additional_files(self, conference, client, test_client):
 

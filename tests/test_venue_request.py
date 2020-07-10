@@ -11,7 +11,7 @@ class TestVenueRequest():
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
-        venue = VenueRequest(client, support_group_id=support_group_id, super_user='openreview.net')
+        venue = VenueRequest(client, support_group_id=support_group_id, super_user='openreview.net', web_url='http://localhost:3030')
 
         assert venue.support_group.id == support_group_id
         assert venue.bid_stage_super_invitation
@@ -28,7 +28,7 @@ class TestVenueRequest():
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
-        VenueRequest(client, support_group_id, super_id)
+        VenueRequest(client, support_group_id, super_id, web_url='http://localhost:3030')
 
         time.sleep(5)
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
@@ -126,6 +126,8 @@ class TestVenueRequest():
         recipients = [msg['content']['to'] for msg in messages]
         assert 'new_test_user@mail.com' in recipients
         assert 'tom@mail.com' in recipients
+        assert 'Venue home page: http://localhost:3030/group?id=TEST.cc/2021/Conference' in messages[0]['content']['text']
+        assert 'Venue Program Chairs console: http://localhost:3030/group?id=TEST.cc/2021/Conference/Program_Chairs' in messages[0]['content']['text']
 
         revision_note = client.post_note(openreview.Note(
             content={
