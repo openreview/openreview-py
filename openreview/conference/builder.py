@@ -13,9 +13,9 @@ from . import matching
 
 class Conference(object):
 
-    def __init__(self, client, webUrl='http://localhost:3030'):
+    def __init__(self, client, web_url='http://localhost:3030'):
         self.client = client
-        self.webUrl = webUrl
+        self.web_url = web_url
         self.request_form_id = None
         self.new = False
         self.use_area_chairs = False
@@ -922,7 +922,7 @@ class Conference(object):
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False,
-                    baseurl = self.webUrl)
+                    baseurl = self.web_url)
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees)):
@@ -937,7 +937,7 @@ class Conference(object):
                     recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False,
-                    baseurl = self.webUrl)
+                    baseurl = self.web_url)
 
         return self.client.get_group(id = reviewers_invited_id)
 
@@ -1273,9 +1273,9 @@ class RegistrationStage(object):
 
 class ConferenceBuilder(object):
 
-    def __init__(self, client):
+    def __init__(self, client, web_url=None):
         self.client = client
-        self.conference = Conference(client)
+        self.conference = Conference(client, web_url)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
         self.submission_stage = None

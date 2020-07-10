@@ -3,7 +3,8 @@ def process(client, note, invitation):
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum)
     conference_group = client.get_group(conference.get_id())
-    
+    FRONTEND_URL = 'http://localhost:3030'
+
     client.add_members_to_group(conference_group, SUPPORT_GROUP)
 
     forum = client.get_note(id=note.forum)
@@ -36,7 +37,7 @@ If you need special features that are not included in your request form, you can
 Best,
 
 The OpenReview Team
-            '''.format(baseurl = client.baseurl, noteId = forum.id, conference_id = conference.get_id(), program_chairs_id = conference.get_program_chairs_id())
+            '''.format(baseurl = FRONTEND_URL, noteId = forum.id, conference_id = conference.get_id(), program_chairs_id = conference.get_program_chairs_id())
         }
     )
     client.post_note(comment_note)

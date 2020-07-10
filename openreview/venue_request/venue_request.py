@@ -3,8 +3,8 @@ from .. import openreview
 import os
 
 class VenueRequest():
-    
-    def __init__(self, client, support_group_id, super_user):
+
+    def __init__(self, client, support_group_id, super_user, web_url):
         self.support_group_id = support_group_id
         self.support_group = openreview.tools.get_group(client, self.support_group_id)
 
@@ -178,7 +178,7 @@ class VenueRequest():
         with open(os.path.join(os.path.dirname(__file__), 'process/commentProcess.js'), 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
-        
+
             self.comment_super_invitation = client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Comment',
                 readers=['everyone'],
@@ -230,6 +230,7 @@ class VenueRequest():
         with open(os.path.join(os.path.dirname(__file__), 'process/deployProcess.py'), 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + super_user + "'")
+            file_content = file_content.replace("FRONTEND_URL = 'http://localhost:3030'", "FRONTEND_URL = '" + web_url + "'")
 
             self.deploy_super_invitation = client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Deploy',
