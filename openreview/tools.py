@@ -561,6 +561,26 @@ class iterget:
 
     next = __next__
 
+
+def iterget_messages(client, to = None, subject = None, status = None):
+    """
+    Returns an iterator over Messages ignoring API limit.
+
+    Example:
+
+    >>> iterget_messages(client, to='melisa@mail.com')
+
+    :return: Iterator over Messages filtered by the provided parameters
+    :rtype: iterget
+    """
+    params = {
+        'to': to,
+        'subject': subject,
+        'status': status
+    }
+
+    return iterget(client.get_messages, **params)
+
 def iterget_tags(client, id = None, invitation = None, forum = None, signature = None, tag = None):
     """
     Returns an iterator over Tags ignoring API limit.
