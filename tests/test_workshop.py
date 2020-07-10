@@ -33,7 +33,7 @@ class TestWorkshop():
         conference = builder.get_result()
         assert conference, 'conference is None'
 
-        resp = requests.get('http://localhost:3030/groups?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
+        resp = requests.get('http://localhost:3000/groups?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
         assert resp.status_code == 200
 
     def test_enable_submissions(self, client, selenium, request_page):
