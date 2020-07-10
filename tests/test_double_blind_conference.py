@@ -486,7 +486,7 @@ class TestDoubleBlindConference():
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Accept invitation
-        accept_url = re.search('http://.*response=Yes', text).group(0)
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
@@ -498,7 +498,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        recruit_invitation = re.search('http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruit_invitation = re.search(r'https://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
         recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
         acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 1
@@ -518,7 +518,7 @@ class TestDoubleBlindConference():
         assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
 
         # Reject invitation
-        reject_url = re.search('http://.*response=No', text).group(0)
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, reject_url, alert=True)
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
@@ -540,6 +540,35 @@ class TestDoubleBlindConference():
         assert messages
         assert len(messages)
         assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\n'
+
+        # Accept invitation using encoded user email
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        text = messages[0]['content']['text']
+
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        print(accept_url)
+
+        encoded_url = accept_url.split('%40')[0] + '%2540' + accept_url.split('%40')[1]
+        request_page(selenium, encoded_url, alert=True)
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 0
+
+        recruit_invitation = re.search(r'https://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
+        assert len(acceptance_notes) == 2
+
+        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
 
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
@@ -568,80 +597,21 @@ class TestDoubleBlindConference():
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
-        assert len(group.members) == 0
+        assert len(group.members) == 1
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group
-        assert len(group.members) == 1
-        assert 'mbok@mail.com' in group.members
+        assert len(group.members) == 0
 
         messages = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
         assert messages
         assert len(messages) == 9
-        tos = [ m['content']['to'] for m in messages]
+        tos = set([m['content']['to'] for m in messages])
+        assert len(tos) == 4
         assert 'michael@mail.com' in tos
         assert 'mohit@mail.com' in tos
         assert 'other@mail.com' in tos
-
-    def test_recruit_reviewers_use_different_baseurl(self, client, selenium, request_page):
-
-        builder = openreview.conference.ConferenceBuilder(client, 'https://testme_1234.com')
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('ABCD.ws/2020/Conference')
-        builder.set_conference_short_name('ABCD 2020')
-        builder.set_submission_stage(double_blind = True, public = True)
-        builder.has_area_chairs(True)
-        conference = builder.get_result()
-        result = conference.recruit_reviewers(['test_subject+1@mail.com', 'test_subject2@mail.com', '~AKBC_PCOne1'])
-        assert result
-        assert result.id == 'ABCD.ws/2020/Conference/Reviewers/Invited'
-        assert 'test_subject+1@mail.com' in result.members
-        assert 'test_subject2@mail.com' in result.members
-
-        group = client.get_group('ABCD.ws/2020/Conference/Reviewers')
-        assert group
-        assert group.id == 'ABCD.ws/2020/Conference/Reviewers'
-        assert 'ABCD.ws/2020/Conference/Area_Chairs' in group.readers
-        assert len(group.members) == 0
-
-        group = client.get_group('ABCD.ws/2020/Conference/Reviewers/Invited')
-        assert group
-        assert len(group.members) == 3
-
-        group = client.get_group('ABCD.ws/2020/Conference/Reviewers/Declined')
-        assert group
-        assert len(group.members) == 0
-
-        messages = client.get_messages(to = 'test_subject+1@mail.com', subject = 'ABCD.ws/2020/Conference: Invitation to Review')
-        text = messages[0]['content']['text']
-        assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ABCD 2020' in text
-        link = re.search('http(.+?)response=', text).group(0)
-        assert 'https://testme_1234.com' in link
-        assert 'http://localhost:3030' not in link
-        assert '%2B' in link
-
-        messages = client.get_messages(to = 'akbc_pc_1@akbc.ws', subject = 'ABCD.ws/2020/Conference: Invitation to Review')
-        text = messages[0]['content']['text']
-        link = re.search('http(.+?)response=', text).group(0)
-        #assert '%7E' in link
-
-        messages = client.get_messages(to = 'test_subject2@mail.com', subject = 'ABCD.ws/2020/Conference: Invitation to Review')
-        text = messages[0]['content']['text']
-        link = re.search('http(.+?)response=', text).group(0)
-        assert '%2B' not in link
-        assert '%7E' not in link
-
-        # Test if the reminder mail has "Dear invitee" for unregistered users in case the name is not provided to recruit_reviewers
-        # In the same test, check if recruitment link baseurl has been overridden
-        result = conference.recruit_reviewers(remind = True, invitees = ['test_subject+1@mail.com'])
-        messages = client.get_messages(to = 'test_subject+1@mail.com', subject = 'Reminder: ABCD.ws/2020/Conference: Invitation to Review')
-        text = messages[0]['content']['text']
-        assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ABCD 2020' in text
-        assert 'https://testme_1234.com' in text
-        assert 'http://localhost:3030' not in text
+        assert 'mbok@mail.com' in tos
 
     def test_set_program_chairs(self, client, selenium, request_page):
 
@@ -681,7 +651,7 @@ class TestDoubleBlindConference():
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers')
         assert group
-        assert len(group.members) == 0
+        assert len(group.members) == 1
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Invited')
         assert group
@@ -689,7 +659,7 @@ class TestDoubleBlindConference():
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group
-        assert len(group.members) == 1
+        assert len(group.members) == 0
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Program_Chairs", client.token)
         assert selenium.find_element_by_link_text('Paper Status')

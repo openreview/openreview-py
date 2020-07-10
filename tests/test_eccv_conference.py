@@ -304,7 +304,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
 
-        reject_url = re.search('http://.*response=No', text).group(0)
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -348,7 +348,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('http://.*response=Yes', text).group(0)
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group(conference.get_reviewers_id())
@@ -903,7 +903,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Desk_Reject',
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
-            readers = ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
+            readers = ['thecvf.com/ECCV/2020/Conference',
+            'thecvf.com/ECCV/2020/Conference/Paper5/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
@@ -933,7 +934,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(desk_rejected_notes) == 1
         assert desk_rejected_notes[0].content['authors'] == ['Anonymous']
         assert desk_rejected_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors']
-        assert desk_rejected_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper5/Authors',
+        assert desk_rejected_notes[0].readers == [
+            'thecvf.com/ECCV/2020/Conference/Paper5/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper5/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper5/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs']
@@ -966,10 +968,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             invitation = 'thecvf.com/ECCV/2020/Conference/Paper4/-/Withdraw',
             forum = blinded_notes[0].forum,
             replyto = blinded_notes[0].forum,
-            readers = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
-            'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
-            'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
+            readers = [
+                'thecvf.com/ECCV/2020/Conference',
+                'thecvf.com/ECCV/2020/Conference/Paper4/Authors',
+                'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
+                'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
+                'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
             writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             content = {
@@ -995,7 +999,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].content['authors'] == ['Anonymous']
         assert withdrawn_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors']
-        assert withdrawn_notes[0].readers == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors',
+        assert withdrawn_notes[0].readers == [
+            'thecvf.com/ECCV/2020/Conference/Paper4/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs']

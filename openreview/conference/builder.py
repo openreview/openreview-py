@@ -13,10 +13,10 @@ from . import matching
 
 class Conference(object):
 
-    def __init__(self, client, web_url='http://localhost:3030'):
+    def __init__(self, client):
         self.client = client
-        self.web_url = web_url
         self.request_form_id = None
+        self.support_user = 'OpenReview.net/Support'
         self.new = False
         self.use_area_chairs = False
         self.use_secondary_area_chairs = False
@@ -47,6 +47,7 @@ class Conference(object):
         self.review_rebuttal_stage = None
         self.review_revision_stage = None
         self.review_rating_stage = None
+        self.submission_revision_stage = None
         self.comment_stage = CommentStage()
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
@@ -192,6 +193,13 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
 
+    def __create_submission_revision_stage(self):
+
+        invitation = tools.get_invitation(self.client, self.get_submission_id())
+        if invitation:
+            notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted)
+            return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
+
     def set_reviewer_reassignment(self, enabled = True):
         self.enable_reviewer_reassignment = enabled
 
@@ -273,6 +281,10 @@ class Conference(object):
         self.meta_review_stage = stage
         return self.__create_meta_review_stage()
 
+    def set_submission_revision_stage(self, stage):
+        self.submission_revision_stage = stage
+        return self.__create_submission_revision_stage()
+
     def set_decision_stage(self, stage):
         self.decision_stage = stage
         return self.__create_decision_stage()
@@ -345,7 +357,7 @@ class Conference(object):
         return secondary_area_chairs_id
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
-        committee = []
+        committee = [self.get_id()]
 
         if with_authors:
             committee.append(self.get_authors_id(number))
@@ -700,10 +712,8 @@ class Conference(object):
         return self.__create_decision_stage()
 
     def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
-        invitation = tools.get_invitation(self.client, self.get_submission_id())
-        if invitation:
-            notes = self.get_submissions(accepted=only_accepted)
-            return self.invitation_builder.set_revise_submission_invitation(self, notes, name, start_date, due_date, invitation.reply['content'], additional_fields, remove_fields)
+        self.submission_revision_stage = SubmissionRevisionStage(name=name, start_date=start_date, due_date=due_date, additional_fields=additional_fields, remove_fields=remove_fields, only_accepted=only_accepted)
+        return self.__create_submission_revision_stage()
 
     ## Deprecated
     def open_revise_reviews(self, name = 'Review_Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
@@ -921,8 +931,7 @@ class Conference(object):
                     recruit_message,
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False,
-                    baseurl = self.web_url)
+                    verbose = False)
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees)):
@@ -936,8 +945,7 @@ class Conference(object):
                     recruit_message,
                     recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False,
-                    baseurl = self.web_url)
+                    verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
@@ -973,7 +981,6 @@ class Conference(object):
                         anonymous=False)
                 }
                 self.client.post_note(submission)
-
 
 class SubmissionStage(object):
 
@@ -1069,6 +1076,15 @@ class BidStage(object):
         self.instructions=instructions
         self.ac_request_count=ac_request_count if ac_request_count else request_count
 
+class SubmissionRevisionStage():
+
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
+        self.name = name
+        self.start_date = start_date
+        self.due_date = due_date
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
+        self.only_accepted = only_accepted
 
 class ReviewStage(object):
 
@@ -1179,7 +1195,6 @@ class ReviewRatingStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
 
-
 class CommentStage(object):
 
     def __init__(self, official_comment_name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
@@ -1216,7 +1231,6 @@ class MetaReviewStage(object):
         readers.append(conference.get_program_chairs_id())
 
         return readers
-
 
 class DecisionStage(object):
 
@@ -1270,12 +1284,11 @@ class RegistrationStage(object):
         self.instructions = instructions
         self.ac_instructions = ac_instructions
 
-
 class ConferenceBuilder(object):
 
-    def __init__(self, client, web_url=None):
+    def __init__(self, client, support_user=None):
         self.client = client
-        self.conference = Conference(client, web_url)
+        self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.override_homepage = False
         self.submission_stage = None
@@ -1288,6 +1301,8 @@ class ConferenceBuilder(object):
         self.meta_review_stage = None
         self.decision_stage = None
         self.program_chairs_ids = []
+
+        self.set_conference_support_user(support_user)
 
     def __build_groups(self, conference_id):
         path_components = conference_id.split('/')
@@ -1313,9 +1328,12 @@ class ConferenceBuilder(object):
 
         return groups
 
-
     def set_conference_id(self, id):
         self.conference.set_id(id)
+
+    def set_conference_support_user(self, user):
+        if user:
+            self.conference.support_user = user
 
     def set_conference_name(self, name):
         self.conference.set_name(name)
@@ -1419,6 +1437,9 @@ class ConferenceBuilder(object):
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
+
+    def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
+        self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted)
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
