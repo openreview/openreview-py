@@ -486,7 +486,7 @@ class TestDoubleBlindConference():
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Accept invitation
-        accept_url = re.search('http://.*response=Yes', text).group(0)
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
@@ -498,7 +498,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        recruit_invitation = re.search(r'http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruit_invitation = re.search(r'https://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
         recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
         acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 1
