@@ -304,7 +304,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
 
-        reject_url = re.search('http://.*response=No', text).group(0)
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -348,7 +348,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('http://.*response=Yes', text).group(0)
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group(conference.get_reviewers_id())
