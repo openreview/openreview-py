@@ -237,7 +237,7 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        request_page(selenium, 'http://localhost:3030/group?id=TEST.cc/2030/Conference', test_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
