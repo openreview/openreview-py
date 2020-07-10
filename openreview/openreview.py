@@ -1147,7 +1147,7 @@ class Client(object):
         :type subject: list[str]
         :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
         :type sender: dict
-        :param replyTo: e-mail address to the reply the sent message
+        :param replyTo: e-mail address used when recipients reply to this message
         :type replyTo: str
 
         :return: Contains the message that was sent to each Group
