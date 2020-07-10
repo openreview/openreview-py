@@ -498,7 +498,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        recruit_invitation = re.search('http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruit_invitation = re.search(r'http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
         recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
         acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 1
@@ -541,6 +541,35 @@ class TestDoubleBlindConference():
         assert len(messages)
         assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\n'
 
+        # Accept invitation using encoded user email
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        text = messages[0]['content']['text']
+
+        accept_url = re.search('http://.*response=Yes', text).group(0)
+        print(accept_url)
+
+        encoded_url = accept_url.split('%40')[0] + '%2540' + accept_url.split('%40')[1]
+        request_page(selenium, encoded_url, alert=True)
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members 
+
+        group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
+        assert group
+        assert len(group.members) == 0
+
+        recruit_invitation = re.search(r'http://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
+        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
+        assert len(acceptance_notes) == 2
+
+        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
+        assert messages
+        assert len(messages) == 2
+        assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
+
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
         assert result
@@ -568,20 +597,21 @@ class TestDoubleBlindConference():
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
-        assert len(group.members) == 0
+        assert len(group.members) == 1
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group
-        assert len(group.members) == 1
-        assert 'mbok@mail.com' in group.members
+        assert len(group.members) == 0
 
         messages = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
         assert messages
         assert len(messages) == 9
-        tos = [ m['content']['to'] for m in messages]
+        tos = set([m['content']['to'] for m in messages])
+        assert len(tos) == 4
         assert 'michael@mail.com' in tos
         assert 'mohit@mail.com' in tos
         assert 'other@mail.com' in tos
+        assert 'mbok@mail.com' in tos
 
     def test_recruit_reviewers_use_different_baseurl(self, client, selenium, request_page):
 
@@ -681,7 +711,7 @@ class TestDoubleBlindConference():
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers')
         assert group
-        assert len(group.members) == 0
+        assert len(group.members) == 1
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Invited')
         assert group
@@ -689,7 +719,7 @@ class TestDoubleBlindConference():
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group
-        assert len(group.members) == 1
+        assert len(group.members) == 0
 
         request_page(selenium, "http://localhost:3000/group?id=AKBC.ws/2019/Conference/Program_Chairs", client.token)
         assert selenium.find_element_by_link_text('Paper Status')
