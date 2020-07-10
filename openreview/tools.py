@@ -1275,8 +1275,7 @@ def recruit_reviewer(client, user, first,
     recruit_message,
     recruit_message_subj,
     reviewers_invited_id,
-    verbose=True,
-    baseurl = ''):
+    verbose=True):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1306,6 +1305,7 @@ def recruit_reviewer(client, user, first,
     # these unicode strings to convert them to bytestrings. This behavior is the same in
     # Python 2, because we imported unicode_literals from __future__.
     hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
+    baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
     # build the URL to send in the message
     url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
