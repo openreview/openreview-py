@@ -237,7 +237,12 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                     "required": True
                 }
             },
-            remove_fields=['keywords'])
+            remove_fields=['keywords'],
+            withdrawn_submission_public=False,
+            withdrawn_submission_author_anonymous=True,
+            email_pcs_on_withdraw=True,
+            desk_rejected_submission_public=False,
+            desk_rejected_submission_author_anonymous=True)
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
