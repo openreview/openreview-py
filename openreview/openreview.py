@@ -1133,7 +1133,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1143,6 +1143,12 @@ class Client(object):
         :type recipients: list[str]
         :param message: Message in the e-mail
         :type message: str
+        :param ignoreRecipients: List of groups ids to be ignored from the recipient list
+        :type subject: list[str]
+        :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
+        :type sender: dict
+        :param replyTo: e-mail address used when recipients reply to this message
+        :type replyTo: str
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
@@ -1152,7 +1158,8 @@ class Client(object):
             'subject': subject ,
             'message': message,
             'ignoreGroups': ignoreRecipients,
-            'from': sender
+            'from': sender,
+            'replyTo': replyTo
             }, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1308,7 +1315,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, offset = None, limit = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1316,12 +1323,14 @@ class Client(object):
         :type to: list[str], optional
         :param subject: Subject of the e-mail
         :type subject: str, optional
+        :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
+        :type status: str, optional
 
         :return: Messages that match the passed parameters
         :rtype: dict
         """
 
-        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'offset': offset, 'limit': limit }, headers = self.headers)
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 

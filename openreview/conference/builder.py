@@ -879,7 +879,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], baseurl = ''):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -961,8 +961,7 @@ class Conference(object):
                     recruit_message,
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False,
-                    baseurl = baseurl)
+                    verbose = False)
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees)):
@@ -976,8 +975,7 @@ class Conference(object):
                     recruit_message,
                     recruit_message_subj,
                     reviewers_invited_id,
-                    verbose = False,
-                    baseurl = baseurl)
+                    verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
@@ -1109,7 +1107,7 @@ class BidStage(object):
         self.ac_request_count=ac_request_count if ac_request_count else request_count
 
 class SubmissionRevisionStage():
-    
+
     def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
         self.name = name
         self.start_date = start_date
