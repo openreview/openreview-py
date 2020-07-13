@@ -1475,13 +1475,19 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_submission_stage(
+            double_blind=True,
+            public=True,
+            withdrawn_submission_public=True,
+            withdrawn_submission_author_anonymous=False,
+            email_pcs_on_withdraw=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.create_withdraw_invitations(reveal_authors=True, reveal_submission=True, email_pcs=True)
+        # conference.create_withdraw_invitations(reveal_authors=True, reveal_submission=True, email_pcs=True)
+        conference.setup_post_submission_stage()
 
         notes = conference.get_submissions()
         assert notes
@@ -1509,7 +1515,7 @@ class TestDoubleBlindConference():
         assert notes
         assert len(notes) == 2
 
-        withdrawn_notes = client.get_notes(invitation = conference.submission_stage.get_withdrawn_submission_id(conference))
+        withdrawn_notes = client.get_notes(invitation=conference.submission_stage.get_withdrawn_submission_id(conference))
 
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].content.get('_bibtex')
@@ -1538,13 +1544,18 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_submission_stage(
+            double_blind=True,
+            public=True,
+            desk_rejected_submission_public=True,
+            desk_rejected_submission_author_anonymous=False)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.create_desk_reject_invitations(reveal_authors=True, reveal_submission=True)
+        conference.setup_post_submission_stage()
+        # conference.create_desk_reject_invitations(reveal_authors=True, reveal_submission=True)
 
         notes = conference.get_submissions()
         assert notes

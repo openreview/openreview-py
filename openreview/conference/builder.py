@@ -509,6 +509,14 @@ class Conference(object):
             return accepted_notes
         return notes
 
+    def get_withdrawn_submissions(self, details=None):
+        invitation = self.submission_stage.get_withdrawn_submission_id(self)
+        return list(tools.iterget_notes(self.client, invitation=invitation, details=details))
+
+    def get_desk_rejected_submissions(self, details=None):
+        invitation = self.submission_stage.get_desk_rejected_submission_id(self)
+        return list(tools.iterget_notes(self.client, invitation=invitation, details=details))
+
     ## Deprecated
     def open_submissions(self):
         return self.__create_submission_stage()
@@ -603,11 +611,17 @@ class Conference(object):
             raise openreview.OpenReviewException('Submission invitation is still due. Aborted blind note creation!')
 
         submissions_by_original = { note.original: note for note in self.get_submissions() }
+        withdrawn_submissions_by_original = {note.original: note for note in self.get_withdrawn_submissions()}
+        desk_rejected_submissions_by_original = {note.original: note for note in self.get_desk_rejected_submissions()}
 
         self.invitation_builder.set_blind_submission_invitation(self, hide_fields)
         blinded_notes = []
 
-        for note in tools.iterget_notes(self.client, invitation = self.get_submission_id(), sort = 'number:asc'):
+        for note in tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc'):
+            # If the note was either withdrawn or desk-rejected already, we should not create another blind copy
+            if withdrawn_submissions_by_original.get(note.id) or desk_rejected_submissions_by_original.get(note.id):
+                continue
+
             blind_note = submissions_by_original.get(note.id)
             if not blind_note:
 
@@ -663,12 +677,16 @@ class Conference(object):
             else:
                 # Single Blind or Open venue
                 self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
-            
-            reveal_authors = False
-            if not self.submission_stage.double_blind:
-                reveal_authors = True
-            self.create_withdraw_invitations(reveal_authors=reveal_authors, reveal_submission=False)
-            self.create_desk_reject_invitations(reveal_authors=reveal_authors, reveal_submission=False)
+
+            self.create_withdraw_invitations(
+                reveal_authors=(not self.submission_stage.withdrawn_submission_author_anonymous),
+                reveal_submission=self.submission_stage.withdrawn_submission_public,
+                email_pcs=self.submission_stage.email_pcs_on_withdraw
+            )
+            self.create_desk_reject_invitations(
+                reveal_authors=(not self.submission_stage.desk_rejected_submission_author_anonymous),
+                reveal_submission=self.submission_stage.desk_rejected_submission_public
+            )
 
             self.set_authors()
             self.set_reviewers()
@@ -809,7 +827,10 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        authors_group = self.__create_group(self.get_authors_id(), self.id, public=True)
+        authors_group = self.__create_group(
+            self.get_authors_id(), 
+            self.id, 
+            public=False)
         return self.webfield_builder.set_author_page(self, authors_group)
 
     def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
@@ -1024,10 +1045,16 @@ class SubmissionStage(object):
             additional_fields={},
             remove_fields=[],
             subject_areas=[],
-            email_pcs = False,
-            create_groups = False,
+            email_pcs=False,
+            create_groups=False,
             # We need to assume the Official Review super invitation is already created and active
-            create_review_invitation = False
+            create_review_invitation=False,
+            withdrawn_submission_public=False,
+            withdrawn_submission_author_anonymous=False,
+            email_pcs_on_withdraw=False,
+            desk_rejected_submission_public=False,
+            desk_rejected_submission_author_anonymous=False,
+            email_pcs_on_desk_reject=True
         ):
 
         self.start_date = start_date
@@ -1041,6 +1068,12 @@ class SubmissionStage(object):
         self.email_pcs = email_pcs
         self.create_groups = create_groups
         self.create_review_invitation = create_review_invitation
+        self.withdrawn_submission_public = withdrawn_submission_public
+        self.withdrawn_submission_author_anonymous = withdrawn_submission_author_anonymous
+        self.email_pcs_on_withdraw = email_pcs_on_withdraw
+        self.desk_rejected_submission_public = desk_rejected_submission_public
+        self.desk_rejected_submission_author_anonymous = desk_rejected_submission_author_anonymous
+        self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
 
     def get_readers(self, conference):
         if self.double_blind:
@@ -1422,9 +1455,15 @@ class ConferenceBuilder(object):
             additional_fields={},
             remove_fields=[],
             subject_areas=[],
-            email_pcs = False,
-            create_groups = False,
-            create_review_invitation = False
+            email_pcs=False,
+            create_groups=False,
+            create_review_invitation=False,
+            withdrawn_submission_public=False,
+            withdrawn_submission_author_anonymous=False,
+            email_pcs_on_withdraw=False,
+            desk_rejected_submission_public=False,
+            desk_rejected_submission_author_anonymous=False,
+            email_pcs_on_desk_reject=True
         ):
 
         self.submission_stage = SubmissionStage(
@@ -1438,7 +1477,13 @@ class ConferenceBuilder(object):
             subject_areas,
             email_pcs,
             create_groups,
-            create_review_invitation
+            create_review_invitation,
+            withdrawn_submission_public,
+            withdrawn_submission_author_anonymous,
+            email_pcs_on_withdraw,
+            desk_rejected_submission_public,
+            desk_rejected_submission_author_anonymous,
+            email_pcs_on_desk_reject
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
