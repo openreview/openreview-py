@@ -65,7 +65,7 @@ class TestLegacyInvitations():
         assert client.get_invitations(regex = 'NIPS.cc/2019/Workshop/MLITS/-/Paper.*/Decision')
 
         reviewer_client = helpers.create_user('reviewer_legacy@mail.com', 'Reviewer', 'Legacy')
-        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2019/Workshop/MLITS/Reviewers", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2019/Workshop/MLITS/Reviewers", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
@@ -74,7 +74,7 @@ class TestLegacyInvitations():
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
         ac_client = helpers.create_user('ac_legacy@mail.com', 'AC', 'Legacy')
-        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2019/Workshop/MLITS/Area_Chairs", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2019/Workshop/MLITS/Area_Chairs", ac_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
@@ -89,7 +89,7 @@ class TestLegacyInvitations():
         assert headers[0].text == '0 of 1 Reviews Submitted'
 
         pc_client = helpers.create_user('pc_legacy@mail.com', 'PC', 'Legacy')
-        request_page(selenium, "http://localhost:3000/group?id=NIPS.cc/2019/Workshop/MLITS/Program_Chairs", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2019/Workshop/MLITS/Program_Chairs", pc_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('venue-configuration')
