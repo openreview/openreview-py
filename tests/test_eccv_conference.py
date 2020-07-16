@@ -304,7 +304,26 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
 
+        # Test to check that a user is not able to accept/decline if they are not a part of the invited group
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+
+        # Removing reviewer from the invited group
+        invited_group = client.remove_members_from_group('thecvf.com/ECCV/2020/Conference/Reviewers/Invited', 'mohit+1@mail.com')
+        assert len(invited_group.members) == 1
+
+        request_page(selenium, reject_url, alert=True)
+        declined_group = client.get_group(id='thecvf.com/ECCV/2020/Conference/Reviewers/Declined')
+        assert len(declined_group.members) == 0
+
+        request_page(selenium, accept_url, alert=True)
+        accepted_group = client.get_group(id='thecvf.com/ECCV/2020/Conference/Reviewers')
+        assert len(accepted_group.members) == 0
+
+        # Placing the reviewer back
+        invited_group = client.add_members_to_group('thecvf.com/ECCV/2020/Conference/Reviewers/Invited', 'mohit+1@mail.com')
+        assert len(invited_group.members) == 2
+
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -330,7 +349,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         ## Reduce the load of Mohit
         notes = client.get_notes(invitation='thecvf.com/ECCV/2020/Conference/-/Recruit_Reviewers', content={'user': 'mohit+1@mail.com'})
         assert notes
-        assert len(notes) == 1
+        assert len(notes) == 3
 
         client.post_note(openreview.Note(
             invitation='thecvf.com/ECCV/2020/Conference/-/Reduced_Load',

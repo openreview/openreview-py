@@ -868,6 +868,7 @@ class Conference(object):
         options = {
             'reviewers_name': reviewers_name,
             'reviewers_accepted_id': reviewers_accepted_id,
+            'reviewers_invited_id': reviewers_invited_id,
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed
         }
