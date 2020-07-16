@@ -63,13 +63,10 @@ function() {
       } else {
         done('Invalid response', note.content.response);
       }
-
       return true;
     } else {
       done('Invalid key or user not in invited group', note.content.key, user);
       return false;
     }
-  })
-  .then(result => done())
-  .catch(error => done(error));
+  });
 }
