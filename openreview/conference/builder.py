@@ -651,8 +651,7 @@ class Conference(object):
                         note=note,
                         venue_fullname=self.name,
                         url_forum=blind_note.id,
-                        year=str(self.get_year()),
-                        baseurl=self.client.baseurl)
+                        year=str(self.get_year()))
 
                     blind_note.content = blind_content
 

@@ -418,8 +418,8 @@ class VenueRequest():
         self.setup_venue_comments()
         self.setup_venue_deployment()
         self.setup_venue_recruitment()
-        
-        # Setup for venue stages 
+
+        # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
         self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
@@ -773,7 +773,7 @@ class VenueRequest():
 
         with open(self.recruitment_process, 'r') as f:
             file_content = f.read()
-            
+
             self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Recruitment',
                 readers=['everyone'],

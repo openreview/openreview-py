@@ -365,12 +365,12 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
         reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
-        reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
         assert selenium.find_element_by_link_text('Expertise Selection')
 
-        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token)
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/-/Expertise_Selection', reviewer_client.token)
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_class_name("description")
@@ -389,7 +389,7 @@ Please contact info@openreview.net with any questions or concerns about this int
     def test_open_registration(self, conference, helpers, selenium, request_page):
 
         reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
-        reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
         assert selenium.find_element_by_link_text('Reviewer Profile Confirmation')
@@ -427,7 +427,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert registration_note
 
 
-        request_page(selenium, 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer_client.token)
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_class_name("description")
@@ -436,7 +436,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert notes[0].text == 'This page provides information and status updates for the ECCV 2020. It will be regularly updated as the conference progresses, so please check back frequently.\nYou have agreed to review up to 7 papers.'
 
         reviewer2_client = helpers.create_user('mohit+1@mail.com', 'Mohit', 'EccvReviewer')
-        request_page(selenium, 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers', reviewer2_client.token)
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_class_name("description")
@@ -447,7 +447,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
         ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
-        reviewer_tasks_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
+        reviewer_tasks_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token)
 
         assert selenium.find_element_by_link_text('Area Chair Profile Confirmation')
@@ -507,11 +507,11 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         tauthor_message = [msg for msg in messages if msg['content']['to'] == note.tauthor][0]
         assert tauthor_message
-        assert tauthor_message['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id
+        assert tauthor_message['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id
 
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
-        assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3000/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
+        assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
 
     def test_revise_additional_files(self, conference, client, test_client):
 
@@ -591,12 +591,12 @@ Please contact info@openreview.net with any questions or concerns about this int
     def test_bid_stage(self, conference, helpers, selenium, request_page):
 
         reviewer_client = openreview.Client(username='test_reviewer_eccv@mail.com', password='1234')
-        reviewer_tasks_url = 'http://localhost:3000/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
+        reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
         assert selenium.find_element_by_link_text('Reviewer Bid')
 
-        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid', reviewer_client.token)
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid', reviewer_client.token)
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_tag_name("li")
@@ -605,11 +605,11 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert notes[4].text == 'Ensure that you have at least 40 bids, which are "Very High" or "High".'
 
         ac_client = openreview.Client(username='test_ac_eccv@mail.com', password='1234')
-        request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_area_chairs_id() + '#areachair-tasks', ac_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_area_chairs_id() + '#areachair-tasks', ac_client.token)
 
         assert selenium.find_element_by_link_text('Area Chair Bid')
 
-        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid', ac_client.token)
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Bid', ac_client.token)
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_tag_name("li")
@@ -669,8 +669,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
 
-        request_page(selenium, url='http://localhost:3000/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token)
-        new_assignment_btn = selenium.find_element_by_id('new-configuration-button')
+        request_page(selenium, url='http://localhost:3030/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token)
+        new_assignment_btn = selenium.find_element_by_xpath('//button[text()="New Assignment Configuration"]')
         assert new_assignment_btn
         new_assignment_btn.click()
 
@@ -864,9 +864,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         hide = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
         referrer = '[Return%20Instructions](/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation)'
 
-        url = 'http://localhost:3000/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
+        url = 'http://localhost:3030/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
 
-        request_page(selenium, 'http://localhost:3000/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation', ac1_client.token)
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation', ac1_client.token)
         panel = selenium.find_element_by_id('notes')
         assert panel
         links = panel.find_elements_by_tag_name('a')
@@ -958,7 +958,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(author_group.members) == 4
         assert 'thecvf.com/ECCV/2020/Conference/Paper5/Authors' not in author_group.members
 
-        request_page(selenium, "http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -1019,7 +1019,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(author_group.members) == 3
         assert 'thecvf.com/ECCV/2020/Conference/Paper4/Authors' not in author_group.members
 
-        request_page(selenium, "http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -1290,14 +1290,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True ))
 
 
-        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , test_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token)
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 2
 
     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
-        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
         status = selenium.find_element_by_id("1-metareview-status")
@@ -1306,7 +1306,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert not status.find_elements_by_class_name('tag-widget')
 
         reviewer_client = openreview.Client(username='reviewer1@fb.com', password='1234')
-        reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
+        reviewer_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token)
 
         assert not selenium.find_elements_by_class_name('tag-widget')
@@ -1314,7 +1314,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         now = datetime.datetime.utcnow()
         conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
 
-        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
         status = selenium.find_element_by_id("1-metareview-status")
@@ -1340,7 +1340,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'])
         )
 
-        reviewer_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
+        reviewer_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
         request_page(selenium, reviewer_url, reviewer_client.token)
 
         tags = selenium.find_elements_by_class_name('tag-widget')
@@ -1384,7 +1384,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         now = datetime.datetime.utcnow()
 
         conference.set_review_rebuttal_stage(openreview.ReviewRebuttalStage(due_date=now + datetime.timedelta(minutes = 40)))
-        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , test_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token)
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 2
 
@@ -1462,7 +1462,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         reviewer_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , reviewer_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , reviewer_client.token)
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 4
 
@@ -1534,7 +1534,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         blinded_notes = conference.get_submissions()
 
-        request_page(selenium, 'http://localhost:3000/forum?id=' + blinded_notes[2].id , ac_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , ac_client.token)
         notes = selenium.find_elements_by_class_name('note_with_children')
         assert len(notes) == 4
 
@@ -1570,7 +1570,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         conference.set_meta_review_stage(openreview.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
-        ac_url = 'http://localhost:3000/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
+        ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
         # Check that Secondary AC Assignments tab is not visible
