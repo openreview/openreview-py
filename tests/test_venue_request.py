@@ -12,16 +12,16 @@ class TestVenueRequest():
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
-        
+
         time.sleep(2)
-        
+
         # Add support group user to the support group object
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        
+
         # Post the request form note
         request_form_note = test_client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
@@ -78,7 +78,7 @@ class TestVenueRequest():
         return venue_details
 
     def test_venue_setup(self, client):
-        
+
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         venue = VenueRequest(client, support_group_id=support_group_id, super_user='openreview.net')
@@ -96,13 +96,13 @@ class TestVenueRequest():
         assert venue.venue_revision_invitation
 
     def test_venue_deployment(self, client, selenium, request_page, helpers, support_client):
-        
+
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
-        
+
         time.sleep(2)
-        request_page(selenium, 'http://localhost:3000/group?id={}&mode=default'.format(support_group_id), client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
 
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
 
@@ -111,11 +111,11 @@ class TestVenueRequest():
 
         support_members = client.get_group(support_group_id).members
         assert support_members and len(support_members) == 1
-        
+
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(minutes=30)
-        
+
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~Newtest_User1'],
@@ -148,9 +148,9 @@ class TestVenueRequest():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
-        
+
         assert request_form_note
-        request_page(selenium, 'http://localhost:3000/forum?id=' + request_form_note.forum, client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, client.token)
 
         messages = client.get_messages(
             to='new_test_user@mail.com',
@@ -187,7 +187,7 @@ class TestVenueRequest():
     def test_venue_revision(self, client, test_client, selenium, request_page, venue):
 
         # Test Revision
-        request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
@@ -199,6 +199,8 @@ class TestVenueRequest():
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com' in recipients
         assert 'tom@mail.com' in recipients
+        assert 'Venue home page: https://openreview.net/group?id=TEST.cc/2030/Conference' in messages[0]['content']['text']
+        assert 'Venue Program Chairs console: https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs' in messages[0]['content']['text']
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -235,7 +237,7 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        request_page(selenium, 'http://localhost:3000/group?id={}'.format(venue['venue_id']), test_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token)
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
@@ -245,7 +247,7 @@ class TestVenueRequest():
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue):
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3000/forum?id={}'.format(venue['request_form_note'].id), test_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token)
         recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -281,7 +283,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer One,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
-        
+
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as reviewer'
@@ -295,7 +297,7 @@ class TestVenueRequest():
         reviewer_group = client.get_group(reviewer_group_id)
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer1')
 
-        reviewer_url = 'http://localhost:3000/group?id={}#reviewer-tasks'.format(reviewer_group_id)
+        reviewer_url = 'http://localhost:3030/group?id={}#reviewer-tasks'.format(reviewer_group_id)
         request_page(selenium, reviewer_url, reviewer_client.token)
         with pytest.raises(NoSuchElementException):
             assert selenium.find_element_by_link_text('Reviewer Bid')
@@ -394,7 +396,7 @@ class TestVenueRequest():
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         assert reviewer_group and len(reviewer_group.members) == 2
 
-        reviewer_page_url = 'http://localhost:3000/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
+        reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
         request_page(selenium, reviewer_page_url, token=reviewer_client.token)
 
         note_div = selenium.find_element_by_id('note-summary-1')
@@ -444,7 +446,7 @@ class TestVenueRequest():
         ac_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         assert ac_group and len(ac_group.members) == 1
 
-        ac_page_url = 'http://localhost:3000/group?id={}/Area_Chairs'.format(venue['venue_id'])
+        ac_page_url = 'http://localhost:3030/group?id={}/Area_Chairs'.format(venue['venue_id'])
         request_page(selenium, ac_page_url, token=meta_reviewer_client.token)
 
         submit_div_1 = selenium.find_element_by_id('1-metareview-status')
@@ -502,7 +504,7 @@ class TestVenueRequest():
         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert submissions and len(submissions) == 2
 
-        paper_url = 'http://localhost:3000/forum?id={}'.format(submissions[0].forum)
+        paper_url = 'http://localhost:3030/forum?id={}'.format(submissions[0].forum)
         request_page(selenium, paper_url, token=test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
@@ -572,7 +574,7 @@ class TestVenueRequest():
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'        
+        assert process_logs[0]['status'] == 'ok'
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -633,7 +635,7 @@ class TestVenueRequest():
 
         blind_submissions = author_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
 
-        author_page_url = 'http://localhost:3000/forum?id={}'.format(blind_submissions[0].forum)
+        author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum)
         print('checkig url: {}'.format(author_page_url))
         request_page(selenium, author_page_url, token=author_client.token)
 
