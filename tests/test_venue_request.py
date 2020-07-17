@@ -13,8 +13,6 @@ class TestVenueRequest():
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
 
-        time.sleep(2)
-
         # Add support group user to the support group object
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -79,11 +77,9 @@ class TestVenueRequest():
 
     def test_venue_setup(self, client):
 
-        super_id = 'openreview.net'
-        support_group_id = super_id + '/Support'
-        venue = VenueRequest(client, support_group_id=support_group_id, super_user='openreview.net')
+        venue = VenueRequest(client, support_group_id='openreview.net/Support', super_user='openreview.net')
 
-        assert venue.support_group.id == support_group_id
+        assert venue.support_group.id == 'openreview.net/Support'
         assert venue.bid_stage_super_invitation
         assert venue.decision_stage_super_invitation
         assert venue.meta_review_stage_super_invitation
@@ -97,19 +93,17 @@ class TestVenueRequest():
 
     def test_venue_deployment(self, client, selenium, request_page, helpers, support_client):
 
-        super_id = 'openreview.net'
-        support_group_id = super_id + '/Support'
-        VenueRequest(client, support_group_id, super_id)
+        support_group_id = 'openreview.net/Support'
+        VenueRequest(client, 'openreview.net/Support', 'openreview.net')
 
-        time.sleep(2)
-        request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=openreview.net/Support&mode=default', client.token)
 
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
 
-        support_group = client.get_group(support_group_id)
+        support_group = client.get_group('openreview.net/Support')
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
-        support_members = client.get_group(support_group_id).members
+        support_members = client.get_group('openreview.net/Support').members
         assert support_members and len(support_members) == 1
 
         now = datetime.datetime.utcnow()
@@ -117,10 +111,10 @@ class TestVenueRequest():
         due_date = now + datetime.timedelta(minutes=30)
 
         request_form_note = client.post_note(openreview.Note(
-            invitation=support_group_id +'/-/Request_Form',
+            invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Newtest_User1'],
             readers=[
-                support_group_id,
+                'openreview.net/Support',
                 '~Newtest_User1',
                 'new_test_user@mail.com',
                 'tom@mail.com'
@@ -169,11 +163,11 @@ class TestVenueRequest():
         deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2021/Conference'},
             forum=request_form_note.forum,
-            invitation='{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number),
-            readers=[support_group_id],
+            invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number),
+            readers=['openreview.net/Support'],
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
-            signatures=[support_group_id],
+            signatures=['openreview.net/Support'],
             writers=['~Support_User1']
         ))
         assert deploy_note
@@ -182,7 +176,7 @@ class TestVenueRequest():
         process_logs = client.get_process_logs(id=deploy_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
+        assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number)
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue):
 
