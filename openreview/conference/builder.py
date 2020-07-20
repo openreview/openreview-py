@@ -917,7 +917,7 @@ class Conference(object):
 
         if remind:
             remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
-            print ('Sending reminders for recruitment invitations')
+            print ('Sending reminders for recruitment invitations to {} users'.format(len(remind_reviewers)))
             for reviewer_id in tqdm(remind_reviewers):
                 reviewer_name = 'invitee'
                 if reviewer_id.startswith('~') :
@@ -933,7 +933,8 @@ class Conference(object):
                     reviewers_invited_id,
                     verbose = False)
 
-        print ('Sending recruitment invitations')
+        new_invitees = set(invitees) - set(reviewers_invited_group.members)
+        print ('Sending new recruitment invitations to {} users'.format(len(new_invitees)))
         for index, email in enumerate(tqdm(invitees)):
             if email not in set(reviewers_invited_group.members):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
