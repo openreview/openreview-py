@@ -897,20 +897,18 @@ class TestDoubleBlindConference():
         assert len(blind_submissions_3) == 2
         assert blind_submissions_3[-1].readers == ['everyone']
 
-        request_page(selenium, "http://localhost:3000/forum?id=" + blind_submissions_3[-1].id, test_client.token)
+        withdraw_invitation = test_client.get_invitations(replyForum=blind_submissions_3[-1].id)
+        assert withdraw_invitation and len(withdraw_invitation) == 1
+        assert withdraw_invitation[0].id == 'AKBC.ws/2025/Conference/Paper1/-/Withdraw'
+        assert withdraw_invitation[0].invitees == ['AKBC.ws/2025/Conference/Paper1/Authors', 'OpenReview.net/Support']
 
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
-
-        conference.set_program_chairs(emails = ['akbc_pc99@mail.com'])
+        conference.set_program_chairs(emails=['akbc_pc99@mail.com'])
         pc_client = helpers.create_user('akbc_pc99@mail.com', 'AKBC', 'Pctwo')
-
-        request_page(selenium, "http://localhost:3000/forum?id=" + blind_submissions_3[-1].id, pc_client.token)
-
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Desk Reject' == reply_row.find_elements_by_class_name('btn')[0].text
+        
+        desk_reject_invitation = pc_client.get_invitations(replyForum=blind_submissions_3[-1].id)
+        assert desk_reject_invitation and len(desk_reject_invitation) == 1
+        assert desk_reject_invitation[0].id == 'AKBC.ws/2025/Conference/Paper1/-/Desk_Reject'
+        assert desk_reject_invitation[0].invitees == ['AKBC.ws/2025/Conference/Program_Chairs', 'OpenReview.net/Support']
 
     def test_author_groups_inorder(self, client):
 
@@ -1349,7 +1347,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
-        conference = builder.get_result()
+        builder.get_result()
 
         #Program chair user
         pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
@@ -1388,7 +1386,7 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         builder.enable_reviewer_reassignment(True)#enable review reassignment so that the assign_Reviewer_Textbox is rendered on page
-        conference = builder.get_result()
+        builder.get_result()
 
         #area chair to reassign reviewer
         ac_client=openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
@@ -1677,7 +1675,7 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
-        conference = builder.get_result()
+        builder.get_result()
 
         builder.set_review_stage(public=True)
         builder.get_result()
@@ -1771,7 +1769,7 @@ class TestDoubleBlindConference():
         assert len(notes) == 1
         note = notes[0]
 
-        valid_bibtex = '''@inproceedings{
+        valid_bibtex = r'''@inproceedings{
 user2019paper,
 title={Paper title {\{}REVISED{\}}},
 author={Test User and Peter User and Andrew Mc},
