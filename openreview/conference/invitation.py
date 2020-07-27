@@ -1515,7 +1515,7 @@ class InvitationBuilder(object):
                     "tag": {
                         "description": "Select value",
                         "order": 1,
-                        "value-regex": 'No Ranking|[0-9]+\sof\s[0-9]+',
+                        "value-regex": r'No Ranking|[0-9]+\sof\s[0-9]+',
                         "required": True
                     }
                 }
