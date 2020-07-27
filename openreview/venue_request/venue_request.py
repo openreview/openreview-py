@@ -418,8 +418,8 @@ class VenueRequest():
         self.setup_venue_comments()
         self.setup_venue_deployment()
         self.setup_venue_recruitment()
-        
-        # Setup for venue stages 
+
+        # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
         self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
@@ -505,7 +505,9 @@ class VenueRequest():
                     'OpenReview Affinity',
                     'TPMS'
                 ],
-                'order': 17
+                'order': 17,
+                'required': True,
+                'default': ['OpenReview Affinity']
             },
             'Author and Reviewer Anonymity': {
                 'description': 'What policy best describes your anonymity policy? (If none of the options apply then please describe your request below)',
@@ -514,7 +516,8 @@ class VenueRequest():
                     'Single-blind (Reviewers are anonymous)',
                     'No anonymity'
                 ],
-                'order': 18
+                'order': 18,
+                'required': True
             },
             'Open Reviewing Policy': {
                 'description': 'Should submitted papers and/or reviews be visible to the public? (This is independent of anonymity policy)',
@@ -523,7 +526,8 @@ class VenueRequest():
                     'Submissions should be public, but reviews should be private.',
                     'Submissions and reviews should both be public.'
                 ],
-                'order': 19
+                'order': 19,
+                'required': True
             },
             'Public Commentary': {
                 'description': 'Would you like to allow members of the public to comment on papers?',
@@ -534,20 +538,61 @@ class VenueRequest():
                 ],
                 'order': 20
             },
+            'withdrawn_submissions_visibility': {
+                'description': 'Would you like to make withdrawn submissions public?',
+                'value-radio': [
+                    'Yes, withdrawn submissions should be made public.', 
+                    'No, withdrawn submissions should not be made public.'],
+                'default': 'No, withdrawn submissions should not be made public.',
+                'order': 21
+            },
+            'withdrawn_submissions_author_anonymity': {
+                'description': 'Would you like to make authors of withdrawn papers anonymous? Note: Authors can only be anonymized for Double blind submissions.',
+                'value-radio': [
+                    'Yes, authors of withdrawn submissions should be anonymized.', 
+                    'No, authors of withdrawn submissions should not be anonymized.'],
+                'default': 'No, authors of withdrawn submissions should not be anonymized.',
+                'order': 22
+            },
+            'email_pcs_for_withdrawn_submissions': {
+                'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
+                'value-radio': [
+                    'Yes, email PCs.',
+                    'No, do not email PCs.'
+                ],
+                'default': 'No, do not email PCs.',
+                'order': 23
+            },
+            'desk_rejected_submissions_visibility': {
+                'description': 'Would you like to make desk rejected submissions public?',
+                'value-radio': [
+                    'Yes, desk rejected submissions should be made public.', 
+                    'No, desk rejected submissions should not be made public.'],
+                'default': 'No, desk rejected submissions should not be made public.',
+                'order': 24
+            },
+            'desk_rejected_submissions_author_anonymity': {
+                'description': 'Would you like to make authors of desk rejected papers anonymous?  Note: Authors can only be anonymized for Double blind submissions.',
+                'value-radio': [
+                    'Yes, authors of desk rejected submissions should be anonymized.', 
+                    'No, authors of desk rejected submissions should not be anonymized.'],
+                'default': 'No, authors of desk rejected submissions should not be anonymized.',
+                'order': 25
+            },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 21
+                'order': 26
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 22
+                'order': 27
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 23
+                'order': 28
             }
         }
 
@@ -728,7 +773,7 @@ class VenueRequest():
 
         with open(self.recruitment_process, 'r') as f:
             file_content = f.read()
-            
+
             self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Recruitment',
                 readers=['everyone'],

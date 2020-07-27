@@ -24,20 +24,17 @@ function render() {
     if (accepted) {
       // Display response text
       var message = 'Thank you for accepting this invitation from ' + HEADER.title;
-      $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
-
+      $response.append('<div><strong>' + message + '</strong></div>');
       $response.append([
-        '<div class="panel">',
-          '<div class="row">',
-            '<p>If you do not already have an OpenReview account, please sign up <a href="/signup">here</a>.</p>',
-            '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile?mode=edit">profile page</a> and has been confirmed.</p>',
-          '</div>',
-        '</div>'
+        '<div>',
+          '<p>If you do not already have an OpenReview account, please sign up <a href="/signup">here</a>.</p>',
+          '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile?mode=edit">profile page</a> and has been confirmed.</p>',
+        '</div>',
       ].join('\n'));
     } else if (declined) {
       // Get invitation to request max load
       var message = 'You have declined the invitation from ' + HEADER.title + '.';
-      $response.append('<div class="panel"><div class="row"><strong>' + message + '</strong></div></div>');
+      $response.append('<div><strong>' + message + '</strong></div>');
     }
   }
 

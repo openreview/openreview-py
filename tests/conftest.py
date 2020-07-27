@@ -1,6 +1,7 @@
 import openreview
 import pytest
 import requests
+import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -64,10 +65,10 @@ def firefox_options(firefox_options):
 
 @pytest.fixture
 def request_page():
-    def request(selenium, url, token = None, alert=False):
+    def request(selenium, url, token = None, alert=False, wait_for_element='content'):
         if token:
-            selenium.get('http://localhost:3000')
-            selenium.add_cookie({'name': 'openreview_sid', 'value': token.replace('Bearer ', '')})
+            selenium.get('http://localhost:3030')
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': True})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
@@ -81,8 +82,9 @@ def request_page():
                 print("No alert is present")
 
         try:
-            element_present = EC.presence_of_element_located((By.ID, 'container'))
+            element_present = EC.presence_of_element_located((By.ID, wait_for_element))
             WebDriverWait(selenium, timeout).until(element_present)
+            time.sleep(2) ## temporally sleep time to wait until the whole page is loaded
         except TimeoutException:
             print("Timed out waiting for page to load")
 
