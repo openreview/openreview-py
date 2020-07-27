@@ -579,7 +579,7 @@ class Client(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, limit = None, offset = None):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -591,6 +591,8 @@ class Client(object):
         :type member: str, optional
         :param signatory: Groups that contain this signatory
         :type signatory: str, optional
+        :param web: Groups that contain a web field value
+        :type web: bool, optional
         :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
@@ -604,6 +606,7 @@ class Client(object):
         if regex != None: params['regex'] = regex
         if member != None: params['member'] = member
         if signatory != None: params['signatory'] = signatory
+        if web: params['web'] = web
         params['limit'] = limit
         params['offset'] = offset
 

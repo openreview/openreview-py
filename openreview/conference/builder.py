@@ -504,7 +504,7 @@ class Conference(object):
         notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details, sort = sort))
         if accepted:
             decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*'))
-            accepted_forums = [d.forum for d in decisions if d.content['decision'].startswith('Accept')]
+            accepted_forums = [d.forum for d in decisions if 'Accept' in d.content['decision']]
             accepted_notes = [n for n in notes if n.id in accepted_forums]
             return accepted_notes
         return notes
