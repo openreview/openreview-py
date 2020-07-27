@@ -77,7 +77,7 @@ def get_conference_builder(client, request_form_id, support_user):
     if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
         builder.has_area_chairs(True)
 
-    double_blind = (note.content.get('Author and Reviewer Anonymity', None) == 'Double-blind')
+    double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
     public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
 
@@ -88,6 +88,16 @@ def get_conference_builder(client, request_form_id, support_user):
         submission_additional_options = json.loads(submission_additional_options.strip())
 
     submission_remove_options = note.content.get('remove_submission_options', [])
+    withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
+    email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')
+    desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
+    
+    # Authors can not be anonymized only if venue is double-blind
+    withdrawn_submission_author_anonymous = False
+    desk_rejected_submission_author_anonymous = False
+    if double_blind:
+        withdrawn_submission_author_anonymous = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
+        desk_rejected_submission_author_anonymous = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
     create_review_invitation = (not double_blind) and note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.' and note.content.get('make_reviews_public', None)
@@ -101,8 +111,12 @@ def get_conference_builder(client, request_form_id, support_user):
         remove_fields = submission_remove_options,
         email_pcs=False, ## Need to add this setting to the form
         create_groups=(not double_blind),
-        create_review_invitation=create_review_invitation
-        )
+        create_review_invitation=create_review_invitation,
+        withdrawn_submission_public=withdrawn_submission_public,
+        withdrawn_submission_author_anonymous=withdrawn_submission_author_anonymous,
+        email_pcs_on_withdraw=email_pcs_on_withdraw,
+        desk_rejected_submission_public=desk_rejected_submission_public,
+        desk_rejected_submission_author_anonymous=desk_rejected_submission_author_anonymous)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
