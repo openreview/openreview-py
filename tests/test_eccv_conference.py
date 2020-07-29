@@ -237,7 +237,12 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                     "required": True
                 }
             },
-            remove_fields=['keywords'])
+            remove_fields=['keywords'],
+            withdrawn_submission_public=False,
+            withdrawn_submission_author_anonymous=True,
+            email_pcs_on_withdraw=True,
+            desk_rejected_submission_public=False,
+            desk_rejected_submission_author_anonymous=True)
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
@@ -536,6 +541,10 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert len(submissions) == 5
         note = submissions[0]
         now = datetime.datetime.utcnow()
+
+        # check if conference is added in active_venues
+        active_venues = client.get_group('active_venues')
+        assert conference.id in active_venues.members
 
         for submission in submissions:
             id = conference.get_invitation_id('Supplementary_Material', submission.number)
@@ -913,7 +922,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.close_submissions()
-        conference.create_desk_reject_invitations(reveal_submission=False)
+        conference.setup_post_submission_stage()
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 5
@@ -978,7 +987,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_withdraw_submission(self, conference, client, test_client, selenium, request_page):
 
-        conference.create_withdraw_invitations(reveal_submission=False)
+        conference.setup_post_submission_stage()
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 4

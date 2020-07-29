@@ -145,6 +145,11 @@ class TestVenueRequest():
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'Public Commentary': 'Yes, allow members of the public to comment non-anonymously.',
+                'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
+                'withdrawn_submissions_author_anonymity': 'No, authors of withdrawn submissions should not be anonymized.',
+                'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.',
+                'desk_rejected_submissions_author_anonymity': 'No, authors of desk rejected submissions should not be anonymized.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
