@@ -195,7 +195,7 @@ submission = {
         'order': 9,
         'value-file': {
             'fileTypes': ['pdf'],
-            'size': 50000000
+            'size': 50
         },
         'required':True
     }
