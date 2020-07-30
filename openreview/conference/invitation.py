@@ -1413,6 +1413,7 @@ class InvitationBuilder(object):
             content = content.replace("var CONFERENCE_NAME = '';", "var CONFERENCE_NAME = '" + conference.get_id() + "';")
             content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "';")
             content = content.replace("var REVIEWERS_ACCEPTED_ID = '';", "var REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "';")
+            content = content.replace("var REVIEWERS_INVITED_ID = '';", "var REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "';")
             content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
             content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")
             if conference.reduced_load_on_decline and options.get('reviewers_name', '') == 'Reviewers':
