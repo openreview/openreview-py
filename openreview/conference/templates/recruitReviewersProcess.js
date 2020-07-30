@@ -18,6 +18,7 @@ function() {
   invitedGroupP.then(function(results) {
     var invitedGroup = results.groups[0];
     if (hashKey === note.content.key && invitedGroup.members.indexOf(user) > -1) {
+      console.log('User ' + user + ' found in the group of invited users');
       if (note.content.response === 'Yes') {
         console.log('Invitation replied Yes');
         //if a user is in the declined group, remove them from that group and add them to the reviewers group
