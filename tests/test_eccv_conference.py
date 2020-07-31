@@ -399,7 +399,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
 By default, we consider all of these papers to formulate your expertise. Please click on "Exclude" for papers that you do NOT want to be used to represent your expertise.
 
-Your previously authored papers from selected conferences were imported automatically from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process.
+Your previously authored papers from selected conferences were imported automatically from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If you need to upload more DBLP.org papers, you can do so by going to your OpenReview profile edit page and then clicking on 'Add DBLP Papers to Profile'.
 
 Papers not automatically included as part of this import process can be uploaded by using the Upload button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
 
