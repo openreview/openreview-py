@@ -1257,7 +1257,7 @@ class ReviewRatingStage(object):
 
 class CommentStage(object):
 
-    def __init__(self, official_comment_name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors=False):
+    def __init__(self, official_comment_name=None, start_date=None, allow_public_comments=False, anonymous=False, unsubmitted_reviewers=False, reader_selection=False, email_pcs=False, authors=False, public_comment_moderation=False):
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
         self.start_date = start_date
@@ -1267,6 +1267,7 @@ class CommentStage(object):
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
         self.authors = authors
+        self.public_comment_moderation = public_comment_moderation
 
 class MetaReviewStage(object):
 
@@ -1501,8 +1502,8 @@ class ConferenceBuilder(object):
     def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
         self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
 
-    def set_comment_stage(self, name = None, start_date = None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False ):
-        self.comment_stage = CommentStage(name, start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
+    def set_comment_stage(self, name=None, start_date=None, allow_public_comments=False, anonymous=False, unsubmitted_reviewers=False, reader_selection=False, email_pcs=False, authors=False, public_comment_moderation=False):
+        self.comment_stage = CommentStage(name, start_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors, public_comment_moderation)
 
     def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
         self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields, process)

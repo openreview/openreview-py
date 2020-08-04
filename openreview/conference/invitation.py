@@ -226,37 +226,6 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
             }
         )
 
-class CommentInvitation(openreview.Invitation):
-
-    def __init__(self, conference):
-
-        content = invitations.comment.copy()
-
-        with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
-            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
-
-            if conference.use_area_chairs:
-                file_content = file_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
-
-            if conference.comment_stage.email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
-
-            super(CommentInvitation, self).__init__(id = conference.get_invitation_id('Comment'),
-                cdate = tools.datetime_millis(conference.comment_stage.start_date),
-                readers = ['everyone'],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                reply = {
-                    'content': content
-                },
-                process_string = file_content
-            )
-
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
     def __init__(self, conference, reveal_authors, reveal_submission):
@@ -614,6 +583,36 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
                 invitees=invitees,
                 reply=reply,
                 process_string=file_content
+            )
+
+class CommentInvitation(openreview.Invitation):
+
+    def __init__(self, conference):
+
+        content = invitations.comment.copy()
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+
+            if conference.use_area_chairs:
+                file_content = file_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
+
+            if conference.comment_stage.email_pcs:
+                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+
+            super(CommentInvitation, self).__init__(
+                id=conference.get_invitation_id('Comment'),
+                cdate=tools.datetime_millis(conference.comment_stage.start_date),
+                readers=['everyone'],
+                writers=[conference.get_id()],
+                signatures=[conference.get_id()],
+                reply={'content': content},
+                process_string = file_content
             )
 
 class PublicCommentInvitation(openreview.Invitation):
@@ -1164,6 +1163,56 @@ class PaperDecisionInvitation(openreview.Invitation):
             }
         )
 
+class PublicCommentModerationInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+        print('Working on ', conference.get_invitation_id(name='Public_Comment_Moderation', number=note.number))
+
+        reply_dict = {
+            'referentInvitation': conference.get_invitation_id(name='Public_Comment', number=note.number),
+            'content': {
+                'mark_as_spam': {
+                    'description': 'Mark this comment as spam. The comment will be updated to be readable only by conference PCs',
+                    'order': 1,
+                    'required': True,
+                    'value-radio': ['Spam'],
+                    'default': 'Spam'
+                },
+            },
+            'forum': note.forum,
+            'readers': {
+                'description': 'User groups that will be able to read this moderation change.',
+                'values': [conference.get_id(), conference.get_program_chairs_id()]
+            },
+            'signatures': {
+                'description': 'How your identity will be displayed.',
+                'values': [conference.get_program_chairs_id()]
+            },
+            'writers': {
+                'values': [conference.get_id(), conference.get_program_chairs_id()]
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/moderation_process.py')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+            file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", "PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "'")
+
+            super().__init__(
+                id=conference.get_invitation_id(name='Public_Comment_Moderation', number=note.number),
+                cdate=tools.datetime_millis(conference.comment_stage.start_date) if conference.comment_stage.start_date else None,
+                readers=[
+                    conference.get_id(),
+                    conference.get_program_chairs_id()],
+                invitees=[
+                    conference.get_id(),
+                    conference.get_program_chairs_id()],
+                writers=[conference.get_id()],
+                signatures=[conference.get_id()],
+                reply=reply_dict,
+                process_string=file_content
+            )
+
 class InvitationBuilder(object):
 
     def __init__(self, client):
@@ -1225,7 +1274,10 @@ class InvitationBuilder(object):
 
         if conference.comment_stage.allow_public_comments:
             for note in tqdm(notes, total=len(notes)):
-                invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
+                comment_invitation = self.client.post_invitation(PublicCommentInvitation(conference, note))
+                if conference.comment_stage.public_comment_moderation:
+                    self.client.post_invitation(PublicCommentModerationInvitation(conference, note))
+                invitations.append(comment_invitation)
 
         return invitations
 
