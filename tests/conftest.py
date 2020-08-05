@@ -39,9 +39,7 @@ def helpers():
 
 @pytest.fixture(scope="session")
 def client():
-    requests.put('http://localhost:3000/reset/openreview.net', json = {'password': '1234'})
-    client = openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
-    yield client
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
 
 @pytest.fixture(scope="session")
 def test_client():
