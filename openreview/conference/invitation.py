@@ -620,22 +620,19 @@ class PublicCommentInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         comment_stage = conference.comment_stage
-        noninvitees = conference.get_committee(number=note.number, with_authors=True)
-        noninvitees.remove(conference.get_id())
-        noninvitees.remove(conference.get_program_chairs_id())
 
         super(PublicCommentInvitation, self).__init__(id = conference.get_invitation_id('Public_Comment', note.number),
             super = conference.get_invitation_id('Comment'),
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = ['everyone', conference.get_id()],
-            noninvitees = noninvitees,
+            noninvitees = conference.get_committee(number = note.number, with_authors = True),
             reply = {
                 'forum': note.id,
                 'replyto': None,
                 'readers': {
                     'description': 'User groups that will be able to read this comment.',
-                    'values-copied': ['everyone', conference.get_id(), conference.get_program_chairs_id()]
+                    'values': ['everyone']
                 },
                 'writers': {
                     'values-copied': [

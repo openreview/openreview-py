@@ -1001,9 +1001,9 @@ class TestDoubleBlindConference():
 
         updated_public_comment = client.get_note(public_comment.id)
         assert updated_public_comment
-        assert updated_public_comment.readers = [conference.get_program_chairs_id(), public_comment.signatures[0]]
-        assert updated_public_comment.signatures = [conference.get_program_chairs_id()]
-        assert updated_public_comment.invitation = conference.get_invitation_id('Spam_Public_Comment')
+        assert updated_public_comment.readers == [conference.get_program_chairs_id(), public_comment.signatures[0]]
+        assert updated_public_comment.signatures == [conference.get_program_chairs_id()]
+        assert updated_public_comment.invitation == conference.get_invitation_id('Spam_Public_Comment')
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
