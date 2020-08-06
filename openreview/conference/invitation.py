@@ -625,7 +625,7 @@ class PublicCommentInvitation(openreview.Invitation):
             super = conference.get_invitation_id('Comment'),
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = ['everyone', conference.get_id()],
+            invitees = ['everyone'],
             noninvitees = conference.get_committee(number = note.number, with_authors = True),
             reply = {
                 'forum': note.id,
