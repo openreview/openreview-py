@@ -945,6 +945,66 @@ class TestDoubleBlindConference():
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
 
+    def test_public_comment_moderation(self, client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind=True, public=True)
+        conference = builder.get_result()
+
+        conference.set_comment_stage(openreview.CommentStage(
+            authors=True,
+            allow_public_comments=True,
+            public_comment_moderation=True))
+
+        helpers.create_user('public_comment_user@mail.com', 'Publiccomment', 'User')
+
+        notes = client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[0]
+        assert submission
+
+        public_comment = client.post_note(openreview.Note(
+            invitation=conference.get_invitation_id(name='Public_Comment', number=submission.number),
+            readers=['everyone'],
+            writers=['~Publiccomment_User1', conference.get_id()],
+            signatures=['~Publiccomment_User1'],
+            forum=submission.forum,
+            replyto=submission.forum,
+            content={
+                'title': 'Spam Comment',
+                'comment': 'this is a spam comment'
+            }
+        ))
+        assert public_comment
+
+        moderation_revision = client.post_note(openreview.Note(
+            forum=submission.forum,
+            referent=public_comment.id,
+            invitation=conference.get_invitation_id(name='Public_Comment_Moderation', number=submission.number),
+            content={
+                'title': public_comment.content['title'],
+                'comment': public_comment.content['comment']
+            },
+            signatures=[conference.get_program_chairs_id()],
+            readers=[
+                conference.get_program_chairs_id(),
+                public_comment.signatures[0]
+            ],
+            writers=[
+                conference.get_id(),
+                conference.get_program_chairs_id()
+            ]
+        ))
+        assert moderation_revision
+
+        updated_public_comment = client.get_note(public_comment.id)
+        assert updated_public_comment
+        assert updated_public_comment.readers = [conference.get_program_chairs_id(), public_comment.signatures[0]]
+        assert updated_public_comment.signatures = [conference.get_program_chairs_id()]
+        assert updated_public_comment.invitation = conference.get_invitation_id('Spam_Public_Comment')
+
     def test_close_comments(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)

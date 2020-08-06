@@ -620,19 +620,22 @@ class PublicCommentInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         comment_stage = conference.comment_stage
+        noninvitees = conference.get_committee(number=note.number, with_authors=True)
+        noninvitees.remove(conference.get_id())
+        noninvitees.remove(conference.get_program_chairs_id())
 
         super(PublicCommentInvitation, self).__init__(id = conference.get_invitation_id('Public_Comment', note.number),
             super = conference.get_invitation_id('Comment'),
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = ['everyone'],
-            noninvitees = conference.get_committee(number = note.number, with_authors = True),
+            invitees = ['everyone', conference.get_id()],
+            noninvitees = noninvitees,
             reply = {
                 'forum': note.id,
                 'replyto': None,
                 'readers': {
                     'description': 'User groups that will be able to read this comment.',
-                    'values': ['everyone']
+                    'values-copied': ['everyone', conference.get_id(), conference.get_program_chairs_id()]
                 },
                 'writers': {
                     'values-copied': [
@@ -708,6 +711,47 @@ class OfficialCommentInvitation(openreview.Invitation):
                 },
                 'signatures': {
                     'values-regex': '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name),
+                    'description': 'How your identity will be displayed.'
+                }
+            }
+        )
+
+class SpamPublicCommentInvitation(openreview.Invitation):
+    
+    def __init__(self, conference):
+        
+        super().__init__(
+            id=conference.get_invitation_id('Spam_Public_Comment'),
+            invitees=['~Super_User1'],
+            readers=[conference.get_id()],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            multiReply=True,
+            reply={
+                'content': {
+                    'title': {
+                        "order": 0,
+                        "value-regex": ".*",
+                        "description": "Brief summary of your comment.",
+                        "required": True
+                    },
+                    'comment': {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,5000}",
+                        "description": "Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+                        "required": True,
+                        "markdown": True
+                    }
+                },
+                "readers": {
+                    'description': 'User groups that will be able to read this moderation action.',
+                    'values-regex': conference.get_program_chairs_id() + '|~.*'
+                },
+                'writers': {
+                    'values': [conference.get_program_chairs_id()]
+                },
+                'signatures': {
+                    'values-regex': conference.get_program_chairs_id() + '|~.*',
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -1166,23 +1210,27 @@ class PaperDecisionInvitation(openreview.Invitation):
 class PublicCommentModerationInvitation(openreview.Invitation):
 
     def __init__(self, conference, note):
-        print('Working on ', conference.get_invitation_id(name='Public_Comment_Moderation', number=note.number))
 
         reply_dict = {
             'referentInvitation': conference.get_invitation_id(name='Public_Comment', number=note.number),
             'content': {
-                'mark_as_spam': {
-                    'description': 'Mark this comment as spam. The comment will be updated to be readable only by conference PCs',
-                    'order': 1,
-                    'required': True,
-                    'value-radio': ['Spam'],
-                    'default': 'Spam'
+                'title': {
+                    'order': 0,
+                    'value-regex': '.{1,500}',
+                    'description': 'Brief summary of your comment.',
+                    'required': True
                 },
+                'comment': {
+                    'order': 1,
+                    'value-regex': '[\\S\\s]{1,5000}',
+                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                    'required': True,
+                }
             },
             'forum': note.forum,
             'readers': {
                 'description': 'User groups that will be able to read this moderation change.',
-                'values': [conference.get_id(), conference.get_program_chairs_id()]
+                'values-regex': conference.get_program_chairs_id() + '|~.*'
             },
             'signatures': {
                 'description': 'How your identity will be displayed.',
@@ -1208,7 +1256,7 @@ class PublicCommentModerationInvitation(openreview.Invitation):
                     conference.get_id(),
                     conference.get_program_chairs_id()],
                 writers=[conference.get_id()],
-                signatures=[conference.get_id()],
+                signatures=['~Super_User1'],
                 reply=reply_dict,
                 process_string=file_content
             )
@@ -1244,7 +1292,6 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(SubmissionInvitation(conference))
 
-
     def set_blind_submission_invitation(self, conference, hide_fields):
 
         invitation = BlindSubmissionsInvitation(conference = conference, hide_fields=hide_fields)
@@ -1273,6 +1320,7 @@ class InvitationBuilder(object):
             invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
 
         if conference.comment_stage.allow_public_comments:
+            self.client.post_invitation(SpamPublicCommentInvitation(conference))
             for note in tqdm(notes, total=len(notes)):
                 comment_invitation = self.client.post_invitation(PublicCommentInvitation(conference, note))
                 if conference.comment_stage.public_comment_moderation:
