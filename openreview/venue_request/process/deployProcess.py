@@ -159,7 +159,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values' : readers
                 }
             },
-            signatures = [SUPPORT_GROUP]
+            signatures = ['~Super_User1']
         ))
 
     review_stage_content = None
@@ -242,7 +242,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             },
             'content': review_stage_content
         },
-        signatures = [SUPPORT_GROUP]
+        signatures = ['~Super_User1']
     ))
 
     if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
@@ -258,7 +258,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values' : readers
                 }
             },
-            signatures = [SUPPORT_GROUP]
+            signatures = ['~Super_User1']
         ))
 
     # revision_stage_invitation
@@ -274,7 +274,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'values' : readers
             }
         },
-        signatures=[SUPPORT_GROUP]
+        signatures=['~Super_User1']
     ))
 
     # decision_stage_invitation
@@ -290,5 +290,5 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'values' : readers
             }
         },
-        signatures=[SUPPORT_GROUP]
+        signatures=['~Super_User1']
     ))

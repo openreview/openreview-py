@@ -842,7 +842,7 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
 
     return iterget(client.get_invitations, **params)
 
-def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
+def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None, web = None):
     """
     Returns an iterator over groups filtered by the provided parameters ignoring API limit.
 
@@ -858,6 +858,8 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
     :type host: str, optional
     :param signatory: a Group ID. If provided, returns Groups whose signatory field contains the given Group ID.
     :type signatory: str, optional
+    :param web: Groups that contain a web field value
+    :type web: bool, optional
 
     :return: Iterator over Groups filtered by the provided parameters
     :rtype: iterget
@@ -874,6 +876,8 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
         params['host'] = host
     if signatory != None:
         params['signatory'] = signatory
+    if web != None:
+        params['web'] = web
 
     return iterget(client.get_groups, **params)
 
