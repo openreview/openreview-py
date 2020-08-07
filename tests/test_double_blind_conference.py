@@ -998,6 +998,7 @@ class TestDoubleBlindConference():
             ]
         ))
         assert moderation_revision
+        time.sleep(1)
 
         updated_public_comment = client.get_note(public_comment.id)
         assert updated_public_comment
