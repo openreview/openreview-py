@@ -986,8 +986,7 @@ class TestDoubleBlindConference():
             content={'mark_as_spam': 'Yes'},
             signatures=[conference.get_program_chairs_id()],
             readers=[
-                conference.get_program_chairs_id(),
-                public_comment.signatures[0]
+                conference.get_program_chairs_id()
             ],
             writers=[
                 conference.get_id(),
