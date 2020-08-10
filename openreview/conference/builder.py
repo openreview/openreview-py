@@ -896,7 +896,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = [], remind_only_input_list=False):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -965,10 +965,13 @@ class Conference(object):
 
         if remind:
             remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
-            print ('Sending reminders for recruitment invitations')
+            if remind_only_input_list and invitees:
+                remind_reviewers = list(set(invitees) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
+
+            print ('Sending reminders for recruitment invitations to', len(remind_reviewers))
             for reviewer_id in tqdm(remind_reviewers):
                 reviewer_name = 'invitee'
-                if reviewer_id.startswith('~') :
+                if reviewer_id.startswith('~'):
                     reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
                 elif (reviewer_id in invitees) and invitee_names:
                     reviewer_name = invitee_names[invitees.index(reviewer_id)]
@@ -980,20 +983,20 @@ class Conference(object):
                     'Reminder: ' + recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False)
-
-        print ('Sending recruitment invitations')
-        for index, email in enumerate(tqdm(invitees)):
-            if email not in set(reviewers_invited_group.members):
-                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name:
-                    name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-                tools.recruit_reviewer(self.client, email, name,
-                    hash_seed,
-                    invitation.id,
-                    recruit_message,
-                    recruit_message_subj,
-                    reviewers_invited_id,
-                    verbose = False)
+        else:
+            print ('Sending new recruitment invitations')
+            for index, email in enumerate(tqdm(invitees)):
+                if email not in set(reviewers_invited_group.members):
+                    name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
+                    if not name:
+                        name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
+                    tools.recruit_reviewer(self.client, email, name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
 
