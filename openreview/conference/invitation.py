@@ -719,7 +719,7 @@ class SpamPublicCommentInvitation(openreview.Invitation):
         
         super().__init__(
             id=conference.get_invitation_id('Spam_Public_Comment'),
-            invitees=['~Super_User1'],
+            invitees=[conference.get_program_chairs_id()],
             readers=[conference.get_id()],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
@@ -727,17 +727,22 @@ class SpamPublicCommentInvitation(openreview.Invitation):
             reply={
                 'content': {
                     'title': {
-                        "order": 0,
+                        "order": 1,
                         "value-regex": ".*",
                         "description": "Brief summary of your comment.",
                         "required": True
                     },
                     'comment': {
-                        "order": 1,
+                        "order": 2,
                         "value-regex": "[\\S\\s]{1,5000}",
                         "description": "Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
                         "required": True,
                         "markdown": True
+                    },
+                    'mark_as_spam': {
+                        'order': 0,
+                        'value-checkbox': 'Yes',
+                        'required': True
                     }
                 },
                 "readers": {
@@ -1211,23 +1216,17 @@ class PublicCommentModerationInvitation(openreview.Invitation):
         reply_dict = {
             'referentInvitation': conference.get_invitation_id(name='Public_Comment', number=note.number),
             'content': {
-                'title': {
+                'mark_as_spam': {
                     'order': 0,
-                    'value-regex': '.{1,500}',
-                    'description': 'Brief summary of your comment.',
+                    'value-checkbox': 'Yes',
                     'required': True
-                },
-                'comment': {
-                    'order': 1,
-                    'value-regex': '[\\S\\s]{1,5000}',
-                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                    'required': True,
                 }
             },
             'forum': note.forum,
             'readers': {
                 'description': 'User groups that will be able to read this moderation change.',
-                'values-regex': conference.get_program_chairs_id() + '|~.*'
+                'values-regex': conference.get_program_chairs_id()
+                #  + '|~.*'
             },
             'signatures': {
                 'description': 'How your identity will be displayed.',

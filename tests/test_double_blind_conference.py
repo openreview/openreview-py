@@ -983,10 +983,7 @@ class TestDoubleBlindConference():
             forum=submission.forum,
             referent=public_comment.id,
             invitation=conference.get_invitation_id(name='Public_Comment_Moderation', number=submission.number),
-            content={
-                'title': public_comment.content['title'],
-                'comment': public_comment.content['comment']
-            },
+            content={'mark_as_spam': 'Yes'},
             signatures=[conference.get_program_chairs_id()],
             readers=[
                 conference.get_program_chairs_id(),
