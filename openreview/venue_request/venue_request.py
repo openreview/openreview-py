@@ -541,7 +541,7 @@ class VenueRequest():
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
                 'value-radio': [
-                    'Yes, withdrawn submissions should be made public.', 
+                    'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
                 'order': 21
@@ -549,7 +549,7 @@ class VenueRequest():
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Would you like to make authors of withdrawn papers anonymous? Note: Authors can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of withdrawn submissions should be anonymized.', 
+                    'Yes, authors of withdrawn submissions should be anonymized.',
                     'No, authors of withdrawn submissions should not be anonymized.'],
                 'default': 'No, authors of withdrawn submissions should not be anonymized.',
                 'order': 22
@@ -566,7 +566,7 @@ class VenueRequest():
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
                 'value-radio': [
-                    'Yes, desk rejected submissions should be made public.', 
+                    'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
                 'order': 24
@@ -574,7 +574,7 @@ class VenueRequest():
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Would you like to make authors of desk rejected papers anonymous?  Note: Authors can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of desk rejected submissions should be anonymized.', 
+                    'Yes, authors of desk rejected submissions should be anonymized.',
                     'No, authors of desk rejected submissions should not be anonymized.'],
                 'default': 'No, authors of desk rejected submissions should not be anonymized.',
                 'order': 25
@@ -701,7 +701,7 @@ class VenueRequest():
                         'values': [self.support_group.id]
                     },
                     'writers': {
-                        'values-regex': '~.*'
+                        'values': [self.support_group.id]
                     },
                     'signatures': {
                         'values': [self.support_group.id]
