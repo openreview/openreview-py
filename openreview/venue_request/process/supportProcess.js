@@ -3,7 +3,7 @@ function(){
     var GROUP_PREFIX = '';
     var SUPPORT_GROUP = GROUP_PREFIX + '/Support';
     var baseUrl = 'https://openreview.net'
-    
+
     var adminMessage = 'A request for service has been submitted. Check it here: ' + baseUrl + '/forum?id=' + note.forum + '\n'
 
     for (key in note.content) {
@@ -47,10 +47,23 @@ function(){
       signatures: [GROUP_PREFIX]
     }
 
+    var postSubmissionInvitation = {
+      id: SUPPORT_GROUP + '/-/Request' + note.number + '/Post_Submission',
+      super: SUPPORT_GROUP + '/-/Post_Submission',
+      reply: {
+        referent: note.forum,
+        forum: note.forum
+      },
+      writers: [SUPPORT_GROUP],
+      signatures: [GROUP_PREFIX]
+    }
+
+
     or3client.or3request(or3client.mailUrl, openreviewMailPayload, 'POST', token)
     .then(result => or3client.or3request(or3client.mailUrl, programchairMailPayload, 'POST', token))
     .then(result => or3client.or3request(or3client.inviteUrl, commentInvitation, 'POST', token))
     .then(result => or3client.or3request(or3client.inviteUrl, deployInvitation, 'POST', token))
+    .then(result => or3client.or3request(or3client.inviteUrl, postSubmissionInvitation, 'POST', token))
     .then(result => done())
     .catch(error => done(error));
 

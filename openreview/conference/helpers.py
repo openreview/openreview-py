@@ -2,12 +2,12 @@ import openreview
 import datetime
 import json
 
-def get_conference(client, request_form_id, support_user=None):
+def get_conference(client, request_form_id, support_user='OpenReview.net/Support'):
 
     builder = get_conference_builder(client, request_form_id, support_user)
     return builder.get_result()
 
-def get_conference_builder(client, request_form_id, support_user):
+def get_conference_builder(client, request_form_id, support_user='OpenReview.net/Support'):
 
     note = client.get_note(request_form_id)
 
@@ -91,7 +91,7 @@ def get_conference_builder(client, request_form_id, support_user):
     withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
     email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')
     desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
-    
+
     # Authors can not be anonymized only if venue is double-blind
     withdrawn_submission_author_anonymous = False
     desk_rejected_submission_author_anonymous = False
@@ -307,7 +307,7 @@ def get_submission_revision_stage(client, request_forum):
         only_accepted = True
 
     return openreview.SubmissionRevisionStage(
-        start_date=submission_revision_start_date, 
+        start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,

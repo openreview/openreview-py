@@ -417,6 +417,7 @@ class VenueRequest():
         self.setup_request_form()
         self.setup_venue_comments()
         self.setup_venue_deployment()
+        self.setup_venue_post_submission()
         self.setup_venue_recruitment()
 
         # Setup for venue stages
@@ -707,6 +708,46 @@ class VenueRequest():
                         'values': [self.support_group.id]
                     },
                     'content': deploy_content
+                }
+            ))
+
+    def setup_venue_post_submission(self):
+
+        post_submission_content = {
+            'force': {
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+                'description': 'Force to create the blind submission if conference if double-blind'
+            },
+            'hide_fields': {
+                'values-regex': '.*',
+                'required': False,
+                'description': 'Comma separated values of submision fields to be hidden, author names are already hidden.'
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/postSubmissionProcess.py'), 'r') as f:
+            file_content = f.read()
+
+            self.post_submission_content = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Post_Submission',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': [self.support_group.id]
+                    },
+                    'writers': {
+                        'values': [self.support_group.id]
+                    },
+                    'signatures': {
+                        'values': [self.support_group.id]
+                    },
+                    'content': post_submission_content
                 }
             ))
 
