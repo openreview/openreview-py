@@ -1021,7 +1021,7 @@ class TestDoubleBlindConference():
 
         updated_public_comment = client.get_note(public_comment.id)
         assert updated_public_comment
-        assert updated_public_comment.readers == [public_comment.signatures[0]]
+        assert updated_public_comment.readers == ['everyone']
         assert updated_public_comment.signatures == [public_comment.signatures[0]]
         assert updated_public_comment.invitation == public_comment.invitation
         assert updated_public_comment.content
