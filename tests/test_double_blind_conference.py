@@ -1002,6 +1002,32 @@ class TestDoubleBlindConference():
         assert updated_public_comment.signatures == [conference.get_program_chairs_id()]
         assert updated_public_comment.invitation == conference.get_invitation_id('Spam_Public_Comment')
 
+        undo_moderation_revision = client.post_note(openreview.Note(
+            forum=submission.forum,
+            referent=public_comment.id,
+            invitation=conference.get_invitation_id(name='Undo_Moderation', number=submission.number),
+            content={'mark_as_spam': 'No'},
+            signatures=[conference.get_program_chairs_id()],
+            readers=[
+                conference.get_program_chairs_id()
+            ],
+            writers=[
+                conference.get_id(),
+                conference.get_program_chairs_id()
+            ]
+        ))
+        assert undo_moderation_revision
+        time.sleep(1)
+
+        updated_public_comment = client.get_note(public_comment.id)
+        assert updated_public_comment
+        assert updated_public_comment.readers == [public_comment.signatures[0]]
+        assert updated_public_comment.signatures == [public_comment.signatures[0]]
+        assert updated_public_comment.invitation == public_comment.invitation
+        assert updated_public_comment.content
+        assert updated_public_comment.content.get('title') == public_comment.content['title']
+        assert updated_public_comment.content.get('comment') == public_comment.content['comment']
+
     def test_close_comments(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)

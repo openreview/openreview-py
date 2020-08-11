@@ -641,7 +641,8 @@ class PublicCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': '~.*|\\(anonymous\\)' if comment_stage.anonymous else '~.*',
+                    # 'values-regex': '~.*|\\(anonymous\\)' if comment_stage.anonymous else '~.*',
+                    'values-regex': conference.get_program_chairs_id() + ('|~.*|\\(anonymous\\)' if comment_stage.anonymous else '|~.*'),
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -741,7 +742,8 @@ class SpamPublicCommentInvitation(openreview.Invitation):
                     },
                     'mark_as_spam': {
                         'order': 0,
-                        'value-checkbox': 'Yes',
+                        'value-radio': ['Yes', 'No'],
+                        'default': 'Yes',
                         'required': True
                     }
                 },
@@ -1218,7 +1220,8 @@ class PublicCommentModerationInvitation(openreview.Invitation):
             'content': {
                 'mark_as_spam': {
                     'order': 0,
-                    'value-checkbox': 'Yes',
+                    'value-radio': ['Yes', 'No'],
+                    'default': 'Yes',
                     'required': True
                 }
             },
@@ -1243,6 +1246,53 @@ class PublicCommentModerationInvitation(openreview.Invitation):
 
             super().__init__(
                 id=conference.get_invitation_id(name='Public_Comment_Moderation', number=note.number),
+                cdate=tools.datetime_millis(conference.comment_stage.start_date) if conference.comment_stage.start_date else None,
+                readers=[
+                    conference.get_id(),
+                    conference.get_program_chairs_id()],
+                invitees=[
+                    conference.get_id(),
+                    conference.get_program_chairs_id()],
+                writers=[conference.get_id()],
+                signatures=['~Super_User1'],
+                reply=reply_dict,
+                process_string=file_content
+            )
+
+class UndoModerationInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        reply_dict = {
+            'referentInvitation': conference.get_invitation_id(name='Spam_Public_Comment'),
+            'content': {
+                'mark_as_spam': {
+                    'order': 0,
+                    'value-radio': ['Yes', 'No'],
+                    'default': 'Yes',
+                    'required': True
+                }
+            },
+            'forum': note.forum,
+            'readers': {
+                'description': 'User groups that will be able to read this moderation change.',
+                'values-regex': conference.get_program_chairs_id()
+            },
+            'signatures': {
+                'description': 'How your identity will be displayed.',
+                'values': [conference.get_program_chairs_id()]
+            },
+            'writers': {
+                'values': [conference.get_id(), conference.get_program_chairs_id()]
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/undo_moderation_process.py')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+
+            super().__init__(
+                id=conference.get_invitation_id(name='Undo_Comment_Moderation', number=note.number),
                 cdate=tools.datetime_millis(conference.comment_stage.start_date) if conference.comment_stage.start_date else None,
                 readers=[
                     conference.get_id(),
@@ -1320,6 +1370,7 @@ class InvitationBuilder(object):
                 comment_invitation = self.client.post_invitation(PublicCommentInvitation(conference, note))
                 if conference.comment_stage.public_comment_moderation:
                     self.client.post_invitation(PublicCommentModerationInvitation(conference, note))
+                    self.client.post_invitation(UndoModerationInvitation( conference, note))
                 invitations.append(comment_invitation)
 
         return invitations
