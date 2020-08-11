@@ -1005,7 +1005,7 @@ class TestDoubleBlindConference():
         undo_moderation_revision = client.post_note(openreview.Note(
             forum=submission.forum,
             referent=public_comment.id,
-            invitation=conference.get_invitation_id(name='Undo_Moderation', number=submission.number),
+            invitation=conference.get_invitation_id(name='Undo_Comment_Moderation', number=submission.number),
             content={'mark_as_spam': 'No'},
             signatures=[conference.get_program_chairs_id()],
             readers=[
