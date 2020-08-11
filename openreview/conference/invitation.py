@@ -1226,7 +1226,6 @@ class PublicCommentModerationInvitation(openreview.Invitation):
             'readers': {
                 'description': 'User groups that will be able to read this moderation change.',
                 'values-regex': conference.get_program_chairs_id()
-                #  + '|~.*'
             },
             'signatures': {
                 'description': 'How your identity will be displayed.',
