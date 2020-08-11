@@ -499,11 +499,10 @@ class VenueRequest():
             'Paper Matching': {
                 'description': 'Choose options for assigning papers to reviewers. If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type.',
                 'values-checkbox': [
-                    'Organizers will assign papers manually',
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores',
                     'OpenReview Affinity',
-                    'TPMS'
+                    'Conflict Detection'
                 ],
                 'order': 17,
                 'required': True,
