@@ -338,7 +338,7 @@ class VenueStages():
                 'default': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'order': 32
             },
-            'release_decision_to_reviewers': {
+            'release_decisions_to_reviewers': {
                 'description': 'Should the decisions be immediately revealed to paper\'s reviewers? Default is "No, decisions should not be immediately revealed to the paper\'s reviewers"',
                 'value-radio': [
                     'Yes, decisions should be immediately revealed to the paper\'s reviewers',
@@ -348,7 +348,7 @@ class VenueStages():
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'order': 33
             },
-            'notify_to_authors': {
+            'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
                 'value-radio': [
                     'Yes, send an email notification to the authors',
@@ -548,11 +548,11 @@ class VenueRequest():
                 'order': 21
             },
             'withdrawn_submissions_author_anonymity': {
-                'description': 'Would you like to make authors of withdrawn papers anonymous? Note: Authors can only be anonymized for Double blind submissions.',
+                'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of withdrawn submissions should be anonymized.',
-                    'No, authors of withdrawn submissions should not be anonymized.'],
-                'default': 'No, authors of withdrawn submissions should not be anonymized.',
+                    'Yes, author identities of withdrawn submissions should be revealed.',
+                    'No, author identities of withdrawn submissions should not be revealed.'],
+                'default': 'No, author identities of withdrawn submissions should not be revealed.',
                 'order': 22
             },
             'email_pcs_for_withdrawn_submissions': {
@@ -573,11 +573,11 @@ class VenueRequest():
                 'order': 24
             },
             'desk_rejected_submissions_author_anonymity': {
-                'description': 'Would you like to make authors of desk rejected papers anonymous?  Note: Authors can only be anonymized for Double blind submissions.',
+                'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of desk rejected submissions should be anonymized.',
-                    'No, authors of desk rejected submissions should not be anonymized.'],
-                'default': 'No, authors of desk rejected submissions should not be anonymized.',
+                    'Yes, author identities of desk rejected submissions should be revealed.',
+                    'No, author identities of desk rejected submissions should not be revealed.'],
+                'default': 'No, author identities of desk rejected submissions should not be revealed.',
                 'order': 25
             },
             'Expected Submissions': {
