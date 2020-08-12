@@ -717,7 +717,7 @@ class VenueRequest():
             'force': {
                 'value-radio': ['Yes', 'No'],
                 'required': True,
-                'description': 'Force to create the blind submission if conference if double-blind'
+                'description': 'Force creating blind submissions if conference is double blind'
             },
             'hide_fields': {
                 'values-regex': '.*',
