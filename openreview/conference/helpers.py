@@ -100,15 +100,15 @@ def get_conference_builder(client, request_form_id, support_user):
         desk_rejected_submission_author_anonymous = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
-    create_review_invitation = (not double_blind) and note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.' and note.content.get('make_reviews_public', None)
+    create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
 
     builder.set_submission_stage(
-        double_blind = double_blind,
-        public = public,
-        start_date = submission_start_date,
-        due_date = submission_due_date,
-        additional_fields = submission_additional_options,
-        remove_fields = submission_remove_options,
+        double_blind=double_blind,
+        public=public,
+        start_date=submission_start_date,
+        due_date=submission_due_date,
+        additional_fields=submission_additional_options,
+        remove_fields=submission_remove_options,
         email_pcs=False, ## Need to add this setting to the form
         create_groups=(not double_blind),
         create_review_invitation=create_review_invitation,
@@ -120,10 +120,10 @@ def get_conference_builder(client, request_form_id, support_user):
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
-        builder.set_expertise_selection_stage(due_date = submission_due_date)
+        builder.set_expertise_selection_stage(due_date=submission_due_date)
 
-    if 'Organizers will assign papers manually' in paper_matching_options:
-        builder.enable_reviewer_reassignment(enable = True)
+    if not paper_matching_options or 'Organizers will assign papers manually' in paper_matching_options:
+        builder.enable_reviewer_reassignment(enable=True)
 
     ## Contact Emails is deprecated
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
