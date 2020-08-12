@@ -66,7 +66,7 @@ class TestVenueRequest():
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
             signatures=[support_group_id],
-            writers=['~Support_User1']
+            writers=[support_group_id]
         ))
 
         # Return venue details as a dict
@@ -179,7 +179,7 @@ class TestVenueRequest():
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
             signatures=[support_group_id],
-            writers=['~Support_User1']
+            writers=[support_group_id]
         ))
         assert deploy_note
 
