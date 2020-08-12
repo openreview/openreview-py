@@ -40,12 +40,13 @@ var instructionDetails = [
   as well as a web interface for browsing, viewing statistics, and modifying the resulting assignments. \
   The OpenReview Matching System supports multiple optimization objectives and arbitrary numerical inputs as features for the match. \
   If you would like to use the OpenReview Paper Matching System for your venue, please indicate which features you would like to use in the form below. \
+  If you do not wish to use the OpenReview Paper Matching System, you can indicate that by deselecting all the options for the field "Paper Matching" in the request form. \
   Our most commonly used features are described in the following list: \
   <ul>\
-  <li><strong>Reviewer Bid Scores</strong>: Reviewers indicate their preference to review papers, which are then converted to scores.</li>\
+  <li><strong>Reviewer Bid Scores</strong>: Reviewers indicate their preference to review papers via bids, which are then converted to scores.</li>\
   <li><strong>Reviewer Recommendation Scores</strong>: Reviewers, Area Chairs, and/or Program Chairs recommend specific reviewers to review papers. These recommendations are then converted to scores according to your specifications.</li>\
-  <li><strong>OpenReview Affinity</strong>: our in-house paper-reviewer affinity model based on TF-IDF vector similarity. </li>\
-  <li><strong>Conflict Detection</strong>: on-house paper-reviewer conflict detection based on OpenReview profiles of reviewers.</li>\
+  <li><strong>OpenReview Affinity</strong>: Our in-house paper-reviewer affinity model based on TF-IDF vector similarity. </li>\
+  <li><strong>Conflict Detection</strong>: Paper-reviewer conflict detection based on OpenReview profiles of paper authors and reviewers. </li>\
   </ul>\
   </p>'},
   {heading: 'Public vs. Private content', body: '<p class="dark">\
