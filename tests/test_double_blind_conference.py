@@ -1231,7 +1231,7 @@ class TestDoubleBlindConference():
         assert 'reviewer2@mail.com' in recipients
 
         messages = client.get_messages(subject = '[AKBC 2019] A review has been received on Paper number: 1, Paper title: "New paper title"')
-        assert len(messages) == 3
+        assert len(messages) == 4
         recipients = [m['content']['to'] for m in messages]
         assert 'pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients
