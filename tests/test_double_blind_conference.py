@@ -960,7 +960,7 @@ class TestDoubleBlindConference():
             allow_public_comments=True,
             public_comment_moderation=True))
 
-        conference.set_program_chairs(emails = ['akbc_pc_22@mail.com'])
+        conference.set_program_chairs(emails=['akbc_pc_22@mail.com'])
         pc_client = helpers.create_user('akbc_pc_22@mail.com', 'AKBC_user', 'Pc')
 
         author_client = helpers.create_user('public_comment_user@mail.com', 'Publiccomment', 'User')
@@ -972,7 +972,7 @@ class TestDoubleBlindConference():
         public_comment = author_client.post_note(openreview.Note(
             invitation=conference.get_invitation_id(name='Public_Comment', number=submission.number),
             readers=['everyone'],
-            writers=['~Publiccomment_User1', conference.get_id()],
+            writers=['~Publiccomment_User1'],
             signatures=['~Publiccomment_User1'],
             forum=submission.forum,
             replyto=submission.forum,
@@ -1053,6 +1053,9 @@ class TestDoubleBlindConference():
         assert re.search(
             'Moderation to your comment .* has been undone.',
             messages[0]['content']['text'])
+
+        pc_group = client.get_group(conference.get_program_chairs_id())
+        client.remove_members_from_group(group=pc_group, members=['akbc_pc_22@mail.com'])
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
@@ -1231,7 +1234,7 @@ class TestDoubleBlindConference():
         assert 'reviewer2@mail.com' in recipients
 
         messages = client.get_messages(subject = '[AKBC 2019] A review has been received on Paper number: 1, Paper title: "New paper title"')
-        assert len(messages) == 4
+        assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'pc@mail.com' in recipients
         assert 'pc2@mail.com' in recipients

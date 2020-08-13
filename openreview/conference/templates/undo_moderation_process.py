@@ -30,7 +30,7 @@ def process(client, note, invitation):
 
         comment_note.readers = ['everyone']
         comment_note.signatures = [comment_author]
-        comment_note.writers = [CONFERENCE_ID, comment_author]
+        comment_note.writers = [comment_author]
         comment_note.invitation = comment_invitation_id
         comment_note.content = {
             'title': comment_note.content['title'],

@@ -636,7 +636,6 @@ class PublicCommentInvitation(openreview.Invitation):
                 },
                 'writers': {
                     'values-copied': [
-                        conference.get_id(),
                         '{signatures}'
                     ]
                 },
@@ -714,7 +713,7 @@ class OfficialCommentInvitation(openreview.Invitation):
             }
         )
 
-class SpamPublicCommentInvitation(openreview.Invitation):
+class ModeratedCommentInvitation(openreview.Invitation):
     
     def __init__(self, conference):
         
@@ -1382,7 +1381,7 @@ class InvitationBuilder(object):
             invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
 
         if conference.comment_stage.allow_public_comments:
-            self.client.post_invitation(SpamPublicCommentInvitation(conference))
+            self.client.post_invitation(ModeratedCommentInvitation(conference))
             for note in tqdm(notes, total=len(notes)):
                 comment_invitation = self.client.post_invitation(PublicCommentInvitation(conference, note))
                 if conference.comment_stage.public_comment_moderation:
