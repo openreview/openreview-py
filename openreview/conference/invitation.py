@@ -719,7 +719,7 @@ class SpamPublicCommentInvitation(openreview.Invitation):
     def __init__(self, conference):
         
         super().__init__(
-            id=conference.get_invitation_id('Spam_Public_Comment'),
+            id=conference.get_invitation_id('Moderated_Comment'),
             invitees=[conference.get_program_chairs_id()],
             readers=[conference.get_id()],
             writers=['~Super_User1'],
@@ -1274,7 +1274,7 @@ class UndoModerationInvitation(openreview.Invitation):
     def __init__(self, conference, note):
 
         reply_dict = {
-            'referentInvitation': conference.get_invitation_id(name='Spam_Public_Comment'),
+            'referentInvitation': conference.get_invitation_id(name='Moderated_Comment'),
             'content': {
                 'moderation_reason': {
                     'order': 3,

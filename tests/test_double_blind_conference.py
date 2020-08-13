@@ -661,7 +661,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Program_Chairs", client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=AKBC.ws/2019/Conference/Program_Chairs', client.token)
         assert selenium.find_element_by_link_text('Paper Status')
         assert selenium.find_element_by_link_text('Area Chair Status')
         assert selenium.find_element_by_link_text('Reviewer Status')
@@ -959,13 +959,16 @@ class TestDoubleBlindConference():
             allow_public_comments=True,
             public_comment_moderation=True))
 
-        helpers.create_user('public_comment_user@mail.com', 'Publiccomment', 'User')
+        conference.set_program_chairs(emails = ['akbc_pc_22@mail.com'])
+        pc_client = helpers.create_user('akbc_pc_22@mail.com', 'AKBC_user', 'Pc')
+
+        author_client = helpers.create_user('public_comment_user@mail.com', 'Publiccomment', 'User')
 
         notes = client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
         assert submission
 
-        public_comment = client.post_note(openreview.Note(
+        public_comment = author_client.post_note(openreview.Note(
             invitation=conference.get_invitation_id(name='Public_Comment', number=submission.number),
             readers=['everyone'],
             writers=['~Publiccomment_User1', conference.get_id()],
@@ -979,11 +982,13 @@ class TestDoubleBlindConference():
         ))
         assert public_comment
 
-        moderation_revision = client.post_note(openreview.Note(
+        moderation_revision = pc_client.post_note(openreview.Note(
             forum=submission.forum,
             referent=public_comment.id,
-            invitation=conference.get_invitation_id(name='Public_Comment_Moderation', number=submission.number),
-            content={'mark_as_spam': 'Yes'},
+            invitation=conference.get_invitation_id(name='Moderation', number=submission.number),
+            content={
+                'moderation_reason': ['Spam'],
+                'justification': 'This is clearly a spam comment'},
             signatures=[conference.get_program_chairs_id()],
             readers=[
                 conference.get_program_chairs_id()
@@ -1000,13 +1005,13 @@ class TestDoubleBlindConference():
         assert updated_public_comment
         assert updated_public_comment.readers == [conference.get_program_chairs_id(), public_comment.signatures[0]]
         assert updated_public_comment.signatures == [conference.get_program_chairs_id()]
-        assert updated_public_comment.invitation == conference.get_invitation_id('Spam_Public_Comment')
+        assert updated_public_comment.invitation == conference.get_invitation_id('Moderated_Comment')
 
-        undo_moderation_revision = client.post_note(openreview.Note(
+        undo_moderation_revision = pc_client.post_note(openreview.Note(
             forum=submission.forum,
             referent=public_comment.id,
-            invitation=conference.get_invitation_id(name='Undo_Comment_Moderation', number=submission.number),
-            content={'mark_as_spam': 'No'},
+            invitation=conference.get_invitation_id(name='Undo_Moderation', number=submission.number),
+            content={'moderation_reason': []},
             signatures=[conference.get_program_chairs_id()],
             readers=[
                 conference.get_program_chairs_id()
@@ -1027,6 +1032,8 @@ class TestDoubleBlindConference():
         assert updated_public_comment.content
         assert updated_public_comment.content.get('title') == public_comment.content['title']
         assert updated_public_comment.content.get('comment') == public_comment.content['comment']
+        assert updated_public_comment.content.get('moderation_reason') == []
+        assert updated_public_comment.content.get('justification') == ''
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
