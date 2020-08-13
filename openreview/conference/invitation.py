@@ -1253,6 +1253,7 @@ class PublicCommentModerationInvitation(openreview.Invitation):
             file_content = f.read()
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
             file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", "PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "'")
+            file_content = file_content.replace("SHORT_NAME = ''", "SHORT_NAME = '" + conference.short_name + "'")
 
             super().__init__(
                 id=conference.get_invitation_id(name='Moderation', number=note.number),
@@ -1305,6 +1306,7 @@ class UndoModerationInvitation(openreview.Invitation):
         with open(os.path.join(os.path.dirname(__file__), 'templates/undo_moderation_process.py')) as f:
             file_content = f.read()
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+            file_content = file_content.replace("SHORT_NAME = ''", "SHORT_NAME = '" + conference.short_name + "'")
 
             super().__init__(
                 id=conference.get_invitation_id(name='Undo_Moderation', number=note.number),

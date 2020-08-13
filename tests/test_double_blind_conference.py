@@ -951,6 +951,7 @@ class TestDoubleBlindConference():
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_conference_short_name('AKBC 2019')
         builder.set_submission_stage(double_blind=True, public=True)
         conference = builder.get_result()
 
@@ -1007,6 +1008,15 @@ class TestDoubleBlindConference():
         assert updated_public_comment.signatures == [conference.get_program_chairs_id()]
         assert updated_public_comment.invitation == conference.get_invitation_id('Moderated_Comment')
 
+        messages = client.get_messages(
+            subject = '[AKBC 2019]: Your comment has been moderated by the Program Committee')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert recipients[0] == 'public_comment_user@mail.com'
+        assert re.search(
+            'Your comment .* has been moderated by the Program Committee. If you wish to appeal against it, please reach out to the committee.',
+            messages[0]['content']['text'])
+
         undo_moderation_revision = pc_client.post_note(openreview.Note(
             forum=submission.forum,
             referent=public_comment.id,
@@ -1034,6 +1044,15 @@ class TestDoubleBlindConference():
         assert updated_public_comment.content.get('comment') == public_comment.content['comment']
         assert updated_public_comment.content.get('moderation_reason') == []
         assert updated_public_comment.content.get('justification') == ''
+
+        messages = client.get_messages(
+            subject = '[AKBC 2019]: Moderation to your comment has been undone by the Program Committee')
+        assert len(messages) == 1
+        recipients = [m['content']['to'] for m in messages]
+        assert recipients[0] == 'public_comment_user@mail.com'
+        assert re.search(
+            'Moderation to your comment .* has been undone.',
+            messages[0]['content']['text'])
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 

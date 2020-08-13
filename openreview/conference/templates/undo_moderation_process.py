@@ -1,6 +1,7 @@
 def process(client, note, invitation):
     from datetime import datetime
     CONFERENCE_ID = ''
+    SHORT_NAME = ''
 
     if 'justification' not in note.content:
         client.post_note(openreview.Note(
@@ -37,3 +38,10 @@ def process(client, note, invitation):
         }
 
         client.post_note(comment_note)
+
+        message = '''Moderation to your comment https://openreview.net/forum?id={}&noteId={} has been undone.'''.format(comment_note.forum, comment_note.id)
+
+        client.post_message(
+            subject='[{}]: Moderation to your comment has been undone by the Program Committee'.format(SHORT_NAME),
+            recipients=[comment_author],
+            message=message)
