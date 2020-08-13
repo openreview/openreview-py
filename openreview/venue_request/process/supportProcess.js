@@ -3,7 +3,7 @@ function(){
     var GROUP_PREFIX = '';
     var SUPPORT_GROUP = GROUP_PREFIX + '/Support';
     var baseUrl = 'https://openreview.net'
-    
+
     var adminMessage = 'A request for service has been submitted. Check it here: ' + baseUrl + '/forum?id=' + note.forum + '\n'
 
     for (key in note.content) {
