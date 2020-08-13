@@ -740,11 +740,16 @@ class SpamPublicCommentInvitation(openreview.Invitation):
                         "required": True,
                         "markdown": True
                     },
-                    'mark_as_spam': {
-                        'order': 0,
-                        'value-radio': ['Yes', 'No'],
-                        'default': 'Yes',
+                    'moderation_reason': {
+                        'order': 3,
+                        'values-checkbox': ['Spam', 'Inappropriate', 'Other'],
                         'required': True
+                    },
+                    'justification': {
+                        'order': 4,
+                        'description': 'Provide a justification. Note that this comment and your moderation will only be visible to the PCs and Comment author.',
+                        'value-regex': '[\\S\\s]{0,5000}',
+                        'required': False
                     }
                 },
                 "readers": {
@@ -1218,11 +1223,16 @@ class PublicCommentModerationInvitation(openreview.Invitation):
         reply_dict = {
             'referentInvitation': conference.get_invitation_id(name='Public_Comment', number=note.number),
             'content': {
-                'mark_as_spam': {
-                    'order': 0,
-                    'value-radio': ['Yes', 'No'],
-                    'default': 'Yes',
+                'moderation_reason': {
+                    'order': 3,
+                    'values-checkbox': ['Spam', 'Inappropriate', 'Other'],
                     'required': True
+                },
+                'justification': {
+                    'order': 4,
+                    'description': 'Provide a justification. Note that this comment and your moderation will only be visible to the PCs and Comment author.',
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'required': False
                 }
             },
             'forum': note.forum,
@@ -1245,7 +1255,7 @@ class PublicCommentModerationInvitation(openreview.Invitation):
             file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", "PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "'")
 
             super().__init__(
-                id=conference.get_invitation_id(name='Public_Comment_Moderation', number=note.number),
+                id=conference.get_invitation_id(name='Moderation', number=note.number),
                 cdate=tools.datetime_millis(conference.comment_stage.start_date) if conference.comment_stage.start_date else None,
                 readers=[
                     conference.get_id(),
@@ -1266,11 +1276,16 @@ class UndoModerationInvitation(openreview.Invitation):
         reply_dict = {
             'referentInvitation': conference.get_invitation_id(name='Spam_Public_Comment'),
             'content': {
-                'mark_as_spam': {
-                    'order': 0,
-                    'value-radio': ['Yes', 'No'],
-                    'default': 'Yes',
-                    'required': True
+                'moderation_reason': {
+                    'order': 3,
+                    'values-checkbox': ['Spam', 'Inappropriate', 'Other'],
+                    'required': False
+                },
+                'justification': {
+                    'order': 4,
+                    'description': 'Provide a justification. Note that this comment and your moderation will only be visible to the PCs and Comment author.',
+                    'value-regex': '[\\S\\s]{0,5000}',
+                    'required': False
                 }
             },
             'forum': note.forum,
@@ -1292,7 +1307,7 @@ class UndoModerationInvitation(openreview.Invitation):
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
 
             super().__init__(
-                id=conference.get_invitation_id(name='Undo_Comment_Moderation', number=note.number),
+                id=conference.get_invitation_id(name='Undo_Moderation', number=note.number),
                 cdate=tools.datetime_millis(conference.comment_stage.start_date) if conference.comment_stage.start_date else None,
                 readers=[
                     conference.get_id(),
