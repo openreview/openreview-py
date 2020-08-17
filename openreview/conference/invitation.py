@@ -692,7 +692,8 @@ class OfficialCommentInvitation(openreview.Invitation):
                 'values': readers
             }
 
-        super(OfficialCommentInvitation, self).__init__(id = conference.get_invitation_id(comment_stage.official_comment_name, note.number),
+        super(OfficialCommentInvitation, self).__init__(
+            id = conference.get_invitation_id(comment_stage.official_comment_name, note.number),
             super = conference.get_invitation_id('Comment'),
             writers = [conference.id],
             signatures = [conference.id],

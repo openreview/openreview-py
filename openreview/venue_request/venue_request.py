@@ -185,6 +185,81 @@ class VenueStages():
             }
         ))
 
+    def setup_official_comment_stage(self):
+
+        official_comment_stage_content = {
+            'commentary_start_date': {
+                'description': 'When does official commentary begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 27
+            },
+            'allow_unsubmitted_reviewers_to_comment': {
+                'description': 'Should the reviewers who have not submitted their review be able to make official comments? Default is "No, unsubmitted reviewers should not be able to post official comments"',
+                'value-radio': [
+                    'Yes, unsubmitted reviewers should be able to post official comments',
+                    'No, unsubmitted reviewers should not be able to post official comments'
+                ],
+                'required': True,
+                'default': 'No, unsubmitted reviewers should not be able to post official comments',
+                'order': 28
+            },
+            'allow_reader_selection': {
+                'description': 'Should the comment author be allowed to select comment readers from a list? Default is "No, comment authors should not be able to select comment readers"',
+                'value-radio': [
+                    'Yes, comment authors should be able to select comment readers',
+                    'No, comment authors should not be able to select comment readers'
+                ],
+                'required': True,
+                'default': 'No, comment authors should not be able to select comment readers',
+                'order': 29
+            },
+            'email_program_chairs_about_official_reviews': {
+                'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
+                'value-radio': [
+                    'Yes, email PCs for each official comment made in the venue',
+                    'No, do not email PCs for each official comment made in the venue'
+                ],
+                'required': True,
+                'default': 'No, do not email PCs for each official comment made in the venue',
+                'order': 30
+            },
+            'allow_authors_to_comment': {
+                'description': 'Should the submission authors be allowed to post official comments on their own submissions? Default is "Yes, allow submission authors to post official comments on their own papers"',
+                'value-radio': [
+                    'Yes, allow submission authors to post official comments on their own papers',
+                    'No, do not allow submission authors to post official comments on their own papers'
+                ],
+                'required': True,
+                'default': 'Yes, allow submission authors to post official comments on their own papers',
+                'order': 31
+            }
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Official_Comment_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        '{content["program_chair_emails"]}',
+                        self.venue_request.support_group.id
+                    ]
+                },
+                'writers': {
+                    'values-copied': ['{signatures}'],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                },
+                'content': official_comment_stage_content
+            }
+        ))
+
     def setup_meta_review_stage(self):
 
         meta_review_stage_content = {
@@ -425,6 +500,7 @@ class VenueRequest():
         self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
         self.review_stage_super_invitation = venue_stages.setup_review_stage()
+        self.official_comment_stage_super_invitation = venue_stages.setup_official_comment_stage()
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
         self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()

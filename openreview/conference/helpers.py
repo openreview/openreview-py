@@ -312,3 +312,35 @@ def get_submission_revision_stage(client, request_forum):
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted)
+
+def get_official_comment_stage(client, request_forum):
+
+    commentary_start_date = request_forum.content.get('commentary_start_date', '').strip()
+    if commentary_start_date:
+        try:
+            commentary_start_date = datetime.datetime.strptime(commentary_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            commentary_start_date = datetime.datetime.strptime(commentary_start_date, '%Y/%m/%d')
+    else:
+        commentary_start_date = None
+
+    allow_public_comments = request_forum.content.get('Public Commentary', '').startswith('Yes')
+    anonymous = allow_public_comments and 'non-anonymously' not in request_forum.content.get('Public Commentary', '')
+
+    unsubmitted_reviewers = request_forum.content.get('official_comment_unsubmitted_reviewers', '') == 'Yes, unsubmitted reviewers should be able to post official comments'
+
+    reader_selection = request_forum.content.get('allow_reader_selection', '') == 'Yes, comment authors should be able to choose comment readers'
+
+    email_pcs = request_forum.content.get('email_program_chairs_about_official_reviews', '') == 'Yes, email PCs for each official comment made in the venue'
+
+    authors_invited = request_forum.content.get('allow_authors_to_comment', '') == 'Yes, allow authors to post official comments'
+
+    return openreview.CommentStage(
+        start_date=commentary_start_date,
+        allow_public_comments=allow_public_comments,
+        anonymous=anonymous,
+        unsubmitted_reviewers=unsubmitted_reviewers,
+        reader_selection=reader_selection,
+        email_pcs=email_pcs,
+        authors=authors_invited
+    )

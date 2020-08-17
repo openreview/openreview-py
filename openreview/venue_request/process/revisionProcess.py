@@ -34,4 +34,7 @@ def process(client, note, invitation):
     elif invitation_type == 'Submission_Revision_Stage':
         conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
+    elif invitation_type == 'Official_Comment_Stage':
+        conference.set_comment_stage(openreview.helpers.get_official_comment_stage(client, forum_note))
+
     print('Conference: ', conference.get_id())
