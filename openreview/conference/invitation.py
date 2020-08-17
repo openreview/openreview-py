@@ -1278,12 +1278,13 @@ class UndoModerationInvitation(openreview.Invitation):
             'content': {
                 'moderation_reason': {
                     'order': 3,
+                    'description': 'Clear your selection to undo moderation',
                     'values-checkbox': ['Spam', 'Inappropriate', 'Other'],
                     'required': False
                 },
                 'justification': {
                     'order': 4,
-                    'description': 'Provide a justification. Note that this comment and your moderation will only be visible to the PCs and Comment author.',
+                    'description': 'Clear the justification text to undo moderation',
                     'value-regex': '[\\S\\s]{0,5000}',
                     'required': False
                 }
