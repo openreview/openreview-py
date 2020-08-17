@@ -338,7 +338,7 @@ class VenueStages():
                 'default': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'order': 32
             },
-            'release_decision_to_reviewers': {
+            'release_decisions_to_reviewers': {
                 'description': 'Should the decisions be immediately revealed to paper\'s reviewers? Default is "No, decisions should not be immediately revealed to the paper\'s reviewers"',
                 'value-radio': [
                     'Yes, decisions should be immediately revealed to the paper\'s reviewers',
@@ -348,7 +348,7 @@ class VenueStages():
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'order': 33
             },
-            'notify_to_authors': {
+            'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
                 'value-radio': [
                     'Yes, send an email notification to the authors',
@@ -417,6 +417,7 @@ class VenueRequest():
         self.setup_request_form()
         self.setup_venue_comments()
         self.setup_venue_deployment()
+        self.setup_venue_post_submission()
         self.setup_venue_recruitment()
 
         # Setup for venue stages
@@ -540,17 +541,17 @@ class VenueRequest():
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
                 'value-radio': [
-                    'Yes, withdrawn submissions should be made public.', 
+                    'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
                 'order': 21
             },
             'withdrawn_submissions_author_anonymity': {
-                'description': 'Would you like to make authors of withdrawn papers anonymous? Note: Authors can only be anonymized for Double blind submissions.',
+                'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of withdrawn submissions should be anonymized.', 
-                    'No, authors of withdrawn submissions should not be anonymized.'],
-                'default': 'No, authors of withdrawn submissions should not be anonymized.',
+                    'Yes, author identities of withdrawn submissions should be revealed.',
+                    'No, author identities of withdrawn submissions should not be revealed.'],
+                'default': 'No, author identities of withdrawn submissions should not be revealed.',
                 'order': 22
             },
             'email_pcs_for_withdrawn_submissions': {
@@ -565,17 +566,17 @@ class VenueRequest():
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
                 'value-radio': [
-                    'Yes, desk rejected submissions should be made public.', 
+                    'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
                 'order': 24
             },
             'desk_rejected_submissions_author_anonymity': {
-                'description': 'Would you like to make authors of desk rejected papers anonymous?  Note: Authors can only be anonymized for Double blind submissions.',
+                'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of desk rejected submissions should be anonymized.', 
-                    'No, authors of desk rejected submissions should not be anonymized.'],
-                'default': 'No, authors of desk rejected submissions should not be anonymized.',
+                    'Yes, author identities of desk rejected submissions should be revealed.',
+                    'No, author identities of desk rejected submissions should not be revealed.'],
+                'default': 'No, author identities of desk rejected submissions should not be revealed.',
                 'order': 25
             },
             'Expected Submissions': {
@@ -700,12 +701,52 @@ class VenueRequest():
                         'values': [self.support_group.id]
                     },
                     'writers': {
-                        'values-regex': '~.*'
+                        'values': [self.support_group.id]
                     },
                     'signatures': {
                         'values': [self.support_group.id]
                     },
                     'content': deploy_content
+                }
+            ))
+
+    def setup_venue_post_submission(self):
+
+        post_submission_content = {
+            'force': {
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+                'description': 'Force creating blind submissions if conference is double blind'
+            },
+            'hide_fields': {
+                'values-regex': '.*',
+                'required': False,
+                'description': 'Comma separated values of submision fields to be hidden, author names are already hidden.'
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/postSubmissionProcess.py'), 'r') as f:
+            file_content = f.read()
+
+            self.post_submission_content = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Post_Submission',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': [self.support_group.id]
+                    },
+                    'writers': {
+                        'values': [self.support_group.id]
+                    },
+                    'signatures': {
+                        'values': [self.support_group.id]
+                    },
+                    'content': post_submission_content
                 }
             ))
 

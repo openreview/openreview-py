@@ -66,7 +66,7 @@ class TestVenueRequest():
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
             signatures=[support_group_id],
-            writers=['~Support_User1']
+            writers=[support_group_id]
         ))
 
         # Return venue details as a dict
@@ -146,10 +146,10 @@ class TestVenueRequest():
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'Public Commentary': 'Yes, allow members of the public to comment non-anonymously.',
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
-                'withdrawn_submissions_author_anonymity': 'No, authors of withdrawn submissions should not be anonymized.',
+                'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
                 'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
                 'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.',
-                'desk_rejected_submissions_author_anonymity': 'No, authors of desk rejected submissions should not be anonymized.',
+                'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
@@ -179,7 +179,7 @@ class TestVenueRequest():
             referent=request_form_note.forum,
             replyto=request_form_note.forum,
             signatures=[support_group_id],
-            writers=['~Support_User1']
+            writers=[support_group_id]
         ))
         assert deploy_note
 
@@ -527,8 +527,8 @@ class TestVenueRequest():
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-                'release_decision_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-                'notify_to_authors': 'No, I will send the emails to the authors'
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'notify_authors': 'No, I will send the emails to the authors'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
