@@ -24,7 +24,7 @@ function (){
       }
 
       if (ACCEPTED_AUTHORS_NAME && (note.content['decision'].indexOf('Accept') > -1)) {
-        promises.push(or3client.or3request( or3client.grpUrl+'/members', { 'id':CONFERENCE_ID + '/' + ACCEPTED_AUTHORS_NAME, 'members':[AUTHORS_ID]}, 'POST', token ));
+        promises.push(or3client.addGroupMember(CONFERENCE_ID + '/' + ACCEPTED_AUTHORS_NAME, [AUTHORS_ID], token));
       }
 
       return Promise.all(promises)
