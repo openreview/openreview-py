@@ -5,6 +5,7 @@ function (){
     var SHORT_PHRASE = '';
     var AUTHORS_NAME = '';
     var ACCEPTED_AUTHORS_NAME = '';
+    var EMAIL_AUTHORS = false;
 
     var forumNote = or3client.or3request(or3client.notesUrl + '?id=' + note.forum, {}, 'GET', token);
 
@@ -14,7 +15,7 @@ function (){
 
       var AUTHORS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + AUTHORS_NAME;
       
-      if (note.readers.includes('everyone') || note.readers.includes(AUTHORS_ID)) {
+      if (EMAIL_AUTHORS && (note.readers.includes('everyone') || note.readers.includes(AUTHORS_ID))) {
         var author_mail = {
           groups: [AUTHORS_ID],
           subject: '[' + SHORT_PHRASE + '] Decision posted to your submission - Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
