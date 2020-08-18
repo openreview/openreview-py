@@ -829,11 +829,12 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
-        # Creating venue level accepted author group
+        # Creating venue level authors group
+        authors_group = self.__create_group(self.get_authors_id(), self.id, public=True)
+
+        # Creating venue level accepted authors group
         self.__create_group(self.get_accepted_authors_id(), self.id)
 
-        # Creating venue level author group
-        authors_group = self.__create_group(self.get_authors_id(), self.id, public=True)
         return self.webfield_builder.set_author_page(self, authors_group)
 
     def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
