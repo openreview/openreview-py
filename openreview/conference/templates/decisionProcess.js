@@ -23,8 +23,12 @@ function (){
         promises.push(or3client.or3request( or3client.mailUrl, author_mail, 'POST', token ));
       }
 
-      if (ACCEPTED_AUTHORS_NAME && (note.content['decision'].indexOf('Accept') > -1)) {
-        promises.push(or3client.addGroupMember(CONFERENCE_ID + '/' + ACCEPTED_AUTHORS_NAME, [AUTHORS_ID], token));
+      if (ACCEPTED_AUTHORS_NAME) {
+        if (note.content['decision'].indexOf('Accept') > -1) {
+          promises.push(or3client.addGroupMember(CONFERENCE_ID + '/' + ACCEPTED_AUTHORS_NAME, [AUTHORS_ID], token));
+        } else if (note.content['decision'].indexOf('Reject') > -1) {
+          promises.push(or3client.removeGroupMember(CONFERENCE_ID + '/' + ACCEPTED_AUTHORS_NAME, AUTHORS_ID, token));
+        }
       }
 
       return Promise.all(promises)
