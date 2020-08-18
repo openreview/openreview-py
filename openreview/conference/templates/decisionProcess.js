@@ -4,6 +4,7 @@ function (){
     var CONFERENCE_ID = '';
     var SHORT_PHRASE = '';
     var AUTHORS_NAME = '';
+    var ACCEPTED_AUTHORS_NAME = '';
 
     var forumNote = or3client.or3request(or3client.notesUrl + '?id=' + note.forum, {}, 'GET', token);
 
@@ -12,7 +13,7 @@ function (){
       var promises = [];
 
       var AUTHORS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + AUTHORS_NAME;
-
+      
       if (note.readers.includes('everyone') || note.readers.includes(AUTHORS_ID)) {
         var author_mail = {
           groups: [AUTHORS_ID],
@@ -20,6 +21,10 @@ function (){
           message: 'To view the decision, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, author_mail, 'POST', token ));
+      }
+
+      if (ACCEPTED_AUTHORS_NAME && (note.content['decision'].indexOf('Accept') > -1)) {
+        promises.push(or3client.or3request( or3client.grpUrl+'/members', { 'id':CONFERENCE_ID + '/' + ACCEPTED_AUTHORS_NAME, 'members':[AUTHORS_ID]}, 'POST', token ));
       }
 
       return Promise.all(promises)

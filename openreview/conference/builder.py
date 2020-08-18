@@ -339,6 +339,9 @@ class Conference(object):
         authors_id = authors_id + self.authors_name
         return authors_id
 
+    def get_accepted_authors_id(self):
+        return self.id + '/' + self.authors_name + '/Accepted'
+
     def get_area_chairs_id(self, number = None):
         area_chairs_id = self.id + '/'
         if number:
@@ -826,6 +829,10 @@ class Conference(object):
         return self.__set_reviewer_page()
 
     def set_authors(self):
+        # Creating venue level accepted author group
+        self.__create_group(self.get_accepted_authors_id(), self.id)
+
+        # Creating venue level author group
         authors_group = self.__create_group(self.get_authors_id(), self.id, public=True)
         return self.webfield_builder.set_author_page(self, authors_group)
 
