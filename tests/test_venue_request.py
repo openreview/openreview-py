@@ -542,7 +542,7 @@ class TestVenueRequest():
 
         # Assert that official comment invitation is now available
         official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
-        assert official_comment_invitation is None
+        assert official_comment_invitation
         
         # Assert that an official comment can be posted by the paper author
         forum_note = blind_submissions[-1]
