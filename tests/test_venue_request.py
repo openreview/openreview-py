@@ -573,17 +573,13 @@ class TestVenueRequest():
 
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue):
 
-        # Assert that PCs do not see a Decision button on the submissions
         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert submissions and len(submissions) == 2
+        submission = submissions[0]
 
-        paper_url = 'http://localhost:3030/forum?id={}'.format(submissions[0].forum)
-        request_page(selenium, paper_url, token=test_client.token)
-
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert reply_row
-        with pytest.raises(NoSuchElementException):
-            assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
+        # Assert that PC does not have access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation is None
 
         # Post a decision stage note
         now = datetime.datetime.utcnow()
@@ -607,24 +603,17 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert decision_stage_note
-        time.sleep(5)
+        time.sleep(2)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        # Assert that PC now sees the Decision button
-        request_page(selenium, paper_url, token=test_client.token)
-
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert reply_row
-        assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
-
-        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
-        assert submissions and len(submissions) == 2
+        # Assert that PC now has access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation
 
         # Post a decision note using pc test_client
-        submission = submissions[0]
         program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
         area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
         decision_note = test_client.post_note(openreview.Note(
