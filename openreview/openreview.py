@@ -18,7 +18,7 @@ class OpenReviewException(Exception):
 
 class Client(object):
     """
-    :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
     :type username: str, optional
