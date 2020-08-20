@@ -223,7 +223,7 @@ The following example script can be used to retrieve all ICLR 2019 metadata and 
 	        '-o', '--outdir', default='./', help='directory where data should be saved')
 	    parser.add_argument(
 	        '--get_pdfs', default=False, action='store_true', help='if included, download pdfs')
-	    parser.add_argument('--baseurl', default='https://openreview.net')
+	    parser.add_argument('--baseurl', default='https://api.openreview.net')
 	    parser.add_argument('--username', default='', help='defaults to empty string (guest user)')
 	    parser.add_argument('--password', default='', help='defaults to empty string (guest user)')
 

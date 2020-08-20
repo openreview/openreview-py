@@ -19,7 +19,7 @@ Login
 Login can be done through the API ::
 
     >>> import openreview
-    >>> client = openreview.Client(baseurl='https://openreview.net',username=<your username>,password=<your password>)
+    >>> client = openreview.Client(baseurl='https://api.openreview.net',username=<your username>,password=<your password>)
 
 
 Conference creation
