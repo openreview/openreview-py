@@ -922,7 +922,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
 
         conference.close_submissions()
-        conference.setup_post_submission_stage()
+        conference.setup_post_submission_stage(force=True)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 5
@@ -987,7 +987,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_withdraw_submission(self, conference, client, test_client, selenium, request_page):
 
-        conference.setup_post_submission_stage()
+        conference.setup_post_submission_stage(force=True)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 4
