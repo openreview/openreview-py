@@ -22,19 +22,20 @@ function(){
       var AREA_CHAIR_2_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/' + SECONDARY_AREA_CHAIR_NAME;
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
+      var note_writer = note.signatures[0];
 
       var ac_mail = {
         groups: [AREA_CHAIR_1_ID],
         ignoreGroups: ignoreGroups,
         subject: '[' + SHORT_PHRASE + '] Comment posted to a paper in your area. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-        message: 'A comment was posted to a paper for which you are serving as Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        message: 'A comment was posted by ' + note_writer + ' to a paper for which you are serving as Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
       };
 
       var ac2_mail = {
         groups: [AREA_CHAIR_2_ID],
         ignoreGroups: ignoreGroups,
         subject: '[' + SHORT_PHRASE + '] Comment posted to a paper in your area. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-        message: 'A comment was posted to a paper for which you are serving as secondary Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        message: 'A comment was posted by ' + note_writer + ' to a paper for which you are serving as secondary Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
       };
 
       var comment_author_mail = {
@@ -47,7 +48,7 @@ function(){
         groups: forumNote.content.authorids,
         ignoreGroups: ignoreGroups,
         subject: '[' + SHORT_PHRASE + '] Your submission has received a comment. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-        message: 'Your submission to ' + SHORT_PHRASE + ' has received a comment.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        message: 'Your submission to ' + SHORT_PHRASE + ' has received a comment by ' + note_writer + '.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
       };
 
       var promises = [];
@@ -64,7 +65,7 @@ function(){
           groups: [REVIEWERS_ID],
           ignoreGroups: ignoreGroups,
           subject: '[' + SHORT_PHRASE + '] Comment posted to a paper you are reviewing. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-          message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'A comment was posted by ' + note_writer + ' to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else if (note.readers.includes(reviewers_submitted)) {
@@ -72,7 +73,7 @@ function(){
           groups: [reviewers_submitted],
           ignoreGroups: ignoreGroups,
           subject: '[' + SHORT_PHRASE + '] Comment posted to a paper you are reviewing. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-          message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'A comment was posted by ' + note_writer + ' to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else {
@@ -82,7 +83,7 @@ function(){
             groups: anonReviewers,
             ignoreGroups: ignoreGroups,
             subject: '[' + SHORT_PHRASE + '] Comment posted to a paper you are reviewing. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-            message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+            message: 'A comment was posted by ' + note_writer + ' to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
           };
           promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
         }
@@ -102,7 +103,7 @@ function(){
           groups: [PROGRAM_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
           subject: '[' + SHORT_PHRASE + '] A comment was posted. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-          message: 'A comment was posted to a paper for which you are serving as Program Chair.\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          message: 'A comment was posted by ' + note_writer + ' to a paper for which you are serving as Program Chair.\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
         };
 
         promises.push(or3client.or3request(or3client.mailUrl, pc_mail, 'POST', token));
