@@ -59,7 +59,7 @@ The OpenReview Team
                 'values' : readers
             }
         },
-        signatures = [SUPPORT_GROUP]
+        signatures = ['~Super_User1']
     ))
 
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
