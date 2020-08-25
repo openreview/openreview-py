@@ -466,6 +466,12 @@ class Matching(object):
                         'value-regex': '.*',
                         'required': False,
                         'order': 17
+                    },
+                    'allow_all_affinities': {
+                        'value-radio': ['True', 'False'],
+                        'required': False,
+                        'default': 'True',
+                        'order': 18
                     }
                 }
             })
