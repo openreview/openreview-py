@@ -267,7 +267,7 @@ def get_decision_stage(client, request_forum):
             public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_to_authors', '').startswith('Yes'))
+            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
     else:
         return openreview.DecisionStage(
             start_date = decision_start_date,
@@ -275,7 +275,7 @@ def get_decision_stage(client, request_forum):
             public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_to_authors', '').startswith('Yes'))
+            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
 
 def get_submission_revision_stage(client, request_forum):
     submission_revision_start_date = request_forum.content.get('submission_revision_start_date', '').strip()

@@ -928,7 +928,8 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
   html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
     '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
-    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a></li></ul>';
+    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a> (' +
+    '<a href="/group?id=' + AUTHORS_ID + '/Accepted&mode=edit">Accepted</a>)</li></ul>';
   html += '</div>';
 
   // Registration Forms
