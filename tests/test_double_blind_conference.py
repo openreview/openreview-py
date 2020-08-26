@@ -1412,6 +1412,10 @@ class TestDoubleBlindConference():
 
         pc_client = helpers.create_user('akbc_pc@mail.com', 'AKBC', 'Pc')
 
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        assert accepted_author_group.members == []
+
         notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[2]
 
@@ -1429,8 +1433,14 @@ class TestDoubleBlindConference():
             }
         )
 
-        meta_review_note = pc_client.post_note(note)
-        assert meta_review_note
+        decision_note = pc_client.post_note(note)
+        assert decision_note
+        time.sleep(2)
+
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        assert len(accepted_author_group.members) == 1
+        assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
@@ -1441,7 +1451,6 @@ class TestDoubleBlindConference():
 
         builder.set_decision_stage(release_to_authors=True)
         conference = builder.get_result()
-
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
         assert decisions

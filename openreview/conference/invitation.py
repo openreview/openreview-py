@@ -1159,13 +1159,16 @@ class DecisionInvitation(openreview.Invitation):
         }
 
         file_content = None
-        if decision_stage.email_authors:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/decisionProcess.js')) as f:
-                file_content = f.read()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/decisionProcess.js')) as f:
+            file_content = f.read()
 
-                file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-                file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-                file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var ACCEPTED_AUTHORS_NAME = '';", "var ACCEPTED_AUTHORS_NAME = '" + conference.authors_name + '/Accepted' + "';")
+
+            if decision_stage.email_authors:
+                file_content = file_content.replace("var EMAIL_AUTHORS = false;", "var EMAIL_AUTHORS = true;")
 
         super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name),
             cdate = tools.datetime_millis(start_date),
