@@ -468,9 +468,10 @@ class Matching(object):
                         'order': 17
                     },
                     'allow_zero_score_assignments': {
-                        'value-radio': ['True', 'False'],
+                        'description': 'Select "Allow" only if you want to allow assignments with 0 scores',
+                        'value-radio': ['Do not allow', 'Allow'],
                         'required': False,
-                        'default': 'True',
+                        'default': 'Do not allow',
                         'order': 18
                     }
                 }
