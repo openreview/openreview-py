@@ -470,7 +470,7 @@ class Matching(object):
                     'allow_zero_score_assignments': {
                         'description': 'Select "Allow" only if you want to allow assignments with 0 scores',
                         'value-radio': ['Do not allow', 'Allow'],
-                        'required': False,
+                        'required': True,
                         'default': 'Do not allow',
                         'order': 18
                     }
