@@ -467,7 +467,7 @@ class Matching(object):
                         'required': False,
                         'order': 17
                     },
-                    'allow_all_affinities': {
+                    'allow_zero_score_assignments': {
                         'value-radio': ['True', 'False'],
                         'required': False,
                         'default': 'True',
