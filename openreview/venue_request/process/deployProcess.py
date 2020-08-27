@@ -304,10 +304,10 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures=['~Super_User1']
     ))
 
-    # official_comment_stage_invitation
+    # comment_stage_invitation
     client.post_invitation(openreview.Invitation(
-        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Official_Comment_Stage',
-        super=SUPPORT_GROUP + '/-/Official_Comment_Stage',
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment_Stage',
+        super=SUPPORT_GROUP + '/-/Comment_Stage',
         reply={
             'forum': forum.id,
             'referent': forum.id,

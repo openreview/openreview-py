@@ -89,7 +89,7 @@ class TestVenueRequest():
         assert venue.meta_review_stage_super_invitation
         assert venue.review_stage_super_invitation
         assert venue.submission_revision_stage_super_invitation
-        assert venue.official_comment_stage_super_invitation
+        assert venue.comment_stage_super_invitation
 
         assert venue.deploy_super_invitation
         assert venue.comment_super_invitation
@@ -504,7 +504,7 @@ class TestVenueRequest():
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
 
-    def test_venue_official_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
+    def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
@@ -517,26 +517,28 @@ class TestVenueRequest():
         # Post an official comment stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
-        official_comment_stage_note = test_client.post_note(openreview.Note(
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = test_client.post_note(openreview.Note(
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'allow_unsubmitted_reviewers_to_comment': 'Yes, unsubmitted reviewers should be able to post official comments',
-                'allow_reader_selection': 'No, comment authors should not be able to select comment readers',
-                'email_program_chairs_about_official_reviews': 'Yes, email PCs for each official comment made in the venue',
-                'allow_authors_to_comment': 'Yes, allow submission authors to post official comments on their own papers'
+                'allow_authors_to_comment': 'Yes, allow submission authors to post official comments on their own papers',
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+                
             },
             forum=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Official_Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
             writers=['~Test_User1']
         ))
-        assert official_comment_stage_note
+        assert comment_stage_note
         time.sleep(2)
 
-        process_logs = client.get_process_logs(id=official_comment_stage_note.id)
+        process_logs = client.get_process_logs(id=comment_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -698,7 +700,6 @@ class TestVenueRequest():
         blind_submissions = author_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
 
         author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum)
-        print('checkig url: {}'.format(author_page_url))
         request_page(selenium, author_page_url, token=author_client.token)
 
         meta_actions = selenium.find_element_by_class_name('meta_actions')
