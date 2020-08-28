@@ -142,7 +142,15 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_create_conference(self, client, conference, helpers):
 
-        pc_client = helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
+        helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
+        helpers.create_user('iclr2021_one@mail.com', 'ReviewerOne', 'ICLR')
+        helpers.create_user('iclr2021_five@mail.com', 'ReviewerFive', 'ICLR')
+        helpers.create_user('iclr2021_six_alternate@mail.com', 'ReviewerSix', 'ICLR', ['iclr2021_six@mail.com'])
+        ## confirm alternate email
+        client.add_members_to_group('~ReviewerSix_ICLR1', 'iclr2021_six@mail.com')
+        client.add_members_to_group('iclr2021_six@mail.com', '~ReviewerSix_ICLR1')
+
+        pc_client = openreview.Client(username='pc@iclr.cc', password='1234')
 
         group = pc_client.get_group('ICLR.cc/2021/Conference')
         assert group
@@ -159,7 +167,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         'iclr2021_three@mail.com',
         'iclr2021_four@mail.com',
         'iclr2021_five@mail.com',
-        'iclr2021_six@mail.com'])
+        'iclr2021_six@mail.com',
+        'iclr2021_seven@mail.com'])
 
         assert result
         assert result.id == 'ICLR.cc/2021/Conference/Reviewers/Invited'
@@ -169,6 +178,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'iclr2021_four@mail.com' in result.members
         assert 'iclr2021_five@mail.com' in result.members
         assert 'iclr2021_six@mail.com' in result.members
+        assert 'iclr2021_seven@mail.com' in result.members
 
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
         text = messages[0]['content']['text']
@@ -227,7 +237,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 3
 
-        messages = client.get_messages(to = 'iclr2021_six@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'iclr2021_six_alternate@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
         text = messages[0]['content']['text']
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
         request_page(selenium, accept_url, alert=True)
@@ -238,7 +248,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_registration(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = helpers.create_user('iclr2021_one@mail.com', 'ReviewerOne', 'ICLR')
+        reviewer_client = openreview.Client(username='iclr2021_one@mail.com', password='1234')
         reviewer_tasks_url = 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
@@ -297,11 +307,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_remind_registration(self, conference, helpers, client):
 
-        five_reviewer_client = helpers.create_user('iclr2021_five@mail.com', 'ReviewerFive', 'ICLR')
-        six_reviewer_client = helpers.create_user('iclr2021_six_alternate@mail.com', 'ReviewerSix', 'ICLR', ['iclr2021_six@mail.com'])
-        ## confirm alternate email
-        client.add_members_to_group('~ReviewerSix_ICLR1', 'iclr2021_six@mail.com')
-        client.add_members_to_group('iclr2021_six@mail.com', '~ReviewerSix_ICLR1')
+        five_reviewer_client = openreview.Client(username='iclr2021_five@mail.com', password='1234')
+        six_reviewer_client = openreview.Client(username='iclr2021_six_alternate@mail.com', password='1234')
 
         subject = '[ICLR 2021] Please complete your profile'
         message = '''
@@ -412,3 +419,19 @@ Naila, Katja, Alice, and Ivan
         assert len(declined_group.members) == 0
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 5
+
+    def test_invite_suggested_reviewers(self, conference, helpers, client, selenium, request_page):
+
+        result = conference.recruit_reviewers_v2(['iclr2021_one@mail.com',
+        'iclr2021_two@mail.com',
+        'iclr2021_three@mail.com',
+        'iclr2021_four@mail.com',
+        'iclr2021_five@mail.com',
+        'iclr2021_six@mail.com',
+        'iclr2021_seven@mail.com',
+        'iclr2021_eight@mail.com',
+        'iclr2021_nine@mail.com',
+        'iclr2021_six_alternate@mail.com'])
+
+        messages = client.get_messages(subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        assert len(messages) == 9
