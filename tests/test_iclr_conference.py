@@ -154,12 +154,21 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        result = conference.recruit_reviewers(['iclr2021_one@mail.com', 'iclr2021_two@mail.com', 'iclr2021_three@mail.com'])
+        result = conference.recruit_reviewers(['iclr2021_one@mail.com',
+        'iclr2021_two@mail.com',
+        'iclr2021_three@mail.com',
+        'iclr2021_four@mail.com',
+        'iclr2021_five@mail.com',
+        'iclr2021_six@mail.com'])
+
         assert result
         assert result.id == 'ICLR.cc/2021/Conference/Reviewers/Invited'
         assert 'iclr2021_one@mail.com' in result.members
         assert 'iclr2021_two@mail.com' in result.members
         assert 'iclr2021_three@mail.com' in result.members
+        assert 'iclr2021_four@mail.com' in result.members
+        assert 'iclr2021_five@mail.com' in result.members
+        assert 'iclr2021_six@mail.com' in result.members
 
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
         text = messages[0]['content']['text']
@@ -194,6 +203,38 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(declined_group.members) == 1
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 1
+
+        messages = client.get_messages(to = 'iclr2021_four@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as a reviewer' in text
+
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+
+        request_page(selenium, accept_url, alert=True)
+        declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
+        assert len(declined_group.members) == 1
+        accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
+        assert len(accepted_group.members) == 2
+
+        messages = client.get_messages(to = 'iclr2021_five@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        text = messages[0]['content']['text']
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        request_page(selenium, accept_url, alert=True)
+        declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
+        assert len(declined_group.members) == 1
+        accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
+        assert len(accepted_group.members) == 3
+
+        messages = client.get_messages(to = 'iclr2021_six@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        text = messages[0]['content']['text']
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        request_page(selenium, accept_url, alert=True)
+        declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
+        assert len(declined_group.members) == 1
+        accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
+        assert len(accepted_group.members) == 4
 
     def test_registration(self, conference, helpers, selenium, request_page):
 
@@ -253,3 +294,75 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert tasks
         assert len(tasks.find_elements_by_class_name('note')) == 2
         assert len(tasks.find_elements_by_class_name('completed')) == 2
+
+    def test_remind_registration(self, conference, helpers, client):
+
+        five_reviewer_client = helpers.create_user('iclr2021_five@mail.com', 'ReviewerFive', 'ICLR')
+        six_reviewer_client = helpers.create_user('iclr2021_six_alternate@mail.com', 'ReviewerSix', 'ICLR', ['iclr2021_six@mail.com'])
+        ## confirm alternate email
+        client.add_members_to_group('~ReviewerSix_ICLR1', 'iclr2021_six@mail.com')
+        client.add_members_to_group('iclr2021_six@mail.com', '~ReviewerSix_ICLR1')
+
+        subject = '[ICLR 2021] Please complete your profile'
+        message = '''
+Dear Reviewer,
+
+
+Thank you for accepting our invitation to serve on the program committee for ICLR 2021. The first task we ask of you is to complete your profile, which is essential in order for us to:
+
+- Assign you relevant submissions.
+
+- Identify gaps in reviewer expertise.
+
+
+To complete your profile, please log into OpenReview and navigate to the reviewer console(https://openreview.net/group?id=ICLR.cc/2021/Conference/Reviewers).
+There you will see a task to "Reviewer Registration". This task should not take more than 10-15 minutes.
+Please complete it by September 4th. Note that you will have to create an OpenReview account if you don’t already have one.
+
+
+Thanks again for your ongoing service to our community.
+
+
+ICLR2021 Programme Chairs,
+
+Naila, Katja, Alice, and Ivan
+        '''
+
+        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
+        assert reminders
+        assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com', 'iclr2021_six@mail.com']
+
+        registration_notes = six_reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Form')
+        assert registration_notes
+        assert len(registration_notes) == 1
+
+        registration_forum = registration_notes[0].forum
+
+        registration_note = six_reviewer_client.post_note(
+            openreview.Note(
+                invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration',
+                forum = registration_forum,
+                replyto = registration_forum,
+                content = {
+                    'profile_confirmed': 'Yes',
+                    'expertise_confirmed': 'Yes',
+                    'TPMS_registration_confirmed': 'Yes',
+                    'reviewer_instructions_confirm': 'Yes',
+                    'emergency_review_count': '0'
+                },
+                signatures = [
+                    '~ReviewerSix_ICLR1'
+                ],
+                readers = [
+                    conference.get_id(),
+                    '~ReviewerSix_ICLR1'
+                ],
+                writers = [
+                    conference.get_id(),
+                    '~ReviewerSix_ICLR1'
+                ]
+            ))
+
+        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
+        assert reminders
+        assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com']

@@ -1005,6 +1005,36 @@ class Conference(object):
 
         return self.client.get_group(id = reviewers_invited_id)
 
+    ## temporal function, move to somewhere else
+    def remind_registration_stage(self, subject, message, committee_id):
+
+        reviewers = self.client.get_group(committee_id).members
+        profiles_by_email = self.client.search_profiles(emails=[m for m in reviewers if '@' in m])
+        confirmations = {c.tauthor: c for c in list(tools.iterget_notes(self.client, invitation=self.get_registration_id(committee_id)))}
+        print('reviewers:', len(reviewers))
+        print('profiles:', len(profiles_by_email))
+        print('confirmations', len(confirmations))
+
+        reminders=[]
+        confirmed=[]
+        for reviewer in reviewers:
+            if reviewer in profiles_by_email:
+                emails = profiles_by_email[reviewer].content['emails']
+                found = False
+                for email in emails:
+                    if email in confirmations:
+                        found = True
+                if not found:
+                    reminders.append(reviewer)
+                else:
+                    confirmed.append(reviewer)
+            else:
+                reminders.append(reviewer)
+
+        self.client.post_message(subject, reminders, message)
+        return reminders
+
+
     def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None, release_accepted_notes = None):
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
