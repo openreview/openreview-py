@@ -431,7 +431,9 @@ Naila, Katja, Alice, and Ivan
         'iclr2021_seven@mail.com',
         'iclr2021_eight@mail.com',
         'iclr2021_nine@mail.com',
-        'iclr2021_six_alternate@mail.com'])
+        'iclr2021_six_alternate@mail.com'], invitee_names=['', '', '', '', '', '', '', '', 'Melisa Bok', ''])
 
         messages = client.get_messages(subject = 'ICLR.cc/2021/Conference: Invitation to Review')
         assert len(messages) == 9
+
+        assert 'Melisa Bok' in messages[8]['content']['text']
