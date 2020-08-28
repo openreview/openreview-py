@@ -154,7 +154,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        result = conference.recruit_reviewers(['iclr2021_one@mail.com',
+        result = conference.recruit_reviewers_v2(['iclr2021_one@mail.com',
         'iclr2021_two@mail.com',
         'iclr2021_three@mail.com',
         'iclr2021_four@mail.com',
@@ -366,3 +366,49 @@ Naila, Katja, Alice, and Ivan
         reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
         assert reminders
         assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com']
+
+
+    def test_retry_declined_reviewers(self, conference, helpers, client, selenium, request_page):
+
+        title = '[ICLR 2021] Please reconsider serving as a reviewer'
+        message = '''
+Dear Reviewer,
+
+
+Thank you for responding to our invitation to serve as a reviewer for ICLR 2021. We would still very much benefit from your expertise and wonder whether you would reconsider our invitation in light of the fact that we will guarantee you a maximum load of 3 papers.
+
+
+If you would now like to ACCEPT the invitation, please click on the following link:
+
+
+{accept_url}
+
+
+We would appreciate an answer by Friday September 4th (in 7 days).
+
+
+If you have any questions, please don’t hesitate to reach out to us at iclr2021programchairs@googlegroups.com.
+
+
+We do hope you will reconsider and we thank you as always for your ongoing service to our community.
+
+
+ICLR2021 Programme Chairs,
+
+Naila, Katja, Alice, and Ivan
+        '''
+
+        result = conference.recruit_reviewers_v2(title=title, message=message, retry_declined=True)
+
+        messages = client.get_messages(subject = '[ICLR 2021] Please reconsider serving as a reviewer')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'iclr2021_two@mail.com'
+        text = messages[0]['content']['text']
+
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+
+        request_page(selenium, accept_url, alert=True)
+        declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
+        assert len(declined_group.members) == 0
+        accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
+        assert len(accepted_group.members) == 5

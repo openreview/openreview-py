@@ -1005,6 +1005,130 @@ class Conference(object):
 
         return self.client.get_group(id = reviewers_invited_id)
 
+    def recruit_reviewers_v2(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False):
+
+        pcs_id = self.get_program_chairs_id()
+        reviewers_id = self.id + '/' + reviewers_name
+        reviewers_declined_id = reviewers_id + '/Declined'
+        reviewers_invited_id = reviewers_id + '/Invited'
+        reviewers_accepted_id = reviewers_id
+        hash_seed = '1234'
+        invitees = [e.lower() if '@' in e else e for e in invitees]
+
+        reviewers_accepted_group = self.__create_group(reviewers_accepted_id, pcs_id)
+        reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
+        reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
+
+        options = {
+            'reviewers_name': reviewers_name,
+            'reviewers_accepted_id': reviewers_accepted_id,
+            'reviewers_invited_id': reviewers_invited_id,
+            'reviewers_declined_id': reviewers_declined_id,
+            'hash_seed': hash_seed
+        }
+        if options['reviewers_name'] == 'Reviewers' and self.reduced_load_on_decline:
+            options['reduced_load_on_decline'] = self.reduced_load_on_decline
+            invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
+            invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
+
+        invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
+        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
+        recruit_message = '''Dear {name},
+
+        You have been nominated by the program chair committee of ''' + self.short_name + ''' to serve as a reviewer.  As a respected researcher in the area, we hope you will accept and help us make the conference a success.
+
+        Reviewers are also welcome to submit papers, so please also consider submitting to the conference!
+
+        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+        The success of the conference depends on the quality of the reviewing process and ultimately on the quality and dedication of the reviewers. We hope you will accept our invitation.
+
+        To ACCEPT the invitation, please click on the following link:
+
+        {accept_url}
+
+        To DECLINE the invitation, please click on the following link:
+
+        {decline_url}
+
+        Please answer within 10 days.
+
+        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+        If you have any questions, please contact us at info@openreview.net.
+
+        Cheers!
+
+        Program Chairs
+
+        '''
+        recruit_message_subj = self.id + ': Invitation to Review'
+
+        if title:
+            recruit_message_subj = title
+
+        if message:
+            recruit_message = message
+
+        if remind:
+            invited_reviewers = reviewers_invited_group.members
+            print ('Sending reminders for recruitment invitations')
+            for reviewer_id in tqdm(invited_reviewers):
+                memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
+                if reviewer_id not in memberships and reviewers_declined_id not in memberships:
+                    reviewer_name = 'invitee'
+                    if reviewer_id.startswith('~') :
+                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                    elif (reviewer_id in invitees) and invitee_names:
+                        reviewer_name = invitee_names[invitees.index(reviewer_id)]
+
+                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        'Reminder: ' + recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
+
+        if retry_declined:
+            declined_reviewers = reviewers_declined_group.members
+            print ('Sending retry to declined reviewers')
+            for reviewer_id in tqdm(declined_reviewers):
+                memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
+                if reviewer_id not in memberships:
+                    reviewer_name = 'invitee'
+                    if reviewer_id.startswith('~') :
+                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                    elif (reviewer_id in invitees) and invitee_names:
+                        reviewer_name = invitee_names[invitees.index(reviewer_id)]
+
+                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
+
+        print ('Sending recruitment invitations')
+        for index, email in enumerate(tqdm(invitees)):
+            memberships = [g.id for g in self.client.get_groups(member=email, regex=reviewers_id)] if tools.get_group(self.client, email) else []
+            if reviewers_invited_id not in memberships:
+                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
+                if not name:
+                    name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
+                tools.recruit_reviewer(self.client, email, name,
+                    hash_seed,
+                    invitation.id,
+                    recruit_message,
+                    recruit_message_subj,
+                    reviewers_invited_id,
+                    verbose = False)
+
+        return self.client.get_group(id = reviewers_invited_id)
+
+
+
     ## temporal function, move to somewhere else
     def remind_registration_stage(self, subject, message, committee_id):
 
