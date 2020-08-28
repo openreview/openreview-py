@@ -57,6 +57,28 @@ def get_group(client, id):
             raise e
     return group
 
+def get_note(client, id):
+    """
+    Get a single Note by id if available
+
+    :param client: User that will retrieve the note
+    :type client: Client
+    :param id: id of the note
+    :type id: str
+
+    :return: Note corresponding to the passed Note id
+    :rtype: Note
+    """
+    note = None
+    try:
+        note = client.get_note(id=id)
+    except openreview.OpenReviewException as e:
+        # throw an error if it is something other than "not found"
+        error = e.args[0][0]['type']
+        if not error.startswith('Not Found'):
+            raise e
+    return note
+
 def get_invitation(client, id):
     """
     Get a single Invitation by id if available
