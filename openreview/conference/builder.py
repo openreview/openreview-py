@@ -1075,7 +1075,7 @@ class Conference(object):
             print ('Sending reminders for recruitment invitations')
             for reviewer_id in tqdm(invited_reviewers):
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
-                if reviewer_id not in memberships and reviewers_declined_id not in memberships:
+                if reviewers_id not in memberships and reviewers_declined_id not in memberships:
                     reviewer_name = 'invitee'
                     if reviewer_id.startswith('~') :
                         reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
@@ -1095,7 +1095,7 @@ class Conference(object):
             print ('Sending retry to declined reviewers')
             for reviewer_id in tqdm(declined_reviewers):
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
-                if reviewer_id not in memberships:
+                if reviewers_id not in memberships:
                     reviewer_name = 'invitee'
                     if reviewer_id.startswith('~') :
                         reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
