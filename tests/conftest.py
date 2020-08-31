@@ -10,7 +10,7 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 
 class Helpers:
     @staticmethod
-    def create_user(email, first, last):
+    def create_user(email, first, last, alternates=[]):
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
@@ -23,7 +23,7 @@ class Helpers:
                         'username': '~' + first + '_' + last + '1'
                     }
                 ],
-            'emails': [email],
+            'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
             })
         assert res, "Res i none"
