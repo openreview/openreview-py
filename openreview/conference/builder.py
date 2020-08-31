@@ -1028,7 +1028,7 @@ class Conference(object):
 
 
 
-    ## temporal function, move to somewhere else
+    ## temporary function, move to somewhere else
     def remind_registration_stage(self, subject, message, committee_id):
 
         reviewers = self.client.get_group(committee_id).members
