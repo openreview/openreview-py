@@ -143,7 +143,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
     def test_create_conference(self, client, conference, helpers):
 
         helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
-        helpers.create_user('iclr2021_one@mail.com', 'ReviewerOne', 'ICLR')
+        helpers.create_user('iclr2021_one@mail.com', 'ReviewerOne', 'ICLR', ['iclr2021_one_alternate@mail.com'])
+        ## confirm alternate email
+        client.add_members_to_group('~ReviewerOne_ICLR1', 'iclr2021_one_alternate@mail.com')
+        client.add_members_to_group('iclr2021_one_alternate@mail.com', '~ReviewerOne_ICLR1')
         helpers.create_user('iclr2021_five@mail.com', 'ReviewerFive', 'ICLR')
         helpers.create_user('iclr2021_six_alternate@mail.com', 'ReviewerSix', 'ICLR', ['iclr2021_six@mail.com'])
         ## confirm alternate email
@@ -162,16 +165,18 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        result = conference.recruit_reviewers_v2(['iclr2021_one@mail.com',
+        result = conference.recruit_reviewers(['iclr2021_one@mail.com',
         'iclr2021_two@mail.com',
         'iclr2021_three@mail.com',
         'iclr2021_four@mail.com',
         'iclr2021_five@mail.com',
         'iclr2021_six@mail.com',
-        'iclr2021_seven@mail.com'])
+        'iclr2021_seven@mail.com',
+        'iclr2021_one_alternate@mail.com'])
 
         assert result
         assert result.id == 'ICLR.cc/2021/Conference/Reviewers/Invited'
+        assert len(result.members) == 7
         assert 'iclr2021_one@mail.com' in result.members
         assert 'iclr2021_two@mail.com' in result.members
         assert 'iclr2021_three@mail.com' in result.members
@@ -179,6 +184,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'iclr2021_five@mail.com' in result.members
         assert 'iclr2021_six@mail.com' in result.members
         assert 'iclr2021_seven@mail.com' in result.members
+        assert 'iclr2021_one_alternate@mail.com' not in result.members
 
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
         text = messages[0]['content']['text']
@@ -405,7 +411,7 @@ ICLR2021 Programme Chairs,
 Naila, Katja, Alice, and Ivan
         '''
 
-        result = conference.recruit_reviewers_v2(title=title, message=message, retry_declined=True)
+        result = conference.recruit_reviewers(title=title, message=message, retry_declined=True)
 
         messages = client.get_messages(subject = '[ICLR 2021] Please reconsider serving as a reviewer')
         assert len(messages) == 1
@@ -422,7 +428,7 @@ Naila, Katja, Alice, and Ivan
 
     def test_invite_suggested_reviewers(self, conference, helpers, client, selenium, request_page):
 
-        result = conference.recruit_reviewers_v2(['iclr2021_one@mail.com',
+        result = conference.recruit_reviewers(['iclr2021_one@mail.com',
         'iclr2021_two@mail.com',
         'iclr2021_three@mail.com',
         'iclr2021_four@mail.com',
