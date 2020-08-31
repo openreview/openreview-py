@@ -19,7 +19,6 @@ jobs:
       - run: curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
       - run: sudo python3 get-pip.py
       - run: sudo pip3 install ~/openreview-py-repo
-      - run: sudo pip3 install "setuptools!=50.0" --force-reinstall
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
       - run: mkdir ~/openreview/logs
