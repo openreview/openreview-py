@@ -502,12 +502,11 @@ class VenueRequest():
                 'values-checkbox': [
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores',
-                    'OpenReview Affinity',
-                    'Conflict Detection'
+                    'OpenReview Affinity'
                 ],
                 'order': 17,
                 'required': True,
-                'default': ['OpenReview Affinity', 'Conflict Detection']
+                'default': ['OpenReview Affinity']
             },
             'Author and Reviewer Anonymity': {
                 'description': 'What policy best describes your anonymity policy? (If none of the options apply then please describe your request below)',

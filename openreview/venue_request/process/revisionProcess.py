@@ -17,9 +17,9 @@ def process(client, note, invitation):
         conference.setup_post_submission_stage()
 
     if invitation_type == 'Bid_Stage':
-        conference.setup_matching(build_conflicts=('Conflict Detection' in forum_note.content.get('Paper Matching', [])))
+        conference.setup_matching(build_conflicts=True)
         if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
-            conference.setup_matching(is_area_chair=True, build_conflicts=('Conflict Detection' in forum_note.content.get('Paper Matching', [])))
+            conference.setup_matching(is_area_chair=True, build_conflicts=True)
         conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note))
 
     elif invitation_type == 'Review_Stage':
