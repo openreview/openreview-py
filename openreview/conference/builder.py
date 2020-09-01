@@ -904,15 +904,13 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', reviewer_accepted_name = None, remind = False, invitee_names = []):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
         reviewers_declined_id = reviewers_id + '/Declined'
         reviewers_invited_id = reviewers_id + '/Invited'
         reviewers_accepted_id = reviewers_id
-        if reviewer_accepted_name:
-            reviewers_accepted_id = reviewers_id + '/' + reviewer_accepted_name
         hash_seed = '1234'
         invitees = [e.lower() if '@' in e else e for e in invitees]
 
@@ -972,26 +970,49 @@ class Conference(object):
             recruit_message = message
 
         if remind:
-            remind_reviewers = list(set(reviewers_invited_group.members) - set(reviewers_declined_group.members) - set(reviewers_accepted_group.members))
+            invited_reviewers = reviewers_invited_group.members
             print ('Sending reminders for recruitment invitations')
-            for reviewer_id in tqdm(remind_reviewers):
-                reviewer_name = 'invitee'
-                if reviewer_id.startswith('~') :
-                    reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
-                elif (reviewer_id in invitees) and invitee_names:
-                    reviewer_name = invitee_names[invitees.index(reviewer_id)]
+            for reviewer_id in tqdm(invited_reviewers):
+                memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
+                if reviewers_id not in memberships and reviewers_declined_id not in memberships:
+                    reviewer_name = 'invitee'
+                    if reviewer_id.startswith('~') :
+                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                    elif (reviewer_id in invitees) and invitee_names:
+                        reviewer_name = invitee_names[invitees.index(reviewer_id)]
 
-                tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
-                    hash_seed,
-                    invitation.id,
-                    recruit_message,
-                    'Reminder: ' + recruit_message_subj,
-                    reviewers_invited_id,
-                    verbose = False)
+                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        'Reminder: ' + recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
+
+        if retry_declined:
+            declined_reviewers = reviewers_declined_group.members
+            print ('Sending retry to declined reviewers')
+            for reviewer_id in tqdm(declined_reviewers):
+                memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
+                if reviewers_id not in memberships:
+                    reviewer_name = 'invitee'
+                    if reviewer_id.startswith('~') :
+                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                    elif (reviewer_id in invitees) and invitee_names:
+                        reviewer_name = invitee_names[invitees.index(reviewer_id)]
+
+                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees)):
-            if email not in set(reviewers_invited_group.members):
+            memberships = [g.id for g in self.client.get_groups(member=email, regex=reviewers_id)] if tools.get_group(self.client, email) else []
+            if reviewers_invited_id not in memberships:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
@@ -1004,6 +1025,38 @@ class Conference(object):
                     verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
+
+
+
+    ## temporary function, move to somewhere else
+    def remind_registration_stage(self, subject, message, committee_id):
+
+        reviewers = self.client.get_group(committee_id).members
+        profiles_by_email = self.client.search_profiles(emails=[m for m in reviewers if '@' in m])
+        confirmations = {c.tauthor: c for c in list(tools.iterget_notes(self.client, invitation=self.get_registration_id(committee_id)))}
+        print('reviewers:', len(reviewers))
+        print('profiles:', len(profiles_by_email))
+        print('confirmations', len(confirmations))
+
+        reminders=[]
+        confirmed=[]
+        for reviewer in reviewers:
+            if reviewer in profiles_by_email:
+                emails = profiles_by_email[reviewer].content['emails']
+                found = False
+                for email in emails:
+                    if email in confirmations:
+                        found = True
+                if not found:
+                    reminders.append(reviewer)
+                else:
+                    confirmed.append(reviewer)
+            else:
+                reminders.append(reviewer)
+
+        self.client.post_message(subject, reminders, message)
+        return reminders
+
 
     def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None, release_accepted_notes = None):
         home_group = self.client.get_group(self.id)
