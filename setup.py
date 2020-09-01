@@ -22,7 +22,8 @@ setup(
         'tqdm',
         'Deprecated',
         'pylatexenc',
-        'tld==0.10'
+        'tld==0.10',
+        'setuptools==49.6.0'
     ],
     extras_require={
         'docs': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
