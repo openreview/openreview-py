@@ -466,6 +466,13 @@ class Matching(object):
                         'value-regex': '.*',
                         'required': False,
                         'order': 17
+                    },
+                    'allow_zero_score_assignments': {
+                        'description': 'Select "Yes" only if you want to allow assignments with 0 scores',
+                        'value-radio': ['Yes', 'No'],
+                        'required': False,
+                        'default': 'No',
+                        'order': 18
                     }
                 }
             })
