@@ -1285,7 +1285,7 @@ class ReviewStage(object):
         signature_regex = conference.get_id() + '/Paper' + str(number) + '/AnonReviewer[0-9]+'
 
         if self.allow_de_anonymization:
-            signature_regex = signature_regex + '|~.*'
+            return '~.*'
 
         return signature_regex
 

@@ -569,16 +569,14 @@ class VenueRequest():
                 'order': 16
             },
             'Paper Matching': {
-                'description': 'Choose options for assigning papers to reviewers. If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type.',
+                'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, deselect all options.',
                 'values-checkbox': [
-                    'Organizers will assign papers manually',
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores',
-                    'OpenReview Affinity',
-                    'TPMS'
+                    'OpenReview Affinity'
                 ],
                 'order': 17,
-                'required': True,
+                'required': False,
                 'default': ['OpenReview Affinity']
             },
             'Author and Reviewer Anonymity': {
