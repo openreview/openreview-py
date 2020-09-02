@@ -45,7 +45,7 @@ var instructionDetails = [
   <ul>\
   <li><strong>Reviewer Bid Scores</strong>: Reviewers indicate their preference to review papers via bids, which are then converted to scores.</li>\
   <li><strong>Reviewer Recommendation Scores</strong>: Reviewers, Area Chairs, and/or Program Chairs recommend specific reviewers to review papers. These recommendations are then converted to scores according to your specifications.</li>\
-  <li><strong>OpenReview Affinity</strong>: Our in-house paper-reviewer affinity model based on TF-IDF vector similarity. </li>\
+  <li><strong>OpenReview Affinity</strong>: Our in-house paper-reviewer affinity model. </li>\
   </ul>\
   </p>'},
   {heading: 'Public vs. Private content', body: '<p class="dark">\
