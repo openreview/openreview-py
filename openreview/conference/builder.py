@@ -681,12 +681,12 @@ class Conference(object):
                 self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
 
             self.create_withdraw_invitations(
-                reveal_authors=(not self.submission_stage.withdrawn_submission_author_anonymous),
+                reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
                 reveal_submission=self.submission_stage.withdrawn_submission_public,
                 email_pcs=self.submission_stage.email_pcs_on_withdraw
             )
             self.create_desk_reject_invitations(
-                reveal_authors=(not self.submission_stage.desk_rejected_submission_author_anonymous),
+                reveal_authors=self.submission_stage.desk_rejected_submission_reveal_authors,
                 reveal_submission=self.submission_stage.desk_rejected_submission_public
             )
 
@@ -1108,10 +1108,10 @@ class SubmissionStage(object):
             # We need to assume the Official Review super invitation is already created and active
             create_review_invitation=False,
             withdrawn_submission_public=False,
-            withdrawn_submission_author_anonymous=False,
+            withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
-            desk_rejected_submission_author_anonymous=False,
+            desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True
         ):
 
@@ -1127,10 +1127,10 @@ class SubmissionStage(object):
         self.create_groups = create_groups
         self.create_review_invitation = create_review_invitation
         self.withdrawn_submission_public = withdrawn_submission_public
-        self.withdrawn_submission_author_anonymous = withdrawn_submission_author_anonymous
+        self.withdrawn_submission_reveal_authors = withdrawn_submission_reveal_authors
         self.email_pcs_on_withdraw = email_pcs_on_withdraw
         self.desk_rejected_submission_public = desk_rejected_submission_public
-        self.desk_rejected_submission_author_anonymous = desk_rejected_submission_author_anonymous
+        self.desk_rejected_submission_reveal_authors = desk_rejected_submission_reveal_authors
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
 
     def get_readers(self, conference):
@@ -1517,10 +1517,10 @@ class ConferenceBuilder(object):
             create_groups=False,
             create_review_invitation=False,
             withdrawn_submission_public=False,
-            withdrawn_submission_author_anonymous=False,
+            withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
-            desk_rejected_submission_author_anonymous=False,
+            desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True
         ):
 
@@ -1537,10 +1537,10 @@ class ConferenceBuilder(object):
             create_groups,
             create_review_invitation,
             withdrawn_submission_public,
-            withdrawn_submission_author_anonymous,
+            withdrawn_submission_reveal_authors,
             email_pcs_on_withdraw,
             desk_rejected_submission_public,
-            desk_rejected_submission_author_anonymous,
+            desk_rejected_submission_reveal_authors,
             email_pcs_on_desk_reject
         )
 
