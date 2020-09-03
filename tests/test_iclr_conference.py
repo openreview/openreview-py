@@ -127,14 +127,50 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         )
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
-            public = False,
+            public = True,
             due_date = now + datetime.timedelta(minutes = 10),
-            withdrawn_submission_public=False,
+            second_due_date = now + datetime.timedelta(minutes = 20),
+            withdrawn_submission_public=True,
             withdrawn_submission_author_anonymous=True,
-            email_pcs_on_withdraw=True,
-            desk_rejected_submission_public=False,
-            desk_rejected_submission_author_anonymous=True)
-
+            email_pcs_on_withdraw=False,
+            desk_rejected_submission_public=True,
+            desk_rejected_submission_author_anonymous=True,
+            additional_fields={
+                "one-sentence_summary": {
+                    "description": "A short sentence describing your paper.",
+                    "order": 5,
+                    "value-regex": "[^\n]{0,250}",
+                    "required": False
+                },
+                "pdf": {
+                    "description": "Upload a PDF file that ends with .pdf. The maximum file size is 50MB. Note: optional before the abstract submission deadline.",
+                    "order": 9,
+                    "value-file": {
+                        "fileTypes": [
+                            "pdf"
+                        ],
+                        "size": 50
+                    },
+                    "required": False
+                },
+                "supplementary_material": {
+                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                    "order": 10,
+                    "value-file": {
+                        "fileTypes": [
+                            "zip"
+                        ],
+                        "size": 100
+                    },
+                    "required": False
+                },
+                "code_of_ethics": {
+                    "description": "See the ICLR Code of Ethics: https://iclr.cc/public/CodeOfEthics",
+                    "order": 16,
+                    "value-checkbox": "I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics",
+                    "required": True
+                }
+            })
 
         conference = builder.get_result()
         conference.set_program_chairs(['pc@iclr.cc'])
@@ -195,12 +231,14 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
 
         request_page(selenium, reject_url, alert=True)
+        time.sleep(2)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 1
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 0
 
         request_page(selenium, accept_url, alert=True)
+        time.sleep(2)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 0
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
@@ -443,3 +481,24 @@ Naila, Katja, Alice, and Ivan
         assert len(messages) == 9
 
         assert 'Melisa Bok' in messages[8]['content']['text']
+
+
+    def test_submit_papers(self, conference, helpers, test_client, selenium, request_page):
+
+        domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
+        for i in range(1,6):
+            note = openreview.Note(invitation = 'ICLR.cc/2021/Conference/-/Submission',
+                readers = ['ICLR.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
+                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~Test_User1'],
+                content = {
+                    'title': 'Paper title ' + str(i) ,
+                    'abstract': 'This is an abstract ' + str(i),
+                    'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
+                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics'
+                }
+            )
+            test_client.post_note(note)
+
+        conference.setup_post_submission_stage(force=True)

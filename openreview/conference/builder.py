@@ -605,13 +605,10 @@ class Conference(object):
         active_venues = self.client.get_group('active_venues')
         self.client.add_members_to_group(active_venues, self.id)
 
-    def create_blind_submissions(self, force=False, hide_fields=[]):
+    def create_blind_submissions(self, hide_fields=[]):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
-
-        if not force and self.submission_stage.due_date and (tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
-            raise openreview.OpenReviewException('Submission invitation is still due. Aborted blind note creation!')
 
         submissions_by_original = { note.original: note for note in self.get_submissions() }
         withdrawn_submissions_by_original = {note.original: note for note in self.get_withdrawn_submissions()}
@@ -661,14 +658,37 @@ class Conference(object):
                     blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
 
-        ## We should only create the author groups
-        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
-
         # Update PC console with double blind submissions
         pc_group = self.client.get_group(self.get_program_chairs_id())
         self.webfield_builder.edit_web_string_value(pc_group, 'BLIND_SUBMISSION_ID', self.get_blind_submission_id())
 
         return blinded_notes
+
+    def setup_first_deadline_stage(self, hide_fields=[]):
+
+        if self.submission_stage.double_blind:
+            self.create_blind_submissions(hide_fields)
+
+        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        self.create_withdraw_invitations(
+            reveal_authors=False,
+            reveal_submission=False,
+            email_pcs=False
+        )
+        self.create_desk_reject_invitations(
+            reveal_authors=False,
+            reveal_submission=False
+        )
+        self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
+            start_date=self.submission_stage.due_date,
+            due_date=self.submission_stage.second_due_date,
+            additional_fields=additional_fields,
+            remove_fields=remove_fields,
+            only_accepted=False
+        )
+        self.__create_submission_revision_stage()
+
+
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         if force or not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
@@ -1098,6 +1118,7 @@ class SubmissionStage(object):
             name='Submission',
             start_date=None,
             due_date=None,
+            second_due_date=None,
             public=False,
             double_blind=False,
             additional_fields={},
@@ -1508,6 +1529,7 @@ class ConferenceBuilder(object):
             name='Submission',
             start_date=None,
             due_date=None,
+            second_due_date=None,
             public=False,
             double_blind=False,
             additional_fields={},
@@ -1528,6 +1550,7 @@ class ConferenceBuilder(object):
             name,
             start_date,
             due_date,
+            second_due_date,
             public,
             double_blind,
             additional_fields,
