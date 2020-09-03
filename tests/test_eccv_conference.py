@@ -534,7 +534,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_revise_additional_files(self, conference, client, test_client):
 
-        conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
+        conference.create_blind_submissions(hide_fields=['pdf', 'supplementary_material'])
 
         submissions = conference.get_submissions()
         assert submissions

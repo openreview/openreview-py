@@ -483,7 +483,7 @@ Naila, Katja, Alice, and Ivan
         assert 'Melisa Bok' in messages[8]['content']['text']
 
 
-    def test_submit_papers(self, conference, helpers, test_client, selenium, request_page):
+    def test_submit_papers(self, conference, helpers, test_client, client):
 
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
@@ -499,6 +499,39 @@ Naila, Katja, Alice, and Ivan
                     'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics'
                 }
             )
-            test_client.post_note(note)
+            note = test_client.post_note(note)
 
-        conference.setup_post_submission_stage(force=True)
+        conference.setup_first_deadline_stage(force=True)
+
+        blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
+        assert len(blinded_notes) == 5
+
+        invitations = test_client.get_invitations(replyForum=blinded_notes[0].id)
+        assert len(invitations) == 1
+        assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
+
+        invitations = test_client.get_invitations(replyForum=blinded_notes[0].original)
+        assert len(invitations) == 1
+        assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Revision'
+
+        invitations = client.get_invitations(replyForum=blinded_notes[0].id)
+        assert len(invitations) == 2
+        assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject'
+        assert invitations[1].id == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
+
+        # Add a revision
+        note = openreview.Note(referent=blinded_notes[0].original,
+            forum=blinded_notes[0].original,
+            invitation = 'ICLR.cc/2021/Conference/Paper5/-/Revision',
+            readers = ['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
+            writers = ['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
+            signatures = ['ICLR.cc/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'EDITED Paper title ' + str(i) ,
+                'abstract': 'This is an abstract ' + str(i),
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
+                'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics'
+            }
+        )
+        note = test_client.post_note(note)

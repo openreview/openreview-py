@@ -370,9 +370,9 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
+                cdate=None,
                 duedate = None,
-                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
+                expdate =None,
                 invitees=[conference.get_authors_id(note.number), conference.support_user],
                 readers=['everyone'],
                 writers=[conference.get_id()],
@@ -585,16 +585,20 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
         reply = {
             'forum': referent,
             'referent': referent,
-            'readers': conference.submission_stage.get_readers(conference),
-            'writers': {
-                'values-copied': [
+            'readers': {
+                'values': [
                     conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
+                    conference.get_authors_id(number=note.number)
+                ]
+            },
+            'writers': {
+                'values': [
+                    conference.get_id(),
+                    conference.get_authors_id(number=note.number)
                 ]
             },
             'signatures': {
-                'values-regex': '~.*'
+                'values-regex': '{}|{}'.format(conference.get_program_chairs_id(), conference.get_authors_id(number=note.number))
             }
         }
 

@@ -361,7 +361,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.create_blind_submissions()
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 1
@@ -436,7 +436,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.create_blind_submissions()
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 2
@@ -606,7 +606,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.create_blind_submissions()
 
         blind_submissions = author_client.get_notes(
             invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
