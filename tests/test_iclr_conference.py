@@ -130,10 +130,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             public = False,
             due_date = now + datetime.timedelta(minutes = 10),
             withdrawn_submission_public=False,
-            withdrawn_submission_reveal_authors=True,
+            withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=True,
             desk_rejected_submission_public=False,
-            desk_rejected_submission_reveal_authors=True)
+            desk_rejected_submission_reveal_authors=False)
 
 
         conference = builder.get_result()
