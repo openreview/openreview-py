@@ -692,13 +692,11 @@ class Conference(object):
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         if force or not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
-            # Due date is in the past
+
             if self.submission_stage.double_blind:
-                # Double Blind venue
                 self.create_blind_submissions(hide_fields)
-            else:
-                # Single Blind or Open venue
-                self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+
+            self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
 
             self.create_withdraw_invitations(
                 reveal_authors=(not self.submission_stage.withdrawn_submission_author_anonymous),
