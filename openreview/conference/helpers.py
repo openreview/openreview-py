@@ -93,11 +93,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
 
     # Authors can not be anonymized only if venue is double-blind
-    withdrawn_submission_reveal_authors = False
-    desk_rejected_submission_reveal_authors = False
-    if double_blind:
-        withdrawn_submission_reveal_authors = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
-        desk_rejected_submission_reveal_authors = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
+    withdrawn_submission_reveal_authors = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
+    desk_rejected_submission_reveal_authors = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
     create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
