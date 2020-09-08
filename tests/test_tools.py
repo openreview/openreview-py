@@ -295,3 +295,16 @@ class TestTools():
         conflicts = openreview.tools.get_conflicts([profile1], profile2)
         assert len(conflicts) == 1
         assert conflicts[0] == 'cmu.edu'
+
+    def test_add_assingments(self, client):
+
+        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
+        assert len(groups) == 2
+
+        for n in range(0, 10):
+            result = openreview.tools.add_assignment(client, 1, 'auai.org/UAI/2020/Conference', 'reviewer{}@mail.com'.format(n))
+            assert result
+
+        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
+        assert len(groups) == 12
+
