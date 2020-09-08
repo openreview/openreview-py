@@ -296,7 +296,7 @@ class TestTools():
         assert len(conflicts) == 1
         assert conflicts[0] == 'cmu.edu'
 
-    def test_add_assingments(self, client):
+    def test_add_assignments(self, client):
 
         groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
         assert len(groups) == 2
@@ -307,4 +307,3 @@ class TestTools():
 
         groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
         assert len(groups) == 12
-
