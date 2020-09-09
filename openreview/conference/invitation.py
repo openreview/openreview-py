@@ -612,6 +612,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
                 cdate=tools.datetime_millis(start_date) if start_date else None,
                 duedate=tools.datetime_millis(due_date) if due_date else None,
                 expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
+                multiReply=submission_revision_stage.multiReply,
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=[conference.get_id()],

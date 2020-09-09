@@ -684,7 +684,8 @@ class Conference(object):
             due_date=self.submission_stage.second_due_date,
             additional_fields=self.submission_stage.additional_fields,
             remove_fields=self.submission_stage.remove_fields,
-            only_accepted=False
+            only_accepted=False,
+            multiReply=False
         )
         self.__create_submission_revision_stage()
 
@@ -1226,13 +1227,14 @@ class BidStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.only_accepted = only_accepted
+        self.multiReply=multiReply
 
 class ReviewStage(object):
 
