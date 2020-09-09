@@ -131,10 +131,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             due_date = now + datetime.timedelta(minutes = 10),
             second_due_date = now + datetime.timedelta(minutes = 20),
             withdrawn_submission_public=True,
-            withdrawn_submission_author_anonymous=True,
+            withdrawn_submission_reveal_authors=True,
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=True,
-            desk_rejected_submission_author_anonymous=True,
+            desk_rejected_submission_reveal_authors=True,
             additional_fields={
                 "one-sentence_summary": {
                     "description": "A short sentence describing your paper.",

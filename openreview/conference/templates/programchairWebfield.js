@@ -463,7 +463,7 @@ var getInvitationId = function(name, number) {
 };
 
 var findNextAnonGroupNumber = function(paperNumber) {
-  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
+  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort(function(a, b) { return parseInt(a) - parseInt(b);});
   for (var i = 1; i < paperReviewerNums.length + 1; i++) {
     if (i.toString() !== paperReviewerNums[i - 1]) {
       return i;

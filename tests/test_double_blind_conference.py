@@ -1413,7 +1413,7 @@ class TestDoubleBlindConference():
             double_blind=True,
             public=True,
             withdrawn_submission_public=True,
-            withdrawn_submission_author_anonymous=False,
+            withdrawn_submission_reveal_authors=True,
             email_pcs_on_withdraw=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
@@ -1481,7 +1481,7 @@ class TestDoubleBlindConference():
             double_blind=True,
             public=True,
             desk_rejected_submission_public=True,
-            desk_rejected_submission_author_anonymous=False)
+            desk_rejected_submission_reveal_authors=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)

@@ -93,11 +93,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
 
     # Authors can not be anonymized only if venue is double-blind
-    withdrawn_submission_author_anonymous = False
-    desk_rejected_submission_author_anonymous = False
-    if double_blind:
-        withdrawn_submission_author_anonymous = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
-        desk_rejected_submission_author_anonymous = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
+    withdrawn_submission_reveal_authors = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
+    desk_rejected_submission_reveal_authors = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
     create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
@@ -113,10 +110,10 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         create_groups=(not double_blind),
         create_review_invitation=create_review_invitation,
         withdrawn_submission_public=withdrawn_submission_public,
-        withdrawn_submission_author_anonymous=withdrawn_submission_author_anonymous,
+        withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
         email_pcs_on_withdraw=email_pcs_on_withdraw,
         desk_rejected_submission_public=desk_rejected_submission_public,
-        desk_rejected_submission_author_anonymous=desk_rejected_submission_author_anonymous)
+        desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:
