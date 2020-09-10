@@ -585,3 +585,44 @@ Naila, Katja, Alice, and Ivan
 
         assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
 
+        ## Withdraw paper
+        test_client.post_note(openreview.Note(invitation='ICLR.cc/2021/Conference/Paper1/-/Withdraw',
+            forum = blinded_notes[4].forum,
+            replyto = blinded_notes[4].forum,
+            readers = [
+                'ICLR.cc/2021/Conference',
+                'ICLR.cc/2021/Conference/Paper1/Authors',
+                'ICLR.cc/2021/Conference/Paper1/Reviewers',
+                'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
+                'ICLR.cc/2021/Conference/Program_Chairs'],
+            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper1/Authors'],
+            signatures = ['ICLR.cc/2021/Conference/Paper1/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
+
+        time.sleep(2)
+
+        withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
+        assert len(withdrawn_notes) == 1
+        withdrawn_notes[0].readers == [
+            'ICLR.cc/2021/Conference/Paper1/Authors',
+            'ICLR.cc/2021/Conference/Paper1/Reviewers',
+            'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
+            'ICLR.cc/2021/Conference/Program_Chairs'
+        ]
+        assert len(conference.get_submissions()) == 4
+
+    def test_post_submission_stage(self, conference, helpers, test_client, client):
+
+        conference.setup_post_submission_stage(force=True)
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 4
+        assert submissions[0].readers == ['everyone']
+        assert submissions[1].readers == ['everyone']
+        assert submissions[2].readers == ['everyone']
+        assert submissions[3].readers == ['everyone']
+
