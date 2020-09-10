@@ -555,14 +555,17 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             value['order'] = order
             content[key] = value
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/submission_revision_process.py')) as f:
             file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.get_id() + "'")
+            file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
             super(SubmissionRevisionInvitation, self).__init__(
                 id=conference.get_invitation_id(submission_revision_stage.name),
                 cdate=tools.datetime_millis(start_date) if start_date else None,
                 duedate=tools.datetime_millis(due_date) if due_date else None,
                 expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
+                multiReply=submission_revision_stage.multiReply,
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=[conference.get_id()],
@@ -603,23 +606,15 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
         }
 
         invitees = note.content['authorids'] + note.signatures + [conference.support_user]
-        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
-            super(PaperSubmissionRevisionInvitation, self).__init__(
-                id=conference.get_invitation_id(submission_revision_stage.name, note.number),
-                super=conference.get_invitation_id(submission_revision_stage.name),
-                cdate=tools.datetime_millis(start_date) if start_date else None,
-                duedate=tools.datetime_millis(due_date) if due_date else None,
-                expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
-                multiReply=submission_revision_stage.multiReply,
-                readers=['everyone'],
-                writers=[conference.get_id()],
-                signatures=[conference.get_id()],
-                invitees=invitees,
-                reply=reply,
-                process_string=file_content
-            )
+        super(PaperSubmissionRevisionInvitation, self).__init__(
+            id=conference.get_invitation_id(submission_revision_stage.name, note.number),
+            super=conference.get_invitation_id(submission_revision_stage.name),
+            readers=['everyone'],
+            writers=[conference.get_id()],
+            signatures=[conference.get_id()],
+            invitees=invitees,
+            reply=reply
+        )
 
 class PublicCommentInvitation(openreview.Invitation):
 

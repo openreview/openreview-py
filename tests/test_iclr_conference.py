@@ -520,6 +520,18 @@ Naila, Katja, Alice, and Ivan
         assert invitations[1].id == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
 
         # Add a revision
+        pdf_url = test_client.put_attachment(
+            os.path.join(os.path.dirname(__file__), 'data/paper.pdf'),
+            'ICLR.cc/2021/Conference/Paper5/-/Revision',
+            'pdf'
+        )
+
+        supplementary_material_url = test_client.put_attachment(
+            os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'),
+            'ICLR.cc/2021/Conference/Paper5/-/Revision',
+            'supplementary_material'
+        )
+
         note = openreview.Note(referent=blinded_notes[0].original,
             forum=blinded_notes[0].original,
             invitation = 'ICLR.cc/2021/Conference/Paper5/-/Revision',
@@ -527,11 +539,49 @@ Naila, Katja, Alice, and Ivan
             writers = ['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
             signatures = ['ICLR.cc/2021/Conference/Paper5/Authors'],
             content = {
-                'title': 'EDITED Paper title ' + str(i) ,
-                'abstract': 'This is an abstract ' + str(i),
-                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
-                'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics'
+                'title': 'EDITED Paper title 5',
+                'abstract': 'This is an abstract 5',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'melisa@mail.com'],
+                'authors': ['Test User', 'Peter Test', 'Andrew Mc', 'Melisa Bok'],
+                'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
+                'pdf': pdf_url,
+                'supplementary_material': supplementary_material_url
             }
         )
-        note = test_client.post_note(note)
+
+        test_client.post_note(note)
+
+        time.sleep(2)
+
+        author_group = client.get_group('ICLR.cc/2021/Conference/Paper5/Authors')
+        assert len(author_group.members) == 3
+        assert 'melisa@mail.com' in author_group.members
+        assert 'test@mail.com' in author_group.members
+        assert 'peter@mail.com' in author_group.members
+
+        messages = client.get_messages(subject='ICLR 2021 has received a new revision of your submission titled EDITED Paper title 5')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'melisa@mail.com' in recipients
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been posted.\n\nTitle: EDITED Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+
+        ## Edit revision
+        references = client.get_references(invitation='ICLR.cc/2021/Conference/Paper5/-/Revision')
+        assert len(references) == 1
+        revision_note = references[0]
+        revision_note.content['title'] = 'EDITED Rev 2 Paper title 5'
+        test_client.post_note(revision_note)
+
+        time.sleep(2)
+
+        messages = client.get_messages(subject='ICLR 2021 has received a new revision of your submission titled EDITED Rev 2 Paper title 5')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'melisa@mail.com' in recipients
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+
+        assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+
