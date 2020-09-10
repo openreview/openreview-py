@@ -626,3 +626,32 @@ Naila, Katja, Alice, and Ivan
         assert submissions[2].readers == ['everyone']
         assert submissions[3].readers == ['everyone']
 
+        ## Withdraw paper
+        test_client.post_note(openreview.Note(invitation='ICLR.cc/2021/Conference/Paper2/-/Withdraw',
+            forum = submissions[3].forum,
+            replyto = submissions[3].forum,
+            readers = [
+                'everyone'],
+            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper2/Authors'],
+            signatures = ['ICLR.cc/2021/Conference/Paper2/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
+
+        time.sleep(2)
+
+        withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
+        assert len(withdrawn_notes) == 2
+        withdrawn_notes[0].readers == [
+            'everyone'
+        ]
+        withdrawn_notes[1].readers == [
+            'ICLR.cc/2021/Conference/Paper1/Authors',
+            'ICLR.cc/2021/Conference/Paper1/Reviewers',
+            'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
+            'ICLR.cc/2021/Conference/Program_Chairs'
+        ]
+
+

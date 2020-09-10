@@ -622,26 +622,28 @@ class Conference(object):
             if withdrawn_submissions_by_original.get(note.id) or desk_rejected_submissions_by_original.get(note.id):
                 continue
 
-            blind_note = submissions_by_original.get(note.id)
-            if not blind_note:
+            existing_blind_note = submissions_by_original.get(note.id)
+            blind_content = {
+                'authors': ['Anonymous'],
+                'authorids': [self.get_authors_id(number=note.number)],
+                '_bibtex': None
+            }
 
-                blind_content = {
-                    'authors': ['Anonymous'],
-                    'authorids': [self.get_authors_id(number=note.number)],
-                    '_bibtex': None
-                }
+            for field in hide_fields:
+                blind_content[field] = ''
 
-                for field in hide_fields:
-                    blind_content[field] = ''
+            blind_readers = self.submission_stage.get_blind_readers(self, note.number, under_submission)
+
+            if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
 
                 blind_note = openreview.Note(
-                    id = None,
+                    id = existing_blind_note.id if existing_blind_note else None,
                     original= note.id,
                     invitation= self.get_blind_submission_id(),
                     forum=None,
                     signatures= [self.id],
                     writers= [self.id],
-                    readers= self.submission_stage.get_blind_readers(self, note.number, under_submission),
+                    readers= blind_readers,
                     content= blind_content)
 
                 blind_note = self.client.post_note(blind_note)
