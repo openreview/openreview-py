@@ -691,28 +691,39 @@ class Conference(object):
         )
         self.__create_submission_revision_stage()
 
+    def setup_final_deadline_stage(self, force=False, hide_fields=[]):
+
+        if self.submission_stage.double_blind:
+            self.create_blind_submissions(hide_fields)
+
+        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        self.create_withdraw_invitations(
+            reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
+            reveal_submission=self.submission_stage.withdrawn_submission_public,
+            email_pcs=self.submission_stage.email_pcs_on_withdraw
+        )
+        self.create_desk_reject_invitations(
+            reveal_authors=self.submission_stage.desk_rejected_submission_reveal_authors,
+            reveal_submission=self.submission_stage.desk_rejected_submission_public
+        )
+
+        self.set_authors()
+        self.set_reviewers()
+        if self.use_area_chairs:
+            self.set_area_chairs()
+
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
-        if force or not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
 
-            if self.submission_stage.double_blind:
-                self.create_blind_submissions(hide_fields)
+        now = datetime.datetime.now()
 
-            self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
-
-            self.create_withdraw_invitations(
-                reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
-                reveal_submission=self.submission_stage.withdrawn_submission_public,
-                email_pcs=self.submission_stage.email_pcs_on_withdraw
-            )
-            self.create_desk_reject_invitations(
-                reveal_authors=self.submission_stage.desk_rejected_submission_reveal_authors,
-                reveal_submission=self.submission_stage.desk_rejected_submission_public
-            )
-
-            self.set_authors()
-            self.set_reviewers()
-            if self.use_area_chairs:
-                self.set_area_chairs()
+        if self.submission_stage.second_due_date:
+            if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
+                self.setup_first_deadline_stage(force, hide_fields)
+            if self.submission_stage.second_due_date < now:
+                self.setup_final_deadline_stage(force, hide_fields)
+        else:
+            if force or not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
+                self.setup_final_deadline_stage(force, hide_fields)
 
     ## Deprecated
     def open_bids(self):

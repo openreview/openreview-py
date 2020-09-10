@@ -617,7 +617,7 @@ Naila, Katja, Alice, and Ivan
 
     def test_post_submission_stage(self, conference, helpers, test_client, client):
 
-        conference.setup_post_submission_stage(force=True)
+        conference.setup_final_deadline_stage(force=True)
 
         submissions = conference.get_submissions()
         assert len(submissions) == 4
