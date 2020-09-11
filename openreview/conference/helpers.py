@@ -147,7 +147,7 @@ def get_bid_stage(client, request_forum):
     else:
         bid_due_date = None
 
-    return openreview.BidStage(start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+    return openreview.BidStage(request_forum.content['conference_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
 
 def get_review_stage(client, request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
