@@ -136,10 +136,10 @@ class WebfieldBuilder(object):
             invitation.web = content
             return self.client.post_invitation(invitation)
 
-    def set_bid_page(self, conference, invitation, group_id, request_count, instructions):
+    def set_bid_page(self, conference, invitation, stage):
 
         sorted_tip = ''
-        if conference.bid_stage.use_affinity_score:
+        if stage.use_affinity_score:
             sorted_tip = '''
             <li>
                 Papers are sorted based on keyword similarity with the papers
@@ -180,14 +180,12 @@ class WebfieldBuilder(object):
             </ul>
             <br>'''
 
-        instructions_html = instructions if instructions else default_instructions
+        instructions_html = stage.instructions if stage.instructions else default_instructions
 
-        default_header = {
-            'title': conference.get_short_name() + ' Bidding Console',
-            'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=request_count)
+        header = {
+            'title': stage.committee_id.split('/')[-1].replace('_', ' ') + ' Bidding Console',
+            'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=stage.request_count)
         }
-
-        header = self.__build_options(default_header, conference.get_bidpage_header())
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/bidWebfield.js')) as f:
             content = f.read()
@@ -197,10 +195,10 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + invitation.id + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
-            content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(group_id) + "';")
+            content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(stage.committee_id) + "';")
 
-            if conference.bid_stage.use_affinity_score:
-                content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id(group_id) + "';")
+            if stage.use_affinity_score:
+                content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id(stage.committee_id) + "';")
 
             invitation.web = content
             return self.client.post_invitation(invitation)
@@ -413,8 +411,7 @@ class WebfieldBuilder(object):
             content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
             if conference.comment_stage:
                 content = content.replace("var COMMENT_NAME = '';", "var COMMENT_NAME = '" + conference.comment_stage.official_comment_name + "';")
-            if conference.bid_stage:
-                content = content.replace("var BID_NAME = '';", "var BID_NAME = '" + conference.bid_stage.name + "';")
+            content = content.replace("var BID_NAME = '';", "var BID_NAME = 'Bid';")
             content = content.replace("var RECOMMENDATION_NAME = '';", "var RECOMMENDATION_NAME = '" + conference.recommendation_name + "';")
             content = content.replace("var SCORES_NAME = '';", "var SCORES_NAME = 'Affinity_Score';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
