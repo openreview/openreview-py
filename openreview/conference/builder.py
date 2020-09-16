@@ -605,13 +605,10 @@ class Conference(object):
         active_venues = self.client.get_group('active_venues')
         self.client.add_members_to_group(active_venues, self.id)
 
-    def create_blind_submissions(self, force=False, hide_fields=[]):
+    def create_blind_submissions(self, hide_fields=[], under_submission=False):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
-
-        if not force and self.submission_stage.due_date and (tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
-            raise openreview.OpenReviewException('Submission invitation is still due. Aborted blind note creation!')
 
         submissions_by_original = { note.original: note for note in self.get_submissions() }
         withdrawn_submissions_by_original = {note.original: note for note in self.get_withdrawn_submissions()}
@@ -625,26 +622,28 @@ class Conference(object):
             if withdrawn_submissions_by_original.get(note.id) or desk_rejected_submissions_by_original.get(note.id):
                 continue
 
-            blind_note = submissions_by_original.get(note.id)
-            if not blind_note:
+            existing_blind_note = submissions_by_original.get(note.id)
+            blind_content = {
+                'authors': ['Anonymous'],
+                'authorids': [self.get_authors_id(number=note.number)],
+                '_bibtex': None
+            }
 
-                blind_content = {
-                    'authors': ['Anonymous'],
-                    'authorids': [self.get_authors_id(number=note.number)],
-                    '_bibtex': None
-                }
+            for field in hide_fields:
+                blind_content[field] = ''
 
-                for field in hide_fields:
-                    blind_content[field] = ''
+            blind_readers = self.submission_stage.get_blind_readers(self, note.number, under_submission)
+
+            if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
 
                 blind_note = openreview.Note(
-                    id = None,
+                    id = existing_blind_note.id if existing_blind_note else None,
                     original= note.id,
                     invitation= self.get_blind_submission_id(),
                     forum=None,
                     signatures= [self.id],
                     writers= [self.id],
-                    readers= self.submission_stage.get_blind_readers(self, note.number),
+                    readers= blind_readers,
                     content= blind_content)
 
                 blind_note = self.client.post_note(blind_note)
@@ -661,39 +660,70 @@ class Conference(object):
                     blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
 
-        ## We should only create the author groups
-        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
-
         # Update PC console with double blind submissions
         pc_group = self.client.get_group(self.get_program_chairs_id())
         self.webfield_builder.edit_web_string_value(pc_group, 'BLIND_SUBMISSION_ID', self.get_blind_submission_id())
 
         return blinded_notes
 
+    def setup_first_deadline_stage(self, force=False, hide_fields=[]):
+
+        if self.submission_stage.double_blind:
+            self.create_blind_submissions(hide_fields=hide_fields, under_submission=True)
+
+        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        self.create_withdraw_invitations(
+            reveal_authors=False,
+            reveal_submission=False,
+            email_pcs=False
+        )
+        self.create_desk_reject_invitations(
+            reveal_authors=False,
+            reveal_submission=False
+        )
+        self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
+            start_date=None if force else self.submission_stage.due_date,
+            due_date=self.submission_stage.second_due_date,
+            additional_fields=self.submission_stage.additional_fields,
+            remove_fields=self.submission_stage.remove_fields,
+            only_accepted=False,
+            multiReply=False
+        )
+        self.__create_submission_revision_stage()
+
+    def setup_final_deadline_stage(self, force=False, hide_fields=[]):
+
+        if self.submission_stage.double_blind:
+            self.create_blind_submissions(hide_fields)
+
+        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        self.create_withdraw_invitations(
+            reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
+            reveal_submission=self.submission_stage.withdrawn_submission_public,
+            email_pcs=self.submission_stage.email_pcs_on_withdraw
+        )
+        self.create_desk_reject_invitations(
+            reveal_authors=self.submission_stage.desk_rejected_submission_reveal_authors,
+            reveal_submission=self.submission_stage.desk_rejected_submission_public
+        )
+
+        self.set_authors()
+        self.set_reviewers()
+        if self.use_area_chairs:
+            self.set_area_chairs()
+
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
-        if force or not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
-            # Due date is in the past
-            if self.submission_stage.double_blind:
-                # Double Blind venue
-                self.create_blind_submissions(force, hide_fields)
-            else:
-                # Single Blind or Open venue
-                self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
 
-            self.create_withdraw_invitations(
-                reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
-                reveal_submission=self.submission_stage.withdrawn_submission_public,
-                email_pcs=self.submission_stage.email_pcs_on_withdraw
-            )
-            self.create_desk_reject_invitations(
-                reveal_authors=self.submission_stage.desk_rejected_submission_reveal_authors,
-                reveal_submission=self.submission_stage.desk_rejected_submission_public
-            )
+        now = datetime.datetime.now()
 
-            self.set_authors()
-            self.set_reviewers()
-            if self.use_area_chairs:
-                self.set_area_chairs()
+        if self.submission_stage.second_due_date:
+            if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
+                self.setup_first_deadline_stage(force, hide_fields)
+            if self.submission_stage.second_due_date < now:
+                self.setup_final_deadline_stage(force, hide_fields)
+        else:
+            if force or not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
+                self.setup_final_deadline_stage(force, hide_fields)
 
     ## Deprecated
     def open_bids(self):
@@ -1098,6 +1128,7 @@ class SubmissionStage(object):
             name='Submission',
             start_date=None,
             due_date=None,
+            second_due_date=None,
             public=False,
             double_blind=False,
             additional_fields={},
@@ -1117,6 +1148,7 @@ class SubmissionStage(object):
 
         self.start_date = start_date
         self.due_date = due_date
+        self.second_due_date = second_due_date
         self.name = name
         self.public = public
         self.double_blind = double_blind
@@ -1156,7 +1188,14 @@ class SubmissionStage(object):
             ] + conference.get_committee()
         }
 
-    def get_blind_readers(self, conference, number):
+    def get_blind_readers(self, conference, number, under_submission):
+        ## the paper is still under submission and shouldn't be released yet
+        if under_submission:
+            return [
+                conference.get_program_chairs_id(),
+                conference.get_area_chairs_id(),
+                conference.get_authors_id(number=number)
+            ]
         if self.public:
             return ['everyone']
         else:
@@ -1199,13 +1238,14 @@ class BidStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.only_accepted = only_accepted
+        self.multiReply=multiReply
 
 class ReviewStage(object):
 
@@ -1508,6 +1548,7 @@ class ConferenceBuilder(object):
             name='Submission',
             start_date=None,
             due_date=None,
+            second_due_date=None,
             public=False,
             double_blind=False,
             additional_fields={},
@@ -1528,6 +1569,7 @@ class ConferenceBuilder(object):
             name,
             start_date,
             due_date,
+            second_due_date,
             public,
             double_blind,
             additional_fields,

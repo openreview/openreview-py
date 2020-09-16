@@ -361,7 +361,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.setup_post_submission_stage(force=True)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 1
@@ -436,7 +436,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.setup_post_submission_stage(force=True)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 2
@@ -606,7 +606,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.setup_post_submission_stage(force=True)
 
         blind_submissions = author_client.get_notes(
             invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
@@ -654,9 +654,9 @@ class TestVenueRequest():
             forum=blind_submissions[0].original,
             referent=blind_submissions[0].original,
             replyto=blind_submissions[0].original,
-            readers=[venue['venue_id'], '~Venue_Author3'],
-            writers=['~Venue_Author3', venue['venue_id']],
-            signatures=['~Venue_Author3'],
+            readers=[venue['venue_id'], '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)],
+            writers=['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number), venue['venue_id']],
+            signatures=['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)],
             content={
                 'title': 'revised test submission 3',
                 'abstract': 'revised abstract 3',
