@@ -717,7 +717,7 @@ var renderHeader = function() {
 var displayStatsAndConfiguration = function(conferenceStats) {
   var referrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs)');
   var bidEnabled = conferenceStatusData.bidEnabled;
-  var recommendationEnabled = conferenceStatusData.bidEnabled;
+  var recommendationEnabled = conferenceStatusData.recommendationEnabled;
   var formatPeriod = function(invitation) {
     var start;
     var end;
@@ -908,9 +908,13 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   if (AREA_CHAIRS_ID) {
     html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
     html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
-    html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+    if (invitationMap[AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
+      html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+    }
   }
-  html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
+  if (invitationMap[REVIEWERS_ID + '/-/Assignment_Configuration']) {
+    html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
+  }
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
   html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
