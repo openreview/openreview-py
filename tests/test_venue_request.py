@@ -376,6 +376,7 @@ class TestVenueRequest():
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'remove_review_form_options': 'title',
                 'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
             },
             forum=venue['request_form_note'].forum,
@@ -410,6 +411,7 @@ class TestVenueRequest():
 
         review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 1
+        assert 'title' not in review_invitations[0].reply['content']
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
