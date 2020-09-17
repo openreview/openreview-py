@@ -128,7 +128,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     return builder
 
-def get_bid_stage(client, request_forum):
+def get_bid_stage(client, request_forum, committee_id):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
     if bid_start_date:
         try:
@@ -147,7 +147,7 @@ def get_bid_stage(client, request_forum):
     else:
         bid_due_date = None
 
-    return openreview.BidStage(request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+    return openreview.BidStage(committee_id if committee_id else request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
 
 def get_review_stage(client, request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
