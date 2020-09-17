@@ -522,8 +522,7 @@ class TestVenueRequest():
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'allow_unsubmitted_reviewers_to_comment': 'Yes, unsubmitted reviewers should be able to post official comments',
-                'allow_authors_to_comment': 'Yes, allow submission authors to post official comments on their own papers',
+                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
                 
             },
@@ -553,7 +552,8 @@ class TestVenueRequest():
             readers=[
                 conference.get_program_chairs_id(),
                 conference.get_area_chairs_id(number=1),
-                conference.get_reviewers_id(number=1) + '/Submitted'
+                conference.get_id() + '/Paper1/Authors',
+                conference.get_id() + '/Paper1/AnonReviewer1'
             ],
             writers=[
                 conference.get_id() + '/Paper1/Authors',

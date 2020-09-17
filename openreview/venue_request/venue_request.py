@@ -198,25 +198,20 @@ class VenueStages():
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 28
             },
-            'allow_unsubmitted_reviewers_to_comment': {
-                'description': 'Should the reviewers who have not submitted their review be able to make official comments? Default is "No, unsubmitted reviewers should not be able to post official comments"',
-                'value-radio': [
-                    'Yes, unsubmitted reviewers should be able to post official comments',
-                    'No, unsubmitted reviewers should not be able to post official comments'
+            'participants': {
+                'description': 'Select who should be allowed to post comments on submissions.',
+                'values-checkbox' : [
+                    'Program Chairs',
+                    'Paper Area Chairs',
+                    'Paper Reviewers',
+                    'Paper Submitted Reviewers',
+                    'Authors',
+                    'Public (anonymously)',
+                    'Public (non-anonymously)'
                 ],
                 'required': True,
-                'default': 'No, unsubmitted reviewers should not be able to post official comments',
+                'default': ['Program Chairs'],
                 'order': 29
-            },
-            'allow_authors_to_comment': {
-                'description': 'Should the submission authors be allowed to post official comments on their own submissions? Default is "Yes, allow submission authors to post official comments on their own papers"',
-                'value-radio': [
-                    'Yes, allow submission authors to post official comments on their own papers',
-                    'No, do not allow submission authors to post official comments on their own papers'
-                ],
-                'required': True,
-                'default': 'Yes, allow submission authors to post official comments on their own papers',
-                'order': 30
             },
             'email_program_chairs_about_official_comments': {
                 'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
@@ -226,7 +221,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, do not email PCs for each official comment made in the venue',
-                'order': 31
+                'order': 30
             }
         }
 

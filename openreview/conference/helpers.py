@@ -333,14 +333,14 @@ def get_comment_stage(client, request_forum):
     else:
         commentary_end_date = None
 
-    allow_public_comments = request_forum.content.get('Public Commentary', '').startswith('Yes')
-    anonymous = allow_public_comments and 'non-anonymously' not in request_forum.content.get('Public Commentary', '')
+    allow_public_comments = 'Public' in request_forum.content.get('participants', '')
+    anonymous = allow_public_comments and 'non-anonymously' not in request_forum.content.get('participants', '')
 
-    unsubmitted_reviewers = request_forum.content.get('official_comment_unsubmitted_reviewers', '') == 'Yes, unsubmitted reviewers should be able to post official comments'
+    unsubmitted_reviewers = 'Paper Submitted Reviewers' not in request_forum.content.get('participants', '') and 'Paper Reviewers' in request_forum.content.get('participants', '')
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_reviews', '') == 'Yes, email PCs for each official comment made in the venue'
 
-    authors_invited = request_forum.content.get('allow_authors_to_comment', '') == 'Yes, allow authors to post official comments'
+    authors_invited = 'Authors' in request_forum.content.get('participants', '')
 
     return openreview.CommentStage(
         start_date=commentary_start_date,
