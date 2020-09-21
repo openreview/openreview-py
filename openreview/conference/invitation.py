@@ -119,9 +119,9 @@ class BlindSubmissionsInvitation(openreview.Invitation):
         )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference, match_group_id, request_count):
+    def __init__(self, conference, bid_stage):
 
-        bid_stage = conference.bid_stage
+        match_group_id = bid_stage.committee_id
 
         readers = [
             conference.get_id(),
@@ -145,7 +145,7 @@ class BidInvitation(openreview.Invitation):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
-            taskCompletionCount = request_count,
+            taskCompletionCount = bid_stage.request_count,
             reply = {
                 'readers': {
                     'values-copied': values_copied
@@ -372,9 +372,9 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
+                cdate=None,
                 duedate = None,
-                expdate = tools.datetime_millis(conference.submission_stage.due_date + datetime.timedelta(days = 90)) if conference.submission_stage.due_date else None,
+                expdate =None,
                 invitees=[conference.get_authors_id(note.number), conference.support_user],
                 readers=['everyone'],
                 writers=[conference.get_id()],
@@ -557,14 +557,17 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             value['order'] = order
             content[key] = value
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/submission_revision_process.py')) as f:
             file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.get_id() + "'")
+            file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
             super(SubmissionRevisionInvitation, self).__init__(
                 id=conference.get_invitation_id(submission_revision_stage.name),
                 cdate=tools.datetime_millis(start_date) if start_date else None,
                 duedate=tools.datetime_millis(due_date) if due_date else None,
                 expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
+                multiReply=submission_revision_stage.multiReply,
                 readers=['everyone'],
                 writers=[conference.get_id()],
                 signatures=[conference.get_id()],
@@ -587,36 +590,33 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
         reply = {
             'forum': referent,
             'referent': referent,
-            'readers': conference.submission_stage.get_readers(conference),
-            'writers': {
-                'values-copied': [
+            'readers': {
+                'values': [
                     conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
+                    conference.get_authors_id(number=note.number)
+                ]
+            },
+            'writers': {
+                'values': [
+                    conference.get_id(),
+                    conference.get_authors_id(number=note.number)
                 ]
             },
             'signatures': {
-                'values-regex': '~.*'
+                'values-regex': '{}|{}'.format(conference.get_program_chairs_id(), conference.get_authors_id(number=note.number))
             }
         }
 
         invitees = note.content['authorids'] + note.signatures + [conference.support_user]
-        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionRevisionProcess.js')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
-            super(PaperSubmissionRevisionInvitation, self).__init__(
-                id=conference.get_invitation_id(submission_revision_stage.name, note.number),
-                super=conference.get_invitation_id(submission_revision_stage.name),
-                cdate=tools.datetime_millis(start_date) if start_date else None,
-                duedate=tools.datetime_millis(due_date) if due_date else None,
-                expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
-                readers=['everyone'],
-                writers=[conference.get_id()],
-                signatures=[conference.get_id()],
-                invitees=invitees,
-                reply=reply,
-                process_string=file_content
-            )
+        super(PaperSubmissionRevisionInvitation, self).__init__(
+            id=conference.get_invitation_id(submission_revision_stage.name, note.number),
+            super=conference.get_invitation_id(submission_revision_stage.name),
+            readers=['everyone'],
+            writers=[conference.get_id()],
+            signatures=[conference.get_id()],
+            invitees=invitees,
+            reply=reply
+        )
 
 class PublicCommentInvitation(openreview.Invitation):
 
@@ -1218,13 +1218,9 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(invitation)
 
-    def set_bid_invitation(self, conference):
+    def set_bid_invitation(self, conference, stage):
 
-        invitations = []
-        invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_reviewers_id(), conference.bid_stage.request_count)))
-        if conference.use_area_chairs:
-            invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_area_chairs_id(), conference.bid_stage.ac_request_count)))
-        return invitations
+        return self.client.post_invitation(BidInvitation(conference, stage))
 
     def set_comment_invitation(self, conference, notes):
 

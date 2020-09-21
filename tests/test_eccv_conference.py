@@ -239,10 +239,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             },
             remove_fields=['keywords'],
             withdrawn_submission_public=False,
-            withdrawn_submission_author_anonymous=True,
+            withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=True,
             desk_rejected_submission_public=False,
-            desk_rejected_submission_author_anonymous=True)
+            desk_rejected_submission_reveal_authors=False)
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
@@ -269,7 +269,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
+        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, use_affinity_score=True, instructions = instructions)
+        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, use_affinity_score=True, instructions = instructions)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
         return conference
@@ -534,7 +535,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_revise_additional_files(self, conference, client, test_client):
 
-        conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
+        conference.setup_post_submission_stage(force=True, hide_fields=['pdf', 'supplementary_material'])
 
         submissions = conference.get_submissions()
         assert submissions
@@ -668,6 +669,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
 
         conference.setup_matching(
+            build_conflicts=True,
             affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
         )
@@ -685,7 +687,7 @@ Please contact info@openreview.net with any questions or concerns about this int
                 writer.writerow([submission.number, 'ac1@eccv.org', round(random.random(), 2)])
                 writer.writerow([submission.number, 'ac2@eccv.org', round(random.random(), 2)])
 
-        conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
+        conference.setup_matching(build_conflicts=True, is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
 
         request_page(selenium, url='http://localhost:3030/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token)
@@ -883,7 +885,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         hide = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
         referrer = '[Return%20Instructions](/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation)'
 
-        url = 'http://localhost:3030/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
+        url = 'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
 
         request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation', ac1_client.token)
         panel = selenium.find_element_by_id('notes')

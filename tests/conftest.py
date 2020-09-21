@@ -66,7 +66,7 @@ def request_page():
     def request(selenium, url, token = None, alert=False, wait_for_element='content'):
         if token:
             selenium.get('http://localhost:3030')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': True})
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)

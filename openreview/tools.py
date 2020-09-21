@@ -920,14 +920,12 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
         anonreviewer_suffix = anonreviewer_group.id.split('/')[-1]
         return anonreviewer_suffix
     elif len(individual_groups) > 0:
-        anonreviewer_group_ids = [g.id for g in individual_groups]
+        anonreviewer_group_ids = [int(g.id.split(individual_label)[1]) for g in individual_groups]
 
         # reverse=True lets us get the AnonReviewer group with the highest index
         highest_anonreviewer_id = sorted(anonreviewer_group_ids, reverse=True)[0]
 
-        # find the number of the highest anonreviewer group
-        highest_anonreviewer_index = highest_anonreviewer_id[-1]
-        return '{}{}'.format(individual_label, int(highest_anonreviewer_index)+1)
+        return '{}{}'.format(individual_label, highest_anonreviewer_id+1)
     else:
         return '{}1'.format(individual_label)
 
