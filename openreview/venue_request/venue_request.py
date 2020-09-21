@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Public Commentary', 'Paper Matching']
+        remove_fields = ['Area Chairs (Metareviewers)', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -594,22 +594,13 @@ class VenueRequest():
                 'order': 19,
                 'required': True
             },
-            'Public Commentary': {
-                'description': 'Would you like to allow members of the public to comment on papers?',
-                'value-radio': [
-                    'No, do not allow public commentary.',
-                    'Yes, allow members of the public to comment non-anonymously.',
-                    'Yes, allow members of the public to comment anonymously.',
-                ],
-                'order': 20
-            },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
                 'value-radio': [
                     'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
-                'order': 21
+                'order': 20
             },
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -617,7 +608,7 @@ class VenueRequest():
                     'Yes, author identities of withdrawn submissions should be revealed.',
                     'No, author identities of withdrawn submissions should not be revealed.'],
                 'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 22
+                'order': 21
             },
             'email_pcs_for_withdrawn_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
@@ -626,7 +617,7 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 23
+                'order': 22
             },
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
@@ -634,7 +625,7 @@ class VenueRequest():
                     'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
-                'order': 24
+                'order': 23
             },
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -642,22 +633,22 @@ class VenueRequest():
                     'Yes, author identities of desk rejected submissions should be revealed.',
                     'No, author identities of desk rejected submissions should not be revealed.'],
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 25
+                'order': 24
             },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 26
+                'order': 25
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 27
+                'order': 26
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 28
+                'order': 27
             }
         }
 

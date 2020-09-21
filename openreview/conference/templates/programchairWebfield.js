@@ -759,7 +759,6 @@ var displayStatsAndConfiguration = function(conferenceStats, conferenceConfig) {
     var description = [
       'Author And Reviewer Anonymity: ' + note.content['Author and Reviewer Anonymity'],
       note.content['Open Reviewing Policy'],
-      note.content['Public Commentary'],
       'Paper matching uses ' + note.content['Paper Matching'].join(', ')
     ];
     if (note.content['Other Important Information']) {
