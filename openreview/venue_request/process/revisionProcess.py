@@ -17,10 +17,12 @@ def process(client, note, invitation):
         conference.setup_post_submission_stage()
 
     if invitation_type == 'Bid_Stage':
+        ## TODO: run setup_matching inside of BidStage?
         conference.setup_matching(build_conflicts=True)
+        conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
         if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
             conference.setup_matching(is_area_chair=True, build_conflicts=True)
-        conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note))
+            conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
 
     elif invitation_type == 'Review_Stage':
         conference.set_review_stage(openreview.helpers.get_review_stage(client, forum_note))

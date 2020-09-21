@@ -361,7 +361,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.setup_post_submission_stage(force=True)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 1
@@ -376,6 +376,7 @@ class TestVenueRequest():
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'remove_review_form_options': 'title',
                 'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
             },
             forum=venue['request_form_note'].forum,
@@ -410,6 +411,7 @@ class TestVenueRequest():
 
         review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 1
+        assert 'title' not in review_invitations[0].reply['content']
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -436,7 +438,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.setup_post_submission_stage(force=True)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert blind_submissions and len(blind_submissions) == 2
@@ -606,7 +608,7 @@ class TestVenueRequest():
         assert submission
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.create_blind_submissions(force=True)
+        conference.setup_post_submission_stage(force=True)
 
         blind_submissions = author_client.get_notes(
             invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
@@ -654,9 +656,9 @@ class TestVenueRequest():
             forum=blind_submissions[0].original,
             referent=blind_submissions[0].original,
             replyto=blind_submissions[0].original,
-            readers=[venue['venue_id'], '~Venue_Author3'],
-            writers=['~Venue_Author3', venue['venue_id']],
-            signatures=['~Venue_Author3'],
+            readers=[venue['venue_id'], '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)],
+            writers=['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number), venue['venue_id']],
+            signatures=['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)],
             content={
                 'title': 'revised test submission 3',
                 'abstract': 'revised abstract 3',

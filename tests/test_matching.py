@@ -68,7 +68,8 @@ class TestMatching():
         }
         builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
 
-        builder.set_bid_stage(due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
+        builder.set_bid_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
+        builder.set_bid_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         conference = builder.get_result()
         return conference
 
@@ -140,13 +141,8 @@ class TestMatching():
         note_3 = test_client.post_note(note_3)
 
         ## Create blind submissions
-        conference.set_submission_stage(openreview.SubmissionStage(due_date=datetime.datetime.utcnow(), double_blind= True, subject_areas=[
-            "Algorithms: Approximate Inference",
-            "Algorithms: Belief Propagation",
-            "Algorithms: Distributed and Parallel",
-            "Algorithms: Exact Inference",
-        ]))
-        blinded_notes = conference.create_blind_submissions()
+        conference.setup_post_submission_stage(force=True)
+        blinded_notes = conference.get_submissions()
 
         ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
@@ -698,13 +694,13 @@ class TestMatching():
         assert 1 == len(ac1_s2_subject_scores)
         assert ac1_s2_subject_scores[0].weight ==  1
 
-    def test_set_assigments(self, conference, client, test_client, helpers): 
+    def test_set_assigments(self, conference, client, test_client, helpers):
         pc_client = helpers.create_user('pc1@mail.com', 'TestPC', 'UAI')
-        
+
         blinded_notes = list(conference.get_submissions())
 
         edges = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment', 
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
             label='ac-matching'
         )
         assert 0 == len(edges)
@@ -771,7 +767,7 @@ class TestMatching():
         ))
 
         edges = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment', 
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment',
             label='rev-matching'
         )
         assert 6 == len(edges)
@@ -786,12 +782,12 @@ class TestMatching():
 
         revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
         assert 2 == len(revs_paper2.members)
-       
+
     def test_redeploy_assigments(self, conference, client, test_client, helpers):
 
         pc_client = openreview.Client(username='pc1@mail.com', password='1234')
         blinded_notes = list(conference.get_submissions())
-        
+
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
@@ -824,7 +820,7 @@ class TestMatching():
         ))
 
         edges = client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment', 
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment',
             label='rev-matching-new'
         )
         assert 3 == len(edges)
@@ -845,6 +841,6 @@ class TestMatching():
 
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/-/Official_Review')
         assert invitation
-        
+
         with pytest.raises(openreview.OpenReviewException, match=r'Review stage has started.'):
             conference.set_assignments(assignment_title='rev-matching-new2', overwrite=True)

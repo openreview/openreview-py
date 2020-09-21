@@ -220,10 +220,9 @@ class TestWorkshop():
         groups = client.get_groups(id = conference.get_authors_id(number = '.*'))
         assert len(groups) == 0
 
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now)
-        conference = builder.get_result()
+        conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = conference.create_blind_submissions()
+        blind_submissions = conference.get_submissions()
         assert blind_submissions
         assert len(blind_submissions) == 1
 
@@ -242,12 +241,14 @@ class TestWorkshop():
         note.content['pdf'] = url
         client.post_note(note)
 
-        blind_submissions_2 = conference.create_blind_submissions()
+        conference.setup_post_submission_stage(force=True)
+
+        blind_submissions_2 = conference.get_submissions()
         assert blind_submissions_2
         assert len(blind_submissions_2) == 2
-        assert blind_submissions[0].id == blind_submissions_2[0].id
+        assert blind_submissions[0].id == blind_submissions_2[1].id
         assert blind_submissions_2[1].readers == [
-            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors',
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'
@@ -272,14 +273,12 @@ class TestWorkshop():
         note.content['pdf'] = url
         client.post_note(note)
 
-        builder.set_submission_stage(double_blind = True, public = True, due_date = now)
-        conference = builder.get_result()
+        conference.setup_post_submission_stage(force=True)
 
-        blind_submissions_3 = conference.create_blind_submissions()
+        blind_submissions_3 = conference.get_submissions()
         assert blind_submissions_3
         assert len(blind_submissions_3) == 3
-        assert blind_submissions[0].id == blind_submissions_3[0].id
-        assert blind_submissions_3[2].readers == ['everyone']
+        assert blind_submissions[0].id == blind_submissions_3[2].id
 
     def test_setup_matching(self, client):
 
@@ -392,7 +391,8 @@ class TestWorkshop():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review',
             forum = submission.id,
@@ -802,7 +802,8 @@ class TestWorkshop():
         posted_note = test_client.post_note(note)
         assert posted_note
 
-        conference.create_blind_submissions()
+        conference.setup_post_submission_stage(force=True)
+
         conference.open_decisions()
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')

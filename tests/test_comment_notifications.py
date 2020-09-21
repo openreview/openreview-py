@@ -389,8 +389,8 @@ class TestCommentNotification():
         ])
         conference = builder.get_result()
 
-        conference.close_submissions()
-        blinded_notes = conference.create_blind_submissions()
+        conference.setup_post_submission_stage(force=True)
+        blinded_notes = conference.get_submissions()
         paper_note = blinded_notes[0]
         conference.set_program_chairs(emails= ['programchair@auai.org'])
         conference.set_area_chairs(emails = ['areachair@auai.org'])
