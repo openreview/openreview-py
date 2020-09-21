@@ -30,7 +30,6 @@ class Conference(object):
         self.reviewerpage_header = {}
         self.areachairpage_header = {}
         self.expertise_selection_page_header = {}
-        self.bidpage_header = {}
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.authors_name = 'Authors'
@@ -40,7 +39,7 @@ class Conference(object):
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
         self.submission_stage = SubmissionStage()
-        self.bid_stage = BidStage()
+        self.bid_stages = {}
         self.expertise_selection_stage = ExpertiseSelectionStage()
         self.registration_stage = RegistrationStage()
         self.review_stage = ReviewStage()
@@ -89,18 +88,13 @@ class Conference(object):
         if expertise_selection_invitation:
             return self.webfield_builder.set_expertise_selection_page(self, expertise_selection_invitation)
 
-    def __set_bid_page(self):
+    def __set_bid_page(self, stage):
         """
         Set a webfield to each available bid invitation
         """
-        bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_reviewers_id()))
+        bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=stage.committee_id))
         if bid_invitation:
-            self.webfield_builder.set_bid_page(self, bid_invitation, self.get_reviewers_id(), self.bid_stage.request_count, self.bid_stage.instructions)
-
-        if self.use_area_chairs:
-            bid_invitation = tools.get_invitation(self.client, self.get_bid_id(group_id=self.get_area_chairs_id()))
-            if bid_invitation:
-                self.webfield_builder.set_bid_page(self, bid_invitation, self.get_area_chairs_id(), self.bid_stage.ac_request_count, self.bid_stage.instructions)
+            self.webfield_builder.set_bid_page(self, bid_invitation, stage)
 
     def __set_recommendation_page(self, assignment_title, score_ids, conflict_id, total_recommendations):
         recommendation_invitation = tools.get_invitation(self.client, self.get_recommendation_id())
@@ -145,10 +139,10 @@ class Conference(object):
     def __create_registration_stage(self):
         return self.invitation_builder.set_registration_invitation(self)
 
-    def __create_bid_stage(self):
+    def __create_bid_stage(self, stage):
 
-        self.invitation_builder.set_bid_invitation(self)
-        return self.__set_bid_page()
+        self.invitation_builder.set_bid_invitation(self, stage)
+        return self.__set_bid_page(stage)
 
     def __create_review_stage(self):
 
@@ -254,8 +248,8 @@ class Conference(object):
         return self.__create_registration_stage()
 
     def set_bid_stage(self, stage):
-        self.bid_stage = stage
-        return self.__create_bid_stage()
+        self.bid_stages[stage.committee_id] = stage
+        return self.__create_bid_stage(stage)
 
     def set_review_stage(self, stage):
         self.review_stage = stage
@@ -387,7 +381,9 @@ class Conference(object):
         return self.get_invitation_id(self.expertise_selection_stage.name)
 
     def get_bid_id(self, group_id):
-        return self.get_invitation_id(self.bid_stage.name, prefix=group_id)
+        if group_id in self.bid_stages:
+            return self.get_invitation_id(self.bid_stages[group_id].name, prefix=group_id)
+        raise openreview.OpenReviewException('BidStage not found for {}'.format(group_id))
 
     def get_recommendation_id(self, group_id=None):
         if not group_id:
@@ -456,13 +452,6 @@ class Conference(object):
 
     def get_areachairpage_header(self):
         return self.areachairpage_header
-
-    def set_bidpage_header(self, header):
-        self.bidpage_header = header
-        return self.__set_bid_page
-
-    def get_bidpage_header(self):
-        return self.bidpage_header
 
     def set_expertise_selection_page_header(self, header):
         self.expertise_selection_page_header = header
@@ -1227,14 +1216,14 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, start_date=None, due_date=None, request_count=50, use_affinity_score=False, instructions=False, ac_request_count=None):
-        self.start_date = start_date
-        self.due_date = due_date
-        self.name = 'Bid'
-        self.request_count = request_count
-        self.use_affinity_score = use_affinity_score
+    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, use_affinity_score=False, instructions=False):
+        self.committee_id=committee_id
+        self.start_date=start_date
+        self.due_date=due_date
+        self.name='Bid'
+        self.request_count=request_count
+        self.use_affinity_score=use_affinity_score
         self.instructions=instructions
-        self.ac_request_count=ac_request_count if ac_request_count else request_count
 
 class SubmissionRevisionStage():
 
@@ -1455,7 +1444,7 @@ class ConferenceBuilder(object):
         self.submission_stage = None
         self.expertise_selection_stage = None
         self.registration_stage = None
-        self.bid_stage = None
+        self.bid_stages = []
         self.review_stage = None
         self.review_rebuttal_stage = None
         self.comment_stage = None
@@ -1595,8 +1584,8 @@ class ConferenceBuilder(object):
         ac_instructions = ac_instructions if ac_instructions else default_instructions
         self.registration_stage=RegistrationStage(name, start_date, due_date, additional_fields, ac_additional_fields, reviewer_instructions, ac_instructions)
 
-    def set_bid_stage(self, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions = False, ac_request_count = None):
-        self.bid_stage = BidStage(start_date, due_date, request_count, use_affinity_score, instructions, ac_request_count)
+    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions = False):
+        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, use_affinity_score, instructions))
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
@@ -1676,8 +1665,8 @@ class ConferenceBuilder(object):
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
 
-        if self.bid_stage:
-            self.conference.set_bid_stage(self.bid_stage)
+        for s in self.bid_stages:
+            self.conference.set_bid_stage(s)
 
         if self.expertise_selection_stage:
             self.conference.set_expertise_selection_stage(self.expertise_selection_stage)

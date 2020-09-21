@@ -68,7 +68,8 @@ class TestMatching():
         }
         builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
 
-        builder.set_bid_stage(due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
+        builder.set_bid_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
+        builder.set_bid_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         conference = builder.get_result()
         return conference
 

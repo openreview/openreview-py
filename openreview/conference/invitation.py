@@ -119,9 +119,9 @@ class BlindSubmissionsInvitation(openreview.Invitation):
         )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference, match_group_id, request_count):
+    def __init__(self, conference, bid_stage):
 
-        bid_stage = conference.bid_stage
+        match_group_id = bid_stage.committee_id
 
         readers = [
             conference.get_id(),
@@ -145,7 +145,7 @@ class BidInvitation(openreview.Invitation):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
-            taskCompletionCount = request_count,
+            taskCompletionCount = bid_stage.request_count,
             reply = {
                 'readers': {
                     'values-copied': values_copied
@@ -1211,13 +1211,9 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(invitation)
 
-    def set_bid_invitation(self, conference):
+    def set_bid_invitation(self, conference, stage):
 
-        invitations = []
-        invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_reviewers_id(), conference.bid_stage.request_count)))
-        if conference.use_area_chairs:
-            invitations.append(self.client.post_invitation(BidInvitation(conference, conference.get_area_chairs_id(), conference.bid_stage.ac_request_count)))
-        return invitations
+        return self.client.post_invitation(BidInvitation(conference, stage))
 
     def set_comment_invitation(self, conference, notes):
 
