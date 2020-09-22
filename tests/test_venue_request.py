@@ -51,7 +51,6 @@ class TestVenueRequest():
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
-                'Public Commentary': 'No, do not allow public commentary.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
@@ -89,6 +88,7 @@ class TestVenueRequest():
         assert venue.meta_review_stage_super_invitation
         assert venue.review_stage_super_invitation
         assert venue.submission_revision_stage_super_invitation
+        assert venue.comment_stage_super_invitation
 
         assert venue.deploy_super_invitation
         assert venue.comment_super_invitation
@@ -144,7 +144,6 @@ class TestVenueRequest():
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
-                'Public Commentary': 'Yes, allow members of the public to comment non-anonymously.',
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
                 'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
                 'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
@@ -505,19 +504,84 @@ class TestVenueRequest():
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
 
+    def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 2
+
+        # Assert that official comment invitation is not available already
+        official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
+        assert official_comment_invitation is None
+
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+                
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert comment_stage_note
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id=comment_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        # Assert that official comment invitation is now available
+        official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
+        assert official_comment_invitation
+        
+        # Assert that an official comment can be posted by the paper author
+        forum_note = blind_submissions[-1]
+        official_comment_note = test_client.post_note(openreview.Note(
+            invitation=conference.get_invitation_id('Official_Comment', number=1),
+            readers=[
+                conference.get_program_chairs_id(),
+                conference.get_area_chairs_id(number=1),
+                conference.get_id() + '/Paper1/Authors',
+                conference.get_id() + '/Paper1/AnonReviewer1'
+            ],
+            writers=[
+                conference.get_id() + '/Paper1/Authors',
+                conference.get_id()],
+            signatures=[conference.get_id() + '/Paper1/Authors'],
+            forum=forum_note.forum,
+            replyto=forum_note.forum,
+            content={
+                'comment': 'test comment',
+                'title': 'test official comment title'
+            }
+        ))
+        assert official_comment_note
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id=official_comment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue):
 
-        # Assert that PCs do not see a Decision button on the submissions
         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert submissions and len(submissions) == 2
+        submission = submissions[0]
 
-        paper_url = 'http://localhost:3030/forum?id={}'.format(submissions[0].forum)
-        request_page(selenium, paper_url, token=test_client.token)
-
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert reply_row
-        with pytest.raises(NoSuchElementException):
-            assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
+        # Assert that PC does not have access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation is None
 
         # Post a decision stage note
         now = datetime.datetime.utcnow()
@@ -541,24 +605,17 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert decision_stage_note
-        time.sleep(5)
+        time.sleep(2)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        # Assert that PC now sees the Decision button
-        request_page(selenium, paper_url, token=test_client.token)
-
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert reply_row
-        assert 'Decision' == reply_row.find_element_by_class_name('btn-xs').text
-
-        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
-        assert submissions and len(submissions) == 2
+        # Assert that PC now has access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation
 
         # Post a decision note using pc test_client
-        submission = submissions[0]
         program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
         area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
         decision_note = test_client.post_note(openreview.Note(
@@ -643,7 +700,6 @@ class TestVenueRequest():
         blind_submissions = author_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
 
         author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum)
-        print('checkig url: {}'.format(author_page_url))
         request_page(selenium, author_page_url, token=author_client.token)
 
         meta_actions = selenium.find_element_by_class_name('meta_actions')

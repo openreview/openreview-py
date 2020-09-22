@@ -246,8 +246,10 @@ class CommentInvitation(openreview.Invitation):
             if conference.comment_stage.email_pcs:
                 file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
-            super(CommentInvitation, self).__init__(id = conference.get_invitation_id('Comment'),
+            super(CommentInvitation, self).__init__(
+                id = conference.get_invitation_id('Comment'),
                 cdate = tools.datetime_millis(conference.comment_stage.start_date),
+                expdate = tools.datetime_millis(conference.comment_stage.end_date) if conference.comment_stage.end_date else None,
                 readers = ['everyone'],
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
@@ -624,6 +626,8 @@ class PublicCommentInvitation(openreview.Invitation):
 
         super(PublicCommentInvitation, self).__init__(id = conference.get_invitation_id('Public_Comment', note.number),
             super = conference.get_invitation_id('Comment'),
+            cdate = tools.datetime_millis(comment_stage.start_date) if comment_stage.start_date else None,
+            expdate = tools.datetime_millis(conference.comment_stage.end_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if conference.comment_stage.end_date else None,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = ['everyone'],
@@ -692,8 +696,11 @@ class OfficialCommentInvitation(openreview.Invitation):
                 'values': readers
             }
 
-        super(OfficialCommentInvitation, self).__init__(id = conference.get_invitation_id(comment_stage.official_comment_name, note.number),
+        super(OfficialCommentInvitation, self).__init__(
+            id = conference.get_invitation_id(comment_stage.official_comment_name, note.number),
             super = conference.get_invitation_id('Comment'),
+            cdate = tools.datetime_millis(comment_stage.start_date) if comment_stage.start_date else None,
+            expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None,
             writers = [conference.id],
             signatures = [conference.id],
             invitees = invitees,
