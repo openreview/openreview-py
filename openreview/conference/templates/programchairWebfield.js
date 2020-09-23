@@ -369,7 +369,6 @@ var postReviewerEmails = function(postData) {
   if (EMAIL_SENDER) {
     formttedData.from = EMAIL_SENDER;
   }
-  //formttedData.parentGroup = REVIEWERS_ID;
 
   return Webfield.post('/messages', formttedData)
   .then(function() {
@@ -1531,7 +1530,8 @@ var displayAreaChairsStatusTable = function() {
     localStorage.setItem('reviewerMessages', JSON.stringify([{
       groups: _.map(usersToMessage, 'id'),
       subject: subject,
-      message: message
+      message: message,
+      parentGroup: AREA_CHAIRS_ID
     }]));
     localStorage.setItem('messageCount', usersToMessage.length);
 
@@ -1745,7 +1745,8 @@ var displayReviewerStatusTable = function() {
     localStorage.setItem('reviewerMessages', JSON.stringify([{
       groups: _.map(usersToMessage, 'id'),
       subject: subject,
-      message: message
+      message: message,
+      parentGroup: REVIEWERS_ID
     }]));
     localStorage.setItem('messageCount', usersToMessage.length);
 
