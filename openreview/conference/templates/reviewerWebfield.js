@@ -378,21 +378,3 @@ $('#group-container').on('click', 'a.note-contents-toggle', function(e) {
   var updated = $(this).text() === hiddenText ? visibleText : hiddenText;
   $(this).text(updated);
 });
-
-$('#group-container').on('click', 'a.send-reminder-link', function(e) {
-  var userId = $(this).data('userId');
-  var forumUrl = $(this).data('forumUrl');
-  var postData = {
-    groups: [userId],
-    subject: SHORT_PHRASE + ' Reminder',
-    message: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
-      'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.'
-  };
-
-  return Webfield.post('/messages', postData).then(function() {
-    // Save the timestamp in the local storage
-    localStorage.setItem(forumUrl + '|' + userId, Date.now());
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
-    renderTable();
-  });
-});

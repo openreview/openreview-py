@@ -364,11 +364,12 @@ var getPcAssignmentTags = function() {
 }
 
 var postReviewerEmails = function(postData) {
-  var formttedData = _.pick(postData, ['groups', 'subject', 'message']);
+  var formttedData = _.pick(postData, ['groups', 'subject', 'message', 'parentGroup']);
   formttedData.message = postData.message.replace('[[SUBMIT_REVIEW_LINK]]', postData.forumUrl);
   if (EMAIL_SENDER) {
     formttedData.from = EMAIL_SENDER;
   }
+  //formttedData.parentGroup = REVIEWERS_ID;
 
   return Webfield.post('/messages', formttedData)
   .then(function() {
@@ -2311,6 +2312,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     if (EMAIL_SENDER) {
       postData.from = EMAIL_SENDER;
     }
+    postData.parentGroup = REVIEWERS_ID;
     return Webfield.post('/messages', postData);
   });
   return false;
