@@ -494,6 +494,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
           invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row[2].number)
         });
         reviewerMessages.push({
+          parentGroup: REVIEWER_GROUP,
           groups: _.map(users, 'id'),
           forumUrl: forumUrl,
           subject: subject,
@@ -1049,6 +1050,7 @@ var registerEventHandlers = function() {
 
     var sendReviewerReminderEmails = function(e) {
       var postData = {
+        parentGroup: REVIEWER_GROUP,
         groups: [userId],
         forumUrl: forumUrl,
         subject: $('#message-reviewers-modal input[name="subject"]').val().trim(),
@@ -1223,6 +1225,7 @@ var registerEventHandlers = function() {
       updateReviewerContainer(paperNumber);
       promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { overlay: true });
       var postData = {
+        parentGroup: REVIEWER_GROUP,
         groups: [reviewerProfile.id],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
         message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
@@ -1305,7 +1308,7 @@ var postReviewerEmails = function(postData) {
     postData.forumUrl
   );
 
-  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
+  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message', 'parentGroup']))
     .then(function(response) {
       // Save the timestamp in the local storage
       for (var i = 0; i < postData.groups.length; i++) {
