@@ -364,7 +364,7 @@ var getPcAssignmentTags = function() {
 }
 
 var postReviewerEmails = function(postData) {
-  var formttedData = _.pick(postData, ['groups', 'subject', 'message']);
+  var formttedData = _.pick(postData, ['groups', 'subject', 'message', 'parentGroup']);
   formttedData.message = postData.message.replace('[[SUBMIT_REVIEW_LINK]]', postData.forumUrl);
   if (EMAIL_SENDER) {
     formttedData.from = EMAIL_SENDER;
@@ -1530,7 +1530,8 @@ var displayAreaChairsStatusTable = function() {
     localStorage.setItem('reviewerMessages', JSON.stringify([{
       groups: _.map(usersToMessage, 'id'),
       subject: subject,
-      message: message
+      message: message,
+      parentGroup: AREA_CHAIRS_ID
     }]));
     localStorage.setItem('messageCount', usersToMessage.length);
 
@@ -1744,7 +1745,8 @@ var displayReviewerStatusTable = function() {
     localStorage.setItem('reviewerMessages', JSON.stringify([{
       groups: _.map(usersToMessage, 'id'),
       subject: subject,
-      message: message
+      message: message,
+      parentGroup: REVIEWERS_ID
     }]));
     localStorage.setItem('messageCount', usersToMessage.length);
 
@@ -2311,6 +2313,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     if (EMAIL_SENDER) {
       postData.from = EMAIL_SENDER;
     }
+    postData.parentGroup = REVIEWERS_ID;
     return Webfield.post('/messages', postData);
   });
   return false;
