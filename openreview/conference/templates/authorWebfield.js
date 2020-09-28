@@ -16,10 +16,11 @@ var AUTHOR_NAME = 'Authors';
 function main() {
   // In the future this should not be necessary as the group's readers
   // will prevent unauthenticated users
-  if (!user || _.startsWith(user.id, 'guest_')) {
+  if (!user || !user.profile) {
     location.href = '/login?redirect=' + encodeURIComponent(
       location.pathname + location.search + location.hash
     );
+    return;
   }
 
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
