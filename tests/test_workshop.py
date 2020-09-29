@@ -566,7 +566,7 @@ class TestWorkshop():
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
+            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
             content = {
                 'title': 'UPDATED Review title',
