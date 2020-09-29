@@ -16,6 +16,15 @@ var CUSTOM_LOAD_INVITATION = CONFERENCE_ID + '/-/Reduced_Load';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
 
 var main = function() {
+  // In the future this should not be necessary as the group's readers
+  // will prevent unauthenticated users
+  if (!user || !user.profile) {
+    location.href = '/login?redirect=' + encodeURIComponent(
+      location.pathname + location.search + location.hash
+    );
+    return;
+  }
+
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
   OpenBanner.venueHomepageLink(CONFERENCE_ID);
