@@ -707,7 +707,7 @@ class TestDoubleBlindConference():
         conference.close_submissions()
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         submission = notes[0]
-        assert [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
+        assert [conference.id, 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'] == submission.writers
 
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
@@ -1098,7 +1098,7 @@ class TestDoubleBlindConference():
             'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
             'AKBC.ws/2019/Conference/Paper1/Reviewers',
             'AKBC.ws/2019/Conference/Paper1/Authors'],
-            writers = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
+            writers = ['AKBC.ws/2019/Conference', 'AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
             content = {
                 'title': 'UPDATED Review title',
