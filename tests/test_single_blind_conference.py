@@ -301,7 +301,7 @@ class TestSingleBlindConference():
         conference.close_submissions()
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
-        assert [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
+        assert [conference.id, 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'] == submission.writers
 
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
