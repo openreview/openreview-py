@@ -670,9 +670,6 @@ class Conference(object):
             reveal_authors=False,
             reveal_submission=False
         )
-        # Make pdf mandatory
-        if 'pdf' in self.submission_stage.additional_fields:
-            self.submission_stage.additional_fields['pdf']['required'] = True
 
         self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
             start_date=None if force else self.submission_stage.due_date,
