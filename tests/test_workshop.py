@@ -497,7 +497,7 @@ class TestWorkshop():
         messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper you are reviewing. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*Comment posted to a paper in your area. Paper Number: 1, Paper Number')
+        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
         messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*A comment was posted. Paper Number')

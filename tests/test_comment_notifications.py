@@ -121,7 +121,7 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
         assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@midl.io')
         assert messages
@@ -175,7 +175,7 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
         assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@midl.io')
         assert messages
@@ -231,8 +231,8 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@midl.io')
         assert messages
@@ -306,9 +306,9 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@midl.io')
         assert messages
         assert len(messages) == 3
-        assert messages[0]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] Program Chairs commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@midl.io')
         assert messages
@@ -479,7 +479,7 @@ class TestCommentNotification():
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'programchair@auai.org'
 
-        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper in your area. Paper Number: 1.*')
+        messages = client.get_messages(subject='.*UAI.*AnonReviewer1 commented on a paper in your area. Paper Number: 1.*')
         assert messages
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'areachair@auai.org'
@@ -567,7 +567,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 2
 
-        messages = client.get_messages(subject='.*UAI.*Comment posted to a paper in your area. Paper Number: 1.*', to='areachair@auai.org')
+        messages = client.get_messages(subject='.*UAI.*AnonReviewer1 commented on a paper in your area. Paper Number: 1.*', to='areachair@auai.org')
         assert messages
         assert len(messages) == 2
 
@@ -720,7 +720,7 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
         assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt.io')
         assert messages
@@ -773,7 +773,7 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt.io')
         assert messages
@@ -835,9 +835,9 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
         assert len(messages) == 3
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2018] Authors commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt.io')
         assert messages
@@ -906,10 +906,10 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
         assert len(messages) == 4
-        assert messages[0]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[3]['content']['subject'] == '[COLT 2018] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2018] Authors commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[3]['content']['subject'] == '[COLT 2018] Program Chairs commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt.io')
         assert messages
@@ -1026,7 +1026,7 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
         assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt17.io')
         assert len(messages) == 0
@@ -1080,7 +1080,7 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt17.io')
         assert len(messages) == 0
@@ -1141,9 +1141,9 @@ class TestCommentNotification():
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
         assert len(messages) == 3
-        assert messages[0]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2017] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[0]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2017] Authors commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] Program Chairs commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt17.io')
         assert messages

@@ -21,20 +21,43 @@ function(){
       var AREA_CHAIR_1_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chair1';
       var AREA_CHAIR_2_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/' + SECONDARY_AREA_CHAIR_NAME;
       var ignoreGroups = note.nonreaders || [];
+      var signature = note.signatures[0].split('/').slice(-1)[0];
+      var prettySignature = signature.startsWith('~') ? signature.replace(/~|\d+/g, '') : signature.replace(/_/g, ' ')
       ignoreGroups.push(note.tauthor);
+      var content = `
+
+      Paper Number: ${forumNote.number}
+
+      Paper Title: "${forumNote.content.title}"
+
+      Comment title: ${note.content.title}
+
+      Comment: ${note.content.comment}
+
+      To view the comment, click here: ${baseUrl}/forum?id=${note.forum}&noteId=${note.id}`
 
       var ac_mail = {
         groups: [AREA_CHAIR_1_ID],
         ignoreGroups: ignoreGroups,
-        subject: '[' + SHORT_PHRASE + '] Comment posted to a paper in your area. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-        message: 'A comment was posted to a paper for which you are serving as Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper in your area. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+        message: `${prettySignature}  commented on a paper for which you are serving as Area Chair.${content}`
       };
 
       var ac2_mail = {
         groups: [AREA_CHAIR_2_ID],
         ignoreGroups: ignoreGroups,
-        subject: '[' + SHORT_PHRASE + '] Comment posted to a paper in your area. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-        message: 'A comment was posted to a paper for which you are serving as secondary Area Chair.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper in your area. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+        message: `${prettySignature}  commented on a paper for which you are serving as secondary Area Chair.
+
+        Paper Number: ${forumNote.number}
+
+        Paper Title: "${forumNote.content.title}"
+
+        Comment title: ${note.content.title}
+
+        Comment: ${note.content.comment}
+
+        To view the comment, click here: ${baseUrl}/forum?id=${note.forum}&noteId=${note.id}`
       };
 
       var comment_author_mail = {

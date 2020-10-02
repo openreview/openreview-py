@@ -1233,7 +1233,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[ECCV 2020] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
+        messages = client.get_messages(subject = '[ECCV 2020] AnonReviewer2 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac1@eccv.org' in recipients
