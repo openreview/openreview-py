@@ -11,6 +11,23 @@ var SUBJECT_AREAS = '';
 var AFFINITY_SCORE_ID = '';
 var CONFLICT_SCORE_ID = '';
 var noteCount = 0;
+var conflictIds = [];
+var bidsByNote = {};
+var scores_by_name = {
+  'TPMS': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score',
+  'Affinity': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'
+}
+var selectedScore = 'Affinity';
+
+  var paperDisplayOptions = {
+    pdfLink: true,
+    replyCount: true,
+    showContents: true,
+    showTags: false,
+    showEdges: true,
+    edgeInvitations: [invitation], // Bid invitation automatically available
+    referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
+  };
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -23,10 +40,10 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-function getPapersSortedByAffinity(offset) {
+function getPapersSortedByAffinity(offset, score_name) {
   if (AFFINITY_SCORE_ID) {
     return Webfield.get('/edges', {
-      invitation: AFFINITY_SCORE_ID,
+      invitation: scores_by_name[score_name],
       tail: user.profile.id,
       sort: 'weight:desc',
       offset: offset,
@@ -106,7 +123,7 @@ function getPapersByBids(bids, bidsByNote) {
 // Perform all the required API calls
 function load() {
 
-  var sortedNotesP = getPapersSortedByAffinity(0);
+  var sortedNotesP = getPapersSortedByAffinity(0, selectedScore);
 
   var conflictIdsP = Webfield.getAll('/edges', {
     invitation: CONFLICT_SCORE_ID,
@@ -128,11 +145,11 @@ function load() {
 
 
 // Display the bid interface populated with loaded data
-function renderContent(notes, conflictIds, bidEdges) {
+function renderContent(notes, conflicts, bidEdges) {
 
   var activeTab = 0;
   var sections;
-  var bidsByNote = {};
+  //var bidsByNote = {};
   var bidsById = {
     'Very High': [],
     'High': [],
@@ -141,22 +158,14 @@ function renderContent(notes, conflictIds, bidEdges) {
     'Low': []
   };
 
+  conflictIds = conflicts;
+
   bidEdges.forEach(function(edge) {
     bidsByNote[edge.head] = edge;
     bidsById[edge.label].push(edge);
   });
 
   var validNotes = prepareNotes(notes, conflictIds, bidsByNote);
-
-  var paperDisplayOptions = {
-    pdfLink: true,
-    replyCount: true,
-    showContents: true,
-    showTags: false,
-    showEdges: true,
-    edgeInvitations: [invitation], // Bid invitation automatically available
-    referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
-  };
 
   $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
     activeTab = $(e.target).data('tabIndex');
@@ -260,40 +269,7 @@ function renderContent(notes, conflictIds, bidEdges) {
       hidden: true
     });
 
-    // Render the contents of the All Papers tab
-    var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
-    var submissionListOptions = {
-      heading: null,
-      container: '#allPapers',
-      search: {
-        enabled: true,
-        localSearch: false,
-        subjectAreas: SUBJECT_AREAS,
-        subjectAreaDropdown: 'basic',
-        invitation: BLIND_SUBMISSION_ID,
-        sort: false,
-        onResults: function(searchResults) {
-          Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
-        },
-        onReset: function() {
-          Webfield.ui.searchResults(notes, searchResultsOptions);
-          $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
-        },
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: noteCount,
-      pageSize: 50,
-      onPageClick: function(offset) {
-        return getPapersSortedByAffinity(offset)
-        .then(function(notes) {
-          return prepareNotes(notes, conflictIds, bidsByNote);
-        });
-      },
-      fadeIn: false
-    };
-
-    Webfield.ui.submissionList(notes, submissionListOptions);
+    renderNotes(notes);
 
     $('#notes > .spinner-container').remove();
     $('#notes .tabs-container').show();
@@ -345,5 +321,58 @@ function addEdgesToNotes(validNotes, edgesMap) {
   return validNotes;
 }
 
+function renderNotes(notes) {
+
+
+    // Render the contents of the All Papers tab
+    var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
+    var submissionListOptions = {
+      heading: null,
+      container: '#allPapers',
+      search: {
+        enabled: true,
+        localSearch: false,
+        subjectAreas: SUBJECT_AREAS,
+        subjectAreaDropdown: 'basic',
+        invitation: BLIND_SUBMISSION_ID,
+        sort: false,
+        onResults: function(searchResults) {
+          Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
+        },
+        onReset: function() {
+          Webfield.ui.searchResults(notes, searchResultsOptions);
+          $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
+        },
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: noteCount,
+      pageSize: 50,
+      onPageClick: function(offset) {
+        return getPapersSortedByAffinity(offset, selectedScore)
+        .then(function(notes) {
+          return prepareNotes(notes, conflictIds, bidsByNote);
+        });
+      },
+      fadeIn: false
+    };
+
+    Webfield.ui.submissionList(notes, submissionListOptions);
+    var affinitySelectedClass = selectedScore == 'Affinity' && 'selected';
+    var tpmsSelectedClass = selectedScore == 'TPMS' && 'selected';
+
+    $('#notes .form-inline.notes-search-form').append('<div class="form-group score"><label for="score-dropdown">Score:</label></div><select class="score-dropdown form-control"><option value="Affinity" ' + affinitySelectedClass + '>Affinity</option><option value="TPMS" ' + tpmsSelectedClass + '>TPMS</option></select>');
+}
+
 // Go!
 main();
+
+// Event handlers
+$('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
+  console.log('change!', $(this).val());
+  selectedScore = $(this).val();
+        return getPapersSortedByAffinity(0, selectedScore)
+        .then(function(notes) {
+          return renderNotes(prepareNotes(notes, conflictIds, bidsByNote));
+        });
+});
