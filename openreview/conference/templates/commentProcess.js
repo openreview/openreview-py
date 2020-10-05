@@ -40,14 +40,14 @@ function(){
         groups: [AREA_CHAIR_1_ID],
         ignoreGroups: ignoreGroups,
         subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper in your area. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-        message: `${prettySignature}  commented on a paper for which you are serving as Area Chair.${content}`
+        message: `${prettySignature} commented on a paper for which you are serving as Area Chair.${content}`
       };
 
       var ac2_mail = {
         groups: [AREA_CHAIR_2_ID],
         ignoreGroups: ignoreGroups,
         subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper in your area. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-        message: `${prettySignature}  commented on a paper for which you are serving as secondary Area Chair.${content}`
+        message: `${prettySignature} commented on a paper for which you are serving as secondary Area Chair.${content}`
       };
 
       var comment_author_mail = {
@@ -60,7 +60,7 @@ function(){
         groups: forumNote.content.authorids,
         ignoreGroups: ignoreGroups,
         subject: `[${SHORT_PHRASE}] ${prettySignature} commented on your submission. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-        message: `${prettySignature}  commented on your submission.${content}`
+        message: `${prettySignature} commented on your submission.${content}`
       };
 
       var promises = [];
@@ -77,7 +77,7 @@ function(){
           groups: [REVIEWERS_ID],
           ignoreGroups: ignoreGroups,
           subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper you are reviewing. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-          message: `${prettySignature}  commented on a paper for which you are serving as reviewer.${content}`
+          message: `${prettySignature} commented on a paper for which you are serving as reviewer.${content}`
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else if (note.readers.includes(reviewers_submitted)) {
@@ -85,7 +85,7 @@ function(){
           groups: [reviewers_submitted],
           ignoreGroups: ignoreGroups,
           subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper you are reviewing. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-          message: `${prettySignature}  commented on a paper for which you are serving as reviewer.${content}`
+          message: `${prettySignature} commented on a paper for which you are serving as reviewer.${content}`
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else {
@@ -95,7 +95,7 @@ function(){
             groups: anonReviewers,
             ignoreGroups: ignoreGroups,
             subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper you are reviewing. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-            message: `${prettySignature}  commented on a paper for which you are serving as reviewer.${content}`
+            message: `${prettySignature} commented on a paper for which you are serving as reviewer.${content}`
           };
           promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
         }
@@ -115,7 +115,7 @@ function(){
           groups: [PROGRAM_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
           subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-          message: `${prettySignature}  commented on a paper for which you are serving as Program Chair.${content}`
+          message: `${prettySignature} commented on a paper for which you are serving as Program Chair.${content}`
         };
 
         promises.push(or3client.or3request(or3client.mailUrl, pc_mail, 'POST', token));
