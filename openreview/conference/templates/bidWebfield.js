@@ -10,24 +10,35 @@ var BID_ID = '';
 var SUBJECT_AREAS = '';
 var AFFINITY_SCORE_ID = '';
 var CONFLICT_SCORE_ID = '';
+
+// Bid status data
+var activeTab = 0
 var noteCount = 0;
 var conflictIds = [];
 var bidsByNote = {};
+var bidsById = {
+  'Very High': [],
+  'High': [],
+  'Neutral': [],
+  'Very Low': [],
+  'Low': []
+};
+var sections = [];
 var scores_by_name = {
   'TPMS': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score',
   'Affinity': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'
 }
 var selectedScore = 'Affinity';
 
-  var paperDisplayOptions = {
-    pdfLink: true,
-    replyCount: true,
-    showContents: true,
-    showTags: false,
-    showEdges: true,
-    edgeInvitations: [invitation], // Bid invitation automatically available
-    referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
-  };
+var paperDisplayOptions = {
+  pdfLink: true,
+  replyCount: true,
+  showContents: true,
+  showTags: false,
+  showEdges: true,
+  edgeInvitations: [invitation], // Bid invitation automatically available
+  referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
+};
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -147,17 +158,6 @@ function load() {
 // Display the bid interface populated with loaded data
 function renderContent(notes, conflicts, bidEdges) {
 
-  var activeTab = 0;
-  var sections;
-  //var bidsByNote = {};
-  var bidsById = {
-    'Very High': [],
-    'High': [],
-    'Neutral': [],
-    'Very Low': [],
-    'Low': []
-  };
-
   conflictIds = conflicts;
 
   bidEdges.forEach(function(edge) {
@@ -216,87 +216,16 @@ function renderContent(notes, conflicts, bidEdges) {
     }
   });
 
-  function updateNotes(notes) {
-
-    var bidCount = 0;
-    $('#bidcount').remove();
-    $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
-
-    var loadingContent = Handlebars.templates.spinner({ extraClasses: 'spinner-inline' });
-    sections = [
-      {
-        heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
-        id: 'allPapers',
-        content: null
-      },
-      {
-        heading: 'Very High',
-        headingCount: bidsById['Very High'].length,
-        id: 'veryHigh',
-        content: loadingContent
-      },
-      {
-        heading: 'High',
-        headingCount: bidsById['High'].length,
-        id: 'high',
-        content: loadingContent
-      },
-      {
-        heading: 'Neutral',
-        headingCount: bidsById['Neutral'].length,
-        id: 'neutral',
-        content: loadingContent
-      },
-      {
-        heading: 'Low',
-        headingCount: bidsById['Low'].length,
-        id: 'low',
-        content: loadingContent
-      },
-      {
-        heading: 'Very Low',
-        headingCount: bidsById['Very Low'].length,
-        id: 'veryLow',
-        content: loadingContent
-      }
-    ];
-    sections[activeTab].active = true;
-
-    $('#notes .tabs-container').remove();
-
-    Webfield.ui.tabPanel(sections, {
-      container: '#notes',
-      hidden: true
+  $('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
+    console.log('change!', $(this).val());
+    selectedScore = $(this).val();
+    return getPapersSortedByAffinity(0, selectedScore)
+    .then(function(notes) {
+      return updateNotes(prepareNotes(notes, conflictIds, bidsByNote));
     });
-
-    renderNotes(notes);
-
-    $('#notes > .spinner-container').remove();
-    $('#notes .tabs-container').show();
-  }
-
-  function updateCounts() {
-
-    var totalCount = 0;
-
-    for(var i = 1; i < sections.length; i++) {
-      var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
-      var numPapers = bidsById[sections[i].heading].length;
-
-      $tab.find('span.badge').remove();
-      if (numPapers) {
-        $tab.append('<span class="badge">' + numPapers + '</span>');
-      }
-
-      totalCount += numPapers;
-    };
-
-    $('#bidcount').remove();
-    $('#header').append('<h4 id="bidcount">You have completed ' + totalCount + ' bids</h4>');
-  }
+  });
 
   updateNotes(validNotes);
-  updateCounts();
 }
 
 function prepareNotes(notes, conflictIds, edgesMap) {
@@ -321,58 +250,127 @@ function addEdgesToNotes(validNotes, edgesMap) {
   return validNotes;
 }
 
-function renderNotes(notes) {
+function updateNotes(notes) {
 
+  var bidCount = 0;
+  $('#bidcount').remove();
+  $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
 
-    // Render the contents of the All Papers tab
-    var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
-    var submissionListOptions = {
-      heading: null,
-      container: '#allPapers',
-      search: {
-        enabled: true,
-        localSearch: false,
-        subjectAreas: SUBJECT_AREAS,
-        subjectAreaDropdown: 'basic',
-        invitation: BLIND_SUBMISSION_ID,
-        sort: false,
-        onResults: function(searchResults) {
-          Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
-        },
-        onReset: function() {
-          Webfield.ui.searchResults(notes, searchResultsOptions);
-          $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
-        },
+  var loadingContent = Handlebars.templates.spinner({ extraClasses: 'spinner-inline' });
+  sections = [
+    {
+      heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
+      id: 'allPapers',
+      content: null
+    },
+    {
+      heading: 'Very High',
+      headingCount: bidsById['Very High'].length,
+      id: 'veryHigh',
+      content: loadingContent
+    },
+    {
+      heading: 'High',
+      headingCount: bidsById['High'].length,
+      id: 'high',
+      content: loadingContent
+    },
+    {
+      heading: 'Neutral',
+      headingCount: bidsById['Neutral'].length,
+      id: 'neutral',
+      content: loadingContent
+    },
+    {
+      heading: 'Low',
+      headingCount: bidsById['Low'].length,
+      id: 'low',
+      content: loadingContent
+    },
+    {
+      heading: 'Very Low',
+      headingCount: bidsById['Very Low'].length,
+      id: 'veryLow',
+      content: loadingContent
+    }
+  ];
+  sections[activeTab].active = true;
+
+  $('#notes .tabs-container').remove();
+
+  Webfield.ui.tabPanel(sections, {
+    container: '#notes',
+    hidden: true
+  });
+
+  // Render the contents of the All Papers tab
+  var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
+  var submissionListOptions = {
+    heading: null,
+    container: '#allPapers',
+    search: {
+      enabled: true,
+      localSearch: false,
+      subjectAreas: SUBJECT_AREAS,
+      subjectAreaDropdown: 'basic',
+      invitation: BLIND_SUBMISSION_ID,
+      sort: false,
+      onResults: function(searchResults) {
+        Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
       },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: noteCount,
-      pageSize: 50,
-      onPageClick: function(offset) {
-        return getPapersSortedByAffinity(offset, selectedScore)
-        .then(function(notes) {
-          return prepareNotes(notes, conflictIds, bidsByNote);
-        });
+      onReset: function() {
+        Webfield.ui.searchResults(notes, searchResultsOptions);
+        $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
       },
-      fadeIn: false
-    };
+    },
+    displayOptions: paperDisplayOptions,
+    autoLoad: false,
+    noteCount: noteCount,
+    pageSize: 50,
+    onPageClick: function(offset) {
+      return getPapersSortedByAffinity(offset, selectedScore)
+      .then(function(notes) {
+        return prepareNotes(notes, conflictIds, bidsByNote);
+      });
+    },
+    fadeIn: false
+  };
 
-    Webfield.ui.submissionList(notes, submissionListOptions);
-    var affinitySelectedClass = selectedScore == 'Affinity' && 'selected';
-    var tpmsSelectedClass = selectedScore == 'TPMS' && 'selected';
+  Webfield.ui.submissionList(notes, submissionListOptions);
+  var affinitySelectedClass = selectedScore == 'Affinity' && 'selected';
+  var tpmsSelectedClass = selectedScore == 'TPMS' && 'selected';
 
-    $('#notes .form-inline.notes-search-form').append('<div class="form-group score"><label for="score-dropdown">Score:</label></div><select class="score-dropdown form-control"><option value="Affinity" ' + affinitySelectedClass + '>Affinity</option><option value="TPMS" ' + tpmsSelectedClass + '>TPMS</option></select>');
+  $('#notes .form-inline.notes-search-form').append('<div class="form-group score"><label for="score-dropdown">Sort:</label></div>' +
+  '<select class="score-dropdown form-control">' +
+  '<option value="Affinity" ' + affinitySelectedClass + '>Affinity Score</option>' +
+  '<option value="TPMS" ' + tpmsSelectedClass + '>TPMS Score</option>' +
+  '</select>');
+
+  $('#notes > .spinner-container').remove();
+  $('#notes .tabs-container').show();
+
+  updateCounts();
+}
+
+function updateCounts() {
+
+  var totalCount = 0;
+
+  for(var i = 1; i < sections.length; i++) {
+    var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
+    var numPapers = bidsById[sections[i].heading].length;
+
+    $tab.find('span.badge').remove();
+    if (numPapers) {
+      $tab.append('<span class="badge">' + numPapers + '</span>');
+    }
+
+    totalCount += numPapers;
+  };
+
+  $('#bidcount').remove();
+  $('#header').append('<h4 id="bidcount">You have completed ' + totalCount + ' bids</h4>');
 }
 
 // Go!
 main();
-
-// Event handlers
-$('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
-  console.log('change!', $(this).val());
-  selectedScore = $(this).val();
-        return getPapersSortedByAffinity(0, selectedScore)
-        .then(function(notes) {
-          return renderNotes(prepareNotes(notes, conflictIds, bidsByNote));
-        });
-});
