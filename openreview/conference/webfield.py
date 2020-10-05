@@ -145,6 +145,11 @@ class WebfieldBuilder(object):
                 Papers are sorted based on keyword similarity with the papers
                 that you provided in the Expertise Selection Interface.
             </li>'''
+            if conference.get_invitation_id(name='TPMS_Score', prefix=stage.committee_id) in stage.score_ids:
+                sorted_tip += '''
+                <li>
+                    Papers can be also sorted by TPMS score, change the sorting criteria using the 'Sort By' dropdown.
+                </li>'''
 
         default_instructions = '''
             <p class="dark"><strong>Instructions:</strong></p>
