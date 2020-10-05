@@ -149,7 +149,7 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
@@ -164,7 +164,7 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
@@ -181,7 +181,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 2
         assert messages[0]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[MIDL 2019] Authors commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] An author commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
 
         reply2_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
@@ -204,7 +204,7 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
@@ -219,7 +219,7 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
@@ -238,7 +238,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 2
         assert messages[0]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[MIDL 2019] Authors commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] An author commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
 
         pc_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert pc_client is not None, "Client is none"
@@ -278,7 +278,7 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
@@ -293,7 +293,7 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[MIDL 2019] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[MIDL 2019] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'reviewer@midl.io')
         assert messages
@@ -314,7 +314,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 4
         assert messages[0]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[MIDL 2019] Authors commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[MIDL 2019] An author commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == 'OpenReview signup confirmation'
         assert messages[3]['content']['subject'] == '[MIDL 2019] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
@@ -750,20 +750,20 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'COLT 2018 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'author2@colt.io')
         assert messages
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'COLT 2018 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'reviewer@colt.io')
         assert messages
         assert len(messages) == 3
         assert messages[1]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
@@ -779,7 +779,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 2
         assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Authors commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2018] An author commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
 
         reply2_comment_note = openreview.Note(invitation = comment_invitation_id,
             forum = note.id,
@@ -806,7 +806,7 @@ class TestCommentNotification():
         assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'COLT 2018 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
@@ -822,28 +822,28 @@ class TestCommentNotification():
         assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'COLT 2018 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'reviewer@colt.io')
         assert messages
         assert len(messages) == 4
         assert messages[1]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt.io')
         assert messages
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Authors commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2018] An author commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt.io')
         assert messages
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Authors commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2018] An author commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
 
         pc_client = helpers.create_user('programchair@colt.io', 'ProgramChair', 'COLT')
@@ -873,7 +873,7 @@ class TestCommentNotification():
         assert len(messages) == 5
         assert messages[0]['content']['subject'] == 'COLT 2018 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[4]['content']['subject'] == '[COLT 2018] Program Chairs commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
@@ -891,7 +891,7 @@ class TestCommentNotification():
         assert len(messages) == 5
         assert messages[0]['content']['subject'] == 'COLT 2018 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[4]['content']['subject'] == '[COLT 2018] Program Chairs commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
@@ -899,7 +899,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 5
         assert messages[1]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2018] Authors commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2018] An author commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
         assert messages[4]['content']['subject'] == '[COLT 2018] Program Chairs commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
@@ -907,7 +907,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 4
         assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Authors commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2018] An author commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2018] Program Chairs commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
@@ -915,7 +915,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 5
         assert messages[0]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2018] Authors commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2018] An author commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2018] AnonReviewer1 commented on a paper. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == 'OpenReview signup confirmation'
         assert messages[4]['content']['subject'] == '[COLT 2018] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
@@ -1055,14 +1055,14 @@ class TestCommentNotification():
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2017] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'author2@colt17.io')
         assert messages
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2017] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
         assert messages
@@ -1075,7 +1075,7 @@ class TestCommentNotification():
         assert messages
         assert len(messages) == 3
         assert messages[1]['content']['subject'] == '[COLT 2017] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2017] Authors commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] An author commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
@@ -1112,7 +1112,7 @@ class TestCommentNotification():
         assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2017] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2017] Program Chairs commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'test@mail.com')
@@ -1128,21 +1128,21 @@ class TestCommentNotification():
         assert len(messages) == 4
         assert messages[0]['content']['subject'] == 'COLT 2017 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2017] Authors commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] An author commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2017] Program Chairs commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'reviewer@colt17.io')
         assert messages
         assert len(messages) == 4
         assert messages[1]['content']['subject'] == '[COLT 2017] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[2]['content']['subject'] == '[COLT 2017] Authors commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[2]['content']['subject'] == '[COLT 2017] An author commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[3]['content']['subject'] == '[COLT 2017] Program Chairs commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'areachair@colt17.io')
         assert messages
         assert len(messages) == 3
         assert messages[0]['content']['subject'] == '[COLT 2017] AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['subject'] == '[COLT 2017] Authors commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['subject'] == '[COLT 2017] An author commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
         assert messages[2]['content']['subject'] == '[COLT 2017] Program Chairs commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title"'
 
         messages = client.get_messages(to = 'programchair@colt17.io')

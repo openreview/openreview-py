@@ -23,6 +23,7 @@ function(){
       var ignoreGroups = note.nonreaders || [];
       var signature = note.signatures[0].split('/').slice(-1)[0];
       var prettySignature = signature.startsWith('~') ? signature.replace(/~|\d+/g, '') : signature.replace(/_/g, ' ')
+      prettySignature = prettySignature == 'Authors' ? 'An author' : prettySignature;
       ignoreGroups.push(note.tauthor);
       var content = `
 
