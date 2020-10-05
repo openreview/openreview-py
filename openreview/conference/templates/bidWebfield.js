@@ -8,10 +8,11 @@ var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
 var BID_ID = '';
 var SUBJECT_AREAS = '';
-var AFFINITY_SCORE_ID = '';
 var CONFLICT_SCORE_ID = '';
+var SCORE_IDS = [];
 
 // Bid status data
+var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
 var activeTab = 0
 var noteCount = 0;
 var conflictIds = [];
@@ -24,11 +25,6 @@ var bidsById = {
   'Low': []
 };
 var sections = [];
-var scoresByName = {
-  'TPMS': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score',
-  'Affinity': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'
-}
-var selectedScore = 'Affinity';
 
 var paperDisplayOptions = {
   pdfLink: true,
@@ -51,10 +47,10 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-function getPapersSortedByAffinity(offset, scoreName) {
-  if (AFFINITY_SCORE_ID) {
+function getPapersSortedByAffinity(offset) {
+  if (selectedScore) {
     return Webfield.get('/edges', {
-      invitation: scoresByName[scoreName],
+      invitation: selectedScore,
       tail: user.profile.id,
       sort: 'weight:desc',
       offset: offset,
@@ -334,18 +330,26 @@ function updateNotes(notes) {
   };
 
   Webfield.ui.submissionList(notes, submissionListOptions);
-  var affinitySelectedClass = selectedScore == 'Affinity' && 'selected';
-  var tpmsSelectedClass = selectedScore == 'TPMS' && 'selected';
 
-  $('#notes .form-inline.notes-search-form').append(
-    '<div class="form-group score">' +
-    '<label for="score-dropdown">Sort By:</label>' +
-    '<select class="score-dropdown form-control">' +
-    '<option value="Affinity" ' + affinitySelectedClass + '>Affinity Score</option>' +
-    '<option value="TPMS" ' + tpmsSelectedClass + '>TPMS Score</option>' +
-    '</select>' +
-    '</div>'
-  );
+
+  if (SCORE_IDS.length) {
+
+    var optionsHtml = '';
+    SCORE_IDS.forEach(function(scoreId) {
+      var label = view.prettyInvitationId(scoreId);
+      var selectedClass = selectedScore == scoreId && 'selected';
+      optionsHtml = optionsHtml + '<option value="' + scoreId + '" ' + selectedClass + '>' + label + '</option>';
+    })
+
+    $('#notes .form-inline.notes-search-form').append(
+      '<div class="form-group score">' +
+      '<label for="score-dropdown">Sort By:</label>' +
+      '<select class="score-dropdown form-control">' +
+      optionsHtml +
+      '</select>' +
+      '</div>'
+    );
+  }
 
   $('#notes > .spinner-container').remove();
   $('#notes .tabs-container').show();

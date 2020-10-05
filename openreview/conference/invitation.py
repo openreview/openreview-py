@@ -146,6 +146,7 @@ class BidInvitation(openreview.Invitation):
             signatures = [conference.get_id()],
             invitees = invitees,
             taskCompletionCount = bid_stage.request_count,
+            multiReply = False,
             reply = {
                 'readers': {
                     'values-copied': values_copied

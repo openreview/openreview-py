@@ -1217,13 +1217,13 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, use_affinity_score=False, instructions=False):
+    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False):
         self.committee_id=committee_id
         self.start_date=start_date
         self.due_date=due_date
         self.name='Bid'
         self.request_count=request_count
-        self.use_affinity_score=use_affinity_score
+        self.score_ids=score_ids
         self.instructions=instructions
 
 class SubmissionRevisionStage():
@@ -1586,8 +1586,8 @@ class ConferenceBuilder(object):
         ac_instructions = ac_instructions if ac_instructions else default_instructions
         self.registration_stage=RegistrationStage(name, start_date, due_date, additional_fields, ac_additional_fields, reviewer_instructions, ac_instructions)
 
-    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions = False):
-        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, use_affinity_score, instructions))
+    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False):
+        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions))
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)

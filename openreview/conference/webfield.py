@@ -139,7 +139,7 @@ class WebfieldBuilder(object):
     def set_bid_page(self, conference, invitation, stage):
 
         sorted_tip = ''
-        if stage.use_affinity_score:
+        if stage.score_ids:
             sorted_tip = '''
             <li>
                 Papers are sorted based on keyword similarity with the papers
@@ -197,8 +197,8 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
             content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(stage.committee_id) + "';")
 
-            if stage.use_affinity_score:
-                content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id(stage.committee_id) + "';")
+            if stage.score_ids:
+                content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
 
             invitation.web = content
             return self.client.post_invitation(invitation)
