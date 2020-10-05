@@ -47,30 +47,20 @@ function(){
         groups: [AREA_CHAIR_2_ID],
         ignoreGroups: ignoreGroups,
         subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper in your area. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
-        message: `${prettySignature}  commented on a paper for which you are serving as secondary Area Chair.
-
-        Paper Number: ${forumNote.number}
-
-        Paper Title: "${forumNote.content.title}"
-
-        Comment title: ${note.content.title}
-
-        Comment: ${note.content.comment}
-
-        To view the comment, click here: ${baseUrl}/forum?id=${note.forum}&noteId=${note.id}`
+        message: `${prettySignature}  commented on a paper for which you are serving as secondary Area Chair.${content}`
       };
 
       var comment_author_mail = {
         groups: [note.tauthor],
         subject: '[' + SHORT_PHRASE + '] Your comment was received on Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-        message: 'Your comment was received on a submission to ' + SHORT_PHRASE + '.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        message: `Your comment was received on a submission to ${SHORT_PHRASE}.${content}`
       };
 
       var paper_author_mail = {
         groups: forumNote.content.authorids,
         ignoreGroups: ignoreGroups,
-        subject: '[' + SHORT_PHRASE + '] Your submission has received a comment. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-        message: 'Your submission to ' + SHORT_PHRASE + ' has received a comment.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+        subject: `[${SHORT_PHRASE}] ${prettySignature} commented on your submission. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+        message: `${prettySignature}  commented on your submission.${content}`
       };
 
       var promises = [];
@@ -86,16 +76,16 @@ function(){
         var reviewer_mail = {
           groups: [REVIEWERS_ID],
           ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] Comment posted to a paper you are reviewing. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-          message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper you are reviewing. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+          message: `${prettySignature}  commented on a paper for which you are serving as reviewer.${content}`
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else if (note.readers.includes(reviewers_submitted)) {
         var reviewer_mail = {
           groups: [reviewers_submitted],
           ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] Comment posted to a paper you are reviewing. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-          message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper you are reviewing. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+          message: `${prettySignature}  commented on a paper for which you are serving as reviewer.${content}`
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else {
@@ -104,8 +94,8 @@ function(){
           var reviewer_mail = {
             groups: anonReviewers,
             ignoreGroups: ignoreGroups,
-            subject: '[' + SHORT_PHRASE + '] Comment posted to a paper you are reviewing. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-            message: 'A comment was posted to a paper for which you are serving as reviewer.\n\nPaper Number: ' + forumNote.number + '\n\nPaper Title: "' + forumNote.content.title + '"\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+            subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper you are reviewing. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+            message: `${prettySignature}  commented on a paper for which you are serving as reviewer.${content}`
           };
           promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
         }
@@ -124,8 +114,8 @@ function(){
         var pc_mail = {
           groups: [PROGRAM_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] A comment was posted. Paper Number: ' + forumNote.number + ', Paper Title: "' + forumNote.content.title + '"',
-          message: 'A comment was posted to a paper for which you are serving as Program Chair.\n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+          subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+          message: `${prettySignature}  commented on a paper for which you are serving as Program Chair.${content}`
         };
 
         promises.push(or3client.or3request(or3client.mailUrl, pc_mail, 'POST', token));
