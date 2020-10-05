@@ -921,7 +921,7 @@ class TestDoubleBlindConference():
         notes = selenium.find_elements_by_class_name('note')
         assert len(notes) == 3
 
-        builder.set_bid_stage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Reviewer/-/Affinity_Score'])
+        builder.set_bid_stage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Reviewers/-/Affinity_Score'])
         builder.set_bid_stage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Area_Chairs/-/Affinity_Score'])
         conference = builder.get_result()
 
