@@ -24,7 +24,7 @@ var bidsById = {
   'Low': []
 };
 var sections = [];
-var scores_by_name = {
+var scoresByName = {
   'TPMS': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score',
   'Affinity': 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'
 }
@@ -51,10 +51,10 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-function getPapersSortedByAffinity(offset, score_name) {
+function getPapersSortedByAffinity(offset, scoreName) {
   if (AFFINITY_SCORE_ID) {
     return Webfield.get('/edges', {
-      invitation: scores_by_name[score_name],
+      invitation: scoresByName[scoreName],
       tail: user.profile.id,
       sort: 'weight:desc',
       offset: offset,
@@ -73,7 +73,7 @@ function getPapersSortedByAffinity(offset, score_name) {
           ids: noteIds
         })
         .then(function(result) {
-          //Keep affinity score order
+          // Keep affinity score order
           var notesById = _.keyBy(result.notes, function(note) {
             return note.id;
           });
@@ -118,7 +118,6 @@ function getPapersSortedByAffinity(offset, score_name) {
       return result.notes;
     })
   }
-
 }
 
 function getPapersByBids(bids, bidsByNote) {
@@ -217,7 +216,6 @@ function renderContent(notes, conflicts, bidEdges) {
   });
 
   $('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
-    console.log('change!', $(this).val());
     selectedScore = $(this).val();
     return getPapersSortedByAffinity(0, selectedScore)
     .then(function(notes) {
@@ -229,7 +227,7 @@ function renderContent(notes, conflicts, bidEdges) {
 }
 
 function prepareNotes(notes, conflictIds, edgesMap) {
-  var validNotes = _.filter(notes, function(note){
+  var validNotes = _.filter(notes, function(note) {
     return !_.includes(conflictIds, note.id);
   })
   return addEdgesToNotes(validNotes, edgesMap);
@@ -251,7 +249,6 @@ function addEdgesToNotes(validNotes, edgesMap) {
 }
 
 function updateNotes(notes) {
-
   var bidCount = 0;
   $('#bidcount').remove();
   $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
@@ -340,11 +337,15 @@ function updateNotes(notes) {
   var affinitySelectedClass = selectedScore == 'Affinity' && 'selected';
   var tpmsSelectedClass = selectedScore == 'TPMS' && 'selected';
 
-  $('#notes .form-inline.notes-search-form').append('<div class="form-group score"><label for="score-dropdown">Sort:</label></div>' +
-  '<select class="score-dropdown form-control">' +
-  '<option value="Affinity" ' + affinitySelectedClass + '>Affinity Score</option>' +
-  '<option value="TPMS" ' + tpmsSelectedClass + '>TPMS Score</option>' +
-  '</select>');
+  $('#notes .form-inline.notes-search-form').append(
+    '<div class="form-group score">' +
+    '<label for="score-dropdown">Sort By:</label>' +
+    '<select class="score-dropdown form-control">' +
+    '<option value="Affinity" ' + affinitySelectedClass + '>Affinity Score</option>' +
+    '<option value="TPMS" ' + tpmsSelectedClass + '>TPMS Score</option>' +
+    '</select>' +
+    '</div>'
+  );
 
   $('#notes > .spinner-container').remove();
   $('#notes .tabs-container').show();
@@ -353,10 +354,9 @@ function updateNotes(notes) {
 }
 
 function updateCounts() {
-
   var totalCount = 0;
 
-  for(var i = 1; i < sections.length; i++) {
+  for (var i = 1; i < sections.length; i++) {
     var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
     var numPapers = bidsById[sections[i].heading].length;
 
