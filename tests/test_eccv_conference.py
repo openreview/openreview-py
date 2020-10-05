@@ -269,8 +269,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, use_affinity_score=True, instructions = instructions)
-        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, use_affinity_score=True, instructions = instructions)
+        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions)
+        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
         return conference
@@ -1233,7 +1233,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[ECCV 2020] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
+        messages = client.get_messages(subject = '[ECCV 2020] AnonReviewer2 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac1@eccv.org' in recipients

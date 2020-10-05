@@ -554,7 +554,7 @@ class Conference(object):
         notes_iterator = self.get_submissions(sort='number:asc', details='original')
         author_group_ids = []
 
-        for n in notes_iterator:
+        for n in tqdm(list(notes_iterator), desc='create_paper_groups'):
             # Paper group
             self.__create_group(
                 group_id = '{conference_id}/Paper{number}'.format(conference_id=self.id, number=n.number),
@@ -606,7 +606,7 @@ class Conference(object):
         self.invitation_builder.set_blind_submission_invitation(self, hide_fields)
         blinded_notes = []
 
-        for note in tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc'):
+        for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='create_blind_submissions'):
             # If the note was either withdrawn or desk-rejected already, we should not create another blind copy
             if withdrawn_submissions_by_original.get(note.id) or desk_rejected_submissions_by_original.get(note.id):
                 continue
@@ -670,6 +670,7 @@ class Conference(object):
             reveal_authors=False,
             reveal_submission=False
         )
+
         self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
             start_date=None if force else self.submission_stage.due_date,
             due_date=self.submission_stage.second_due_date,
@@ -991,7 +992,7 @@ class Conference(object):
         if remind:
             invited_reviewers = reviewers_invited_group.members
             print ('Sending reminders for recruitment invitations')
-            for reviewer_id in tqdm(invited_reviewers):
+            for reviewer_id in tqdm(invited_reviewers, desc='remind_reviewers'):
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
                 if reviewers_id not in memberships and reviewers_declined_id not in memberships:
                     reviewer_name = 'invitee'
@@ -1011,7 +1012,7 @@ class Conference(object):
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
             print ('Sending retry to declined reviewers')
-            for reviewer_id in tqdm(declined_reviewers):
+            for reviewer_id in tqdm(declined_reviewers, desc='retry_declined'):
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
                 if reviewers_id not in memberships:
                     reviewer_name = 'invitee'
@@ -1029,7 +1030,7 @@ class Conference(object):
                         verbose = False)
 
         print ('Sending recruitment invitations')
-        for index, email in enumerate(tqdm(invitees)):
+        for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=email, regex=reviewers_id)] if tools.get_group(self.client, email) else []
             if reviewers_invited_id not in memberships:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
@@ -1216,13 +1217,13 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, use_affinity_score=False, instructions=False):
+    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False):
         self.committee_id=committee_id
         self.start_date=start_date
         self.due_date=due_date
         self.name='Bid'
         self.request_count=request_count
-        self.use_affinity_score=use_affinity_score
+        self.score_ids=score_ids
         self.instructions=instructions
 
 class SubmissionRevisionStage():
@@ -1585,8 +1586,8 @@ class ConferenceBuilder(object):
         ac_instructions = ac_instructions if ac_instructions else default_instructions
         self.registration_stage=RegistrationStage(name, start_date, due_date, additional_fields, ac_additional_fields, reviewer_instructions, ac_instructions)
 
-    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, use_affinity_score = False, instructions = False):
-        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, use_affinity_score, instructions))
+    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False):
+        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions))
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)

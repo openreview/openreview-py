@@ -146,6 +146,7 @@ class BidInvitation(openreview.Invitation):
             signatures = [conference.get_id()],
             invitees = invitees,
             taskCompletionCount = bid_stage.request_count,
+            multiReply = False,
             reply = {
                 'readers': {
                     'values-copied': values_copied
@@ -1226,11 +1227,11 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(CommentInvitation(conference))
-        for note in tqdm(notes, total=len(notes)):
+        for note in tqdm(notes, total=len(notes), desc='set_comment_invitation'):
             invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
 
         if conference.comment_stage.allow_public_comments:
-            for note in tqdm(notes, total=len(notes)):
+            for note in tqdm(notes, total=len(notes), desc='set_public_comment_invitation'):
                 invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
 
         return invitations
@@ -1242,7 +1243,7 @@ class InvitationBuilder(object):
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission))
 
         notes = list(conference.get_submissions())
-        for note in notes:
+        for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
             invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs)))
 
         return invitations
@@ -1254,7 +1255,7 @@ class InvitationBuilder(object):
         self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission))
 
         notes = list(conference.get_submissions())
-        for note in notes:
+        for note in tqdm(notes, total=len(notes), desc='set_desk_reject_invitation'):
             invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission)))
 
         return invitations
@@ -1262,7 +1263,7 @@ class InvitationBuilder(object):
     def set_review_invitation(self, conference, notes):
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
-        for note in tqdm(notes, total=len(notes)):
+        for note in tqdm(notes, total=len(notes), desc='set_reviewinvitation'):
             invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
             self.__update_readers(invitation)
             invitations.append(invitation)
@@ -1272,7 +1273,7 @@ class InvitationBuilder(object):
     def set_review_rebuttal_invitation(self, conference, reviews):
         invitations = []
         self.client.post_invitation(RebuttalInvitation(conference))
-        for note in tqdm(reviews):
+        for note in tqdm(reviews, desc='set_review_rebuttal_invitation'):
             invitation = self.client.post_invitation(PaperReviewRebuttalInvitation(conference, note))
             invitations.append(invitation)
 
@@ -1281,7 +1282,7 @@ class InvitationBuilder(object):
     def set_review_revision_invitation(self, conference, reviews):
         invitations = []
         self.client.post_invitation(ReviewRevisionInvitation(conference))
-        for note in tqdm(reviews):
+        for note in tqdm(reviews, desc='set_review_revision_invitation'):
             invitation = self.client.post_invitation(PaperReviewRevisionInvitation(conference, note))
             invitations.append(invitation)
 
@@ -1290,7 +1291,7 @@ class InvitationBuilder(object):
     def set_review_rating_invitation(self, conference, reviews):
         invitations = []
         self.client.post_invitation(ReviewRatingInvitation(conference))
-        for note in tqdm(reviews):
+        for note in tqdm(reviews, desc='set_review_rating_invitation'):
             invitation = self.client.post_invitation(PaperReviewRatingInvitation(conference, note))
             invitations.append(invitation)
 
@@ -1300,7 +1301,7 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(MetaReviewInvitation(conference))
-        for note in notes:
+        for note in tqdm(notes, total=len(notes), desc='set_meta_review_invitation'):
             invitation = self.client.post_invitation(PaperMetaReviewInvitation(conference, note))
             self.__update_readers(invitation)
             invitations.append(invitation)
@@ -1311,7 +1312,7 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(DecisionInvitation(conference))
-        for note in notes:
+        for note in tqdm(notes, total=len(notes), desc='set_decision_invitation'):
             invitation = self.client.post_invitation(PaperDecisionInvitation(conference, note))
             self.__update_readers(invitation)
             invitations.append(invitation)
@@ -1322,7 +1323,7 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(SubmissionRevisionInvitation(conference, content))
-        for note in notes:
+        for note in tqdm(notes, total=len(notes), desc='set_revise_submission_invitation'):
             invitations.append(self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content)))
 
         return invitations

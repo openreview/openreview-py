@@ -24,22 +24,19 @@ def process(client, note, invitation):
     if forum_note.content['authors'] == ['Anonymous'] and forum_note.original:
         original_note = client.get_note(forum_note.original)
 
-    note = original_note if original_note else forum_note
-
-
     if REVEAL_SUBMISSIONS_ON_DESK_REJECT:
         forum_note.readers = ['everyone']
     else:
         forum_note.readers = committee
 
     bibtex = openreview.tools.get_bibtex(
-        note=original_note if original_note is not None else forum_note, 
-        venue_fullname=CONFERENCE_NAME, 
-        url_forum=forum_note.id, 
-        year=CONFERENCE_YEAR, 
-        anonymous=not(REVEAL_AUTHORS_ON_DESK_REJECT), 
+        note=original_note if original_note is not None else forum_note,
+        venue_fullname=CONFERENCE_NAME,
+        url_forum=forum_note.id,
+        year=CONFERENCE_YEAR,
+        anonymous=not(REVEAL_AUTHORS_ON_DESK_REJECT),
         baseurl='https://openreview.net')
-    
+
     if original_note:
         if REVEAL_AUTHORS_ON_DESK_REJECT:
             forum_note.content = {'_bibtex': bibtex}
@@ -50,7 +47,7 @@ def process(client, note, invitation):
                 '_bibtex': bibtex}
     else:
         forum_note.content['_bibtex'] = bibtex
-    
+
     forum_note = client.post_note(forum_note)
 
     # Expire review, meta-review and decision invitations
@@ -68,8 +65,12 @@ def process(client, note, invitation):
         CONFERENCE_SHORT_NAME=CONFERENCE_SHORT_NAME,
         paper_number=forum_note.number
     )
-    email_body = '''The {CONFERENCE_SHORT_NAME} paper "{paper_title_or_num}" has been marked desk rejected by the program chairs.'''.format(
+    email_body = '''The {CONFERENCE_SHORT_NAME} paper "{paper_title_or_num}" has been marked desk rejected by the program chairs.
+
+To view more details, click here: https://openreview.net/forum?id={forum_id}&noteId={note_id}'''.format(
         CONFERENCE_SHORT_NAME=CONFERENCE_SHORT_NAME,
-        paper_title_or_num=forum_note.content.get('title', '#'+str(forum_note.number))
+        paper_title_or_num=forum_note.content.get('title', '#'+str(forum_note.number)),
+        forum_id=note.forum,
+        note_id=note.id
     )
     client.post_message(email_subject, committee, email_body)
