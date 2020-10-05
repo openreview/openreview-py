@@ -918,7 +918,7 @@ class Conference(object):
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
         self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
-        return conference_matching.deploy(assignment_title, is_area_chair, overwrite)
+        return conference_matching.deploy(assignment_title, overwrite)
 
 
     def set_recruitment_reduced_load(self, reduced_load_options):
