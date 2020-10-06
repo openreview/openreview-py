@@ -14,19 +14,19 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
-      - run:
-          name: install ubuntu build reqs
-          command: |
-            sudo apt update && sudo apt upgrade -y
-            sudo apt install build-essential libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev tk-dev libffi-dev
+      # - run:
+      #     name: install ubuntu build reqs
+      #     command: |
+      #       sudo apt update && sudo apt upgrade -y
+      #       sudo apt install build-essential libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev tk-dev libffi-dev
       - run:
           name: install python 3.7
           command: |
+            sudo apt-get update
             sudo apt-get install software-properties-common
-            sudo apt-get update
             sudo add-apt-repository --yes ppa:deadsnakes/ppa
-            sudo apt-get update
             sudo apt-get install python3.7
+            python3.7 --version
             wget https://bootstrap.pypa.io/get-pip.py
             sudo python3.7 get-pip.py
             sudo python3.7 -m pip install --upgrade pip setuptools wheel
