@@ -30,7 +30,6 @@ jobs:
             wget https://bootstrap.pypa.io/get-pip.py
             sudo python3.7 get-pip.py
             sudo python3.7 -m pip install --upgrade pip setuptools wheel
-            sudo python3.7 -m pip install pipenv
       - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
