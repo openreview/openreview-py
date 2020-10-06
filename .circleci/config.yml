@@ -3,6 +3,8 @@ orbs:
   codecov: codecov/codecov@1.0.5
 jobs:
   build:
+    machine:
+      image: ubuntu-1604:201903-01
     working_directory: ~/openreview-py-repo
     docker:
       - image: circleci/node:12.13.1
