@@ -569,15 +569,15 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
-    def deploy_acs(assignment_edges, paper_by_forum):
+    def deploy_acs(self, assignment_edges, paper_by_forum):
         acs = self.match_group.members
         for edge in tqdm(assignment_edges, total=len(assignment_edges)):
             if edge.head in paper_by_forum:
                 if edge.tail in acs:
                     paper_number = paper_by_forum.get(edge.head).number
-                    ac_group = '{self.conference.id}/Paper{paper_number}/Area_Chairs'.format(paper_number=paper_number)
-                    ac1_group = '{self.conference.id}/Paper{paper_number}/Area_Chair1'.format(paper_number=paper_number)
-                    author_group = '{self.conference.id}/Paper{paper_number}/Authors'.format(paper_number=paper_number)
+                    ac_group = '{conference_id}/Paper{paper_number}/Area_Chairs'.format(conference_id=self.conference.id, paper_number=paper_number)
+                    ac1_group = '{conference_id}/Paper{paper_number}/Area_Chair1'.format(conference_id=self.conference.id, paper_number=paper_number)
+                    author_group = '{conference_id}/Paper{paper_number}/Authors'.format(conference_id=self.conference.id, paper_number=paper_number)
                     group = openreview.Group(id=ac_group,
                                             members=[edge.tail],
                                             readers=[self.conference.id, ac_group],
@@ -586,7 +586,7 @@ class Matching(object):
                                             signatures=[self.conference.id],
                                             writers=[self.conference.id]
                                             )
-                    r = client.post_group(group)
+                    r = self.client.post_group(group)
                     anon_group = openreview.Group(id=ac1_group,
                                             members=[edge.tail],
                                             readers=[self.conference.id, ac1_group],
@@ -595,7 +595,7 @@ class Matching(object):
                                             signatures=[self.conference.id],
                                             writers=[self.conference.id]
                                             )
-                    r = client.post_group(anon_group)
+                    r = self.client.post_group(anon_group)
                 else:
                     print('ac not found', edge.tail)
             else:
