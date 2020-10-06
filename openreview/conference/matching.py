@@ -575,9 +575,9 @@ class Matching(object):
             if edge.head in paper_by_forum:
                 if edge.tail in acs:
                     paper_number = paper_by_forum.get(edge.head).number
-                    ac_group = f'{self.conference.id}/Paper{paper_number}/Area_Chairs'
-                    ac1_group = f'{self.conference.id}/Paper{paper_number}/Area_Chair1'
-                    author_group = f'{self.conference.id}/Paper{paper_number}/Authors'
+                    ac_group = '{self.conference.id}/Paper{paper_number}/Area_Chairs'.format(paper_number=paper_number)
+                    ac1_group = '{self.conference.id}/Paper{paper_number}/Area_Chair1'.format(paper_number=paper_number)
+                    author_group = '{self.conference.id}/Paper{paper_number}/Authors'.format(paper_number=paper_number)
                     group = openreview.Group(id=ac_group,
                                             members=[edge.tail],
                                             readers=[self.conference.id, ac_group],
