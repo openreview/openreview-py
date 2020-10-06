@@ -14,10 +14,16 @@ jobs:
           transport.host: localhost
     steps:
       - checkout
-      - run: sudo apt-get update
-      - run: sudo apt-get install python3
-      - run: curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-      - run: sudo python3 get-pip.py
+      - run:
+          name: install python 3.7
+          command: |
+            sudo add-apt-repository --yes ppa:deadsnakes/ppa
+            sudo apt-get update
+            sudo apt-get install python3.7
+            wget https://bootstrap.pypa.io/get-pip.py
+            sudo python3.7 get-pip.py
+            sudo python3.7 -m pip install --upgrade pip setuptools wheel
+            sudo python3.7 -m pip install pipenv
       - run: sudo pip3 install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
