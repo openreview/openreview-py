@@ -927,3 +927,36 @@ class TestMatching():
         assert client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chairs').members == ['ac1@cmu.edu']
         assert client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac1@cmu.edu']
 
+
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            readers = [conference.id, 'ac1@cmu.edu'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[1].id,
+            tail = 'ac1@cmu.edu',
+            label = 'ac-matching-2',
+            weight = 0.98
+        ))
+
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            readers = [conference.id, 'ac2@umass.edu'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[0].id,
+            tail = 'ac2@umass.edu',
+            label = 'ac-matching-2',
+            weight = 0.87
+        ))
+
+        conference.set_assignments(assignment_title='ac-matching-2', is_area_chair=True, overwrite=True)
+
+        assert client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chairs').members == ['ac2@umass.edu']
+        assert client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac2@umass.edu']
+
+        assert client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chairs').members == ['ac1@cmu.edu']
+        assert client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chair1').members == ['ac1@cmu.edu']
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chairs')
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1')
