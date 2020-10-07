@@ -776,9 +776,9 @@ class TestMatching():
 
         revs_paper0 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
         assert 2 == len(revs_paper0.members)
-        assert revs_paper0.members[0] == '~Reviewer_One1'
+        assert revs_paper0.members[0] == 'r1@mit.edu'
         assert revs_paper0.members[1] == 'r2@google.com'
-        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['~Reviewer_One1']
+        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r1@mit.edu']
         assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r2@google.com']
 
         revs_paper1 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
@@ -791,9 +791,9 @@ class TestMatching():
         revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
         assert 2 == len(revs_paper2.members)
         assert revs_paper2.members[0] == 'r3@fb.com'
-        assert revs_paper2.members[1] == '~Reviewer_One1'
+        assert revs_paper2.members[1] == 'r1@mit.edu'
         assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r3@fb.com']
-        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number)).members == ['~Reviewer_One1']
+        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number)).members == ['r1@mit.edu']
 
     def test_redeploy_assigments(self, conference, client, test_client, helpers):
 
@@ -846,8 +846,8 @@ class TestMatching():
             assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
 
         revs_paper1 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
-        assert ['~Reviewer_One1'] == revs_paper1.members
-        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['~Reviewer_One1']
+        assert ['r1@mit.edu'] == revs_paper1.members
+        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
 
