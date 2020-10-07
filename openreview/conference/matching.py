@@ -203,7 +203,7 @@ class Matching(object):
                         head=submission.id,
                         tail=user_info['id'],
                         weight=-1,
-                        label=_conflict_label(conflicts),
+                        label='Conflict',
                         readers=self._get_edge_readers(tail=user_info['id']),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
