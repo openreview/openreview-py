@@ -252,7 +252,7 @@ var getAllAreaChairs = function() {
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'invitation,tags',
+    details: 'invitation,tags,original',
     sort: 'number:asc'
   });
 };
@@ -1890,7 +1890,6 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var cellCheck = { selected: false, noteId: note.id };
 
   // Build Note Summary Cell
-  note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
   cell1.referrer = paperTableReferrerUrl;
 
@@ -2496,6 +2495,8 @@ var buildCSV = function(){
   rowData.push(['number',
   'forum',
   'title',
+  'abstract',
+  'authors',
   'num reviewers',
   'min rating',
   'max rating',
@@ -2521,11 +2522,16 @@ var buildCSV = function(){
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
+    var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
+    var abstract = paperTableRow.note.content.abstract.replace(/"/g, '""');
+    var authors = originalNote.content.authors ? originalNote.content.authors : [];
     rowData.push([paperTableRow.note.number,
     '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
     '"' + title + '"',
+    '"' + abstract + '"',
+    '"' + authors.join('|') + '"',
     paperTableRow.reviewProgressData.numReviewers,
     paperTableRow.reviewProgressData.minRating,
     paperTableRow.reviewProgressData.maxRating,
