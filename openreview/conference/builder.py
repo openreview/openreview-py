@@ -1090,7 +1090,7 @@ class Conference(object):
 
         if not decision_heading_map:
             decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), limit = 1)
+            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), expired=True, limit = 1)
             if invitations:
                 for option in invitations[0].reply['content']['decision']['value-radio']:
                     decision_heading_map[option] = option + ' Papers'
@@ -1102,15 +1102,27 @@ class Conference(object):
             accepted_submissions = self.get_submissions(accepted=True, details='original')
 
             for submission in accepted_submissions:
-                submission.content = {
-                    '_bibtex': tools.get_bibtex(
-                        openreview.Note.from_json(submission.details['original']),
+
+                has_original = submission.details and 'original' in submission.details
+                if has_original:
+                    submission.content = {
+                        '_bibtex': tools.get_bibtex(
+                            openreview.Note.from_json(submission.details['original']),
+                            release_accepted_notes.get('conference_title', 'unknown'),
+                            release_accepted_notes.get('conference_year', 'unknown'),
+                            url_forum=submission.forum,
+                            accepted=True,
+                            anonymous=False)
+                    }
+                else:
+                    submission.content['_bibtex'] = tools.get_bibtex(
+                        submission,
                         release_accepted_notes.get('conference_title', 'unknown'),
                         release_accepted_notes.get('conference_year', 'unknown'),
                         url_forum=submission.forum,
                         accepted=True,
                         anonymous=False)
-                }
+
                 self.client.post_note(submission)
 
     def get_submissions_attachments(self, field_name='pdf', field_type='pdf', folder_path='./pdfs', accepted=False):
