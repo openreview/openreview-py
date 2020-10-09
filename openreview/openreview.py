@@ -463,6 +463,29 @@ class Client(object):
         response = self.__handle_response(response)
         return response.content
 
+    def get_attachment(self, id, field_name):
+        """
+        Gets the binary content of a attachment using the provided note id
+        If the pdf is not found then this returns an error message with "status":404.
+
+        :param id: Note id or Reference id of the pdf
+        :type id: str
+        :param field_name: name of the field associated with the attachment file
+        :type field_name: str
+
+        :return: The binary content of a pdf
+        :rtype: bytes
+
+        Example:
+
+        >>> f = get_attachment(id='Place Note-ID here', field_name='pdf')
+        >>> with open('output.pdf','wb') as op: op.write(f)
+
+        """
+        response = requests.get(self.baseurl + '/attachment', params = { 'id': id, 'name': field_name }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.content
+
     def get_venues(self, id=None, ids=None, invitations=None):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.

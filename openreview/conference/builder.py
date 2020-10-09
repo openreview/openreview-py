@@ -1128,7 +1128,7 @@ class Conference(object):
                 paper_number = submission.number
                 try:
                     with open('{folder_path}/Paper{number}.{field_type}'.format(folder_path=folder_path, number=paper_number, field_type=field_type), 'wb') as f:
-                        f.write(self.client.get_pdf(submission.id))
+                        f.write(self.client.get_attachment(submission.id, field_name))
                 except Exception as e:
                     print ('Error during attachment download for paper number {}, error: {}'.format(submission.number, e))
                 return attachment_url
