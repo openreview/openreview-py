@@ -5,6 +5,8 @@ import datetime
 import re
 from enum import Enum
 from tqdm import tqdm
+import os
+import concurrent.futures
 from .. import openreview
 from .. import tools
 from . import webfield
@@ -1110,6 +1112,37 @@ class Conference(object):
                         anonymous=False)
                 }
                 self.client.post_note(submission)
+
+    def get_submissions_attachments(self, field_name='pdf', field_type='pdf', folder_path='./pdfs', accepted=False):
+        print('Loading submissions...')
+        submissions = list(self.get_submissions(accepted))
+        pbar = tqdm(total=len(submissions), desc='Downloading files...')
+
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        def get_attachment_file(submission):
+            pbar.update(1)
+            if field_name in submission.content:
+                paper_number = submission.number
+                try:
+                    with open('{folder_path}/Paper{number}.{field_type}'.format(folder_path=folder_path, number=paper_number, field_type=field_type), 'wb') as f:
+                        f.write(self.client.get_attachment(submission.id, field_name))
+                except Exception as e:
+                    print ('Error during attachment download for paper number {}, error: {}'.format(submission.number, e))
+                return True
+            return None
+
+        futures = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Start the load operations and mark each future with its URL
+            for submission in submissions:
+                futures.append(executor.submit(get_attachment_file, submission))
+        pbar.close()
+
+        for future in futures:
+            result = future.result()
+
 
 class SubmissionStage(object):
 
