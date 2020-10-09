@@ -1124,14 +1124,13 @@ class Conference(object):
         def get_attachment_file(submission):
             pbar.update(1)
             if field_name in submission.content:
-                attachment_url = '{0}{1}'.format(self.client.baseurl, submission.content[field_name])
                 paper_number = submission.number
                 try:
                     with open('{folder_path}/Paper{number}.{field_type}'.format(folder_path=folder_path, number=paper_number, field_type=field_type), 'wb') as f:
                         f.write(self.client.get_attachment(submission.id, field_name))
                 except Exception as e:
                     print ('Error during attachment download for paper number {}, error: {}'.format(submission.number, e))
-                return attachment_url
+                return True
             return None
 
         futures = []
