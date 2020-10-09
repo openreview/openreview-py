@@ -1088,7 +1088,7 @@ class Conference(object):
 
         if not decision_heading_map:
             decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), limit = 1)
+            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), expired=True, limit = 1)
             if invitations:
                 for option in invitations[0].reply['content']['decision']['value-radio']:
                     decision_heading_map[option] = option + ' Papers'

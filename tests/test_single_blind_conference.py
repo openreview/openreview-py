@@ -673,4 +673,20 @@ class TestSingleBlindConference():
         note = client.post_note(note)
 
 
-        conference.set_homepage_decisions(release_accepted_notes={ 'conference_title': 'test', 'conference_year': '2018' })
+        conference.set_homepage_decisions(release_accepted_notes={ 'conference_title': 'NIPS Workshop MLITS', 'conference_year': '2018' })
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+
+        valid_bibtex = '''@inproceedings{
+user2018new,
+title={New paper title},
+author={Test User and Peter Test and Andrew Mc},
+booktitle={NIPS Workshop MLITS},
+year={2018},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + submissions[0].forum + '''}
+}'''
+
+        assert submissions[0].content['_bibtex'] == valid_bibtex
