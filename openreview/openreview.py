@@ -501,11 +501,11 @@ class Client(object):
         :rtype: list[dict]
         """
         params = {}
-        if id != None:
+        if id is not None:
             params['id'] = id
-        if ids != None:
+        if ids is not None:
             params['ids'] = ','.join(ids)
-        if invitations != None:
+        if invitations is not None:
             params['invitations'] = ','.join(invitations)
 
         response = requests.get(self.venues_url, params=params, headers=self.headers)
@@ -625,10 +625,10 @@ class Client(object):
         :rtype: list[Group]
         """
         params = {}
-        if id != None: params['id'] = id
-        if regex != None: params['regex'] = regex
-        if member != None: params['member'] = member
-        if signatory != None: params['signatory'] = signatory
+        if id is not None: params['id'] = id
+        if regex is not None: params['regex'] = regex
+        if member is not None: params['member'] = member
+        if signatory is not None: params['signatory'] = signatory
         if web: params['web'] = web
         params['limit'] = limit
         params['offset'] = offset
@@ -679,17 +679,17 @@ class Client(object):
         :rtype: list[Invitation]
         """
         params = {}
-        if id!=None:
+        if id is not None:
             params['id'] = id
-        if invitee!=None:
+        if invitee is not None:
             params['invitee'] = invitee
-        if replytoNote!=None:
+        if replytoNote is not None:
             params['replytoNote'] = replytoNote
-        if replyForum!=None:
+        if replyForum is not None:
             params['replyForum'] = replyForum
-        if signature!=None:
+        if signature is not None:
             params['signature'] = signature
-        if note!=None:
+        if note is not None:
             params['note']=note
         if regex:
             params['regex'] = regex
@@ -774,36 +774,36 @@ class Client(object):
         :rtype: list[Note]
         """
         params = {}
-        if id != None:
+        if id is not None:
             params['id'] = id
-        if paperhash != None:
+        if paperhash is not None:
             params['paperhash'] = paperhash
-        if forum != None:
+        if forum is not None:
             params['forum'] = forum
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if replyto != None:
+        if replyto is not None:
             params['replyto'] = replyto
-        if tauthor != None:
+        if tauthor is not None:
             params['tauthor'] = tauthor
-        if signature != None:
+        if signature is not None:
             params['signature'] = signature
-        if writer != None:
+        if writer is not None:
             params['writer'] = writer
         if trash == True:
             params['trash']=True
-        if number != None:
+        if number is not None:
             params['number'] = number
-        if content != None:
+        if content is not None:
             for k in content:
                 params['content.' + k] = content[k]
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
-        if mintcdate != None:
+        if mintcdate is not None:
             params['mintcdate'] = mintcdate
-        if details != None:
+        if details is not None:
             params['details'] = details
         params['sort'] = sort
         params['original'] = original
@@ -849,18 +849,18 @@ class Client(object):
         :rtype: list[Note]
         """
         params = {}
-        if referent != None:
+        if referent is not None:
             params['referent'] = referent
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if mintcdate != None:
+        if mintcdate is not None:
             params['mintcdate'] = mintcdate
-        if content != None:
+        if content is not None:
             for k in content:
                 params['content.' + k] = content[k]
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
         if original == True:
             params['original'] = "true"
@@ -888,19 +888,19 @@ class Client(object):
         """
         params = {}
 
-        if id != None:
+        if id is not None:
             params['id'] = id
-        if forum != None:
+        if forum is not None:
             params['forum'] = forum
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if signature != None:
+        if signature is not None:
             params['signature'] = signature
-        if tag != None:
+        if tag is not None:
             params['tag'] = tag
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
 
         response = requests.get(self.tags_url, params = params, headers = self.headers)
@@ -1313,9 +1313,9 @@ class Client(object):
             'source': source
         }
 
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
 
         response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
@@ -1418,13 +1418,13 @@ class Group(object):
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.writers = writers
-        self.members = [] if members==None else members
+        self.members = [] if members is None else members
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
         self.signatories = signatories
         self.web=None
-        if web != None:
+        if web is not None:
             with open(web) as f:
                 self.web = f.read()
 
@@ -1640,14 +1640,14 @@ class Invitation(object):
         self.details = details
         self.web = None
         self.process = None
-        if web != None:
+        if web is not None:
             with open(web) as f:
                 self.web = f.read()
-        if process != None:
+        if process is not None:
             with open(process) as f:
                 self.process = f.read()
         self.transform = None
-        if transform != None:
+        if transform is not None:
             with open(transform) as f:
                 self.transform = f.read()
         if process_string:
@@ -1808,7 +1808,7 @@ class Note(object):
         self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
         self.writers = writers
         self.number = number
@@ -1922,7 +1922,7 @@ class Tag(object):
         self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
 
     def to_json(self):
