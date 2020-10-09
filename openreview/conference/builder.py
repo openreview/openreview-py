@@ -1100,15 +1100,27 @@ class Conference(object):
             accepted_submissions = self.get_submissions(accepted=True, details='original')
 
             for submission in accepted_submissions:
-                submission.content = {
-                    '_bibtex': tools.get_bibtex(
-                        openreview.Note.from_json(submission.details['original']),
+
+                has_original = submission.details and 'original' in submission.details
+                if has_original:
+                    submission.content = {
+                        '_bibtex': tools.get_bibtex(
+                            openreview.Note.from_json(submission.details['original']),
+                            release_accepted_notes.get('conference_title', 'unknown'),
+                            release_accepted_notes.get('conference_year', 'unknown'),
+                            url_forum=submission.forum,
+                            accepted=True,
+                            anonymous=False)
+                    }
+                else:
+                    submission.content['_bibtex'] = tools.get_bibtex(
+                        submission,
                         release_accepted_notes.get('conference_title', 'unknown'),
                         release_accepted_notes.get('conference_year', 'unknown'),
                         url_forum=submission.forum,
                         accepted=True,
                         anonymous=False)
-                }
+
                 self.client.post_note(submission)
 
 class SubmissionStage(object):

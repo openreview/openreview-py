@@ -645,4 +645,32 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('areachair-status')
         assert tabs.find_element_by_id('reviewer-status')
 
+    def test_post_decisions(self, client, selenium, request_page):
 
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        conference.set_decision_stage(openreview.DecisionStage(public=True))
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Decision',
+            forum = submissions[0].id,
+            replyto = submissions[0].id,
+            readers = ['everyone'],
+            writers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs'],
+            signatures = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs'],
+            content = {
+                'title': 'Paper Decision',
+                'decision': 'Accept (Oral)'
+            }
+        )
+        note = client.post_note(note)
+
+
+        conference.set_homepage_decisions(release_accepted_notes={ 'conference_title': 'test', 'conference_year': '2018' })
