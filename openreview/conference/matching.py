@@ -657,7 +657,7 @@ class Matching(object):
                                             members=[member],
                                             readers=[self.conference.id, ac_group, anon_reviewer_group],
                                             nonreaders=[author_group],
-                                            signatories=[anon_reviewer_group],
+                                            signatories=[self.conference.id, anon_reviewer_group],
                                             signatures=[self.conference.id],
                                             writers=[self.conference.id, ac_group]
                                             )
