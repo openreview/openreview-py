@@ -1159,7 +1159,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1175,6 +1175,8 @@ class Client(object):
         :type sender: dict
         :param replyTo: e-mail address used when recipients reply to this message
         :type replyTo: str
+        :param parentGroup: parent group recipients of e-mail belong to
+        :type parentGroup: str
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
@@ -1185,7 +1187,8 @@ class Client(object):
             'message': message,
             'ignoreGroups': ignoreRecipients,
             'from': sender,
-            'replyTo': replyTo
+            'replyTo': replyTo,
+            'parentGroup': parentGroup
             }, headers = self.headers)
         response = self.__handle_response(response)
 
