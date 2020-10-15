@@ -944,6 +944,41 @@ class TestMatching():
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
 
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r2@google.com'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[2].id,
+            tail = 'r2@google.com',
+            label = 'rev-matching-emergency-3',
+            weight = 0.98
+        ))
+
+        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True)
+
+        revs_paper0 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        assert [] == revs_paper0.members
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number))
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number))
+
+
+        revs_paper1 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        assert [] == revs_paper1.members
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number))
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
+
+        revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        assert ['r2@google.com'] == revs_paper2.members
+        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
+
         now = datetime.datetime.now()
         conference.set_review_stage(openreview.ReviewStage(start_date = now))
 
