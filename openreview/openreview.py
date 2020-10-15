@@ -1325,6 +1325,11 @@ class Client(object):
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
+    def get_notes_by_ids(self, ids):
+        response = requests.post(self.notes_url + '/search', json = { 'ids': ids }, headers = self.headers)
+        response = self.__handle_response(response)
+        return [Note.from_json(n) for n in response.json()['notes']]
+
     def get_tildeusername(self, first, last, middle = None):
         """
         Gets next possible tilde user name corresponding to the specified first, middle and last name
