@@ -613,6 +613,12 @@ class Matching(object):
             else:
                 print('assignment not found', paper.id)
 
+    def get_next_anon_id(self, start, end, prefix, anon_group_dict):
+        for index in range(start, end):
+            anon_reviewer_group_id = '{prefix}/{index}'.format(prefix=prefix, index=index)
+            if anon_reviewer_group_id not in anon_group_dict:
+                return index
+        return end
 
     def deploy_reviewers(self, assignment_title, overwrite):
 
@@ -622,37 +628,51 @@ class Matching(object):
             label=assignment_title, groupby='head', select='tail')}
 
         for paper in tqdm(papers, total=len(papers)):
+
+            reviewers_group = self.client.get_group('{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number))
+            anon_groups = self.client.get_groups(regex='{conference_id}/Paper{number}/AnonReviewer[0-9]+'.format(conference_id=self.conference.id, number=paper.number))
+            anon_groups_dict = {}
+
             if overwrite:
-                groups = self.client.get_groups(regex='{conference_id}/Paper{number}/(Reviewers|AnonReviewer[0-9]+)'.format(conference_id=self.conference.id, number=paper.number))
-                for group in groups:
+                reviewers_group.members = []
+                self.client.post_group(reviewers_group)
+                for group in anon_groups:
                     self.client.delete_group(group.id)
+            else:
+                anon_groups_dict = { g.id: g for g in anon_groups if len(g.members) > 0 }
 
             if paper.id in assignment_edges:
 
-                ac_group = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
-                reviewer_group = '{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number)
-                author_group = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
-                members = [v['tail'] for v in assignment_edges[paper.id]]
+                ac_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
+                reviewer_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number)
+                author_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
+                members = reviewers_group.members + [v['tail'] for v in assignment_edges[paper.id]]
 
-                group = openreview.Group(id=reviewer_group,
+                group = openreview.Group(id=reviewer_group_id,
                                         members=members,
-                                        readers=[self.conference.id, ac_group, reviewer_group],
-                                        nonreaders=[author_group],
-                                        signatories=[self.conference.id, ac_group],
+                                        readers=[self.conference.id, ac_group_id, reviewer_group_id],
+                                        nonreaders=[author_group_id],
+                                        signatories=[self.conference.id, ac_group_id],
                                         signatures=[self.conference.id],
-                                        writers=[self.conference.id, ac_group]
+                                        writers=[self.conference.id, ac_group_id]
                                         )
                 r = self.client.post_group(group)
 
-                for index,member in enumerate(members):
-                    anon_reviewer_group = '{conference_id}/Paper{number}/AnonReviewer{index}'.format(conference_id=self.conference.id, number=paper.number, index=index+1)
-                    group = openreview.Group(id=anon_reviewer_group,
+                number = 1
+                print(anon_groups, anon_groups_dict)
+                for member in members:
+                    prefix = '{conference_id}/Paper{number}/AnonReviewer'.format(conference_id=self.conference.id, number=paper.number)
+                    number = self.get_next_anon_id(number, len(anon_groups_dict) + len(members), prefix, anon_groups_dict)
+                    anon_reviewer_group_id = prefix + str(number)
+                    number += 1
+
+                    group = openreview.Group(id=anon_reviewer_group_id,
                                             members=[member],
-                                            readers=[self.conference.id, ac_group, anon_reviewer_group],
-                                            nonreaders=[author_group],
-                                            signatories=[self.conference.id, anon_reviewer_group],
+                                            readers=[self.conference.id, ac_group_id, anon_reviewer_group_id],
+                                            nonreaders=[author_group_id],
+                                            signatories=[self.conference.id, anon_reviewer_group_id],
                                             signatures=[self.conference.id],
-                                            writers=[self.conference.id, ac_group]
+                                            writers=[self.conference.id, ac_group_id]
                                             )
                     r = self.client.post_group(group)
             else:
