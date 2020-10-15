@@ -615,8 +615,7 @@ class Matching(object):
 
     def get_next_anon_id(self, start, end, prefix, anon_group_dict):
         for index in range(start, end):
-            anon_reviewer_group_id = '{prefix}/{index}'.format(prefix=prefix, index=index)
-            if anon_reviewer_group_id not in anon_group_dict:
+            if prefix + str(index) not in anon_group_dict:
                 return index
         return end
 
@@ -646,7 +645,8 @@ class Matching(object):
                 ac_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
                 reviewer_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number)
                 author_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
-                members = reviewers_group.members + [v['tail'] for v in assignment_edges[paper.id]]
+                new_reviewers = [v['tail'] for v in assignment_edges[paper.id]]
+                members = reviewers_group.members + new_reviewers
 
                 group = openreview.Group(id=reviewer_group_id,
                                         members=members,
@@ -659,15 +659,14 @@ class Matching(object):
                 r = self.client.post_group(group)
 
                 number = 1
-                print(anon_groups, anon_groups_dict)
-                for member in members:
+                for reviewer in new_reviewers:
                     prefix = '{conference_id}/Paper{number}/AnonReviewer'.format(conference_id=self.conference.id, number=paper.number)
-                    number = self.get_next_anon_id(number, len(anon_groups_dict) + len(members), prefix, anon_groups_dict)
+                    number = self.get_next_anon_id(number, len(members), prefix, anon_groups_dict)
                     anon_reviewer_group_id = prefix + str(number)
                     number += 1
 
                     group = openreview.Group(id=anon_reviewer_group_id,
-                                            members=[member],
+                                            members=[reviewer],
                                             readers=[self.conference.id, ac_group_id, anon_reviewer_group_id],
                                             nonreaders=[author_group_id],
                                             signatories=[self.conference.id, anon_reviewer_group_id],
