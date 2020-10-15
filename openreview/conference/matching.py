@@ -572,61 +572,49 @@ class Matching(object):
 
     def deploy_acs(self, assignment_title, overwrite):
 
-        if overwrite:
-            groups = []
-            groups.extend(self.client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chairs'))
-            groups.extend(self.client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chair[0-9]+'))
-            for group in tqdm(groups, total=len(groups), desc='Deleting groups'):
-                self.client.delete_group(group.id)
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
 
-        paper_by_forum = {n.forum: n for n in openreview.tools.iterget_notes(
-            self.client,
-            invitation=self.conference.get_blind_submission_id())}
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
 
-        assignment_edges = list(openreview.tools.iterget_edges(
-            self.client,
-            invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-            label=assignment_title))
+        for paper in tqdm(papers, total=len(papers)):
+            if overwrite:
+                groups = self.client.get_groups(regex='{conference_id}/Paper{number}/Area_Chair(s|[0-9]+)'.format(conference_id=self.conference.id, number=paper.number))
+                for group in groups:
+                    self.client.delete_group(group.id)
 
-        acs = self.match_group.members
-        for edge in tqdm(assignment_edges, total=len(assignment_edges)):
-            if edge.head in paper_by_forum:
-                if edge.tail in acs:
-                    paper_number = paper_by_forum.get(edge.head).number
-                    ac_group = '{conference_id}/Paper{paper_number}/Area_Chairs'.format(conference_id=self.conference.id, paper_number=paper_number)
-                    ac1_group = '{conference_id}/Paper{paper_number}/Area_Chair1'.format(conference_id=self.conference.id, paper_number=paper_number)
-                    author_group = '{conference_id}/Paper{paper_number}/Authors'.format(conference_id=self.conference.id, paper_number=paper_number)
-                    group = openreview.Group(id=ac_group,
-                                            members=[edge.tail],
-                                            readers=[self.conference.id, ac_group],
+            if paper.id in assignment_edges:
+
+                ac_group = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
+                author_group = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
+                members = [v['tail'] for v in assignment_edges[paper.id]]
+
+                group = openreview.Group(id=ac_group,
+                                        members=members,
+                                        readers=[self.conference.id, ac_group],
+                                        nonreaders=[author_group],
+                                        signatories=[self.conference.id, ac_group],
+                                        signatures=[self.conference.id],
+                                        writers=[self.conference.id]
+                                        )
+                r = self.client.post_group(group)
+
+                for index,member in enumerate(members):
+                    anon_ac_group = '{conference_id}/Paper{number}/Area_Chair{index}'.format(conference_id=self.conference.id, number=paper.number, index=index+1)
+                    group = openreview.Group(id=anon_ac_group,
+                                            members=[member],
+                                            readers=[self.conference.id, anon_ac_group],
                                             nonreaders=[author_group],
-                                            signatories=[self.conference.id, ac_group],
+                                            signatories=[self.conference.id, anon_ac_group],
                                             signatures=[self.conference.id],
                                             writers=[self.conference.id]
                                             )
                     r = self.client.post_group(group)
-                    anon_group = openreview.Group(id=ac1_group,
-                                            members=[edge.tail],
-                                            readers=[self.conference.id, ac1_group],
-                                            nonreaders=[author_group],
-                                            signatories=[ac1_group],
-                                            signatures=[self.conference.id],
-                                            writers=[self.conference.id]
-                                            )
-                    r = self.client.post_group(anon_group)
-                else:
-                    print('ac not found', edge.tail)
             else:
-                print('paper not found', edge.head)
+                print('assignment not found', paper.id)
+
 
     def deploy_reviewers(self, assignment_title, overwrite):
-
-        if overwrite:
-            groups = []
-            groups.extend(self.client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
-            groups.extend(self.client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/AnonReviewer[0-9]+'))
-            for group in tqdm(groups, total=len(groups), desc='Deleting groups'):
-                self.client.delete_group(group.id)
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
 
@@ -634,6 +622,11 @@ class Matching(object):
             label=assignment_title, groupby='head', select='tail')}
 
         for paper in tqdm(papers, total=len(papers)):
+            if overwrite:
+                groups = self.client.get_groups(regex='{conference_id}/Paper{number}/(Reviewers|AnonReviewer[0-9]+)'.format(conference_id=self.conference.id, number=paper.number))
+                for group in groups:
+                    self.client.delete_group(group.id)
+
             if paper.id in assignment_edges:
 
                 ac_group = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
