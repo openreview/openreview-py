@@ -203,7 +203,7 @@ class Matching(object):
                         head=submission.id,
                         tail=user_info['id'],
                         weight=-1,
-                        label=_conflict_label(conflicts),
+                        label='Conflict',
                         readers=self._get_edge_readers(tail=user_info['id']),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
@@ -458,6 +458,7 @@ class Matching(object):
                             'Error',
                             'No Solution',
                             'Complete',
+                            'Deploying',
                             'Deployed'
                         ],
                         'order': 16
@@ -569,45 +570,121 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
+    def deploy_acs(self, assignment_title, overwrite):
 
-    def deploy(self, assignment_title, is_area_chair, overwrite):
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+
+        for paper in tqdm(papers, total=len(papers)):
+            if overwrite:
+                groups = self.client.get_groups(regex='{conference_id}/Paper{number}/Area_Chair(s|[0-9]+)'.format(conference_id=self.conference.id, number=paper.number))
+                for group in groups:
+                    self.client.delete_group(group.id)
+
+            if paper.id in assignment_edges:
+
+                ac_group = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
+                author_group = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
+                members = [v['tail'] for v in assignment_edges[paper.id]]
+
+                group = openreview.Group(id=ac_group,
+                                        members=members,
+                                        readers=[self.conference.id, ac_group],
+                                        nonreaders=[author_group],
+                                        signatories=[self.conference.id, ac_group],
+                                        signatures=[self.conference.id],
+                                        writers=[self.conference.id]
+                                        )
+                r = self.client.post_group(group)
+
+                for index,member in enumerate(members):
+                    anon_ac_group = '{conference_id}/Paper{number}/Area_Chair{index}'.format(conference_id=self.conference.id, number=paper.number, index=index+1)
+                    group = openreview.Group(id=anon_ac_group,
+                                            members=[member],
+                                            readers=[self.conference.id, anon_ac_group],
+                                            nonreaders=[author_group],
+                                            signatories=[self.conference.id, anon_ac_group],
+                                            signatures=[self.conference.id],
+                                            writers=[self.conference.id]
+                                            )
+                    r = self.client.post_group(group)
+            else:
+                print('assignment not found', paper.id)
+
+    def get_next_anon_id(self, start, end, prefix, anon_group_dict):
+        for index in range(start, end):
+            if prefix + str(index) not in anon_group_dict:
+                return index
+        return end
+
+    def deploy_reviewers(self, assignment_title, overwrite):
+
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+
+        for paper in tqdm(papers, total=len(papers)):
+
+            reviewers_group = self.client.get_group('{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number))
+            anon_groups = self.client.get_groups(regex='{conference_id}/Paper{number}/AnonReviewer[0-9]+'.format(conference_id=self.conference.id, number=paper.number))
+            anon_groups_dict = {}
+
+            if overwrite:
+                reviewers_group.members = []
+                self.client.post_group(reviewers_group)
+                for group in anon_groups:
+                    self.client.delete_group(group.id)
+            else:
+                anon_groups_dict = { g.id: g for g in anon_groups if len(g.members) > 0 }
+
+            if paper.id in assignment_edges:
+
+                ac_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
+                reviewer_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number)
+                author_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
+                new_reviewers = [v['tail'] for v in assignment_edges[paper.id]]
+                members = reviewers_group.members + new_reviewers
+
+                group = openreview.Group(id=reviewer_group_id,
+                                        members=members,
+                                        readers=[self.conference.id, ac_group_id, reviewer_group_id],
+                                        nonreaders=[author_group_id],
+                                        signatories=[self.conference.id, ac_group_id],
+                                        signatures=[self.conference.id],
+                                        writers=[self.conference.id, ac_group_id]
+                                        )
+                r = self.client.post_group(group)
+
+                number = 1
+                for reviewer in new_reviewers:
+                    prefix = '{conference_id}/Paper{number}/AnonReviewer'.format(conference_id=self.conference.id, number=paper.number)
+                    number = self.get_next_anon_id(number, len(members), prefix, anon_groups_dict)
+                    anon_reviewer_group_id = prefix + str(number)
+                    number += 1
+
+                    group = openreview.Group(id=anon_reviewer_group_id,
+                                            members=[reviewer],
+                                            readers=[self.conference.id, ac_group_id, anon_reviewer_group_id],
+                                            nonreaders=[author_group_id],
+                                            signatories=[self.conference.id, anon_reviewer_group_id],
+                                            signatures=[self.conference.id],
+                                            writers=[self.conference.id, ac_group_id]
+                                            )
+                    r = self.client.post_group(group)
+            else:
+                print('assignment not found', paper.id)
+
+
+    def deploy(self, assignment_title, overwrite=False):
         '''
         WARNING: This function untested
 
         '''
         # pylint: disable=too-many-locals
+        if self.is_area_chair:
+            return self.deploy_acs(assignment_title, overwrite)
 
-        # Get the configuration note to check the group to assign
-        client = self.conference.client
-
-        submissions = openreview.tools.iterget_notes(
-            client,
-            invitation=self.conference.get_blind_submission_id())
-
-        if overwrite:
-            groups = []
-            if is_area_chair:
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chairs'))
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chair[0-9]+'))
-            else:
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/AnonReviewer[0-9]+'))
-            for group in tqdm(groups, total=len(groups), desc='Deleting groups'):
-                client.delete_group(group.id)
-
-        edges_count = client.get_edges_count(invitation=self.conference.get_paper_assignment_id(self.match_group.id), label=assignment_title)
-
-        assignment_edges = openreview.tools.iterget_edges(
-            client,
-            invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-            label=assignment_title)
-
-        paper_by_forum = {n.forum: n for n in submissions}
-
-        for edge in tqdm(assignment_edges, total=edges_count):
-            if edge.head in paper_by_forum:
-                paper_number = paper_by_forum.get(edge.head).number
-                user = edge.tail
-                self.conference.set_assignment(user, paper_number, self.is_area_chair)
-            else:
-                print('paper not found', edge.head)
+        return self.deploy_reviewers(assignment_title, overwrite)

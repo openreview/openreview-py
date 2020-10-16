@@ -920,7 +920,7 @@ class Conference(object):
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
         self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
-        return conference_matching.deploy(assignment_title, is_area_chair, overwrite)
+        return conference_matching.deploy(assignment_title, overwrite)
 
 
     def set_recruitment_reduced_load(self, reduced_load_options):
@@ -1301,7 +1301,8 @@ class ReviewStage(object):
         email_pcs = False,
         additional_fields = {},
         remove_fields = [],
-        rating_field_name = None
+        rating_field_name = None,
+        process_path = None
     ):
 
         self.start_date = start_date
@@ -1317,6 +1318,7 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
+        self.process_path = process_path
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
