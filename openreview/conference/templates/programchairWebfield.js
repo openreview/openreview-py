@@ -252,7 +252,7 @@ var getAllAreaChairs = function() {
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'invitation,tags,original',
+    details: 'invitation,tags,original,replyCount',
     sort: 'number:asc'
   });
 };
@@ -1118,7 +1118,8 @@ var displayPaperStatusTable = function() {
     Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
     Reviewers_Assigned: function(row) { return row.reviewProgressData.numReviewers; },
     Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
-    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; }
+    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+    Number_of_Forum_Replies: function(row) { return row.reviewProgressData.forumReplyCount; },
   };
   if (AREA_CHAIRS_ID) {
     sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
@@ -1961,6 +1962,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var reviewProgressData = {
     noteId: note.id,
     paperNumber: note.number,
+    forumReplyCount: note.details['replyCount'],
     numSubmittedReviews: Object.keys(completedReviews).length,
     numReviewers: Object.keys(reviewerIds).length,
     reviewers: combinedObj,
