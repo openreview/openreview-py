@@ -985,9 +985,80 @@ class TestMatching():
         invitation = client.get_invitation(id='auai.org/UAI/2019/Conference/-/Official_Review')
         assert invitation
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Review stage has started.'):
-            conference.set_assignments(assignment_title='rev-matching-new2', overwrite=True)
+        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True)
 
+        revs_paper0 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        assert [] == revs_paper0.members
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number))
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number))
+
+
+        revs_paper1 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        assert [] == revs_paper1.members
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number))
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
+
+        revs_paper2 = client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        assert ['r2@google.com'] == revs_paper2.members
+        assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
+            assert client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
+
+        reviewer_client = helpers.create_user('r2@google.com', 'Reviewer', 'Two')
+
+        reviewer_client.post_note(openreview.Note(
+            invitation='auai.org/UAI/2019/Conference/Paper1/-/Official_Review',
+            forum=blinded_notes[2].id,
+            replyto=blinded_notes[2].id,
+            content={
+                'title': 'review',
+                'review': 'this is a good paper',
+                'rating': '1: Trivial or wrong',
+                'confidence': "1: The reviewer's evaluation is an educated guess"
+            },
+            readers=[
+                "auai.org/UAI/2019/Conference/Program_Chairs",
+                "auai.org/UAI/2019/Conference/Paper1/Area_Chairs",
+                'auai.org/UAI/2019/Conference/Paper1/AnonReviewer1'
+            ],
+            nonreaders=["auai.org/UAI/2019/Conference/Paper1/Authors"],
+            writers=[
+                "auai.org/UAI/2019/Conference",
+                'auai.org/UAI/2019/Conference/Paper1/AnonReviewer1'
+            ],
+            signatures=['auai.org/UAI/2019/Conference/Paper1/AnonReviewer1']
+        ))
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, 'r1@mit.edu'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[2].id,
+            tail = 'r1@mit.edu',
+            label = 'rev-matching-emergency-4',
+            weight = 0.98
+        ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assingnment of a paper with a review'):
+            conference.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True)
+
+        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
+            readers = [conference.id, '~Reviewer_Two1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = blinded_notes[2].id,
+            tail = '~Reviewer_Two1',
+            label = 'rev-matching-emergency-5',
+            weight = 0.98
+        ))
+
+        conference.set_assignments(assignment_title='rev-matching-emergency-5', overwrite=True)
 
     def test_set_ac_assigments(self, conference, client, test_client, helpers):
 

@@ -571,12 +571,28 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
+    def _validate_assignments(self, reviews, assignment_edges, anon_name='AnonReviewer'):
+
+        for review in reviews:
+            if review.forum in assignment_edges:
+                reviewer_index = int(review.signatures[0].split(anon_name)[-1])
+                members = [v['tail'] for v in assignment_edges[review.forum]]
+                profile = self.client.get_profile(review.tauthor)
+                # author of the review not in the assignment list or in another order
+                if profile.id not in members or reviewer_index != (members.index(profile.id)+1):
+                    raise openreview.OpenReviewException('Can not overwrite assingnment of a paper with a review: {}'.format(review.forum))
+
+
+
     def deploy_acs(self, assignment_title, overwrite):
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
-
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id('Meta_Review', '.*'))
         assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select='tail')}
+
+        if overwrite and reviews:
+            self._validate_assignments(reviews, assignment_edges, 'Area_Chair')
 
         for paper in tqdm(papers, total=len(papers)):
             if overwrite:
@@ -623,9 +639,12 @@ class Matching(object):
     def deploy_reviewers(self, assignment_title, overwrite):
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
-
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id('Official_Review', '.*'))
         assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select='tail')}
+
+        if overwrite and reviews:
+            self._validate_assignments(reviews, assignment_edges, 'AnonReviewer')
 
         for paper in tqdm(papers, total=len(papers)):
 
