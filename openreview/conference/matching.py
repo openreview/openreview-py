@@ -459,7 +459,8 @@ class Matching(object):
                             'No Solution',
                             'Complete',
                             'Deploying',
-                            'Deployed'
+                            'Deployed',
+                            'Deployment Error'
                         ],
                         'order': 16
                     },
