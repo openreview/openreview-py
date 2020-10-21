@@ -735,7 +735,8 @@ class ReviewInvitation(openreview.Invitation):
             if field in content:
                 del content[field]
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
+        process_file = review_stage.process_path if review_stage.process_path else os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')
+        with open(process_file) as f:
             file_content = f.read()
 
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")

@@ -5,6 +5,8 @@ import datetime
 import re
 from enum import Enum
 from tqdm import tqdm
+import os
+import concurrent.futures
 from .. import openreview
 from .. import tools
 from . import webfield
@@ -903,22 +905,12 @@ class Conference(object):
 
     def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
         if is_area_chair:
-            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.meta_review_stage.name))
-        else:
-            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.review_stage.name))
-
-        if invitation:
-            activation_date = invitation.cdate or invitation.tcdate
-            if activation_date < tools.datetime_millis(datetime.datetime.now()):
-                raise openreview.OpenReviewException('{} stage has started.'.format('MetaReview' if is_area_chair else 'Review'))
-
-        if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
         self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
-        return conference_matching.deploy(assignment_title, is_area_chair, overwrite)
+        return conference_matching.deploy(assignment_title, overwrite)
 
 
     def set_recruitment_reduced_load(self, reduced_load_options):
@@ -1088,7 +1080,7 @@ class Conference(object):
 
         if not decision_heading_map:
             decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), limit = 1)
+            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), expired=True, limit = 1)
             if invitations:
                 for option in invitations[0].reply['content']['decision']['value-radio']:
                     decision_heading_map[option] = option + ' Papers'
@@ -1100,16 +1092,59 @@ class Conference(object):
             accepted_submissions = self.get_submissions(accepted=True, details='original')
 
             for submission in accepted_submissions:
-                submission.content = {
-                    '_bibtex': tools.get_bibtex(
-                        openreview.Note.from_json(submission.details['original']),
+
+                has_original = submission.details and 'original' in submission.details
+                if has_original:
+                    submission.content = {
+                        '_bibtex': tools.get_bibtex(
+                            openreview.Note.from_json(submission.details['original']),
+                            release_accepted_notes.get('conference_title', 'unknown'),
+                            release_accepted_notes.get('conference_year', 'unknown'),
+                            url_forum=submission.forum,
+                            accepted=True,
+                            anonymous=False)
+                    }
+                else:
+                    submission.content['_bibtex'] = tools.get_bibtex(
+                        submission,
                         release_accepted_notes.get('conference_title', 'unknown'),
                         release_accepted_notes.get('conference_year', 'unknown'),
                         url_forum=submission.forum,
                         accepted=True,
                         anonymous=False)
-                }
+
                 self.client.post_note(submission)
+
+    def get_submissions_attachments(self, field_name='pdf', field_type='pdf', folder_path='./pdfs', accepted=False):
+        print('Loading submissions...')
+        submissions = list(self.get_submissions(accepted))
+        pbar = tqdm(total=len(submissions), desc='Downloading files...')
+
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        def get_attachment_file(submission):
+            pbar.update(1)
+            if field_name in submission.content:
+                paper_number = submission.number
+                try:
+                    with open('{folder_path}/Paper{number}.{field_type}'.format(folder_path=folder_path, number=paper_number, field_type=field_type), 'wb') as f:
+                        f.write(self.client.get_attachment(submission.id, field_name))
+                except Exception as e:
+                    print ('Error during attachment download for paper number {}, error: {}'.format(submission.number, e))
+                return True
+            return None
+
+        futures = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Start the load operations and mark each future with its URL
+            for submission in submissions:
+                futures.append(executor.submit(get_attachment_file, submission))
+        pbar.close()
+
+        for future in futures:
+            result = future.result()
+
 
 class SubmissionStage(object):
 
@@ -1256,7 +1291,8 @@ class ReviewStage(object):
         email_pcs = False,
         additional_fields = {},
         remove_fields = [],
-        rating_field_name = None
+        rating_field_name = None,
+        process_path = None
     ):
 
         self.start_date = start_date
@@ -1272,6 +1308,7 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
+        self.process_path = process_path
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:

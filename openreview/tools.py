@@ -1325,7 +1325,7 @@ def recruit_reviewer(client, user, first,
     )
 
     # send the email through openreview
-    response = client.post_message(recruit_message_subj, [user], personalized_message)
+    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id)
 
     if 'groups' in response and response['groups']:
         client.add_members_to_group(reviewers_invited_id, [user])

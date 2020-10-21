@@ -463,6 +463,29 @@ class Client(object):
         response = self.__handle_response(response)
         return response.content
 
+    def get_attachment(self, id, field_name):
+        """
+        Gets the binary content of a attachment using the provided note id
+        If the pdf is not found then this returns an error message with "status":404.
+
+        :param id: Note id or Reference id of the pdf
+        :type id: str
+        :param field_name: name of the field associated with the attachment file
+        :type field_name: str
+
+        :return: The binary content of a pdf
+        :rtype: bytes
+
+        Example:
+
+        >>> f = get_attachment(id='Place Note-ID here', field_name='pdf')
+        >>> with open('output.pdf','wb') as op: op.write(f)
+
+        """
+        response = requests.get(self.baseurl + '/attachment', params = { 'id': id, 'name': field_name }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.content
+
     def get_venues(self, id=None, ids=None, invitations=None):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
@@ -1136,7 +1159,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1152,6 +1175,8 @@ class Client(object):
         :type sender: dict
         :param replyTo: e-mail address used when recipients reply to this message
         :type replyTo: str
+        :param parentGroup: parent group recipients of e-mail belong to
+        :type parentGroup: str
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
@@ -1162,7 +1187,8 @@ class Client(object):
             'message': message,
             'ignoreGroups': ignoreRecipients,
             'from': sender,
-            'replyTo': replyTo
+            'replyTo': replyTo,
+            'parentGroup': parentGroup
             }, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1296,6 +1322,11 @@ class Client(object):
             params['offset'] = offset
 
         response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
+        response = self.__handle_response(response)
+        return [Note.from_json(n) for n in response.json()['notes']]
+
+    def get_notes_by_ids(self, ids):
+        response = requests.post(self.notes_url + '/search', json = { 'ids': ids }, headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
