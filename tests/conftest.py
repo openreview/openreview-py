@@ -33,7 +33,7 @@ class Helpers:
     def get_user(email):
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def helpers():
     return Helpers
 

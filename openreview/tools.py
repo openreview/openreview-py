@@ -53,7 +53,9 @@ def get_group(client, id):
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         error = e.args[0][0]
-        if not error.startswith('Group Not Found'):
+        if isinstance(error, str) and error.startswith('Group Not Found'):
+            return None
+        else:
             raise e
     return group
 

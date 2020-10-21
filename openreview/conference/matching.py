@@ -577,10 +577,10 @@ class Matching(object):
             if review.forum in assignment_edges:
                 reviewer_index = int(review.signatures[0].split(anon_name)[-1])
                 members = [v['tail'] for v in assignment_edges[review.forum]]
-                profile = self.client.get_profile(review.tauthor)
+                current_member = self.client.get_group(review.signatures[0]).members[0]
                 # author of the review not in the assignment list or in another order
-                if profile.id not in members or reviewer_index != (members.index(profile.id)+1):
-                    raise openreview.OpenReviewException('Can not overwrite assingnment of a paper with a review: {}'.format(review.forum))
+                if current_member not in members or reviewer_index != (members.index(current_member)+1):
+                    raise openreview.OpenReviewException('Can not overwrite assignment of a paper with a review: {}'.format(review.forum))
 
 
 
