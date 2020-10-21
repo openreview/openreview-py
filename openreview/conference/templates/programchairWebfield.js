@@ -1972,6 +1972,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     minConfidence: minConfidence,
     maxConfidence: maxConfidence,
     sendReminder: true,
+    showActivityModal: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
     referrer: paperTableReferrerUrl
@@ -2279,6 +2280,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       reviewerNumber: nextAnonNumber
     };
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
+    reviewerSummaryMap[paperNumber].showActivityModal = true;
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     reviewerSummaryMap[paperNumber].sendReminder = true;
     reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
@@ -2391,12 +2393,40 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
     delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
+    reviewerSummaryMap[paperNumber].showActivityModal = true;
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
     promptMessage('Reviewer ' + view.prettyId(userId) + ' has been removed for paper ' + paperNumber, { overlay: true });
     paperStatusNeedsRerender = true;
   });
+  return false;
+});
+
+$('#group-container').on('click', 'a.show-activity-modal', function(e) {
+  var paperNum = $(this).data('paperNum');
+  var reviewerNum = $(this).data('reviewerNum');
+
+  $('#reviewer-activity-modal').remove();
+
+  $('#content').append(Handlebars.templates.genericModal({
+    id: 'reviewer-activity-modal',
+    showHeader: true,
+    title: 'AnonReviewer' + reviewerNum + ' Activity',
+    body: Handlebars.templates.spinner({ extraClasses: 'spinner-inline' }),
+    showFooter: false,
+  }));
+  $('#reviewer-activity-modal').modal('show');
+
+  Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
+    .then(function(response) {
+      $('#reviewer-activity-modal .modal-body').empty();
+      Webfield.ui.searchResults(response.notes, {
+        container: '#reviewer-activity-modal .modal-body',
+        emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
+      });
+    });
+
   return false;
 });
 
