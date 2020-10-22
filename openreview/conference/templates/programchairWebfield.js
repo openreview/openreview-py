@@ -2407,16 +2407,24 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
 $('#group-container').on('click', 'a.show-activity-modal', function(e) {
   var paperNum = $(this).data('paperNum');
   var reviewerNum = $(this).data('reviewerNum');
+  var reviewerName = $(this).data('reviewerName');
+  var reviewerEmail = $(this).data('reviewerEmail');
 
   $('#reviewer-activity-modal').remove();
 
   $('#content').append(Handlebars.templates.genericModal({
     id: 'reviewer-activity-modal',
     showHeader: true,
-    title: 'AnonReviewer' + reviewerNum + ' Activity',
+    title: 'Paper ' + paperNum + ' Reviewer ' + reviewerNum + ' Activity',
     body: Handlebars.templates.spinner({ extraClasses: 'spinner-inline' }),
     showFooter: false,
   }));
+  $('#reviewer-activity-modal .modal-header').append(
+    '<ul class="list-inline">' +
+    '<li><strong>Name:</strong> ' + reviewerName + '</li>' +
+    '<li><strong>Email:</strong> ' + reviewerEmail + '</li>' +
+    '</ul>'
+  );
   $('#reviewer-activity-modal').modal('show');
 
   Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
@@ -2424,6 +2432,7 @@ $('#group-container').on('click', 'a.show-activity-modal', function(e) {
       $('#reviewer-activity-modal .modal-body').empty();
       Webfield.ui.searchResults(response.notes, {
         container: '#reviewer-activity-modal .modal-body',
+        openInNewTab: true,
         emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
       });
     });
