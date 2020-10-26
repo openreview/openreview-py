@@ -193,7 +193,7 @@ class Conference(object):
 
         invitation = tools.get_invitation(self.client, self.get_submission_id())
         if invitation:
-            notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted)
+            notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted, details='original')
             return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
 
     def set_reviewer_reassignment(self, enabled = True):
@@ -1263,7 +1263,7 @@ class BidStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -1271,6 +1271,7 @@ class SubmissionRevisionStage():
         self.remove_fields = remove_fields
         self.only_accepted = only_accepted
         self.multiReply=multiReply
+        self.allow_author_reorder=allow_author_reorder
 
 class ReviewStage(object):
 
@@ -1641,8 +1642,8 @@ class ConferenceBuilder(object):
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
 
-    def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False):
-        self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted)
+    def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, allow_author_reorder=False):
+        self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted, allow_author_reorder)
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
