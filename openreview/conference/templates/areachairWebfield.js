@@ -995,6 +995,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     minConfidence: minConfidence,
     maxConfidence: maxConfidence,
     sendReminder: true,
+    showActivityModal: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
     referrer: referrerUrl
@@ -1219,6 +1220,7 @@ var registerEventHandlers = function() {
       reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
       reviewerSummaryMap[paperNumber].expandReviewerList = true;
       reviewerSummaryMap[paperNumber].sendReminder = true;
+      reviewerSummaryMap[paperNumber].showActivityModal = true;
       reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
@@ -1265,6 +1267,42 @@ var registerEventHandlers = function() {
       updateReviewerContainer(paperNumber);
       promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
     })
+    return false;
+  });
+
+  $('#group-container').on('click', 'a.show-activity-modal', function(e) {
+    var paperNum = $(this).data('paperNum');
+    var reviewerNum = $(this).data('reviewerNum');
+    var reviewerName = $(this).data('reviewerName');
+    var reviewerEmail = $(this).data('reviewerEmail');
+
+    $('#reviewer-activity-modal').remove();
+
+    $('#content').append(Handlebars.templates.genericModal({
+      id: 'reviewer-activity-modal',
+      showHeader: true,
+      title: 'Paper ' + paperNum + ' Reviewer ' + reviewerNum + ' Activity',
+      body: Handlebars.templates.spinner({ extraClasses: 'spinner-inline' }),
+      showFooter: false,
+    }));
+    $('#reviewer-activity-modal .modal-header').append(
+      '<ul class="list-inline">' +
+      '<li><strong>Name:</strong> ' + reviewerName + '</li>' +
+      '<li><strong>Email:</strong> ' + reviewerEmail + '</li>' +
+      '</ul>'
+    );
+    $('#reviewer-activity-modal').modal('show');
+
+    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
+      .then(function(response) {
+        $('#reviewer-activity-modal .modal-body').empty();
+        Webfield.ui.searchResults(response.notes, {
+          container: '#reviewer-activity-modal .modal-body',
+          openInNewTab: true,
+          emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
+        });
+      });
+
     return false;
   });
 
