@@ -36,7 +36,7 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.get_id(), '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             writers = [conference.get_id(), '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -634,7 +634,7 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.get_id(), '~Test_User1', 'author@colt.io', 'author2@colt.io'],
             writers = [conference.get_id(), '~Test_User1', 'author@colt.io', 'author2@colt.io'],
             signatures = ['~Test_User1'],
             content = {
@@ -942,7 +942,7 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
             writers = [conference.id, '~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
             signatures = ['~Test_User1'],
             content = {

@@ -93,7 +93,7 @@ class TestReviewersConference():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
             signatures = ['~Test_User1'],
             content = {

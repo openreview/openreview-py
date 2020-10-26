@@ -148,7 +148,16 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True, email_pcs=True, create_groups=True)
+        builder.set_submission_stage(
+            due_date = now + datetime.timedelta(minutes = 40), 
+            public=True, 
+            email_pcs=True, 
+            create_groups=True, 
+            withdrawn_submission_public=True,
+            withdrawn_submission_reveal_authors=True,
+            desk_rejected_submission_public=True,
+            desk_rejected_submission_reveal_authors=True)
+
         builder.has_area_chairs(True)
         builder.set_override_homepage(True)
         conference = builder.get_result()
@@ -166,7 +175,7 @@ class TestSingleBlindConference():
         assert not content.get('archival_status')
 
         note = openreview.Note(invitation = invitation.id,
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -198,6 +207,8 @@ class TestSingleBlindConference():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'pc2@mail.com' in recipients
+
+        conference.setup_final_deadline_stage()
 
         # Author user
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token)
@@ -324,8 +335,9 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert len(reply_row.find_elements_by_class_name('btn')) == 2
         assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[1].text
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
@@ -343,7 +355,8 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
@@ -410,7 +423,8 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
