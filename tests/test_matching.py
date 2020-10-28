@@ -799,7 +799,7 @@ class TestMatching():
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r3@fb.com')+1)).members == ['r3@fb.com']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r1@mit.edu')+1)).members == ['r1@mit.edu']
 
-    def test_redeploy_assigments(self, conference, pc_client, test_client, helpers):
+    def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
         blinded_notes = list(conference.get_submissions())
 
@@ -1014,8 +1014,9 @@ class TestMatching():
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
 
         reviewer_client = helpers.create_user('r2@google.com', 'Reviewer', 'Two')
+        conference.set_assignment('ac1@cmu.edu', 1, is_area_chair = True)
 
-        reviewer_client.post_note(openreview.Note(
+        review_note = reviewer_client.post_note(openreview.Note(
             invitation='auai.org/UAI/2019/Conference/Paper1/-/Official_Review',
             forum=blinded_notes[2].id,
             replyto=blinded_notes[2].id,
@@ -1038,6 +1039,11 @@ class TestMatching():
             signatures=['auai.org/UAI/2019/Conference/Paper1/AnonReviewer1']
         ))
 
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r1@mit.edu'],
             writers = [conference.id],
@@ -1048,20 +1054,8 @@ class TestMatching():
             weight = 0.98
         ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignment of a paper with a review'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignments when there are reviews posted.'):
             conference.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True)
-
-        pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r2@google.com'],
-            writers = [conference.id],
-            signatures = [conference.id],
-            head = blinded_notes[2].id,
-            tail = 'r2@google.com',
-            label = 'rev-matching-emergency-5',
-            weight = 0.98
-        ))
-
-        conference.set_assignments(assignment_title='rev-matching-emergency-5', overwrite=True)
 
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 

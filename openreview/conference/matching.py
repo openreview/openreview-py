@@ -644,7 +644,7 @@ class Matching(object):
             label=assignment_title, groupby='head', select='tail')}
 
         if overwrite and reviews:
-            self._validate_assignments(reviews, assignment_edges, 'AnonReviewer')
+            raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
 
         for paper in tqdm(papers, total=len(papers)):
 
