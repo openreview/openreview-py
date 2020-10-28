@@ -571,19 +571,6 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
-    def _validate_assignments(self, reviews, assignment_edges, anon_name='AnonReviewer'):
-
-        for review in reviews:
-            if review.forum in assignment_edges:
-                reviewer_index = int(review.signatures[0].split(anon_name)[-1])
-                members = [v['tail'] for v in assignment_edges[review.forum]]
-                current_member = self.client.get_group(review.signatures[0]).members[0]
-                # author of the review not in the assignment list or in another order
-                if current_member not in members or reviewer_index != (members.index(current_member)+1):
-                    raise openreview.OpenReviewException('Can not overwrite assignment of a paper with a review: {}'.format(review.forum))
-
-
-
     def deploy_acs(self, assignment_title, overwrite):
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
@@ -592,7 +579,7 @@ class Matching(object):
             label=assignment_title, groupby='head', select='tail')}
 
         if overwrite and reviews:
-            self._validate_assignments(reviews, assignment_edges, 'Area_Chair')
+            raise openreview.OpenReviewException('Can not overwrite assignments when there are meta reviews posted.')
 
         for paper in tqdm(papers, total=len(papers)):
             if overwrite:
