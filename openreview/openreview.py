@@ -2129,7 +2129,6 @@ class Profile(object):
         """
         body = {
             'id': self.id,
-            'number': self.number,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
             'referent': self.referent,
