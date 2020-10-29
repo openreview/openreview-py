@@ -311,8 +311,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
 
         # Test to check that a user is not able to accept/decline if they are not a part of the invited group
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         # Removing reviewer from the invited group
         invited_group = client.remove_members_from_group('thecvf.com/ECCV/2020/Conference/Reviewers/Invited', 'mohit+1@mail.com')
@@ -373,7 +373,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group(conference.get_reviewers_id())
