@@ -1,32 +1,27 @@
-OpenReview API Documentation
-========================================
+OpenReview Python Client Documentation
+======================================
 
-About OpenReview
------------------
-
-OpenReview aims to promote openness in scientific communication, particularly the peer review process, by providing a flexible cloud-based web interface and underlying database API.
-
-This document is a guide to the python API supported by OpenReview.
-
+The OpenReview Python Client makes it easy to interact with the OpenReview REST
+API from the command line or a Python application. This library is the official
+API client created and maintained by the OpenReview Team.
 
 Contents
-----------
+--------
 
 .. toctree::
    :maxdepth: 3
 
    about
-   api
    how_to_setup
+   api
    examples
-   help
    conference_builder
    mental_models
+   help
 
 
-Indices and tables
---------------------
+Indices and Tables
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`

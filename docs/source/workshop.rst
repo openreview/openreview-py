@@ -1,4 +1,4 @@
-Creating a conference
+Creating a Conference
 ========================
 
 Demo Workshop
