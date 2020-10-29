@@ -210,6 +210,10 @@ class TestSingleBlindConference():
 
         conference.setup_final_deadline_stage()
 
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+        assert submissions[0].readers == ['everyone']
+
         # Author user
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token)
         invitation_panel = selenium.find_element_by_id('invitation')

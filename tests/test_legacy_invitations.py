@@ -55,6 +55,11 @@ class TestLegacyInvitations():
 
         # conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.setup_final_deadline_stage()
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+        assert submissions[0].readers == ['everyone']
+
         conference.set_reviewers(['reviewer_legacy@mail.com'])
         conference.set_area_chairs(['ac_legacy@mail.com'])
         conference.set_program_chairs(['pc_legacy@mail.com'])
