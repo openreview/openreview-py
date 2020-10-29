@@ -227,8 +227,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as a reviewer' in text
 
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         request_page(selenium, reject_url, alert=True)
         time.sleep(2)
@@ -249,8 +249,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as a reviewer' in text
 
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         request_page(selenium, reject_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
@@ -263,8 +263,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as a reviewer' in text
 
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
@@ -274,7 +274,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         messages = client.get_messages(to = 'iclr2021_five@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 1
@@ -283,7 +283,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         messages = client.get_messages(to = 'iclr2021_six_alternate@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 1
@@ -456,7 +456,7 @@ Naila, Katja, Alice, and Ivan
         assert messages[0]['content']['to'] == 'iclr2021_two@mail.com'
         text = messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
