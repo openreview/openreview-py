@@ -31,8 +31,6 @@ jobs:
           command: |
             cd ~/openreview
             npm install
-            sudo npm install -g grunt-cli
-            grunt regen
       - run:
           name: run api
           command: |
@@ -51,7 +49,7 @@ jobs:
             npm install
             export NEXT_PORT=3030
             cp .env.sample .env
-            npm run dev
+            SUPER_USER=openreview.net npm run dev
           background: true
       - run:
           shell: /bin/sh
