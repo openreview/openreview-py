@@ -594,7 +594,8 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             content = {
                 'authors': {
                     'values': original_content['authors'],
-                    'required': True
+                    'required': True,
+                    'hidden': True
                 },
                 'authorids': {
                     'values': original_content['authorids'],
