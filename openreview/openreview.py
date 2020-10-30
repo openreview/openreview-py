@@ -52,6 +52,7 @@ class Client(object):
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.venues_url = self.baseurl + '/venues'
+        self.edits_url = self.baseurl + '/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.token = token
@@ -1385,6 +1386,34 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
+    def post_invitation_edit(self, readers, writers, signatures, invitation):
+        """
+        """
+        edit_json = {
+            'readers': readers,
+            'writers': writers,
+            'signatures': signatures,
+            'invitation': invitation.to_json()
+        }
+        response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_note_edit(self, invitation, signatures, referent=None, note=None):
+        """
+        """
+        edit_json = {
+            'invitation': invitation,
+            'signatures': signatures,
+            'referent': referent,
+            'note': note.to_json() if note else {}
+        }
+        response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
 class Group(object):
     """
     When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
@@ -1679,10 +1708,6 @@ class Invitation(object):
         body = {
             'id': self.id,
             'super': self.super,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
-            'tcdate': self.tcdate,
-            'tmdate': self.tmdate,
             'duedate': self.duedate,
             'expdate': self.expdate,
             'readers': self.readers,
@@ -1784,11 +1809,11 @@ class Note(object):
     :type tauthor: str, optional
     """
     def __init__(self,
-        invitation,
-        readers,
-        writers,
-        signatures,
-        content,
+        invitation=None,
+        readers=None,
+        writers=None,
+        signatures=None,
+        content=None,
         id=None,
         original=None,
         number=None,
