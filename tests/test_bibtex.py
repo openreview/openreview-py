@@ -16,7 +16,7 @@ class TestBibtex():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = ['NIPS.cc/2020/Workshop/MLITS','bibtex@mail.com', 'peter@mail.com', 'andrew@mail.com','~Bibtex_User1'],
             writers = [conference.id, '~Bibtex_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Bibtex_User1'],
             content = {
