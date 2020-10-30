@@ -33,7 +33,7 @@ class TestEdges:
 
         # Sample note
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id],
             writers = [conference.id],
             signatures = ['~Super_User1'],
             content = {
