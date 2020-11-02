@@ -137,8 +137,44 @@ class TestJournal():
                                                         }
                                                     }
                                         ))
-        ## Post the submission
-        submission_note = test_client.post_note_edit(invitation=submission_invitation_id,
+
+        ## Desk reject invitation
+        desk_reject_invitation_id=f'{venue_id}/-/Desk_Rejection'
+        invitation = client.post_invitation_edit(readers=[venue_id],
+                                    writers=[venue_id],
+                                    signatures=[venue_id],
+                                    invitation=openreview.Invitation(id=desk_reject_invitation_id,
+                                                    invitees=[action_editors_id, venue_id],
+                                                    readers=['everyone'],
+                                                    writers=[venue_id],
+                                                    signatures=[venue_id],
+                                                    reply={
+                                                        'referent': { 'value-invitation': submission_invitation_id },
+                                                        'signatures': { 'values-regex': f'{action_editors_id}|{venue_id}' },
+                                                        'readers': { 'values': [ 'everyone']},
+                                                        'writers': { 'values': [ venue_id, action_editors_id]},
+                                                        'note': {
+                                                            'readers': {
+                                                                'values': ['everyone']
+                                                            },
+                                                            'content': {
+                                                                'venue': {
+                                                                    'value': {
+                                                                        'value': 'Desk rejected by TMLR'
+                                                                    }
+                                                                },
+                                                                'venueid': {
+                                                                    'value': {
+                                                                        'value': '.TMLR'
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                        ))
+
+        ## Post the submission 1
+        submission_note_1 = test_client.post_note_edit(invitation=submission_invitation_id,
                                     signatures=['~Test_User1'],
                                     note=openreview.Note(
                                         content={
@@ -150,7 +186,7 @@ class TestJournal():
                                     ))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note['id'])
+        process_logs = client.get_process_logs(id = submission_note_1['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -160,15 +196,100 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert client.get_group(f"{venue_id}/Paper1/AEs")
 
-        ## Accept the submission
-        under_review_note = client.post_note_edit(invitation=under_review_invitation_id,
-                                    signatures=[action_editors_id],
-                                    referent=submission_note['id'])
+        ## Post the submission 2
+        submission_note_2 = test_client.post_note_edit(invitation=submission_invitation_id,
+                                    signatures=['~Test_User1'],
+                                    note=openreview.Note(
+                                        content={
+                                            'title': { 'value': 'Paper title 2' },
+                                            'abstract': { 'value': 'Paper abstract 2' },
+                                            'authors': { 'value': ['Test User', 'Melisa Bok']},
+                                            'authorids': { 'value': ['~Test_User1', 'melisa@mail.com']}
+                                        }
+                                    ))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note['id'])
+        process_logs = client.get_process_logs(id = submission_note_2['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        print(f"Check forum http://localhost:3030/forum?id={submission_note['id']}")
+        author_group=client.get_group(f"{venue_id}/Paper2/Authors")
+        assert author_group
+        assert author_group.members == ['~Test_User1', 'melisa@mail.com']
+        assert client.get_group(f"{venue_id}/Paper2/Reviewers")
+        assert client.get_group(f"{venue_id}/Paper2/AEs")
+
+        ## Accept the submission 1
+        under_review_note = client.post_note_edit(invitation=under_review_invitation_id,
+                                    signatures=[action_editors_id],
+                                    referent=submission_note_1['id'])
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = submission_note_1['id'])
+        assert len(process_logs) == 2
+        assert process_logs[0]['status'] == 'ok'
+
+        ## Desk reject the submission 2
+        desk_reject_note = client.post_note_edit(invitation=desk_reject_invitation_id,
+                                    signatures=[action_editors_id],
+                                    referent=submission_note_2['id'])
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = submission_note_1['id'])
+        assert len(process_logs) == 2
+        assert process_logs[0]['status'] == 'ok'
+
+
+        review_invitation_id=f'{venue_id}/Paper1/-/Review'
+        invitation = client.post_invitation_edit(readers=[venue_id],
+                                    writers=[venue_id],
+                                    signatures=[venue_id],
+                                    invitation=openreview.Invitation(id=review_invitation_id,
+                                                    invitees=[f"{venue_id}/Paper1/Reviewers", f'{venue_id}/Paper${{number}}/AEs'],
+                                                    readers=['everyone'],
+                                                    writers=[venue_id],
+                                                    signatures=[venue_id],
+                                                    reply={
+                                                        'signatures': { 'values-regex': '~.*' },
+                                                        'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs']},
+                                                        'writers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs']},
+                                                        'note': {
+                                                            'forum': submission_note_1['id'],
+                                                            'replyto': submission_note_1['id'],
+                                                            'signatures': { 'values-regex': f'{venue_id}/Paper${{number}}/AnonReviewer1|{venue_id}/Paper${{number}}/AEs' },
+                                                            'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/AnonReviewer1', f'{venue_id}/Paper${{number}}/AEs']},
+                                                            'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/AnonReviewer1', f'{venue_id}/Paper${{number}}/AEs']},
+                                                            'content': {
+                                                                'title': {
+                                                                    'value': {
+                                                                        'value-regex': '.*',
+                                                                        'required': True
+                                                                    }
+                                                                },
+                                                                'review': {
+                                                                    'value': {
+                                                                        'value-regex': '.*',
+                                                                        'required': True
+                                                                    }
+                                                                },
+                                                                'rating': {
+                                                                    'value': {
+                                                                        'values-regex': '.*',
+                                                                        'required': True
+                                                                    }
+                                                                },
+                                                                'confidence': {
+                                                                    'value': {
+                                                                        'values-regex': '.*',
+                                                                        'required': True
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    process='./tests/data/author_submission_process.py'
+                                        ))
+
+        print(f"Check forum http://localhost:3030/forum?id={submission_note_1['id']}")
+        print(f"Check forum http://localhost:3030/forum?id={submission_note_2['id']}")
         assert False
