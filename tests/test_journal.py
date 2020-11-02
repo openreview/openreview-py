@@ -99,7 +99,8 @@ class TestJournal():
                                                                 }
                                                             }
                                                         }
-                                                    }
+                                                    },
+                                                    process='./tests/data/author_submission_process.py'
                                         ))
 
         ## Under review invitation
@@ -148,10 +149,26 @@ class TestJournal():
                                         }
                                     ))
 
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = submission_note['id'])
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        author_group=client.get_group(f"{venue_id}/Paper1/Authors")
+        assert author_group
+        assert author_group.members == ['~Test_User1', 'carlos@mail.com']
+        assert client.get_group(f"{venue_id}/Paper1/Reviewers")
+        assert client.get_group(f"{venue_id}/Paper1/AEs")
+
         ## Accept the submission
         under_review_note = client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[action_editors_id],
                                     referent=submission_note['id'])
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = submission_note['id'])
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
         print(f"Check forum http://localhost:3030/forum?id={submission_note['id']}")
         assert False
