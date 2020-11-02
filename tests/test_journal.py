@@ -124,7 +124,7 @@ class TestJournal():
                                                             'content': {
                                                                 'venue': {
                                                                     'value': {
-                                                                        'value-dropdown': ['Under review for TMLR']
+                                                                        'value': 'Under review for TMLR'
                                                                     }
                                                                 },
                                                                 'venueid': {
@@ -151,12 +151,7 @@ class TestJournal():
         ## Accept the submission
         under_review_note = client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[action_editors_id],
-                                    referent=submission_note['id'],
-                                    note=openreview.Note(content={
-                                            'venue': {
-                                                'value': 'Under review for TMLR'
-                                            }
-                                    }))
+                                    referent=submission_note['id'])
 
         print(f"Check forum http://localhost:3030/forum?id={submission_note['id']}")
         assert False
