@@ -44,7 +44,7 @@ class TestMatching():
             </p>'''
         })
         print ('Homepage header set')
-        builder.set_conference_program_chairs_ids(['pc1@mail.com', 'pc2@mail.com'])
+        builder.set_conference_program_chairs_ids(['pc1@mail.com', 'pc3@mail.com'])
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
         builder.set_override_homepage(True)
@@ -126,12 +126,12 @@ class TestMatching():
         ## Paper 3
         note_3 = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu', 'pc2@mail.com'],
+            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
             signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title 3',
                 'abstract': 'This is an abstract',
-                'authorids': ['test@mail.com', 'a3@umass.edu', 'pc2@mail.com'],
+                'authorids': ['test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
                 'authors': ['Test User', 'Author 3', 'PC author'],
                 'subject_areas': [
                     'Algorithms: Distributed and Parallel',
@@ -1059,7 +1059,7 @@ class TestMatching():
 
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
-        pc2_client = helpers.create_user('pc2@mail.com', 'PC', 'Two')
+        pc2_client = helpers.create_user('pc3@mail.com', 'PC', 'Three')
         pc2_client.impersonate(conference.id)
 
         conference.client = pc2_client
