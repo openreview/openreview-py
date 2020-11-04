@@ -47,9 +47,14 @@ jobs:
           command: |
             cd ~/openreview-web
             npm install
-            export NEXT_PORT=3030
             cp .env.sample .env
-            SUPER_USER=openreview.net npm run dev
+            SUPER_USER=openreview.net npm run build
+      - run:
+          name: run web-app
+          command: |
+            cd ~/openreview-web
+            export NEXT_PORT=3030
+            SUPER_USER=openreview.net npm run start
           background: true
       - run:
           shell: /bin/sh
