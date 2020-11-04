@@ -37,3 +37,53 @@ def process(client, note, invitation):
         members=[]
     ))
 
+    ## TODO: create this invitation using an invitation
+    review_invitation_id=f'{paper_group.id}/-/Review'
+    invitation = client.post_invitation_edit(readers=[venue_id],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                invitation=openreview.Invitation(id=review_invitation_id,
+                                                invitees=[f"{paper_group.id}/Reviewers", f'{paper_group.id}/AEs'],
+                                                readers=['everyone'],
+                                                writers=[venue_id],
+                                                signatures=[venue_id],
+                                                reply={
+                                                    'signatures': { 'values-regex': '~.*' },
+                                                    'readers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs']},
+                                                    'writers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs']},
+                                                    'note': {
+                                                        'forum': { 'value': note.id },
+                                                        'replyto': { 'value': note.id },
+                                                        'signatures': { 'values-regex': f'{paper_group.id}/AnonReviewer1|{paper_group.id}/AEs' },
+                                                        'readers': { 'values': [ venue_id, f'{paper_group.id}/AnonReviewer1', f'{paper_group.id}/AEs']},
+                                                        'writers': { 'values': [ venue_id, f'{paper_group.id}/AnonReviewer1', f'{paper_group.id}/AEs']},
+                                                        'content': {
+                                                            'title': {
+                                                                'value': {
+                                                                    'value-regex': '.*',
+                                                                    'required': True
+                                                                }
+                                                            },
+                                                            'review': {
+                                                                'value': {
+                                                                    'value-regex': '.*',
+                                                                    'required': True
+                                                                }
+                                                            },
+                                                            'rating': {
+                                                                'value': {
+                                                                    'values-regex': '.*',
+                                                                    'required': True
+                                                                }
+                                                            },
+                                                            'confidence': {
+                                                                'value': {
+                                                                    'values-regex': '.*',
+                                                                    'required': True
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                    ))
+

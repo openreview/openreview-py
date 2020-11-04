@@ -196,6 +196,14 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert client.get_group(f"{venue_id}/Paper1/AEs")
 
+        note = client.get_note(submission_note_1['id'])
+        assert note
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['.TMLR', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
+
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation=submission_invitation_id,
                                     signatures=['~Test_User1'],
@@ -226,8 +234,18 @@ class TestJournal():
 
         time.sleep(2)
         process_logs = client.get_process_logs(id = submission_note_1['id'])
-        assert len(process_logs) == 2
+        assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        note = client.get_note(submission_note_1['id'])
+        assert note
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        ## authorids should be anonymous
+        assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
+
 
         ## Desk reject the submission 2
         desk_reject_note = client.post_note_edit(invitation=desk_reject_invitation_id,
@@ -236,59 +254,13 @@ class TestJournal():
 
         time.sleep(2)
         process_logs = client.get_process_logs(id = submission_note_1['id'])
-        assert len(process_logs) == 2
+        assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        ## Check invitations
+        invitations = client.get_invitations(replyForum=submission_note_1['id'])
+        assert len(invitations) == 3
 
-        review_invitation_id=f'{venue_id}/Paper1/-/Review'
-        invitation = client.post_invitation_edit(readers=[venue_id],
-                                    writers=[venue_id],
-                                    signatures=[venue_id],
-                                    invitation=openreview.Invitation(id=review_invitation_id,
-                                                    invitees=[f"{venue_id}/Paper1/Reviewers", f'{venue_id}/Paper${{number}}/AEs'],
-                                                    readers=['everyone'],
-                                                    writers=[venue_id],
-                                                    signatures=[venue_id],
-                                                    reply={
-                                                        'signatures': { 'values-regex': '~.*' },
-                                                        'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs']},
-                                                        'writers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs']},
-                                                        'note': {
-                                                            'forum': submission_note_1['id'],
-                                                            'replyto': submission_note_1['id'],
-                                                            'signatures': { 'values-regex': f'{venue_id}/Paper${{number}}/AnonReviewer1|{venue_id}/Paper${{number}}/AEs' },
-                                                            'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/AnonReviewer1', f'{venue_id}/Paper${{number}}/AEs']},
-                                                            'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/AnonReviewer1', f'{venue_id}/Paper${{number}}/AEs']},
-                                                            'content': {
-                                                                'title': {
-                                                                    'value': {
-                                                                        'value-regex': '.*',
-                                                                        'required': True
-                                                                    }
-                                                                },
-                                                                'review': {
-                                                                    'value': {
-                                                                        'value-regex': '.*',
-                                                                        'required': True
-                                                                    }
-                                                                },
-                                                                'rating': {
-                                                                    'value': {
-                                                                        'values-regex': '.*',
-                                                                        'required': True
-                                                                    }
-                                                                },
-                                                                'confidence': {
-                                                                    'value': {
-                                                                        'values-regex': '.*',
-                                                                        'required': True
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    process='./tests/data/author_submission_process.py'
-                                        ))
 
         print(f"Check forum http://localhost:3030/forum?id={submission_note_1['id']}")
         print(f"Check forum http://localhost:3030/forum?id={submission_note_2['id']}")
