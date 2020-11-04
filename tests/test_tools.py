@@ -3,6 +3,7 @@ import pytest
 import random
 import types
 import sys
+import os
 
 def do_work(value):
     return value.id
