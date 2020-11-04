@@ -49,8 +49,7 @@ jobs:
             npm install
             export NEXT_PORT=3030
             cp .env.sample .env
-            SUPER_USER=openreview.net npm run build
-            SUPER_USER=openreview.net npm run start
+            SUPER_USER=openreview.net npm run dev
           background: true
       - run:
           shell: /bin/sh
