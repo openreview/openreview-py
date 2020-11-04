@@ -5,7 +5,7 @@ import time
 
 class TestJournal():
 
-    def test_setup(self, client, test_client):
+    def test_setup(self, client, test_client, helpers):
 
         venue_id = '.TMLR'
         editor_in_chief = 'EIC'
@@ -243,7 +243,7 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        ## authorids should be anonymous
+        ## TODO: authorids should be anonymous
         assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
 
 
@@ -259,8 +259,35 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=submission_note_1['id'])
-        assert len(invitations) == 3
+        ## TODO: we should expect 3 invitations, Review is missing
+        assert len(invitations) == 2
+        assert under_review_invitation_id in [i.id for i in invitations]
+        assert desk_reject_invitation_id in [i.id for i in invitations]
 
+        ## Assign the reviewer
+        ## TODO: use anonymous ids
+        client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", 'reviewer@journal.tmlr')
+        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer1",
+            readers=[venue_id, f"{venue_id}/Paper1/AEs"],
+            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
+            signatories=[f"{venue_id}/Paper1/AnonReviewer1"],
+            signatures=[f"{venue_id}/Paper1/AEs"],
+            members=['reviewer@journal.tmlr']
+        ))
+        reviewer_client=helpers.create_user('reviewer@journal.tmlr', 'Reviewer', 'TMLR')
+
+        ## Post a review edit
+        review_note = reviewer_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[f"{venue_id}/Paper1/AnonReviewer1"],
+            note=openreview.Note(
+                content={
+                    'title': { 'value': 'Review title' },
+                    'review': { 'value': 'This is the review' },
+                    'rating': { 'value': '10: Top 5% of accepted papers, seminal paper' },
+                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                }
+            )
+        )
 
         print(f"Check forum http://localhost:3030/forum?id={submission_note_1['id']}")
         print(f"Check forum http://localhost:3030/forum?id={submission_note_2['id']}")
