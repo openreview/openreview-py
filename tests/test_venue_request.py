@@ -739,3 +739,92 @@ class TestVenueRequest():
         messages = client.get_messages(subject='{} has received a new revision of your submission titled revised test submission 3'.format(venue['request_form_note'].content['Abbreviated Venue Name']))
         assert messages and len(messages) == 1
         assert messages[0]['content']['to'] == 'venue_author3@mail.com'
+
+    def test_venue_reveal_authors(self, client, test_client, selenium, request_page, helpers, venue):
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 3
+
+        # Assert that submissions are still blind 
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
+        assert blind_submissions[1].content['authors'] == ['Anonymous']
+        assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
+        assert blind_submissions[2].content['authors'] == ['Anonymous']
+        assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+
+        # Post a reveal authors note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        reveal_authors_note = test_client.post_note(openreview.Note(
+            content={
+                'reveal_all_authors': 'Yes, reveal author identities of all papers to the public'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Reveal_Authors'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert reveal_authors_note
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = reveal_authors_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 3
+
+        # Assert that submisions are not blind anymore
+        assert blind_submissions[0].content['authors'] == ['Venue Author']
+        assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
+        assert blind_submissions[1].content['authors'] == ['Venue Author']
+        assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
+        assert blind_submissions[2].content['authors'] == ['Venue Author']
+        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3']
+    
+    def test_venue_release_notes(self, client, test_client, selenium, request_page, helpers, venue):
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 3
+
+        # Assert that submissions are private
+        assert blind_submissions[0].readers == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number), venue['venue_id'],
+                                                '{}/Reviewers'.format(venue['venue_id']),'{}/Area_Chairs'.format(venue['venue_id']),'{}/Program_Chairs'.format(venue['venue_id'])]
+        # assert blind_submissions[1].readers == [venue['venue_id'],'~Venue_Author2']
+        # assert blind_submissions[2].readers == [venue['venue_id'],'~Venue_Author3']        
+        
+        # Post a release papers note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        release_papers_note = test_client.post_note(openreview.Note(
+            content={
+                'release_all_papers': 'Yes, release all papers to the public'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Release_Papers'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert release_papers_note
+        time.sleep(2)
+
+        process_logs = client.get_process_logs(id = release_papers_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 3
+
+        # Assert that submissions are public
+        assert blind_submissions[0].readers == ['everyone']
+        assert blind_submissions[1].readers == ['everyone']
+        assert blind_submissions[2].readers == ['everyone']  

@@ -685,7 +685,7 @@ class Conference(object):
 
     def setup_final_deadline_stage(self, force=False, hide_fields=[]):
 
-        if self.submission_stage.double_blind:
+        if self.submission_stage.double_blind and not self.submission_stage.author_names_revealed:
             self.create_blind_submissions(hide_fields)
 
         if not self.submission_stage.double_blind and self.submission_stage.public:
@@ -1151,6 +1151,45 @@ class Conference(object):
         for future in futures:
             result = future.result()
 
+    def release_notes(self, accepted=False):
+        submissions = self.get_submissions(accepted=accepted, details='original')
+
+        if not self.submission_stage.double_blind:
+            self.invitation_builder.set_submission_invitation(self, public=True)
+
+        for submission in submissions:
+            submission.readers = ['everyone']
+            if 'Anonymous' not in submission.content['authors']:
+                submission.content = {}
+            else:
+                submission.content = {
+                    'authors':['Anonymous'],
+                    'authorids': submission.content['authorids']
+                }
+            # submission.content['authors'] = submission.content['authors']
+            # submission.content['authorids'] = submission.content['authorids']
+            self.client.post_note(submission)
+    
+    def reveal_authors(self, accepted=False):
+        submissions = self.get_submissions(accepted=accepted, details='original')
+        decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
+        
+        for submission in submissions:
+            original = submission.details['original']
+            decision = False
+            decision_note = decisions_by_forum.get(submission.forum, None)
+            if decision_note and 'Accept' in decision_note.content['decision']:
+                decision = True
+            submission.content = {
+                '_bibtex': tools.get_bibtex(
+                            openreview.Note.from_json(original),
+                            venue_fullname=self.name,
+                            year=str(self.year),
+                            url_forum=submission.forum,
+                            accepted=decision,
+                            anonymous=False)
+            }
+            self.client.post_note(submission)
 
 class SubmissionStage(object):
 
@@ -1174,7 +1213,8 @@ class SubmissionStage(object):
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            email_pcs_on_desk_reject=True
+            email_pcs_on_desk_reject=True, 
+            author_names_revealed=False
         ):
 
         self.start_date = start_date
@@ -1195,6 +1235,7 @@ class SubmissionStage(object):
         self.desk_rejected_submission_public = desk_rejected_submission_public
         self.desk_rejected_submission_reveal_authors = desk_rejected_submission_reveal_authors
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
+        self.author_names_revealed = author_names_revealed
 
     def get_final_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
@@ -1573,7 +1614,8 @@ class ConferenceBuilder(object):
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            email_pcs_on_desk_reject=True
+            email_pcs_on_desk_reject=True,
+            author_names_revealed=False
         ):
 
         self.submission_stage = SubmissionStage(
@@ -1594,7 +1636,8 @@ class ConferenceBuilder(object):
             email_pcs_on_withdraw,
             desk_rejected_submission_public,
             desk_rejected_submission_reveal_authors,
-            email_pcs_on_desk_reject
+            email_pcs_on_desk_reject, 
+            author_names_revealed
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):

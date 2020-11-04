@@ -28,7 +28,7 @@ class SubmissionInvitation(openreview.Invitation):
         }
 
         if public:
-            readers = {'values': ['everyone']}
+            readers = {'values-regex': '.*'}
 
         content = invitations.submission.copy()
 

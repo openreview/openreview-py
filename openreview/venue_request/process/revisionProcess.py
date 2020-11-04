@@ -39,4 +39,12 @@ def process(client, note, invitation):
     elif invitation_type == 'Comment_Stage':
         conference.set_comment_stage(openreview.helpers.get_comment_stage(client, forum_note))
 
+    elif invitation_type == 'Reveal_Authors':
+        accepted=forum_note.content.get('reveal_all_authors', '') == 'No, reveal author identities of only accepted papers to the public'
+        conference.reveal_authors(accepted)
+
+    elif invitation_type == 'Release_Papers':
+        accepted=forum_note.content.get('release_all_papers', '') == 'No, release only accepted papers to the public'
+        conference.release_notes(accepted)
+
     print('Conference: ', conference.get_id())

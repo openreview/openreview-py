@@ -450,6 +450,81 @@ class VenueStages():
             }
         ))
 
+    def setup_release_papers_stage(self):
+
+        release_papers_content = {
+           'release_all_papers': {
+                'description': 'Would you like to release all papers to the public?',
+                'value-radio': [
+                    'Yes, release all papers to the public',
+                    'No, release only accepted papers to the public'],
+                'default': 'No, release only accepted papers to the public',
+                'required': True
+            }
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Release_Papers'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values-copied': ['{signatures}'],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': release_papers_content
+            }
+        ))
+    
+    def setup_reveal_authors_stage(self):
+
+        reveal_authors_content = {
+           'reveal_all_authors': {
+                'description': 'Would you like to release author identities of all papers to the public?',
+                'value-radio': [
+                    'Yes, reveal author identities of all papers to the public',
+                    'No, reveal author identities of only accepted papers to the public'],
+                'default': 'No, reveal author identities of only accepted papers to the public',
+                'required': True
+            }
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Reveal_Authors'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values-copied': ['{signatures}'],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': reveal_authors_content
+            }
+        ))
 
 class VenueRequest():
 
@@ -494,6 +569,8 @@ class VenueRequest():
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
         self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
+        self.release_papers_stage_super_invitation = venue_stages.setup_release_papers_stage()
+        self.reveal_authors_stage_super_invitation = venue_stages.setup_reveal_authors_stage()
 
     def setup_request_form(self):
 
