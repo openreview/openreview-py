@@ -13,14 +13,22 @@ LONG_BUFFER_DAYS = 10
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference):
+    def __init__(self, conference, public):
 
         readers = {}
         submission_stage = conference.submission_stage
         additional_fields = submission_stage.additional_fields
         start_date = submission_stage.start_date
         due_date = submission_stage.due_date
-        readers = submission_stage.get_readers(conference)
+        readers = { 'values-copied': [
+            conference.get_id(),
+            '{content.authorids}',
+            '{signatures}'
+            ]
+        }
+
+        if public:
+            readers = {'values': ['everyone']}
 
         content = invitations.submission.copy()
 
@@ -735,7 +743,8 @@ class ReviewInvitation(openreview.Invitation):
             if field in content:
                 del content[field]
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')) as f:
+        process_file = review_stage.process_path if review_stage.process_path else os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')
+        with open(process_file) as f:
             file_content = f.read()
 
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
@@ -1202,9 +1211,9 @@ class InvitationBuilder(object):
                     note.nonreaders = invitation.reply['nonreaders']['values']
                 self.client.post_note(note)
 
-    def set_submission_invitation(self, conference):
+    def set_submission_invitation(self, conference, public):
 
-        return self.client.post_invitation(SubmissionInvitation(conference))
+        return self.client.post_invitation(SubmissionInvitation(conference, public=public))
 
 
     def set_blind_submission_invitation(self, conference, hide_fields):

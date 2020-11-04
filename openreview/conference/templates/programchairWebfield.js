@@ -252,7 +252,7 @@ var getAllAreaChairs = function() {
 var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'invitation,tags',
+    details: 'invitation,tags,original,replyCount',
     sort: 'number:asc'
   });
 };
@@ -1118,7 +1118,8 @@ var displayPaperStatusTable = function() {
     Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
     Reviewers_Assigned: function(row) { return row.reviewProgressData.numReviewers; },
     Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
-    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; }
+    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+    Number_of_Forum_Replies: function(row) { return row.reviewProgressData.forumReplyCount; },
   };
   if (AREA_CHAIRS_ID) {
     sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
@@ -1890,7 +1891,6 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var cellCheck = { selected: false, noteId: note.id };
 
   // Build Note Summary Cell
-  note.content.authors = null;  // Don't display 'Blinded Authors'
   var cell1 = note;
   cell1.referrer = paperTableReferrerUrl;
 
@@ -1962,6 +1962,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var reviewProgressData = {
     noteId: note.id,
     paperNumber: note.number,
+    forumReplyCount: note.details['replyCount'],
     numSubmittedReviews: Object.keys(completedReviews).length,
     numReviewers: Object.keys(reviewerIds).length,
     reviewers: combinedObj,
@@ -1972,6 +1973,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
     minConfidence: minConfidence,
     maxConfidence: maxConfidence,
     sendReminder: true,
+    showActivityModal: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
     referrer: paperTableReferrerUrl
@@ -2279,6 +2281,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
       reviewerNumber: nextAnonNumber
     };
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
+    reviewerSummaryMap[paperNumber].showActivityModal = true;
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     reviewerSummaryMap[paperNumber].sendReminder = true;
     reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
@@ -2391,12 +2394,49 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
     var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
     delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
     reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
+    reviewerSummaryMap[paperNumber].showActivityModal = true;
     reviewerSummaryMap[paperNumber].expandReviewerList = true;
     $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
     updateReviewerContainer(paperNumber);
     promptMessage('Reviewer ' + view.prettyId(userId) + ' has been removed for paper ' + paperNumber, { overlay: true });
     paperStatusNeedsRerender = true;
   });
+  return false;
+});
+
+$('#group-container').on('click', 'a.show-activity-modal', function(e) {
+  var paperNum = $(this).data('paperNum');
+  var reviewerNum = $(this).data('reviewerNum');
+  var reviewerName = $(this).data('reviewerName');
+  var reviewerEmail = $(this).data('reviewerEmail');
+
+  $('#reviewer-activity-modal').remove();
+
+  $('#content').append(Handlebars.templates.genericModal({
+    id: 'reviewer-activity-modal',
+    showHeader: true,
+    title: 'Paper ' + paperNum + ' Reviewer ' + reviewerNum + ' Activity',
+    body: Handlebars.templates.spinner({ extraClasses: 'spinner-inline' }),
+    showFooter: false,
+  }));
+  $('#reviewer-activity-modal .modal-header').append(
+    '<ul class="list-inline">' +
+    '<li><strong>Name:</strong> ' + reviewerName + '</li>' +
+    '<li><strong>Email:</strong> ' + reviewerEmail + '</li>' +
+    '</ul>'
+  );
+  $('#reviewer-activity-modal').modal('show');
+
+  Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
+    .then(function(response) {
+      $('#reviewer-activity-modal .modal-body').empty();
+      Webfield.ui.searchResults(response.notes, {
+        container: '#reviewer-activity-modal .modal-body',
+        openInNewTab: true,
+        emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
+      });
+    });
+
   return false;
 });
 
@@ -2496,6 +2536,8 @@ var buildCSV = function(){
   rowData.push(['number',
   'forum',
   'title',
+  'abstract',
+  'authors',
   'num reviewers',
   'min rating',
   'max rating',
@@ -2521,11 +2563,16 @@ var buildCSV = function(){
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, areachairProfile, decision);
+    var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
+    var abstract = paperTableRow.note.content.abstract.replace(/"/g, '""');
+    var authors = originalNote.content.authors ? originalNote.content.authors : [];
     rowData.push([paperTableRow.note.number,
     '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
     '"' + title + '"',
+    '"' + abstract + '"',
+    '"' + authors.join('|') + '"',
     paperTableRow.reviewProgressData.numReviewers,
     paperTableRow.reviewProgressData.minRating,
     paperTableRow.reviewProgressData.maxRating,

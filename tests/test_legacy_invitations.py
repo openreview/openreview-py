@@ -27,13 +27,19 @@ class TestLegacyInvitations():
         builder.has_area_chairs(True)
         builder.use_legacy_invitation_id(True)
         now = datetime.datetime.utcnow()
-        builder.set_submission_stage(public = True, due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_submission_stage(
+            public = True, 
+            due_date = now + datetime.timedelta(minutes = 40),
+            withdrawn_submission_public=True,
+            withdrawn_submission_reveal_authors=True,
+            desk_rejected_submission_public=True,
+            desk_rejected_submission_reveal_authors=True)
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -47,7 +53,13 @@ class TestLegacyInvitations():
         note.content['pdf'] = url
         test_client.post_note(note)
 
-        conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        # conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        conference.setup_final_deadline_stage()
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+        assert submissions[0].readers == ['everyone']
+
         conference.set_reviewers(['reviewer_legacy@mail.com'])
         conference.set_area_chairs(['ac_legacy@mail.com'])
         conference.set_program_chairs(['pc_legacy@mail.com'])

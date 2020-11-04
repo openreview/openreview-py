@@ -486,7 +486,7 @@ class TestDoubleBlindConference():
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Accept invitation
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
@@ -518,7 +518,7 @@ class TestDoubleBlindConference():
         assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
 
         # Reject invitation
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, reject_url, alert=True)
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
@@ -545,7 +545,7 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         print(accept_url)
 
         encoded_url = accept_url.split('%40')[0] + '%2540' + accept_url.split('%40')[1]

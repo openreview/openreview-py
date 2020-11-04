@@ -131,7 +131,7 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        return self.invitation_builder.set_submission_invitation(self)
+        return self.invitation_builder.set_submission_invitation(self, public=False)
 
     def __create_expertise_selection_stage(self):
 
@@ -623,7 +623,7 @@ class Conference(object):
             for field in hide_fields:
                 blind_content[field] = ''
 
-            blind_readers = self.submission_stage.get_blind_readers(self, note.number, under_submission)
+            blind_readers = self.submission_stage.get_final_readers(self, note.number, under_submission)
 
             if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
 
@@ -687,6 +687,12 @@ class Conference(object):
 
         if self.submission_stage.double_blind:
             self.create_blind_submissions(hide_fields)
+
+        if not self.submission_stage.double_blind and self.submission_stage.public:
+            self.invitation_builder.set_submission_invitation(self, public=True)
+            for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='set_final_readers'):
+                note.readers = ['everyone']
+                self.client.post_note(note)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
@@ -905,22 +911,12 @@ class Conference(object):
 
     def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
         if is_area_chair:
-            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.meta_review_stage.name))
-        else:
-            invitation = tools.get_invitation(self.client, self.get_invitation_id(self.review_stage.name))
-
-        if invitation:
-            activation_date = invitation.cdate or invitation.tcdate
-            if activation_date < tools.datetime_millis(datetime.datetime.now()):
-                raise openreview.OpenReviewException('{} stage has started.'.format('MetaReview' if is_area_chair else 'Review'))
-
-        if is_area_chair:
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
         conference_matching = matching.Matching(self, match_group)
         self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
-        return conference_matching.deploy(assignment_title, is_area_chair, overwrite)
+        return conference_matching.deploy(assignment_title, overwrite)
 
 
     def set_recruitment_reduced_load(self, reduced_load_options):
@@ -1200,30 +1196,7 @@ class SubmissionStage(object):
         self.desk_rejected_submission_reveal_authors = desk_rejected_submission_reveal_authors
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
 
-    def get_readers(self, conference):
-        if self.double_blind:
-            return {
-                'values-copied': [
-                    conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
-                ]
-            }
-
-        if self.public:
-            return {
-                'values': ['everyone']
-            }
-
-        return {
-            'values-copied': [
-                conference.get_id(),
-                '{content.authorids}',
-                '{signatures}'
-            ] + conference.get_committee()
-        }
-
-    def get_blind_readers(self, conference, number, under_submission):
+    def get_final_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
             return [
@@ -1301,7 +1274,8 @@ class ReviewStage(object):
         email_pcs = False,
         additional_fields = {},
         remove_fields = [],
-        rating_field_name = None
+        rating_field_name = None,
+        process_path = None
     ):
 
         self.start_date = start_date
@@ -1317,6 +1291,7 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
+        self.process_path = process_path
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
