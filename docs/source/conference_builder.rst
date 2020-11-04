@@ -60,7 +60,6 @@ This call will setup an invitation to submit papers following the conference typ
     >>> invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 23, 59))
 
 
-
 Close Submissions
 -----------------
 
@@ -98,5 +97,4 @@ This will send an email to the reviewers asking for a response to accept or reje
     >>>
     >>> '''
     >>> conference.recruit_reviewers(emails = ['ac1@mail.com', 'ac2@mail.com'], title = title, message = message, reviewers_name = 'Area_Chairs')
-
 
