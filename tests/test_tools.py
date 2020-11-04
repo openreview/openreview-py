@@ -314,7 +314,8 @@ class TestTools():
         assert openreview.tools.get_group(client, '~Super_User1')
         assert openreview.tools.get_group(client, '~Super_User2') == None
 
-
+        os.environ["OPENREVIEW_USERNAME"] = ""
+        os.environ["OPENREVIEW_PASSWORD"] = ""
         guest_client = openreview.Client()
 
         with pytest.raises(openreview.OpenReviewException, match=r'forbidden'):
