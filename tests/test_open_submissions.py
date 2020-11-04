@@ -40,7 +40,7 @@ class TestOpenSubmissions():
     def test_post_submission(self, client, conference, test_client):
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {

@@ -494,7 +494,6 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
           invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row[2].number)
         });
         reviewerMessages.push({
-          parentGroup: REVIEWER_GROUP,
           groups: _.map(users, 'id'),
           forumUrl: forumUrl,
           subject: subject,
@@ -995,6 +994,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     minConfidence: minConfidence,
     maxConfidence: maxConfidence,
     sendReminder: true,
+    showActivityModal: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
     referrer: referrerUrl
@@ -1050,7 +1050,6 @@ var registerEventHandlers = function() {
 
     var sendReviewerReminderEmails = function(e) {
       var postData = {
-        parentGroup: REVIEWER_GROUP,
         groups: [userId],
         forumUrl: forumUrl,
         subject: $('#message-reviewers-modal input[name="subject"]').val().trim(),
@@ -1219,13 +1218,13 @@ var registerEventHandlers = function() {
       reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
       reviewerSummaryMap[paperNumber].expandReviewerList = true;
       reviewerSummaryMap[paperNumber].sendReminder = true;
+      reviewerSummaryMap[paperNumber].showActivityModal = true;
       reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
       updateReviewerContainer(paperNumber);
       promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { overlay: true });
       var postData = {
-        parentGroup: REVIEWER_GROUP,
         groups: [reviewerProfile.id],
         subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
         message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
@@ -1265,6 +1264,42 @@ var registerEventHandlers = function() {
       updateReviewerContainer(paperNumber);
       promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
     })
+    return false;
+  });
+
+  $('#group-container').on('click', 'a.show-activity-modal', function(e) {
+    var paperNum = $(this).data('paperNum');
+    var reviewerNum = $(this).data('reviewerNum');
+    var reviewerName = $(this).data('reviewerName');
+    var reviewerEmail = $(this).data('reviewerEmail');
+
+    $('#reviewer-activity-modal').remove();
+
+    $('#content').append(Handlebars.templates.genericModal({
+      id: 'reviewer-activity-modal',
+      showHeader: true,
+      title: 'Paper ' + paperNum + ' Reviewer ' + reviewerNum + ' Activity',
+      body: Handlebars.templates.spinner({ extraClasses: 'spinner-inline' }),
+      showFooter: false,
+    }));
+    $('#reviewer-activity-modal .modal-header').append(
+      '<ul class="list-inline">' +
+      '<li><strong>Name:</strong> ' + reviewerName + '</li>' +
+      '<li><strong>Email:</strong> ' + reviewerEmail + '</li>' +
+      '</ul>'
+    );
+    $('#reviewer-activity-modal').modal('show');
+
+    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
+      .then(function(response) {
+        $('#reviewer-activity-modal .modal-body').empty();
+        Webfield.ui.searchResults(response.notes, {
+          container: '#reviewer-activity-modal .modal-body',
+          openInNewTab: true,
+          emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
+        });
+      });
+
     return false;
   });
 
@@ -1308,7 +1343,7 @@ var postReviewerEmails = function(postData) {
     postData.forumUrl
   );
 
-  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message', 'parentGroup']))
+  return Webfield.post('/messages', _.pick(postData, ['groups', 'subject', 'message']))
     .then(function(response) {
       // Save the timestamp in the local storage
       for (var i = 0; i < postData.groups.length; i++) {

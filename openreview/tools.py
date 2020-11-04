@@ -146,12 +146,13 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
                         'last': last,
                         'username': tilde_id
                     }
-                ]
+                ],
+                'homepage': 'http://no_url'
             }
             client.post_group(tilde_group)
             client.post_group(email_group)
 
-            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content))
+            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content, signatures=[tilde_id]))
 
             return profile
 
@@ -203,7 +204,7 @@ def create_authorid_profiles(client, note, print=print):
                             created_profiles.append(profile)
                             print('{}: profile created with id {}'.format(note.id, profile.id))
                         except openreview.OpenReviewException as e:
-                            print('Error while creating profile for note id {}, author {author_id}, '.format(note.id, e))
+                            print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
                     else:
                         print('{}: invalid author name {}'.format(note.id, author_name))
         else:

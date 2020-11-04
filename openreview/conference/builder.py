@@ -131,7 +131,7 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        return self.invitation_builder.set_submission_invitation(self)
+        return self.invitation_builder.set_submission_invitation(self, public=False)
 
     def __create_expertise_selection_stage(self):
 
@@ -623,7 +623,7 @@ class Conference(object):
             for field in hide_fields:
                 blind_content[field] = ''
 
-            blind_readers = self.submission_stage.get_blind_readers(self, note.number, under_submission)
+            blind_readers = self.submission_stage.get_final_readers(self, note.number, under_submission)
 
             if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
 
@@ -687,6 +687,12 @@ class Conference(object):
 
         if self.submission_stage.double_blind:
             self.create_blind_submissions(hide_fields)
+
+        if not self.submission_stage.double_blind and self.submission_stage.public:
+            self.invitation_builder.set_submission_invitation(self, public=True)
+            for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='set_final_readers'):
+                note.readers = ['everyone']
+                self.client.post_note(note)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
@@ -1190,30 +1196,7 @@ class SubmissionStage(object):
         self.desk_rejected_submission_reveal_authors = desk_rejected_submission_reveal_authors
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
 
-    def get_readers(self, conference):
-        if self.double_blind:
-            return {
-                'values-copied': [
-                    conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
-                ]
-            }
-
-        if self.public:
-            return {
-                'values': ['everyone']
-            }
-
-        return {
-            'values-copied': [
-                conference.get_id(),
-                '{content.authorids}',
-                '{signatures}'
-            ] + conference.get_committee()
-        }
-
-    def get_blind_readers(self, conference, number, under_submission):
+    def get_final_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
             return [
