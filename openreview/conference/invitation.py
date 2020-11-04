@@ -599,16 +599,30 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
         content = None
 
         if submission_revision_stage.allow_author_reorder:
-            content = {
-                'authors': {
-                    'values': original_content['authors'],
-                    'required': True,
-                    'hidden': True
-                },
-                'authorids': {
-                    'values': original_content['authorids'],
-                    'required': True
-                }
+
+            content = submission_content.copy()
+
+            for field in submission_revision_stage.remove_fields:
+                if field in content:
+                    del content[field]
+                else:
+                    print('Field {} not found in content: {}'.format(field, content))
+
+            for order, key in enumerate(submission_revision_stage.additional_fields, start=10):
+                value = submission_revision_stage.additional_fields[key]
+                value['order'] = order
+                content[key] = value
+
+            content['authors']={
+                'values': original_content['authors'],
+                'required': True,
+                'hidden': True,
+                'order': content['authors']['order']
+            }
+            content['authorids']={
+                'values': original_content['authorids'],
+                'required': True,
+                'order': content['authorids']['order']
             }
 
         reply = {
