@@ -2,11 +2,11 @@ from setuptools import setup
 
 setup(
     name='openreview-py',
-    version='1.0.18',
-    description='OpenReview client library',
+    version='1.0.19',
+    description='OpenReview API Python client library',
     url='https://github.com/openreview/openreview-py',
-    author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
-    author_email='spector@cs.umass.edu, mbok@cs.umass.edu, mandler@cs.umass.edu, muniyal@cs.umass.edu',
+    author='OpenReview Team',
+    author_email='info@openreview.net',
     license='MIT',
     packages=[
         'openreview',

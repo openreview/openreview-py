@@ -1,3 +1,9 @@
 include README.md
 include openreview/conference/templates/*.js
 include openreview/conference/templates/*.py
+include openreview/venue_request/webfield/*.js
+include openreview/venue_request/process/*.js
+include openreview/venue_request/process/*.py
+include openreview/agora/webfield/*.js
+include openreview/agora/process/*.js
+include openreview/agora/process/*.py
