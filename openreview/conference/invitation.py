@@ -592,13 +592,43 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
 
         submission_revision_stage = conference.submission_revision_stage
         referent = note.original if conference.submission_stage.double_blind else note.id
+        original_content = note.details['original']['content'] if conference.submission_stage.double_blind else note.content
 
         start_date = submission_revision_stage.start_date
         due_date = submission_revision_stage.due_date
+        content = None
+
+        if submission_revision_stage.allow_author_reorder:
+
+            content = submission_content.copy()
+
+            for field in submission_revision_stage.remove_fields:
+                if field in content:
+                    del content[field]
+                else:
+                    print('Field {} not found in content: {}'.format(field, content))
+
+            for order, key in enumerate(submission_revision_stage.additional_fields, start=10):
+                value = submission_revision_stage.additional_fields[key]
+                value['order'] = order
+                content[key] = value
+
+            content['authors']={
+                'values': original_content['authors'],
+                'required': True,
+                'hidden': True,
+                'order': content['authors']['order']
+            }
+            content['authorids']={
+                'values': original_content['authorids'],
+                'required': True,
+                'order': content['authorids']['order']
+            }
 
         reply = {
             'forum': referent,
             'referent': referent,
+            'content': content,
             'readers': {
                 'values': [
                     conference.get_id(),
@@ -620,7 +650,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
         super(PaperSubmissionRevisionInvitation, self).__init__(
             id=conference.get_invitation_id(submission_revision_stage.name, note.number),
             super=conference.get_invitation_id(submission_revision_stage.name),
-            readers=['everyone'],
+            readers=invitees,
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
             invitees=invitees,
