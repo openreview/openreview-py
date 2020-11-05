@@ -10,9 +10,12 @@ class TestJournal():
 
         venue_id = '.TMLR'
         editor_in_chief = 'EIC'
+        editor_in_chief_id = f"{venue_id}/{editor_in_chief}"
         action_editors = 'AEs'
         reviewers = 'Reviewers'
         super_user = 'openreview.net'
+        raia_client = helpers.create_user('raia@mail.com', 'Raia', 'Hadsell')
+        joelle_client = helpers.create_user('joelle@mail.com', 'Joelle', 'Pineau')
 
         ## venue group
         venue_group=client.post_group(openreview.Group(id=venue_id,
@@ -20,13 +23,12 @@ class TestJournal():
                         writers=[venue_id],
                         signatures=['~Super_User1'],
                         signatories=[venue_id],
-                        members=[]
+                        members=[editor_in_chief_id]
                         ))
 
         client.add_members_to_group('host', venue_id)
 
         ## editor in chief
-        editor_in_chief_id = f"{venue_id}/{editor_in_chief}"
         editor_in_chief_group=client.post_group(openreview.Group(id=editor_in_chief_id,
                         readers=['everyone'],
                         writers=[editor_in_chief_id],
@@ -97,7 +99,7 @@ class TestJournal():
                         readers=['everyone'],
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
-                        signatories=[action_editors_id],
+                        signatories=[],
                         members=['~Joelle_Pineau1']
                         ))
 
@@ -123,11 +125,11 @@ class TestJournal():
                 signatures=[venue_id],
                 reply={
                     'signatures': { 'values-regex': '~.*' },
-                    'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']},
+                    'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Authors']},
                     'writers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']},
                     'note': {
                         'signatures': { 'values': [ f'{venue_id}/Paper${{number}}/Authors'] },
-                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/Authors']},
+                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Authors']},
                         'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/Authors']},
                         'content': {
                             'title': {
@@ -290,7 +292,7 @@ class TestJournal():
         note = client.get_note(submission_note_1['id'])
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
-        assert note.readers == ['.TMLR', '.TMLR/Paper1/Authors']
+        assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
@@ -341,9 +343,12 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
+        ## Assign Action editr to submission 1
+        raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
+
         ## Accept the submission 1
-        under_review_note = client.post_note_edit(invitation=under_review_invitation_id,
-                                    signatures=[action_editors_id],
+        under_review_note = joelle_client.post_note_edit(invitation=under_review_invitation_id,
+                                    signatures=[f'{venue_id}/Paper1/AEs'],
                                     referent=submission_note_1['id'],
                                     note=openreview.Note(forum=submission_note_1['id']))
 
@@ -361,10 +366,12 @@ class TestJournal():
         ## TODO: authorids should be anonymous
         assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
 
+        ## Assign Action editr to submission 2
+        raia_client.add_members_to_group(f'{venue_id}/Paper2/AEs', '~Joelle_Pineau1')
 
         ## Desk reject the submission 2
-        desk_reject_note = client.post_note_edit(invitation=desk_reject_invitation_id,
-                                    signatures=[action_editors_id],
+        desk_reject_note = joelle_client.post_note_edit(invitation=desk_reject_invitation_id,
+                                    signatures=[f'{venue_id}/Paper2/AEs'],
                                     referent=submission_note_2['id'],
                                     note=openreview.Note(forum=submission_note_2['id']))
 
@@ -376,7 +383,7 @@ class TestJournal():
         note = client.get_note(submission_note_2['id'])
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
-        assert note.readers == ['.TMLR', '.TMLR/Paper2/Authors']
+        assert note.readers == ['.TMLR', '.TMLR/Paper2/AEs', '.TMLR/Paper2/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper2/Authors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
         ## TODO: authorids should be anonymous
@@ -392,7 +399,7 @@ class TestJournal():
 
         ## Assign the reviewer
         ## TODO: use anonymous ids
-        client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", 'reviewer@journal.tmlr')
+        joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", 'reviewer@journal.tmlr')
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer1",
             readers=[venue_id, f"{venue_id}/Paper1/AEs"],
             writers=[venue_id, f"{venue_id}/Paper1/AEs"],
@@ -414,7 +421,3 @@ class TestJournal():
                 }
             )
         )
-
-        print(f"Check forum http://localhost:3030/forum?id={submission_note_1['id']}")
-        print(f"Check forum http://localhost:3030/forum?id={submission_note_2['id']}")
-        assert False
