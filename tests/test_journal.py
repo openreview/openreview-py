@@ -114,149 +114,167 @@ class TestJournal():
         ## Submission invitation
         submission_invitation_id=f'{venue_id}/-/Author_Submission'
         invitation = client.post_invitation_edit(readers=[venue_id],
-                                    writers=[venue_id],
-                                    signatures=[venue_id],
-                                    invitation=openreview.Invitation(id=submission_invitation_id,
-                                                    invitees=['~'],
-                                                    readers=['everyone'],
-                                                    writers=[venue_id],
-                                                    signatures=[venue_id],
-                                                    reply={
-                                                        'signatures': { 'values-regex': '~.*' },
-                                                        'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']},
-                                                        'writers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']},
-                                                        'note': {
-                                                            'signatures': { 'values': [ f'{venue_id}/Paper${{number}}/Authors'] },
-                                                            'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/Authors']},
-                                                            'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/Authors']},
-                                                            'content': {
-                                                                'title': {
-                                                                    'value': {
-                                                                        'value-regex': '.*',
-                                                                        'required': True
-                                                                    }
-                                                                },
-                                                                'abstract': {
-                                                                    'value': {
-                                                                        'value-regex': '.*',
-                                                                        'required': True
-                                                                    }
-                                                                },
-                                                                'authors': {
-                                                                    'value': {
-                                                                        'values-regex': '.*',
-                                                                        'required': True
-                                                                    },
-                                                                    'readers': {
-                                                                        'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']
-                                                                    }
-                                                                },
-                                                                'authorids': {
-                                                                    'value': {
-                                                                        'values-regex': '.*',
-                                                                        'required': True
-                                                                    },
-                                                                    'readers': {
-                                                                        'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']
-                                                                    }
-                                                                },
-                                                                'venue': {
-                                                                    'value': {
-                                                                        'value': 'Submitted to TMLR'
-                                                                    }
-                                                                },
-                                                                'venueid': {
-                                                                    'value': {
-                                                                        'value': '.TMLR/Submitted'
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    process='./tests/data/author_submission_process.py'
-                                        ))
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=submission_invitation_id,
+                invitees=['~'],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                reply={
+                    'signatures': { 'values-regex': '~.*' },
+                    'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']},
+                    'writers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']},
+                    'note': {
+                        'signatures': { 'values': [ f'{venue_id}/Paper${{number}}/Authors'] },
+                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/Authors']},
+                        'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{number}}/Authors']},
+                        'content': {
+                            'title': {
+                                'value': {
+                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                    'order': 1,
+                                    'value-regex': '.{1,250}',
+                                    'required':True
+                                }
+                            },
+                            'abstract': {
+                                'value': {
+                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                    'order': 4,
+                                    'value-regex': '[\\S\\s]{1,5000}',
+                                    'required':True
+                                }
+                            },
+                            'authors': {
+                                'value': {
+                                    'description': 'Comma separated list of author names.',
+                                    'order': 2,
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'required':True,
+                                    'hidden': True
+                                },
+                                'readers': {
+                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']
+                                }
+                            },
+                            'authorids': {
+                                'value': {
+                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                    'order': 3,
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                    'required':True
+                                },
+                                'readers': {
+                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']
+                                }
+                            },
+                            'pdf': {
+                                'value': {
+                                    'description': 'Upload a PDF file that ends with .pdf',
+                                    'order': 5,
+                                    'value-file': {
+                                        'fileTypes': ['pdf'],
+                                        'size': 50
+                                    },
+                                    'required':True
+                                }
+                            },
+                            'venue': {
+                                'value': {
+                                    'value': 'Submitted to TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR/Submitted'
+                                }
+                            }
+                        }
+                    }
+                },
+                process='./tests/data/author_submission_process.py'
+                ))
 
         ## Under review invitation
         under_review_invitation_id=f'{venue_id}/-/Under_Review'
         invitation = client.post_invitation_edit(readers=[venue_id],
-                                    writers=[venue_id],
-                                    signatures=[venue_id],
-                                    invitation=openreview.Invitation(id=under_review_invitation_id,
-                                                    invitees=[action_editors_id, venue_id],
-                                                    readers=['everyone'],
-                                                    writers=[venue_id],
-                                                    signatures=[venue_id],
-                                                    reply={
-                                                        'referent': { 'value-invitation': submission_invitation_id },
-                                                        'signatures': { 'values-regex': f'{action_editors_id}|{venue_id}' },
-                                                        'readers': { 'values': [ 'everyone']},
-                                                        'writers': { 'values': [ venue_id, action_editors_id]},
-                                                        'note': {
-                                                            'readers': {
-                                                                'values': ['everyone']
-                                                            },
-                                                            'content': {
-                                                                'venue': {
-                                                                    'value': {
-                                                                        'value': 'Under review for TMLR'
-                                                                    }
-                                                                },
-                                                                'venueid': {
-                                                                    'value': {
-                                                                        'value': '.TMLR/Under_Review'
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                        ))
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=under_review_invitation_id,
+                invitees=[action_editors_id, venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                reply={
+                    'referent': { 'value-invitation': submission_invitation_id },
+                    'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
+                    'readers': { 'values': [ 'everyone']},
+                    'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs']},
+                    'note': {
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'content': {
+                            'venue': {
+                                'value': {
+                                    'value': 'Under review for TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR/Under_Review'
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
 
         ## Desk reject invitation
         desk_reject_invitation_id=f'{venue_id}/-/Desk_Rejection'
         invitation = client.post_invitation_edit(readers=[venue_id],
-                                    writers=[venue_id],
-                                    signatures=[venue_id],
-                                    invitation=openreview.Invitation(id=desk_reject_invitation_id,
-                                                    invitees=[action_editors_id, venue_id],
-                                                    readers=['everyone'],
-                                                    writers=[venue_id],
-                                                    signatures=[venue_id],
-                                                    reply={
-                                                        'referent': { 'value-invitation': submission_invitation_id },
-                                                        'signatures': { 'values-regex': f'{action_editors_id}|{venue_id}' },
-                                                        'readers': { 'values': [ 'everyone']},
-                                                        'writers': { 'values': [ venue_id, action_editors_id]},
-                                                        'note': {
-                                                            'readers': {
-                                                                'values': ['everyone']
-                                                            },
-                                                            'content': {
-                                                                'venue': {
-                                                                    'value': {
-                                                                        'value': 'Desk rejected by TMLR'
-                                                                    }
-                                                                },
-                                                                'venueid': {
-                                                                    'value': {
-                                                                        'value': '.TMLR/Desk_Rejection'
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                        ))
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=desk_reject_invitation_id,
+                invitees=[action_editors_id, venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                reply={
+                    'referent': { 'value-invitation': submission_invitation_id },
+                    'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
+                    'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs', f'{venue_id}/Paper${{note.forum.number}}/Authors']},
+                    'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs']},
+                    'note': {
+                        'content': {
+                            'venue': {
+                                'value': {
+                                    'value': 'Desk rejected by TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR/Desk_Rejection'
+                                }
+                            }
+                        }
+                    }
+                }
+                ))
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation=submission_invitation_id,
-                                    signatures=['~Test_User1'],
-                                    note=openreview.Note(
-                                        content={
-                                            'title': { 'value': 'Paper title' },
-                                            'abstract': { 'value': 'Paper abstract' },
-                                            'authors': { 'value': ['Test User', 'Carlos Mondragon']},
-                                            'authorids': { 'value': ['~Test_User1', 'carlos@mail.com']}
-                                        }
-                                    ))
+            signatures=['~Test_User1'],
+            note=openreview.Note(
+                content={
+                    'title': { 'value': 'Paper title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Test User', 'Carlos Mondragon']},
+                    'authorids': { 'value': ['~Test_User1', 'carlos@mail.com']}
+                }
+            ))
 
         time.sleep(2)
         process_logs = client.get_process_logs(id = submission_note_1['id'])
@@ -300,10 +318,34 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper2/Reviewers")
         assert client.get_group(f"{venue_id}/Paper2/AEs")
 
+        ## Post the submission 3
+        submission_note_3 = test_client.post_note_edit(invitation=submission_invitation_id,
+                                    signatures=['~Test_User1'],
+                                    note=openreview.Note(
+                                        content={
+                                            'title': { 'value': 'Paper title 3' },
+                                            'abstract': { 'value': 'Paper abstract 3' },
+                                            'authors': { 'value': ['Test User', 'Andrew McCallum']},
+                                            'authorids': { 'value': ['~Test_User1', 'andrew@mail.com']}
+                                        }
+                                    ))
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = submission_note_3['id'])
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        author_group=client.get_group(f"{venue_id}/Paper3/Authors")
+        assert author_group
+        assert author_group.members == ['~Test_User1', 'andrew@mail.com']
+        assert client.get_group(f"{venue_id}/Paper3/Reviewers")
+        assert client.get_group(f"{venue_id}/Paper3/AEs")
+
         ## Accept the submission 1
         under_review_note = client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[action_editors_id],
-                                    referent=submission_note_1['id'])
+                                    referent=submission_note_1['id'],
+                                    note=openreview.Note(forum=submission_note_1['id']))
 
         time.sleep(2)
         process_logs = client.get_process_logs(id = submission_note_1['id'])
@@ -323,12 +365,23 @@ class TestJournal():
         ## Desk reject the submission 2
         desk_reject_note = client.post_note_edit(invitation=desk_reject_invitation_id,
                                     signatures=[action_editors_id],
-                                    referent=submission_note_2['id'])
+                                    referent=submission_note_2['id'],
+                                    note=openreview.Note(forum=submission_note_2['id']))
 
         time.sleep(2)
         process_logs = client.get_process_logs(id = submission_note_1['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        note = client.get_note(submission_note_2['id'])
+        assert note
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['.TMLR', '.TMLR/Paper2/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper2/Authors']
+        assert note.signatures == ['.TMLR/Paper2/Authors']
+        ## TODO: authorids should be anonymous
+        assert note.content['authorids'] == ['~Test_User1', 'melisa@mail.com']
+
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=submission_note_1['id'])
