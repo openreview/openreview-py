@@ -20,7 +20,8 @@ var paperDisplayOptions = {
   pdfLink: true,
   replyCount: true,
   showContents: true,
-  showTags: false
+  showTags: false,
+  referrer: encodeURIComponent('[TMLR](/group?id=' + CONFERENCE_ID + '#submissions)')
 };
 var commentDisplayOptions = {
   pdfLink: false,

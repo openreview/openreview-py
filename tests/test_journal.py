@@ -250,6 +250,7 @@ class TestJournal():
                     'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs', f'{venue_id}/Paper${{note.forum.number}}/Authors']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs']},
                     'note': {
+                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs', f'{venue_id}/Paper${{note.forum.number}}/Authors']},
                         'content': {
                             'venue': {
                                 'value': {
