@@ -182,14 +182,33 @@ class TestJournal():
                                     'required':True
                                 }
                             },
+                            "supplementary_material": {
+                                'value': {
+                                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                                    "order": 6,
+                                    "value-file": {
+                                        "fileTypes": [
+                                            "zip",
+                                            "pdf"
+                                        ],
+                                        "size": 100
+                                    },
+                                    "required": False
+                                },
+                                'readers': {
+                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Reviewers', f'{venue_id}/Paper${{number}}/Authors' ]
+                                }
+                            },
                             'venue': {
                                 'value': {
-                                    'value': 'Submitted to TMLR'
+                                    'value': 'Submitted to TMLR',
+                                    'hidden': True
                                 }
                             },
                             'venueid': {
                                 'value': {
-                                    'value': '.TMLR/Submitted'
+                                    'value': '.TMLR/Submitted',
+                                    'hidden': True
                                 }
                             }
                         }
@@ -275,7 +294,9 @@ class TestJournal():
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Carlos Mondragon']},
-                    'authorids': { 'value': ['~Test_User1', 'carlos@mail.com']}
+                    'authorids': { 'value': ['~Test_User1', 'carlos@mail.com']},
+                    'pdf': {'value': '/pdf/paper.pdf' },
+                    'supplementary_material': { 'value': '/attachment/supplementary_material.zip'}
                 }
             ))
 
@@ -364,7 +385,6 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        ## TODO: authorids should be anonymous
         assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
 
         ## Assign Action editr to submission 2
