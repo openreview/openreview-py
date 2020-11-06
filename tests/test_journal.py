@@ -393,8 +393,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=submission_note_1['id'])
-        ## TODO: we should expect 3 invitations, Review is missing
-        assert len(invitations) == 2
+        assert len(invitations) == 3
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
@@ -402,7 +401,7 @@ class TestJournal():
         ## TODO: use anonymous ids
         joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", 'reviewer@journal.tmlr')
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer1",
-            readers=[venue_id, f"{venue_id}/Paper1/AEs"],
+            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"],
             writers=[venue_id, f"{venue_id}/Paper1/AEs"],
             signatories=[f"{venue_id}/Paper1/AnonReviewer1"],
             signatures=[f"{venue_id}/Paper1/AEs"],

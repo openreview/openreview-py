@@ -21,7 +21,7 @@ var paperDisplayOptions = {
   replyCount: true,
   showContents: true,
   showTags: false,
-  referrer: encodeURIComponent('[TMLR](/group?id=' + CONFERENCE_ID + '#submissions)')
+  referrer: encodeURIComponent('[TMLR](/group?id=' + CONFERENCE_ID + ')')
 };
 var commentDisplayOptions = {
   pdfLink: false,
