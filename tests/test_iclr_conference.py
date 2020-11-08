@@ -542,7 +542,7 @@ Naila, Katja, Alice, and Ivan
                 'title': 'EDITED Paper title 5',
                 'abstract': 'This is an abstract 5',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'melisa@mail.com'],
-                'authors': ['Test User', 'Peter Test', 'Andrew Mc', 'Melisa Bok'],
+                'authors': ['Test User', 'Peter Test', 'Melisa Bok'],
                 'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
                 'pdf': pdf_url,
                 'supplementary_material': supplementary_material_url
@@ -655,3 +655,30 @@ Naila, Katja, Alice, and Ivan
         ]
 
 
+    def test_revision_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True))
+
+        submissions = conference.get_submissions()
+
+        print(submissions[0])
+
+        test_client.post_note(openreview.Note(
+            invitation='ICLR.cc/2021/Conference/Paper5/-/Revision',
+            referent=submissions[0].original,
+            forum=submissions[0].original,
+            readers=['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
+            writers=['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
+            signatures=['ICLR.cc/2021/Conference/Paper5/Authors'],
+            content={
+                'title': 'EDITED V3 Paper title 5',
+                'abstract': 'This is an abstract 5',
+                'authorids': ['peter@mail.com', 'test@mail.com', 'melisa@mail.com'],
+                'authors': ['Peter Test', 'Test User', 'Melisa Bok'],
+                'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
+                'pdf': submissions[0].content['pdf'],
+                'supplementary_material': submissions[0].content['supplementary_material']
+            }
+
+        ))
