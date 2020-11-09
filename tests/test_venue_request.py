@@ -795,8 +795,10 @@ class TestVenueRequest():
         # Assert that submissions are private
         assert blind_submissions[0].readers == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number), venue['venue_id'],
                                                 '{}/Reviewers'.format(venue['venue_id']),'{}/Area_Chairs'.format(venue['venue_id']),'{}/Program_Chairs'.format(venue['venue_id'])]
-        # assert blind_submissions[1].readers == [venue['venue_id'],'~Venue_Author2']
-        # assert blind_submissions[2].readers == [venue['venue_id'],'~Venue_Author3']        
+        assert blind_submissions[1].readers == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number), venue['venue_id'],
+                                                '{}/Reviewers'.format(venue['venue_id']),'{}/Area_Chairs'.format(venue['venue_id']),'{}/Program_Chairs'.format(venue['venue_id'])]
+        assert blind_submissions[2].readers == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number), venue['venue_id'],
+                                                '{}/Reviewers'.format(venue['venue_id']),'{}/Area_Chairs'.format(venue['venue_id']),'{}/Program_Chairs'.format(venue['venue_id'])]      
         
         # Post a release papers note
         now = datetime.datetime.utcnow()
@@ -827,4 +829,4 @@ class TestVenueRequest():
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
-        assert blind_submissions[2].readers == ['everyone']  
+        assert blind_submissions[2].readers == ['everyone']

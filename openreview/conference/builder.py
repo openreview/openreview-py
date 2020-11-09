@@ -1153,22 +1153,55 @@ class Conference(object):
 
     def release_notes(self, accepted=False):
         submissions = self.get_submissions(accepted=accepted, details='original')
+        decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
 
         if not self.submission_stage.double_blind:
             self.invitation_builder.set_submission_invitation(self, public=True)
+            for submission in submissions:
+                submission.readers = ['everyone']
+                decision_note = decisions_by_forum.get(submission.forum, None)
+                if decision_note and 'Accept' in decision_note.content['decision']:
+                    accepted = True
+                submission.content['_bibtex'] = tools.get_bibtex(
+                        submission,
+                        venue_fullname=self.name,
+                        year=str(self.year),
+                        url_forum=submission.forum,
+                        accepted=accepted,
+                        anonymous=False)
+                self.client.post_note(submission)
+        else: 
+            for submission in submissions:
+                submission.readers = ['everyone']
+                original = submission.details['original']
+                accepted = False
+                decision_note = decisions_by_forum.get(submission.forum, None)
+                if decision_note and 'Accept' in decision_note.content['decision']:
+                    accepted = True
+                if 'Anonymous' in submission.content['authors']:
+                    submission.content = {
+                        'authors':['Anonymous'],
+                        'authorids': submission.content['authorids'],
+                        '_bibtex': tools.get_bibtex(
+                            openreview.Note.from_json(original),
+                            venue_fullname=self.name,
+                            year=str(self.year),
+                            url_forum=submission.forum,
+                            accepted=accepted,
+                            anonymous=True)
+                    }
+                else:
+                    submission.content = {
+                        '_bibtex': tools.get_bibtex(
+                            openreview.Note.from_json(original),
+                            venue_fullname=self.name,
+                            year=str(self.year),
+                            url_forum=submission.forum,
+                            accepted=accepted,
+                            anonymous=False)
+                    }
 
-        for submission in submissions:
-            submission.readers = ['everyone']
-            if 'Anonymous' not in submission.content['authors']:
-                submission.content = {}
-            else:
-                submission.content = {
-                    'authors':['Anonymous'],
-                    'authorids': submission.content['authorids']
-                }
-            # submission.content['authors'] = submission.content['authors']
-            # submission.content['authorids'] = submission.content['authorids']
-            self.client.post_note(submission)
+                self.client.post_note(submission)
     
     def reveal_authors(self, accepted=False):
         submissions = self.get_submissions(accepted=accepted, details='original')
@@ -1176,17 +1209,17 @@ class Conference(object):
         
         for submission in submissions:
             original = submission.details['original']
-            decision = False
+            accepted = False
             decision_note = decisions_by_forum.get(submission.forum, None)
             if decision_note and 'Accept' in decision_note.content['decision']:
-                decision = True
+                accepted = True
             submission.content = {
                 '_bibtex': tools.get_bibtex(
                             openreview.Note.from_json(original),
                             venue_fullname=self.name,
                             year=str(self.year),
                             url_forum=submission.forum,
-                            accepted=decision,
+                            accepted=accepted,
                             anonymous=False)
             }
             self.client.post_note(submission)
