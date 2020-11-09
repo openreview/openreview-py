@@ -318,6 +318,8 @@ class TestJournal():
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
+        assert note.content['venue'] == 'Submitted to TMLR'
+        assert note.content['venueid'] == '.TMLR/Submitted'
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation=submission_invitation_id,
@@ -386,6 +388,9 @@ class TestJournal():
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
+        assert note.content['venue'] == 'Under review for TMLR'
+        assert note.content['venueid'] == '.TMLR/Under_Review'
+
 
         ## Assign Action editr to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/AEs', '~Joelle_Pineau1')
@@ -409,6 +414,8 @@ class TestJournal():
         assert note.signatures == ['.TMLR/Paper2/Authors']
         ## TODO: authorids should be anonymous
         assert note.content['authorids'] == ['~Test_User1', 'melisa@mail.com']
+        assert note.content['venue'] == 'Desk rejected by TMLR'
+        assert note.content['venueid'] == '.TMLR/Desk_Rejection'
 
 
         ## Check invitations
