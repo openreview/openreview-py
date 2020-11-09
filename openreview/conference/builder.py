@@ -1076,7 +1076,7 @@ class Conference(object):
         return reminders
 
 
-    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None, release_accepted_notes = None):
+    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
         options['blind_submission_id'] = self.get_blind_submission_id()
@@ -1093,33 +1093,6 @@ class Conference(object):
         options['decision_heading_map'] = decision_heading_map
 
         self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
-
-        if release_accepted_notes:
-            accepted_submissions = self.get_submissions(accepted=True, details='original')
-
-            for submission in accepted_submissions:
-
-                has_original = submission.details and 'original' in submission.details
-                if has_original:
-                    submission.content = {
-                        '_bibtex': tools.get_bibtex(
-                            openreview.Note.from_json(submission.details['original']),
-                            release_accepted_notes.get('conference_title', 'unknown'),
-                            release_accepted_notes.get('conference_year', 'unknown'),
-                            url_forum=submission.forum,
-                            accepted=True,
-                            anonymous=False)
-                    }
-                else:
-                    submission.content['_bibtex'] = tools.get_bibtex(
-                        submission,
-                        release_accepted_notes.get('conference_title', 'unknown'),
-                        release_accepted_notes.get('conference_year', 'unknown'),
-                        url_forum=submission.forum,
-                        accepted=True,
-                        anonymous=False)
-
-                self.client.post_note(submission)
 
     def get_submissions_attachments(self, field_name='pdf', field_type='pdf', folder_path='./pdfs', accepted=False):
         print('Loading submissions...')
@@ -1202,6 +1175,8 @@ class Conference(object):
                     }
 
                 self.client.post_note(submission)
+
+        self.set_homepage_decisions()
         active_venues = self.client.get_group('active_venues')
         self.client.remove_members_from_group(active_venues, self.id)
     
@@ -1226,6 +1201,7 @@ class Conference(object):
             }
             self.client.post_note(submission)
         
+        self.set_homepage_decisions()
         active_venues = self.client.get_group('active_venues')
         self.client.remove_members_from_group(active_venues, self.id)
 
