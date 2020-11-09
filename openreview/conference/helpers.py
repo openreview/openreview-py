@@ -100,6 +100,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
 
     author_names_revealed = 'reveal author identities' in note.content.get('reveal_all_authors', '')
+    papers_released = 'papers to the public' in note.content.get('release_all_papers', '')
 
     builder.set_submission_stage(
         double_blind=double_blind,
@@ -116,7 +117,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         email_pcs_on_withdraw=email_pcs_on_withdraw,
         desk_rejected_submission_public=desk_rejected_submission_public,
         desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
-        author_names_revealed=author_names_revealed)
+        author_names_revealed=author_names_revealed, 
+        papers_released=papers_released)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:

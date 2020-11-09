@@ -685,7 +685,7 @@ class Conference(object):
 
     def setup_final_deadline_stage(self, force=False, hide_fields=[]):
 
-        if self.submission_stage.double_blind and not self.submission_stage.author_names_revealed:
+        if self.submission_stage.double_blind and not (self.submission_stage.author_names_revealed or self.submission_stage.papers_released):
             self.create_blind_submissions(hide_fields)
 
         if not self.submission_stage.double_blind and self.submission_stage.public:
@@ -1202,6 +1202,8 @@ class Conference(object):
                     }
 
                 self.client.post_note(submission)
+        active_venues = self.client.get_group('active_venues')
+        self.client.remove_members_from_group(active_venues, self.id)
     
     def reveal_authors(self, accepted=False):
         submissions = self.get_submissions(accepted=accepted, details='original')
@@ -1223,6 +1225,9 @@ class Conference(object):
                             anonymous=False)
             }
             self.client.post_note(submission)
+        
+        active_venues = self.client.get_group('active_venues')
+        self.client.remove_members_from_group(active_venues, self.id)
 
 class SubmissionStage(object):
 
@@ -1247,7 +1252,8 @@ class SubmissionStage(object):
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True, 
-            author_names_revealed=False
+            author_names_revealed=False,
+            papers_released=False
         ):
 
         self.start_date = start_date
@@ -1269,6 +1275,7 @@ class SubmissionStage(object):
         self.desk_rejected_submission_reveal_authors = desk_rejected_submission_reveal_authors
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
         self.author_names_revealed = author_names_revealed
+        self.papers_released = papers_released
 
     def get_final_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
@@ -1648,7 +1655,8 @@ class ConferenceBuilder(object):
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True,
-            author_names_revealed=False
+            author_names_revealed=False, 
+            papers_released=False
         ):
 
         self.submission_stage = SubmissionStage(
@@ -1670,7 +1678,8 @@ class ConferenceBuilder(object):
             desk_rejected_submission_public,
             desk_rejected_submission_reveal_authors,
             email_pcs_on_desk_reject, 
-            author_names_revealed
+            author_names_revealed,
+            papers_released
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
