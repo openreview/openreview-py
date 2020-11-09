@@ -19,12 +19,10 @@ Consider the following example which gets the public `Notes` that represent the 
 
 By default, `get_notes` will return up to the first 1000 corresponding `Notes` (`limit=1000`). To retrieve `Notes` beyond the first 1000, you can adjust the `offset` parameter, or use the function `tools.iterget_notes` which returns an iterator over all corresponding `Notes`::
 
-
 	blind_submissions_iterator = openreview.tools.iterget_notes(
 		client, invitation='ICLR.cc/2019/Conference/-/Blind_Submission')
 
 It's also possible to query for `Notes` by `Invitation` ID using a regex pattern. Consider the following example that gets all `Public_Comments` for the ICLR 2019 conference::
-
 
 	iclr19_public_comments = client.get_notes(
 		invitation='ICLR.cc/2019/Conference/-/Paper.*/Public_Comment')
@@ -35,14 +33,12 @@ Invitation IDs follow a loose convention that resembles the one in the example a
 
 Invitations can be queried with the `get_invitations` function to find the Invitation IDs for a particular conference. The following example retrieves the first 10 Invitations for the ICLR 2019 conference::
 
-
 	iclr19_invitations = client.get_invitations(
 		regex='ICLR.cc/2019/Conference/.*',
 		limit=10,
 		offset=0)
 
 Like `get_notes`, `get_invitations` will return up to the first 1000 Invitations (`limit=1000`). To retrieve Invitations beyond the first 1000, you can adjust the `offset` parameter, or use the function `tools.iterget_invitations`::
-
 
 	iclr19_invitations_iterator = openreview.tools.iterget_invitations(
 		client, regex='ICLR.cc/2019/Conference/.*')
@@ -55,7 +51,6 @@ Like comments and submissions, reviews are also usually represented as Notes. Co
 
 For example, the reviews in ICLR 2019 all have invitations with the following pattern::
 
-
 	ICLR.cc/2019/Conference/-/Paper.*/Official_Review
 
 To retrieve the Official Reviews for a given ICLR 2019 paper, do the following::
@@ -65,13 +60,11 @@ To retrieve the Official Reviews for a given ICLR 2019 paper, do the following::
 
 The specific structure of the review's ``content`` field is determined by the conference, but a typical review's content will include fields like ``title``, ``review``, ``rating``, and ``confidence``::
 
-
 	review0 = paper123_reviews[0]
 	print(review0.content['rating'])
 	'8: Top 50% of accepted papers, clear accept'
 
 Conferences as large as ICLR 2019 will often have a number of reviews that exceeds the default API limit. To retrieve all Official Reviews for all ICLR 2019 papers, create an iterator over reviews by doing the following::
-
 
 	review_iterator = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Paper.*/Official_Review')
 	for review in review_iterator:
@@ -79,10 +72,10 @@ Conferences as large as ICLR 2019 will often have a number of reviews that excee
 
 Retrieving all accepted Submissions for a conference (Single-blind)
 -------------------------------------------------------------------
+
 Since the Submissions do not contain the decisions, we first need to retrieve all the Decision notes, filter the accepted notes and use their forum ID to locate its corresponding Submission. We break down these steps below.
 
-Retrieve Submissions and Decisions.
-
+Retrieve Submissions and Decisions::
 
 	id_to_submission = {
     	note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'MIDL.io/2019/Conference/-/Full_Submission')
@@ -91,28 +84,28 @@ Retrieve Submissions and Decisions.
 
 It is convenient to place all the submissions in a dictionary with their id as the key so that we can retrieve an accepted submission using its id.
 
-We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
-
+We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission::
 
 	accepted_submissions = [id_to_submission[note.forum] for note in all_decision_notes if note.content['decision'] == 'Accept']
 
 Retrieving all accepted Submissions for a conference (Double-blind)
 -------------------------------------------------------------------
+
 This is very similar to the previous example. The only difference is that we need to get the blind notes with the added details parameter to get the Submission.
 
-Retrieve Submissions and Decisions.
+Retrieve Submissions and Decisions::
 
 	blind_notes = {note.id: note for note in openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Blind_Submission', details='original')}
-
 	all_decision_notes = openreview.tools.iterget_notes(client, invitation = 'auai.org/UAI/2019/Conference/-/Paper.*/Decision')
 
-We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission.
+We then filter the Decision notes that were accepted and use their forum ID to get the corresponding Submission::
 
 	accepted_submissions = [blind_notes[decision_note.forum].details['original'] for decision_note in all_decision_notes if 'Accept' in decision_note.content['decision']]
 
 Retrieving all the author names and e-mails from accepted Submissions
 ---------------------------------------------------------------------
-First we need to retrieve the Accepted Submissions. Please refer to 'Retrieving all accepted Submissions for a conference'. Once we get the Accepted Submissions we can easily extract the author's information from them.
+
+First we need to retrieve the Accepted Submissions. Please refer to 'Retrieving all accepted Submissions for a conference'. Once we get the Accepted Submissions we can easily extract the author's information from them::
 
 	author_emails = []
 	author_names = []
@@ -139,7 +132,6 @@ The data in a comment, or basically Notes objects, can be accessed like this::
 	print(iclr19_forum_public_comments[0].content["title"])
 	print(iclr19_forum_public_comments[0].content["comment"])
 
-
 Getting ICLR 2019 data
 --------------------------------
 
@@ -151,7 +143,6 @@ The following example script can be used to retrieve all ICLR 2019 metadata and 
 	from collections import defaultdict
 	from tqdm import tqdm
 	import openreview
-
 
 	def download_iclr19(client, outdir='./', get_pdfs=False):
 	    '''
@@ -241,7 +232,7 @@ The following example script can be used to retrieve all ICLR 2019 metadata and 
 
 You can also call this script with the `openreview` package::
 
-	 python -m openreview.scripts.download_iclr19 --get_pdfs
+	  python -m openreview.scripts.download_iclr19 --get_pdfs
 
 
 Edges
@@ -265,7 +256,6 @@ Users can query for edges using any combination of the following fields:
 
 Consider the following example which gets the first 10 `Edges` representing the "Personal" conflicts in ICLR 2020::
 
-
 	>>> conflict_edges = client.get_edges(
 		invitation='ICLR.cc/2020/Conference/-/Conflict',
 		label='Personal',
@@ -275,23 +265,18 @@ Note that since conflict data is sensitive, you may not have permissions to acce
 
 By default, `get_edges` will return up to the first 1000 corresponding `Edges` (`limit=1000`). To retrieve `Edges` beyond the first 1000, you can adjust the `offset` parameter, or use the function `tools.iterget_edges` which returns an iterator over all corresponding `Edges`::
 
-
 	>>> conflict_edges_iterator = openreview.tools.iterget_edges(
-		client, 
+		client,
 		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
 		label='Personal')
 
-
 Since edges usually are very large in numbers, it is possible to get just the count of edges by using the function `client.get_edges_count`
-
 
 	>>> conflict_edges_count = client.get_edges_count(
 		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
 		label='Personal')
 
-
 Since most of the common tasks performed using `Edges` require `Edges` to be grouped, it's also possible to query for already grouped `Edges`. Consider the following example that gets all reviewers grouped by papers they have conflicts with for the ICLR 2020 Conference ::
-
 
 	>>> grouped_conflict_edges = client.get_grouped_edges(
 		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
@@ -299,7 +284,6 @@ Since most of the common tasks performed using `Edges` require `Edges` to be gro
 		select='tail,weight,label')
 
 Consider the following example that gets all papers grouped by reviewers they have conflicts with for the ICLR 2020 Conference ::
-
 
 	>>> grouped_conflict_edges = client.get_grouped_edges(
 		invitation='ICLR.cc/2020/Conference/Reviewers/-/Conflict',
