@@ -106,6 +106,12 @@ class Client(object):
                 raise OpenReviewException(response.json())
 
     ## PUBLIC FUNCTIONS
+    def impersonate(self, group_id):
+        response = requests.get(self.baseurl + '/impersonate', params={ 'groupId': group_id }, headers=self.headers)
+        response = self.__handle_response(response)
+        json_response = response.json()
+        self.__handle_token(json_response)
+        return json_response
 
     def login_user(self,username=None, password=None):
         """
