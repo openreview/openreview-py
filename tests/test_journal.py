@@ -43,7 +43,7 @@ class TestJournal():
             editors+=f'<a href="https://openreview.net/profile?id={m}">{name}</a></br>'
 
         header = {
-            "title": "Transactions of Machine Learning Research Journal",
+            "title": "Transactions of Machine Learning Research",
             "subtitle": "To de defined",
             "location": "Everywhere",
             "date": "Ongoing",
@@ -367,7 +367,7 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
-        ## Assign Action editr to submission 1
+        ## Assign Action editor to submission 1
         raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
 
         ## Accept the submission 1
@@ -391,8 +391,7 @@ class TestJournal():
         assert note.content['venue'] == 'Under review for TMLR'
         assert note.content['venueid'] == '.TMLR/Under_Review'
 
-
-        ## Assign Action editr to submission 2
+        ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/AEs', '~Joelle_Pineau1')
 
         ## Desk reject the submission 2
@@ -402,7 +401,7 @@ class TestJournal():
                                     note=openreview.Note(forum=submission_note_2['id']))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note_1['id'])
+        process_logs = client.get_process_logs(id = submission_note_2['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -420,7 +419,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=submission_note_1['id'])
-        assert len(invitations) == 3
+        assert len(invitations) == 4
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
@@ -448,3 +447,18 @@ class TestJournal():
                 }
             )
         )
+
+        # ## Add revision to submission 1
+        # edit_note_1 = test_client.post_note_edit(invitation=submission_invitation_id,
+        #                             signatures=['~Test_User1'],
+        #                             referent=submission_note_1['id'],
+        #                             note=openreview.Note(
+        #                                 forum=submission_note_1['id'],
+        #                                 content={
+        #                                     'title': { 'value': 'Paper title Version 2' }
+        #                                 }
+        #                             ))
+        # time.sleep(2)
+        # process_logs = client.get_process_logs(id = submission_note_1['id'])
+        # assert len(process_logs) == 2
+        # assert process_logs[0]['status'] == 'ok'
