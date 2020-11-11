@@ -301,7 +301,8 @@ class TestJournal():
             ))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note_1['id'])
+        note_id_1=submission_note_1['note']['id']
+        process_logs = client.get_process_logs(id = note_id_1)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -311,7 +312,7 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert client.get_group(f"{venue_id}/Paper1/AEs")
 
-        note = client.get_note(submission_note_1['id'])
+        note = client.get_note(note_id_1)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs', '.TMLR/Paper1/Authors']
@@ -334,7 +335,8 @@ class TestJournal():
                                     ))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note_2['id'])
+        note_id_2=submission_note_2['note']['id']
+        process_logs = client.get_process_logs(id = note_id_2)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -357,7 +359,8 @@ class TestJournal():
                                     ))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note_3['id'])
+        note_id_3=submission_note_3['note']['id']
+        process_logs = client.get_process_logs(id = note_id_3)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -373,15 +376,15 @@ class TestJournal():
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[f'{venue_id}/Paper1/AEs'],
-                                    referent=submission_note_1['id'],
-                                    note=openreview.Note(forum=submission_note_1['id']))
+                                    referent=note_id_1,
+                                    note=openreview.Note(forum=note_id_1))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note_1['id'])
+        process_logs = client.get_process_logs(id = note_id_1)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        note = client.get_note(submission_note_1['id'])
+        note = client.get_note(note_id_1)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['everyone']
@@ -397,15 +400,15 @@ class TestJournal():
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation=desk_reject_invitation_id,
                                     signatures=[f'{venue_id}/Paper2/AEs'],
-                                    referent=submission_note_2['id'],
-                                    note=openreview.Note(forum=submission_note_2['id']))
+                                    referent=note_id_2,
+                                    note=openreview.Note(forum=note_id_2))
 
         time.sleep(2)
-        process_logs = client.get_process_logs(id = submission_note_2['id'])
+        process_logs = client.get_process_logs(id = note_id_2)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        note = client.get_note(submission_note_2['id'])
+        note = client.get_note(note_id_2)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['.TMLR', '.TMLR/Paper2/AEs', '.TMLR/Paper2/Authors']
@@ -418,7 +421,7 @@ class TestJournal():
 
 
         ## Check invitations
-        invitations = client.get_invitations(replyForum=submission_note_1['id'])
+        invitations = client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 4
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
