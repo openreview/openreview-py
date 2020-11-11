@@ -293,6 +293,49 @@ class TestVenueRequest():
         assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
 
+    def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue):
+
+        # Test Reviewer Remind Recruitment
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token)
+        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        assert recruitment_div
+        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        assert reply_row
+        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
+
+        remind_recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Remind Recruitment',
+                'invitee_role': 'reviewer',
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~Test_User1'],
+            writers=[]
+        ))
+        assert remind_recruitment_note
+
+        time.sleep(5)
+        process_logs = client.get_process_logs(id=remind_recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+
+        messages = client.get_messages(to='reviewer_candidate1@email.com')
+        assert messages and len(messages) == 2
+        assert messages[1]['content']['subject'] == 'Reminder: [TestVenue@OR2030] Invitation to serve as reviewer'
+        assert messages[1]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+
+        messages = client.get_messages(to='reviewer_candidate2@email.com')
+        assert messages and len(messages) == 2
+        assert messages[1]['content']['subject'] == 'Reminder: [TestVenue@OR2030] Invitation to serve as reviewer'
+        assert messages[1]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         reviewer_client = helpers.create_user('venue_reviewer1@mail.com', 'Venue', 'Reviewer')
