@@ -33,6 +33,38 @@ def process(client, note, invitation):
     elif invitation_type == 'Decision_Stage':
         conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
 
+        if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private."):
+            client.post_invitation(openreview.Invitation(
+                id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Release_Papers',
+                super = SUPPORT_GROUP + '/-/Release_Papers',
+                invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                reply = {
+                    'forum': forum_note.id,
+                    'referent': forum_note.id,
+                    'readers' : {
+                        'description': 'The users who will be allowed to read the above content.',
+                        'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                    }
+                },
+                signatures = ['~Super_User1']
+            ))
+
+        if (forum_note.content.get('Author and Reviewer Anonymity', '') == "Double-blind"):
+            client.post_invitation(openreview.Invitation(
+                id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Reveal_Authors',
+                super = SUPPORT_GROUP + '/-/Reveal_Authors',
+                invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                reply = {
+                    'forum': forum_note.id,
+                    'referent': forum_note.id,
+                    'readers' : {
+                        'description': 'The users who will be allowed to read the above content.',
+                        'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                    }
+                },
+                signatures = ['~Super_User1']
+            ))
+
     elif invitation_type == 'Submission_Revision_Stage':
         conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 

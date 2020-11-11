@@ -318,35 +318,3 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         },
         signatures=['~Super_User1']
     ))
-
-    if (forum.content['Open Reviewing Policy'] == "Submissions and reviews should both be private.") :
-        client.post_invitation(openreview.Invitation(
-            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Release_Papers',
-            super = SUPPORT_GROUP + '/-/Release_Papers',
-            invitees = readers,
-            reply = {
-                'forum': forum.id,
-                'referent': forum.id,
-                'readers' : {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values' : readers
-                }
-            },
-            signatures = ['~Super_User1']
-        ))
-
-    if (forum.content['Author and Reviewer Anonymity'] == "Double-blind") :
-        client.post_invitation(openreview.Invitation(
-            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reveal_Authors',
-            super = SUPPORT_GROUP + '/-/Reveal_Authors',
-            invitees = readers,
-            reply = {
-                'forum': forum.id,
-                'referent': forum.id,
-                'readers' : {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values' : readers
-                }
-            },
-            signatures = ['~Super_User1']
-        ))
