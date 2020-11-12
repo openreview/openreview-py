@@ -776,7 +776,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
       return '<h3><span style="color: #777;">' + numComplete + ' / 0</span></h3>'
     }
     return '<h3>' +
-      _.round((numComplete / numTotal) * 100, 1) + '% &nbsp;' +
+      _.round((numComplete / numTotal) * 100, 2) + '% &nbsp;' +
       '<span style="color: #777;">(' + numComplete + ' / ' + numTotal + ')</span>' +
     '</h3>';
   };
