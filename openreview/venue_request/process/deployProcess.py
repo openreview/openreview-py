@@ -141,10 +141,58 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
+    remind_recruitment_invitation = openreview.Invitation(
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Remind_Recruitment',
+        super = SUPPORT_GROUP + '/-/Remind_Recruitment',
+        invitees = readers,
+        reply = {
+            'forum': forum.id,
+            'replyto': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            },
+            'writers': {
+                'values':[],
+            },
+            'content': {
+                'title': {
+                    'value': 'Remind Recruitment',
+                    'required': True,
+                    'order': 1
+                },
+                'invitee_role': {
+                    'description': 'Please select the role of the invitees you would like to remind.',
+                    'value-radio': ['reviewer'],
+                    'default': 'reviewer',
+                    'required': True,
+                    'order': 2
+                },
+                'invitation_email_subject': {
+                    'value-regex': '.*',
+                    'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
+                    'order': 3,
+                    'required': True,
+                    'default': recruitment_email_subject
+                },
+                'invitation_email_content': {
+                    'value-regex': '[\\S\\s]{1,10000}',
+                    'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
+                    'order': 4,
+                    'required': True,
+                    'default': recruitment_email_body
+                }
+            }
+        },
+        signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
+    )
+
     if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
         recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
+        remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
 
     client.post_invitation(recruitment_invitation)
+    client.post_invitation(remind_recruitment_invitation)
 
     if 'Reviewer Bid Scores' in forum.content.get('Paper Matching', []):
         client.post_invitation(openreview.Invitation(

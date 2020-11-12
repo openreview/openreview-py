@@ -477,6 +477,7 @@ class VenueRequest():
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
+        self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -484,6 +485,7 @@ class VenueRequest():
         self.setup_venue_deployment()
         self.setup_venue_post_submission()
         self.setup_venue_recruitment()
+        self.setup_venue_remind_recruitment()
 
         # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
@@ -889,5 +891,85 @@ class VenueRequest():
                         'values-regex': '~.*|{}'.format(self.support_group.id)
                     },
                     'content': recruitment_content
+                }
+            ))
+
+    def setup_venue_remind_recruitment(self):
+
+        remind_recruitment_content = {
+            'title': {
+                'value': 'Remind Recruitment',
+                'required': True,
+                'order': 1
+            },
+            'invitee_role': {
+                'description': 'Please select the role of the invitees you would like to remind.',
+                'value-radio': ['reviewer', 'area chair'],
+                'default': 'reviewer',
+                'required': True,
+                'order': 2
+            },
+            'invitation_email_subject': {
+                'value-regex': '.*',
+                'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
+                'order': 3,
+                'required': True,
+                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
+            },
+            'invitation_email_content': {
+                'value-regex': '[\\S\\s]{1,10000}',
+                'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
+                'order': 4,
+                'required': True,
+                'default': '''Dear {name},
+
+        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+
+        You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
+
+        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+        To ACCEPT the invitation, please click on the following link:
+
+        {accept_url}
+
+        To DECLINE the invitation, please click on the following link:
+
+        {decline_url}
+
+        Please answer within 10 days.
+
+        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+        If you have any questions, please contact us at info@openreview.net.
+
+        Cheers!
+
+        Program Chairs
+        '''
+        }}
+
+        with open(self.remind_recruitment_process, 'r') as f:
+            file_content = f.read()
+
+            self.remind_recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Remind_Recruitment',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values':[],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': remind_recruitment_content
                 }
             ))
