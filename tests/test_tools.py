@@ -1,7 +1,9 @@
 import openreview
+import pytest
 import random
 import types
 import sys
+import os
 
 def do_work(value):
     return value.id
@@ -307,3 +309,16 @@ class TestTools():
 
         groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
         assert len(groups) == 12
+
+    def test_group(self, client):
+
+        assert openreview.tools.get_group(client, '~Super_User1')
+        assert openreview.tools.get_group(client, '~Super_User2') == None
+
+        os.environ["OPENREVIEW_USERNAME"] = ""
+        os.environ["OPENREVIEW_PASSWORD"] = ""
+        guest_client = openreview.Client()
+
+        with pytest.raises(openreview.OpenReviewException, match=r'forbidden'):
+            assert openreview.tools.get_group(guest_client, '~Super_User1')
+
