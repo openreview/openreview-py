@@ -796,7 +796,7 @@ class TestVenueRequest():
         assert blind_submissions[2].content['authors'] == ['Anonymous']
         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
 
-        # Post a reveal authors note
+        # Post a post decision note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
@@ -805,7 +805,7 @@ class TestVenueRequest():
                 'reveal_all_authors': 'Yes, reveal author identities of all papers to the public'
             },
             forum=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Reveal_Authors'.format(venue['support_group_id'], venue['request_form_note'].number),
+            invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -843,7 +843,7 @@ class TestVenueRequest():
         assert blind_submissions[2].readers == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number), venue['venue_id'],
                                                 '{}/Reviewers'.format(venue['venue_id']),'{}/Area_Chairs'.format(venue['venue_id']),'{}/Program_Chairs'.format(venue['venue_id'])]      
         
-        # Post a release papers note
+        # Post a post decision note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
@@ -852,7 +852,7 @@ class TestVenueRequest():
                 'release_all_papers': 'Yes, release all papers to the public'
             },
             forum=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Release_Papers'.format(venue['support_group_id'], venue['request_form_note'].number),
+            invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,

@@ -33,26 +33,32 @@ def process(client, note, invitation):
     elif invitation_type == 'Decision_Stage':
         conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
 
-        if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private."):
-            client.post_invitation(openreview.Invitation(
-                id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Release_Papers',
-                super = SUPPORT_GROUP + '/-/Release_Papers',
-                invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
-                reply = {
-                    'forum': forum_note.id,
-                    'referent': forum_note.id,
-                    'readers' : {
-                        'description': 'The users who will be allowed to read the above content.',
-                        'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
-                    }
-                },
-                signatures = ['~Super_User1']
-            ))
+        content = {
+            'release_all_papers': {
+                'description': 'Would you like to release all papers to the public? Do not click any option if you would not like to release papers to the public.',
+                'value-radio': [
+                    'Yes, release all papers to the public',
+                    'No, release only accepted papers to the public'],
+                'required': False
+            },
+            'reveal_all_authors': {
+                'description': 'Would you like to release author identities of all papers to the public? Do not click any option if you would not like to reveal author names.',
+                'value-radio': [
+                    'Yes, reveal author identities of all papers to the public',
+                    'No, reveal author identities of only accepted papers to the public'],
+                'required': False
+            }
+        }
 
-        if (forum_note.content.get('Author and Reviewer Anonymity', '') == "Double-blind"):
+        if (forum_note.content.get('Open Reviewing Policy','') != "Submissions and reviews should both be private."):
+            del content['release_all_papers']
+        if (forum_note.content.get('Author and Reviewer Anonymity', '') != "Double-blind"):
+            del content['reveal_all_authors']
+
+        if content:
             client.post_invitation(openreview.Invitation(
-                id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Reveal_Authors',
-                super = SUPPORT_GROUP + '/-/Reveal_Authors',
+                id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Decision_Stage',
+                super = SUPPORT_GROUP + '/-/Post_Decision_Stage',
                 invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
                 reply = {
                     'forum': forum_note.id,
@@ -60,7 +66,8 @@ def process(client, note, invitation):
                     'readers' : {
                         'description': 'The users who will be allowed to read the above content.',
                         'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
-                    }
+                    },
+                    'content': content
                 },
                 signatures = ['~Super_User1']
             ))
@@ -71,12 +78,12 @@ def process(client, note, invitation):
     elif invitation_type == 'Comment_Stage':
         conference.set_comment_stage(openreview.helpers.get_comment_stage(client, forum_note))
 
-    elif invitation_type == 'Reveal_Authors':
-        accepted=forum_note.content.get('reveal_all_authors', '') == 'No, reveal author identities of only accepted papers to the public'
-        conference.reveal_authors(accepted)
-
-    elif invitation_type == 'Release_Papers':
-        accepted=forum_note.content.get('release_all_papers', '') == 'No, release only accepted papers to the public'
-        conference.release_notes(accepted)
+    elif invitation_type == 'Post_Decision_Stage':
+        if 'reveal_all_authors' in forum_note.content:
+            reveal_accepted=forum_note.content.get('reveal_all_authors', '') == 'No, reveal author identities of only accepted papers to the public'
+            conference.reveal_authors(reveal_accepted)
+        if 'release_all_papers' in forum_note.content:
+            release_accepted=forum_note.content.get('release_all_papers', '') == 'No, release only accepted papers to the public'
+            conference.release_notes(release_accepted)
 
     print('Conference: ', conference.get_id())
