@@ -663,6 +663,11 @@ class PublicCommentInvitation(openreview.Invitation):
 
         comment_stage = conference.comment_stage
 
+        signature_regex = '~.*|{}'.format(conference.get_program_chairs_id()) 
+
+        if comment_stage.anonymous:
+            signature_regex = '~.*|\\(anonymous\\)|{}'.format(conference.get_program_chairs_id()) 
+
         super(PublicCommentInvitation, self).__init__(id = conference.get_invitation_id('Public_Comment', note.number),
             super = conference.get_invitation_id('Comment'),
             cdate = tools.datetime_millis(comment_stage.start_date) if comment_stage.start_date else None,
@@ -685,7 +690,7 @@ class PublicCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': '~.*|\\(anonymous\\)' if comment_stage.anonymous else '~.*',
+                    'values-regex': signature_regex,
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -844,7 +849,7 @@ class PaperReviewInvitation(openreview.Invitation):
             super = conference.get_invitation_id(review_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [conference.get_reviewers_id(number = note.number), conference.support_user],
+            invitees = [conference.get_reviewers_id(number = note.number), conference.get_program_chairs_id(), conference.support_user],
             reply = reply
         )
 
@@ -912,11 +917,11 @@ class PaperReviewRebuttalInvitation(openreview.Invitation):
             },
             'signatures': {
                 'description': 'How your identity will be displayed with the above content.',
-                'values-regex': paper_group + '/Authors'
+                'values-regex': paper_group + '/Authors|'+ conference.get_program_chairs_id()
             },
             'writers': {
                 'description': 'Users that may modify this record.',
-                'values': [conference.id, paper_group + '/Authors']
+                'values-copied': [conference.get_id(), '{signatures}']
             }
         }
 
@@ -924,7 +929,7 @@ class PaperReviewRebuttalInvitation(openreview.Invitation):
             super = conference.get_invitation_id(review_rebuttal_stage.name),
             writers = [conference.id],
             signatures = [conference.id],
-            invitees = [paper_group + '/Authors', conference.support_user],
+            invitees = [paper_group + '/Authors', conference.get_program_chairs_id(), conference.support_user],
             reply = reply
         )
 
@@ -984,11 +989,11 @@ class PaperReviewRevisionInvitation(openreview.Invitation):
                 'values': review.nonreaders
             },
             'writers': {
-                'values': review.writers,
+                'values-copied': [conference.get_id(), '{signatures}'],
                 'description': 'How your identity will be displayed.'
             },
             'signatures': {
-                'values-regex': review.signatures,
+                'values-regex': '{}|{}'.format(review.signatures[0], conference.get_program_chairs_id()),
                 'description': 'How your identity will be displayed.'
             }
         }
@@ -1043,11 +1048,11 @@ class PaperReviewRatingInvitation(openreview.Invitation):
                 'values': [conference.get_program_chairs_id(), paper_group + '/Area_Chairs', paper_group + '/Reviewers/Submitted']
             },
             'writers': {
-                'values-regex': paper_group + '/Area_Chair[0-9]+',
+                'values-copied': [conference.get_id(), '{signatures}'],
                 'description': 'How your identity will be displayed.'
             },
             'signatures': {
-                'values-regex': paper_group + '/Area_Chair[0-9]+',
+                'values-regex': paper_group + '/Area_Chair[0-9]+|' + conference.get_program_chairs_id(),
                 'description': 'How your identity will be displayed.'
             }
         }
