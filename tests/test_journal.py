@@ -16,6 +16,7 @@ class TestJournal():
         super_user = 'openreview.net'
         raia_client = helpers.create_user('raia@mail.com', 'Raia', 'Hadsell')
         joelle_client = helpers.create_user('joelle@mail.com', 'Joelle', 'Pineau')
+        peter_client = helpers.create_user('peter@mail.com', 'Peter', 'Snow')
 
         ## venue group
         venue_group=client.post_group(openreview.Group(id=venue_id,
@@ -157,7 +158,7 @@ class TestJournal():
                                     'hidden': True
                                 },
                                 'readers': {
-                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']
+                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Authors']
                                 }
                             },
                             'authorids': {
@@ -168,7 +169,7 @@ class TestJournal():
                                     'required':True
                                 },
                                 'readers': {
-                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/Authors']
+                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Authors']
                                 }
                             },
                             'pdf': {
@@ -422,7 +423,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 4
+        assert len(invitations) == 6
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
@@ -451,17 +452,49 @@ class TestJournal():
             )
         )
 
-        # ## Add revision to submission 1
-        # edit_note_1 = test_client.post_note_edit(invitation=submission_invitation_id,
-        #                             signatures=['~Test_User1'],
-        #                             referent=submission_note_1['id'],
-        #                             note=openreview.Note(
-        #                                 forum=submission_note_1['id'],
-        #                                 content={
-        #                                     'title': { 'value': 'Paper title Version 2' }
-        #                                 }
-        #                             ))
-        # time.sleep(2)
-        # process_logs = client.get_process_logs(id = submission_note_1['id'])
-        # assert len(process_logs) == 2
-        # assert process_logs[0]['status'] == 'ok'
+        # Post a public comment
+        comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Comment',
+            signatures=['~Peter_Snow1'],
+            note=openreview.Note(
+                signatures=['~Peter_Snow1'],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'title': { 'value': 'Comment title' },
+                    'comment': { 'value': 'This is an inapropiate comment' }
+                }
+            )
+        )
+        comment_note_id=comment_note['note']['id']
+        note = client.get_note(comment_note_id)
+        assert note
+        assert note.invitation == '.TMLR/Paper1/-/Comment'
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/AEs', '~Peter_Snow1']
+        assert note.signatures == ['~Peter_Snow1']
+        assert note.content['title'] == 'Comment title'
+        assert note.content['comment'] == 'This is an inapropiate comment'
+
+
+        # Moderate a public comment
+        moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderate',
+            signatures=[f"{venue_id}/Paper1/AEs"],
+            referent=comment_note_id,
+            note=openreview.Note(
+                signatures=['~Peter_Snow1'],
+                readers=[venue_id, f"{venue_id}/Paper1/AEs"],
+                content={
+                    'title': { 'value': 'Moderated comment' },
+                    'comment': { 'value': 'Removed: This is an inapropiate comment' }
+                }
+            )
+        )
+
+        note = client.get_note(comment_note_id)
+        assert note
+        assert note.invitation == '.TMLR/Paper1/-/Comment'
+        assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/AEs']
+        assert note.signatures == ['~Peter_Snow1']
+        assert note.content['title'] == 'Moderated comment'
+        assert note.content['comment'] == 'Removed: This is an inapropiate comment'

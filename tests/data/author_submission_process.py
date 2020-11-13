@@ -199,4 +199,92 @@ def process(client, note, invitation):
                 }
             }))
 
+    comment_invitation_id=f'{paper_group.id}/-/Comment'
+    invitation = client.post_invitation_edit(readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        invitation=openreview.Invitation(id=comment_invitation_id,
+            invitees=['everyone'],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'signatures': { 'values-regex': '~.*' },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                'note': {
+                    'forum': { 'value': note.id },
+                    #'replyto': { 'value': note.id },
+                    'signatures': { 'values': ['${signatures}'] },
+                    'readers': { 'values': [ 'everyone']},
+                    'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                    'content': {
+                        'title': {
+                            'value': {
+                                'order': 0,
+                                'value-regex': '.{1,500}',
+                                'description': 'Brief summary of your comment.',
+                                'required': True
+                            }
+                        },
+                        'comment': {
+                            'value': {
+                                'order': 1,
+                                'value-regex': '[\\S\\s]{1,5000}',
+                                'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'required': True,
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            }))
+
+    moderate_invitation_id=f'{paper_group.id}/-/Moderate'
+    invitation = client.post_invitation_edit(readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        invitation=openreview.Invitation(id=moderate_invitation_id,
+            invitees=[venue_id, f'{paper_group.id}/AEs'],
+            readers=[venue_id, f'{paper_group.id}/AEs'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'forum': note.id,
+                'referent': { 'value-invitation': comment_invitation_id },
+                'signatures': { 'values-regex': f'{paper_group.id}/AEs|{venue_id}$' },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
+                'note': {
+                    'readers': {
+                        'values-dropdown': ['everyone', venue_id, f'{paper_group.id}/AEs']
+                    },
+                    'writers': {
+                        'values': [venue_id, f'{paper_group.id}/AEs']
+                    },
+                    'signatures': { 'values-regex': '~.*' },
+                    'content': {
+                        'title': {
+                            'value': {
+                                'order': 0,
+                                'value-regex': '.{1,500}',
+                                'description': 'Brief summary of your comment.',
+                                'required': True
+                            }
+                        },
+                        'comment': {
+                            'value': {
+                                'order': 1,
+                                'value-regex': '[\\S\\s]{1,5000}',
+                                'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'required': True,
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    )
+
 
