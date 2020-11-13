@@ -1124,81 +1124,46 @@ class Conference(object):
         for future in futures:
             result = future.result()
 
-    def release_notes(self, accepted=False):
-        submissions = self.get_submissions(accepted=accepted, details='original')
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False):
+        submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
 
-        if not self.submission_stage.double_blind:
+        if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
             self.invitation_builder.set_submission_invitation(self, public=True)
-            for submission in submissions:
-                submission.readers = ['everyone']
-                decision_note = decisions_by_forum.get(submission.forum, None)
-                if decision_note and 'Accept' in decision_note.content['decision']:
-                    accepted = True
-                submission.content['_bibtex'] = tools.get_bibtex(
-                        submission,
-                        venue_fullname=self.name,
-                        year=str(self.year),
-                        url_forum=submission.forum,
-                        accepted=accepted,
-                        anonymous=False)
-                self.client.post_note(submission)
-        else: 
-            for submission in submissions:
-                submission.readers = ['everyone']
-                original = submission.details['original']
-                accepted = False
-                decision_note = decisions_by_forum.get(submission.forum, None)
-                if decision_note and 'Accept' in decision_note.content['decision']:
-                    accepted = True
-                if 'Anonymous' in submission.content['authors']:
-                    submission.content = {
-                        'authors':['Anonymous'],
-                        'authorids': submission.content['authorids'],
-                        '_bibtex': tools.get_bibtex(
-                            openreview.Note.from_json(original),
-                            venue_fullname=self.name,
-                            year=str(self.year),
-                            url_forum=submission.forum,
-                            accepted=accepted,
-                            anonymous=True)
-                    }
-                else:
-                    submission.content = {
-                        '_bibtex': tools.get_bibtex(
-                            openreview.Note.from_json(original),
-                            venue_fullname=self.name,
-                            year=str(self.year),
-                            url_forum=submission.forum,
-                            accepted=accepted,
-                            anonymous=False)
-                    }
 
-                self.client.post_note(submission)
+        def is_release_note(is_note_accepted):
+            return release_all_notes or (release_notes_accepted and is_note_accepted)
 
-        self.set_homepage_decisions()
-        active_venues = self.client.get_group('active_venues')
-        self.client.remove_members_from_group(active_venues, self.id)
-    
-    def reveal_authors(self, accepted=False):
-        submissions = self.get_submissions(accepted=accepted, details='original')
-        decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
-        
+        def is_release_authors(is_note_accepted):
+            return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
+
         for submission in submissions:
-            original = submission.details['original']
-            accepted = False
             decision_note = decisions_by_forum.get(submission.forum, None)
-            if decision_note and 'Accept' in decision_note.content['decision']:
-                accepted = True
-            submission.content = {
-                '_bibtex': tools.get_bibtex(
-                            openreview.Note.from_json(original),
-                            venue_fullname=self.name,
-                            year=str(self.year),
-                            url_forum=submission.forum,
-                            accepted=accepted,
-                            anonymous=False)
-            }
+            note_accepted = decision_note and 'Accept' in decision_note.content['decision']
+            if is_release_note(note_accepted):
+                submission.readers = ['everyone']
+            if self.submission_stage.double_blind:
+                release_authors = is_release_authors(note_accepted)
+                submission.content = {
+                    '_bibtex': tools.get_bibtex(
+                                openreview.Note.from_json(submission.details['original']),
+                                venue_fullname=self.name,
+                                year=str(self.year),
+                                url_forum=submission.forum,
+                                accepted=note_accepted,
+                                anonymous=(not release_authors))
+                }
+                if not release_authors:
+                    submission.content['authors'] = ['Anonymous']
+                    submission.content['authorids'] = ['Anonymous']
+            else:
+                submission.content['_bibtex'] = tools.get_bibtex(
+                                submission,
+                                venue_fullname=self.name,
+                                year=str(self.year),
+                                url_forum=submission.forum,
+                                accepted=note_accepted,
+                                anonymous=False)
             self.client.post_note(submission)
         
         self.set_homepage_decisions()

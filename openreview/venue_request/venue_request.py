@@ -451,19 +451,21 @@ class VenueStages():
         ))
     def setup_post_decision_stage(self):
         post_decision_content = {
-            'release_all_papers': {
-                'description': 'Would you like to release all papers to the public? Do not click any option if you would not like to release papers to the public.',
+            'release_submissions': {
+                'description': 'Would you like to release submissions to the public?',
                 'value-radio': [
-                    'Yes, release all papers to the public',
-                    'No, release only accepted papers to the public'],
-                'required': False
+                    'Release all submissions to the public',
+                    'Release only accepted submission to the public',
+                    'No, I don\'t want to release any submissions'],
+                'required': True
             },
-            'reveal_all_authors': {
-                'description': 'Would you like to release author identities of all papers to the public? Do not click any option if you would not like to reveal author names.',
+            'reveal_authors': {
+                'description': 'Would you like to release author identities of submissions to the public?',
                 'value-radio': [
-                    'Yes, reveal author identities of all papers to the public',
-                    'No, reveal author identities of only accepted papers to the public'],
-                'required': False
+                    'Reveal author identities of all submissions to the public',
+                    'Reveal author identities of only accepted submissions to the public',
+                    'No, I don\'t want to reveal any author identities.'],
+                'required': True
             }
         }
 

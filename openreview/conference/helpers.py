@@ -99,8 +99,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
     create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
 
-    author_names_revealed = 'reveal author identities' in note.content.get('reveal_all_authors', '')
-    papers_released = 'papers to the public' in note.content.get('release_all_papers', '')
+    author_names_revealed = 'reveal author identities' in note.content.get('reveal_authors', '')
+    papers_released = 'papers to the public' in note.content.get('release_submissions', '')
 
     builder.set_submission_stage(
         double_blind=double_blind,
