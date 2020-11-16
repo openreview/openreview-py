@@ -528,6 +528,17 @@ class TestJournal():
             )
         )
 
+        time.sleep(2)
+        review_2=review_note['note']['id']
+        process_logs = client.get_process_logs(id = review_2)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
+        assert len(reviews) == 2
+        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
+        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer3",
             readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"],
             writers=[venue_id, f"{venue_id}/Paper1/AEs"],
@@ -551,23 +562,14 @@ class TestJournal():
             )
         )
 
+        time.sleep(2)
+        review_3=review_note['note']['id']
+        process_logs = client.get_process_logs(id = review_3)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 3
-        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
-        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
-        assert reviews[2].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
-
-        review_invitation_id=f'{venue_id}/Paper1/-/Review'
-        invitation = client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            referent=review_invitation_id,
-            invitation=openreview.Invitation(id=review_invitation_id,
-                signatures=[venue_id],
-                reply={
-                    'note': {
-                        'readers': { 'values': ['everyone'] }
-                    }
-                }
-            )
-        )
+        assert reviews[0].readers == ['everyone']
+        assert reviews[1].readers == ['everyone']
+        assert reviews[2].readers == ['everyone']
