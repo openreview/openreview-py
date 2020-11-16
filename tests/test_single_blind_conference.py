@@ -670,6 +670,8 @@ class TestSingleBlindConference():
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.has_area_chairs(True)
+        builder.set_conference_year(2018)
+        builder.set_conference_name('NIPS Workshop MLITS')
         conference = builder.get_result()
 
         conference.set_decision_stage(openreview.DecisionStage(public=True))
@@ -690,8 +692,7 @@ class TestSingleBlindConference():
         )
         note = client.post_note(note)
 
-
-        conference.set_homepage_decisions(release_accepted_notes={ 'conference_title': 'NIPS Workshop MLITS', 'conference_year': '2018' })
+        conference.post_decision_stage(release_notes_accepted=True)
 
         submissions = conference.get_submissions()
         assert len(submissions) == 1
