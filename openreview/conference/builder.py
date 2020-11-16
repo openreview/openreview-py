@@ -1355,10 +1355,10 @@ class ReviewStage(object):
         return [conference.get_authors_id(number = number)]
 
     def get_signatures(self, conference, number):
-        signature_regex = conference.get_id() + '/Paper' + str(number) + '/AnonReviewer[0-9]+'
+        signature_regex = conference.get_id() + '/Paper' + str(number) + '/AnonReviewer[0-9]+|' +  conference.get_program_chairs_id()
 
         if self.allow_de_anonymization:
-            return '~.*'
+            return '~.*|' + conference.get_program_chairs_id()
 
         return signature_regex
 
