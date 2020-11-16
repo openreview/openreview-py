@@ -17,6 +17,9 @@ class TestJournal():
         raia_client = helpers.create_user('raia@mail.com', 'Raia', 'Hadsell')
         joelle_client = helpers.create_user('joelle@mail.com', 'Joelle', 'Pineau')
         peter_client = helpers.create_user('peter@mail.com', 'Peter', 'Snow')
+        david_client=helpers.create_user('david@mail.com', 'David', 'Belanger')
+        melisa_client=helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
+        carlos_client=helpers.create_user('carlos@mail.com', 'Carlos', 'Mondragon')
 
         ## venue group
         venue_group=client.post_group(openreview.Group(id=venue_id,
@@ -111,7 +114,7 @@ class TestJournal():
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
-                        members=['~David_Bellanger1']
+                        members=['~David_Bellanger1', '~Melisa_Bok1', '~Carlos_Mondragon1']
                         ))
 
         ## Submission invitation
@@ -294,8 +297,8 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Carlos Mondragon']},
-                    'authorids': { 'value': ['~Test_User1', 'carlos@mail.com']},
+                    'authors': { 'value': ['Test User', 'Andrew McCallum']},
+                    'authorids': { 'value': ['~Test_User1', 'andrew@mail.com']},
                     'pdf': {'value': '/pdf/paper.pdf' },
                     'supplementary_material': { 'value': '/attachment/supplementary_material.zip'}
                 }
@@ -309,7 +312,7 @@ class TestJournal():
 
         author_group=client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~Test_User1', 'carlos@mail.com']
+        assert author_group.members == ['~Test_User1', 'andrew@mail.com']
         assert client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert client.get_group(f"{venue_id}/Paper1/AEs")
 
@@ -319,7 +322,7 @@ class TestJournal():
         assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
         assert note.content['venue'] == 'Submitted to TMLR'
         assert note.content['venueid'] == '.TMLR/Submitted'
 
@@ -330,8 +333,8 @@ class TestJournal():
                                         content={
                                             'title': { 'value': 'Paper title 2' },
                                             'abstract': { 'value': 'Paper abstract 2' },
-                                            'authors': { 'value': ['Test User', 'Melisa Bok']},
-                                            'authorids': { 'value': ['~Test_User1', 'melisa@mail.com']}
+                                            'authors': { 'value': ['Test User', 'Celeste Martinez']},
+                                            'authorids': { 'value': ['~Test_User1', 'celeste@mail.com']}
                                         }
                                     ))
 
@@ -343,7 +346,7 @@ class TestJournal():
 
         author_group=client.get_group(f"{venue_id}/Paper2/Authors")
         assert author_group
-        assert author_group.members == ['~Test_User1', 'melisa@mail.com']
+        assert author_group.members == ['~Test_User1', 'celeste@mail.com']
         assert client.get_group(f"{venue_id}/Paper2/Reviewers")
         assert client.get_group(f"{venue_id}/Paper2/AEs")
 
@@ -391,7 +394,7 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids'] == ['~Test_User1', 'carlos@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
         assert note.content['venue'] == 'Under review for TMLR'
         assert note.content['venueid'] == '.TMLR/Under_Review'
 
@@ -416,38 +419,39 @@ class TestJournal():
         assert note.writers == ['.TMLR', '.TMLR/Paper2/Authors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
         ## TODO: authorids should be anonymous
-        assert note.content['authorids'] == ['~Test_User1', 'melisa@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'celeste@mail.com']
         assert note.content['venue'] == 'Desk rejected by TMLR'
         assert note.content['venueid'] == '.TMLR/Desk_Rejection'
 
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 6
+        assert len(invitations) == 5
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
         ## Assign the reviewer
         ## TODO: use anonymous ids
-        joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", 'reviewer@journal.tmlr')
+        joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", ['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1'])
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer1",
             readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"],
             writers=[venue_id, f"{venue_id}/Paper1/AEs"],
             signatories=[f"{venue_id}/Paper1/AnonReviewer1"],
             signatures=[f"{venue_id}/Paper1/AEs"],
-            members=['reviewer@journal.tmlr']
+            members=['~David_Belanger1']
         ))
-        reviewer_client=helpers.create_user('reviewer@journal.tmlr', 'Reviewer', 'TMLR')
 
         ## Post a review edit
-        review_note = reviewer_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+        review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[f"{venue_id}/Paper1/AnonReviewer1"],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'Review title' },
                     'review': { 'value': 'This is the review' },
-                    'rating': { 'value': '10: Top 5% of accepted papers, seminal paper' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                    'rating': { 'value': 'Accept' },
+                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
+                    'certification_recommendation': { 'value': 'Outstanding article' },
+                    'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
                 }
             )
         )
@@ -498,3 +502,72 @@ class TestJournal():
         assert note.signatures == ['~Peter_Snow1']
         assert note.content['title'] == 'Moderated comment'
         assert note.content['comment'] == 'Removed: This is an inapropiate comment'
+
+        ## Assign two mote reviewers
+        ## TODO: use anonymous ids
+        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer2",
+            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"],
+            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
+            signatories=[f"{venue_id}/Paper1/AnonReviewer2"],
+            signatures=[f"{venue_id}/Paper1/AEs"],
+            members=['~Melisa_Bok1']
+        ))
+
+        ## Post a review edit
+        review_note = melisa_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[f"{venue_id}/Paper1/AnonReviewer2"],
+            note=openreview.Note(
+                content={
+                    'title': { 'value': 'another Review title' },
+                    'review': { 'value': 'This is another review' },
+                    'rating': { 'value': 'Accept' },
+                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
+                    'certification_recommendation': { 'value': 'Outstanding article' },
+                    'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                }
+            )
+        )
+
+        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer3",
+            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"],
+            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
+            signatories=[f"{venue_id}/Paper1/AnonReviewer3"],
+            signatures=[f"{venue_id}/Paper1/AEs"],
+            members=['~Carlos_Mondragon1']
+        ))
+
+        ## Post a review edit
+        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[f"{venue_id}/Paper1/AnonReviewer3"],
+            note=openreview.Note(
+                content={
+                    'title': { 'value': 'another Review title' },
+                    'review': { 'value': 'This is another review' },
+                    'rating': { 'value': 'Accept' },
+                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
+                    'certification_recommendation': { 'value': 'Outstanding article' },
+                    'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                }
+            )
+        )
+
+        reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
+        assert len(reviews) == 3
+        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
+        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
+        assert reviews[2].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+
+        review_invitation_id=f'{venue_id}/Paper1/-/Review'
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            referent=review_invitation_id,
+            invitation=openreview.Invitation(id=review_invitation_id,
+                signatures=[venue_id],
+                reply={
+                    'note': {
+                        'readers': { 'values': ['everyone'] }
+                    }
+                }
+            )
+        )

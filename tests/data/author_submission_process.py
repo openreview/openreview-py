@@ -49,14 +49,14 @@ def process(client, note, invitation):
             signatures=[venue_id],
             reply={
                 'signatures': { 'values-regex': f'{paper_group.id}/AnonReviewer.*|{paper_group.id}/AEs' },
-                'readers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs']},
-                'writers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs']},
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'note': {
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs']},
-                    'writers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs']},
+                    'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
+                    'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                     'content': {
                         'title': {
                             'value': {
@@ -75,20 +75,21 @@ def process(client, note, invitation):
                                 'markdown': True
                             }
                         },
-                        'rating': {
+                        'suggested_changes': {
+                            'value': {
+                                'order': 2,
+                                'value-regex': '[\\S\\s]{1,200000}',
+                                'description': 'List of suggested revisions to support acceptance (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'required': True,
+                                'markdown': True
+                            }
+                        },
+                        'recommendation': {
                             'value': {
                                 'order': 3,
-                                'value-dropdown': [
-                                    '10: Top 5% of accepted papers, seminal paper',
-                                    '9: Top 15% of accepted papers, strong accept',
-                                    '8: Top 50% of accepted papers, clear accept',
-                                    '7: Good paper, accept',
-                                    '6: Marginally above acceptance threshold',
-                                    '5: Marginally below acceptance threshold',
-                                    '4: Ok but not good enough - rejection',
-                                    '3: Clear rejection',
-                                    '2: Strong rejection',
-                                    '1: Trivial or wrong'
+                                'value-radio': [
+                                    'Accept',
+                                    'Reject'
                                 ],
                                 'required': True
                             }
@@ -105,99 +106,128 @@ def process(client, note, invitation):
                                 ],
                                 'required': True
                             }
+                        },
+                        'certification_recommendation': {
+                            'value': {
+                                'order': 5,
+                                'value-radio': [
+                                    'Featured article',
+                                    'Outstanding article'
+                                ],
+                                'required': False
+                            },
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
+                            }
+                        },
+                        'certification_confidence': {
+                            'value': {
+                                'order': 6,
+                                'value-radio': [
+                                    '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature',
+                                    '4: The reviewer is confident but not absolutely certain that the evaluation is correct',
+                                    '3: The reviewer is fairly confident that the evaluation is correct',
+                                    '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper',
+                                    '1: The reviewer\'s evaluation is an educated guess'
+                                ],
+                                'required': False
+                            },
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
+                            }
                         }
                     }
                 }
             }
     ))
 
-    revision_invitation_id=f'{paper_group.id}/-/Revision'
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=openreview.Invitation(id=revision_invitation_id,
-            invitees=[f"{paper_group.id}/Authors"],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            reply={
-                'referent': { 'value': note.id },
-                'signatures': { 'values': [f'{paper_group.id}/Authors'] },
-                'readers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs', f'{paper_group.id}/Authors']},
-                'writers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']},
-                'note': {
-                    'forum': { 'value': note.id },
-                    'content': {
-                        'title': {
-                            'value': {
-                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 1,
-                                'value-regex': '.{1,250}',
-                                'required':False
-                            }
-                        },
-                        'abstract': {
-                            'value': {
-                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 4,
-                                'value-regex': '[\\S\\s]{1,5000}',
-                                'required':False
-                            }
-                        },
-                        'authors': {
-                            'value': {
-                                'description': 'Comma separated list of author names.',
-                                'order': 2,
-                                'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                'required':False,
-                                'hidden': True
-                            },
-                            'readers': {
-                                'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']
-                            }
-                        },
-                        'authorids': {
-                            'value': {
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                'order': 3,
-                                'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                'required':False
-                            },
-                            'readers': {
-                                'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']
-                            }
-                        },
-                        'pdf': {
-                            'value': {
-                                'description': 'Upload a PDF file that ends with .pdf',
-                                'order': 5,
-                                'value-file': {
-                                    'fileTypes': ['pdf'],
-                                    'size': 50
-                                },
-                                'required':False
-                            }
-                        },
-                        "supplementary_material": {
-                            'value': {
-                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                "order": 6,
-                                "value-file": {
-                                    "fileTypes": [
-                                        "zip",
-                                        "pdf"
-                                    ],
-                                    "size": 100
-                                },
-                                "required": False
-                            },
-                            'readers': {
-                                'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers', f'{paper_group.id}/Authors' ]
-                            }
-                        }
-                    }
-                }
-            }))
+    # revision_invitation_id=f'{paper_group.id}/-/Revision'
+    # invitation = client.post_invitation_edit(readers=[venue_id],
+    #     writers=[venue_id],
+    #     signatures=[venue_id],
+    #     invitation=openreview.Invitation(id=revision_invitation_id,
+    #         invitees=[f"{paper_group.id}/Authors"],
+    #         readers=['everyone'],
+    #         writers=[venue_id],
+    #         signatures=[venue_id],
+    #         reply={
+    #             'referent': { 'value': note.id },
+    #             'signatures': { 'values': [f'{paper_group.id}/Authors'] },
+    #             'readers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs', f'{paper_group.id}/Authors']},
+    #             'writers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']},
+    #             'note': {
+    #                 'forum': { 'value': note.id },
+    #                 'content': {
+    #                     'title': {
+    #                         'value': {
+    #                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+    #                             'order': 1,
+    #                             'value-regex': '.{1,250}',
+    #                             'required':False
+    #                         }
+    #                     },
+    #                     'abstract': {
+    #                         'value': {
+    #                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+    #                             'order': 4,
+    #                             'value-regex': '[\\S\\s]{1,5000}',
+    #                             'required':False
+    #                         }
+    #                     },
+    #                     'authors': {
+    #                         'value': {
+    #                             'description': 'Comma separated list of author names.',
+    #                             'order': 2,
+    #                             'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+    #                             'required':False,
+    #                             'hidden': True
+    #                         },
+    #                         'readers': {
+    #                             'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']
+    #                         }
+    #                     },
+    #                     'authorids': {
+    #                         'value': {
+    #                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+    #                             'order': 3,
+    #                             'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+    #                             'required':False
+    #                         },
+    #                         'readers': {
+    #                             'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']
+    #                         }
+    #                     },
+    #                     'pdf': {
+    #                         'value': {
+    #                             'description': 'Upload a PDF file that ends with .pdf',
+    #                             'order': 5,
+    #                             'value-file': {
+    #                                 'fileTypes': ['pdf'],
+    #                                 'size': 50
+    #                             },
+    #                             'required':False
+    #                         }
+    #                     },
+    #                     "supplementary_material": {
+    #                         'value': {
+    #                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+    #                             "order": 6,
+    #                             "value-file": {
+    #                                 "fileTypes": [
+    #                                     "zip",
+    #                                     "pdf"
+    #                                 ],
+    #                                 "size": 100
+    #                             },
+    #                             "required": False
+    #                         },
+    #                         'readers': {
+    #                             'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers', f'{paper_group.id}/Authors' ]
+    #                         }
+    #                     }
+    #                 }
+    #             }
+    #         }))
 
     comment_invitation_id=f'{paper_group.id}/-/Comment'
     invitation = client.post_invitation_edit(readers=[venue_id],

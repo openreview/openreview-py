@@ -1392,7 +1392,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, readers, writers, signatures, invitation):
+    def post_invitation_edit(self, readers, writers, signatures, invitation, referent=None):
         """
         """
         edit_json = {
@@ -1401,6 +1401,10 @@ class Client(object):
             'signatures': signatures,
             'invitation': invitation.to_json()
         }
+
+        if referent is not None:
+            edit_json['referent']=referent
+
         response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1640,7 +1644,7 @@ class Invitation(object):
     :type details: dict, optional
     """
     def __init__(self,
-        id,
+        id = None,
         readers = None,
         writers = None,
         invitees = None,
