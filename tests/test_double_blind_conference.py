@@ -1683,7 +1683,7 @@ class TestDoubleBlindConference():
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
 
-        conference.reveal_authors(accepted=True)
+        conference.post_decision_stage(reveal_authors_accepted=True)
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
