@@ -1034,13 +1034,16 @@ class PaperReviewRatingInvitation(openreview.Invitation):
 
         review_rating_stage = conference.review_rating_stage
         paper_group = review.invitation.split('/-/')[0]
+        paper_number = paper_group.split('/Paper')[-1]
+        review_signature = review.signatures[0]
+        readers = review_rating_stage.get_readers(conference, paper_number, review_signature)
 
         reply = {
             'forum': review.forum,
             'replyto': review.id,
             'readers': {
                 'description': 'Select all user groups that should be able to read this comment.',
-                'values': [conference.get_program_chairs_id(), paper_group + '/Area_Chairs', paper_group + '/Reviewers/Submitted']
+                'values': readers
             },
             'writers': {
                 'values-regex': paper_group + '/Area_Chair[0-9]+',
