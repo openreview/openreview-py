@@ -1676,13 +1676,14 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_name('Automated Knowledge Base Construction Conference')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
 
-        conference.set_homepage_decisions(release_accepted_notes={ 'conference_title': 'Automated Knowledge Base Construction Conference', 'conference_year': '2019'})
+        conference.post_decision_stage(reveal_authors_accepted=True)
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
