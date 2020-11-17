@@ -1573,8 +1573,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             replyto=reviews[1].id,
             invitation=reviews[1].signatures[0] + '/-/Review_Rating',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted'],
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs'],
             writers=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
             signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
             content={

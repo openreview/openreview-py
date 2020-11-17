@@ -1382,12 +1382,47 @@ class ReviewRevisionStage(object):
 
 class ReviewRatingStage(object):
 
-    def __init__(self, start_date = None, due_date = None, name = 'Review_Rating', additional_fields = {}, remove_fields = []):
+    class Readers(Enum):
+        REVIEWERS = 0
+        REVIEWERS_ASSIGNED = 1
+        REVIEWERS_SUBMITTED = 2
+        REVIEWER_SIGNATURE = 3
+        NO_REVIEWERS = 4
+
+    def __init__(self, start_date = None, due_date = None, name = 'Review_Rating', additional_fields = {}, remove_fields = [], public = False, release_to_reviewers = Readers.NO_REVIEWERS):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
+        self.public = public
+        self.release_to_reviewers = release_to_reviewers
+
+    def _get_reviewer_readers(self, conference, number, review_signature):
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS:
+            return conference.get_reviewers_id()
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS_ASSIGNED:
+            return conference.get_reviewers_id(number = number)
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS_SUBMITTED:
+            return conference.get_reviewers_id(number = number) + '/Submitted'
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWER_SIGNATURE:
+            return review_signature
+        raise openreview.OpenReviewException('Unrecognized readers option')
+
+    def get_readers(self, conference, number, review_signature):
+
+        if self.public:
+            return ['everyone']
+
+        readers = [ conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(number = number))
+
+        if self.release_to_reviewers is not ReviewRatingStage.Readers.NO_REVIEWERS:
+            readers.append(self._get_reviewer_readers(conference, number, review_signature))
+
+        return readers
 
 class CommentStage(object):
 
@@ -1641,6 +1676,9 @@ class ConferenceBuilder(object):
 
     def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
         self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
+
+    def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
+        self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
 
     def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False):
         self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
