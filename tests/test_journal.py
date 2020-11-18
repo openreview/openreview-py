@@ -138,58 +138,56 @@ class TestJournal():
                         'content': {
                             'title': {
                                 'value': {
-                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 1,
                                     'value-regex': '.{1,250}',
                                     'required':True
-                                }
+                                },
+                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'order': 1
                             },
                             'abstract': {
                                 'value': {
-                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 4,
                                     'value-regex': '[\\S\\s]{1,5000}',
                                     'required':True
-                                }
+                                },
+                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'order': 4,
                             },
                             'authors': {
                                 'value': {
-                                    'description': 'Comma separated list of author names.',
-                                    'order': 2,
                                     'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                    'required':True,
-                                    'hidden': True
+                                    'required':True
                                 },
+                                'description': 'Comma separated list of author names.',
+                                'order': 2,
+                                'hidden': True,
                                 'readers': {
                                     'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Authors']
                                 }
                             },
                             'authorids': {
                                 'value': {
-                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                    'order': 3,
                                     'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                                     'required':True
                                 },
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                'order': 3,
                                 'readers': {
                                     'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Authors']
                                 }
                             },
                             'pdf': {
                                 'value': {
-                                    'description': 'Upload a PDF file that ends with .pdf',
-                                    'order': 5,
                                     'value-file': {
                                         'fileTypes': ['pdf'],
                                         'size': 50
                                     },
-                                    'required':True
-                                }
+                                    'required': False
+                                },
+                                'description': 'Upload a PDF file that ends with .pdf',
+                                'order': 5,
                             },
                             "supplementary_material": {
                                 'value': {
-                                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                    "order": 6,
                                     "value-file": {
                                         "fileTypes": [
                                             "zip",
@@ -199,6 +197,8 @@ class TestJournal():
                                     },
                                     "required": False
                                 },
+                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                                "order": 6,
                                 'readers': {
                                     'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{number}}/AEs', f'{venue_id}/Paper${{number}}/Reviewers', f'{venue_id}/Paper${{number}}/Authors' ]
                                 }
@@ -206,14 +206,14 @@ class TestJournal():
                             'venue': {
                                 'value': {
                                     'value': 'Submitted to TMLR',
-                                    'hidden': True
-                                }
+                                },
+                                'hidden': True
                             },
                             'venueid': {
                                 'value': {
                                     'value': '.TMLR/Submitted',
-                                    'hidden': True
-                                }
+                                },
+                                'hidden': True
                             }
                         }
                     }
@@ -237,6 +237,7 @@ class TestJournal():
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs']},
                     'note': {
+                        'forum': { 'value-invitation': submission_invitation_id },
                         'readers': {
                             'values': ['everyone']
                         },
@@ -273,6 +274,7 @@ class TestJournal():
                     'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs', f'{venue_id}/Paper${{note.forum.number}}/Authors']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs']},
                     'note': {
+                        'forum': { 'value-invitation': submission_invitation_id },
                         'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.forum.number}}/AEs', f'{venue_id}/Paper${{note.forum.number}}/Authors']},
                         'content': {
                             'venue': {
@@ -299,8 +301,8 @@ class TestJournal():
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
                     'authorids': { 'value': ['~Test_User1', 'andrew@mail.com']},
-                    'pdf': {'value': '/pdf/paper.pdf' },
-                    'supplementary_material': { 'value': '/attachment/supplementary_material.zip'}
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'}
                 }
             ))
 
@@ -448,7 +450,9 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Review title' },
                     'review': { 'value': 'This is the review' },
-                    'rating': { 'value': 'Accept' },
+                    # 'rating': { 'value': 'Accept' },
+                    'suggested_changes': { 'value': 'No changes' },
+                    'recommendation': { 'value': 'Accept' },
                     'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
                     'certification_recommendation': { 'value': 'Outstanding article' },
                     'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
@@ -520,7 +524,9 @@ class TestJournal():
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
-                    'rating': { 'value': 'Accept' },
+                    # 'rating': { 'value': 'Accept' },
+                    'suggested_changes': { 'value': 'No changes' },
+                    'recommendation': { 'value': 'Accept' },
                     'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
                     'certification_recommendation': { 'value': 'Outstanding article' },
                     'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
@@ -543,7 +549,9 @@ class TestJournal():
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
-                    'rating': { 'value': 'Accept' },
+                    # 'rating': { 'value': 'Accept' },
+                    'suggested_changes': { 'value': 'No changes' },
+                    'recommendation': { 'value': 'Accept' },
                     'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
                     'certification_recommendation': { 'value': 'Outstanding article' },
                     'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
@@ -565,6 +573,7 @@ class TestJournal():
             invitation=openreview.Invitation(id=review_invitation_id,
                 signatures=[venue_id],
                 reply={
+                    'readers': { 'values': ['everyone'] },
                     'note': {
                         'readers': { 'values': ['everyone'] }
                     }
