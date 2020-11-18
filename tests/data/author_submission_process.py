@@ -39,11 +39,34 @@ def process(client, note, invitation):
 
     ## TODO: create this invitation using an invitation
     review_invitation_id=f'{paper_group.id}/-/Review'
+
+    process_function='''def process(client, note, invitation):
+    venue_id='.TMLR'
+
+    ## TODO: send message to the reviewer, AE confirming the review was posted
+
+    reviews=client.get_notes(forum=note.forum, invitation=note.invitation)
+    if len(reviews) == 3:
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            referent=note.invitation,
+            invitation=openreview.Invitation(id=note.invitation,
+                signatures=[venue_id],
+                reply={
+                    'note': {
+                        'readers': { 'values': ['everyone'] }
+                    }
+                }
+            )
+        )
+    '''
+
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
         invitation=openreview.Invitation(id=review_invitation_id,
-            invitees=[f"{paper_group.id}/Reviewers", f'{paper_group.id}/AEs'],
+            invitees=[venue_id, f"{paper_group.id}/Reviewers", f'{paper_group.id}/AEs'],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -138,7 +161,8 @@ def process(client, note, invitation):
                         }
                     }
                 }
-            }
+            },
+            process_string=process_function
     ))
 
     # revision_invitation_id=f'{paper_group.id}/-/Revision'
