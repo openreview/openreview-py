@@ -748,17 +748,8 @@ class Conference(object):
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, total_recommendations)
         return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()), total_recommendations)
 
-    def open_paper_ranking(self, start_date=None, due_date=None):
-
-        invitations = []
-        invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_reviewers_id(), start_date, due_date)
-        invitations.append(invitation)
-
-        if self.use_area_chairs:
-            invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_area_chairs_id(), start_date, due_date)
-            invitations.append(invitation)
-
-        return invitations
+    def open_paper_ranking(self, committee_id, start_date=None, due_date=None):
+        return self.invitation_builder.set_paper_ranking_invitation(self, committee_id, start_date, due_date)
 
     ## Deprecated
     def open_registration(self, name=None, start_date=None, due_date=None, additional_fields={}, ac_additional_fields={}, instructions=None, ac_instructions=None):
@@ -1165,7 +1156,7 @@ class Conference(object):
                                 accepted=note_accepted,
                                 anonymous=False)
             self.client.post_note(submission)
-        
+
         self.set_homepage_decisions()
         active_venues = self.client.get_group('active_venues')
         self.client.remove_members_from_group(active_venues, self.id)
@@ -1192,7 +1183,7 @@ class SubmissionStage(object):
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            email_pcs_on_desk_reject=True, 
+            email_pcs_on_desk_reject=True,
             author_names_revealed=False,
             papers_released=False
         ):
@@ -1632,7 +1623,7 @@ class ConferenceBuilder(object):
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True,
-            author_names_revealed=False, 
+            author_names_revealed=False,
             papers_released=False
         ):
 
@@ -1654,7 +1645,7 @@ class ConferenceBuilder(object):
             email_pcs_on_withdraw,
             desk_rejected_submission_public,
             desk_rejected_submission_reveal_authors,
-            email_pcs_on_desk_reject, 
+            email_pcs_on_desk_reject,
             author_names_revealed,
             papers_released
         )
