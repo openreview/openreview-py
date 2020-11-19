@@ -1333,7 +1333,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert not selenium.find_elements_by_class_name('tag-widget')
 
         now = datetime.datetime.utcnow()
-        conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
 
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)

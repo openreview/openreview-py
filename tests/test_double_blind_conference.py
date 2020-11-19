@@ -1556,7 +1556,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
 
         now = datetime.datetime.utcnow()
-        conference.open_paper_ranking(due_date = now + datetime.timedelta(minutes = 10))
+        conference.open_paper_ranking(conference.get_reviewers_id(), due_date = now + datetime.timedelta(minutes = 10))
 
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
