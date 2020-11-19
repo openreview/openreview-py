@@ -1549,7 +1549,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 'description': 'Justification of the rating. Max length: 5000',
                 'required': False
             }
-        }, remove_fields = ['title', 'novelty', 'soundness']))
+        }, remove_fields = ['review_quality']))
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
 
