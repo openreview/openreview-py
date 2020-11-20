@@ -20,6 +20,7 @@ class TestJournal():
         david_client=helpers.create_user('david@mail.com', 'David', 'Belanger')
         melisa_client=helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
         carlos_client=helpers.create_user('carlos@mail.com', 'Carlos', 'Mondragon')
+        guest_client=openreview.Client()
 
         ## venue group
         venue_group=client.post_group(openreview.Group(id=venue_id,
@@ -450,7 +451,6 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Review title' },
                     'review': { 'value': 'This is the review' },
-                    # 'rating': { 'value': 'Accept' },
                     'suggested_changes': { 'value': 'No changes' },
                     'recommendation': { 'value': 'Accept' },
                     'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
@@ -474,7 +474,7 @@ class TestJournal():
             )
         )
         comment_note_id=comment_note['note']['id']
-        note = client.get_note(comment_note_id)
+        note = guest_client.get_note(comment_note_id)
         assert note
         assert note.invitation == '.TMLR/Paper1/-/Comment'
         assert note.readers == ['everyone']
@@ -490,22 +490,21 @@ class TestJournal():
             referent=comment_note_id,
             note=openreview.Note(
                 signatures=['~Peter_Snow1'],
-                readers=[venue_id, f"{venue_id}/Paper1/AEs"],
                 content={
                     'title': { 'value': 'Moderated comment' },
-                    'comment': { 'value': 'Removed: This is an inapropiate comment' }
+                    'comment': { 'value': 'Moderated content' }
                 }
             )
         )
 
-        note = client.get_note(comment_note_id)
+        note = guest_client.get_note(comment_note_id)
         assert note
         assert note.invitation == '.TMLR/Paper1/-/Comment'
-        assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs']
+        assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/AEs']
         assert note.signatures == ['~Peter_Snow1']
-        assert note.content['title'] == 'Moderated comment'
-        assert note.content['comment'] == 'Removed: This is an inapropiate comment'
+        assert note.content.get('title') is None
+        assert note.content.get('comment') is None
 
         ## Assign two mote reviewers
         ## TODO: use anonymous ids
@@ -524,7 +523,6 @@ class TestJournal():
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
-                    # 'rating': { 'value': 'Accept' },
                     'suggested_changes': { 'value': 'No changes' },
                     'recommendation': { 'value': 'Accept' },
                     'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
@@ -560,7 +558,6 @@ class TestJournal():
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
-                    # 'rating': { 'value': 'Accept' },
                     'suggested_changes': { 'value': 'No changes' },
                     'recommendation': { 'value': 'Accept' },
                     'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },

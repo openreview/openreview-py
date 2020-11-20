@@ -271,7 +271,6 @@ def process(client, note, invitation):
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'note': {
                     'forum': { 'value': note.id },
-                    #'replyto': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
@@ -314,7 +313,7 @@ def process(client, note, invitation):
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'note': {
                     'readers': {
-                        'values-dropdown': ['everyone', venue_id, f'{paper_group.id}/AEs']
+                        'values': ['everyone']
                     },
                     'writers': {
                         'values': [venue_id, f'{paper_group.id}/AEs']
@@ -327,6 +326,9 @@ def process(client, note, invitation):
                                 'value-regex': '.{1,500}',
                                 'description': 'Brief summary of your comment.',
                                 'required': True
+                            },
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/AEs', '${referent.signatures}']
                             }
                         },
                         'comment': {
@@ -336,6 +338,9 @@ def process(client, note, invitation):
                                 'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                                 'required': True,
                                 'markdown': True
+                            },
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/AEs', '${referent.signatures}']
                             }
                         }
                     }
