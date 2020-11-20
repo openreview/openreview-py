@@ -663,10 +663,10 @@ class PublicCommentInvitation(openreview.Invitation):
 
         comment_stage = conference.comment_stage
 
-        signature_regex = '~.*|{}'.format(conference.get_program_chairs_id()) 
+        signature_regex = '~.*|{}'.format(conference.get_program_chairs_id())
 
         if comment_stage.anonymous:
-            signature_regex = '~.*|\\(anonymous\\)|{}'.format(conference.get_program_chairs_id()) 
+            signature_regex = '~.*|\\(anonymous\\)|{}'.format(conference.get_program_chairs_id())
 
         super(PublicCommentInvitation, self).__init__(id = conference.get_invitation_id('Public_Comment', note.number),
             super = conference.get_invitation_id('Comment'),
@@ -675,7 +675,7 @@ class PublicCommentInvitation(openreview.Invitation):
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = ['everyone'],
-            noninvitees = conference.get_committee(number = note.number, with_authors = True),
+            noninvitees = [] if comment_stage.only_accepted else conference.get_committee(number = note.number, with_authors = True),
             reply = {
                 'forum': note.id,
                 'replyto': None,
@@ -1274,6 +1274,13 @@ class InvitationBuilder(object):
 
         invitations = []
         self.client.post_invitation(CommentInvitation(conference))
+
+        if conference.comment_stage.only_accepted:
+            accepted_notes=conference.get_submissions(accepted=True)
+            for note in tqdm(accepted_notes, total=len(accepted_notes), desc='set_public_comment_invitation_only_accepted'):
+                invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
+            return invitations
+
         for note in tqdm(notes, total=len(notes), desc='set_comment_invitation'):
             invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
 
