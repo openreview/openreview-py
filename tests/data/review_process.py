@@ -12,6 +12,9 @@ def process(client, note, invitation):
             invitation=openreview.Invitation(id=note.invitation,
                 signatures=[venue_id],
                 reply={
+                    'signatures': { 'values': [venue_id] },
+                    'readers': { 'values': [venue_id, '${referent.signatures}'] },
+                    'writers': { 'values': [venue_id] },
                     'note': {
                         'readers': { 'values': ['everyone'] }
                     }
