@@ -28,7 +28,7 @@ class SubmissionInvitation(openreview.Invitation):
         }
 
         if public:
-            readers = {'values': ['everyone']}
+            readers = {'values-regex': '.*'}
 
         content = invitations.submission.copy()
 
@@ -1039,13 +1039,16 @@ class PaperReviewRatingInvitation(openreview.Invitation):
 
         review_rating_stage = conference.review_rating_stage
         paper_group = review.invitation.split('/-/')[0]
+        paper_number = paper_group.split('/Paper')[-1]
+        review_signature = review.signatures[0]
+        readers = review_rating_stage.get_readers(conference, paper_number, review_signature)
 
         reply = {
             'forum': review.forum,
             'replyto': review.id,
             'readers': {
                 'description': 'Select all user groups that should be able to read this comment.',
-                'values': [conference.get_program_chairs_id(), paper_group + '/Area_Chairs', paper_group + '/Reviewers/Submitted']
+                'values': readers
             },
             'writers': {
                 'values-copied': [conference.get_id(), '{signatures}'],
@@ -1318,8 +1321,9 @@ class InvitationBuilder(object):
         invitations = []
         self.client.post_invitation(RebuttalInvitation(conference))
         for note in tqdm(reviews, desc='set_review_rebuttal_invitation'):
-            invitation = self.client.post_invitation(PaperReviewRebuttalInvitation(conference, note))
-            invitations.append(invitation)
+            if 'AnonReviewer' in note.signatures[0]:
+                invitation = self.client.post_invitation(PaperReviewRebuttalInvitation(conference, note))
+                invitations.append(invitation)
 
         return invitations
 
@@ -1327,8 +1331,9 @@ class InvitationBuilder(object):
         invitations = []
         self.client.post_invitation(ReviewRevisionInvitation(conference))
         for note in tqdm(reviews, desc='set_review_revision_invitation'):
-            invitation = self.client.post_invitation(PaperReviewRevisionInvitation(conference, note))
-            invitations.append(invitation)
+            if 'AnonReviewer' in note.signatures[0]:
+                invitation = self.client.post_invitation(PaperReviewRevisionInvitation(conference, note))
+                invitations.append(invitation)
 
         return invitations
 
@@ -1336,8 +1341,9 @@ class InvitationBuilder(object):
         invitations = []
         self.client.post_invitation(ReviewRatingInvitation(conference))
         for note in tqdm(reviews, desc='set_review_rating_invitation'):
-            invitation = self.client.post_invitation(PaperReviewRatingInvitation(conference, note))
-            invitations.append(invitation)
+            if 'AnonReviewer' in note.signatures[0]:
+                invitation = self.client.post_invitation(PaperReviewRatingInvitation(conference, note))
+                invitations.append(invitation)
 
         return invitations
 

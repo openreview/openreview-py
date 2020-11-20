@@ -685,7 +685,7 @@ class Conference(object):
 
     def setup_final_deadline_stage(self, force=False, hide_fields=[]):
 
-        if self.submission_stage.double_blind:
+        if self.submission_stage.double_blind and not (self.submission_stage.author_names_revealed or self.submission_stage.papers_released):
             self.create_blind_submissions(hide_fields)
 
         if not self.submission_stage.double_blind and self.submission_stage.public:
@@ -748,17 +748,8 @@ class Conference(object):
         self.invitation_builder.set_recommendation_invitation(self, start_date, due_date, total_recommendations)
         return self.__set_recommendation_page(assignment_title, score_ids, self.get_conflict_score_id(self.get_reviewers_id()), total_recommendations)
 
-    def open_paper_ranking(self, start_date=None, due_date=None):
-
-        invitations = []
-        invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_reviewers_id(), start_date, due_date)
-        invitations.append(invitation)
-
-        if self.use_area_chairs:
-            invitation = self.invitation_builder.set_paper_ranking_invitation(self, self.get_area_chairs_id(), start_date, due_date)
-            invitations.append(invitation)
-
-        return invitations
+    def open_paper_ranking(self, committee_id, start_date=None, due_date=None):
+        return self.invitation_builder.set_paper_ranking_invitation(self, committee_id, start_date, due_date)
 
     ## Deprecated
     def open_registration(self, name=None, start_date=None, due_date=None, additional_fields={}, ac_additional_fields={}, instructions=None, ac_instructions=None):
@@ -1076,7 +1067,7 @@ class Conference(object):
         return reminders
 
 
-    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None, release_accepted_notes = None):
+    def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
         home_group = self.client.get_group(self.id)
         options = self.get_homepage_options()
         options['blind_submission_id'] = self.get_blind_submission_id()
@@ -1093,33 +1084,6 @@ class Conference(object):
         options['decision_heading_map'] = decision_heading_map
 
         self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
-
-        if release_accepted_notes:
-            accepted_submissions = self.get_submissions(accepted=True, details='original')
-
-            for submission in accepted_submissions:
-
-                has_original = submission.details and 'original' in submission.details
-                if has_original:
-                    submission.content = {
-                        '_bibtex': tools.get_bibtex(
-                            openreview.Note.from_json(submission.details['original']),
-                            release_accepted_notes.get('conference_title', 'unknown'),
-                            release_accepted_notes.get('conference_year', 'unknown'),
-                            url_forum=submission.forum,
-                            accepted=True,
-                            anonymous=False)
-                    }
-                else:
-                    submission.content['_bibtex'] = tools.get_bibtex(
-                        submission,
-                        release_accepted_notes.get('conference_title', 'unknown'),
-                        release_accepted_notes.get('conference_year', 'unknown'),
-                        url_forum=submission.forum,
-                        accepted=True,
-                        anonymous=False)
-
-                self.client.post_note(submission)
 
     def get_submissions_attachments(self, field_name='pdf', field_type='pdf', folder_path='./pdfs', accepted=False):
         print('Loading submissions...')
@@ -1151,6 +1115,51 @@ class Conference(object):
         for future in futures:
             result = future.result()
 
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False):
+        submissions = self.get_submissions(details='original')
+        decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
+
+        if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
+            self.invitation_builder.set_submission_invitation(self, public=True)
+
+        def is_release_note(is_note_accepted):
+            return release_all_notes or (release_notes_accepted and is_note_accepted)
+
+        def is_release_authors(is_note_accepted):
+            return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
+
+        for submission in submissions:
+            decision_note = decisions_by_forum.get(submission.forum, None)
+            note_accepted = decision_note and 'Accept' in decision_note.content['decision']
+            if is_release_note(note_accepted):
+                submission.readers = ['everyone']
+            if self.submission_stage.double_blind:
+                release_authors = is_release_authors(note_accepted)
+                submission.content = {
+                    '_bibtex': tools.get_bibtex(
+                                openreview.Note.from_json(submission.details['original']),
+                                venue_fullname=self.name,
+                                year=str(self.year),
+                                url_forum=submission.forum,
+                                accepted=note_accepted,
+                                anonymous=(not release_authors))
+                }
+                if not release_authors:
+                    submission.content['authors'] = ['Anonymous']
+                    submission.content['authorids'] = ['Anonymous']
+            else:
+                submission.content['_bibtex'] = tools.get_bibtex(
+                                submission,
+                                venue_fullname=self.name,
+                                year=str(self.year),
+                                url_forum=submission.forum,
+                                accepted=note_accepted,
+                                anonymous=False)
+            self.client.post_note(submission)
+
+        self.set_homepage_decisions()
+        active_venues = self.client.get_group('active_venues')
+        self.client.remove_members_from_group(active_venues, self.id)
 
 class SubmissionStage(object):
 
@@ -1174,7 +1183,9 @@ class SubmissionStage(object):
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            email_pcs_on_desk_reject=True
+            email_pcs_on_desk_reject=True,
+            author_names_revealed=False,
+            papers_released=False
         ):
 
         self.start_date = start_date
@@ -1195,6 +1206,8 @@ class SubmissionStage(object):
         self.desk_rejected_submission_public = desk_rejected_submission_public
         self.desk_rejected_submission_reveal_authors = desk_rejected_submission_reveal_authors
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
+        self.author_names_revealed = author_names_revealed
+        self.papers_released = papers_released
 
     def get_final_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
@@ -1360,12 +1373,47 @@ class ReviewRevisionStage(object):
 
 class ReviewRatingStage(object):
 
-    def __init__(self, start_date = None, due_date = None, name = 'Review_Rating', additional_fields = {}, remove_fields = []):
+    class Readers(Enum):
+        REVIEWERS = 0
+        REVIEWERS_ASSIGNED = 1
+        REVIEWERS_SUBMITTED = 2
+        REVIEWER_SIGNATURE = 3
+        NO_REVIEWERS = 4
+
+    def __init__(self, start_date = None, due_date = None, name = 'Review_Rating', additional_fields = {}, remove_fields = [], public = False, release_to_reviewers = Readers.NO_REVIEWERS):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
+        self.public = public
+        self.release_to_reviewers = release_to_reviewers
+
+    def _get_reviewer_readers(self, conference, number, review_signature):
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS:
+            return conference.get_reviewers_id()
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS_ASSIGNED:
+            return conference.get_reviewers_id(number = number)
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWERS_SUBMITTED:
+            return conference.get_reviewers_id(number = number) + '/Submitted'
+        if self.release_to_reviewers is ReviewRatingStage.Readers.REVIEWER_SIGNATURE:
+            return review_signature
+        raise openreview.OpenReviewException('Unrecognized readers option')
+
+    def get_readers(self, conference, number, review_signature):
+
+        if self.public:
+            return ['everyone']
+
+        readers = [ conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(number = number))
+
+        if self.release_to_reviewers is not ReviewRatingStage.Readers.NO_REVIEWERS:
+            readers.append(self._get_reviewer_readers(conference, number, review_signature))
+
+        return readers
 
 class CommentStage(object):
 
@@ -1574,7 +1622,9 @@ class ConferenceBuilder(object):
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            email_pcs_on_desk_reject=True
+            email_pcs_on_desk_reject=True,
+            author_names_revealed=False,
+            papers_released=False
         ):
 
         self.submission_stage = SubmissionStage(
@@ -1595,7 +1645,9 @@ class ConferenceBuilder(object):
             email_pcs_on_withdraw,
             desk_rejected_submission_public,
             desk_rejected_submission_reveal_authors,
-            email_pcs_on_desk_reject
+            email_pcs_on_desk_reject,
+            author_names_revealed,
+            papers_released
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None):
@@ -1615,6 +1667,9 @@ class ConferenceBuilder(object):
 
     def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
         self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
+
+    def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
+        self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
 
     def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False):
         self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)

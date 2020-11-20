@@ -60,24 +60,16 @@ desk_reject = {
 
 
 review_rating = {
-    'title': {
-        'order': 1,
-        'value': 'Review Rating',
-        'required': True
-    },
-    'novelty': {
-        'order': 2,
-        'value-dropdown': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
-        'description': 'Indicate your agreement with the following: This paper is highly novel.',
-        'required': True
-    },
-    'soundness': {
-        'order': 2,
-        'value-dropdown': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
-        'description': 'Indicate your agreement with the following: This paper is technically sound.',
-        'required': True
+    "review_quality": {
+        "description": "How helpful is this review:",
+        "order": 1,
+        "required": True,
+        "value-radio": [
+            "Poor - not very helpful",
+            "Good",
+            "Outstanding"
+        ]
     }
-
 }
 
 review = {

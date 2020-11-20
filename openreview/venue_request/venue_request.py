@@ -449,7 +449,50 @@ class VenueStages():
                 'content': decision_stage_content
             }
         ))
+    def setup_post_decision_stage(self):
+        post_decision_content = {
+            'release_submissions': {
+                'description': 'Would you like to release submissions to the public?',
+                'value-radio': [
+                    'Release all submissions to the public',
+                    'Release only accepted submission to the public',
+                    'No, I don\'t want to release any submissions'],
+                'required': True
+            },
+            'reveal_authors': {
+                'description': 'Would you like to release author identities of submissions to the public?',
+                'value-radio': [
+                    'Reveal author identities of all submissions to the public',
+                    'Reveal author identities of only accepted submissions to the public',
+                    'No, I don\'t want to reveal any author identities.'],
+                'required': True
+            }
+        }
 
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Post_Decision_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values-copied': ['{signatures}'],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': post_decision_content
+            }
+        ))
 
 class VenueRequest():
 
@@ -496,6 +539,7 @@ class VenueRequest():
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
         self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
+        self.post_decision_stage_invitation = venue_stages.setup_post_decision_stage()
 
     def setup_request_form(self):
 
@@ -566,15 +610,14 @@ class VenueRequest():
                 'order': 16
             },
             'Paper Matching': {
-                'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, deselect all options.',
+                'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, do not select any options.',
                 'values-checkbox': [
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores',
                     'OpenReview Affinity'
                 ],
                 'order': 17,
-                'required': False,
-                'default': ['OpenReview Affinity']
+                'required': False
             },
             'Author and Reviewer Anonymity': {
                 'description': 'What policy best describes your anonymity policy? (If none of the options apply then please describe your request below)',

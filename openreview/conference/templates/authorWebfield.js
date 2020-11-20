@@ -32,10 +32,36 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
+function getReviews(forums) {
+  if (OFFICIAL_REVIEW_NAME) {
+    return Webfield.get('/notes', {
+      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_REVIEW_NAME,
+      forum: forums
+    }).then(function(result) {
+      return result.notes || [];
+    });
+  } else {
+    return $.Deferred().resolve([]);
+  }
+}
+
+function getMetaReviews(forums) {
+  if (OFFICIAL_META_REVIEW_NAME) {
+    return Webfield.get('/notes', {
+      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_META_REVIEW_NAME,
+      forum: forums
+    }).then(function(result) {
+      return result.notes || [];
+    });
+  } else {
+    return $.Deferred().resolve([]);
+  }
+}
+
 
 // Load makes all the API calls needed to get the data to render the page
 function load() {
-  var authorNotesP = Webfield.get('/notes', {
+  var notesP = Webfield.get('/notes', {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
     details: 'invitation,overwriting'
@@ -66,29 +92,10 @@ function load() {
     } else {
       return result.notes;
     }
+  }).then(function(notes) {
+    var forums = notes.map(function(n) { return n.id; });
+    return $.when(notes, getReviews(forums), getMetaReviews(forums));
   });
-
-  var officialReviewsP;
-  if (OFFICIAL_REVIEW_NAME) {
-    officialReviewsP = Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_REVIEW_NAME
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    officialReviewsP = $.Deferred().resolve([]);
-  }
-
-  var metaReviewsP;
-  if (OFFICIAL_META_REVIEW_NAME) {
-    metaReviewsP = Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_META_REVIEW_NAME
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    metaReviewsP = $.Deferred().resolve([]);
-  }
 
   var invitationsP = Webfield.get('/invitations', {
     regex: CONFERENCE_ID + '.*',
@@ -111,7 +118,7 @@ function load() {
     return result.invitations || [];
   });
 
-  return $.when(authorNotesP, officialReviewsP, metaReviewsP, invitationsP, edgeInvitationsP);
+  return $.when(notesP, invitationsP, edgeInvitationsP);
 }
 
 
@@ -141,7 +148,11 @@ function renderHeader() {
   });
 }
 
-function renderContent(authorNotes, officialReviews, metaReviews, invitations, edgeInvitations) {
+function renderContent(notes, invitations, edgeInvitations) {
+  console.log(notes);
+  var authorNotes = notes[0];
+  var officialReviews = notes[1];
+  var metaReviews = notes[2];
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',

@@ -1333,7 +1333,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert not selenium.find_elements_by_class_name('tag-widget')
 
         now = datetime.datetime.utcnow()
-        conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
 
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
@@ -1549,7 +1550,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 'description': 'Justification of the rating. Max length: 5000',
                 'required': False
             }
-        }, remove_fields = ['title', 'novelty', 'soundness']))
+        }, remove_fields = ['review_quality']))
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
 
@@ -1573,8 +1574,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             replyto=reviews[1].id,
             invitation=reviews[1].signatures[0] + '/-/Review_Rating',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted'],
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs'],
             writers=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
             signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
             content={
