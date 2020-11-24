@@ -1115,7 +1115,7 @@ class Conference(object):
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False, decision_heading_map=None):
         submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
 
@@ -1128,7 +1128,7 @@ class Conference(object):
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
-        for submission in submissions:
+        for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
             if is_release_note(note_accepted):
@@ -1157,9 +1157,8 @@ class Conference(object):
                                 anonymous=False)
             self.client.post_note(submission)
 
-        self.set_homepage_decisions()
-        active_venues = self.client.get_group('active_venues')
-        self.client.remove_members_from_group(active_venues, self.id)
+        self.set_homepage_decisions(decision_heading_map=decision_heading_map)
+        self.client.remove_members_from_group('active_venues', self.id)
 
 class SubmissionStage(object):
 
@@ -1417,7 +1416,17 @@ class ReviewRatingStage(object):
 
 class CommentStage(object):
 
-    def __init__(self, official_comment_name=None, start_date=None, end_date=None, allow_public_comments=False, anonymous=False, unsubmitted_reviewers=False, reader_selection=False, email_pcs=False, authors=False):
+    def __init__(self,
+    official_comment_name=None,
+    start_date=None,
+    end_date=None,
+    allow_public_comments=False,
+    anonymous=False,
+    unsubmitted_reviewers=False,
+    reader_selection=False,
+    email_pcs=False,
+    authors=False,
+    only_accepted=False):
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
         self.start_date = start_date
@@ -1428,6 +1437,7 @@ class CommentStage(object):
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
         self.authors = authors
+        self.only_accepted=only_accepted
 
 class MetaReviewStage(object):
 

@@ -54,6 +54,13 @@ def process(client, note, invitation):
                 'required': True
             }
 
+        content['home_page_tab_names'] = {
+            'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
+            'value-dict': {},
+            'default': { o:o for o in note.content.get('decision_options', ['Accept (Oral)', 'Accept (Poster)', 'Reject'])},
+            'required': False
+        }
+
         if content:
             client.post_invitation(openreview.Invitation(
                 id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Decision_Stage',
@@ -85,6 +92,6 @@ def process(client, note, invitation):
         if 'release_submissions' in forum_note.content:
             release_all_notes=forum_note.content.get('release_submissions', '') == 'Release all submissions to the public'
             release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted papers to the public'
-        conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted)
+        conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, decision_heading_map=forum_note.content.get('home_page_tab_names'))
 
     print('Conference: ', conference.get_id())
