@@ -35,7 +35,11 @@ var availableOptions = [];
 
 // Main function is the entry point to the webfield code
 var main = function() {
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   renderHeader();
 

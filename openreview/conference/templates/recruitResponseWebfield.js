@@ -9,7 +9,11 @@ function main() {
 
   Webfield.ui.venueHeader(HEADER);
 
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   render();
 }

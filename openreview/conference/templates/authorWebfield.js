@@ -27,7 +27,11 @@ function main() {
 
   renderHeader();
 
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   load().then(renderContent).then(Webfield.ui.done);
 }

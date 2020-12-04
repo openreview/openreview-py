@@ -44,7 +44,11 @@ var paperStatusNeedsRerender = false;
 $.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
 
 var main = function() {
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   renderHeader();
 

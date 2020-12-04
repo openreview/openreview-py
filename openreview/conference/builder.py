@@ -1069,11 +1069,8 @@ class Conference(object):
 
     def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
         home_group = self.client.get_group(self.id)
-        options = self.get_homepage_options()
-        options['blind_submission_id'] = self.get_blind_submission_id()
+        options = {}
         options['decision_invitation_regex'] = self.get_invitation_id(invitation_name, '.*')
-        options['withdrawn_submission_id'] = self.submission_stage.get_withdrawn_submission_id(self)
-        options['desk_rejected_submission_id'] = self.submission_stage.get_desk_rejected_submission_id(self)
 
         if not decision_heading_map:
             decision_heading_map = {}
@@ -1083,7 +1080,7 @@ class Conference(object):
                     decision_heading_map[option] = option + ' Papers'
         options['decision_heading_map'] = decision_heading_map
 
-        self.webfield_builder.set_home_page(group = home_group, layout = 'decisions', options = options)
+        self.webfield_builder.set_home_page(conference = self, group = home_group, layout = 'decisions', options = options)
 
     def get_submissions_attachments(self, field_name='pdf', field_type='pdf', folder_path='./pdfs', accepted=False):
         print('Loading submissions...')
@@ -1707,11 +1704,11 @@ class ConferenceBuilder(object):
 
         id = self.conference.get_id()
         groups = self.__build_groups(id)
-        for g in groups[:-1]:
+        for i, g in enumerate(groups[:-1]):
             # set a landing page only where there is not special webfield
             writable = g.details.get('writable') if g.details else True
             if writable and (not g.web or 'VENUE_LINKS' in g.web):
-                self.webfield_builder.set_landing_page(g)
+                self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id
@@ -1734,19 +1731,7 @@ class ConferenceBuilder(object):
         home_group = groups[-1]
         writable = home_group.details.get('writable') if home_group.details else True
         if writable and (not home_group.web or self.override_homepage):
-            options = self.conference.get_homepage_options()
-            options['reviewers_name'] = self.conference.reviewers_name
-            options['area_chairs_name'] = self.conference.area_chairs_name
-            options['reviewers_id'] = self.conference.get_reviewers_id()
-            options['authors_id'] = self.conference.get_authors_id()
-            options['program_chairs_id'] = self.conference.get_program_chairs_id()
-            options['area_chairs_id'] = self.conference.get_area_chairs_id()
-            options['submission_id'] = self.conference.get_submission_id()
-            options['blind_submission_id'] = self.conference.get_blind_submission_id()
-            options['withdrawn_submission_id'] = self.conference.submission_stage.get_withdrawn_submission_id(self.conference)
-            options['desk_rejected_submission_id'] = self.conference.submission_stage.get_desk_rejected_submission_id(self.conference)
-            options['public'] = self.conference.submission_stage.public
-            groups[-1] = self.webfield_builder.set_home_page(group = home_group, layout = self.conference.layout, options = options)
+            groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': groups[-2].id })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_area_chairs:

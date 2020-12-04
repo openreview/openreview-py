@@ -27,7 +27,11 @@ var main = function() {
 
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   displayHeader();
 
