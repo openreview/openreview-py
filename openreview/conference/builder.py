@@ -1152,9 +1152,19 @@ class Conference(object):
                                 url_forum=submission.forum,
                                 accepted=note_accepted,
                                 anonymous=False)
+            if note_accepted:
+                decision = re.sub(r'[Accept()\W]+', '', decision_note.content['decision'])
+                venueid = self.id
+                venue = self.short_name
+                if decision:
+                    venueid += '/' + decision
+                    venue += ' ' + decision
+                submission.content['venueid'] = venueid
+                submission.content['venue'] = venue
             self.client.post_note(submission)
 
-        self.set_homepage_decisions(decision_heading_map=decision_heading_map)
+        if decision_heading_map:
+            self.set_homepage_decisions(decision_heading_map=decision_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
 class SubmissionStage(object):

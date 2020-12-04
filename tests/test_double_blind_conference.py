@@ -1683,7 +1683,7 @@ class TestDoubleBlindConference():
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
 
-        conference.post_decision_stage(reveal_authors_accepted=True)
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
@@ -1718,3 +1718,5 @@ url={'''
         valid_bibtex = valid_bibtex+'https://openreview.net/forum?id='+note.forum+'''}
 }'''
         assert note.content['_bibtex'] == valid_bibtex
+        assert note.content['venue'] == 'AKBC 2019 Oral'
+        assert note.content['venueid'] == 'AKBC.ws/2019/Conference/Accept'

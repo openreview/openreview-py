@@ -145,7 +145,9 @@ function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejected
     }
   });
 
-  papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
+  if (papersByDecision['reject']) {
+    papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
+  }
 
   return papersByDecision;
 }
