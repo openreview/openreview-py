@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // Constants
 var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
@@ -35,7 +38,11 @@ var availableOptions = [];
 
 // Main function is the entry point to the webfield code
 var main = function() {
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   renderHeader();
 

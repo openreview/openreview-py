@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Add Bid Interface
 // ------------------------------------
@@ -38,6 +41,12 @@ var paperDisplayOptions = {
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
+
   Webfield.ui.setup('#invitation-container', CONFERENCE_ID);  // required
 
   Webfield.ui.header(HEADER.title, HEADER.instructions);

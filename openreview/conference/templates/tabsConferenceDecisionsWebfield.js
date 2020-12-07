@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Advanced venue homepage template
 //
@@ -7,6 +10,7 @@
 
 // Constants
 var CONFERENCE_ID = '';
+var PARENT_GROUP_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var WITHDRAWN_SUBMISSION_ID = '';
 var DESK_REJECTED_SUBMISSION_ID = '';
@@ -26,6 +30,11 @@ var sections = [];
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else if (PARENT_GROUP_ID.length){
+    OpenBanner.venueHomepageLink(PARENT_GROUP_ID);
+  }
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
   renderConferenceHeader();
@@ -139,7 +148,9 @@ function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejected
     }
   });
 
-  papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
+  if (papersByDecision['reject']) {
+    papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
+  }
 
   return papersByDecision;
 }

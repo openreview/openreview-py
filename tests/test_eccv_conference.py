@@ -25,7 +25,6 @@ class TestECCVConference():
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.set_conference_short_name('ECCV 2020')
-        builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
         builder.set_homepage_header({

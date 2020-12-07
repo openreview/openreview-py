@@ -350,7 +350,6 @@ class TestCommentNotification():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
-        builder.set_override_homepage(True)
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
         builder.set_review_stage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
         conference = builder.get_result()

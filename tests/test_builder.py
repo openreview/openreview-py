@@ -13,7 +13,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestBuilder():
 
-    def test_override_homepage(self, client):
+    def test_override_homepage(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -27,19 +27,16 @@ class TestBuilder():
         assert len(groups) == 3
         home_group = groups[-1]
         assert home_group.id == 'test.org/2019/Conference'
-        assert 'Venue homepage template' in home_group.web
 
-        home_group.web = 'This is a webfield'
-        client.post_group(home_group)
+        request_page(selenium, 'http://localhost:3030/group?id=test.org/2019/Conference')
+        assert selenium.find_element_by_tag_name('h3').text == 'test.org/2019/Conference'
 
+        builder.set_homepage_header({ 'subtitle': 'TEST 2019' })
         conference = builder.get_result()
-        groups = conference.get_conference_groups()
-        assert 'This is a webfield' in groups[-1].web
 
-        builder.set_override_homepage(True)
-        conference = builder.get_result()
-        groups = conference.get_conference_groups()
-        assert 'Venue homepage template' in groups[-1].web
+        request_page(selenium, 'http://localhost:3030/group?id=test.org/2019/Conference')
+        assert selenium.find_element_by_tag_name('h3').text == 'TEST 2019'
+
 
     def test_web_set_landing_page(self, client):
         builder = openreview.conference.ConferenceBuilder(client)
@@ -56,7 +53,6 @@ class TestBuilder():
         start_pos = group.web.find('VENUE_LINKS')
         insert_pos = group.web.find('];', start_pos)
         group.web = group.web[:insert_pos] + child_str + group.web[insert_pos:]
-        print(group.web)
         client.post_group(group)
 
         builder.set_conference_id("ds.cs.umass.edu/Test_I/2019/Workshop/WS_1")
