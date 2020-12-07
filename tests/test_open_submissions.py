@@ -25,7 +25,6 @@ class TestOpenSubmissions():
 
         builder.set_conference_id('aclweb.org/ACL/2020/Workshop/NLP-COVID')
         builder.set_conference_short_name('NLP-COVID-2020')
-        builder.set_override_homepage(True)
         builder.has_area_chairs(False)
         builder.set_submission_stage(double_blind=False, public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True, create_groups=True, create_review_invitation=True)
         builder.set_review_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True)

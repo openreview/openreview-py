@@ -16,7 +16,5 @@ if (args && args.referrer) {
   OpenBanner.referrerLink(args.referrer);
 } else if (PARENT_GROUP_ID.length){
   OpenBanner.venueHomepageLink(PARENT_GROUP_ID);
-} else {
-  OpenBanner.welcome();
 }
 

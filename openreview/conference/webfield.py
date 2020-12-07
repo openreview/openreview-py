@@ -16,7 +16,8 @@ class WebfieldBuilder(object):
             merged_options[k] = default[k]
 
         for o in options:
-            merged_options[o] = options[o]
+            if options[o] is not None:
+                merged_options[o] = options[o]
 
         return merged_options
 
@@ -100,9 +101,13 @@ class WebfieldBuilder(object):
             content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if conference.submission_stage.public else "var PUBLIC = false;")
 
             current_group = self.client.get_group(group.id)
-            current_group.web = content
-            current_group.signatures = [group.id]
-            return self.client.post_group(current_group)
+            writable = current_group.details.get('writable', False)
+            if writable and (not current_group.web or current_group.web.startswith('// webfield_template')):
+                current_group.web = content
+                current_group.signatures = [group.id]
+                return self.client.post_group(current_group)
+            else:
+                return group
 
     def set_expertise_selection_page(self, conference, invitation):
 

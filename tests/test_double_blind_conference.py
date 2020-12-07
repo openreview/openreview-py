@@ -70,7 +70,6 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_conference_name('Automated Knowledge Base Construction')
-        builder.set_override_homepage(True)
         builder.has_area_chairs(True)
 
         conference = builder.get_result()
@@ -143,7 +142,6 @@ class TestDoubleBlindConference():
                 </ul></p>',
             'deadline': 'Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018'
         })
-        builder.set_override_homepage(True)
         builder.has_area_chairs(True)
 
         conference = builder.get_result()

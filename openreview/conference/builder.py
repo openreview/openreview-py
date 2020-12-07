@@ -1528,7 +1528,6 @@ class ConferenceBuilder(object):
         self.client = client
         self.conference = Conference(client)
         self.webfield_builder = webfield.WebfieldBuilder(client)
-        self.override_homepage = False
         self.submission_stage = None
         self.expertise_selection_stage = None
         self.registration_stage = None
@@ -1610,9 +1609,6 @@ class ConferenceBuilder(object):
 
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)
-
-    def set_override_homepage(self, override):
-        self.override_homepage = override
 
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
@@ -1739,9 +1735,7 @@ class ConferenceBuilder(object):
             self.conference.set_area_chairs()
 
         home_group = groups[-1]
-        writable = home_group.details.get('writable') if home_group.details else True
-        if writable and (not home_group.web or self.override_homepage):
-            groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': groups[-2].id })
+        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': groups[-2].id })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_area_chairs:

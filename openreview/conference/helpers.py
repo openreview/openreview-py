@@ -81,8 +81,6 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
 
-    builder.set_override_homepage(True)
-
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
@@ -117,7 +115,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         email_pcs_on_withdraw=email_pcs_on_withdraw,
         desk_rejected_submission_public=desk_rejected_submission_public,
         desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
-        author_names_revealed=author_names_revealed, 
+        author_names_revealed=author_names_revealed,
         papers_released=papers_released)
 
     paper_matching_options = note.content.get('Paper Matching', [])
