@@ -32,8 +32,10 @@ class WebfieldBuilder(object):
         else:
             return current_invitation
 
-    def __update_group(self, group, content):
+    def __update_group(self, group, content, signature=None):
         current_group=self.client.get_group(group.id)
+        if signature:
+            current_group.signatures=[signature]
         if self.__should_update(current_group):
             current_group.web = content
             return self.client.post_group(current_group)
@@ -117,7 +119,7 @@ class WebfieldBuilder(object):
             content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + conference.submission_stage.get_desk_rejected_submission_id(conference) + "';")
             content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if conference.submission_stage.public else "var PUBLIC = false;")
 
-            return self.__update_group(group, content)
+            return self.__update_group(group, content, conference.id)
 
     def set_expertise_selection_page(self, conference, invitation):
 
