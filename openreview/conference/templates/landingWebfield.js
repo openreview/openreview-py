@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 var GROUP_ID = '';
 var PARENT_GROUP_ID = '';
 var HEADER = {

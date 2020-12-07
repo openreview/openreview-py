@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Add Bid Interface
 // ------------------------------------

@@ -1711,10 +1711,7 @@ class ConferenceBuilder(object):
         id = self.conference.get_id()
         groups = self.__build_groups(id)
         for i, g in enumerate(groups[:-1]):
-            # set a landing page only where there is not special webfield
-            writable = g.details.get('writable') if g.details else True
-            if writable and (not g.web or 'VENUE_LINKS' in g.web):
-                self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
+            self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id

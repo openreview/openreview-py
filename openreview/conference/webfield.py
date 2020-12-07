@@ -21,6 +21,25 @@ class WebfieldBuilder(object):
 
         return merged_options
 
+    def __should_update(self, entity):
+        return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template'))
+
+    def __update_invitation(self, invitation, content):
+        current_invitation=self.client.get_invitation(invitation.id)
+        if self.__should_update(current_invitation):
+            current_invitation.web = content
+            return self.client.post_invitation(current_invitation)
+        else:
+            return current_invitation
+
+    def __update_group(self, group, content):
+        current_group=self.client.get_group(group.id)
+        if self.__should_update(current_group):
+            current_group.web = content
+            return self.client.post_group(current_group)
+        else:
+            return current_group
+
     def set_landing_page(self, group, parentGroup, options = {}):
         # sets webfield to show links to child groups
 
@@ -46,8 +65,7 @@ class WebfieldBuilder(object):
                     content = content.replace("var PARENT_GROUP_ID = '';", "var PARENT_GROUP_ID = '" + parentGroup.id + "';")
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-                group.web = content
-                return self.client.post_group(group)
+                return self.__update_group(group, content)
 
         elif links:
             # parse existing webfield and add new links
@@ -55,8 +73,7 @@ class WebfieldBuilder(object):
             link_str = json.dumps(links)
             link_str = link_str[1:-1]
             start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
-            group.web = group.web[:start_pos] +link_str + ','+ group.web[start_pos:]
-            return self.client.post_group(group)
+            return self.__update_group(group, group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
 
 
     def set_home_page(self, conference, group, layout, options = {}):
@@ -100,14 +117,7 @@ class WebfieldBuilder(object):
             content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + conference.submission_stage.get_desk_rejected_submission_id(conference) + "';")
             content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if conference.submission_stage.public else "var PUBLIC = false;")
 
-            current_group = self.client.get_group(group.id)
-            writable = current_group.details.get('writable', False)
-            if writable and (not current_group.web or current_group.web.startswith('// webfield_template')):
-                current_group.web = content
-                current_group.signatures = [group.id]
-                return self.client.post_group(current_group)
-            else:
-                return group
+            return self.__update_group(group, content)
 
     def set_expertise_selection_page(self, conference, invitation):
 
@@ -140,8 +150,7 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var EXPERTISE_BID_ID = '';", "var EXPERTISE_BID_ID = '" + conference.get_expertise_selection_id() + "';")
 
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
     def set_bid_page(self, conference, invitation, stage):
 
@@ -212,8 +221,7 @@ class WebfieldBuilder(object):
             if stage.score_ids:
                 content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
 
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
     def set_recommendation_page(self, conference, invitation, assignment_title, score_ids, conflict_id, total_recommendations):
 
@@ -243,8 +251,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
 
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
     def set_paper_ranking_page(self, conference, invitation, group_name):
 
@@ -260,8 +267,7 @@ class WebfieldBuilder(object):
                 content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/Area_Chairs';")
             else:
                 content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/AnonReviewer.*';")
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
     def set_reduced_load_page(self, conference_id, invitation, options = {}):
 
@@ -281,8 +287,7 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
     def set_recruit_page(self, conference_id, invitation, options = {}):
 
@@ -303,8 +308,7 @@ class WebfieldBuilder(object):
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var REDUCED_LOAD_INVITATION_NAME = '';", "var REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load';")
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
 
     def set_author_page(self, conference, group):
@@ -325,8 +329,7 @@ class WebfieldBuilder(object):
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
 
     def set_reviewer_page(self, conference, group):
 
@@ -353,8 +356,8 @@ class WebfieldBuilder(object):
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load) + ";")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
+
 
     def set_area_chair_page(self, conference, group):
 
@@ -389,8 +392,7 @@ class WebfieldBuilder(object):
             if conference.use_secondary_area_chairs:
                 content = content.replace("var SECONDARY_AREA_CHAIR_NAME = '';", "var SECONDARY_AREA_CHAIR_NAME = '" + conference.secondary_area_chairs_name + "';")
                 content = content.replace("var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';", "var OFFICIAL_SECONDARY_META_REVIEW_NAME = 'Secondary_Meta_Review';")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
 
     def set_program_chair_page(self, conference, group):
 
@@ -435,8 +437,8 @@ class WebfieldBuilder(object):
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
             if conference.request_form_id:
                 content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
+
 
     def edit_web_value(self, group, global_name, new_value):
         # replaces a value (ex. true)
