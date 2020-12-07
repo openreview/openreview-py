@@ -1719,4 +1719,4 @@ url={'''
 }'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
-        assert note.content['venueid'] == 'AKBC.ws/2019/Conference/Accept'
+        assert note.content['venueid'] == 'AKBC.ws/2019/Conference/Oral'
