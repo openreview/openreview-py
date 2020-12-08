@@ -168,165 +168,128 @@ class TestESWCConference():
         assert len(conference.get_submissions()) == 4
 
         # Add a revision
-        # pdf_url = test_client.put_attachment(
-        #     os.path.join(os.path.dirname(__file__), 'data/paper.pdf'),
-        #     'ICLR.cc/2021/Conference/Paper5/-/Revision',
-        #     'pdf'
-        # )
+        pdf_url = test_client.put_attachment(
+            os.path.join(os.path.dirname(__file__), 'data/paper.pdf'),
+            'eswc-conferences.org/ESWC/2021/Conference/Paper2/-/Revision',
+            'pdf'
+        )
 
-        # supplementary_material_url = test_client.put_attachment(
-        #     os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'),
-        #     'ICLR.cc/2021/Conference/Paper5/-/Revision',
-        #     'supplementary_material'
-        # )
+        note = openreview.Note(referent=notes[1].id,
+            forum=notes[1].id,
+            invitation = 'eswc-conferences.org/ESWC/2021/Conference/Paper2/-/Revision',
+            readers = ['eswc-conferences.org/ESWC/2021/Conference', 'eswc-conferences.org/ESWC/2021/Conference/Paper2/Authors'],
+            writers = ['eswc-conferences.org/ESWC/2021/Conference', 'eswc-conferences.org/ESWC/2021/Conference/Paper2/Authors'],
+            signatures = ['eswc-conferences.org/ESWC/2021/Conference/Paper2/Authors'],
+            content = {
+                'title': 'EDITED Paper title 5',
+                'abstract': 'This is an abstract 5',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'melisa@mail.com'],
+                'authors': ['Test User', 'Peter Test', 'Melisa Bok'],
+                'lead_author_is_phD_student': 'Yes',
+                'pdf': pdf_url
+            }
+        )
 
-        # note = openreview.Note(referent=blinded_notes[0].original,
-        #     forum=blinded_notes[0].original,
-        #     invitation = 'ICLR.cc/2021/Conference/Paper5/-/Revision',
-        #     readers = ['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-        #     writers = ['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-        #     signatures = ['ICLR.cc/2021/Conference/Paper5/Authors'],
-        #     content = {
-        #         'title': 'EDITED Paper title 5',
-        #         'abstract': 'This is an abstract 5',
-        #         'authorids': ['test@mail.com', 'peter@mail.com', 'melisa@mail.com'],
-        #         'authors': ['Test User', 'Peter Test', 'Melisa Bok'],
-        #         'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
-        #         'pdf': pdf_url,
-        #         'supplementary_material': supplementary_material_url
-        #     }
-        # )
+        test_client.post_note(note)
 
-        # test_client.post_note(note)
+        time.sleep(2)
 
-        # time.sleep(2)
+        author_group = client.get_group('eswc-conferences.org/ESWC/2021/Conference/Paper2/Authors')
+        assert len(author_group.members) == 3
+        assert 'melisa@mail.com' in author_group.members
+        assert 'test@mail.com' in author_group.members
+        assert 'peter@mail.com' in author_group.members
 
-        # author_group = client.get_group('ICLR.cc/2021/Conference/Paper5/Authors')
-        # assert len(author_group.members) == 3
-        # assert 'melisa@mail.com' in author_group.members
-        # assert 'test@mail.com' in author_group.members
-        # assert 'peter@mail.com' in author_group.members
+        messages = client.get_messages(subject='ESWC 2021 has received a new revision of your submission titled EDITED Paper title 5')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'melisa@mail.com' in recipients
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert messages[0]['content']['text'] == '''Your new revision of the submission to ESWC 2021 has been posted.\n\nTitle: EDITED Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
 
-        # messages = client.get_messages(subject='ICLR 2021 has received a new revision of your submission titled EDITED Paper title 5')
-        # assert len(messages) == 3
-        # recipients = [m['content']['to'] for m in messages]
-        # assert 'melisa@mail.com' in recipients
-        # assert 'test@mail.com' in recipients
-        # assert 'peter@mail.com' in recipients
-        # assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been posted.\n\nTitle: EDITED Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        ## Edit revision
+        references = client.get_references(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper2/-/Revision')
+        assert len(references) == 1
+        revision_note = references[0]
+        revision_note.content['title'] = 'EDITED Rev 2 Paper title 5'
+        test_client.post_note(revision_note)
 
-        # ## Edit revision
-        # references = client.get_references(invitation='ICLR.cc/2021/Conference/Paper5/-/Revision')
-        # assert len(references) == 1
-        # revision_note = references[0]
-        # revision_note.content['title'] = 'EDITED Rev 2 Paper title 5'
-        # test_client.post_note(revision_note)
+        time.sleep(2)
 
-        # time.sleep(2)
+        messages = client.get_messages(subject='ESWC 2021 has received a new revision of your submission titled EDITED Rev 2 Paper title 5')
+        assert len(messages) == 3
+        recipients = [m['content']['to'] for m in messages]
+        assert 'melisa@mail.com' in recipients
+        assert 'test@mail.com' in recipients
+        assert 'peter@mail.com' in recipients
+        assert messages[0]['content']['text'] == '''Your new revision of the submission to ESWC 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
 
-        # messages = client.get_messages(subject='ICLR 2021 has received a new revision of your submission titled EDITED Rev 2 Paper title 5')
-        # assert len(messages) == 3
-        # recipients = [m['content']['to'] for m in messages]
-        # assert 'melisa@mail.com' in recipients
-        # assert 'test@mail.com' in recipients
-        # assert 'peter@mail.com' in recipients
+        ## Desk Reject paper
+        pc_client = openreview.Client(username='pc@eswc-conferences.org', password='1234')
+        pc_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper3/-/Desk_Reject',
+            forum = notes[2].id,
+            replyto = notes[2].id,
+            readers = [
+                'eswc-conferences.org/ESWC/2021/Conference',
+                'eswc-conferences.org/ESWC/2021/Conference/Paper3/Authors',
+                'eswc-conferences.org/ESWC/2021/Conference/Paper3/Reviewers',
+                'eswc-conferences.org/ESWC/2021/Conference/Paper3/Area_Chairs',
+                'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'],
+            writers = [conference.get_id(), 'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'],
+            signatures = ['eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'],
+            content = {
+                'title': 'Submission Desk Rejected by Program Chairs',
+                'desk_reject_comments': 'missing pdf'
+            }
+        ))
 
-        # assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        time.sleep(2)
 
-        # ## Withdraw paper
-        # test_client.post_note(openreview.Note(invitation='ICLR.cc/2021/Conference/Paper1/-/Withdraw',
-        #     forum = blinded_notes[4].forum,
-        #     replyto = blinded_notes[4].forum,
-        #     readers = [
-        #         'ICLR.cc/2021/Conference',
-        #         'ICLR.cc/2021/Conference/Paper1/Authors',
-        #         'ICLR.cc/2021/Conference/Paper1/Reviewers',
-        #         'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
-        #         'ICLR.cc/2021/Conference/Program_Chairs'],
-        #     writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper1/Authors'],
-        #     signatures = ['ICLR.cc/2021/Conference/Paper1/Authors'],
-        #     content = {
-        #         'title': 'Submission Withdrawn by the Authors',
-        #         'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-        #     }
-        # ))
+        desk_rejected_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Desk_Rejected_Submission')
+        assert len(desk_rejected_notes) == 1
+        desk_rejected_notes[0].readers == [
+            'eswc-conferences.org/ESWC/2021/Conference/Paper3/Authors',
+            'eswc-conferences.org/ESWC/2021/Conference/Paper3/Reviewers',
+            'eswc-conferences.org/ESWC/2021/Conference/Paper3/Area_Chairs',
+            'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
+        ]
+        assert len(conference.get_submissions()) == 3
 
-        # time.sleep(2)
+    def test_post_submission_stage(self, conference, helpers, test_client, client):
 
-        # withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
-        # assert len(withdrawn_notes) == 1
-        # withdrawn_notes[0].readers == [
-        #     'ICLR.cc/2021/Conference/Paper1/Authors',
-        #     'ICLR.cc/2021/Conference/Paper1/Reviewers',
-        #     'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
-        #     'ICLR.cc/2021/Conference/Program_Chairs'
-        # ]
-        # assert len(conference.get_submissions()) == 4
+        conference.setup_final_deadline_stage(force=True)
 
-    # def test_post_submission_stage(self, conference, helpers, test_client, client):
+        submissions = conference.get_submissions()
+        assert len(submissions) == 3
+        assert submissions[0].readers == ['everyone']
+        assert submissions[1].readers == ['everyone']
+        assert submissions[2].readers == ['everyone']
 
-    #     conference.setup_final_deadline_stage(force=True)
+        ## Withdraw paper
+        test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper5/-/Withdraw',
+            forum = submissions[0].forum,
+            replyto = submissions[0].forum,
+            readers = [
+                'everyone'],
+            writers = [conference.get_id(), 'eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
+            signatures = ['eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
 
-    #     submissions = conference.get_submissions()
-    #     assert len(submissions) == 4
-    #     assert submissions[0].readers == ['everyone']
-    #     assert submissions[1].readers == ['everyone']
-    #     assert submissions[2].readers == ['everyone']
-    #     assert submissions[3].readers == ['everyone']
+        time.sleep(2)
 
-    #     ## Withdraw paper
-    #     test_client.post_note(openreview.Note(invitation='ICLR.cc/2021/Conference/Paper2/-/Withdraw',
-    #         forum = submissions[3].forum,
-    #         replyto = submissions[3].forum,
-    #         readers = [
-    #             'everyone'],
-    #         writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper2/Authors'],
-    #         signatures = ['ICLR.cc/2021/Conference/Paper2/Authors'],
-    #         content = {
-    #             'title': 'Submission Withdrawn by the Authors',
-    #             'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-    #         }
-    #     ))
-
-    #     time.sleep(2)
-
-    #     withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
-    #     assert len(withdrawn_notes) == 2
-    #     withdrawn_notes[0].readers == [
-    #         'everyone'
-    #     ]
-    #     withdrawn_notes[1].readers == [
-    #         'ICLR.cc/2021/Conference/Paper1/Authors',
-    #         'ICLR.cc/2021/Conference/Paper1/Reviewers',
-    #         'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
-    #         'ICLR.cc/2021/Conference/Program_Chairs'
-    #     ]
-
-
-    # def test_revision_stage(self, conference, helpers, test_client, client):
-
-    #     now = datetime.datetime.utcnow()
-    #     conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True))
-
-    #     submissions = conference.get_submissions()
-
-    #     print(submissions[0])
-
-    #     test_client.post_note(openreview.Note(
-    #         invitation='ICLR.cc/2021/Conference/Paper5/-/Revision',
-    #         referent=submissions[0].original,
-    #         forum=submissions[0].original,
-    #         readers=['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-    #         writers=['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-    #         signatures=['ICLR.cc/2021/Conference/Paper5/Authors'],
-    #         content={
-    #             'title': 'EDITED V3 Paper title 5',
-    #             'abstract': 'This is an abstract 5',
-    #             'authorids': ['peter@mail.com', 'test@mail.com', 'melisa@mail.com'],
-    #             'authors': ['Peter Test', 'Test User', 'Melisa Bok'],
-    #             'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
-    #             'pdf': submissions[0].content['pdf'],
-    #             'supplementary_material': submissions[0].content['supplementary_material']
-    #         }
-
-    #     ))
+        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
+        assert len(withdrawn_notes) == 2
+        withdrawn_notes[0].readers == [
+            'everyone'
+        ]
+        withdrawn_notes[1].readers == [
+            'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors',
+            'eswc-conferences.org/ESWC/2021/Conference/Paper1/Reviewers',
+            'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
+            'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
+        ]
