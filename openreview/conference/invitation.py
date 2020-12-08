@@ -13,11 +13,10 @@ LONG_BUFFER_DAYS = 10
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, public):
+    def __init__(self, conference, public, submission_readers):
 
         readers = {}
         submission_stage = conference.submission_stage
-        additional_fields = submission_stage.additional_fields
         start_date = submission_stage.start_date
         due_date = submission_stage.due_date
         readers = { 'values-copied': [
@@ -27,25 +26,14 @@ class SubmissionInvitation(openreview.Invitation):
             ]
         }
 
+        if submission_readers:
+            readers['values-copied'] = readers['values-copied'] + submission_readers
+
         if public:
             readers = {'values-regex': '.*'}
 
-        content = invitations.submission.copy()
+        content = submission_stage.get_content()
 
-        if submission_stage.subject_areas:
-            content['subject_areas'] = {
-                'order' : 5,
-                'description' : "Select or type subject area",
-                'values-dropdown': submission_stage.subject_areas,
-                'required': True
-            }
-
-        for field in submission_stage.remove_fields:
-            del content[field]
-        for order, key in enumerate(additional_fields, start=10):
-            value = additional_fields[key]
-            value['order'] = order
-            content[key] = value
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
@@ -294,7 +282,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
         else:
-            content = invitations.submission.copy()
+            content = conference.submission_stage.get_content()
 
         readers = {'values-regex': '.*'}
         if reveal_submission:
@@ -435,7 +423,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
         else:
-            content = invitations.submission.copy()
+            content = conference.submission_stage.get_content()
 
         readers = {'values-regex': '.*'}
         if reveal_submission:
@@ -1249,9 +1237,9 @@ class InvitationBuilder(object):
                     note.nonreaders = invitation.reply['nonreaders']['values']
                 self.client.post_note(note)
 
-    def set_submission_invitation(self, conference, public):
+    def set_submission_invitation(self, conference, public, submission_readers=None):
 
-        return self.client.post_invitation(SubmissionInvitation(conference, public=public))
+        return self.client.post_invitation(SubmissionInvitation(conference, public, submission_readers))
 
 
     def set_blind_submission_invitation(self, conference, hide_fields):
