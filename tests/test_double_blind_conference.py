@@ -1697,8 +1697,8 @@ class TestDoubleBlindConference():
         assert tabs
         with pytest.raises(NoSuchElementException):
             notes_panel.find_element_by_class_name('spinner-container')
-        assert tabs.find_element_by_id('accept-oral')
-        assert tabs.find_element_by_id('accept-poster')
+        assert tabs.find_element_by_id('accepted-poster-papers')
+        assert tabs.find_element_by_id('accepted-oral-papers')
         assert tabs.find_element_by_id('reject')
 
         notes = conference.get_submissions()
@@ -1717,4 +1717,4 @@ url={'''
 }'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
-        assert note.content['venueid'] == 'AKBC.ws/2019/Conference/Oral'
+        assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
