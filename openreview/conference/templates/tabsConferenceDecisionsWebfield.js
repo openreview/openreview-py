@@ -91,7 +91,8 @@ function renderConferenceHeader() {
 }
 
 function getElementId(decision) {
-  return decision.replace(' ', '-')
+  if (!decision) return decision;
+  return decision.replace(/\W/g, '-')
     .replace('(', '')
     .replace(')', '')
     .toLowerCase();
@@ -102,12 +103,17 @@ function renderConferenceTabs() {
     heading: 'Your Consoles',
     id: 'your-consoles',
   });
+  var tabNames = new Set();
   for (var decision in DECISION_HEADING_MAP) {
-    sections.push({
-      heading: DECISION_HEADING_MAP[decision],
-      id: getElementId(decision)
-    });
+    tabNames.add(DECISION_HEADING_MAP[decision]);
   }
+  var tabArray = Array.from(tabNames);
+  tabArray.forEach(function(tabName) {
+    sections.push({
+      heading: tabName,
+      id: getElementId(tabName)
+    });
+  })
 
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
@@ -138,20 +144,23 @@ function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejected
 
   var papersByDecision = {};
   for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[getElementId(decision)] = [];
+    papersByDecision[getElementId(DECISION_HEADING_MAP[decision])] = [];
   }
 
   decisionNotes.forEach(function(d) {
-    var decisionKey = getElementId(d.content.decision);
-    if (notesDict[d.forum] && papersByDecision[decisionKey]) {
-      papersByDecision[decisionKey].push(notesDict[d.forum]);
+    var tabName = DECISION_HEADING_MAP[d.content.decision];
+    if (tabName) {
+      var decisionKey = getElementId(tabName);
+      if (notesDict[d.forum] && papersByDecision[decisionKey]) {
+        papersByDecision[decisionKey].push(notesDict[d.forum]);
+      }
     }
+
   });
 
   if (papersByDecision['reject']) {
     papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
   }
-
   return papersByDecision;
 }
 
