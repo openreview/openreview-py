@@ -715,7 +715,7 @@ class TestWorkshop():
             'Reject': 'All Presentations'
         })
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#accept-oral", client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token)
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -728,7 +728,7 @@ class TestWorkshop():
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
         assert tabs
-        accepted_panel = selenium.find_element_by_id('accept-oral')
+        accepted_panel = selenium.find_element_by_id('oral-presentations')
         assert accepted_panel
         accepted_notes = accepted_panel.find_elements_by_class_name('note')
         assert accepted_notes
