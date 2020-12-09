@@ -1153,11 +1153,11 @@ class Conference(object):
                                 accepted=note_accepted,
                                 anonymous=False)
             if note_accepted:
-                decision = re.sub(r'[Accept()\W]+', '', decision_note.content['decision'])
+                decision = decision_note.content['decision'].replace('Accept', '')
+                decision = re.sub(r'[()\W]+', '', decision)
                 venueid = self.id
                 venue = self.short_name
                 if decision:
-                    venueid += '/' + decision
                     venue += ' ' + decision
                 submission.content['venueid'] = venueid
                 submission.content['venue'] = venue
