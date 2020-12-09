@@ -92,7 +92,7 @@ function renderConferenceHeader() {
 
 function getElementId(decision) {
   if (!decision) return decision;
-  return decision.replace(' ', '-')
+  return decision.replace(/\W/g, '-')
     .replace('(', '')
     .replace(')', '')
     .toLowerCase();
