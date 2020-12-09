@@ -13,24 +13,13 @@ LONG_BUFFER_DAYS = 10
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, public, submission_readers):
+    def __init__(self, conference, under_submission, submission_readers):
 
         readers = {}
         submission_stage = conference.submission_stage
         start_date = submission_stage.start_date
         due_date = submission_stage.due_date
-        readers = { 'values-copied': [
-            conference.get_id(),
-            '{content.authorids}',
-            '{signatures}'
-            ]
-        }
-
-        if submission_readers:
-            readers['values-copied'] = readers['values-copied'] + submission_readers
-
-        if public:
-            readers = {'values-regex': '.*'}
+        readers = submission_stage.get_invitation_readers(conference, under_submission, submission_readers)
 
         content = submission_stage.get_content()
 
@@ -1237,9 +1226,9 @@ class InvitationBuilder(object):
                     note.nonreaders = invitation.reply['nonreaders']['values']
                 self.client.post_note(note)
 
-    def set_submission_invitation(self, conference, public, submission_readers=None):
+    def set_submission_invitation(self, conference, under_submission=True, submission_readers=None):
 
-        return self.client.post_invitation(SubmissionInvitation(conference, public, submission_readers))
+        return self.client.post_invitation(SubmissionInvitation(conference, under_submission, submission_readers))
 
 
     def set_blind_submission_invitation(self, conference, hide_fields):

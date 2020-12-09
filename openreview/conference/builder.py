@@ -132,7 +132,7 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        return self.invitation_builder.set_submission_invitation(self, public=False)
+        return self.invitation_builder.set_submission_invitation(self)
 
     def __create_expertise_selection_stage(self):
 
@@ -664,7 +664,7 @@ class Conference(object):
             self.create_blind_submissions(hide_fields=hide_fields, under_submission=True)
         else:
             if submission_readers:
-                self.invitation_builder.set_submission_invitation(self, hide_fields, submission_readers)
+                self.invitation_builder.set_submission_invitation(conference=self, under_submissions=True, submission_readers=submission_readers)
                 submissions = self.get_submissions()
                 for s in submissions:
                     s.readers = s.readers + submission_readers
@@ -698,10 +698,10 @@ class Conference(object):
         if self.submission_stage.double_blind and not (self.submission_stage.author_names_revealed or self.submission_stage.papers_released):
             self.create_blind_submissions(hide_fields)
 
-        if not self.submission_stage.double_blind and self.submission_stage.public:
-            self.invitation_builder.set_submission_invitation(self, public=True)
+        if not self.submission_stage.double_blind and not self.submission_stage.papers_released:
+            self.invitation_builder.set_submission_invitation(self, under_submission=False)
             for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='set_final_readers'):
-                note.readers = ['everyone']
+                note.readers = self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
                 self.client.post_note(note)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
@@ -1236,9 +1236,33 @@ class SubmissionStage(object):
         if self.public:
             return ['everyone']
         else:
-            readers = conference.get_committee()
-            readers.insert(0, conference.get_authors_id(number = number))
+            return [
+                conference.get_program_chairs_id(),
+                conference.get_area_chairs_id(),
+                conference.get_reviewers_id(number=number),
+                conference.get_authors_id(number=number)
+            ]
+
+    def get_invitation_readers(self, conference, under_submission, submission_readers):
+        if under_submission:
+            readers = {
+                'values-copied': [
+                    conference.get_id(),
+                    '{content.authorids}',
+                    '{signatures}'
+                ]
+            }
+            if submission_readers:
+                readers['values-copied'] = readers['values-copied'] + submission_readers
             return readers
+
+        if self.public:
+            return {'values-regex': '.*'}
+
+        ## allow any reader until we can figure out how to set the readers by paper number
+        return {
+            'values-regex': '.*'
+        }
 
     def get_submission_id(self, conference):
         return conference.get_invitation_id(self.name)
