@@ -1127,7 +1127,7 @@ class Conference(object):
         decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
 
         if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
-            self.invitation_builder.set_submission_invitation(self, public=True)
+            self.invitation_builder.set_submission_invitation(self, submission_readers=['everyone'])
 
         def is_release_note(is_note_accepted):
             return release_all_notes or (release_notes_accepted and is_note_accepted)
@@ -1274,8 +1274,8 @@ class SubmissionStage(object):
                 readers['values-copied'] = readers['values-copied'] + submission_readers
             return readers
 
-        if self.public:
-            return {'values-regex': '.*'}
+        if self.public or (submission_readers and submission_readers == ['everyone']):
+            return {'values': ['everyone']}
 
         ## allow any reader until we can figure out how to set the readers by paper number
         return {
@@ -1714,7 +1714,7 @@ class ConferenceBuilder(object):
             readers=None
         ):
 
-        submissions_readers=[SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+        submissions_readers=[SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
         if public:
             submissions_readers=[SubmissionStage.Readers.EVERYONE]
         if readers:
