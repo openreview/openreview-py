@@ -248,10 +248,9 @@ class TestWorkshop():
         assert len(blind_submissions_2) == 2
         assert blind_submissions[0].id == blind_submissions_2[1].id
         assert blind_submissions_2[1].readers == [
-            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
-            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'
         ]
 
         now = datetime.datetime.utcnow()
