@@ -664,7 +664,7 @@ class Conference(object):
             self.create_blind_submissions(hide_fields=hide_fields, under_submission=True)
         else:
             if submission_readers:
-                self.invitation_builder.set_submission_invitation(conference=self, under_submissions=True, submission_readers=submission_readers)
+                self.invitation_builder.set_submission_invitation(conference=self, under_submission=True, submission_readers=submission_readers)
                 submissions = self.get_submissions()
                 for s in submissions:
                     s.readers = s.readers + submission_readers
@@ -1179,13 +1179,20 @@ class Conference(object):
 
 class SubmissionStage(object):
 
+    class Readers(Enum):
+        EVERYONE = 0
+        AREA_CHAIRS = 1
+        AREA_CHAIRS_ASSIGNED = 2
+        REVIEWERS = 3
+        REVIEWERS_ASSIGNED = 4
+
     def __init__(
             self,
             name='Submission',
             start_date=None,
             due_date=None,
             second_due_date=None,
-            public=False,
+            readers=[],
             double_blind=False,
             additional_fields={},
             remove_fields=[],
@@ -1208,7 +1215,7 @@ class SubmissionStage(object):
         self.due_date = due_date
         self.second_due_date = second_due_date
         self.name = name
-        self.public = public
+        self.readers = readers
         self.double_blind = double_blind
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
@@ -1224,6 +1231,7 @@ class SubmissionStage(object):
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
         self.author_names_revealed = author_names_revealed
         self.papers_released = papers_released
+        self.public = self.Readers.EVERYONE in self.readers
 
     def get_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
@@ -1235,13 +1243,23 @@ class SubmissionStage(object):
             ]
         if self.public:
             return ['everyone']
-        else:
-            return [
-                conference.get_program_chairs_id(),
-                conference.get_area_chairs_id(),
-                conference.get_reviewers_id(number=number),
-                conference.get_authors_id(number=number)
-            ]
+
+        submission_readers=[conference.get_program_chairs_id()]
+
+        if self.Readers.AREA_CHAIRS in self.readers and conference.use_area_chairs:
+            submission_readers.append(conference.get_area_chairs_id())
+
+        if self.Readers.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_area_chairs:
+            submission_readers.append(conference.get_area_chairs_id(number=number))
+
+        if self.Readers.REVIEWERS in self.readers:
+            submission_readers.append(conference.get_reviewers_id())
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.readers:
+            submission_readers.append(conference.get_reviewers_id(number=number))
+
+        submission_readers.append(conference.get_authors_id(number=number))
+        return submission_readers
 
     def get_invitation_readers(self, conference, under_submission, submission_readers):
         if under_submission:
@@ -1677,7 +1695,7 @@ class ConferenceBuilder(object):
             start_date=None,
             due_date=None,
             second_due_date=None,
-            public=False,
+            public=None, ## deprecated, please use readers parameter to specify the readers of the submissions
             double_blind=False,
             additional_fields={},
             remove_fields=[],
@@ -1692,15 +1710,22 @@ class ConferenceBuilder(object):
             desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
-            papers_released=False
+            papers_released=False,
+            readers=None
         ):
+
+        submissions_readers=[SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+        if public:
+            submissions_readers=[SubmissionStage.Readers.EVERYONE]
+        if readers:
+            submissions_readers=readers
 
         self.submission_stage = SubmissionStage(
             name,
             start_date,
             due_date,
             second_due_date,
-            public,
+            submissions_readers,
             double_blind,
             additional_fields,
             remove_fields,
