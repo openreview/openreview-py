@@ -82,7 +82,7 @@ class TestSingleBlindPrivateConference():
 
         notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
         assert len(notes) == 5
-        assert notes[0].readers == ['MICCAI.org/2021/Challenges/Program_Chairs', 'MICCAI.org/2021/Challenges/Area_Chairs', 'MICCAI.org/2021/Challenges/Paper5/Reviewers', 'MICCAI.org/2021/Challenges/Paper5/Authors']
+        assert notes[0].readers == ['MICCAI.org/2021/Challenges', 'MICCAI.org/2021/Challenges/Area_Chairs', 'MICCAI.org/2021/Challenges/Paper5/Reviewers', 'MICCAI.org/2021/Challenges/Paper5/Authors']
 
         invitations = test_client.get_invitations(replyForum=notes[0].id)
         assert len(invitations) == 1
