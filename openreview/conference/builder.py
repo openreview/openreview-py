@@ -1237,14 +1237,14 @@ class SubmissionStage(object):
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
             return [
-                conference.get_program_chairs_id(),
+                conference.get_id(),
                 conference.get_area_chairs_id(),
                 conference.get_authors_id(number=number)
             ]
         if self.public:
             return ['everyone']
 
-        submission_readers=[conference.get_program_chairs_id()]
+        submission_readers=[conference.get_id()]
 
         if self.Readers.AREA_CHAIRS in self.readers and conference.use_area_chairs:
             submission_readers.append(conference.get_area_chairs_id())
