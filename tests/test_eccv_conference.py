@@ -1027,7 +1027,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].content['authors'] == ['Anonymous']
-        assert withdrawn_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors']
+        assert withdrawn_notes[0].content['authorids'] == ['Anonymous']
         assert withdrawn_notes[0].readers == [
             'thecvf.com/ECCV/2020/Conference/Paper4/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
