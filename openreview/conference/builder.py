@@ -672,13 +672,13 @@ class Conference(object):
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
-            reveal_authors=False,
+            reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
             email_pcs=False,
             force=True
         )
         self.create_desk_reject_invitations(
-            reveal_authors=False,
+            reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
             force=True
         )

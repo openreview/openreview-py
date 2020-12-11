@@ -22,7 +22,7 @@ def process(client, note, invitation):
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
 
     original_note = None
-    if forum_note.content['authors'] == ['Anonymous'] and forum_note.original:
+    if forum_note.original:
         original_note = client.get_note(id=forum_note.original)
 
     if REVEAL_SUBMISSIONS_ON_WITHDRAW:
@@ -31,11 +31,11 @@ def process(client, note, invitation):
         forum_note.readers = committee
 
     bibtex = openreview.tools.get_bibtex(
-        note=original_note if original_note is not None else forum_note, 
-        venue_fullname=CONFERENCE_NAME, 
-        url_forum=forum_note.id, 
-        year=CONFERENCE_YEAR, 
-        anonymous=not(REVEAL_AUTHORS_ON_WITHDRAW), 
+        note=original_note if original_note is not None else forum_note,
+        venue_fullname=CONFERENCE_NAME,
+        url_forum=forum_note.id,
+        year=CONFERENCE_YEAR,
+        anonymous=not(REVEAL_AUTHORS_ON_WITHDRAW),
         baseurl='https://openreview.net')
 
     if original_note:
@@ -43,8 +43,8 @@ def process(client, note, invitation):
             forum_note.content = {'_bibtex': bibtex}
         else:
             forum_note.content = {
-                'authors': forum_note.content['authors'],
-                'authorids': forum_note.content['authorids'],
+                'authors': ['Anonymous'],
+                'authorids': ['Anonymous'],
                 '_bibtex': bibtex}
     else:
         forum_note.content['_bibtex'] = bibtex

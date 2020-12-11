@@ -165,6 +165,13 @@ class TestESWCConference():
             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
             'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
         ]
+        assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
+user2020paper,
+title={Paper title 1},
+author={Test User and Peter Test and Andrew Mc},
+year={2020},
+url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
+}'''
         assert len(conference.get_submissions()) == 4
 
         # Add a revision
@@ -293,3 +300,10 @@ class TestESWCConference():
             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
             'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
         ]
+        assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
+user2020paper,
+title={Paper title 5},
+author={Test User and Peter Test and Andrew Mc},
+year={2020},
+url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
+}'''
