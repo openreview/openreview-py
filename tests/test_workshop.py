@@ -470,6 +470,7 @@ class TestWorkshop():
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
         notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        assert len(notes) == 3
         submission = notes[2]
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Decision',
@@ -486,14 +487,47 @@ class TestWorkshop():
             }
         )
         decision_note = pc_client.post_note(note)
-        assert decision_note
+
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/-/Decision',
+            forum = notes[1].id,
+            replyto = notes[1].id,
+            readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            nonreaders = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors'],
+            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            content = {
+                'title': 'Paper Decision',
+                'decision': 'Accept (Poster)',
+                'comment': 'this is a comment'
+            }
+        )
+        decision_note = pc_client.post_note(note)
+
+        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper3/-/Decision',
+            forum = notes[0].id,
+            replyto = notes[0].id,
+            readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            nonreaders = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper3/Authors'],
+            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            content = {
+                'title': 'Paper Decision',
+                'decision': 'Reject',
+                'comment': 'this is a comment'
+            }
+        )
+        decision_note = pc_client.post_note(note)
 
         notes = conference.get_submissions(accepted=True)
-        assert notes
+        assert len(notes) == 2
+
+        notes = conference.get_submissions(accepted=False)
+        assert len(notes) == 3
+
 
     def test_release_decisions(self, client, conference, selenium, request_page):
 
-        conference.set_homepage_decisions(decision_heading_map = {
+        conference.post_decision_stage(reveal_authors_accepted=True, release_all_notes=True, decision_heading_map = {
             'Accept (Oral)': 'Oral Presentations',
             'Accept (Poster)': 'Post Presentations',
             'Reject': 'All Presentations'
@@ -548,55 +582,43 @@ class TestWorkshop():
 
     def test_accepted_papers(self, client, conference, test_client):
 
-        accepted_notes = conference.get_submissions(accepted=True)
-        assert accepted_notes
-        assert len(accepted_notes) == 1
-
-        note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
-            content = {
-                'title': 'Paper title 2',
-                'abstract': 'This is an abstract',
-                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc']
-            }
-        )
-        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
-        note.content['pdf'] = url
-        posted_note = test_client.post_note(note)
-        assert posted_note
-
-        conference.setup_post_submission_stage(force=True)
-
-        conference.open_decisions()
-
-        pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
-
-        notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
-        submission = notes[2]
-
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/-/Decision',
-            forum = submission.id,
-            replyto = submission.id,
-            readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            nonreaders = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            content = {
-                'title': 'Paper Decision',
-                'decision': 'Reject',
-                'comment': 'this is a comment'
-            }
-        )
-        decision_note = pc_client.post_note(note)
-        assert decision_note
+        accepted_authors = client.get_group('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors/Accepted')
+        assert accepted_authors
+        assert accepted_authors.members == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors']
 
         notes = conference.get_submissions(accepted=True)
-        assert notes
+        assert len(notes) == 2
+
+        test_client.post_note(openreview.Note(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Withdraw',
+            forum = notes[0].forum,
+            replyto = notes[0].forum,
+            readers = [
+                'icaps-conference.org/ICAPS/2019/Workshop/HSDIP',
+                'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
+                'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
+                'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            writers = [conference.get_id(), 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
+            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
+
+        time.sleep(2)
+
+        notes = conference.get_submissions(accepted=True)
         assert len(notes) == 1
 
-        notes = conference.get_submissions(accepted=False)
-        assert notes
-        assert len(notes) == 4
+        withdrawn_notes = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Withdrawn_Submission')
+        assert len(withdrawn_notes) == 1
+        assert withdrawn_notes[0].readers == [
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
+            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'
+        ]
+        assert withdrawn_notes[0].content['authorids'] == ['Anonymous']
+
+        accepted_authors = client.get_group('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors/Accepted')
+        assert accepted_authors
+        assert accepted_authors.members == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors']

@@ -159,7 +159,7 @@ class TestESWCConference():
 
         withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
         assert len(withdrawn_notes) == 1
-        withdrawn_notes[0].readers == [
+        assert withdrawn_notes[0].readers == [
             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors',
             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Reviewers',
             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
