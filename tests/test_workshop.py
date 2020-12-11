@@ -14,8 +14,10 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestWorkshop():
 
-    def test_create_conference(self, client):
-
+    @pytest.fixture(scope="class")
+    def conference(self, client):
+        now = datetime.datetime.utcnow()
+        #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -30,43 +32,26 @@ class TestWorkshop():
         'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
         'location': 'Berkeley, CA, USA'
         })
+        builder.has_area_chairs(False)
+        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+
         conference = builder.get_result()
-        assert conference, 'conference is None'
+        conference.set_program_chairs(emails = ['program_chairs@hsdip.org'])
+        return conference
+
+
+    def test_create_conference(self, client, conference):
 
         resp = requests.get('http://localhost:3000/groups?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
         assert resp.status_code == 200
 
-    def test_enable_submissions(self, client, selenium, request_page):
-
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
-        conference = builder.get_result()
-        conference.set_program_chairs(emails = ['program_chairs@hsdip.org'])
+    def test_enable_submissions(self, client, conference, selenium, request_page):
 
         invitation = client.get_invitation(id = conference.get_submission_id())
         assert invitation
-        assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
-        assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
 
         posted_invitation = client.get_invitation(id = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Submission')
         assert posted_invitation
-        assert posted_invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
-        assert posted_invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
 
@@ -91,25 +76,7 @@ class TestWorkshop():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
 
-    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page):
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
-        conference = builder.get_result()
+    def test_post_submissions(self, client, conference, test_client, peter_client, selenium, request_page):
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
@@ -191,27 +158,7 @@ class TestWorkshop():
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
-    def test_create_blind_submissions(self, client):
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
+    def test_create_blind_submissions(self, client, conference):
 
         group = client.get_group(id = conference.get_authors_id())
         assert group
@@ -253,10 +200,6 @@ class TestWorkshop():
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'
         ]
 
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
-        conference = builder.get_result()
-
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
@@ -279,27 +222,7 @@ class TestWorkshop():
         assert len(blind_submissions_3) == 3
         assert blind_submissions[0].id == blind_submissions_3[2].id
 
-    def test_setup_matching(self, client):
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
+    def test_setup_matching(self, client, conference):
 
         conference.setup_matching()
 
@@ -308,27 +231,10 @@ class TestWorkshop():
         assert 'scores_specification' in invitation.reply['content']
         assert not invitation.reply['content']['scores_specification']['default']
 
-    def test_set_authors(self, client, test_client, selenium, request_page, helpers):
+    def test_set_authors(self, client, conference, test_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
         now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED)
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
+        conference.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED))
 
         group = client.get_group(id = conference.get_authors_id())
         assert group
@@ -344,33 +250,12 @@ class TestWorkshop():
         assert group
         assert len(group.members) == 3
 
-        conference = builder.get_result()
-
         group = client.get_group(id = conference.get_authors_id())
         assert group
         assert len(group.members) == 3
 
-    def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
+    def test_open_reviews(self, client, conference, test_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED)
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
         conference.set_reviewers(emails = ['reviewer4@mail.com'])
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
@@ -430,29 +315,9 @@ class TestWorkshop():
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
         assert len(notes) == 1
 
-    def test_open_comments(self, client, test_client, selenium, request_page, helpers):
+    def test_open_comments(self, client, conference, test_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
-        builder.has_area_chairs(False)
-        builder.set_comment_stage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True, authors=True)
-        conference = builder.get_result()
-        assert conference
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True, authors=True))
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[2]
@@ -525,29 +390,7 @@ class TestWorkshop():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-    def test_open_revise_reviews(self, client, test_client, selenium, request_page, helpers):
-
-        now = datetime.datetime.utcnow()
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
-        assert conference
+    def test_open_revise_reviews(self, client, conference, test_client, selenium, request_page, helpers):
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[2]
@@ -556,6 +399,7 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
+        now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1/-/Review_Revision',
@@ -596,27 +440,8 @@ class TestWorkshop():
         recipients = [m['content']['to'] for m in messages]
         assert 'reviewer4@mail.com' in recipients
 
-    def test_open_meta_reviews(self, client, test_client, helpers):
+    def test_open_meta_reviews(self, client, conference, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
         conference.open_meta_reviews()
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
@@ -638,27 +463,7 @@ class TestWorkshop():
         meta_review_note = pc_client.post_note(note)
         assert meta_review_note
 
-    def test_open_decisions(self, client, helpers):
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
+    def test_open_decisions(self, client, conference, helpers):
 
         conference.open_decisions()
 
@@ -686,27 +491,7 @@ class TestWorkshop():
         notes = conference.get_submissions(accepted=True)
         assert notes
 
-    def test_release_decisions(self, client, selenium, request_page):
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        now = datetime.datetime.utcnow()
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
-
-        builder.has_area_chairs(False)
-        conference = builder.get_result()
+    def test_release_decisions(self, client, conference, selenium, request_page):
 
         conference.set_homepage_decisions(decision_heading_map = {
             'Accept (Oral)': 'Oral Presentations',
@@ -738,7 +523,7 @@ class TestWorkshop():
         consoles_tab = selenium.find_element_by_id('your-consoles')
         assert consoles_tab
 
-    def test_pc_console(self, client, selenium, request_page):
+    def test_pc_console(self, client, conference, selenium, request_page):
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
@@ -761,25 +546,7 @@ class TestWorkshop():
         with pytest.raises(NoSuchElementException):
             assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5')
 
-    def test_accepted_papers(self, client, test_client):
-
-        builder = openreview.conference.ConferenceBuilder(client)
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
-        builder.set_conference_name('Heuristics and Search for Domain-independent Planning')
-        builder.set_conference_short_name('ICAPS HSDIP 2019')
-        builder.set_homepage_header({
-        'title': 'Heuristics and Search for Domain-independent Planning',
-        'subtitle': 'ICAPS 2019 Workshop',
-        'deadline': 'Submission Deadline: March 17, 2019 midnight AoE',
-        'date': 'July 11-15, 2019',
-        'website': 'https://icaps19.icaps-conference.org/workshops/HSDIP/index.html',
-        'location': 'Berkeley, CA, USA'
-        })
-        builder.has_area_chairs(False)
-        builder.set_submission_stage(double_blind=True)
-        conference = builder.get_result()
+    def test_accepted_papers(self, client, conference, test_client):
 
         accepted_notes = conference.get_submissions(accepted=True)
         assert accepted_notes
