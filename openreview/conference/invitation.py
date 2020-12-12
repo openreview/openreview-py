@@ -623,7 +623,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             }
         }
 
-        invitees = note.content['authorids'] + note.signatures + [conference.support_user]
+        invitees = [conference.get_id(), conference.get_authors_id(number=note.number)]
         super(PaperSubmissionRevisionInvitation, self).__init__(
             id=conference.get_invitation_id(submission_revision_stage.name, note.number),
             super=conference.get_invitation_id(submission_revision_stage.name),
