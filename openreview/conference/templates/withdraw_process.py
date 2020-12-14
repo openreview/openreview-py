@@ -22,7 +22,7 @@ def process(client, note, invitation):
     forum_note.invitation = WITHDRAWN_SUBMISSION_ID
 
     original_note = None
-    if forum_note.content['authors'] == ['Anonymous'] and forum_note.original:
+    if forum_note.original:
         original_note = client.get_note(id=forum_note.original)
 
     if REVEAL_SUBMISSIONS_ON_WITHDRAW:
@@ -31,23 +31,33 @@ def process(client, note, invitation):
         forum_note.readers = committee
 
     bibtex = openreview.tools.get_bibtex(
-        note=original_note if original_note is not None else forum_note, 
-        venue_fullname=CONFERENCE_NAME, 
-        url_forum=forum_note.id, 
-        year=CONFERENCE_YEAR, 
-        anonymous=not(REVEAL_AUTHORS_ON_WITHDRAW), 
+        note=original_note if original_note is not None else forum_note,
+        venue_fullname=CONFERENCE_NAME,
+        url_forum=forum_note.id,
+        year=CONFERENCE_YEAR,
+        anonymous=not(REVEAL_AUTHORS_ON_WITHDRAW),
         baseurl='https://openreview.net')
 
     if original_note:
         if REVEAL_AUTHORS_ON_WITHDRAW:
-            forum_note.content = {'_bibtex': bibtex}
+            forum_note.content = {
+                '_bibtex': bibtex,
+                'venue': '',
+                'venueid': ''
+            }
         else:
             forum_note.content = {
-                'authors': forum_note.content['authors'],
-                'authorids': forum_note.content['authorids'],
-                '_bibtex': bibtex}
+                'authors': ['Anonymous'],
+                'authorids': ['Anonymous'],
+                '_bibtex': bibtex,
+                'venue': '',
+                'venueid': ''
+            }
     else:
         forum_note.content['_bibtex'] = bibtex
+        forum_note.content['venue'] = ''
+        forum_note.content['venueid'] = ''
+
 
     forum_note = client.post_note(forum_note)
 
@@ -60,6 +70,7 @@ def process(client, note, invitation):
         client.post_invitation(invitation)
 
     client.remove_members_from_group(CONFERENCE_ID + '/Authors', PAPER_AUTHORS_ID)
+    client.remove_members_from_group(CONFERENCE_ID + '/Authors/Accepted', PAPER_AUTHORS_ID)
 
     # Mail Authors, Reviewers, ACs (if present) and PCs
     email_subject = '''{CONFERENCE_SHORT_NAME}: Paper #{paper_number} withdrawn by paper authors'''.format(
