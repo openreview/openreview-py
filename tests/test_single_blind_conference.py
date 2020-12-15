@@ -149,17 +149,16 @@ class TestSingleBlindConference():
         builder.set_conference_short_name('MLITS 2018')
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(
-            due_date = now + datetime.timedelta(minutes = 40), 
-            public=True, 
-            email_pcs=True, 
-            create_groups=True, 
+            due_date = now + datetime.timedelta(minutes = 40),
+            public=True,
+            email_pcs=True,
+            create_groups=True,
             withdrawn_submission_public=True,
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True)
 
         builder.has_area_chairs(True)
-        builder.set_override_homepage(True)
         conference = builder.get_result()
 
         invitation = client.get_invitation(conference.get_submission_id())

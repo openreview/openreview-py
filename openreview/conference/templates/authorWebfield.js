@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Author Console Webfield
 // ------------------------------------
@@ -27,7 +30,11 @@ function main() {
 
   renderHeader();
 
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   load().then(renderContent).then(Webfield.ui.done);
 }

@@ -25,7 +25,6 @@ class TestICLRConference():
 
         builder.set_conference_id('ICLR.cc/2021/Conference')
         builder.set_conference_short_name('ICLR 2021')
-        builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_homepage_header({
             'title': 'International Conference on Learning Representations',
