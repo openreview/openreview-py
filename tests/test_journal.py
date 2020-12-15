@@ -325,8 +325,7 @@ class TestJournal():
         assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        ## Temporally disabled, check with Carlos, super user should be able to see the real author names
-        ##assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
         assert note.content['venue'] == 'Submitted to TMLR'
         assert note.content['venueid'] == '.TMLR/Submitted'
 
