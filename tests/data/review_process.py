@@ -13,7 +13,7 @@ def process(client, note, invitation):
                 signatures=[venue_id],
                 reply={
                     'signatures': { 'values': [venue_id] },
-                    'readers': { 'values': [venue_id, '${referent.signatures}'] },
+                    'readers': { 'values': [venue_id, '${note.signatures}'] },
                     'writers': { 'values': [venue_id] },
                     'note': {
                         'readers': { 'values': ['everyone'] }

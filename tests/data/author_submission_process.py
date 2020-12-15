@@ -54,10 +54,7 @@ def process(client, note, invitation):
             invitation=openreview.Invitation(id=note.invitation,
                 signatures=[venue_id],
                 reply={
-                    'signatures': { 'values': [venue_id] },
-                    'readers': { 'values': [venue_id, '${referent.signatures}'] },
-                    'writers': { 'values': [venue_id] },
-                    'note': {
+                   'note': {
                         'readers': { 'values': ['everyone'] }
                     }
                 }
@@ -328,7 +325,7 @@ def process(client, note, invitation):
                                 'required': True
                             },
                             'readers': {
-                                'values': [ venue_id, f'{paper_group.id}/AEs', '${referent.signatures}']
+                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
                             }
                         },
                         'comment': {
@@ -340,7 +337,7 @@ def process(client, note, invitation):
                                 'markdown': True
                             },
                             'readers': {
-                                'values': [ venue_id, f'{paper_group.id}/AEs', '${referent.signatures}']
+                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
                             }
                         }
                     }
