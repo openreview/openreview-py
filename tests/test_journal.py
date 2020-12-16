@@ -575,6 +575,6 @@ class TestJournal():
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 3
         #Temporally disabled
-        #assert reviews[0].readers == ['everyone']
-        #assert reviews[1].readers == ['everyone']
-        #assert reviews[2].readers == ['everyone']
+        assert reviews[0].readers == ['everyone']
+        assert reviews[1].readers == ['everyone']
+        assert reviews[2].readers == ['everyone']
