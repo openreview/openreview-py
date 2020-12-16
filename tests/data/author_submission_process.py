@@ -55,6 +55,7 @@ def process(client, note, invitation):
                 signatures=[venue_id],
                 reply={
                     'signatures': { 'values': [ venue_id ] },
+                    'readers': { 'values': [venue_id, '.TMLR/Paper${{referent}.number}/AEs', '${{referent}.signatures}'] },
                     'note': {
                         'readers': { 'values': ['everyone'] }
                     }

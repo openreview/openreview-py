@@ -572,9 +572,25 @@ class TestJournal():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        ## All the reviewes should be public now
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 3
-        #Temporally disabled
         assert reviews[0].readers == ['everyone']
         assert reviews[1].readers == ['everyone']
         assert reviews[2].readers == ['everyone']
+
+        ## Check permissions of the review revisions
+        review_revisions=client.get_references(referent=reviews[0].id)
+        assert len(review_revisions) == 2
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+
+        review_revisions=client.get_references(referent=reviews[1].id)
+        assert len(review_revisions) == 2
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
+
+        review_revisions=client.get_references(referent=reviews[2].id)
+        assert len(review_revisions) == 2
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
