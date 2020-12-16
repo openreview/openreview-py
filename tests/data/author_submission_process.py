@@ -45,6 +45,7 @@ def process(client, note, invitation):
 
     ## TODO: send message to the reviewer, AE confirming the review was posted
 
+    paper_number=client.get_note(note.forum).number
     reviews=client.get_notes(forum=note.forum, invitation=note.invitation)
     if len(reviews) == 3:
         invitation = client.post_invitation_edit(readers=[venue_id],
@@ -55,7 +56,7 @@ def process(client, note, invitation):
                 signatures=[venue_id],
                 reply={
                     'signatures': { 'values': [ venue_id ] },
-                    'readers': { 'values': [venue_id, '.TMLR/Paper${{referent}.number}/AEs', '${{referent}.signatures}'] },
+                    'readers': { 'values': [venue_id, f'.TMLR/Paper{paper_number}/AEs', '${{referent}.signatures}'] },
                     'note': {
                         'readers': { 'values': ['everyone'] }
                     }
