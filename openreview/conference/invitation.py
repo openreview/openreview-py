@@ -13,39 +13,16 @@ LONG_BUFFER_DAYS = 10
 
 class SubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, public):
+    def __init__(self, conference, under_submission, submission_readers):
 
         readers = {}
         submission_stage = conference.submission_stage
-        additional_fields = submission_stage.additional_fields
         start_date = submission_stage.start_date
         due_date = submission_stage.due_date
-        readers = { 'values-copied': [
-            conference.get_id(),
-            '{content.authorids}',
-            '{signatures}'
-            ]
-        }
+        readers = submission_stage.get_invitation_readers(conference, under_submission, submission_readers)
 
-        if public:
-            readers = {'values-regex': '.*'}
+        content = submission_stage.get_content()
 
-        content = invitations.submission.copy()
-
-        if submission_stage.subject_areas:
-            content['subject_areas'] = {
-                'order' : 5,
-                'description' : "Select or type subject area",
-                'values-dropdown': submission_stage.subject_areas,
-                'required': True
-            }
-
-        for field in submission_stage.remove_fields:
-            del content[field]
-        for order, key in enumerate(additional_fields, start=10):
-            value = additional_fields[key]
-            value['order'] = order
-            content[key] = value
         with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
             file_content = f.read()
             file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
@@ -294,7 +271,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
         else:
-            content = invitations.submission.copy()
+            content = conference.submission_stage.get_content()
 
         readers = {'values-regex': '.*'}
         if reveal_submission:
@@ -435,7 +412,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
         else:
-            content = invitations.submission.copy()
+            content = conference.submission_stage.get_content()
 
         readers = {'values-regex': '.*'}
         if reveal_submission:
@@ -575,7 +552,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
                 id=conference.get_invitation_id(submission_revision_stage.name),
                 cdate=tools.datetime_millis(start_date) if start_date else None,
                 duedate=tools.datetime_millis(due_date) if due_date else None,
-                expdate=tools.datetime_millis(due_date + datetime.timedelta(days=LONG_BUFFER_DAYS)) if due_date else None,
+                expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes=SHORT_BUFFER_MIN)) if due_date else None,
                 multiReply=submission_revision_stage.multiReply,
                 readers=['everyone'],
                 writers=[conference.get_id()],
@@ -646,7 +623,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             }
         }
 
-        invitees = note.content['authorids'] + note.signatures + [conference.support_user]
+        invitees = [conference.get_id(), conference.get_authors_id(number=note.number)]
         super(PaperSubmissionRevisionInvitation, self).__init__(
             id=conference.get_invitation_id(submission_revision_stage.name, note.number),
             super=conference.get_invitation_id(submission_revision_stage.name),
@@ -798,7 +775,7 @@ class ReviewInvitation(openreview.Invitation):
             super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name),
                 cdate = tools.datetime_millis(review_stage.start_date),
                 duedate = tools.datetime_millis(review_stage.due_date),
-                expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if review_stage.due_date else None,
+                expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
@@ -889,7 +866,7 @@ class RebuttalInvitation(openreview.Invitation):
             super(RebuttalInvitation, self).__init__(id = conference.get_invitation_id(review_rebuttal_stage.name),
                 cdate = tools.datetime_millis(review_rebuttal_stage.start_date),
                 duedate = tools.datetime_millis(review_rebuttal_stage.due_date),
-                expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if review_rebuttal_stage.due_date else None,
+                expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
@@ -960,7 +937,7 @@ class ReviewRevisionInvitation(openreview.Invitation):
             super(ReviewRevisionInvitation, self).__init__(id = conference.get_invitation_id(review_revision_stage.name),
                 cdate = tools.datetime_millis(review_revision_stage.start_date),
                 duedate = tools.datetime_millis(review_revision_stage.due_date),
-                expdate = tools.datetime_millis(review_revision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if review_revision_stage.due_date else None,
+                expdate = tools.datetime_millis(review_revision_stage.due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if review_revision_stage.due_date else None,
                 readers = ['everyone'],
                 writers = [conference.id],
                 signatures = [conference.id],
@@ -1084,7 +1061,7 @@ class MetaReviewInvitation(openreview.Invitation):
         super(MetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
-            expdate = tools.datetime_millis(due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if due_date else None,
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None,
             readers = ['everyone'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1249,9 +1226,9 @@ class InvitationBuilder(object):
                     note.nonreaders = invitation.reply['nonreaders']['values']
                 self.client.post_note(note)
 
-    def set_submission_invitation(self, conference, public):
+    def set_submission_invitation(self, conference, under_submission=True, submission_readers=None):
 
-        return self.client.post_invitation(SubmissionInvitation(conference, public=public))
+        return self.client.post_invitation(SubmissionInvitation(conference, under_submission, submission_readers))
 
 
     def set_blind_submission_invitation(self, conference, hide_fields):

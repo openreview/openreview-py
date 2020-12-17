@@ -1718,3 +1718,7 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert note.content['venue'] == 'AKBC 2019 Oral'
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
+
+        accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
+        assert accepted_authors
+        assert accepted_authors.members == ['AKBC.ws/2019/Conference/Paper1/Authors']

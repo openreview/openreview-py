@@ -12,6 +12,7 @@ from .. import tools
 from . import webfield
 from . import invitation
 from . import matching
+from .. import invitations
 
 class Conference(object):
 
@@ -131,7 +132,7 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        return self.invitation_builder.set_submission_invitation(self, public=False)
+        return self.invitation_builder.set_submission_invitation(self)
 
     def __create_expertise_selection_stage(self):
 
@@ -531,22 +532,22 @@ class Conference(object):
 
         return invitation
 
-    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False):
+    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
 
-        if reveal_submission and not self.submission_stage.public:
+        if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
 
-        if not reveal_authors and not self.submission_stage.double_blind:
+        if not force and not reveal_authors and not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Can not hide authors of submissions in single blind or open venue')
 
         return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_pcs)
 
-    def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False):
+    def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False, force=False):
 
-        if reveal_submission and not self.submission_stage.public:
+        if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal desk-rejected submissions that are not originally public')
 
-        if not reveal_authors and not self.submission_stage.double_blind:
+        if not force and not reveal_authors and not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Can not hide authors of submissions in single blind or open venue')
 
         return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission)
@@ -623,7 +624,7 @@ class Conference(object):
             for field in hide_fields:
                 blind_content[field] = ''
 
-            blind_readers = self.submission_stage.get_final_readers(self, note.number, under_submission)
+            blind_readers = self.submission_stage.get_readers(self, note.number, under_submission)
 
             if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
 
@@ -657,20 +658,29 @@ class Conference(object):
 
         return blinded_notes
 
-    def setup_first_deadline_stage(self, force=False, hide_fields=[]):
+    def setup_first_deadline_stage(self, force=False, hide_fields=[], submission_readers=None):
 
         if self.submission_stage.double_blind:
             self.create_blind_submissions(hide_fields=hide_fields, under_submission=True)
+        else:
+            if submission_readers:
+                self.invitation_builder.set_submission_invitation(conference=self, under_submission=True, submission_readers=submission_readers)
+                submissions = self.get_submissions()
+                for s in submissions:
+                    s.readers = s.readers + submission_readers
+                    self.client.post_note(s)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
-            reveal_authors=False,
+            reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
-            email_pcs=False
+            email_pcs=False,
+            force=True
         )
         self.create_desk_reject_invitations(
-            reveal_authors=False,
-            reveal_submission=False
+            reveal_authors=not self.submission_stage.double_blind,
+            reveal_submission=False,
+            force=True
         )
 
         self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
@@ -688,10 +698,10 @@ class Conference(object):
         if self.submission_stage.double_blind and not (self.submission_stage.author_names_revealed or self.submission_stage.papers_released):
             self.create_blind_submissions(hide_fields)
 
-        if not self.submission_stage.double_blind and self.submission_stage.public:
-            self.invitation_builder.set_submission_invitation(self, public=True)
+        if not self.submission_stage.double_blind and not self.submission_stage.papers_released:
+            self.invitation_builder.set_submission_invitation(self, under_submission=False)
             for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='set_final_readers'):
-                note.readers = ['everyone']
+                note.readers = self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
                 self.client.post_note(note)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
@@ -1117,7 +1127,7 @@ class Conference(object):
         decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
 
         if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
-            self.invitation_builder.set_submission_invitation(self, public=True)
+            self.invitation_builder.set_submission_invitation(self, submission_readers=['everyone'])
 
         def is_release_note(is_note_accepted):
             return release_all_notes or (release_notes_accepted and is_note_accepted)
@@ -1169,13 +1179,20 @@ class Conference(object):
 
 class SubmissionStage(object):
 
+    class Readers(Enum):
+        EVERYONE = 0
+        AREA_CHAIRS = 1
+        AREA_CHAIRS_ASSIGNED = 2
+        REVIEWERS = 3
+        REVIEWERS_ASSIGNED = 4
+
     def __init__(
             self,
             name='Submission',
             start_date=None,
             due_date=None,
             second_due_date=None,
-            public=False,
+            readers=[],
             double_blind=False,
             additional_fields={},
             remove_fields=[],
@@ -1198,7 +1215,7 @@ class SubmissionStage(object):
         self.due_date = due_date
         self.second_due_date = second_due_date
         self.name = name
-        self.public = public
+        self.readers = readers
         self.double_blind = double_blind
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
@@ -1214,21 +1231,56 @@ class SubmissionStage(object):
         self.email_pcs_on_desk_reject = email_pcs_on_desk_reject
         self.author_names_revealed = author_names_revealed
         self.papers_released = papers_released
+        self.public = self.Readers.EVERYONE in self.readers
 
-    def get_final_readers(self, conference, number, under_submission):
+    def get_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
             return [
-                conference.get_program_chairs_id(),
+                conference.get_id(),
                 conference.get_area_chairs_id(),
                 conference.get_authors_id(number=number)
             ]
         if self.public:
             return ['everyone']
-        else:
-            readers = conference.get_committee()
-            readers.insert(0, conference.get_authors_id(number = number))
+
+        submission_readers=[conference.get_id()]
+
+        if self.Readers.AREA_CHAIRS in self.readers and conference.use_area_chairs:
+            submission_readers.append(conference.get_area_chairs_id())
+
+        if self.Readers.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_area_chairs:
+            submission_readers.append(conference.get_area_chairs_id(number=number))
+
+        if self.Readers.REVIEWERS in self.readers:
+            submission_readers.append(conference.get_reviewers_id())
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.readers:
+            submission_readers.append(conference.get_reviewers_id(number=number))
+
+        submission_readers.append(conference.get_authors_id(number=number))
+        return submission_readers
+
+    def get_invitation_readers(self, conference, under_submission, submission_readers):
+        if under_submission:
+            readers = {
+                'values-copied': [
+                    conference.get_id(),
+                    '{content.authorids}',
+                    '{signatures}'
+                ]
+            }
+            if submission_readers:
+                readers['values-copied'] = readers['values-copied'] + submission_readers
             return readers
+
+        if self.public or (submission_readers and submission_readers == ['everyone']):
+            return {'values': ['everyone']}
+
+        ## allow any reader until we can figure out how to set the readers by paper number
+        return {
+            'values-regex': '.*'
+        }
 
     def get_submission_id(self, conference):
         return conference.get_invitation_id(self.name)
@@ -1244,6 +1296,27 @@ class SubmissionStage(object):
 
     def get_desk_rejected_submission_id(self, conference, name = 'Desk_Rejected_Submission'):
         return conference.get_invitation_id(name)
+
+    def get_content(self):
+        content = invitations.submission.copy()
+
+        if self.subject_areas:
+            content['subject_areas'] = {
+                'order' : 5,
+                'description' : "Select or type subject area",
+                'values-dropdown': self.subject_areas,
+                'required': True
+            }
+
+        for field in self.remove_fields:
+            del content[field]
+
+        for order, key in enumerate(self.additional_fields, start=10):
+            value = self.additional_fields[key]
+            value['order'] = order
+            content[key] = value
+
+        return content
 
 class ExpertiseSelectionStage(object):
 
@@ -1622,7 +1695,7 @@ class ConferenceBuilder(object):
             start_date=None,
             due_date=None,
             second_due_date=None,
-            public=False,
+            public=None, ## deprecated, please use readers parameter to specify the readers of the submissions
             double_blind=False,
             additional_fields={},
             remove_fields=[],
@@ -1637,15 +1710,22 @@ class ConferenceBuilder(object):
             desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
-            papers_released=False
+            papers_released=False,
+            readers=None
         ):
+
+        submissions_readers=[SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
+        if public:
+            submissions_readers=[SubmissionStage.Readers.EVERYONE]
+        if readers:
+            submissions_readers=readers
 
         self.submission_stage = SubmissionStage(
             name,
             start_date,
             due_date,
             second_due_date,
-            public,
+            submissions_readers,
             double_blind,
             additional_fields,
             remove_fields,
