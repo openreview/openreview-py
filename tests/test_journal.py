@@ -242,6 +242,9 @@ class TestJournal():
                         'readers': {
                             'values': ['everyone']
                         },
+                        'writers': {
+                            'values': [venue_id]
+                        },
                         'content': {
                             'venue': {
                                 'value': {
@@ -395,7 +398,7 @@ class TestJournal():
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
         assert note.content['venue'] == 'Under review for TMLR'
