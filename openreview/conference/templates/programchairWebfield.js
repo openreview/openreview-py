@@ -509,7 +509,7 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
 
   groups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
-    if (!num) {
+    if (!(num && num in noteMap)) {
       return;
     }
 
@@ -520,9 +520,7 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
       return;
     }
 
-    if (num in noteMap) {
-      noteMap[num][0] = areaChair;
-    }
+    noteMap[num][0] = areaChair;
     if (!(areaChair in areaChairMap)) {
       areaChairMap[areaChair] = [];
     }
