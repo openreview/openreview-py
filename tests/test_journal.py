@@ -508,7 +508,7 @@ class TestJournal():
         assert note.content.get('title') is None
         assert note.content.get('comment') is None
 
-        ## Assign two mote reviewers
+        ## Assign two more reviewers
         ## TODO: use anonymous ids
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer2",
             readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"],
@@ -597,3 +597,114 @@ class TestJournal():
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
+
+        ## Allow the authors to revise their papers during the rebuttal discussion
+        revision_invitation_id=f'{venue_id}/Paper1/-/Revision'
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=revision_invitation_id,
+                invitees=[f"{venue_id}/Paper1/Authors"],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                reply={
+                    'referent': { 'value': note_id_1 },
+                    'signatures': { 'values': [f'{venue_id}/Paper1/Authors'] },
+                    'readers': { 'values': ['everyone']},
+                    'writers': { 'values': [ venue_id, f'{venue_id}/Paper1/Authors']},
+                    'note': {
+                        'forum': { 'value': note_id_1 },
+                        'content': {
+                            'title': {
+                                'value': {
+                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                    'order': 1,
+                                    'value-regex': '.{1,250}',
+                                    'required':False
+                                }
+                            },
+                            'abstract': {
+                                'value': {
+                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                    'order': 4,
+                                    'value-regex': '[\\S\\s]{1,5000}',
+                                    'required':False
+                                }
+                            },
+                            'authors': {
+                                'value': {
+                                    'description': 'Comma separated list of author names.',
+                                    'order': 2,
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'required':False,
+                                    'hidden': True
+                                }
+                            },
+                            'authorids': {
+                                'value': {
+                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                    'order': 3,
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                    'required':False
+                                }
+                            },
+                            'pdf': {
+                                'value': {
+                                    'description': 'Upload a PDF file that ends with .pdf',
+                                    'order': 5,
+                                    'value-file': {
+                                        'fileTypes': ['pdf'],
+                                        'size': 50
+                                    },
+                                    'required':False
+                                }
+                            },
+                            "supplementary_material": {
+                                'value': {
+                                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                                    "order": 6,
+                                    "value-file": {
+                                        "fileTypes": [
+                                            "zip",
+                                            "pdf"
+                                        ],
+                                        "size": 100
+                                    },
+                                    "required": False
+                                }
+                            }
+                        }
+                    }
+                }))
+
+        ## post a revision
+        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Revision',
+            signatures=[f"{venue_id}/Paper1/Authors"],
+            referent=note_id_1,
+            note=openreview.Note(
+                forum=note_id_1,
+                content={
+                    'title': { 'value': 'Paper title VERSION 2' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Test User', 'Andrew McCallum']},
+                    'authorids': { 'value': ['~Test_User1', 'andrew@mail.com']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'}
+                }
+            )
+        )
+
+        note = client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['venue'] == 'Under review for TMLR'
+        assert note.content['venueid'] == '.TMLR/Under_Review'
+        assert note.content['title'] == 'Paper title VERSION 2'
+        assert note.content['abstract'] == 'Paper abstract'
