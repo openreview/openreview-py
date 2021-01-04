@@ -2,6 +2,8 @@ import openreview
 import pytest
 import time
 import json
+import datetime
+import random
 
 
 class TestJournal():
@@ -14,12 +16,28 @@ class TestJournal():
         action_editors = 'AEs'
         reviewers = 'Reviewers'
         super_user = 'openreview.net'
+        now = datetime.datetime.utcnow()
+
+        ## Editors in Chief
         raia_client = helpers.create_user('raia@mail.com', 'Raia', 'Hadsell')
+        kyunghyun_client = helpers.create_user('kyunghyun@mail.com', 'Kyunghyun', 'Cho')
+
+        ## Action Editors
         joelle_client = helpers.create_user('joelle@mail.com', 'Joelle', 'Pineau')
-        peter_client = helpers.create_user('peter@mail.com', 'Peter', 'Snow')
+        ryan_client = helpers.create_user('ryan@mail.com', 'Ryan', 'Adams')
+        samy_client = helpers.create_user('samy@mail.com', 'Samy', 'Bengio')
+        yoshua_client = helpers.create_user('yoshua@mail.com', 'Yoshua', 'Bengio')
+        corinna_client = helpers.create_user('corinna@mail.com', 'Corinna', 'Cortes')
+        ivan_client = helpers.create_user('ivan@mail.com', 'Ivan', 'Titov')
+        shakir_client = helpers.create_user('shakir@mail.com', 'Shakir', 'Mohamed')
+        silvia_client = helpers.create_user('silvia@mail.com', 'Silvia', 'Villa')
+
+        ## Reviewers
         david_client=helpers.create_user('david@mail.com', 'David', 'Belanger')
         melisa_client=helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
         carlos_client=helpers.create_user('carlos@mail.com', 'Carlos', 'Mondragon')
+
+        peter_client = helpers.create_user('peter@mail.com', 'Peter', 'Snow')
         guest_client=openreview.Client()
 
         ## venue group
@@ -98,17 +116,27 @@ class TestJournal():
             venue_group.web = content
             client.post_group(venue_group)
 
-        ## action editor
+        ## action editors group
         action_editors_id = f"{venue_id}/{action_editors}"
         client.post_group(openreview.Group(id=action_editors_id,
                         readers=['everyone'],
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
-                        members=['~Joelle_Pineau1']
+                        members=[
+                            '~Joelle_Pineau1',
+                            '~Ryan_Adams1',
+                            '~Samy_Bengio1',
+                            '~Yoshua_Bengio1',
+                            '~Corinna_Cortes1',
+                            '~Ivan_Titov1',
+                            '~Shakir_Mohamed1',
+                            '~Silvia_Villa1'
+                        ]
                         ))
+        ## TODO: add webfield console
 
-        ## reviewers
+        ## reviewers group
         reviewers_id = f"{venue_id}/{reviewers}"
         client.post_group(openreview.Group(id=reviewers_id,
                         readers=['everyone'],
@@ -117,6 +145,7 @@ class TestJournal():
                         signatories=[],
                         members=['~David_Bellanger1', '~Melisa_Bok1', '~Carlos_Mondragon1']
                         ))
+        ## TODO: add webfield console
 
         ## Submission invitation
         submission_invitation_id=f'{venue_id}/-/Author_Submission'
@@ -381,8 +410,171 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
         ## Assign Action editor to submission 1
-        raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
+        ##raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
+        ## Action Editors conflict, use API v1
+        conflict_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Conflict'
+        client.post_invitation(openreview.Invitation(
+            id=conflict_ae_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id, f'{venue_id}/Paper1/Authors'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [venue_id, f'{venue_id}/Paper1/Authors', '{tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query' : {
+                            'id': note_id_1
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query' : {
+                            'group' : action_editors_id
+                        }
+                    },
+                    'weight': {
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    },
+                    'label': {
+                        'value-regex': '.*'
+                    }
+                }
+            }))
 
+        affinity_score_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Affinity_Score'
+        client.post_invitation(openreview.Invitation(
+            id=affinity_score_ae_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id, f'{venue_id}/Paper1/Authors'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [venue_id, f'{venue_id}/Paper1/Authors', '{tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query' : {
+                            'id': note_id_1
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query' : {
+                            'group' : action_editors_id
+                        }
+                    },
+                    'weight': {
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    },
+                    'label': {
+                        'value-regex': '.*'
+                    }
+                }
+            }))
+
+        ## Suggest Action Editors, use API v1
+        suggest_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Recommendation'
+        invitation = client.post_invitation(openreview.Invitation(
+            id=suggest_ae_invitation_id,
+            duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
+            invitees=[f'{venue_id}/Paper1/Authors'],
+            readers=[venue_id, f'{venue_id}/Paper1/Authors'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values': [venue_id, f'{venue_id}/Paper1/Authors']
+                },
+                'writers': {
+                    'values': [venue_id, f'{venue_id}/Paper1/Authors']
+                },
+                'signatures': {
+                    'values': [f'{venue_id}/Paper1/Authors']
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query': {
+                            'id': note_id_1
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query': {
+                            'group': action_editors_id
+                        }
+                    },
+                    'weight': {
+                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                        'required': True
+                    }
+                }
+            }))
+
+        header = {
+            'title': 'TMLR Action Editor Suggestion',
+            'instructions': '<p class="dark">Recommend a ranked list of action editor for each of your submitted papers.</p>\
+                <p class="dark"><strong>Instructions:</strong></p>\
+                <ul>\
+                    <li>For each of your assigned papers, please select 5 reviewers to recommend.</li>\
+                    <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
+                    <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
+                    <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
+                    <li>To get started click the button below.</li>\
+                </ul>\
+                <br>'
+        }
+
+        conflict_id = conflict_ae_invitation_id
+        score_ids = [affinity_score_ae_invitation_id]
+        start_param = invitation.id
+        edit_param = invitation.id
+        browse_param = ';'.join(score_ids)
+        params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
+        with open('./tests/data/suggestAEWebfield.js') as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+            invitation.web = content
+            client.post_invitation(invitation)
+
+
+        ## Create conflict and affinity score edges
+        for ae in ['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']:
+            edge = openreview.Edge(invitation = affinity_score_ae_invitation_id,
+                readers = [venue_id, f'{venue_id}/Paper1/Authors', ae],
+                writers = [venue_id],
+                signatures = [venue_id],
+                head = note_id_1,
+                tail = ae,
+                weight=round(random.random(), 2)
+            )
+            client.post_edge(edge)
+
+
+        assert 1 == 2
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[f'{venue_id}/Paper1/AEs'],
