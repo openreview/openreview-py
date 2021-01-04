@@ -441,7 +441,7 @@ class TestJournal():
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer1",
             readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"],
             writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[f"{venue_id}/Paper1/AnonReviewer1"],
+            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer1"],
             signatures=[f"{venue_id}/Paper1/AEs"],
             members=['~David_Belanger1']
         ))
@@ -513,7 +513,7 @@ class TestJournal():
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer2",
             readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"],
             writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[f"{venue_id}/Paper1/AnonReviewer2"],
+            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer2"],
             signatures=[f"{venue_id}/Paper1/AEs"],
             members=['~Melisa_Bok1']
         ))
@@ -548,7 +548,7 @@ class TestJournal():
         client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer3",
             readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"],
             writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[f"{venue_id}/Paper1/AnonReviewer3"],
+            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer3"],
             signatures=[f"{venue_id}/Paper1/AEs"],
             members=['~Carlos_Mondragon1']
         ))
@@ -579,8 +579,11 @@ class TestJournal():
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 3
         assert reviews[0].readers == ['everyone']
+        assert reviews[0].signatures == [f"{venue_id}/Paper1/AnonReviewer1"]
         assert reviews[1].readers == ['everyone']
+        assert reviews[1].signatures == [f"{venue_id}/Paper1/AnonReviewer2"]
         assert reviews[2].readers == ['everyone']
+        assert reviews[2].signatures == [f"{venue_id}/Paper1/AnonReviewer3"]
 
         ## Check permissions of the review revisions
         review_revisions=client.get_references(referent=reviews[0].id)
