@@ -848,3 +848,45 @@ class TestVenueRequest():
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
+
+        # Post another revision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=5)
+        revision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_revision_remove_options': ['keywords', 'pdf']
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=['~Test_User1']
+        ))
+        assert revision_stage_note
+
+        time.sleep(5)
+        process_logs = client.get_process_logs(id=revision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 3
+
+        # Assert that submisions are still not blind
+        assert blind_submissions[0].content['authors'] == ['Venue Author']
+        assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
+        assert blind_submissions[1].content['authors'] == ['Venue Author']
+        assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
+        assert blind_submissions[2].content['authors'] == ['Venue Author']
+        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3']
+
+        # Assert that submissions are still public
+        assert blind_submissions[0].readers == ['everyone']
+        assert blind_submissions[1].readers == ['everyone']
+        assert blind_submissions[2].readers == ['everyone']

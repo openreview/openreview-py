@@ -91,7 +91,7 @@ def process(client, note, invitation):
             reveal_authors_accepted=forum_note.content.get('reveal_authors', '') == 'Reveal author identities of only accepted submissions to the public'
         if 'release_submissions' in forum_note.content:
             release_all_notes=forum_note.content.get('release_submissions', '') == 'Release all submissions to the public'
-            release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted papers to the public'
+            release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted submission to the public'
         conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, decision_heading_map=forum_note.content.get('home_page_tab_names'))
 
     print('Conference: ', conference.get_id())
