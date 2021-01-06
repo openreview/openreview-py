@@ -103,7 +103,7 @@ class TestESWCConference():
         assert pc_group.web
 
     def test_submit_papers(self, conference, helpers, test_client, client):
-
+        year = datetime.datetime.now().year
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2021/Conference/-/Submission',
@@ -166,10 +166,10 @@ class TestESWCConference():
             'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
         ]
         assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
-user2020paper,
+user'''+str(year)+'''paper,
 title={Paper title 1},
 author={Test User and Peter Test and Andrew Mc},
-year={2020},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 }'''
         assert len(conference.get_submissions()) == 4
@@ -264,7 +264,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert len(conference.get_submissions()) == 3
 
     def test_post_submission_stage(self, conference, helpers, test_client, client):
-
+        year = datetime.datetime.now().year
         conference.setup_final_deadline_stage(force=True)
 
         submissions = conference.get_submissions()
@@ -301,9 +301,9 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
             'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
         ]
         assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
-user2020paper,
+user'''+str(year)+'''paper,
 title={Paper title 5},
 author={Test User and Peter Test and Andrew Mc},
-year={2020},
+year={'''+str(year)+'''},
 url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 }'''
