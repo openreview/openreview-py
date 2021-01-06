@@ -745,9 +745,13 @@ class TestVenueRequest():
         author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum)
         request_page(selenium, author_page_url, token=author_client.token)
 
-        meta_actions = selenium.find_element_by_class_name('meta_actions')
-        assert meta_actions
-        assert 'Revision' == meta_actions.find_element_by_class_name('edit_button').text
+        meta_actions = selenium.find_elements_by_class_name('meta_actions')
+        assert len(meta_actions) == 2
+        ## Edit and trash buttons, the submission invitation is still open
+        assert meta_actions[0].find_element_by_class_name('edit_button')
+        assert meta_actions[0].find_element_by_class_name('trash_button')
+        ## Reference invitations
+        assert 'Revision' == meta_actions[1].find_element_by_class_name('edit_button').text
 
         # Post revision note for a submission
         revision_note = author_client.post_note(openreview.Note(
