@@ -1650,6 +1650,7 @@ class Invitation(object):
         invitees = None,
         signatures = None,
         reply = None,
+        edit = None,
         super = None,
         noninvitees = None,
         nonreaders = None,
@@ -1682,6 +1683,7 @@ class Invitation(object):
         self.multiReply = multiReply
         self.taskCompletionCount = taskCompletionCount
         self.reply = reply
+        self.edit = edit
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.details = details
@@ -1729,6 +1731,7 @@ class Invitation(object):
             'multiReply': self.multiReply,
             'taskCompletionCount': self.taskCompletionCount,
             'reply': self.reply,
+            'edit': self.edit,
             'process': self.process,
             'web': self.web,
             'transform': self.transform,

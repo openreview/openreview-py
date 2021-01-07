@@ -157,7 +157,7 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                reply={
+                edit={
                     'signatures': { 'values-regex': '~.*' },
                     'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
                     'writers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{note.number}}/Authors']},
@@ -261,12 +261,12 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                reply={
-                    'referent': { 'value-invitation': submission_invitation_id },
+                edit={
                     'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
                     'note': {
+                        'id': { 'value-invitation': submission_invitation_id },
                         'forum': { 'value-invitation': submission_invitation_id },
                         'readers': {
                             'values': ['everyone']
@@ -301,12 +301,12 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                reply={
-                    'referent': { 'value-invitation': submission_invitation_id },
+                edit={
                     'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
                     'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
                     'note': {
+                        'id': { 'value-invitation': submission_invitation_id },
                         'forum': { 'value-invitation': submission_invitation_id },
                         'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
                         'content': {
@@ -574,12 +574,11 @@ class TestJournal():
             client.post_edge(edge)
 
 
-        assert 1 == 2
+        # assert 1 == 2
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[f'{venue_id}/Paper1/AEs'],
-                                    referent=note_id_1,
-                                    note=openreview.Note(forum=note_id_1))
+                                    note=openreview.Note(id=note_id_1, forum=note_id_1))
 
         time.sleep(2)
         process_logs = client.get_process_logs(id = note_id_1)
@@ -602,8 +601,7 @@ class TestJournal():
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation=desk_reject_invitation_id,
                                     signatures=[f'{venue_id}/Paper2/AEs'],
-                                    referent=note_id_2,
-                                    note=openreview.Note(forum=note_id_2))
+                                    note=openreview.Note(id=note_id_2, forum=note_id_2))
 
         time.sleep(2)
         process_logs = client.get_process_logs(id = note_id_2)
@@ -681,8 +679,8 @@ class TestJournal():
         # Moderate a public comment
         moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderate',
             signatures=[f"{venue_id}/Paper1/AEs"],
-            referent=comment_note_id,
             note=openreview.Note(
+                id=comment_note_id,
                 signatures=['~Peter_Snow1'],
                 content={
                     'title': { 'value': 'Moderated comment' },
@@ -803,12 +801,12 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                reply={
-                    'referent': { 'value': note_id_1 },
+                edit={
                     'signatures': { 'values': [f'{venue_id}/Paper1/Authors'] },
                     'readers': { 'values': ['everyone']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper1/Authors']},
                     'note': {
+                        'id': { 'value': note_id_1 },
                         'forum': { 'value': note_id_1 },
                         'content': {
                             'title': {
@@ -876,8 +874,8 @@ class TestJournal():
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
-            referent=note_id_1,
             note=openreview.Note(
+                id=note_id_1,
                 forum=note_id_1,
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },

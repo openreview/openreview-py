@@ -51,12 +51,12 @@ def process(client, note, invitation):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            referent=note.invitation,
             invitation=openreview.Invitation(id=note.invitation,
+                id=note.invitation
                 signatures=[venue_id],
-                reply={
-                    'signatures': { 'values': [ '${{referent}.signatures}' ] },
-                    'readers': { 'values': [venue_id, f'.TMLR/Paper{paper_number}/AEs', '${{referent}.signatures}'] },
+                edit={
+                    'signatures': { 'values': [ '${{note.id}.signatures}' ] },
+                    'readers': { 'values': [venue_id, f'.TMLR/Paper{paper_number}/AEs', '${{note.id}.signatures}'] },
                     'note': {
                         'readers': { 'values': ['everyone'] }
                     }
@@ -73,7 +73,7 @@ def process(client, note, invitation):
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
+            edit={
                 'signatures': { 'values-regex': f'{paper_group.id}/AnonReviewer.*|{paper_group.id}/AEs' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
@@ -265,7 +265,7 @@ def process(client, note, invitation):
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
+            edit={
                 'signatures': { 'values-regex': '~.*' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
@@ -305,13 +305,13 @@ def process(client, note, invitation):
             readers=[venue_id, f'{paper_group.id}/AEs'],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
+            edit={
                 'forum': note.id,
-                'referent': { 'value-invitation': comment_invitation_id },
                 'signatures': { 'values-regex': f'{paper_group.id}/AEs|{venue_id}$' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'note': {
+                    'id': { 'value-invitation': comment_invitation_id },
                     'readers': {
                         'values': ['everyone']
                     },
