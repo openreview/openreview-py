@@ -52,7 +52,6 @@ def process(client, note, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.Invitation(id=note.invitation,
-                id=note.invitation
                 signatures=[venue_id],
                 edit={
                     'signatures': { 'values': [ '${{note.id}.signatures}' ] },

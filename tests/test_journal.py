@@ -410,7 +410,7 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
         ## Assign Action editor to submission 1
-        ##raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
+        raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
         ## Action Editors conflict, use API v1
         conflict_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Conflict'
         client.post_invitation(openreview.Invitation(
@@ -621,7 +621,8 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 5
+        # assert len(invitations) == 5
+        assert len(invitations) == 4
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
