@@ -1225,6 +1225,11 @@ class InvitationBuilder(object):
                 if 'nonreaders' in invitation.reply:
                     note.nonreaders = invitation.reply['nonreaders']['values']
                 self.client.post_note(note)
+            if 'values-copied' in invitation.reply['readers'] and len(note.readers) != len(invitation.reply['readers']['values-copied']):
+                note.readers = [reader.replace('{signatures}', note.signatures[0]) for reader in invitation.reply['readers']['values-copied']]
+                if 'nonreaders' in invitation.reply:
+                    note.nonreaders = invitation.reply['nonreaders']['values']
+                self.client.post_note(note)
 
     def set_submission_invitation(self, conference, under_submission=True, submission_readers=None):
 
