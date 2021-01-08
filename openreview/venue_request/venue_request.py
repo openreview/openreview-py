@@ -126,7 +126,7 @@ class VenueStages():
                 'order': 25
             },
             'release_reviews_to_reviewers': {
-                'description': 'Should the reviews be visible to the reviewers',
+                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting?',
                 'value-radio': [
                     'Reviews should be immediately revealed to all reviewers',
                     'Reviews should be immediately revealed to the paper\'s reviewers',
