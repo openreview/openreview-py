@@ -139,6 +139,7 @@ var main = function() {
       invitationMap: invitationMap
     };
 
+    var finalDecisions = calcDecisions(blindedNotes, decisions);
     var conferenceStats = {
       blindSubmissionsCount: blindedNotes.length,
       withdrawnSubmissionsCount: withdrawnNotesCount,
@@ -167,8 +168,8 @@ var main = function() {
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
       metaReviewsCount: calcMetaReviewCount(blindedNotes, metaReviews),
       metaReviewersComplete: calcMetaReviewersComplete(areaChairGroupMaps.byAreaChairs, metaReviews),
-      decisionsCount: decisions.length,
-      decisionsByTypeCount: _.groupBy(decisions, 'content.decision')
+      decisionsCount: finalDecisions.length,
+      decisionsByTypeCount: _.groupBy(finalDecisions, 'content.decision')
     };
     displayStatsAndConfiguration(conferenceStats);
 
@@ -690,6 +691,20 @@ var calcMetaReviewCount = function(blindedNotes, metaReviews) {
     }
   })
   return metaReviewCount;
+}
+
+var calcDecisions = function(blindedNotes, decisions) {
+  var decisionByForum = {};
+  decisions.forEach(function(m) {
+    decisionByForum[m.forum] = m;
+  })
+  var finalDecisions = [];
+  blindedNotes.forEach(function(n) {
+    if (n.id in decisionByForum) {
+      finalDecisions.push(decisionByForum[n.id]);
+    }
+  })
+  return finalDecisions;
 }
 
 
