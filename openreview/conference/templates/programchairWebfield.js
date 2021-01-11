@@ -680,10 +680,7 @@ var calcMetaReviewersComplete = function(acMap, metaReviews) {
 };
 
 var calcMetaReviewCount = function(blindedNotes, metaReviews) {
-  var metaReviewByForum = {};
-  metaReviews.forEach(function(m) {
-    metaReviewByForum[m.forum] = m;
-  })
+  var metaReviewByForum = _.keyBy(metaReviews, 'forum');
   var metaReviewCount = 0;
   blindedNotes.forEach(function(n) {
     if (n.id in metaReviewByForum) {
@@ -694,10 +691,7 @@ var calcMetaReviewCount = function(blindedNotes, metaReviews) {
 }
 
 var calcDecisions = function(blindedNotes, decisions) {
-  var decisionByForum = {};
-  decisions.forEach(function(m) {
-    decisionByForum[m.forum] = m;
-  })
+  var decisionByForum = _.keyBy(decisions, 'forum');
   var finalDecisions = [];
   blindedNotes.forEach(function(n) {
     if (n.id in decisionByForum) {
