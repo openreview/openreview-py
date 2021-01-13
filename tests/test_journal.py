@@ -492,6 +492,45 @@ class TestJournal():
                 }
             }))
 
+        ## Editors custom loads
+        custom_papers_ae_invitation_id=f'{venue_id}/AEs/-/Custom_Max_Papers'
+        invitation = client.post_invitation(openreview.Invitation(
+            id=custom_papers_ae_invitation_id,
+            invitees=[editor_in_chief_group.id],
+            readers=[venue_id, editor_in_chief_group.id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [venue_id, '{tail}']
+                },
+                'writers': {
+                    'values-copied': [venue_id, '{tail}']
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Group',
+                        'query': {
+                        'id': f'{venue_id}/AEs'
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query': {
+                            'group': action_editors_id
+                        }
+                    },
+                    'weight': {
+                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*',
+                        'required': True
+                    }
+                }
+            }))
+
         ## Suggest Action Editors, use API v1
         suggest_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Recommendation'
         invitation = client.post_invitation(openreview.Invitation(
@@ -572,9 +611,77 @@ class TestJournal():
                 weight=round(random.random(), 2)
             )
             client.post_edge(edge)
+            edge = openreview.Edge(invitation = custom_papers_ae_invitation_id,
+                readers = [venue_id, ae],
+                writers = [venue_id],
+                signatures = [venue_id],
+                head = f'{venue_id}/AEs',
+                tail = ae,
+                weight=random.randint(1, 10)
+            )
+            client.post_edge(edge)
+            number=round(random.random(), 2)
+            if number <= 0.3:
+                edge = openreview.Edge(invitation = conflict_ae_invitation_id,
+                    readers = [venue_id, f'{venue_id}/Paper1/Authors', ae],
+                    writers = [venue_id],
+                    signatures = [venue_id],
+                    head = note_id_1,
+                    tail = ae,
+                    weight=-1,
+                    label='Conflict'
+                )
+                client.post_edge(edge)
 
 
-        # assert 1 == 2
+        ## Assign Action Editors, use API v1
+        assign_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Paper_Assignment'
+        invitation = client.post_invitation(openreview.Invitation(
+            id=assign_ae_invitation_id,
+            duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
+            invitees=[editor_in_chief_group.id],
+            readers=[venue_id, editor_in_chief_group.id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values': [venue_id, editor_in_chief_group.id]
+                },
+                'writers': {
+                    'values': [venue_id, editor_in_chief_group.id]
+                },
+                'signatures': {
+                    'values': [editor_in_chief_group.id]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query': {
+                            'id': note_id_1
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query': {
+                            'group': action_editors_id
+                        }
+                    },
+                    'weight': {
+                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*',
+                        'required': True
+                    }
+                }
+            }))
+
+        start_param = invitation.id
+        edit_param = invitation.id
+        score_ids = [suggest_ae_invitation_id, affinity_score_ae_invitation_id, custom_papers_ae_invitation_id + ',head:ignore', conflict_ae_invitation_id]
+        browse_param = ';'.join(score_ids)
+        params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&referrer=[Return Instructions](/invitation?id={edit_param})'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param)
+        print(params)
+        ##assert 1==2
+
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[f'{venue_id}/Paper1/AEs'],
