@@ -158,8 +158,9 @@ function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejected
 
   });
 
-  if (papersByDecision['reject']) {
-    papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
+  if (DECISION_HEADING_MAP['Reject']) {
+    var decisionKey = getElementId(DECISION_HEADING_MAP['Reject']);
+    papersByDecision[decisionKey] = papersByDecision[decisionKey].concat(withdrawnNotes.concat(deskRejectedNotes));
   }
   return papersByDecision;
 }

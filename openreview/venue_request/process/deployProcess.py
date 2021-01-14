@@ -246,13 +246,15 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'order': 25
             },
             'release_reviews_to_reviewers': {
-                'description': 'Should the reviews be visible immediately upon posting to paper\'s reviewers regardless of whether they have reviewed the paper or not? Based on your earlier selections, default is "Yes, reviews should be immediately revealed to the all paper\'s reviewers".',
+                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting? Based on your earlier selections, default is "Reviews should be immediately revealed to all reviewers".',
                 'value-radio': [
-                    'Yes, reviews should be immediately revealed to the all paper\'s reviewers',
-                    'No, reviews should be immediately revealed only to the reviewers who have already reviewed the paper'
+                    'Reviews should be immediately revealed to all reviewers',
+                    'Reviews should be immediately revealed to the paper\'s reviewers',
+                    'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                    'Review should not be revealed to any reviewer, except to the author of the review'
                 ],
                 'required': True,
-                'default': 'Yes, reviews should be immediately revealed to the all paper\'s reviewers',
+                'default': 'Reviews should be immediately revealed to all reviewers',
                 'order': 26
             },
             'email_program_chairs_about_reviews': {

@@ -674,13 +674,20 @@ class TestDoubleBlindConference():
             'archival_status': {
                 'description': 'Archival Status.',
                 'order': 10,
-                'required': False
+                'required': False,
+                'value-radio': ['Archival', 'Non-Archival'],
             },
             'subject_areas': {
                 'description': 'Subject Areas.',
                 'order': 12,
-                'required': False
-            },
+                'required': False,
+                'values-dropdown': [
+                    'Databases',
+                    'Information Integration',
+                    'Knowledge Representation',
+                    'Semantic Web'
+                ]
+            }
         }
         builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
         builder.has_area_chairs(True)
@@ -724,13 +731,20 @@ class TestDoubleBlindConference():
             'archival_status': {
                 'description': 'Archival Status.',
                 'order': 10,
-                'required': False
+                'required': False,
+                'value-radio': ['Archival', 'Non-Archival'],
             },
             'subject_areas': {
                 'description': 'Subject Areas.',
-                'order': 11,
-                'required': False
-            },
+                'order': 12,
+                'required': False,
+                'values-dropdown': [
+                    'Databases',
+                    'Information Integration',
+                    'Knowledge Representation',
+                    'Semantic Web'
+                ]
+            }
         }
         builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
         builder.has_area_chairs(True)
@@ -1361,13 +1375,13 @@ class TestDoubleBlindConference():
                 'description': 'Subject Areas.',
                 'order': 12,
                 'required': False,
-                'value-dropdown': [
+                'values-dropdown': [
                     'Databases',
                     'Information Integration',
                     'Knowledge Representation',
                     'Semantic Web'
                 ]
-            },
+            }
         }
         builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
         builder.set_decision_stage()
@@ -1393,7 +1407,7 @@ class TestDoubleBlindConference():
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
-                'subject_areas': 'Databases',
+                'subject_areas': ['Databases'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
@@ -1592,7 +1606,7 @@ class TestDoubleBlindConference():
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
-                'subject_areas': 'Databases',
+                'subject_areas': ['Databases'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
