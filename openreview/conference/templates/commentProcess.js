@@ -22,7 +22,7 @@ function(){
       var AREA_CHAIR_2_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/' + SECONDARY_AREA_CHAIR_NAME;
       var ignoreGroups = note.nonreaders || [];
       var signature = note.signatures[0].split('/').slice(-1)[0];
-      var prettySignature = signature.startsWith('~') ? signature.replace(/~|\d+/g, '') : signature.replace(/_/g, ' ')
+      var prettySignature = signature.startsWith('~') ? signature.replace(/~|\d+/g, '').replace(/_/g, ' ') : signature.replace(/_/g, ' ')
       prettySignature = prettySignature == 'Authors' ? 'An author' : prettySignature;
       ignoreGroups.push(note.tauthor);
       var content = `
