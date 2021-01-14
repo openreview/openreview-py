@@ -139,6 +139,7 @@ var main = function() {
       invitationMap: invitationMap
     };
 
+    var finalDecisions = calcDecisions(blindedNotes, decisions);
     var conferenceStats = {
       blindSubmissionsCount: blindedNotes.length,
       withdrawnSubmissionsCount: withdrawnNotesCount,
@@ -165,8 +166,10 @@ var main = function() {
       reviewersWithAssignmentsCount: Object.keys(reviewerGroupMaps.byReviewers).length,
       reviewersComplete: calcReviewersComplete(reviewerGroupMaps, officialReviews),
       paperReviewsComplete: calcPaperReviewsComplete(reviewerGroupMaps.byNotes, officialReviewMap),
-      metaReviewsCount: metaReviews.length,
+      metaReviewsCount: calcMetaReviewCount(blindedNotes, metaReviews),
       metaReviewersComplete: calcMetaReviewersComplete(areaChairGroupMaps.byAreaChairs, metaReviews),
+      decisionsCount: finalDecisions.length,
+      decisionsByTypeCount: _.groupBy(finalDecisions, 'content.decision')
     };
     displayStatsAndConfiguration(conferenceStats);
 
@@ -676,6 +679,28 @@ var calcMetaReviewersComplete = function(acMap, metaReviews) {
   }, 0);
 };
 
+var calcMetaReviewCount = function(blindedNotes, metaReviews) {
+  var metaReviewByForum = _.keyBy(metaReviews, 'forum');
+  var metaReviewCount = 0;
+  blindedNotes.forEach(function(n) {
+    if (n.id in metaReviewByForum) {
+      metaReviewCount += 1;
+    }
+  })
+  return metaReviewCount;
+}
+
+var calcDecisions = function(blindedNotes, decisions) {
+  var decisionByForum = _.keyBy(decisions, 'forum');
+  var finalDecisions = [];
+  blindedNotes.forEach(function(n) {
+    if (n.id in decisionByForum) {
+      finalDecisions.push(decisionByForum[n.id]);
+    }
+  })
+  return finalDecisions;
+}
+
 
 // Render functions
 var renderHeader = function() {
@@ -889,6 +914,25 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     html += '</div>';
     html += '<hr class="spacer" style="margin-bottom: 1rem;">';
   }
+
+  html += '<div class="row" style="margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Decision Progress:',
+    renderProgressStat(conferenceStats.decisionsCount, conferenceStats.blindSubmissionsCount),
+    '% of papers that have received a decision'
+  );
+  html += '</div>';
+
+  html += '<div class="row" style="margin-top: .5rem;">';
+  Object.keys(conferenceStats.decisionsByTypeCount).forEach(function(type) {
+    html += renderStatContainer(
+      type + ':',
+      renderProgressStat(conferenceStats.decisionsByTypeCount[type].length, conferenceStats.blindSubmissionsCount)
+    );
+  })
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem;">';
+
 
   // Config
   var requestForm = conferenceStatusData.requestForm;
@@ -2553,7 +2597,8 @@ var buildCSV = function(){
   'ac recommendation',
   'ac profile id',
   'ac email',
-  'ac ranking'].join(',') + '\n');
+  'ac ranking',
+  'decision'].join(',') + '\n');
 
   _.forEach(notes, function(note) {
     var revIds = reviewerIds[note.number];
@@ -2588,7 +2633,8 @@ var buildCSV = function(){
     paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
     areachairProfile.id,
     areachairProfile.email,
-    acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag
+    acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag,
+    paperTableRow.decision && paperTableRow.decision.content.decision
     ].join(',') + '\n');
   });
 
