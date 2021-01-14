@@ -1407,7 +1407,7 @@ class TestDoubleBlindConference():
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
-                'subject_areas': 'Databases',
+                'subject_areas': ['Databases'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
@@ -1606,7 +1606,7 @@ class TestDoubleBlindConference():
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
                 'authors': ['Test User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
-                'subject_areas': 'Databases',
+                'subject_areas': ['Databases'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
