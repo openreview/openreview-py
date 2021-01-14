@@ -681,7 +681,7 @@ class TestDoubleBlindConference():
                 'description': 'Subject Areas.',
                 'order': 12,
                 'required': False,
-                'value-dropdown': [
+                'values-dropdown': [
                     'Databases',
                     'Information Integration',
                     'Knowledge Representation',
@@ -738,7 +738,7 @@ class TestDoubleBlindConference():
                 'description': 'Subject Areas.',
                 'order': 12,
                 'required': False,
-                'value-dropdown': [
+                'values-dropdown': [
                     'Databases',
                     'Information Integration',
                     'Knowledge Representation',
@@ -1375,7 +1375,7 @@ class TestDoubleBlindConference():
                 'description': 'Subject Areas.',
                 'order': 12,
                 'required': False,
-                'value-dropdown': [
+                'values-dropdown': [
                     'Databases',
                     'Information Integration',
                     'Knowledge Representation',
