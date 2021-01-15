@@ -1,5 +1,6 @@
-def process(client, note, invitation):
+def process(client, edit, invitation):
     venue_id='.TMLR'
+    note=edit.note
 
     paper_group=client.post_group(openreview.Group(id=f'{venue_id}/Paper{note.number}',
         readers=[venue_id],
@@ -40,18 +41,19 @@ def process(client, note, invitation):
     ## TODO: create this invitation using an invitation
     review_invitation_id=f'{paper_group.id}/-/Review'
 
-    process_function='''def process(client, note, invitation):
+    process_function='''def process(client, edit, invitation):
     venue_id='.TMLR'
+    note=edit.note
 
     ## TODO: send message to the reviewer, AE confirming the review was posted
 
     paper_number=client.get_note(note.forum).number
-    reviews=client.get_notes(forum=note.forum, invitation=note.invitation)
+    reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(reviews) == 3:
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=note.invitation,
+            invitation=openreview.Invitation(id=edit.invitation,
                 signatures=[venue_id],
                 edit={
                     'signatures': { 'values': [ '${{note.id}.signatures}' ] },
@@ -77,8 +79,8 @@ def process(client, note, invitation):
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'note': {
-                    'forum': { 'value': note.forum },
-                    'replyto': { 'value': note.forum },
+                    'forum': { 'value': note.id },
+                    'replyto': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
@@ -269,7 +271,7 @@ def process(client, note, invitation):
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'note': {
-                    'forum': { 'value': note.forum },
+                    'forum': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
@@ -305,7 +307,7 @@ def process(client, note, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'forum': note.forum,
+                'forum': note.id,
                 'signatures': { 'values-regex': f'{paper_group.id}/AEs|{venue_id}$' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
