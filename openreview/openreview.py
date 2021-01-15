@@ -1717,7 +1717,7 @@ class Edit(object):
             nonreaders = e.get('nonreaders'),
             writers = e.get('writers'),
             signatures = e.get('signatures'),
-            note = e.get('note'),
+            note = Note.from_json(e['note']) if 'note' in e else None,
             invitation = e.get('invitation'),
             )
         return edit
