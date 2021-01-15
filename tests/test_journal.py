@@ -687,11 +687,6 @@ class TestJournal():
                                     signatures=[f'{venue_id}/Paper1/AEs'],
                                     note=openreview.Note(id=note_id_1, forum=note_id_1))
 
-        # time.sleep(2)
-        # process_logs = client.get_process_logs(id = under_review_note['id'])
-        # assert len(process_logs) == 1
-        # assert process_logs[0]['status'] == 'ok'
-
         note = joelle_client.get_note(note_id_1)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
@@ -709,11 +704,6 @@ class TestJournal():
         desk_reject_note = joelle_client.post_note_edit(invitation=desk_reject_invitation_id,
                                     signatures=[f'{venue_id}/Paper2/AEs'],
                                     note=openreview.Note(id=note_id_2, forum=note_id_2))
-
-        # time.sleep(2)
-        # process_logs = client.get_process_logs(id = note_id_2)
-        # assert len(process_logs) == 1
-        # assert process_logs[0]['status'] == 'ok'
 
         note = joelle_client.get_note(note_id_2)
         assert note
@@ -759,6 +749,11 @@ class TestJournal():
                 }
             )
         )
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_note['id'])
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Comment',
