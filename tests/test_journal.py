@@ -724,19 +724,13 @@ class TestJournal():
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
         ## Assign the reviewer
-        ## TODO: use anonymous ids
         joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", ['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1'])
-        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer1",
-            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"],
-            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer1"],
-            signatures=[f"{venue_id}/Paper1/AEs"],
-            members=['~David_Belanger1']
-        ))
+        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~David_Belanger1')
+        assert len(david_anon_groups) == 1
 
         ## Post a review edit
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[f"{venue_id}/Paper1/AnonReviewer1"],
+            signatures=[david_anon_groups[0].id],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'Review title' },
@@ -802,18 +796,12 @@ class TestJournal():
         assert note.content.get('comment') is None
 
         ## Assign two more reviewers
-        ## TODO: use anonymous ids
-        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer2",
-            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"],
-            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer2"],
-            signatures=[f"{venue_id}/Paper1/AEs"],
-            members=['~Melisa_Bok1']
-        ))
+        melisa_anon_groups=melisa_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~Melisa_Bok1')
+        assert len(melisa_anon_groups) == 1
 
         ## Post a review edit
         review_note = melisa_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[f"{venue_id}/Paper1/AnonReviewer2"],
+            signatures=[melisa_anon_groups[0].id],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'another Review title' },
@@ -835,20 +823,15 @@ class TestJournal():
 
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 2
-        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
-        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
+        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
 
-        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer3",
-            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"],
-            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer3"],
-            signatures=[f"{venue_id}/Paper1/AEs"],
-            members=['~Carlos_Mondragon1']
-        ))
+        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~Carlos_Mondragon1')
+        assert len(carlos_anon_groups) == 1
 
         ## Post a review edit
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[f"{venue_id}/Paper1/AnonReviewer3"],
+            signatures=[carlos_anon_groups[0].id],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'another Review title' },
@@ -872,27 +855,27 @@ class TestJournal():
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 3
         assert reviews[0].readers == ['everyone']
-        assert reviews[0].signatures == [f"{venue_id}/Paper1/AnonReviewer1"]
+        assert reviews[0].signatures == [david_anon_groups[0].id]
         assert reviews[1].readers == ['everyone']
-        assert reviews[1].signatures == [f"{venue_id}/Paper1/AnonReviewer2"]
+        assert reviews[1].signatures == [melisa_anon_groups[0].id]
         assert reviews[2].readers == ['everyone']
-        assert reviews[2].signatures == [f"{venue_id}/Paper1/AnonReviewer3"]
+        assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
         ## Check permissions of the review revisions
         review_revisions=client.get_references(referent=reviews[0].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
 
         review_revisions=client.get_references(referent=reviews[1].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
 
         review_revisions=client.get_references(referent=reviews[2].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
 
         ## Allow the authors to revise their papers during the rebuttal discussion
         revision_invitation_id=f'{venue_id}/Paper1/-/Revision'

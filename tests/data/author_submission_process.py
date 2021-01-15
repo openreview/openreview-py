@@ -35,7 +35,8 @@ def process(client, edit, invitation):
         writers=[venue_id, action_editors_group_id],
         signatures=[venue_id],
         signatories=[venue_id],
-        members=[]
+        members=[],
+        anonids=True
     ))
 
     ## TODO: create this invitation using an invitation
@@ -79,7 +80,7 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'{paper_group.id}/AnonReviewer.*|{paper_group.id}/AEs' },
+                'signatures': { 'values-regex': f'{paper_group.id}/Reviewers/.*|{paper_group.id}/AEs' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'note': {

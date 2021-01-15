@@ -1472,7 +1472,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids=None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
@@ -1485,6 +1485,7 @@ class Group(object):
         self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
         self.signatories = signatories
+        self.anonids = anonids
         self.web=None
         if web is not None:
             with open(web) as f:
@@ -1521,6 +1522,7 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
+            'anonids': self.anonids,
             'web': self.web,
             'details': self.details
         }
@@ -1549,6 +1551,7 @@ class Group(object):
             nonreaders = g.get('nonreaders'),
             signatories = g.get('signatories'),
             signatures = g.get('signatures'),
+            anonids = g.get('anonids'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
