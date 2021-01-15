@@ -409,8 +409,6 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
-        ## Assign Action editor to submission 1
-        raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
         ## Action Editors conflict, use API v1
         conflict_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Conflict'
         client.post_invitation(openreview.Invitation(
@@ -673,6 +671,11 @@ class TestJournal():
                     }
                 }
             }))
+        with open('./tests/data/paper_assignment_process.js') as f:
+            content = f.read()
+            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + f'{venue_id}/Paper1/AEs' + "';")
+            invitation.process = content
+            client.post_invitation(invitation)
 
         start_param = invitation.id
         edit_param = invitation.id
@@ -681,6 +684,24 @@ class TestJournal():
         params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&referrer=[Return Instructions](/invitation?id={edit_param})'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param)
         print(params)
         ##assert 1==2
+
+        ## Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation=assign_ae_invitation_id,
+            readers=[venue_id, editor_in_chief_group.id],
+            writers=[venue_id, editor_in_chief_group.id],
+            signatures=[editor_in_chief_group.id],
+            head=note_id_1,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = paper_assignment_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper1/AEs')
+        assert ae_group.members == ['~Joelle_Pineau1']
 
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation=under_review_invitation_id,
