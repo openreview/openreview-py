@@ -47,6 +47,10 @@ def process(client, edit, invitation):
 
     ## TODO: send message to the reviewer, AE confirming the review was posted
 
+    review_note=client.get_note(note.id)
+    if review_note.readers == ['everyone']:
+        return
+
     paper_number=client.get_note(note.forum).number
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(reviews) == 3:
