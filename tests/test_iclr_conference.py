@@ -515,8 +515,9 @@ Naila, Katja, Alice, and Ivan
 
         invitations = client.get_invitations(replyForum=blinded_notes[0].id)
         assert len(invitations) == 2
-        assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject'
-        assert invitations[1].id == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
+        invitation_ids = sorted([invitation.id for invitation in invitations])
+        assert invitation_ids[0] == 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject'
+        assert invitation_ids[1] == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
 
         # Add a revision
         pdf_url = test_client.put_attachment(
