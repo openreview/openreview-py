@@ -68,6 +68,13 @@ function load() {
     includeCount: true
   });
 
+  var acceptedNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
+    'content.venueid': CONFERENCE_ID,
+    pageSize: PAGE_SIZE,
+    details: 'replyCount',
+    includeCount: true
+  });
+
   var activityNotesP = $.Deferred().resolve([]);
   if (user && !_.startsWith(user.id, 'guest_')) {
     activityNotesP = Webfield.api.getSubmissions(WILDCARD_INVITATION, {
@@ -76,7 +83,7 @@ function load() {
     });
   }
 
-  return $.when(submittedNotesP, underReviewNotesP, deskRejectedNotesP, activityNotesP);
+  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, deskRejectedNotesP, activityNotesP);
 }
 
 // Render functions
@@ -106,6 +113,10 @@ function renderConferenceTabs() {
 
   var sections = [
   {
+      heading: 'Accepted Papers',
+      id: 'accepted-papers',
+  },
+  {
     heading: 'Under Review',
     id: 'under-review-submissions',
   },
@@ -128,7 +139,51 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(submittedResponse, underReviewResponse, deskRejectedResponse, activityNotes) {
+function renderContent(acceptedResponse, submittedResponse, underReviewResponse, deskRejectedResponse, activityNotes) {
+
+  var acceptedPapers = acceptedResponse.notes || [];
+  var acceptedPapersCount = acceptedResponse.count || 0;
+
+  $('#accepted-papers').empty();
+
+  if (acceptedPapersCount) {
+    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
+      container: '#accepted-papers',
+      autoLoad: false
+    });
+
+    Webfield.ui.submissionList(acceptedPapers, {
+      heading: null,
+      container: '#accepted-papers',
+      search: {
+        enabled: true,
+        localSearch: false,
+        invitation: SUBMISSION_ID,
+        onResults: function(searchResults) {
+          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
+        },
+        onReset: function() {
+          Webfield.ui.searchResults(notes, searchResultsListOptions);
+          $('#accepted-papers').append(view.paginationLinks(acceptedPapersCount, PAGE_SIZE, 1));
+        }
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: acceptedPapersCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(SUBMISSION_ID, {
+          'content.venueid': CONFERENCE_ID,
+          details: 'replyCount',
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
+      fadeIn: false
+    });
+  } else {
+    $('.tabs-container a[href="#accepted-papers"]').parent().hide();
+  }
 
   var underReviewSubmissions = underReviewResponse.notes || [];
   var underReviewCount = underReviewResponse.count || 0;
@@ -171,7 +226,7 @@ function renderContent(submittedResponse, underReviewResponse, deskRejectedRespo
       fadeIn: false
     });
   } else {
-    $('.tabs-container a[href="#submissions"]').parent().hide();
+    $('.tabs-container a[href="#under-review-submissions"]').parent().hide();
   }
 
   var submissionNotesCount = submittedResponse.count || 0;

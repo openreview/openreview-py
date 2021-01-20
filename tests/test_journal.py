@@ -36,6 +36,8 @@ class TestJournal():
         david_client=helpers.create_user('david@mail.com', 'David', 'Belanger')
         melisa_client=helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
         carlos_client=helpers.create_user('carlos@mail.com', 'Carlos', 'Mondragon')
+        andrew_client = helpers.create_user('andrew@mail.com', 'Andrew', 'McCallum')
+        hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
         peter_client = helpers.create_user('peter@mail.com', 'Peter', 'Snow')
         guest_client=openreview.Client()
@@ -143,7 +145,7 @@ class TestJournal():
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
-                        members=['~David_Bellanger1', '~Melisa_Bok1', '~Carlos_Mondragon1']
+                        members=['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
                         ))
         ## TODO: add webfield console
 
@@ -261,13 +263,13 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
+                multiReply=False,
                 edit={
                     'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
                     'note': {
                         'id': { 'value-invitation': submission_invitation_id },
-                        'forum': { 'value-invitation': submission_invitation_id },
                         'readers': {
                             'values': ['everyone']
                         },
@@ -301,13 +303,13 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
+                multiReply=False,
                 edit={
                     'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
                     'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
                     'note': {
                         'id': { 'value-invitation': submission_invitation_id },
-                        'forum': { 'value-invitation': submission_invitation_id },
                         'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
                         'content': {
                             'venue': {
@@ -324,6 +326,63 @@ class TestJournal():
                     }
                 }
                 ))
+
+        ## Acceptance invitation
+        acceptance_invitation_id=f'{venue_id}/-/Acceptance'
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=acceptance_invitation_id,
+                invitees=[venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                multiReply=False,
+                edit={
+                    'signatures': { 'values': [editor_in_chief_id] },
+                    'readers': { 'values': [ 'everyone']},
+                    'writers': { 'values': [ venue_id ]},
+                    'note': {
+                        'id': { 'value-invitation': submission_invitation_id },
+                        'content': {
+                            'venue': {
+                                'value': {
+                                    'value': 'TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR'
+                                }
+                            },
+                            'authors': {
+                                'value': {
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'required':True
+                                },
+                                'description': 'Comma separated list of author names.',
+                                'order': 1,
+                                'hidden': True,
+                                'readers': {
+                                    'values': ['everyone']
+                                }
+                            },
+                            'authorids': {
+                                'value': {
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                    'required':True
+                                },
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                'order': 2,
+                                'readers': {
+                                    'values': ['everyone']
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation=submission_invitation_id,
@@ -409,8 +468,6 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
-        ## Assign Action editor to submission 1
-        raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
         ## Action Editors conflict, use API v1
         conflict_ae_invitation_id=f'{venue_id}/Paper1/AEs/-/Conflict'
         client.post_invitation(openreview.Invitation(
@@ -540,6 +597,7 @@ class TestJournal():
             readers=[venue_id, f'{venue_id}/Paper1/Authors'],
             writers=[venue_id],
             signatures=[venue_id],
+            taskCompletionCount=1,
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
@@ -643,6 +701,7 @@ class TestJournal():
             readers=[venue_id, editor_in_chief_group.id],
             writers=[venue_id],
             signatures=[venue_id],
+            taskCompletionCount=1,
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
@@ -673,6 +732,11 @@ class TestJournal():
                     }
                 }
             }))
+        with open('./tests/data/paper_assignment_process.js') as f:
+            content = f.read()
+            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + f'{venue_id}/Paper1/AEs' + "';")
+            invitation.process = content
+            client.post_invitation(invitation)
 
         start_param = invitation.id
         edit_param = invitation.id
@@ -682,15 +746,28 @@ class TestJournal():
         print(params)
         ##assert 1==2
 
+        ## Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation=assign_ae_invitation_id,
+            readers=[venue_id, editor_in_chief_group.id],
+            writers=[venue_id, editor_in_chief_group.id],
+            signatures=[editor_in_chief_group.id],
+            head=note_id_1,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = paper_assignment_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ae_group = raia_client.get_group(f'{venue_id}/Paper1/AEs')
+        assert ae_group.members == ['~Joelle_Pineau1']
+
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation=under_review_invitation_id,
                                     signatures=[f'{venue_id}/Paper1/AEs'],
                                     note=openreview.Note(id=note_id_1, forum=note_id_1))
-
-        # time.sleep(2)
-        # process_logs = client.get_process_logs(id = under_review_note['id'])
-        # assert len(process_logs) == 1
-        # assert process_logs[0]['status'] == 'ok'
 
         note = joelle_client.get_note(note_id_1)
         assert note
@@ -710,11 +787,6 @@ class TestJournal():
                                     signatures=[f'{venue_id}/Paper2/AEs'],
                                     note=openreview.Note(id=note_id_2, forum=note_id_2))
 
-        # time.sleep(2)
-        # process_logs = client.get_process_logs(id = note_id_2)
-        # assert len(process_logs) == 1
-        # assert process_logs[0]['status'] == 'ok'
-
         note = joelle_client.get_note(note_id_2)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
@@ -728,25 +800,18 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        # assert len(invitations) == 5
-        assert len(invitations) == 4
+        assert len(invitations) == 5
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
         ## Assign the reviewer
-        ## TODO: use anonymous ids
         joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", ['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1'])
-        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer1",
-            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"],
-            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer1"],
-            signatures=[f"{venue_id}/Paper1/AEs"],
-            members=['~David_Belanger1']
-        ))
+        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~David_Belanger1')
+        assert len(david_anon_groups) == 1
 
         ## Post a review edit
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[f"{venue_id}/Paper1/AnonReviewer1"],
+            signatures=[david_anon_groups[0].id],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'Review title' },
@@ -759,6 +824,11 @@ class TestJournal():
                 }
             )
         )
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = review_note['id'])
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Comment',
@@ -807,18 +877,12 @@ class TestJournal():
         assert note.content.get('comment') is None
 
         ## Assign two more reviewers
-        ## TODO: use anonymous ids
-        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer2",
-            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"],
-            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer2"],
-            signatures=[f"{venue_id}/Paper1/AEs"],
-            members=['~Melisa_Bok1']
-        ))
+        melisa_anon_groups=melisa_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~Melisa_Bok1')
+        assert len(melisa_anon_groups) == 1
 
         ## Post a review edit
         review_note = melisa_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[f"{venue_id}/Paper1/AnonReviewer2"],
+            signatures=[melisa_anon_groups[0].id],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'another Review title' },
@@ -840,20 +904,15 @@ class TestJournal():
 
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 2
-        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
-        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
+        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
 
-        client.post_group(openreview.Group(id=f"{venue_id}/Paper1/AnonReviewer3",
-            readers=[venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"],
-            writers=[venue_id, f"{venue_id}/Paper1/AEs"],
-            signatories=[venue_id, f"{venue_id}/Paper1/AnonReviewer3"],
-            signatures=[f"{venue_id}/Paper1/AEs"],
-            members=['~Carlos_Mondragon1']
-        ))
+        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~Carlos_Mondragon1')
+        assert len(carlos_anon_groups) == 1
 
         ## Post a review edit
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[f"{venue_id}/Paper1/AnonReviewer3"],
+            signatures=[carlos_anon_groups[0].id],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'another Review title' },
@@ -877,110 +936,50 @@ class TestJournal():
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 3
         assert reviews[0].readers == ['everyone']
-        assert reviews[0].signatures == [f"{venue_id}/Paper1/AnonReviewer1"]
+        assert reviews[0].signatures == [david_anon_groups[0].id]
         assert reviews[1].readers == ['everyone']
-        assert reviews[1].signatures == [f"{venue_id}/Paper1/AnonReviewer2"]
+        assert reviews[1].signatures == [melisa_anon_groups[0].id]
         assert reviews[2].readers == ['everyone']
-        assert reviews[2].signatures == [f"{venue_id}/Paper1/AnonReviewer3"]
+        assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
         ## Check permissions of the review revisions
         review_revisions=client.get_references(referent=reviews[0].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer1"]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
 
         review_revisions=client.get_references(referent=reviews[1].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer2"]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
 
         review_revisions=client.get_references(referent=reviews[2].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", f"{venue_id}/Paper1/AnonReviewer3"]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
 
-        ## Allow the authors to revise their papers during the rebuttal discussion
-        revision_invitation_id=f'{venue_id}/Paper1/-/Revision'
-        invitation = client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.Invitation(id=revision_invitation_id,
-                invitees=[f"{venue_id}/Paper1/Authors"],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                edit={
-                    'signatures': { 'values': [f'{venue_id}/Paper1/Authors'] },
-                    'readers': { 'values': ['everyone']},
-                    'writers': { 'values': [ venue_id, f'{venue_id}/Paper1/Authors']},
-                    'note': {
-                        'id': { 'value': note_id_1 },
-                        'forum': { 'value': note_id_1 },
-                        'content': {
-                            'title': {
-                                'value': {
-                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 1,
-                                    'value-regex': '.{1,250}',
-                                    'required':False
-                                }
-                            },
-                            'abstract': {
-                                'value': {
-                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 4,
-                                    'value-regex': '[\\S\\s]{1,5000}',
-                                    'required':False
-                                }
-                            },
-                            'authors': {
-                                'value': {
-                                    'description': 'Comma separated list of author names.',
-                                    'order': 2,
-                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                    'required':False,
-                                    'hidden': True
-                                }
-                            },
-                            'authorids': {
-                                'value': {
-                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                    'order': 3,
-                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                    'required':False
-                                }
-                            },
-                            'pdf': {
-                                'value': {
-                                    'description': 'Upload a PDF file that ends with .pdf',
-                                    'order': 5,
-                                    'value-file': {
-                                        'fileTypes': ['pdf'],
-                                        'size': 50
-                                    },
-                                    'required':False
-                                }
-                            },
-                            "supplementary_material": {
-                                'value': {
-                                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                    "order": 6,
-                                    "value-file": {
-                                        "fileTypes": [
-                                            "zip",
-                                            "pdf"
-                                        ],
-                                        "size": 100
-                                    },
-                                    "required": False
-                                }
-                            }
-                        }
-                    }
-                }))
+        ## Check decision invitation
+        assert client.get_invitation(f"{venue_id}/Paper1/-/Decision")
+
+        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+            signatures=[f"{venue_id}/Paper1/AEs"],
+            note=openreview.Note(
+                content={
+                    'recommendation': { 'value': 'Accept as is' },
+                    'comment': { 'value': 'This is a nice paper!' }
+                }
+            )
+        )
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = decision_note['id'])
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        assert client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
 
         ## post a revision
-        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Revision',
+        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
             note=openreview.Note(
                 id=note_id_1,
@@ -1007,5 +1006,23 @@ class TestJournal():
         assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
         assert note.content['venue'] == 'Under review for TMLR'
         assert note.content['venueid'] == '.TMLR/Under_Review'
+        assert note.content['title'] == 'Paper title VERSION 2'
+        assert note.content['abstract'] == 'Paper abstract'
+
+        acceptance_note = raia_client.post_note_edit(invitation=acceptance_invitation_id,
+                            signatures=[editor_in_chief_id],
+                            note=openreview.Note(id=note_id_1, forum=note_id_1))
+
+        note = client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['venue'] == 'TMLR'
+        assert note.content['venueid'] == '.TMLR'
         assert note.content['title'] == 'Paper title VERSION 2'
         assert note.content['abstract'] == 'Paper abstract'
