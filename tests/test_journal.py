@@ -36,6 +36,8 @@ class TestJournal():
         david_client=helpers.create_user('david@mail.com', 'David', 'Belanger')
         melisa_client=helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
         carlos_client=helpers.create_user('carlos@mail.com', 'Carlos', 'Mondragon')
+        andrew_client = helpers.create_user('andrew@mail.com', 'Andrew', 'McCallum')
+        hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
         peter_client = helpers.create_user('peter@mail.com', 'Peter', 'Snow')
         guest_client=openreview.Client()
@@ -143,7 +145,7 @@ class TestJournal():
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
-                        members=['~David_Bellanger1', '~Melisa_Bok1', '~Carlos_Mondragon1']
+                        members=['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
                         ))
         ## TODO: add webfield console
 
@@ -261,13 +263,13 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
+                multiReply=False,
                 edit={
                     'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
                     'note': {
                         'id': { 'value-invitation': submission_invitation_id },
-                        'forum': { 'value-invitation': submission_invitation_id },
                         'readers': {
                             'values': ['everyone']
                         },
@@ -301,13 +303,13 @@ class TestJournal():
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
+                multiReply=False,
                 edit={
                     'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
                     'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
                     'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
                     'note': {
                         'id': { 'value-invitation': submission_invitation_id },
-                        'forum': { 'value-invitation': submission_invitation_id },
                         'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
                         'content': {
                             'venue': {
@@ -538,6 +540,7 @@ class TestJournal():
             readers=[venue_id, f'{venue_id}/Paper1/Authors'],
             writers=[venue_id],
             signatures=[venue_id],
+            taskCompletionCount=1,
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
@@ -641,6 +644,7 @@ class TestJournal():
             readers=[venue_id, editor_in_chief_group.id],
             writers=[venue_id],
             signatures=[venue_id],
+            taskCompletionCount=1,
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
