@@ -42,9 +42,102 @@ def process(client, edit, invitation):
     ## TODO: create this invitation using an invitation
     review_invitation_id=f'{paper_group.id}/-/Review'
 
+    acceptance_process_function='''\'''def process(client, edit, invitation):
+    venue_id='.TMLR'
+    note=edit.note
+    paper_group_id=edit.invitation.split('/-/')[0]
+
+    if note.content['recommendation']['value'] == 'Reject':
+        return
+
+    invitation_name= 'Camera_Ready_Revision' if note.content['recommendation']['value'] == 'Accept as is' else 'Revision'
+
+    revision_invitation_id=f'{paper_group_id}/-/{invitation_name}'
+    invitation = client.post_invitation_edit(readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        invitation=openreview.Invitation(id=revision_invitation_id,
+            invitees=[f"{paper_group_id}/Authors"],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            duedate=1613822400000,
+            edit={
+                'signatures': { 'values': [f'{paper_group_id}/Authors'] },
+                'readers': { 'values': ['everyone']},
+                'writers': { 'values': [ venue_id, f'{paper_group_id}/Authors']},
+                'note': {
+                    'id': { 'value': note.forum },
+                    'forum': { 'value': note.forum },
+                    'content': {
+                        'title': {
+                            'value': {
+                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'order': 1,
+                                'value-regex': '.{1,250}',
+                                'required':False
+                            }
+                        },
+                        'abstract': {
+                            'value': {
+                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'order': 4,
+                                'value-regex': '[\\S\\s]{1,5000}',
+                                'required':False
+                            }
+                        },
+                        'authors': {
+                            'value': {
+                                'description': 'Comma separated list of author names.',
+                                'order': 2,
+                                'values-regex': '.*',
+                                'required':False,
+                                'hidden': True
+                            }
+                        },
+                        'authorids': {
+                            'value': {
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                'order': 3,
+                                'values-regex': r'~.*|.*',
+                                'required':False
+                            }
+                        },
+                        'pdf': {
+                            'value': {
+                                'description': 'Upload a PDF file that ends with .pdf',
+                                'order': 5,
+                                'value-file': {
+                                    'fileTypes': ['pdf'],
+                                    'size': 50
+                                },
+                                'required':False
+                            }
+                        },
+                        "supplementary_material": {
+                            'value': {
+                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                                "order": 6,
+                                "value-file": {
+                                    "fileTypes": [
+                                        "zip",
+                                        "pdf"
+                                    ],
+                                    "size": 100
+                                },
+                                "required": False
+                            }
+                        }
+                    }
+                }
+            }))
+    \'''
+    '''
+
     process_function='''def process(client, edit, invitation):
     venue_id='.TMLR'
     note=edit.note
+    paper_group_id=edit.invitation.split('/-/')[0]
 
     ## TODO: send message to the reviewer, AE confirming the review was posted
 
@@ -52,7 +145,6 @@ def process(client, edit, invitation):
     if review_note.readers == ['everyone']:
         return
 
-    paper_number=client.get_note(note.forum).number
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(reviews) == 3:
         invitation = client.post_invitation_edit(readers=[venue_id],
@@ -62,13 +154,59 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 edit={
                     'signatures': { 'values': [ '${{note.id}.signatures}' ] },
-                    'readers': { 'values': [venue_id, f'.TMLR/Paper{paper_number}/AEs', '${{note.id}.signatures}'] },
+                    'readers': { 'values': [venue_id, f'{paper_group_id}/AEs', '${{note.id}.signatures}'] },
                     'note': {
                         'readers': { 'values': ['everyone'] }
                     }
                 }
             )
         )
+
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=f'{paper_group_id}/-/Decision',
+                duedate=1613822400000,
+                invitees=[venue_id, f"{paper_group_id}/AEs"],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                edit={
+                    'signatures': { 'values': [f'{paper_group_id}/AEs'] },
+                    'readers': { 'values': [ venue_id, f'{paper_group_id}/AEs'] },
+                    'writers': { 'values': [ venue_id, f'{paper_group_id}/AEs'] },
+                    'note': {
+                        'forum': { 'value': note.forum },
+                        'replyto': { 'value': note.forum },
+                        'signatures': { 'values': [f'{paper_group_id}/AEs'] },
+                        'readers': { 'values': [ 'everyone' ] },
+                        'writers': { 'values': [ venue_id, f'{paper_group_id}/AEs'] },
+                        'content': {
+                            'recommendation': {
+                                'value': {
+                                    'order': 1,
+                                    'value-radio': [
+                                        'Accept as is',
+                                        'Accept with revisions',
+                                        'Reject'
+                                    ],
+                                    'required': True
+                                }
+                            },
+                            'comment': {
+                                'value': {
+                                    'order': 2,
+                                    'value-regex': '[\\S\\s]{1,200000}',
+                                    'description': 'TODO (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                    'required': True,
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                },
+                process_string=''' + acceptance_process_function + '''
+        ))
     '''
 
     invitation = client.post_invitation_edit(readers=[venue_id],

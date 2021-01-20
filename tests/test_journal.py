@@ -327,6 +327,63 @@ class TestJournal():
                 }
                 ))
 
+        ## Acceptance invitation
+        acceptance_invitation_id=f'{venue_id}/-/Acceptance'
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=acceptance_invitation_id,
+                invitees=[venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                multiReply=False,
+                edit={
+                    'signatures': { 'values': [editor_in_chief_id] },
+                    'readers': { 'values': [ 'everyone']},
+                    'writers': { 'values': [ venue_id ]},
+                    'note': {
+                        'id': { 'value-invitation': submission_invitation_id },
+                        'content': {
+                            'venue': {
+                                'value': {
+                                    'value': 'TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR'
+                                }
+                            },
+                            'authors': {
+                                'value': {
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'required':True
+                                },
+                                'description': 'Comma separated list of author names.',
+                                'order': 1,
+                                'hidden': True,
+                                'readers': {
+                                    'values': ['everyone']
+                                }
+                            },
+                            'authorids': {
+                                'value': {
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                    'required':True
+                                },
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                'order': 2,
+                                'readers': {
+                                    'values': ['everyone']
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation=submission_invitation_id,
             signatures=['~Test_User1'],
@@ -743,8 +800,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        # assert len(invitations) == 5
-        assert len(invitations) == 4
+        assert len(invitations) == 5
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
@@ -902,88 +958,28 @@ class TestJournal():
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
 
-        ## Allow the authors to revise their papers during the rebuttal discussion
-        revision_invitation_id=f'{venue_id}/Paper1/-/Revision'
-        invitation = client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.Invitation(id=revision_invitation_id,
-                invitees=[f"{venue_id}/Paper1/Authors"],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                edit={
-                    'signatures': { 'values': [f'{venue_id}/Paper1/Authors'] },
-                    'readers': { 'values': ['everyone']},
-                    'writers': { 'values': [ venue_id, f'{venue_id}/Paper1/Authors']},
-                    'note': {
-                        'id': { 'value': note_id_1 },
-                        'forum': { 'value': note_id_1 },
-                        'content': {
-                            'title': {
-                                'value': {
-                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 1,
-                                    'value-regex': '.{1,250}',
-                                    'required':False
-                                }
-                            },
-                            'abstract': {
-                                'value': {
-                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 4,
-                                    'value-regex': '[\\S\\s]{1,5000}',
-                                    'required':False
-                                }
-                            },
-                            'authors': {
-                                'value': {
-                                    'description': 'Comma separated list of author names.',
-                                    'order': 2,
-                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                    'required':False,
-                                    'hidden': True
-                                }
-                            },
-                            'authorids': {
-                                'value': {
-                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                    'order': 3,
-                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                    'required':False
-                                }
-                            },
-                            'pdf': {
-                                'value': {
-                                    'description': 'Upload a PDF file that ends with .pdf',
-                                    'order': 5,
-                                    'value-file': {
-                                        'fileTypes': ['pdf'],
-                                        'size': 50
-                                    },
-                                    'required':False
-                                }
-                            },
-                            "supplementary_material": {
-                                'value': {
-                                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                    "order": 6,
-                                    "value-file": {
-                                        "fileTypes": [
-                                            "zip",
-                                            "pdf"
-                                        ],
-                                        "size": 100
-                                    },
-                                    "required": False
-                                }
-                            }
-                        }
-                    }
-                }))
+        ## Check decision invitation
+        assert client.get_invitation(f"{venue_id}/Paper1/-/Decision")
+
+        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+            signatures=[f"{venue_id}/Paper1/AEs"],
+            note=openreview.Note(
+                content={
+                    'recommendation': { 'value': 'Accept as is' },
+                    'comment': { 'value': 'This is a nice paper!' }
+                }
+            )
+        )
+
+        time.sleep(2)
+        process_logs = client.get_process_logs(id = decision_note['id'])
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        assert client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
 
         ## post a revision
-        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Revision',
+        revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
             note=openreview.Note(
                 id=note_id_1,
@@ -1010,5 +1006,23 @@ class TestJournal():
         assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
         assert note.content['venue'] == 'Under review for TMLR'
         assert note.content['venueid'] == '.TMLR/Under_Review'
+        assert note.content['title'] == 'Paper title VERSION 2'
+        assert note.content['abstract'] == 'Paper abstract'
+
+        acceptance_note = raia_client.post_note_edit(invitation=acceptance_invitation_id,
+                            signatures=[editor_in_chief_id],
+                            note=openreview.Note(id=note_id_1, forum=note_id_1))
+
+        note = client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['venue'] == 'TMLR'
+        assert note.content['venueid'] == '.TMLR'
         assert note.content['title'] == 'Paper title VERSION 2'
         assert note.content['abstract'] == 'Paper abstract'
