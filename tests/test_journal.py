@@ -34,12 +34,12 @@ class TestJournal():
 
         ## Reviewers
         david_client=helpers.create_user('david@mail.com', 'David', 'Belanger')
-        melisa_client=helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
+        melisa_client=helpers.create_user('melisabok@mail.com', 'Melisa', 'Bok')
         carlos_client=helpers.create_user('carlos@mail.com', 'Carlos', 'Mondragon')
-        andrew_client = helpers.create_user('andrew@mail.com', 'Andrew', 'McCallum')
+        andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
-        peter_client = helpers.create_user('peter@mail.com', 'Peter', 'Snow')
+        peter_client = helpers.create_user('petersnow@mail.com', 'Peter', 'Snow')
         guest_client=openreview.Client()
 
         ## venue group
@@ -392,7 +392,7 @@ class TestJournal():
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~Test_User1', 'andrew@mail.com']},
+                    'authorids': { 'value': ['~Test_User1', 'andrewmc@mail.com']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'}
                 }
@@ -406,7 +406,7 @@ class TestJournal():
 
         author_group=client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~Test_User1', 'andrew@mail.com']
+        assert author_group.members == ['~Test_User1', 'andrewmc@mail.com']
         assert client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert client.get_group(f"{venue_id}/Paper1/AEs")
 
@@ -416,7 +416,7 @@ class TestJournal():
         assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue'] == 'Submitted to TMLR'
         assert note.content['venueid'] == '.TMLR/Submitted'
 
@@ -452,7 +452,7 @@ class TestJournal():
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
                                             'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                                            'authorids': { 'value': ['~Test_User1', 'andrew@mail.com']}
+                                            'authorids': { 'value': ['~Test_User1', 'andrewmc@mail.com']}
                                         }
                                     ))
 
@@ -464,7 +464,7 @@ class TestJournal():
 
         author_group=client.get_group(f"{venue_id}/Paper3/Authors")
         assert author_group
-        assert author_group.members == ['~Test_User1', 'andrew@mail.com']
+        assert author_group.members == ['~Test_User1', 'andrewmc@mail.com']
         assert client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
@@ -775,7 +775,7 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue'] == 'Under review for TMLR'
         assert note.content['venueid'] == '.TMLR/Under_Review'
 
@@ -988,7 +988,7 @@ class TestJournal():
                     'title': { 'value': 'Paper title VERSION 2' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~Test_User1', 'andrew@mail.com']},
+                    'authorids': { 'value': ['~Test_User1', 'andrewmc@mail.com']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'}
                 }
@@ -1003,7 +1003,7 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue'] == 'Under review for TMLR'
         assert note.content['venueid'] == '.TMLR/Under_Review'
         assert note.content['title'] == 'Paper title VERSION 2'
@@ -1021,7 +1021,7 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids'] == ['~Test_User1', 'andrew@mail.com']
+        assert note.content['authorids'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue'] == 'TMLR'
         assert note.content['venueid'] == '.TMLR'
         assert note.content['title'] == 'Paper title VERSION 2'

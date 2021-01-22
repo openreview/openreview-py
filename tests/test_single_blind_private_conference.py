@@ -90,5 +90,6 @@ class TestSingleBlindPrivateConference():
 
         invitations = client.get_invitations(replyForum=notes[0].id)
         assert len(invitations) == 2
-        assert invitations[0].id == 'MICCAI.org/2021/Challenges/Paper5/-/Desk_Reject'
-        assert invitations[1].id == 'MICCAI.org/2021/Challenges/Paper5/-/Withdraw'
+        invitation_ids = sorted([invitation.id for invitation in invitations])
+        assert invitation_ids[0] == 'MICCAI.org/2021/Challenges/Paper5/-/Desk_Reject'
+        assert invitation_ids[1] == 'MICCAI.org/2021/Challenges/Paper5/-/Withdraw'
