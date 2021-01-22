@@ -1849,6 +1849,10 @@ class Invitation(object):
         body = {
             'id': self.id,
             'super': self.super,
+            'cdate': self.cdate,
+            'ddate': self.ddate,
+            'tcdate': self.tcdate,
+            'tmdate': self.tmdate,
             'duedate': self.duedate,
             'expdate': self.expdate,
             'readers': self.readers,
