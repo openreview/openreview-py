@@ -30,11 +30,14 @@ var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';
 var SECONDARY_AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/' + SECONDARY_AREA_CHAIR_NAME + '$';
 
 var reviewerSummaryMap = {};
+var conferenceStatusData = {};
 var reviewerOptions = [];
 var paperAndReviewersWithConflict = {};
 var paperRankingInvitation = null;
 var showRankings = false;
 var availableOptions = [];
+
+$.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -312,7 +315,7 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryM
       }
     });
 
-    return {
+    conferenceStatusData = {
       profiles: profiles,
       blindedNotes: blindedNotes,
       officialReviews: officialReviews,
@@ -327,6 +330,7 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryM
       acPapers: acPapers,
       secondaryAcPapers: secondaryAcPapers,
     };
+    return conferenceStatusData;
   });
 };
 
@@ -573,6 +577,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
         '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
+    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>' +
     '<div class="pull-right">' +
       '<strong>Sort By:</strong> ' +
       '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
@@ -1341,6 +1346,78 @@ var registerEventHandlers = function() {
       $msgReviewerButton.attr('disabled', true);
       $superCheckBox.prop('checked', false);
     }
+  });
+
+  var buildCSV = function(){
+    var profiles = conferenceStatusData.profiles;
+    var notes = conferenceStatusData.blindedNotes;
+    var completedReviews = conferenceStatusData.officialReviews;
+    var metaReviews = conferenceStatusData.metaReviews;
+    var reviewerIds = conferenceStatusData.noteToReviewerIds;
+    var reviewerRankingByPaper = conferenceStatusData.reviewerRankingByPaper;
+    var acRankingByPaper = conferenceStatusData.acRankingByPaper;
+
+    var rowData = [];
+    rowData.push(['number',
+    'forum',
+    'title',
+    'abstract',
+    'num reviewers',
+    'num submitted reviewers',
+    'missing reviewers',
+    'min rating',
+    'max rating',
+    'average rating',
+    'min confidence',
+    'max confidence',
+    'average confidence',
+    'ac recommendation'].join(',') + '\n');
+
+    _.forEach(notes, function(note) {
+      var revIds = reviewerIds[note.number] || Object.create(null);
+      for (var revNumber in revIds) {
+        var uId = revIds[revNumber];
+        revIds[revNumber] = findProfile(profiles, uId);
+      }
+      var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+      var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
+      var paperTableRow = buildTableRow(note, revIds, noteCompletedReviews, metaReview, null, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {});
+
+      var title = paperTableRow[2]['content']['title'].replace(/"/g, '""');
+      var abstract = paperTableRow[2]['content']['abstract'].replace(/"/g, '""');
+      var reviewersData = _.values(paperTableRow[3]['reviewers']);
+      var allReviewers = [];
+      var missingReviewers = [];
+      reviewersData.forEach(function(r) {
+        allReviewers.push(r.id);
+        if (!r.completedReview) {
+          missingReviewers.push(r.id);
+        }
+      });
+
+      rowData.push([paperTableRow[1]['number'],
+      '"https://openreview.net/forum?id=' + paperTableRow[2]['id'] + '"',
+      '"' + title + '"',
+      '"' + abstract + '"',
+      paperTableRow[3]['numReviewers'],
+      paperTableRow[3]['numSubmittedReviews'],
+      '"' + missingReviewers.join('|') + '"',
+      paperTableRow[3]['minRating'],
+      paperTableRow[3]['maxRating'],
+      paperTableRow[3]['averageRating'],
+      paperTableRow[3]['minConfidence'],
+      paperTableRow[3]['maxConfidence'],
+      paperTableRow[3]['averageConfidence'],
+      metaReview && metaReview.content.recommendation
+      ].join(',') + '\n');
+    });
+    return [rowData.join('')];
+  };
+
+  $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
+    var blob = new Blob(buildCSV(), {type: 'text/csv'});
+    saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_AC_paper_status.csv',);
+    return false;
   });
 };
 
