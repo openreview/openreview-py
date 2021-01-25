@@ -5,10 +5,10 @@ jobs:
   build:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/node:12.13.1
+      - image: circleci/python:3.7-node
       - image: circleci/redis:6.0.0
       - image: circleci/mongo:3.6.4
-      - image: circleci/python:3.7.9
+      #- image: circleci/python:3.7.9
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
