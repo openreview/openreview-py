@@ -515,7 +515,7 @@ class TestAgora():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        # assert not editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
+        assert not editor_client.get_notes(invitation='-Agora/COVID-19/-/Submission')
         assert len(editor_client.get_notes(invitation='-Agora/COVID-19/-/Article')) == 1
         assert len(editor_client.get_notes(invitation='-Agora/COVID-19/-/Desk_Rejected')) == 1
 

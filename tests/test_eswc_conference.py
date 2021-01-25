@@ -264,47 +264,47 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         ]
         assert len(conference.get_submissions()) == 3
 
-#     def test_post_submission_stage(self, conference, helpers, test_client, client):
-#         year = datetime.datetime.now().year
-#         conference.setup_final_deadline_stage(force=True)
+    def test_post_submission_stage(self, conference, helpers, test_client, client):
+        year = datetime.datetime.now().year
+        conference.setup_final_deadline_stage(force=True)
 
-#         submissions = conference.get_submissions()
-#         assert len(submissions) == 3
-#         assert submissions[0].readers == ['everyone']
-#         assert submissions[1].readers == ['everyone']
-#         assert submissions[2].readers == ['everyone']
+        submissions = conference.get_submissions()
+        assert len(submissions) == 3
+        assert submissions[0].readers == ['everyone']
+        assert submissions[1].readers == ['everyone']
+        assert submissions[2].readers == ['everyone']
 
-#         ## Withdraw paper
-#         test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper5/-/Withdraw',
-#             forum = submissions[0].forum,
-#             replyto = submissions[0].forum,
-#             readers = [
-#                 'everyone'],
-#             writers = [conference.get_id(), 'eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
-#             signatures = ['eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
-#             content = {
-#                 'title': 'Submission Withdrawn by the Authors',
-#                 'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-#             }
-#         ))
+        ## Withdraw paper
+        test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper5/-/Withdraw',
+            forum = submissions[0].forum,
+            replyto = submissions[0].forum,
+            readers = [
+                'everyone'],
+            writers = [conference.get_id(), 'eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
+            signatures = ['eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
 
-#         time.sleep(2)
+        time.sleep(2)
 
-#         withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
-#         assert len(withdrawn_notes) == 2
-#         withdrawn_notes[0].readers == [
-#             'everyone'
-#         ]
-#         withdrawn_notes[1].readers == [
-#             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors',
-#             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Reviewers',
-#             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
-#             'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
-#         ]
-#         assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
-# user'''+str(year)+'''paper,
-# title={Paper title 5},
-# author={Test User and Peter Test and Andrew Mc},
-# year={'''+str(year)+'''},
-# url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
-# }'''
+        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
+        assert len(withdrawn_notes) == 2
+        withdrawn_notes[0].readers == [
+            'everyone'
+        ]
+        withdrawn_notes[1].readers == [
+            'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors',
+            'eswc-conferences.org/ESWC/2021/Conference/Paper1/Reviewers',
+            'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
+            'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'
+        ]
+        assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
+user'''+str(year)+'''paper,
+title={Paper title 5},
+author={Test User and Peter Test and Andrew Mc},
+year={'''+str(year)+'''},
+url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
+}'''
