@@ -4,7 +4,7 @@ import time
 import json
 import datetime
 import random
-
+import os
 
 class TestJournal():
 
@@ -40,6 +40,10 @@ class TestJournal():
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
         peter_client = helpers.create_user('petersnow@mail.com', 'Peter', 'Snow')
+        if os.environ.get("OPENREVIEW_USERNAME"):
+            os.environ.pop("OPENREVIEW_USERNAME")
+        if os.environ.get("OPENREVIEW_PASSWORD"):
+            os.environ.pop("OPENREVIEW_PASSWORD")
         guest_client=openreview.Client()
 
         ## venue group
