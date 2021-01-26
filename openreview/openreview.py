@@ -1440,7 +1440,7 @@ class Client(object):
 
         return Edit.from_json(response.json())
 
-   def get_jobs_status(self):
+    def get_jobs_status(self):
         """
         **Only for Super User**. Retrieves the jobs status of the queue
 
