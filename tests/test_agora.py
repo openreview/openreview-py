@@ -6,7 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestAgora():
 
-    def test_setup(self, client, request_page, selenium):
+    def test_setup(self, client, helpers, request_page, selenium):
 
         ##Create support group
 
@@ -54,7 +54,7 @@ class TestAgora():
 
         posted_note = author_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -92,7 +92,7 @@ class TestAgora():
 
         posted_note = editor_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -129,7 +129,7 @@ class TestAgora():
 
         posted_note = editor_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -170,7 +170,7 @@ class TestAgora():
 
         posted_note = article_editor_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -203,7 +203,7 @@ class TestAgora():
 
         posted_note = article_editor_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -240,7 +240,7 @@ class TestAgora():
 
         posted_note = reviewer_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -283,7 +283,7 @@ class TestAgora():
 
         posted_note = reviewer_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -320,7 +320,7 @@ class TestAgora():
 
         posted_note = author_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -360,7 +360,7 @@ class TestAgora():
 
         posted_note = melisa_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -402,7 +402,7 @@ class TestAgora():
 
         posted_note = author_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -442,7 +442,7 @@ class TestAgora():
 
         posted_note = article_editor_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -484,7 +484,7 @@ class TestAgora():
 
         posted_note = author_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
@@ -509,7 +509,7 @@ class TestAgora():
 
         posted_note = editor_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1
