@@ -51,7 +51,7 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = note.id)
         assert logs
@@ -84,7 +84,7 @@ class TestCommentNotification():
             }
         )
         comment_note = reviewer_client.post_note(comment_note)
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -142,7 +142,7 @@ class TestCommentNotification():
 
         reply_comment_note = test_client.post_note(reply_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -197,7 +197,7 @@ class TestCommentNotification():
 
         reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -271,7 +271,7 @@ class TestCommentNotification():
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         messages = client.get_messages(to = 'author@mail.com')
         assert messages
@@ -374,7 +374,7 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = note.id)
         assert logs
@@ -420,7 +420,7 @@ class TestCommentNotification():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = review_note.id)
         assert logs
@@ -467,7 +467,7 @@ class TestCommentNotification():
         )
         comment_note = reviewer_client.post_note(comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -514,7 +514,7 @@ class TestCommentNotification():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = review_note.id)
         assert logs
@@ -556,7 +556,7 @@ class TestCommentNotification():
         )
         comment_note = reviewer_client.post_note(comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -648,7 +648,7 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = note.id)
         assert logs
@@ -684,7 +684,7 @@ class TestCommentNotification():
         )
         comment_note = reviewer_client.post_note(comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -738,7 +738,7 @@ class TestCommentNotification():
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = reply_comment_note.id)
         assert logs
@@ -794,7 +794,7 @@ class TestCommentNotification():
 
         reply2_comment_note = reviewer_client.post_note(reply2_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = reply2_comment_note.id)
         assert logs
@@ -861,7 +861,7 @@ class TestCommentNotification():
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = reply3_comment_note.id)
         assert logs
@@ -956,7 +956,7 @@ class TestCommentNotification():
         note = test_client.post_note(note)
         assert note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = note.id)
         assert logs
@@ -990,7 +990,7 @@ class TestCommentNotification():
         )
         comment_note = reviewer_client.post_note(comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
@@ -1043,7 +1043,7 @@ class TestCommentNotification():
         )
         reply_comment_note = test_client.post_note(reply_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = reply_comment_note.id)
         assert logs
@@ -1100,7 +1100,7 @@ class TestCommentNotification():
 
         reply3_comment_note = pc_client.post_note(reply3_comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = reply3_comment_note.id)
         assert logs
@@ -1150,7 +1150,7 @@ class TestCommentNotification():
         assert messages[0]['content']['subject'] == 'OpenReview signup confirmation'
         assert messages[1]['content']['subject'] == '[COLT 2017] Your comment was received on Paper Number: 1, Paper Title: "Paper title"'
 
-    def test_notify_except_authors_are_program_chairs(self, client, test_client):
+    def test_notify_except_authors_are_program_chairs(self, client, helpers, test_client):
 
         builder = openreview.conference.ConferenceBuilder(client)
 
@@ -1201,7 +1201,7 @@ class TestCommentNotification():
         )
         comment_note = reviewer_client.post_note(comment_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = comment_note.id)
         assert logs
