@@ -140,7 +140,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
 
-    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page):
+    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -188,7 +188,7 @@ class TestSingleBlindConference():
         note.content['pdf'] = url
         note = test_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)
@@ -446,7 +446,7 @@ class TestSingleBlindConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -493,7 +493,7 @@ class TestSingleBlindConference():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 2
@@ -708,3 +708,61 @@ url={https://openreview.net/forum?id='''
 }'''
 
         assert submissions[0].content['_bibtex'] == valid_bibtex
+
+    def test_enable_camera_ready_revisions(self, client, test_client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2018)
+        builder.set_conference_name('NIPS Workshop MLITS')
+        conference = builder.get_result()
+
+        conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Camera_Ready_Revision',
+            forum = notes[0].id,
+            referent = notes[0].id,
+            readers = ['NIPS.cc/2018/Workshop/MLITS', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
+            writers = [conference.id, 'NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
+            signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
+            content = {
+                'title': 'New paper title Version 2',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com', 'melisa@mail.com'],
+                'authors': ['Test User', 'Peter Test', 'Andrew Mc', 'Melisa Bok'],
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
+            }
+        )
+
+        posted_note = test_client.post_note(note)
+        assert posted_note
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        valid_bibtex = '''@inproceedings{
+user2018new,
+title={New paper title Version 2},
+author={Test User and Peter Test and Andrew Mc and Melisa Bok},
+booktitle={NIPS Workshop MLITS},
+year={2018},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + notes[0].forum + '''}
+}'''

@@ -1038,7 +1038,7 @@ class TestMatching():
             signatures=['auai.org/UAI/2019/Conference/Paper1/AnonReviewer1']
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
