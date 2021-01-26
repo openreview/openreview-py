@@ -3,6 +3,8 @@ def process_update(client, note, invitation, existing_note):
     CONFERENCE_ID = ''
     SHORT_PHRASE = ''
     AUTHORS_NAME = ''
+    CONFERENCE_NAME = ''
+    CONFERENCE_YEAR = ''
 
     action = 'posted'
     if existing_note:
@@ -30,4 +32,23 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
         if author_group:
             author_group.members = authorids
             client.post_group(author_group)
+
+    if CONFERENCE_NAME and CONFERENCE_YEAR and note.content.get('title') and note.content.get('authors'):
+        bibtex_note=forum
+        notes=client.get_notes(original=forum.id)
+        if notes:
+            bibtex_note=notes[0]
+            bibtex_note.content = {
+                'venue': bibtex_note.content['venue'],
+                'venueid': bibtex_note.content['venueid']
+            }
+        bibtex_note.content['_bibtex'] = openreview.tools.get_bibtex(
+            note,
+            venue_fullname=CONFERENCE_NAME,
+            year=CONFERENCE_YEAR,
+            url_forum=bibtex_note.id,
+            accepted=True,
+            anonymous=forum.content.get('authorids', []) == ['Anonymous']
+        )
+        client.post_note(bibtex_note)
 

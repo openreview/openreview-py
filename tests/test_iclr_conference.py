@@ -551,7 +551,7 @@ Naila, Katja, Alice, and Ivan
 
         test_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         author_group = client.get_group('ICLR.cc/2021/Conference/Paper5/Authors')
         assert len(author_group.members) == 3
@@ -574,7 +574,7 @@ Naila, Katja, Alice, and Ivan
         revision_note.content['title'] = 'EDITED Rev 2 Paper title 5'
         test_client.post_note(revision_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         messages = client.get_messages(subject='ICLR 2021 has received a new revision of your submission titled EDITED Rev 2 Paper title 5')
         assert len(messages) == 3
@@ -603,7 +603,7 @@ Naila, Katja, Alice, and Ivan
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
 
         withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
         assert len(withdrawn_notes) == 1
@@ -640,7 +640,7 @@ Naila, Katja, Alice, and Ivan
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
 
         withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
         assert len(withdrawn_notes) == 2

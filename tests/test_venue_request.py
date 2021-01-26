@@ -8,12 +8,12 @@ from openreview import VenueRequest
 class TestVenueRequest():
 
     @pytest.fixture(scope='class')
-    def venue(self, client, support_client, test_client):
+    def venue(self, client, support_client, test_client, helpers):
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         # Add support group user to the support group object
         support_group = client.get_group(support_group_id)
@@ -54,7 +54,7 @@ class TestVenueRequest():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
-        time.sleep(5)
+        helpers.await_queue()
 
         # Post a deploy note
         client.post_note(openreview.Note(
@@ -76,7 +76,7 @@ class TestVenueRequest():
         }
         return venue_details
 
-    def test_venue_setup(self, client):
+    def test_venue_setup(self, client, helpers):
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
@@ -101,7 +101,7 @@ class TestVenueRequest():
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
 
-        time.sleep(2)
+        helpers.await_queue()
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
 
         helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
@@ -182,13 +182,13 @@ class TestVenueRequest():
         ))
         assert deploy_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=deploy_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-    def test_venue_revision(self, client, test_client, selenium, request_page, venue):
+    def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token)
@@ -235,7 +235,7 @@ class TestVenueRequest():
         ))
         assert venue_revision_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=venue_revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -248,7 +248,7 @@ class TestVenueRequest():
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
 
-    def test_venue_recruitment(self, client, test_client, selenium, request_page, venue):
+    def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token)
@@ -277,7 +277,7 @@ class TestVenueRequest():
         ))
         assert recruitment_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=recruitment_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -293,7 +293,7 @@ class TestVenueRequest():
         assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
 
-    def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue):
+    def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Remind Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token)
@@ -320,7 +320,7 @@ class TestVenueRequest():
         ))
         assert remind_recruitment_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=remind_recruitment_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -368,7 +368,7 @@ class TestVenueRequest():
         ))
         assert bid_stage_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=bid_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
@@ -430,7 +430,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert review_stage_note
-        time.sleep(5)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_stage_note.id)
         assert len(process_logs) == 1
@@ -525,7 +525,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert meta_review_stage_note
-        time.sleep(5)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = meta_review_stage_note.id)
         assert len(process_logs) == 1
@@ -578,7 +578,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert comment_stage_note
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id=comment_stage_note.id)
         assert len(process_logs) == 1
@@ -610,13 +610,13 @@ class TestVenueRequest():
             }
         ))
         assert official_comment_note
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id=official_comment_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-    def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue):
+    def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
 
         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         assert submissions and len(submissions) == 2
@@ -648,7 +648,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert decision_stage_note
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -677,7 +677,7 @@ class TestVenueRequest():
         ))
 
         assert decision_note
-        time.sleep(5)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -735,7 +735,7 @@ class TestVenueRequest():
         ))
         assert revision_stage_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=revision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -771,7 +771,7 @@ class TestVenueRequest():
         ))
         assert revision_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -831,7 +831,7 @@ class TestVenueRequest():
             writers=['~Test_User1']
         ))
         assert post_decision_stage_note
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
         assert len(process_logs) == 1
@@ -874,7 +874,7 @@ class TestVenueRequest():
         ))
         assert revision_stage_note
 
-        time.sleep(5)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id=revision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'

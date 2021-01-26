@@ -527,6 +527,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
     def __init__(self, conference, submission_content):
 
         submission_revision_stage = conference.submission_revision_stage
+        accepted_only = conference.submission_revision_stage.only_accepted
         content = submission_content.copy()
 
         start_date = submission_revision_stage.start_date
@@ -548,6 +549,10 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.get_id() + "'")
             file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
+            if accepted_only:
+                file_content = file_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.name + "'")
+                file_content = file_content.replace("CONFERENCE_YEAR = ''", "CONFERENCE_YEAR = '" + str(conference.year) + "'")
+
             super(SubmissionRevisionInvitation, self).__init__(
                 id=conference.get_invitation_id(submission_revision_stage.name),
                 cdate=tools.datetime_millis(start_date) if start_date else None,
@@ -629,7 +634,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             super=conference.get_invitation_id(submission_revision_stage.name),
             readers=invitees,
             writers=[conference.get_id()],
-            signatures=[conference.get_id()],
+            signatures=['~Super_User1' if submission_revision_stage.only_accepted else conference.get_id()],
             invitees=invitees,
             reply=reply
         )
