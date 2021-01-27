@@ -127,6 +127,19 @@ def process(client, edit, invitation):
                                 },
                                 "required": False
                             }
+                        },
+                        "video": {
+                            'value': {
+                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                                "order": 6,
+                                "value-file": {
+                                    "fileTypes": [
+                                        "mp4"
+                                    ],
+                                    "size": 100
+                                },
+                                "required": True
+                            }
                         }
                     }
                 }
@@ -430,7 +443,7 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'~.*|{paper_group.id}/AEs|{paper_group.id}/Reviewers/.*' },
+                'signatures': { 'values-regex': f'~.*|{venue_id}/EIC|{paper_group.id}/AEs|{paper_group.id}/Reviewers/.*|{paper_group.id}/Authors' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'note': {

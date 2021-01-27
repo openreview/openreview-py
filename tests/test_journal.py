@@ -388,6 +388,41 @@ class TestJournal():
             )
         )
 
+        ## Reject invitation
+        reject_invitation_id=f'{venue_id}/-/Reject'
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.Invitation(id=reject_invitation_id,
+                invitees=[venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                multiReply=False,
+                edit={
+                    'signatures': { 'values': [editor_in_chief_id] },
+                    'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
+                    'writers': { 'values': [ venue_id ]},
+                    'note': {
+                        'id': { 'value-invitation': submission_invitation_id },
+                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
+                        'content': {
+                            'venue': {
+                                'value': {
+                                    'value': 'Rejected by TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR/Rejection'
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation=submission_invitation_id,
             signatures=['~Test_User1'],
@@ -804,7 +839,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 6
+        assert len(invitations) == 7
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
@@ -1000,7 +1035,8 @@ class TestJournal():
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
                     'authorids': { 'value': ['~Test_User1', 'andrewmc@mail.com']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'}
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'video': { 'value': '/attachment/' + 's' * 40 +'.mp4'}
                 }
             )
         )

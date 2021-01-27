@@ -11,6 +11,7 @@ var SUBMISSION_ID = '.TMLR/-/Author_Submission';
 var SUBMITTED_ID = '.TMLR/Submitted';
 var UNDER_REVIEW_ID = '.TMLR/Under_Review';
 var DESK_REJECTED_ID = '.TMLR/Desk_Rejection';
+var REJECTED_ID = '.TMLR/Rejection';
 var HEADER = {};
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
@@ -61,8 +62,9 @@ function load() {
     includeCount: true
   });
 
-  var deskRejectedNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
+  var rejectedNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': DESK_REJECTED_ID,
+    'content.venueid': REJECTED_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
@@ -83,7 +85,7 @@ function load() {
     });
   }
 
-  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, deskRejectedNotesP, activityNotesP);
+  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP, activityNotesP);
 }
 
 // Render functions
@@ -125,8 +127,8 @@ function renderConferenceTabs() {
     id: 'submissions',
   },
   {
-    heading: 'Desk Rejected Submissions',
-    id: 'desk-rejected-submissions',
+    heading: 'Rejected Submissions',
+    id: 'rejected-submissions',
   },
   {
     heading: 'Recent Activity',
@@ -139,7 +141,7 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(acceptedResponse, submittedResponse, underReviewResponse, deskRejectedResponse, activityNotes) {
+function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse, activityNotes) {
 
   var acceptedPapers = acceptedResponse.notes || [];
   var acceptedPapersCount = acceptedResponse.count || 0;
@@ -258,24 +260,24 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     $('.tabs-container a[href="#submissions"]').parent().hide();
   }
 
-  var deskRejectedNotesCount = deskRejectedResponse.count || 0;
-  if (deskRejectedNotesCount) {
-    $('#desk-rejected-submissions').empty();
+  var rejectedNotesCount = rejectedResponse.count || 0;
+  if (rejectedNotesCount) {
+    $('#rejected-submissions').empty();
 
-    var deskRejectedNotesArray = deskRejectedResponse.notes || [];
-    Webfield.ui.submissionList(deskRejectedNotesArray, {
+    var rejectedNotesArray = rejectedResponse.notes || [];
+    Webfield.ui.submissionList(rejectedNotesArray, {
       heading: null,
-      container: '#desk-rejected-submissions',
+      container: '#rejected-submissions',
       search: {
         enabled: false
       },
       displayOptions: paperDisplayOptions,
       autoLoad: false,
-      noteCount: deskRejectedNotesCount,
+      noteCount: rejectedNotesCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
         return Webfield.api.getSubmissions(SUBMISSION_ID, {
-          'content.venueid': DESK_REJECTED_ID,
+          'content.venueid': REJECTED_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
           offset: offset
@@ -284,7 +286,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       fadeIn: false
     });
   } else {
-    $('.tabs-container a[href="#desk-rejected-submissions"]').parent().hide();
+    $('.tabs-container a[href="#rejected-submissions"]').parent().hide();
   }
 
   // Activity Tab
