@@ -402,7 +402,7 @@ class TestJournal():
                 }
             ))
 
-        time.sleep(2)
+        helpers.await_queue()
         note_id_1=submission_note_1['note']['id']
         process_logs = client.get_process_logs(id = submission_note_1['id'])
         assert len(process_logs) == 1
@@ -436,7 +436,7 @@ class TestJournal():
                                         }
                                     ))
 
-        time.sleep(2)
+        helpers.await_queue()
         note_id_2=submission_note_2['note']['id']
         process_logs = client.get_process_logs(id = submission_note_2['id'])
         assert len(process_logs) == 1
@@ -460,7 +460,7 @@ class TestJournal():
                                         }
                                     ))
 
-        time.sleep(2)
+        helpers.await_queue()
         note_id_3=submission_note_3['note']['id']
         process_logs = client.get_process_logs(id = submission_note_3['id'])
         assert len(process_logs) == 1
@@ -760,7 +760,7 @@ class TestJournal():
             weight=1
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = paper_assignment_edge.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -829,7 +829,7 @@ class TestJournal():
             )
         )
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -900,7 +900,7 @@ class TestJournal():
             )
         )
 
-        time.sleep(2)
+        helpers.await_queue()
         review_2=review_note['note']['id']
         process_logs = client.get_process_logs(id = review_note['id'])
         assert len(process_logs) == 1
@@ -930,7 +930,7 @@ class TestJournal():
             )
         )
 
-        time.sleep(2)
+        helpers.await_queue()
         review_3=review_note['note']['id']
         process_logs = client.get_process_logs(id = review_note['id'])
         assert len(process_logs) == 1
@@ -975,7 +975,7 @@ class TestJournal():
             )
         )
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = decision_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
