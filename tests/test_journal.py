@@ -804,7 +804,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 5
+        assert len(invitations) == 6
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
@@ -835,7 +835,7 @@ class TestJournal():
         assert process_logs[0]['status'] == 'ok'
 
         # Post a public comment
-        comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Comment',
+        comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
             signatures=['~Peter_Snow1'],
             note=openreview.Note(
                 signatures=['~Peter_Snow1'],
@@ -850,7 +850,7 @@ class TestJournal():
         comment_note_id=comment_note['note']['id']
         note = guest_client.get_note(comment_note_id)
         assert note
-        assert note.invitation == '.TMLR/Paper1/-/Comment'
+        assert note.invitation == '.TMLR/Paper1/-/Public_Comment'
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/AEs', '~Peter_Snow1']
         assert note.signatures == ['~Peter_Snow1']
@@ -873,7 +873,7 @@ class TestJournal():
 
         note = guest_client.get_note(comment_note_id)
         assert note
-        assert note.invitation == '.TMLR/Paper1/-/Comment'
+        assert note.invitation == '.TMLR/Paper1/-/Public_Comment'
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/AEs']
         assert note.signatures == ['~Peter_Snow1']
@@ -950,17 +950,23 @@ class TestJournal():
         review_revisions=client.get_references(referent=reviews[0].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
+        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         review_revisions=client.get_references(referent=reviews[1].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
+        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         review_revisions=client.get_references(referent=reviews[2].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
+        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         ## Check decision invitation
         assert client.get_invitation(f"{venue_id}/Paper1/-/Decision")

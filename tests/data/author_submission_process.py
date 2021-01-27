@@ -147,20 +147,39 @@ def process(client, edit, invitation):
 
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(reviews) == 3:
+        # invitation = client.post_invitation_edit(readers=[venue_id],
+        #     writers=[venue_id],
+        #     signatures=[venue_id],
+        #     invitation=openreview.Invitation(id=edit.invitation,
+        #         signatures=[venue_id],
+        #         edit={
+        #             'signatures': { 'values': [ '${{note.id}.signatures}' ] },
+        #             'readers': { 'values': [venue_id, f'{paper_group_id}/AEs', '${{note.id}.signatures}'] },
+        #             'note': {
+        #                 'readers': { 'values': ['everyone'] }
+        #             }
+        #         }
+        #     )
+        # )
+
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=edit.invitation,
+            invitation=openreview.Invitation(id=f'{paper_group_id}/-/Release_Review',
+                invitees=[venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
                 signatures=[venue_id],
                 edit={
-                    'signatures': { 'values': [ '${{note.id}.signatures}' ] },
-                    'readers': { 'values': [venue_id, f'{paper_group_id}/AEs', '${{note.id}.signatures}'] },
+                    'signatures': { 'values': [venue_id ] },
+                    'readers': { 'values': [ venue_id, f'{paper_group_id}/AEs', '${{note.id}.signatures}' ] },
+                    'writers': { 'values': [ venue_id ] },
                     'note': {
-                        'readers': { 'values': ['everyone'] }
+                        'id': { 'value-invitation': edit.invitation },
+                        'readers': { 'values': [ 'everyone' ] }
                     }
                 }
-            )
-        )
+        ))
 
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
@@ -401,17 +420,17 @@ def process(client, edit, invitation):
     #             }
     #         }))
 
-    comment_invitation_id=f'{paper_group.id}/-/Comment'
+    public_comment_invitation_id=f'{paper_group.id}/-/Public_Comment'
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
-        invitation=openreview.Invitation(id=comment_invitation_id,
+        invitation=openreview.Invitation(id=public_comment_invitation_id,
             invitees=['everyone'],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': '~.*' },
+                'signatures': { 'values-regex': f'~.*|{paper_group.id}/AEs|{paper_group.id}/Reviewers/.*' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
                 'note': {
@@ -419,6 +438,46 @@ def process(client, edit, invitation):
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                    'content': {
+                        'title': {
+                            'value': {
+                                'order': 0,
+                                'value-regex': '.{1,500}',
+                                'description': 'Brief summary of your comment.',
+                                'required': True
+                            }
+                        },
+                        'comment': {
+                            'value': {
+                                'order': 1,
+                                'value-regex': '[\\S\\s]{1,5000}',
+                                'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'required': True,
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            }))
+
+    official_comment_invitation_id=f'{paper_group.id}/-/Official_Comment'
+    invitation = client.post_invitation_edit(readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        invitation=openreview.Invitation(id=official_comment_invitation_id,
+            invitees=[venue_id, f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers'],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'values-regex': f'{venue_id}/EIC|{paper_group.id}/AEs|{paper_group.id}/Reviewers/.*' },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers']},
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                'note': {
+                    'forum': { 'value': note.id },
+                    'signatures': { 'values': ['${signatures}'] },
+                    'readers': { 'values-dropdown': [f'{venue_id}/EIC', f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers']},
+                    'writers': { 'values': ['${signatures}']},
                     'content': {
                         'title': {
                             'value': {
@@ -456,7 +515,7 @@ def process(client, edit, invitation):
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'note': {
-                    'id': { 'value-invitation': comment_invitation_id },
+                    'id': { 'value-invitation': public_comment_invitation_id },
                     'readers': {
                         'values': ['everyone']
                     },
