@@ -71,7 +71,7 @@ class BlindSubmissionsInvitation(openreview.Invitation):
 
         content = {
             'authors': {
-                'values': ['Anonymous']
+                'values-radio': ['Anonymous']
             },
             'authorids': {
                 'values-regex': '.*'
