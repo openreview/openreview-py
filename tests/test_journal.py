@@ -34,7 +34,7 @@ class TestJournal():
 
         ## Reviewers
         david_client=helpers.create_user('david@mail.com', 'David', 'Belanger')
-        melisa_client=helpers.create_user('melisabok@mail.com', 'Melisa', 'Bok')
+        javier_client=helpers.create_user('javier@mail.com', 'Javier', 'Burroni')
         carlos_client=helpers.create_user('carlos@mail.com', 'Carlos', 'Mondragon')
         andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
@@ -149,7 +149,7 @@ class TestJournal():
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
-                        members=['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
+                        members=['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
                         ))
         ## TODO: add webfield console
 
@@ -809,7 +809,7 @@ class TestJournal():
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
         ## Assign the reviewer
-        joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", ['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1'])
+        joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", ['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1'])
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
@@ -881,12 +881,12 @@ class TestJournal():
         assert note.content.get('comment') is None
 
         ## Assign two more reviewers
-        melisa_anon_groups=melisa_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~Melisa_Bok1')
-        assert len(melisa_anon_groups) == 1
+        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~Javier_Burroni1')
+        assert len(javier_anon_groups) == 1
 
         ## Post a review edit
-        review_note = melisa_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[melisa_anon_groups[0].id],
+        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[javier_anon_groups[0].id],
             note=openreview.Note(
                 content={
                     'title': { 'value': 'another Review title' },
@@ -908,7 +908,7 @@ class TestJournal():
 
         reviews=client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
         assert len(reviews) == 2
-        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
+        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
         assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
 
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewers/.*', signatory='~Carlos_Mondragon1')
@@ -942,7 +942,7 @@ class TestJournal():
         assert reviews[0].readers == ['everyone']
         assert reviews[0].signatures == [david_anon_groups[0].id]
         assert reviews[1].readers == ['everyone']
-        assert reviews[1].signatures == [melisa_anon_groups[0].id]
+        assert reviews[1].signatures == [javier_anon_groups[0].id]
         assert reviews[2].readers == ['everyone']
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
@@ -954,8 +954,8 @@ class TestJournal():
 
         review_revisions=client.get_references(referent=reviews[1].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", melisa_anon_groups[0].id]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
 
         review_revisions=client.get_references(referent=reviews[2].id)
         assert len(review_revisions) == 2
