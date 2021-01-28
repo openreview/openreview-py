@@ -839,7 +839,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 7
+        assert len(invitations) == 8
         assert under_review_invitation_id in [i.id for i in invitations]
         assert desk_reject_invitation_id in [i.id for i in invitations]
 
@@ -1003,8 +1003,27 @@ class TestJournal():
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
-        ## Check decision invitation
-        assert client.get_invitation(f"{venue_id}/Paper1/-/Decision")
+        ## Check decision invitation, should be available only when all the reviews are rated
+        decision_invitation=client.get_invitation(f"{venue_id}/Paper1/-/Decision")
+        assert decision_invitation.invitees == []
+
+        for review in reviews:
+            signature=review.signatures[0]
+            rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=[f"{venue_id}/Paper1/AEs"],
+                note=openreview.Note(
+                    content={
+                        'rating': { 'value': 'Good' }
+                    }
+                )
+            )
+            helpers.await_queue()
+            process_logs = client.get_process_logs(id = rating_note['id'])
+            assert len(process_logs) == 1
+            assert process_logs[0]['status'] == 'ok'
+
+        decision_invitation=client.get_invitation(f"{venue_id}/Paper1/-/Decision")
+        assert decision_invitation.invitees == [venue_id, f"{venue_id}/Paper1/AEs"]
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[f"{venue_id}/Paper1/AEs"],
