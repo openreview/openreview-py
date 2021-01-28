@@ -39,7 +39,8 @@ class TestJournal():
             os.environ.pop("OPENREVIEW_PASSWORD")
         guest_client=openreview.Client()
 
-        journal=openreview.journal.Journal(client, venue_id, editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'], super_user='openreview.net')
+        journal=openreview.journal.Journal(client, venue_id, super_user='openreview.net')
+        journal.setup(editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
         now = datetime.datetime.utcnow()
 
         ## Post the submission 1
