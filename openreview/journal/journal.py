@@ -3,6 +3,7 @@ from . import invitation
 import os
 import json
 import datetime
+import random
 
 class Journal(object):
 
@@ -14,13 +15,30 @@ class Journal(object):
         self.editor_in_chief_id = f"{venue_id}/{self.editor_in_chief}"
         self.action_editors = 'AEs'
         self.reviewers = 'Reviewers'
-        now = datetime.datetime.utcnow()
         self.invitation_builder = invitation.InvitationBuilder(client)
 
 
     def setup(self, editors=[]):
         self.setup_groups(editors)
         self.invitation_builder.set_submission_invitation(self)
+        self.invitation_builder.set_ae_custom_papers_invitation(self)
+
+    def set_action_editors(self, editors, custom_papers):
+        venue_id=self.venue_id
+        self.client.add_members_to_group(f"{venue_id}/{self.action_editors}", editors)
+        for index,ae in enumerate(editors):
+            edge = openreview.Edge(invitation = f"{venue_id}/{self.action_editors}/-/Custom_Max_Papers",
+                readers = [venue_id, ae],
+                writers = [venue_id],
+                signatures = [venue_id],
+                head = f'{venue_id}/AEs',
+                tail = ae,
+                weight=custom_papers[index]
+            )
+            self.client.post_edge(edge)
+
+    def get_action_editors(self):
+        return self.client.get_group(f"{self.venue_id}/{self.action_editors}").members
 
     def setup_groups(self, editors):
         venue_id=self.venue_id
@@ -109,17 +127,7 @@ class Journal(object):
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
-                        members=[
-                            '~Joelle_Pineau1',
-                            '~Ryan_Adams1',
-                            '~Samy_Bengio1',
-                            '~Yoshua_Bengio1',
-                            '~Corinna_Cortes1',
-                            '~Ivan_Titov1',
-                            '~Shakir_Mohamed1',
-                            '~Silvia_Villa1'
-                        ]
-                        ))
+                        members=[]))
         ## TODO: add webfield console
 
         ## reviewers group
@@ -133,4 +141,32 @@ class Journal(object):
                         ))
         ## TODO: add webfield console
 
+    def setup_ae_assignment(self, number):
+        venue_id=self.venue_id
+        note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
+        self.invitation_builder.set_ae_assignment_invitation(self, note)
 
+        ## Create conflict and affinity score edges
+        for ae in self.get_action_editors():
+            edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.action_editors}/-/Affinity_Score',
+                readers = [venue_id, f'{venue_id}/Paper{note.number}/Authors', ae],
+                writers = [venue_id],
+                signatures = [venue_id],
+                head = note.id,
+                tail = ae,
+                weight=round(random.random(), 2)
+            )
+            self.client.post_edge(edge)
+
+            random_number=round(random.random(), 2)
+            if random_number <= 0.3:
+                edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.action_editors}/-/Conflict',
+                    readers = [venue_id, f'{venue_id}/Paper{note.number}/Authors', ae],
+                    writers = [venue_id],
+                    signatures = [venue_id],
+                    head = note.id,
+                    tail = ae,
+                    weight=-1,
+                    label='Conflict'
+                )
+                self.client.post_edge(edge)
