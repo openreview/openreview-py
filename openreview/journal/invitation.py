@@ -318,7 +318,7 @@ class InvitationBuilder(object):
                     'head': {
                         'type': 'Group',
                         'query': {
-                        'id': f'{venue_id}/AEs'
+                        'id': action_editors_id
                         }
                     },
                     'tail': {
@@ -535,7 +535,7 @@ class InvitationBuilder(object):
             }))
         with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.js')) as f:
             content = f.read()
-            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + f'{venue_id}/Paper{number}/AEs' + "';")
+            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + paper_action_editors_id + "';")
             invitation.process = content
             self.client.post_invitation(invitation)
 
