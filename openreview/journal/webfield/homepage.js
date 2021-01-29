@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Venue homepage template
 //
@@ -6,12 +9,12 @@
 // ------------------------------------
 
 // Constants
-var CONFERENCE_ID = '.TMLR';
-var SUBMISSION_ID = '.TMLR/-/Author_Submission';
-var SUBMITTED_ID = '.TMLR/Submitted';
-var UNDER_REVIEW_ID = '.TMLR/Under_Review';
-var DESK_REJECTED_ID = '.TMLR/Desk_Rejection';
-var REJECTED_ID = '.TMLR/Rejection';
+var CONFERENCE_ID = '';
+var SUBMISSION_ID = '';
+var SUBMITTED_ID = '';
+var UNDER_REVIEW_ID = '';
+var DESK_REJECTED_ID = '';
+var REJECTED_ID = '';
 var HEADER = {};
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
@@ -22,7 +25,7 @@ var paperDisplayOptions = {
   replyCount: true,
   showContents: true,
   showTags: false,
-  referrer: encodeURIComponent('[TMLR](/group?id=' + CONFERENCE_ID + ')')
+  referrer: encodeURIComponent('[' + HEADER.short + '](/group?id=' + CONFERENCE_ID + ')')
 };
 var commentDisplayOptions = {
   pdfLink: false,
@@ -63,8 +66,7 @@ function load() {
   });
 
   var rejectedNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': DESK_REJECTED_ID,
-    'content.venueid': REJECTED_ID,
+    'content.venueid': DESK_REJECTED_ID + ',' + REJECTED_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true

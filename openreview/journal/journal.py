@@ -94,6 +94,7 @@ class Journal(object):
 
         header = {
             "title": "Transactions of Machine Learning Research",
+            "short": "TMLR",
             "subtitle": "To de defined",
             "location": "Everywhere",
             "date": "Ongoing",
@@ -140,6 +141,12 @@ class Journal(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + venue_id + "/-/Author_Submission';")
+            content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + venue_id + "/Submitted';")
+            content = content.replace("var UNDER_REVIEW_ID = '';", "var UNDER_REVIEW_ID = '" + venue_id + "/Under_Review';")
+            content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
+            content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
             venue_group.web = content
             self.client.post_group(venue_group)
 
