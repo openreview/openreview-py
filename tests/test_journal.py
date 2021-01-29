@@ -42,6 +42,7 @@ class TestJournal():
         journal=openreview.journal.Journal(client, venue_id, super_user='openreview.net')
         journal.setup(editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
         journal.set_action_editors(editors=['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'], custom_papers=[5, 6, 4, 6, 6, 6, 6, 3])
+        journal.set_reviewers(reviewers=['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         now = datetime.datetime.utcnow()
 
         ## Post the submission 1
@@ -138,6 +139,7 @@ class TestJournal():
         assert client.get_group(f"{venue_id}/Paper3/AEs")
 
         journal.setup_ae_assignment(number=1)
+        journal.setup_reviewer_assignment(number=1)
         editor_in_chief_group_id = f"{venue_id}/EIC"
         action_editors_id=f'{venue_id}/AEs'
 

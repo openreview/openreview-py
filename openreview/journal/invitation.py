@@ -551,3 +551,160 @@ class InvitationBuilder(object):
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
             invitation.web = content
             self.client.post_invitation(invitation)
+
+    def set_reviewer_assignment_invitation(self, journal, note):
+        venue_id=journal.venue_id
+        note_id=note.id
+        number=note.number
+        now = datetime.datetime.utcnow()
+        reviewers_id=f'{venue_id}/Reviewers'
+        editor_in_chief_id = f"{venue_id}/EIC"
+        conflict_reviewers_invitation_id=f'{venue_id}/Paper{number}/Reviewers/-/Conflict'
+        self.client.post_invitation(openreview.Invitation(
+            id=conflict_reviewers_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id, f'{venue_id}/Paper{number}/AEs'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [venue_id, f'{venue_id}/Paper{number}/AEs', '{tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query' : {
+                            'id': note_id
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query' : {
+                            'group' : reviewers_id
+                        }
+                    },
+                    'weight': {
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    },
+                    'label': {
+                        'value-regex': '.*'
+                    }
+                }
+            }))
+
+        affinity_score_reviewers_invitation_id=f'{venue_id}/Paper{number}/Reviewers/-/Affinity_Score'
+        self.client.post_invitation(openreview.Invitation(
+            id=affinity_score_reviewers_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id, f'{venue_id}/Paper{number}/AEs'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-copied': [venue_id, f'{venue_id}/Paper{number}/AEs', '{tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query' : {
+                            'id': note_id
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query' : {
+                            'group' : reviewers_id
+                        }
+                    },
+                    'weight': {
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    },
+                    'label': {
+                        'value-regex': '.*'
+                    }
+                }
+            }))
+
+        ## Assign Reviewers, use API v1
+        assign_reviewers_invitation_id=f'{venue_id}/Paper{number}/Reviewers/-/Paper_Assignment'
+        invitation = self.client.post_invitation(openreview.Invitation(
+            id=assign_reviewers_invitation_id,
+            duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
+            invitees=[f'{venue_id}/Paper{number}/AEs'],
+            readers=[venue_id, f'{venue_id}/Paper{number}/AEs'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            taskCompletionCount=3,
+            reply={
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values': [venue_id, f'{venue_id}/Paper{number}/AEs']
+                },
+                'writers': {
+                    'values': [venue_id, f'{venue_id}/Paper{number}/AEs']
+                },
+                'signatures': {
+                    'values': [f'{venue_id}/Paper{number}/AEs']
+                },
+                'content': {
+                    'head': {
+                        'type': 'Note',
+                        'query': {
+                            'id': note_id
+                        }
+                    },
+                    'tail': {
+                        'type': 'Profile',
+                        'query': {
+                            'group': reviewers_id
+                        }
+                    },
+                    'weight': {
+                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*',
+                        'required': True
+                    }
+                }
+            }))
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.js')) as f:
+            content = f.read()
+            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + f'{venue_id}/Paper{number}/Reviewers' + "';")
+            invitation.process = content
+            self.client.post_invitation(invitation)
+
+        header = {
+            'title': 'TMLR Reviewer Assignment',
+            'instructions': '<p class="dark">Assign reviewers based on their affinity scores.</p>\
+                <p class="dark"><strong>Instructions:</strong></p>\
+                <ul>\
+                    <li>TODO.</li>\
+                </ul>\
+                <br>'
+        }
+
+        start_param = invitation.id
+        edit_param = invitation.id
+        score_ids = [affinity_score_reviewers_invitation_id, conflict_reviewers_invitation_id]
+        browse_param = ';'.join(score_ids)
+        params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&referrer=[Return Instructions](/invitation?id={edit_param})'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param)
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/assignReviewerWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+            invitation.web = content
+            self.client.post_invitation(invitation)

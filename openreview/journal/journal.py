@@ -37,8 +37,14 @@ class Journal(object):
             )
             self.client.post_edge(edge)
 
+    def set_reviewers(self, reviewers):
+        self.client.add_members_to_group(f"{self.venue_id}/{self.reviewers}", reviewers)
+
     def get_action_editors(self):
         return self.client.get_group(f"{self.venue_id}/{self.action_editors}").members
+
+    def get_reviewers(self):
+        return self.client.get_group(f"{self.venue_id}/{self.reviewers}").members
 
     def setup_groups(self, editors):
         venue_id=self.venue_id
@@ -137,7 +143,7 @@ class Journal(object):
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
-                        members=['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
+                        members=[]
                         ))
         ## TODO: add webfield console
 
@@ -166,6 +172,36 @@ class Journal(object):
                     signatures = [venue_id],
                     head = note.id,
                     tail = ae,
+                    weight=-1,
+                    label='Conflict'
+                )
+                self.client.post_edge(edge)
+
+    def setup_reviewer_assignment(self, number):
+        venue_id=self.venue_id
+        note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
+        self.invitation_builder.set_reviewer_assignment_invitation(self, note)
+
+        ## Create conflict and affinity score edges
+        for r in self.get_reviewers():
+            edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.reviewers}/-/Affinity_Score',
+                readers = [venue_id, f'{venue_id}/Paper{note.number}/AEs', r],
+                writers = [venue_id],
+                signatures = [venue_id],
+                head = note.id,
+                tail = r,
+                weight=round(random.random(), 2)
+            )
+            self.client.post_edge(edge)
+
+            random_number=round(random.random(), 2)
+            if random_number <= 0.3:
+                edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.reviewers}/-/Conflict',
+                    readers = [venue_id, f'{venue_id}/Paper{note.number}/AEs', r],
+                    writers = [venue_id],
+                    signatures = [venue_id],
+                    head = note.id,
+                    tail = r,
                     weight=-1,
                     label='Conflict'
                 )
