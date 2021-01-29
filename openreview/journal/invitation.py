@@ -13,8 +13,14 @@ class InvitationBuilder(object):
     def set_submission_invitation(self, journal):
 
         venue_id=journal.venue_id
-        editor_in_chief_id=journal.editor_in_chief_id
-        action_editors_id=f"{venue_id}/{journal.action_editors}"
+        editor_in_chief_id=journal.get_editors_in_chief_id()
+        action_editors_id=journal.get_action_editors_id()
+        action_editors_value=journal.get_action_editors_id(number='${note.number}')
+        action_editors_regex=journal.get_action_editors_id(number='.*')
+        reviewers_value=journal.get_reviewers_id(number='${note.number}')
+        authors_value=journal.get_authors_id(number='${note.number}')
+
+
         ## Submission invitation
         submission_invitation_id=f'{venue_id}/-/Author_Submission'
         invitation=self.client.post_invitation_edit(readers=[venue_id],
@@ -27,12 +33,12 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 edit={
                     'signatures': { 'values-regex': '~.*' },
-                    'readers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
-                    'writers': { 'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{note.number}}/Authors']},
+                    'readers': { 'values': [ venue_id, '${signatures}', action_editors_value, authors_value]},
+                    'writers': { 'values': [ venue_id, '${signatures}', authors_value]},
                     'note': {
-                        'signatures': { 'values': [ f'{venue_id}/Paper${{note.number}}/Authors'] },
-                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
-                        'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/Authors']},
+                        'signatures': { 'values': [authors_value] },
+                        'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
+                        'writers': { 'values': [ venue_id, authors_value]},
                         'content': {
                             'title': {
                                 'value': {
@@ -59,7 +65,7 @@ class InvitationBuilder(object):
                                 'order': 2,
                                 'hidden': True,
                                 'readers': {
-                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']
+                                    'values': [ venue_id, '${signatures}', action_editors_value, authors_value]
                                 }
                             },
                             'authorids': {
@@ -70,7 +76,7 @@ class InvitationBuilder(object):
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                                 'order': 3,
                                 'readers': {
-                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']
+                                    'values': [ venue_id, '${signatures}', action_editors_value, authors_value]
                                 }
                             },
                             'pdf': {
@@ -98,7 +104,7 @@ class InvitationBuilder(object):
                                 "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                                 "order": 6,
                                 'readers': {
-                                    'values': [ venue_id, '${signatures}', f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Reviewers', f'{venue_id}/Paper${{note.number}}/Authors' ]
+                                    'values': [ venue_id, '${signatures}', action_editors_value, reviewers_value, authors_value]
                                 }
                             },
                             'venue': {
@@ -131,9 +137,9 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 multiReply=False,
                 edit={
-                    'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
+                    'signatures': { 'values-regex': f'{action_editors_regex}|{venue_id}$' },
                     'readers': { 'values': [ 'everyone']},
-                    'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
+                    'writers': { 'values': [ venue_id, action_editors_value]},
                     'note': {
                         'id': { 'value-invitation': submission_invitation_id },
                         'readers': {
@@ -171,12 +177,12 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 multiReply=False,
                 edit={
-                    'signatures': { 'values-regex': f'{venue_id}/Paper.*/AEs|{venue_id}$' },
-                    'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
-                    'writers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs']},
+                    'signatures': { 'values-regex': f'{action_editors_regex}|{venue_id}$' },
+                    'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
+                    'writers': { 'values': [ venue_id, action_editors_value]},
                     'note': {
                         'id': { 'value-invitation': submission_invitation_id },
-                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
+                        'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'content': {
                             'venue': {
                                 'value': {
@@ -263,11 +269,11 @@ class InvitationBuilder(object):
                 multiReply=False,
                 edit={
                     'signatures': { 'values': [editor_in_chief_id] },
-                    'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
+                    'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
                     'writers': { 'values': [ venue_id ]},
                     'note': {
                         'id': { 'value-invitation': under_review_invitation_id },
-                        'readers': { 'values': [ venue_id, f'{venue_id}/Paper${{note.number}}/AEs', f'{venue_id}/Paper${{note.number}}/Authors']},
+                        'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'content': {
                             'venue': {
                                 'value': {
@@ -287,9 +293,10 @@ class InvitationBuilder(object):
 
     def set_ae_custom_papers_invitation(self, journal):
         venue_id=journal.venue_id
-        action_editors_id=f'{venue_id}/AEs'
-        editor_in_chief_id = f"{venue_id}/EIC"
-        custom_papers_ae_invitation_id=f'{venue_id}/AEs/-/Custom_Max_Papers'
+        editor_in_chief_id=journal.get_editors_in_chief_id()
+        action_editors_id=journal.get_action_editors_id()
+
+        custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
         invitation = self.client.post_invitation(openreview.Invitation(
             id=custom_papers_ae_invitation_id,
             invitees=[editor_in_chief_id],
@@ -330,23 +337,26 @@ class InvitationBuilder(object):
     def set_ae_assignment_invitation(self, journal, note):
         number=note.number
         venue_id=journal.venue_id
-        action_editors_id=f'{venue_id}/AEs'
-        editor_in_chief_id = f"{venue_id}/EIC"
-        conflict_ae_invitation_id=f'{venue_id}/Paper{number}/AEs/-/Conflict'
-        custom_papers_ae_invitation_id=f'{venue_id}/AEs/-/Custom_Max_Papers'
+        editor_in_chief_id=journal.get_editors_in_chief_id()
+        action_editors_id=journal.get_action_editors_id()
+        paper_action_editors_id=journal.get_action_editors_id(number=number)
+        paper_authors_id=journal.get_authors_id(number=number)
+
+        conflict_ae_invitation_id=f'{paper_action_editors_id}/-/Conflict'
+        custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
 
         note_id=note.id
         now = datetime.datetime.utcnow()
         self.client.post_invitation(openreview.Invitation(
             id=conflict_ae_invitation_id,
             invitees=[venue_id],
-            readers=[venue_id, f'{venue_id}/Paper{number}/Authors'],
+            readers=[venue_id, paper_authors_id],
             writers=[venue_id],
             signatures=[venue_id],
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, f'{venue_id}/Paper{number}/Authors', '{tail}']
+                    'values-copied': [venue_id, paper_authors_id, '{tail}']
                 },
                 'writers': {
                     'values': [venue_id]
@@ -376,17 +386,17 @@ class InvitationBuilder(object):
                 }
             }))
 
-        affinity_score_ae_invitation_id=f'{venue_id}/Paper{number}/AEs/-/Affinity_Score'
+        affinity_score_ae_invitation_id=f'{paper_action_editors_id}/-/Affinity_Score'
         self.client.post_invitation(openreview.Invitation(
             id=affinity_score_ae_invitation_id,
             invitees=[venue_id],
-            readers=[venue_id, f'{venue_id}/Paper{number}/Authors'],
+            readers=[venue_id, paper_authors_id],
             writers=[venue_id],
             signatures=[venue_id],
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, f'{venue_id}/Paper{number}/Authors', '{tail}']
+                    'values-copied': [venue_id, paper_authors_id, '{tail}']
                 },
                 'writers': {
                     'values': [venue_id]
@@ -416,25 +426,25 @@ class InvitationBuilder(object):
                 }
             }))
 
-        suggest_ae_invitation_id=f'{venue_id}/Paper{number}/AEs/-/Recommendation'
+        suggest_ae_invitation_id=f'{paper_action_editors_id}/-/Recommendation'
         invitation = self.client.post_invitation(openreview.Invitation(
             id=suggest_ae_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
-            invitees=[f'{venue_id}/Paper{number}/Authors'],
-            readers=[venue_id, f'{venue_id}/Paper{number}/Authors'],
+            invitees=[paper_authors_id],
+            readers=[venue_id, paper_authors_id],
             writers=[venue_id],
             signatures=[venue_id],
             taskCompletionCount=1,
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
-                    'values': [venue_id, f'{venue_id}/Paper{number}/Authors']
+                    'values': [venue_id, paper_authors_id]
                 },
                 'writers': {
-                    'values': [venue_id, f'{venue_id}/Paper{number}/Authors']
+                    'values': [venue_id, paper_authors_id]
                 },
                 'signatures': {
-                    'values': [f'{venue_id}/Paper{number}/Authors']
+                    'values': [paper_authors_id]
                 },
                 'content': {
                     'head': {
@@ -484,7 +494,7 @@ class InvitationBuilder(object):
             invitation.web = content
             self.client.post_invitation(invitation)
 
-        assign_ae_invitation_id=f'{venue_id}/Paper{number}/AEs/-/Paper_Assignment'
+        assign_ae_invitation_id=f'{paper_action_editors_id}/-/Paper_Assignment'
         invitation = self.client.post_invitation(openreview.Invitation(
             id=assign_ae_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 20)),
@@ -557,19 +567,23 @@ class InvitationBuilder(object):
         note_id=note.id
         number=note.number
         now = datetime.datetime.utcnow()
-        reviewers_id=f'{venue_id}/Reviewers'
-        editor_in_chief_id = f"{venue_id}/EIC"
-        conflict_reviewers_invitation_id=f'{venue_id}/Paper{number}/Reviewers/-/Conflict'
+        reviewers_id=journal.get_reviewers_id()
+        paper_reviewers_id=journal.get_reviewers_id(number=number)
+        paper_action_editors_id=journal.get_action_editors_id(number=number)
+        editor_in_chief_id = journal.get_editors_in_chief_id()
+
+        conflict_reviewers_invitation_id=f'{paper_reviewers_id}/-/Conflict'
+
         self.client.post_invitation(openreview.Invitation(
             id=conflict_reviewers_invitation_id,
             invitees=[venue_id],
-            readers=[venue_id, f'{venue_id}/Paper{number}/AEs'],
+            readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, f'{venue_id}/Paper{number}/AEs', '{tail}']
+                    'values-copied': [venue_id, paper_action_editors_id, '{tail}']
                 },
                 'writers': {
                     'values': [venue_id]
@@ -599,17 +613,17 @@ class InvitationBuilder(object):
                 }
             }))
 
-        affinity_score_reviewers_invitation_id=f'{venue_id}/Paper{number}/Reviewers/-/Affinity_Score'
+        affinity_score_reviewers_invitation_id=f'{paper_reviewers_id}/-/Affinity_Score'
         self.client.post_invitation(openreview.Invitation(
             id=affinity_score_reviewers_invitation_id,
             invitees=[venue_id],
-            readers=[venue_id, f'{venue_id}/Paper{number}/AEs'],
+            readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, f'{venue_id}/Paper{number}/AEs', '{tail}']
+                    'values-copied': [venue_id, paper_action_editors_id, '{tail}']
                 },
                 'writers': {
                     'values': [venue_id]
@@ -640,25 +654,25 @@ class InvitationBuilder(object):
             }))
 
         ## Assign Reviewers, use API v1
-        assign_reviewers_invitation_id=f'{venue_id}/Paper{number}/Reviewers/-/Paper_Assignment'
+        assign_reviewers_invitation_id=f'{paper_reviewers_id}/-/Paper_Assignment'
         invitation = self.client.post_invitation(openreview.Invitation(
             id=assign_reviewers_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
-            invitees=[f'{venue_id}/Paper{number}/AEs'],
-            readers=[venue_id, f'{venue_id}/Paper{number}/AEs'],
+            invitees=[paper_action_editors_id],
+            readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
             taskCompletionCount=3,
             reply={
                 'readers': {
                     'description': 'The users who will be allowed to read the above content.',
-                    'values': [venue_id, f'{venue_id}/Paper{number}/AEs']
+                    'values': [venue_id, paper_action_editors_id]
                 },
                 'writers': {
-                    'values': [venue_id, f'{venue_id}/Paper{number}/AEs']
+                    'values': [venue_id, paper_action_editors_id]
                 },
                 'signatures': {
-                    'values': [f'{venue_id}/Paper{number}/AEs']
+                    'values': [paper_action_editors_id]
                 },
                 'content': {
                     'head': {
@@ -682,7 +696,7 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.js')) as f:
             content = f.read()
-            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + f'{venue_id}/Paper{number}/Reviewers' + "';")
+            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + paper_reviewers_id + "';")
             invitation.process = content
             self.client.post_invitation(invitation)
 

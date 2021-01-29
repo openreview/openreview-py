@@ -11,12 +11,29 @@ class Journal(object):
 
         self.client=client
         self.venue_id=venue_id
-        self.editor_in_chief = 'EIC'
-        self.editor_in_chief_id = f"{venue_id}/{self.editor_in_chief}"
-        self.action_editors = 'AEs'
-        self.reviewers = 'Reviewers'
+        self.editors_in_chief_name = 'EIC'
+        self.action_editors_name = 'AEs'
+        self.reviewers_name = 'Reviewers'
+        self.authors_name = 'Authors'
+        self.submission_group_name = 'Paper'
         self.invitation_builder = invitation.InvitationBuilder(client)
 
+    def __get_group_id(self, name, number=None):
+        if number:
+            return f'{self.venue_id}/{self.submission_group_name}{number}/{name}'
+        return f'{self.venue_id}/{name}'
+
+    def get_editors_in_chief_id(self):
+        return f'{self.venue_id}/{self.editors_in_chief_name}'
+
+    def get_action_editors_id(self, number=None):
+        return self.__get_group_id(self.action_editors_name, number)
+
+    def get_reviewers_id(self, number=None):
+        return self.__get_group_id(self.reviewers_name, number)
+
+    def get_authors_id(self, number=None):
+        return self.__get_group_id(self.authors_name, number)
 
     def setup(self, editors=[]):
         self.setup_groups(editors)
@@ -25,31 +42,31 @@ class Journal(object):
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
-        self.client.add_members_to_group(f"{venue_id}/{self.action_editors}", editors)
+        aes=self.get_action_editors_id()
+        self.client.add_members_to_group(aes, editors)
         for index,ae in enumerate(editors):
-            edge = openreview.Edge(invitation = f"{venue_id}/{self.action_editors}/-/Custom_Max_Papers",
+            edge = openreview.Edge(invitation = f'{aes}/-/Custom_Max_Papers',
                 readers = [venue_id, ae],
                 writers = [venue_id],
                 signatures = [venue_id],
-                head = f'{venue_id}/AEs',
+                head = aes,
                 tail = ae,
                 weight=custom_papers[index]
             )
             self.client.post_edge(edge)
 
     def set_reviewers(self, reviewers):
-        self.client.add_members_to_group(f"{self.venue_id}/{self.reviewers}", reviewers)
+        self.client.add_members_to_group(self.get_reviewers_id(), reviewers)
 
     def get_action_editors(self):
-        return self.client.get_group(f"{self.venue_id}/{self.action_editors}").members
+        return self.client.get_group(self.get_action_editors_id()).members
 
     def get_reviewers(self):
-        return self.client.get_group(f"{self.venue_id}/{self.reviewers}").members
+        return self.client.get_group(self.get_reviewers_id()).members
 
     def setup_groups(self, editors):
         venue_id=self.venue_id
-        editor_in_chief_id=self.editor_in_chief_id
-
+        editor_in_chief_id=self.get_editors_in_chief_id()
         ## venue group
         venue_group=self.client.post_group(openreview.Group(id=venue_id,
                         readers=['everyone'],
@@ -67,7 +84,7 @@ class Journal(object):
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[editor_in_chief_id],
-                        members=['~Raia_Hadsell1', '~Kyunghyun_Cho1']
+                        members=editors
                         ))
 
         editors=""
@@ -127,7 +144,7 @@ class Journal(object):
             self.client.post_group(venue_group)
 
         ## action editors group
-        action_editors_id = f"{venue_id}/{self.action_editors}"
+        action_editors_id = self.get_action_editors_id()
         self.client.post_group(openreview.Group(id=action_editors_id,
                         readers=['everyone'],
                         writers=[editor_in_chief_id],
@@ -137,7 +154,7 @@ class Journal(object):
         ## TODO: add webfield console
 
         ## reviewers group
-        reviewers_id = f"{venue_id}/{self.reviewers}"
+        reviewers_id = self.get_reviewers_id()
         self.client.post_group(openreview.Group(id=reviewers_id,
                         readers=['everyone'],
                         writers=[editor_in_chief_id],
@@ -149,13 +166,16 @@ class Journal(object):
 
     def setup_ae_assignment(self, number):
         venue_id=self.venue_id
+        action_editors_id=self.get_action_editors_id(number=number)
+        authors_id=self.get_authors_id(number=number)
+
         note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
         self.invitation_builder.set_ae_assignment_invitation(self, note)
 
         ## Create conflict and affinity score edges
         for ae in self.get_action_editors():
-            edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.action_editors}/-/Affinity_Score',
-                readers = [venue_id, f'{venue_id}/Paper{note.number}/Authors', ae],
+            edge = openreview.Edge(invitation = f'{action_editors_id}/-/Affinity_Score',
+                readers = [venue_id, authors_id, ae],
                 writers = [venue_id],
                 signatures = [venue_id],
                 head = note.id,
@@ -166,8 +186,8 @@ class Journal(object):
 
             random_number=round(random.random(), 2)
             if random_number <= 0.3:
-                edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.action_editors}/-/Conflict',
-                    readers = [venue_id, f'{venue_id}/Paper{note.number}/Authors', ae],
+                edge = openreview.Edge(invitation = f'{action_editors_id}/-/Conflict',
+                    readers = [venue_id, authors_id, ae],
                     writers = [venue_id],
                     signatures = [venue_id],
                     head = note.id,
@@ -179,13 +199,15 @@ class Journal(object):
 
     def setup_reviewer_assignment(self, number):
         venue_id=self.venue_id
+        reviewers_id=self.get_reviewers_id(number=number)
+        action_editors_id=self.get_action_editors_id(number=number)
         note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
         self.invitation_builder.set_reviewer_assignment_invitation(self, note)
 
         ## Create conflict and affinity score edges
         for r in self.get_reviewers():
-            edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.reviewers}/-/Affinity_Score',
-                readers = [venue_id, f'{venue_id}/Paper{note.number}/AEs', r],
+            edge = openreview.Edge(invitation = f'{reviewers_id}/-/Affinity_Score',
+                readers = [venue_id, action_editors_id, r],
                 writers = [venue_id],
                 signatures = [venue_id],
                 head = note.id,
@@ -196,8 +218,8 @@ class Journal(object):
 
             random_number=round(random.random(), 2)
             if random_number <= 0.3:
-                edge = openreview.Edge(invitation = f'{venue_id}/Paper{note.number}/{self.reviewers}/-/Conflict',
-                    readers = [venue_id, f'{venue_id}/Paper{note.number}/AEs', r],
+                edge = openreview.Edge(invitation = f'{reviewers_id}/-/Conflict',
+                    readers = [venue_id, action_editors_id, r],
                     writers = [venue_id],
                     signatures = [venue_id],
                     head = note.id,
