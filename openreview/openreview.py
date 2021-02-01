@@ -1393,7 +1393,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, readers, writers, signatures, invitation, referent=None):
+    def post_invitation_edit(self, readers, writers, signatures, invitation):
         """
         """
         edit_json = {
@@ -1403,23 +1403,20 @@ class Client(object):
             'invitation': invitation.to_json()
         }
 
-        if referent is not None:
-            edit_json['referent']=referent
-
         response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
 
-    def post_note_edit(self, invitation, signatures, referent=None, note=None):
+    def post_note_edit(self, invitation, signatures, note=None):
         """
         """
         edit_json = {
             'invitation': invitation,
             'signatures': signatures,
-            'referent': referent,
             'note': note.to_json() if note else {}
         }
+
         response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1996,8 +1993,6 @@ class Note(object):
         self.ddate = ddate
         self.content = content
         self.forum = forum
-        self.referent = referent
-        self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
         self.nonreaders = [] if nonreaders is None else nonreaders
@@ -2007,6 +2002,10 @@ class Note(object):
         self.details = details
         if tauthor:
             self.tauthor = tauthor
+        if referent:
+            self.referent = referent
+        if invitation:
+            self.invitation = invitation
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2033,8 +2032,6 @@ class Note(object):
             'number': self.number,
             'content': self.content,
             'forum': self.forum,
-            'referent': self.referent,
-            'invitation': self.invitation,
             'replyto': self.replyto,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
@@ -2044,6 +2041,10 @@ class Note(object):
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
+        if hasattr(self, 'referent'):
+            body['referent'] = self.referent
+        if hasattr(self, 'invitation'):
+            body['invitation'] = self.invitation
         return body
 
     @classmethod
