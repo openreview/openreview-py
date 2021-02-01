@@ -1039,7 +1039,7 @@ class TestDoubleBlindConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -1122,7 +1122,7 @@ class TestDoubleBlindConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -1264,7 +1264,7 @@ class TestDoubleBlindConference():
 
         decision_note = pc_client.post_note(note)
         assert decision_note
-        time.sleep(2)
+        helpers.await_queue()
 
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group
@@ -1456,7 +1456,7 @@ class TestDoubleBlindConference():
         posted_note = test_client.post_note(withdrawal_note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         notes = conference.get_submissions()
         assert notes
@@ -1525,7 +1525,7 @@ class TestDoubleBlindConference():
         posted_note = pc_client.post_note(desk_reject_note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         notes = conference.get_submissions()
         assert notes
@@ -1737,7 +1737,7 @@ url={'''
         assert accepted_authors
         assert accepted_authors.members == ['AKBC.ws/2019/Conference/Paper1/Authors']
 
-    def test_enable_camera_ready_revisions(self, client, test_client):
+    def test_enable_camera_ready_revisions(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -1805,7 +1805,7 @@ url={'''
         posted_note = test_client.post_note(note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1

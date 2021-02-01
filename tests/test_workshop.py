@@ -296,7 +296,7 @@ class TestWorkshop():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -345,7 +345,7 @@ class TestWorkshop():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -384,7 +384,7 @@ class TestWorkshop():
         public_comment_note = random_user.post_note(note)
         assert public_comment_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = public_comment_note.id)
         assert len(process_logs) == 1
@@ -422,7 +422,7 @@ class TestWorkshop():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -580,7 +580,7 @@ class TestWorkshop():
         with pytest.raises(NoSuchElementException):
             assert tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5')
 
-    def test_accepted_papers(self, client, conference, test_client):
+    def test_accepted_papers(self, client, conference, test_client, helpers):
 
         accepted_authors = client.get_group('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors/Accepted')
         assert accepted_authors
@@ -605,7 +605,7 @@ class TestWorkshop():
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
 
         notes = conference.get_submissions(accepted=True)
         assert len(notes) == 1

@@ -140,7 +140,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
 
-    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page):
+    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -188,7 +188,7 @@ class TestSingleBlindConference():
         note.content['pdf'] = url
         note = test_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)
@@ -446,7 +446,7 @@ class TestSingleBlindConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -493,7 +493,7 @@ class TestSingleBlindConference():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 2
@@ -709,7 +709,7 @@ url={https://openreview.net/forum?id='''
 
         assert submissions[0].content['_bibtex'] == valid_bibtex
 
-    def test_enable_camera_ready_revisions(self, client, test_client):
+    def test_enable_camera_ready_revisions(self, client, test_client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -745,7 +745,7 @@ url={https://openreview.net/forum?id='''
         posted_note = test_client.post_note(note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = posted_note.id)
         assert len(process_logs) == 1

@@ -490,12 +490,12 @@ Please contact info@openreview.net with any questions or concerns about this int
             )
             test_client.post_note(note)
 
-    def test_submission_edit(self, conference, client, test_client):
+    def test_submission_edit(self, conference, client, helpers, test_client):
 
         existing_notes = client.get_notes(invitation = conference.get_submission_id())
         assert len(existing_notes) == 5
 
-        time.sleep(2)
+        helpers.await_queue()
         note = existing_notes[0]
         process_logs = client.get_process_logs(id = note.id)
         assert len(process_logs) == 1
@@ -509,7 +509,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         note.content['title'] = 'I have been updated'
         client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)
@@ -920,7 +920,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             weight = 1
         ))
 
-    def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
+    def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
         conference.close_submissions()
         conference.setup_post_submission_stage(force=True)
@@ -949,7 +949,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         posted_note = pc_client.post_note(desk_reject_note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = posted_note.id)
         assert logs
@@ -986,7 +986,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 5
 
-    def test_withdraw_submission(self, conference, client, test_client, selenium, request_page):
+    def test_withdraw_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
         conference.setup_post_submission_stage(force=True)
 
@@ -1014,7 +1014,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         posted_note = test_client.post_note(withdrawal_note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = posted_note.id)
         assert logs
@@ -1047,7 +1047,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 4
 
-    def test_review_stage(self, conference, client, test_client, selenium, request_page):
+    def test_review_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
         conference.set_assignment('~AreaChair_ECCV_One1', 2, is_area_chair=True)
@@ -1143,7 +1143,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1183,7 +1183,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1206,7 +1206,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         ## Authors
         assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
 
-    def test_comment_stage(self, conference, client, test_client, selenium, request_page):
+    def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True))
 
@@ -1227,7 +1227,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
         assert comment_note
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = comment_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1398,7 +1398,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
             )
 
-    def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page):
+    def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         blinded_notes = conference.get_submissions()
 
@@ -1433,7 +1433,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
         assert rebuttal_note
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = rebuttal_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1454,7 +1454,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert 'reviewer1@fb.com' in recipients
         assert 'ac1@eccv.org' in recipients
 
-    def test_revise_review_stage(self, conference, client, test_client, selenium, request_page):
+    def test_revise_review_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         blinded_notes = conference.get_submissions()
 
@@ -1512,7 +1512,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
         assert review_revision_note
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'

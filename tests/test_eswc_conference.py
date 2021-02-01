@@ -155,7 +155,7 @@ class TestESWCConference():
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
 
         withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
         assert len(withdrawn_notes) == 1
@@ -199,7 +199,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 
         test_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         author_group = client.get_group('eswc-conferences.org/ESWC/2021/Conference/Paper2/Authors')
         assert len(author_group.members) == 3
@@ -222,7 +222,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         revision_note.content['title'] = 'EDITED Rev 2 Paper title 5'
         test_client.post_note(revision_note)
 
-        time.sleep(2)
+        helpers.await_queue()
 
         messages = client.get_messages(subject='ESWC 2021 has received a new revision of your submission titled EDITED Rev 2 Paper title 5')
         assert len(messages) == 3
@@ -251,7 +251,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
 
         desk_rejected_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Desk_Rejected_Submission')
         assert len(desk_rejected_notes) == 1
@@ -287,7 +287,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
 
         withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
         assert len(withdrawn_notes) == 2

@@ -51,6 +51,7 @@ class Client(object):
         self.messages_url = self.baseurl + '/messages'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.jobs_status = self.baseurl + '/jobs/status'
         self.venues_url = self.baseurl + '/venues'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
@@ -1390,6 +1391,18 @@ class Client(object):
         response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
+
+    def get_jobs_status(self):
+        """
+        **Only for Super User**. Retrieves the jobs status of the queue
+
+        :return: Jobs status
+        :rtype: dict
+        """
+
+        response = requests.get(self.jobs_status, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
 class Group(object):
     """
