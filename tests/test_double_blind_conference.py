@@ -1569,6 +1569,7 @@ class TestDoubleBlindConference():
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
+        now = datetime.datetime.utcnow()
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True, due_date= now - datetime.timedelta(minutes = 60))
         builder.set_conference_short_name('AKBC 2019')
