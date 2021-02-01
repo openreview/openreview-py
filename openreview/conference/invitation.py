@@ -735,8 +735,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                 'replyto': None,
                 'readers': reply_readers,
                 'nonreaders': {
-                    'values-dropdown': readers,
-                    'required': False
+                    'values-dropdown': readers
                 },
                 'writers': {
                     'values-copied': [
