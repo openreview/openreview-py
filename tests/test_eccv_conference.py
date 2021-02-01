@@ -922,7 +922,6 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
-        conference.close_submissions()
         conference.setup_post_submission_stage(force=True)
 
         blinded_notes = conference.get_submissions()
