@@ -1411,13 +1411,12 @@ class Client(object):
 
         return response.json()
 
-    def post_note_edit(self, invitation, signatures, referent=None, note=None):
+    def post_note_edit(self, invitation, signatures, note=None):
         """
         """
         edit_json = {
             'invitation': invitation,
-            'signatures': signatures,
-            'referent': referent,
+            'signatures': signatures
             'note': note.to_json() if note else {}
         }
         response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
