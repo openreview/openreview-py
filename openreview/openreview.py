@@ -2032,8 +2032,6 @@ class Note(object):
             'number': self.number,
             'content': self.content,
             'forum': self.forum,
-            'referent': self.referent,
-            'invitation': self.invitation,
             'replyto': self.replyto,
             'readers': self.readers,
             'nonreaders': self.nonreaders,
@@ -2043,6 +2041,13 @@ class Note(object):
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
+
+        if self.referent:
+            body['referent'] = self.referent
+
+        if self.invitation:
+            body['invitation'] = self.invitation
+
         return body
 
     @classmethod
