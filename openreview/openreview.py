@@ -1416,7 +1416,7 @@ class Client(object):
         """
         edit_json = {
             'invitation': invitation,
-            'signatures': signatures
+            'signatures': signatures,
             'note': note.to_json() if note else {}
         }
         response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
