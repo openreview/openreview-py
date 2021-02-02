@@ -512,26 +512,6 @@ class Conference(object):
         invitation = self.submission_stage.get_desk_rejected_submission_id(self)
         return list(tools.iterget_notes(self.client, invitation=invitation, details=details))
 
-    ## Deprecated
-    def open_submissions(self):
-        return self.__create_submission_stage()
-
-    def close_submissions(self):
-
-        # Expire invitation
-        invitation = self.__expire_invitation(self.get_submission_id())
-
-        # update submission due date
-        if self.submission_stage.due_date and (
-            tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
-            self.submission_stage.due_date = datetime.datetime.utcnow()
-
-        # Add venue to active venues
-        active_venues_group = self.client.get_group(id = 'active_venues')
-        self.client.add_members_to_group(active_venues_group, [self.get_id()])
-
-        return invitation
-
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
 
         if not force and reveal_submission and not self.submission_stage.public:
@@ -951,15 +931,15 @@ class Conference(object):
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
+
+        role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
         recruit_message = '''Dear {name},
 
-        You have been nominated by the program chair committee of ''' + self.short_name + ''' to serve as a reviewer.  As a respected researcher in the area, we hope you will accept and help us make the conference a success.
+        You have been nominated by the program chair committee of '''+ self.get_short_name() + ''' to serve as '''+ role +'''. As a respected researcher in the area, we hope you will accept and help us make ''' + self.short_name + ''' a success.
 
-        Reviewers are also welcome to submit papers, so please also consider submitting to the conference!
+        You are also welcome to submit papers, so please also consider submitting to '''+ self.get_short_name() + '''.
 
-        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
-
-        The success of the conference depends on the quality of the reviewing process and ultimately on the quality and dedication of the reviewers. We hope you will accept our invitation.
+        We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
         To ACCEPT the invitation, please click on the following link:
 
@@ -973,14 +953,15 @@ class Conference(object):
 
         If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact us at info@openreview.net.
+        If you have any questions, please contact info@openreview.net.
 
         Cheers!
 
         Program Chairs
 
         '''
-        recruit_message_subj = self.id + ': Invitation to Review'
+
+        recruit_message_subj = '[' + self.get_short_name() + ']: Invitation to serve as ' + role.capitalize()
 
         if title:
             recruit_message_subj = title

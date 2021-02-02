@@ -28,7 +28,7 @@ class TestLegacyInvitations():
         builder.use_legacy_invitation_id(True)
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(
-            public = True, 
+            public = True,
             due_date = now + datetime.timedelta(minutes = 40),
             withdrawn_submission_public=True,
             withdrawn_submission_reveal_authors=True,
@@ -53,7 +53,6 @@ class TestLegacyInvitations():
         note.content['pdf'] = url
         test_client.post_note(note)
 
-        # conference.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         conference.setup_final_deadline_stage()
 
         submissions = conference.get_submissions()
