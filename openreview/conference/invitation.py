@@ -734,6 +734,9 @@ class OfficialCommentInvitation(openreview.Invitation):
                 'forum': note.id,
                 'replyto': None,
                 'readers': reply_readers,
+                'nonreaders': {
+                    'values-dropdown': readers
+                },
                 'writers': {
                     'values-copied': [
                         conference.id,

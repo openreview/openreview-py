@@ -312,16 +312,6 @@ class TestSingleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
-        conference.close_submissions()
-        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
-        submission = notes[0]
-        assert [conference.id, 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'] == submission.writers
-
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
-
-        assert len(selenium.find_elements_by_class_name('edit_button')) == 0
-        assert len(selenium.find_elements_by_class_name('trash_button')) == 0
-
     def test_open_comments(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
