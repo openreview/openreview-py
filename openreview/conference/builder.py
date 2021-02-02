@@ -981,7 +981,7 @@ class Conference(object):
 
         '''
 
-        recruit_message_subj = '[' + self.get_short_name() + ']: Invitation to serve as ' + role.capitalize()
+        recruit_message_subj = '[' + self.get_short_name() + ']: Invitation to serve as ' + role.title()
 
         if title:
             recruit_message_subj = title

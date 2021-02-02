@@ -1458,17 +1458,23 @@ class InvitationBuilder(object):
         }
         reply = self.__build_options(default_reply, options.get('reply', {}))
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.py')) as f:
             content = f.read()
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
-            content = content.replace("var CONFERENCE_NAME = '';", "var CONFERENCE_NAME = '" + conference.get_id() + "';")
-            content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "';")
-            content = content.replace("var REVIEWERS_ACCEPTED_ID = '';", "var REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "';")
-            content = content.replace("var REVIEWERS_INVITED_ID = '';", "var REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "';")
-            content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
-            content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")
+            content = content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+            content = content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.get_id() + "'")
+            content = content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "'")
+            content = content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "'")
+            content = content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
+            content = content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "'")
+            if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
+                content = content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
+                content = content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
+            elif options.get('reviewers_name') == 'Area_Chairs':
+                content = content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
+                content = content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
+            content = content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
             if conference.reduced_load_on_decline and options.get('reviewers_name', '') == 'Reviewers':
-                content = content.replace("var REDUCED_LOAD_INVITATION_NAME = '';", "var REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load';")
+                content = content.replace("REDUCED_LOAD_INVITATION_NAME = ''", "REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load'")
             invitation = openreview.Invitation(id = conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers')),
                 duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
                 readers = ['everyone'],
