@@ -557,8 +557,8 @@ var buildOfficialReviewMap = function(noteNumbers, notes) {
     }
 
     if (num && num in noteMap) {
-      ratingMatch = n.content[REVIEW_RATING_NAME] && n.content[REVIEW_RATING_NAME].match(ratingExp);
-      n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
+      ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
+      n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
       confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
       n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
       noteMap[num][index] = n;
@@ -2588,6 +2588,8 @@ var buildCSV = function(){
   'abstract',
   'authors',
   'num reviewers',
+  'num submitted reviewers',
+  'missing reviewers',
   'min rating',
   'max rating',
   'average rating',
@@ -2618,12 +2620,23 @@ var buildCSV = function(){
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
     var abstract = paperTableRow.note.content.abstract.replace(/"/g, '""');
     var authors = originalNote.content.authors ? originalNote.content.authors : [];
+    var reviewersData = _.values(paperTableRow.reviewProgressData.reviewers);
+    var allReviewers = [];
+    var missingReviewers = [];
+    reviewersData.forEach(function(r) {
+      allReviewers.push(r.id);
+      if (!r.completedReview) {
+        missingReviewers.push(r.id);
+      }
+    });
     rowData.push([paperTableRow.note.number,
     '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
     '"' + title + '"',
     '"' + abstract + '"',
     '"' + authors.join('|') + '"',
     paperTableRow.reviewProgressData.numReviewers,
+    paperTableRow.reviewProgressData.numSubmittedReviews,
+    '"' + missingReviewers.join('|') + '"',
     paperTableRow.reviewProgressData.minRating,
     paperTableRow.reviewProgressData.maxRating,
     paperTableRow.reviewProgressData.averageRating,
