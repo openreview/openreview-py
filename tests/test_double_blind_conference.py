@@ -460,25 +460,25 @@ class TestDoubleBlindConference():
         assert invitation.process
         assert invitation.web
 
-        messages = client.get_messages(to = 'michael@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'michael@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear Michael Spector,' in text
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
-        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         assert messages
         assert len(messages) == 1
 
         # Test if the reminder mail has "Dear invitee" for unregistered users in case the name is not provided to recruit_reviewers
         result = conference.recruit_reviewers(remind = True, invitees = ['mbok@mail.com'])
-        messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: [AKBC 2019]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Test if the mail has "Dear <name>" for unregistered users in case the name is provided to recruit_reviewers
         result = conference.recruit_reviewers(remind = True, invitees = ['mbok@mail.com'], invitee_names = ['Melisa Bok'])
-        messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: [AKBC 2019]: Invitation to serve as Reviewer')
         text = messages[1]['content']['text']
         assert 'Dear Melisa Bok,' in text
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
@@ -540,7 +540,7 @@ class TestDoubleBlindConference():
         assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\n'
 
         # Accept invitation using encoded user email
-        messages = client.get_messages(to = 'mbok@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
 
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
@@ -578,7 +578,7 @@ class TestDoubleBlindConference():
         assert 'other@mail.com' in result.members
 
         # Don't send the invitation twice
-        messages = client.get_messages(to = 'michael@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'michael@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         assert messages
         assert len(messages) == 1
 
@@ -587,7 +587,7 @@ class TestDoubleBlindConference():
         assert invited
         assert len(invited.members) == 5
 
-        messages = client.get_messages(to = 'another@mail.com', subject = 'AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'another@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         assert messages
         assert len(messages) == 1
         text = messages[0]['content']['text']
@@ -601,7 +601,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        messages = client.get_messages(subject = 'Reminder: AKBC.ws/2019/Conference: Invitation to Review')
+        messages = client.get_messages(subject = 'Reminder: [AKBC 2019]: Invitation to serve as Reviewer')
         assert messages
         assert len(messages) == 9
         tos = set([m['content']['to'] for m in messages])
@@ -708,16 +708,6 @@ class TestDoubleBlindConference():
 
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
-
-        conference.close_submissions()
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
-        submission = notes[0]
-        assert [conference.id, 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'] == submission.writers
-
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
-
-        assert len(selenium.find_elements_by_class_name('edit_button')) == 0
-        assert len(selenium.find_elements_by_class_name('trash_button')) == 0
 
     def test_create_blind_submissions(self, client):
 
@@ -1579,14 +1569,14 @@ class TestDoubleBlindConference():
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
+        now = datetime.datetime.utcnow()
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_submission_stage(double_blind = True, public = True, due_date= now - datetime.timedelta(minutes = 60))
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.close_submissions()
 
         notes = conference.get_submissions()
         assert notes

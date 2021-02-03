@@ -24,8 +24,8 @@ class VenueStages():
         }
         revision_content['remove_submission_options'] = {
             'order': 19,
-            'values-dropdown':  ['keywords', 'pdf', 'TL;DR'],
-            'description': 'Fields to remove from the default form: keywords, pdf, TL;DR'
+            'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
+            'description': 'Fields to remove from the default form: abstract, keywords, pdf, TL;DR'
         }
         revision_content['homepage_override'] = {
             'order': 20,
@@ -769,7 +769,8 @@ class VenueRequest():
                             'order': 2,
                             'value-regex': '[\\S\\s]{1,5000}',
                             'description': 'Your comment or reply (max 5000 characters).',
-                            'required': True
+                            'required': True,
+                            'markdown': True
                         }
                     }
                 }
