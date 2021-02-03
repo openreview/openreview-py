@@ -57,7 +57,7 @@ Open Submissions
 
 This call will setup an invitation to submit papers following the conference type, in this case is double blind, and with the submission deadline for Friday, October 5, 2019
 
-    >>> invitation = conference.open_submissions(due_date = datetime.datetime(2019, 10, 5, 23, 59))
+    >>> invitation = conference.set_submissions_stage(openreview.SubmissionStage(due_date = datetime.datetime(2019, 10, 5, 23, 59))
 
 
 Close Submissions
@@ -65,7 +65,7 @@ Close Submissions
 
 The submission will be closed when the current date passes the due date specified in open submissions call. In this case it will force the close of the submissions and it will disable the adition and edition of the papers by the authors. They can not edit the submission anymore
 
-    >>> invitation = conference.close_submissions()
+    >>> invitation = conference.setup_post_submission_stage()
 
 
 Recruit Reviewers
