@@ -221,10 +221,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'iclr2021_seven@mail.com' in result.members
         assert 'iclr2021_one_alternate@mail.com' not in result.members
 
-        messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as a reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
 
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
@@ -243,10 +243,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 1
 
-        messages = client.get_messages(to = 'iclr2021_two@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'iclr2021_two@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as a reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
 
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
@@ -257,10 +257,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 1
 
-        messages = client.get_messages(to = 'iclr2021_four@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'iclr2021_four@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as a reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
 
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
@@ -271,7 +271,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 2
 
-        messages = client.get_messages(to = 'iclr2021_five@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'iclr2021_five@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
@@ -280,7 +280,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 3
 
-        messages = client.get_messages(to = 'iclr2021_six_alternate@mail.com', subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'iclr2021_six_alternate@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
@@ -476,7 +476,7 @@ Naila, Katja, Alice, and Ivan
         'iclr2021_nine@mail.com',
         'iclr2021_six_alternate@mail.com'], invitee_names=['', '', '', '', '', '', '', '', 'Melisa Bok', ''])
 
-        messages = client.get_messages(subject = 'ICLR.cc/2021/Conference: Invitation to Review')
+        messages = client.get_messages(subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         assert len(messages) == 9
 
         assert 'Melisa Bok' in messages[8]['content']['text']
