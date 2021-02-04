@@ -621,14 +621,14 @@ class TestVenueRequest():
         assert public_comment_invitation
 
         # Assert that a non-anonymous public comment can be posted by a random logged in user
-        random_user = helpers.create_user(email='random_user1@mail.co', first='Random', last='User')
+        random_user = helpers.create_user(email='public_user1@mail.co', first='Public', last='User')
         public_comment_note = random_user.post_note(openreview.Note(
             invitation = conference.get_invitation_id('Public_Comment', number=1),
             forum = forum_note.forum,
             replyto = forum_note.forum,
             readers = ['everyone'],
-            writers = ['~Random_User1'],
-            signatures = ['~Random_User1'],
+            writers = ['~Public_User1'],
+            signatures = ['~Public_User1'],
             content = {
                 'title': 'test public comment title',
                 'comment': 'test comment!'
