@@ -611,6 +611,50 @@ class TestDoubleBlindConference():
         assert 'other@mail.com' in tos
         assert 'mbok@mail.com' in tos
 
+        # Recruit acs
+        result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'], reviewers_name = 'Area_Chairs')
+        assert result
+        assert result.id == 'AKBC.ws/2019/Conference/Area_Chairs/Invited'
+        assert 'mbok@mail.com' in result.members
+        assert 'other@mail.com' in result.members
+
+        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
+        assert group
+        assert group.id == 'AKBC.ws/2019/Conference/Area_Chairs'
+        assert 'AKBC.ws/2019/Conference/Area_Chairs' in group.readers
+        assert len(group.members) == 0
+
+        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Invited')
+        assert group
+        assert len(group.members) == 2
+
+        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Declined')
+        assert group
+        assert len(group.members) == 0
+
+        messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Area Chair')
+        text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of AKBC 2019' in text
+
+        # accept AC invitation while already having accepted reviewer invitation
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+
+        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
+        assert group
+        assert len(group.members) == 0
+
+        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Declined')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
+        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Area Chair Invitation not accepted')
+        assert messages
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == 'It seems like you already accepted an invitation to serve as a Reviewer for AKBC 2019. If you would like to change your decision and serve as a Area Chair, please click the Decline link in the Reviewer invitation email and click the Accept link in the Area Chair invitation email.'
+
     def test_set_program_chairs(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
