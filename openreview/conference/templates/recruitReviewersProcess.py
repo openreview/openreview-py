@@ -16,10 +16,9 @@ def process(client, note, invitation):
 
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
     
-    invited_group = client.get_group(REVIEWERS_INVITED_ID)
-    if (hashkey == note.content['key'] and user in invited_group.members):
+    if (hashkey == note.content['key'] and client.get_groups(regex=REVIEWERS_INVITED_ID, member=user)):
         if (note.content['response'] == 'Yes'):
-            if (AREA_CHAIRS_ACCEPTED_ID and user in client.get_group(AREA_CHAIRS_ACCEPTED_ID).members):
+            if (AREA_CHAIRS_ACCEPTED_ID and client.get_groups(regex=AREA_CHAIRS_ACCEPTED_ID, member=user)):
                 client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, user)
                 client.add_members_to_group(REVIEWERS_DECLINED_ID, user)
 
