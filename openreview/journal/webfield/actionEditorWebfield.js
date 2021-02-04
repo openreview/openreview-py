@@ -3,45 +3,22 @@
 
 // Constants
 var VENUE_ID = '.TMLR';
-var CONFERENCE_ID = '.TMLR';
-var PAPER_GROUP_STRING = 'Paper';
-var PAPER_AE_REGEX = '.TMLR/Paper.*/AEs';
-var PAPER_REVIEWER_REGEX = '.TMLR/Paper.*/Reviewers/.*';
-var ACTION_EDITOR_NAME = 'AEs';
-
 var SHORT_PHRASE = 'TMLR';
-//var SUBMISSION_ID = '.TMLR/-/Author_Submission';
-// var BLIND_SUBMISSION_ID = '';
 var HEADER = {};
-var AREA_CHAIR_NAME = '';
+
+var SUBMISSION_NAME = 'Author_Submission';
+var ACTION_EDITOR_NAME = 'AEs';
+var REVIEWER_NAME = 'Reviewers';
 var REVIEW_NAME = 'Review';
-// var SECONDARY_AREA_CHAIR_NAME = '';
-// var REVIEWER_NAME = '';
-// var OFFICIAL_REVIEW_NAME = '';
-// var REVIEW_RATING_NAME = 'rating';
-// var REVIEW_CONFIDENCE_NAME = 'confidence';
-// var OFFICIAL_META_REVIEW_NAME = '';
-// var ENABLE_REVIEWER_REASSIGNMENT = false;
-// var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
+var DECISION_NAME = 'Decision';
+var PAPER_GROUP_STRING = 'Paper';
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
-// var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
-// var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]+$';
-// var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
-// var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
-// var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
-// var REVIEWER_PAPER_RANKING_ID = REVIEWER_GROUP + '/-/Paper_Ranking';
+var PAPER_AE_REGEX = VENUE_ID + '/' + PAPER_GROUP_STRING + '.*/' + ACTION_EDITOR_NAME;
+var PAPER_REVIEWER_REGEX = VENUE_ID + '/' + PAPER_GROUP_STRING + '.*/' + REVIEWER_NAME + '/.*';
+var WILDCARD_INVITATION = VENUE_ID + '.*';
+var SUBMISSION_ID = VENUE_ID + '/-/' + SUBMISSION_NAME;
 
-// var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';
-// var SECONDARY_AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/' + SECONDARY_AREA_CHAIR_NAME + '$';
-
-// var reviewerSummaryMap = {};
 var conferenceStatusData = {};
-// var reviewerOptions = [];
-// var paperAndReviewersWithConflict = {};
-// var paperRankingInvitation = null;
-// var showRankings = false;
-// var availableOptions = [];
 
 $.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
 
@@ -114,21 +91,8 @@ var getPaperNumbersfromGroups = function(groups) {
   }), _.isInteger);
 };
 
-var buildNoteMap = function(noteNumbers) {
-  var noteMap = Object.create(null);
-  for (var i = 0; i < noteNumbers.length; i++) {
-    noteMap[noteNumbers[i]] = Object.create(null);
-    reviewerSummaryMap[noteNumbers[i]] = Object.create(null);
-  }
-  return noteMap;
-};
-
 var getInvitationId = function(name, number) {
-  return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
-};
-
-var getInvitationRegex = function(name, numberStr) {
-  return '^' + CONFERENCE_ID + '/Paper(' + numberStr + ')/-/' + name;
+  return VENUE_ID + '/' + PAPER_GROUP_STRING + number + '/-/' + name;
 };
 
 // Ajax functions
@@ -141,15 +105,14 @@ var loadData = function(noteNumbers) {
     var noteNumbersStr = noteNumbers.join(',');
 
     submissionsP = Webfield.getAll('/notes', {
-      //'content.venueid': VENUE_ID + '/Under_Review',
-      invitation: VENUE_ID + '/-/Author_Submission',
+      invitation: SUBMISSION_ID,
       number: noteNumbersStr,
       sort: 'number:desc'
     });
 
     var noteNumberRegex = noteNumbers.join('|');
     repliesP = Webfield.getAll('/notes', {
-      invitation: '^' + VENUE_ID + '/' + PAPER_GROUP_STRING + '(' + noteNumberRegex + ')/-/(Review|Decision)'
+      invitation: '^' + VENUE_ID + '/' + PAPER_GROUP_STRING + '(' + noteNumberRegex + ')/-/(' + REVIEW_NAME + '|' + DECISION_NAME + ')'
     });
 
     reviewersP = Webfield.getAll('/groups', { regex: PAPER_REVIEWER_REGEX });
@@ -191,62 +154,6 @@ var loadData = function(noteNumbers) {
   );
 };
 
-var getOfficialReviews = function(noteNumbers) {
-  if (!noteNumbers.length) {
-    return $.Deferred().resolve({});
-  }
-
-  var noteMap = buildNoteMap(noteNumbers);
-
-  return Webfield.getAll('/notes', {
-    invitation: getInvitationRegex(OFFICIAL_REVIEW_NAME, noteNumbers.join('|'))
-  })
-  .then(function(notes) {
-    var ratingExp = /^(\d+): .*/;
-
-    _.forEach(notes, function(n) {
-      var num = getNumberfromGroup(n.signatures[0], 'Paper');
-      var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
-      if (num) {
-        if (num in noteMap) {
-          // Need to parse rating and confidence strings into ints
-          ratingMatch = n.content[REVIEW_RATING_NAME] && n.content[REVIEW_RATING_NAME].match(ratingExp);
-          n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
-          confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
-          n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
-
-          noteMap[num][index] = n;
-        }
-      }
-    });
-
-    return noteMap;
-  });
-};
-
-var getReviewerGroups = function(noteNumbers) {
-  if (!noteNumbers.length) {
-    return $.Deferred().resolve({});
-  };
-
-  var noteMap = buildNoteMap(noteNumbers);
-
-  return Webfield.getAll('/groups', { regex: ANONREVIEWER_WILDCARD })
-  .then(function(groups) {
-    _.forEach(groups, function(g) {
-      var num = getNumberfromGroup(g.id, 'Paper');
-      var index = getNumberfromGroup(g.id, 'AnonReviewer');
-      if (num) {
-        if ((num in noteMap) && g.members.length) {
-          noteMap[num][index] = g.members[0];
-        }
-      }
-    });
-
-    return noteMap;
-  });
-};
-
 var formatData = function(submissions, replies, reviewers, invitations, edgeInvitations, tagInvitations) {
 
   var statusMap = {};
@@ -266,10 +173,10 @@ var formatData = function(submissions, replies, reviewers, invitations, edgeInvi
   replies.forEach(function(reply) {
     var submission = notesById[reply.forum];
     if (submission) {
-      if (reply.invitation.endsWith('Decision')) {
+      if (reply.invitation.endsWith(DECISION_NAME)) {
         statusMap[submission.number].decision = reply;
       }
-      if (reply.invitation.endsWith('Review')) {
+      if (reply.invitation.endsWith(REVIEW_NAME)) {
         statusMap[submission.number].reviews[reply.signatures[0]] = reply;
       }
     }
@@ -286,7 +193,7 @@ var formatData = function(submissions, replies, reviewers, invitations, edgeInvi
 
   invitations.forEach(function(invitation) {
     var submission = notesById[invitation.reply.forum];
-    if (submission && invitation.id.endsWith('/Decision')) {
+    if (submission && invitation.id.endsWith('/' + DECISION_NAME)) {
       statusMap[submission.number].decisionInvitation = invitation;
     }
   })
@@ -371,24 +278,8 @@ var renderHeader = function() {
   Webfield.ui.tabPanel(tabsList);
 };
 
-var renderTable = function(rows, container, secondary_meta) {
-  renderTableRows(rows, container, secondary_meta);
-}
-
-//var renderStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, acRankingByPaper, reviewerRankingByPaper, container) {
 var renderStatusTable = function(data, container) {
     var rows = _.map(data.submissions, function(submission) {
-    // var reviewersProfile = {};
-    // for (var revNumber in revIds) {
-    //   var uId = revIds[revNumber];
-    //   revIds[revNumber] = findProfile(profiles, uId);
-    // }
-
-    // var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    // var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
-    // var metaReviewInvitation = _.find(allInvitations, ['id', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-
-    //return buildTableRow(note, revIds, noteCompletedReviews, metaReview, metaReviewInvitation, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {});
     return buildTableRow(data.statusMap[submission.number], data.profiles);
   });
 
@@ -406,7 +297,7 @@ var renderStatusTable = function(data, container) {
     Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
     Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
     Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
-    Meta_Review_Recommendation: function(row) { return row[4].recommendation; }
+    Decision_Recommendation: function(row) { return row[4].recommendation; }
   };
 
   var sortResults = function(newOption, switchOrder) {
@@ -584,133 +475,7 @@ var renderStatusTable = function(data, container) {
   }
 };
 
-var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, acRankingByPaper, reviewerRankingByPaper, container) {
-  var rows = _.map(notes, function(note) {
-    var revIds = reviewerIds[note.number] || Object.create(null);
-    for (var revNumber in revIds) {
-      var uId = revIds[revNumber];
-      revIds[revNumber] = findProfile(profiles, uId);
-    }
-
-    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
-
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}, 'secondary');
-  });
-
-  var order = 'desc';
-  var sortOptions = {
-    Paper_Number: function(row) { return row[1].number; },
-    Paper_Title: function(row) { return _.toLower(_.trim(row[2].content.title)); },
-    Number_of_Forum_Replies: function(row) { return row[3].forumReplyCount; },
-    Number_of_Reviews_Submitted: function(row) { return row[3].numSubmittedReviews; },
-    Number_of_Reviews_Missing: function(row) { return row[3].numReviewers - row[3].numSubmittedReviews; },
-    Average_Rating: function(row) { return row[3].averageRating === 'N/A' ? 0 : row[3].averageRating; },
-    Max_Rating: function(row) { return row[3].maxRating === 'N/A' ? 0 : row[3].maxRating; },
-    Min_Rating: function(row) { return row[3].minRating === 'N/A' ? 0 : row[3].minRating; },
-    Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
-    Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
-    Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
-    Meta_Review_Recommendation: function(row) { return row[4].recommendation; }
-  };
-
-  var sortResults = function(newOption, switchOrder) {
-    if (switchOrder) {
-      order = order === 'asc' ? 'desc' : 'asc';
-    }
-    renderTable(_.orderBy(rows, sortOptions[newOption], order), container, true);
-  }
-
-  var sortOptionHtml = Object.keys(sortOptions).map(function(option) {
-    return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
-  }).join('\n');
-
-  var sortBarHtml = '<form class="form-inline search-form clearfix" role="search">' +
-    '<div class="pull-right">' +
-      '<strong>Sort By:</strong> ' +
-      '<select id="form-sort-secondary" class="form-control">' + sortOptionHtml + '</select>' +
-      '<button id="form-order-secondary" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
-    '</div>' +
-  '</form>';
-  if (rows.length) {
-    $(container).empty().append(sortBarHtml);
-  }
-
-  // Need to add event handlers for these controls inside this function so they have access to row
-  // data
-  $('#form-sort-secondary').on('change', function(e) {
-    sortResults($(e.target).val(), false);
-  });
-  $('#form-order-secondary').on('click', function(e) {
-    sortResults($(this).prev().val(), true);
-    return false;
-  });
-
-  if (rows.length) {
-    renderTable(rows, container, true);
-  } else {
-    $(container).empty().append('<p class="empty-message">No assigned papers. ' +
-    'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
-  }
-};
-
-var updateReviewerContainer = function (paperNumber, renderEmptyDropdown) {
-  renderEmptyDropdown = renderEmptyDropdown || false;
-  $addReviewerContainer = $('#' + paperNumber + '-add-reviewer');
-  $reviewerProgressContainer = $('#' + paperNumber + '-reviewer-progress');
-  paperForum = $reviewerProgressContainer.data('paperForum');
-
-  var paperNoteId = reviewerSummaryMap[paperNumber].noteId;
-  var dropdownOptions = [];
-  if (!renderEmptyDropdown) {
-    var reviewersToRender = reviewerOptions;
-    var reviewerWithConflictForThisPaper = paperAndReviewersWithConflict[paperNumber];
-    if (reviewerWithConflictForThisPaper) {
-      reviewersToRender = reviewerOptions.filter(function (reviewerOption) {
-        return reviewerWithConflictForThisPaper.indexOf(reviewerOption.id) === -1;
-      })
-    };
-    dropdownOptions = reviewersToRender;
-  }
-
-  var filterOptions = function(options, term) {
-    return _.filter(options, function(p) {
-      return _.includes(p.description.toLowerCase(), term.toLowerCase());
-    });
-  };
-  placeholder = 'reviewer@domain.edu';
-
-  var $dropdown = view.mkDropdown(placeholder, false, null, function(update, term) {
-    update(filterOptions(dropdownOptions, term));
-  }, function(value, id) {
-    var selectedOption = _.find(dropdownOptions, ['id', id]);
-    var $input = $dropdown.find('input');
-
-    if (!(selectedOption && selectedOption.description === value)) {
-      $input.val(value);
-      $input.attr('value_id', value);
-    } else {
-      $input.val(value);
-      $input.attr('value_id', id);
-    }
-  });
-
-  $dropdown.find('input').attr({
-    class: 'form-control dropdown note_content_value input-assign-reviewer',
-    name: placeholder,
-    autocomplete: 'on'
-  });
-  $dropdown.find('div').attr({
-    class: 'dropdown_content dropdown_content_assign_reviewer',
-    name: placeholder,
-    autocomplete: 'on'
-  });
-
-  $addReviewerContainer.append($dropdown);
-  $addReviewerContainer.append('<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber + ' data-paper-forum=' + paperForum +'>Assign</button>');
-}
-
-var renderTableRows = function(rows, container, secondary_meta) {
+var renderTable = function(rows, container) {
   var templateFuncs = [
     function(data) {
       var checked = data.selected ? 'checked="checked"' : '';
@@ -734,7 +499,7 @@ var renderTableRows = function(rows, container, secondary_meta) {
   var tableHtml = Handlebars.templates['components/table']({
     headings: [
       '<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
-      'Review Progress', 'Meta Review Status'
+      'Review Progress', 'Decision Status'
     ],
     rows: rowsHtml,
     extraClasses: 'ac-console-table'
@@ -744,106 +509,34 @@ var renderTableRows = function(rows, container, secondary_meta) {
   $(container).append(tableHtml);
 }
 
-var postRenderTable = function(rows) {
-  if (paperRankingInvitation) {
-    currentRankings = [];
-    rows.forEach(function(row) {
-      if (row[4].ranking && row[4].ranking.tag !== 'No Ranking') {
-        currentRankings.push(row[4].ranking.tag);
-      }
-    });
-    paperRankingInvitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
-  }
-  var invitationId = paperRankingInvitation ? paperRankingInvitation.id : PAPER_RANKING_ID;
-
-  rows.forEach(function(row) {
-    var noteId = row[4].noteId;
-    var noteNumber = row[4].paperNumber;
-    var paperRanking = row[4].ranking;
-    $metaReviewStatusContainer = $('#' + noteNumber + '-metareview-status');
-    if (!$metaReviewStatusContainer.length) {
-      return;
-    }
-
-    var $tagWidget = view.mkTagInput(
-      'tag',
-      paperRankingInvitation && paperRankingInvitation.reply.content.tag,
-      paperRanking ? [paperRanking] : [],
-      {
-        forum: noteId,
-        placeholder: (paperRankingInvitation && paperRankingInvitation.reply.content.tag.description) || view.prettyInvitationId(invitationId),
-        label: view.prettyInvitationId(invitationId),
-        readOnly: false,
-        onChange: function(id, value, deleted, done) {
-          var body = {
-            id: id,
-            tag: value,
-            signatures: [CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
-            readers: [CONFERENCE_ID, CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
-            forum: noteId,
-            invitation: invitationId,
-            ddate: deleted ? Date.now() : null
-          };
-          body = view.getCopiedValues(body, paperRankingInvitation.reply);
-          $('.tag-widget button').attr('disabled', true);
-          Webfield.post('/tags', body)
-          .then(function(result) {
-            row[4].ranking = result; //not sure if this is the best way to do it
-            postRenderTable(rows);
-            done(result);
-          })
-          .fail(function(error) {
-            promptError(error ? error : 'The specified tag could not be updated');
-          });
-        }
-      }
-    );
-    $metaReviewStatusContainer.find('.tag-widget').remove();
-    $metaReviewStatusContainer.append($tagWidget);
-  });
-};
-
 var renderTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
-    container: '#areachair-tasks',
-    emptyMessage: 'No outstanding tasks for this conference',
-    referrer: encodeURIComponent('[Area Chair Console](/group?id=' + CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '#areachair-tasks)')
+    container: '#action-editor-tasks',
+    emptyMessage: 'No outstanding tasks for this journal',
+    referrer: encodeURIComponent('[Action Editor Console](/group?id=' + VENUE_ID + '/' + ACTION_EDITOR_NAME + '#action-editor-tasks)')
   }
   $(tasksOptions.container).empty();
 
   Webfield.ui.newTaskList(invitations, tagInvitations.concat(edgeInvitations), tasksOptions);
-  $('.tabs-container a[href="#areachair-tasks"]').parent().show();
+  $('.tabs-container a[href="#action-editor-tasks"]').parent().show();
 }
 
 var renderTableAndTasks = function(data) {
   conferenceStatusData = data;
   renderTasks(data.invitations, data.edgeInvitations, data.tagInvitations);
 
-  renderStatusTable(
-    data,
-    // fetchedData.profiles,
-    // primaryAssignments,
-    // fetchedData.invitations,
-    // fetchedData.officialReviews,
-    // fetchedData.metaReviews,
-    // _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
-    // fetchedData.acRankingByPaper,
-    // fetchedData.reviewerRankingByPaper,
-    '#assigned-papers'
-  );
+  renderStatusTable(data, '#assigned-papers');
 
   registerEventHandlers();
 
   Webfield.ui.done();
 }
 
-//var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, metaReviewInvitation, acPaperRanking, reviewerPaperRanking, typeMetaReviewer) {
 var buildTableRow = function(submissionStatusMap, profiles) {
   var note = submissionStatusMap.submission;
   var cellCheck = { selected: false, noteId: note.id };
-  var referrerContainer = '#assigned-papers';
-  var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + CONFERENCE_ID + '/' + ACTION_EDITOR_NAME + referrerContainer + ')');
+  var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + VENUE_ID + '/' + ACTION_EDITOR_NAME + '#assigned-papers)');
 
   // Paper number cell
   var cell0 = {
@@ -858,10 +551,11 @@ var buildTableRow = function(submissionStatusMap, profiles) {
   var combinedObj = {};
   var index = 1;
   for (var reviewerId in submissionStatusMap.reviewers) {
+    var reviewerNumber = reviewerId.split('/').slice(-1)[0];
     var reviewerProfile = findProfile(profiles, submissionStatusMap.reviewers[reviewerId])
     var review = submissionStatusMap.reviews[reviewerId];
     if (review) {
-      combinedObj[index] = {
+      combinedObj[reviewerNumber] = {
         id: reviewerProfile.id,
         name: reviewerProfile.name,
         email: reviewerProfile.email,
@@ -876,10 +570,10 @@ var buildTableRow = function(submissionStatusMap, profiles) {
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: note.forum,
         noteId: note.id,
-        invitationId: getInvitationId('Review', note.number)
+        invitationId: getInvitationId(REVIEW_NAME, note.number)
       });
-      var lastReminderSent = localStorage.getItem(forumUrl + '|' + reviewer.id);
-      combinedObj[index] = {
+      var lastReminderSent = localStorage.getItem(forumUrl + '|' + reviewerProfile.id);
+      combinedObj[reviewerNumber] = {
         id: reviewerProfile.id,
         name: reviewerProfile.name,
         email: reviewerProfile.email,
@@ -887,7 +581,7 @@ var buildTableRow = function(submissionStatusMap, profiles) {
         forumUrl: forumUrl,
         lastReminderSent: lastReminderSent ? new Date(parseInt(lastReminderSent)).toLocaleDateString() : lastReminderSent,
         paperNumber: note.number,
-        reviewerNumber: index
+        reviewerNumber: reviewerId
       };
     }
     index = index + 1;
@@ -920,7 +614,7 @@ var buildTableRow = function(submissionStatusMap, profiles) {
     var invitationUrlParams = {
       id: note.forum,
       noteId: note.id,
-      invitationId: getInvitationId('Decision', note.number),
+      invitationId: getInvitationId(DECISION_NAME, note.number),
       referrer: referrerUrl
     };
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);;
@@ -928,16 +622,6 @@ var buildTableRow = function(submissionStatusMap, profiles) {
 
   return [cellCheck, cell0, cell1, cell2, cell3];
 };
-
-var findNextAnonGroupNumber = function(paperNumber){
-  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
-  for (var i = 1; i < paperReviewerNums.length + 1; i++) {
-    if (i.toString() !== paperReviewerNums[i-1]) {
-      return i;
-    }
-  }
-  return paperReviewerNums.length + 1;
-}
 
 // Event Handlers
 var registerEventHandlers = function() {
@@ -988,190 +672,6 @@ var registerEventHandlers = function() {
     return false;
   });
 
-  // $('#group-container').on('click', 'a.collapse-btn', function(e) {
-  //   var paperIdArray = $(this).attr('href').split("-");//href attribute is in format of #{paperId}-reviewers
-  //   paperIdArray.pop(); //
-  //   var paperId = paperIdArray.join('-').substring(1);
-  //   var paperIndex = Object.keys(reviewerSummaryMap).filter(function (p) {
-  //     return reviewerSummaryMap[p].noteId === paperId;
-  //   })
-  //   var paperNumber = reviewerSummaryMap[paperIndex].paperNumber;
-  //   if ($(this).text() === 'Show reviewers') {
-  //     $(this).text('Hide reviewers');
-  //     updateReviewerContainer(paperNumber, true);//render empty dropdown as placeholder for visual consistency
-  //     Webfield.get('/edges', {
-  //       head: paperId,
-  //       invitation: REVIEWER_GROUP_WITH_CONFLICT
-  //     }).then(function (result) {
-  //       var reviewerWithConflictForThisPaper = result.edges.map(function (p) {
-  //         return p.tail;
-  //       });
-  //       paperAndReviewersWithConflict[paperNumber]=reviewerWithConflictForThisPaper;
-  //       $addReviewerContainer.children().remove(); //remove empty dropdown when actual data arrive
-  //       updateReviewerContainer(paperNumber, false); //render dropdown with filtered value
-  //     });
-  //   } else {
-  //     $(this).text('Show reviewers');
-  //     $(paperNumber + '-add-reviewer').children().remove()
-  //   }
-  // });
-
-  $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) {
-    var $link = $(this);
-    var paperNumber = $link.data('paperNumber');
-    var paperForum = $link.data('paperForum');
-    var $currDiv = $('#' + paperNumber + '-add-reviewer');
-    var userToAdd = $currDiv.find('input').attr('value_id').trim();
-
-    if (!userToAdd || !((userToAdd.indexOf('@') > 0) || _.startsWith(userToAdd, '~'))) {
-      // this checks if no input was given, OR  if the given input neither has an '@' nor does it start with a '~'
-      promptError('Please enter a valid email for assigning a reviewer');
-      return false;
-    }
-    var alreadyAssigned = _.find(reviewerSummaryMap[paperNumber].reviewers, function(rev){
-      return (rev.email === userToAdd) || (rev.id === userToAdd);
-    });
-    if (alreadyAssigned) {
-      promptError('Reviewer ' + view.prettyId(userToAdd) + ' has already been assigned to Paper ' + paperNumber.toString());
-      return false;
-    }
-
-    var reviewersWithConflict = paperAndReviewersWithConflict[paperNumber];
-
-    //if input is a reviewer in conflict, show error no matter of ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS flag
-    if(reviewersWithConflict && _.includes(reviewersWithConflict, userToAdd)){
-      promptError('The reviewer entered is invalid');
-      $currDiv.find('input').val('');
-      $currDiv.find('input').attr('value_id', '');
-      return false;
-    }
-
-    if (!ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS) { //check only if reassign to outside is disabled
-      var insideReviewer = reviewerOptions.find(function (reviewerOption) {
-        return reviewerOption.id === userToAdd;
-      })
-      if (!insideReviewer) { // not in allreviewers means is a outside reviewer
-        promptError('Please choose only reviewers from the dropdown');
-        $currDiv.find('input').val('');
-        $currDiv.find('input').attr('value_id', '');
-        return false;
-      }
-    }
-
-    if (!_.startsWith(userToAdd, '~')) {
-      userToAdd = userToAdd.toLowerCase();
-    }
-
-    var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
-    var reviewerProfile = {
-      'email' : userToAdd,
-      'id' : userToAdd,
-      'name': '',
-      'content': {'names': [{'username': userToAdd}]}
-    };
-
-    getUserProfiles([userToAdd])
-    .then(function (userProfile){
-      if (userProfile && Object.keys(userProfile).length){
-        reviewerProfile = userProfile[Object.keys(userProfile)[0]];
-      }
-      return Webfield.put('/groups/members', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-        members: [reviewerProfile.id]
-      })
-    })
-    .then(function(result) {
-      return Webfield.post('/groups', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
-        members: [reviewerProfile.id],
-        nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
-        readers: [
-          CONFERENCE_ID,
-          CONFERENCE_ID + '/Program_Chairs',
-          CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs',
-          CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber],
-        writers: [
-          CONFERENCE_ID,
-          CONFERENCE_ID + '/Program_Chairs',
-          CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
-        signatures: [CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
-        signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
-      })
-    })
-    .then(function(result) {
-      return Webfield.put('/groups/members', {
-        id: REVIEWER_GROUP,
-        members: [reviewerProfile.id]
-      })
-    })
-    .then(function(results) {
-      var forumUrl = 'https://openreview.net/forum?' + $.param({
-        id: paperForum,
-        invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
-      });
-      var lastReminderSent = null;
-      reviewerSummaryMap[paperNumber].reviewers[nextAnonNumber] = {
-        id: reviewerProfile.id,
-        name: reviewerProfile.name,
-        email: reviewerProfile.email,
-        forum: paperForum,
-        forumUrl: forumUrl,
-        lastReminderSent: lastReminderSent,
-        paperNumber: paperNumber,
-        reviewerNumber: nextAnonNumber
-      };
-      reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
-      reviewerSummaryMap[paperNumber].expandReviewerList = true;
-      reviewerSummaryMap[paperNumber].sendReminder = true;
-      reviewerSummaryMap[paperNumber].showActivityModal = true;
-      reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
-      var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
-      $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
-      updateReviewerContainer(paperNumber);
-      promptMessage('Email has been sent to ' + view.prettyId(reviewerProfile.id) + ' about their new assignment to paper ' + paperNumber, { overlay: true });
-      var postData = {
-        groups: [reviewerProfile.id],
-        subject: SHORT_PHRASE + ": You have been assigned as a Reviewer for paper number " + paperNumber,
-        message: 'This is to inform you that you have been assigned as a Reviewer for paper number ' + paperNumber +
-        ' for ' + SHORT_PHRASE + '.' +
-        '\n\nTo review this new assignment, please login to OpenReview and go to ' +
-        'https://openreview.net/forum?id=' + paperForum + '&invitationId=' + getInvitationId(OFFICIAL_REVIEW_NAME, paperNumber.toString()) +
-        '\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=' + REVIEWER_GROUP +
-        '\n\nThank you,\n' + SHORT_PHRASE + ' Area Chair'
-      };
-      return Webfield.post('/messages', postData);
-    });
-    return false;
-  });
-
-  $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
-    var $link = $(this);
-    var userId = $link.data('userId');
-    var paperNumber = $link.data('paperNumber');
-    var reviewerNumber = $link.data('reviewerNumber');
-
-    Webfield.delete('/groups/members', {
-      id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
-      members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
-    })
-    .then(function(result) {
-      return Webfield.delete('/groups/members', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-        members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
-      });
-    })
-    .then(function(result) {
-      var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
-      delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
-      reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
-      reviewerSummaryMap[paperNumber].expandReviewerList = true;
-      $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
-      updateReviewerContainer(paperNumber);
-      promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
-    })
-    return false;
-  });
-
   $('#group-container').on('click', 'a.show-activity-modal', function(e) {
     var paperNum = $(this).data('paperNum');
     var reviewerNum = $(this).data('reviewerNum');
@@ -1195,13 +695,13 @@ var registerEventHandlers = function() {
     );
     $('#reviewer-activity-modal').modal('show');
 
-    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
+    Webfield.get('/notes', { signature: VENUE_ID + '/' + PAPER_GROUP_STRING + paperNum + '/' + REVIEWER_NAME + '/' + reviewerNum })
       .then(function(response) {
         $('#reviewer-activity-modal .modal-body').empty();
         Webfield.ui.searchResults(response.notes, {
           container: '#reviewer-activity-modal .modal-body',
           openInNewTab: true,
-          emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
+          emptyMessage: 'Reviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
         });
       });
 
@@ -1309,7 +809,7 @@ var registerEventHandlers = function() {
 
   $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
     var blob = new Blob(buildCSV(), {type: 'text/csv'});
-    saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_AC_paper_status.csv',);
+    saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_' + ACTION_EDITOR_NAME + '_paper_status.csv',);
     return false;
   });
 };
