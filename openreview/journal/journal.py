@@ -152,13 +152,16 @@ class Journal(object):
 
         ## action editors group
         action_editors_id = self.get_action_editors_id()
-        self.client.post_group(openreview.Group(id=action_editors_id,
+        action_editor_group=self.client.post_group(openreview.Group(id=action_editors_id,
                         readers=['everyone'],
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
                         signatories=[],
                         members=[]))
-        ## TODO: add webfield console
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
+            content = f.read()
+            action_editor_group.web = content
+            self.client.post_group(action_editor_group)
 
         ## reviewers group
         reviewers_id = self.get_reviewers_id()
