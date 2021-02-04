@@ -753,16 +753,6 @@ class TestDoubleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
-        conference.close_submissions()
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
-        submission = notes[0]
-        assert [conference.id, 'test@mail.com', 'peter@mail.com', 'andrew@mail.com', '~Test_User1'] == submission.writers
-
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
-
-        assert len(selenium.find_elements_by_class_name('edit_button')) == 0
-        assert len(selenium.find_elements_by_class_name('trash_button')) == 0
-
     def test_create_blind_submissions(self, client):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1623,14 +1613,14 @@ class TestDoubleBlindConference():
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
+        now = datetime.datetime.utcnow()
         builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True)
+        builder.set_submission_stage(double_blind = True, public = True, due_date= now - datetime.timedelta(minutes = 60))
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         conference = builder.get_result()
-        conference.close_submissions()
 
         notes = conference.get_submissions()
         assert notes

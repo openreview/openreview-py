@@ -33,7 +33,7 @@ class TestWorkshop():
         'location': 'Berkeley, CA, USA'
         })
         builder.has_area_chairs(False)
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
+        builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
 
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['program_chairs@hsdip.org'])
@@ -195,9 +195,7 @@ class TestWorkshop():
         assert len(blind_submissions_2) == 2
         assert blind_submissions[0].id == blind_submissions_2[1].id
         assert blind_submissions_2[1].readers == [
-            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP',
-            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers',
-            'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'
+            'everyone'
         ]
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -330,7 +328,6 @@ class TestWorkshop():
             forum = submission.id,
             replyto = review.id,
             readers = [
-                'everyone',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
@@ -372,7 +369,7 @@ class TestWorkshop():
         random_user = helpers.create_user(email='random_user1@mail.co', first='Random', last='User')
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Public_Comment',
             forum = submission.id,
-            replyto = review.id,
+            replyto = submission.id,
             readers = ['everyone'],
             writers = ['~Random_User1'],
             signatures = ['~Random_User1'],

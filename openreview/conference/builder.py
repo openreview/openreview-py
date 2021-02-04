@@ -512,26 +512,6 @@ class Conference(object):
         invitation = self.submission_stage.get_desk_rejected_submission_id(self)
         return list(tools.iterget_notes(self.client, invitation=invitation, details=details))
 
-    ## Deprecated
-    def open_submissions(self):
-        return self.__create_submission_stage()
-
-    def close_submissions(self):
-
-        # Expire invitation
-        invitation = self.__expire_invitation(self.get_submission_id())
-
-        # update submission due date
-        if self.submission_stage.due_date and (
-            tools.datetime_millis(self.submission_stage.due_date) > tools.datetime_millis(datetime.datetime.utcnow())):
-            self.submission_stage.due_date = datetime.datetime.utcnow()
-
-        # Add venue to active venues
-        active_venues_group = self.client.get_group(id = 'active_venues')
-        self.client.add_members_to_group(active_venues_group, [self.get_id()])
-
-        return invitation
-
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
 
         if not force and reveal_submission and not self.submission_stage.public:
