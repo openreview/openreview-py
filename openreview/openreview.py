@@ -1393,7 +1393,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, readers, writers, signatures, invitation, referent=None):
+    def post_invitation_edit(self, readers, writers, signatures, invitation):
         """
         """
         edit_json = {
@@ -1402,9 +1402,6 @@ class Client(object):
             'signatures': signatures,
             'invitation': invitation.to_json()
         }
-
-        if referent is not None:
-            edit_json['referent']=referent
 
         response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -1419,6 +1416,7 @@ class Client(object):
             'signatures': signatures,
             'note': note.to_json() if note else {}
         }
+
         response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1995,8 +1993,6 @@ class Note(object):
         self.ddate = ddate
         self.content = content
         self.forum = forum
-        self.referent = referent
-        self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
         self.nonreaders = [] if nonreaders is None else nonreaders
@@ -2006,6 +2002,10 @@ class Note(object):
         self.details = details
         if tauthor:
             self.tauthor = tauthor
+        if referent:
+            self.referent = referent
+        if invitation:
+            self.invitation = invitation
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2041,13 +2041,10 @@ class Note(object):
         }
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
-
-        if self.referent:
+        if hasattr(self, 'referent'):
             body['referent'] = self.referent
-
-        if self.invitation:
+        if hasattr(self, 'invitation'):
             body['invitation'] = self.invitation
-
         return body
 
     @classmethod
