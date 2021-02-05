@@ -224,8 +224,8 @@ def get_meta_review_stage(client, request_forum):
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
         additional_fields = {'recommendation': {
-            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]},
-            'required': True}
+            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
+            'required': True}}
 
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
