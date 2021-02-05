@@ -224,8 +224,8 @@ def get_meta_review_stage(client, request_forum):
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
         additional_fields = {'recommendation': {
-            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]},
-            'required': True}
+            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
+            'required': True}}
 
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
@@ -329,8 +329,8 @@ def get_comment_stage(client, request_forum):
     else:
         commentary_end_date = None
 
-    allow_public_comments = 'Public' in request_forum.content.get('participants', '')
-    anonymous = allow_public_comments and 'non-anonymously' not in request_forum.content.get('participants', '')
+    anonymous = 'Public (anonymously)' in request_forum.content.get('participants', '')
+    allow_public_comments = anonymous or 'Public (non-anonymously)' in request_forum.content.get('participants', '')
 
     unsubmitted_reviewers = 'Paper Submitted Reviewers' not in request_forum.content.get('participants', '') and 'Paper Reviewers' in request_forum.content.get('participants', '')
 
