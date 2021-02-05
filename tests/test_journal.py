@@ -8,16 +8,22 @@ import os
 
 class TestJournal():
 
-    def test_setup(self, client, test_client, helpers):
 
+    @pytest.fixture(scope="class")
+    def journal(self, client):
         venue_id = '.TMLR'
+        journal=openreview.journal.Journal(client, venue_id, super_user='openreview.net')
+        return journal
+
+    def test_setup(self, journal, client, helpers):
+
         ## Editors in Chief
-        raia_client = helpers.create_user('raia@mail.com', 'Raia', 'Hadsell')
-        kyunghyun_client = helpers.create_user('kyunghyun@mail.com', 'Kyunghyun', 'Cho')
+        helpers.create_user('raia@mail.com', 'Raia', 'Hadsell')
+        helpers.create_user('kyunghyun@mail.com', 'Kyunghyun', 'Cho')
 
         ## Action Editors
-        joelle_client = helpers.create_user('joelle@mail.com', 'Joelle', 'Pineau')
-        ryan_client = helpers.create_user('ryan@mail.com', 'Ryan', 'Adams')
+        helpers.create_user('joelle@mail.com', 'Joelle', 'Pineau')
+        ryan_client = helpers.create_user('yan@mail.com', 'Ryan', 'Adams')
         samy_client = helpers.create_user('samy@mail.com', 'Samy', 'Bengio')
         yoshua_client = helpers.create_user('yoshua@mail.com', 'Yoshua', 'Bengio')
         corinna_client = helpers.create_user('corinna@mail.com', 'Corinna', 'Cortes')
@@ -32,17 +38,39 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
+        journal.setup(editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
+
+    def test_invite_action_editors(self, journal):
+
+
+        journal.set_action_editors(editors=['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'], custom_papers=[5, 6, 4, 6, 6, 6, 6, 3])
+
+
+    def test_invite_reviewers(self, journal):
+
+        journal.set_reviewers(reviewers=['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+
+
+    def test_submission(self, journal, client, test_client, helpers):
+
+        venue_id = journal.venue_id
+        raia_client = openreview.Client(username='raia@mail.com', password='1234')
+        joelle_client = openreview.Client(username='joelle@mail.com', password='1234')
+
+
+        ## Reviewers
+        david_client=openreview.Client(username='david@mail.com', password='1234')
+        javier_client=openreview.Client(username='javier@mail.com', password='1234')
+        carlos_client=openreview.Client(username='carlos@mail.com', password='1234')
+        andrew_client=openreview.Client(username='andrewmc@mail.com', password='1234')
+        hugo_client=openreview.Client(username='hugo@mail.com', password='1234')
+
         peter_client = helpers.create_user('petersnow@mail.com', 'Peter', 'Snow')
         if os.environ.get("OPENREVIEW_USERNAME"):
             os.environ.pop("OPENREVIEW_USERNAME")
         if os.environ.get("OPENREVIEW_PASSWORD"):
             os.environ.pop("OPENREVIEW_PASSWORD")
         guest_client=openreview.Client()
-
-        journal=openreview.journal.Journal(client, venue_id, super_user='openreview.net')
-        journal.setup(editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
-        journal.set_action_editors(editors=['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'], custom_papers=[5, 6, 4, 6, 6, 6, 6, 3])
-        journal.set_reviewers(reviewers=['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         now = datetime.datetime.utcnow()
 
         ## Post the submission 1
