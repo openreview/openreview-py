@@ -1,4 +1,4 @@
-def process(client, edit, invitation):
+def process(client, note, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     SHORT_PHRASE = ''
@@ -8,13 +8,15 @@ def process(client, edit, invitation):
     ACTION_EDITOR_DECLINED_ID = ''
     HASH_SEED = ''
 
-    note=edit.note
-    user = urllib.parse.unquote(note.content['user']['value'])
+    #note=edit.note
+    #user = urllib.parse.unquote(note.content['user']['value'])
+    user = urllib.parse.unquote(note.content['user'])
 
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
 
-    if (hashkey == note.content['key']['value'] and client.get_groups(regex=ACTION_EDITOR_INVITED_ID, member=user)):
-        if (note.content['response']['value'] == 'Yes'):
+    #if (hashkey == note.content['key']['value'] and client.get_groups(regex=ACTION_EDITOR_INVITED_ID, member=user)):
+    if (hashkey == note.content['key'] and client.get_groups(regex=ACTION_EDITOR_INVITED_ID, member=user)):
+        if (note.content['response'] == 'Yes'):
             client.remove_members_from_group(ACTION_EDITOR_DECLINED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_ACCEPTED_ID, user)
 
@@ -26,7 +28,7 @@ If you would like to change your decision, please click the Decline link in the 
 
             return client.post_message(subject, [user], message, parentGroup=ACTION_EDITOR_ACCEPTED_ID)
 
-        if (note.content['response']['value'] == 'No'):
+        if (note.content['response'] == 'No'):
             client.remove_members_from_group(ACTION_EDITOR_ACCEPTED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_DECLINED_ID, user)
 

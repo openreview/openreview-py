@@ -41,11 +41,14 @@ class InvitationBuilder(object):
                         signatures = [venue_id],
                         edit = {
                             'signatures': { 'values-regex': '\\(anonymous\\)' },
+                            #'readers': { 'values': [venue_id, '${note.content.user.value}'] }, remove the user for now
                             'readers': { 'values': [venue_id] },
                             'writers': { 'values': []},
                             'note': {
-                                'signatures': { 'values': ['${note.content.user.value}'] },
-                                'readers': { 'values': [venue_id, '${note.content.user.value}'] },
+                                #'signatures': { 'values': ['${note.content.user.value}'] },
+                                'signatures': { 'values-regex': '\\(anonymous\\)' },
+                                # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
+                                'readers': { 'values': [venue_id] },
                                 'writers': { 'values': []},
                                 'content': {
                                     'title': {
