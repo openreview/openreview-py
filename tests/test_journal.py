@@ -60,10 +60,23 @@ class TestJournal():
         assert len(group.members) == 1
         assert '~Joelle_Pineau1' in group.members
 
-    def test_invite_reviewers(self, journal):
+    def test_invite_reviewers(self, journal, client, request_page, selenium):
 
-        journal.set_reviewers(reviewers=['~David_Belanger1', '~Melisa_Bok1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        res=journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        assert res.id == '.TMLR/Reviewers/Invited'
+        assert res.members == ['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
 
+        messages = client.get_messages(subject = 'Invitation to be an Reviewer')
+        assert len(messages) == 5
+
+        for message in messages:
+            text = message['content']['text']
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+            request_page(selenium, accept_url, alert=True)
+
+        group = client.get_group('.TMLR/Reviewers')
+        assert len(group.members) == 5
+        assert '~Javier_Burroni1' in group.members
 
     def test_submission(self, journal, client, test_client, helpers):
 

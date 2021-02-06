@@ -17,7 +17,7 @@ jobs:
       - run: sudo apt-get update
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone -b feature/api-v2 --single-branch https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
-      - run: git clone -b feature/api-v2-support --single-branch https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
       - run: mkdir ~/openreview/logs
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments

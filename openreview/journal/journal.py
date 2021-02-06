@@ -188,13 +188,29 @@ class Journal(object):
         ## reviewers group
         reviewers_id = self.get_reviewers_id()
         self.client.post_group(openreview.Group(id=reviewers_id,
-                        readers=['everyone'],
+                        readers=[venue_id, action_editors_id],
                         writers=[venue_id],
                         signatures=[venue_id],
                         signatories=[],
                         members=[]
                         ))
         ## TODO: add webfield console
+
+        ## reviewers invited group
+        self.client.post_group(openreview.Group(id=f'{reviewers_id}/Invited',
+                        readers=[venue_id],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        signatories=[],
+                        members=[]))
+
+        ## reviewers declined group
+        self.client.post_group(openreview.Group(id=f'{reviewers_id}/Declined',
+                        readers=[venue_id],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        signatories=[],
+                        members=[]))
 
     def setup_ae_assignment(self, number):
         venue_id=self.venue_id
@@ -285,4 +301,29 @@ class Journal(object):
                     verbose = False)
 
         return self.client.get_group(id = action_editors_invited_id)
+
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None):
+
+        reviewers_id = self.get_reviewers_id()
+        reviewers_declined_id = reviewers_id + '/Declined'
+        reviewers_invited_id = reviewers_id + '/Invited'
+        hash_seed = secrets.token_hex(16)
+
+        invitation = self.invitation_builder.set_reviewer_recruitment_invitation(self, hash_seed, self.header)
+
+        for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
+            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if tools.get_group(self.client, invitee) else []
+            if reviewers_invited_id not in memberships:
+                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
+                if not name:
+                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
+                tools.recruit_reviewer(self.client, invitee, name,
+                    hash_seed,
+                    invitation['invitation']['id'],
+                    message,
+                    subject,
+                    reviewers_invited_id,
+                    verbose = False)
+
+        return self.client.get_group(id = reviewers_invited_id)
 
