@@ -1,9 +1,13 @@
 from .. import openreview
+from .. import tools
 from . import invitation
 import os
+import re
 import json
 import datetime
 import random
+import secrets
+from tqdm import tqdm
 
 class Journal(object):
 
@@ -17,6 +21,17 @@ class Journal(object):
         self.authors_name = 'Authors'
         self.submission_group_name = 'Paper'
         self.invitation_builder = invitation.InvitationBuilder(client)
+        self.header = {
+            "title": "Transactions of Machine Learning Research",
+            "short": "TMLR",
+            "subtitle": "To de defined",
+            "location": "Everywhere",
+            "date": "Ongoing",
+            "website": "https://openreview.net",
+            "instructions": '',
+            "deadline": "",
+            "contact": "info@openreview.net"
+        }
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -92,55 +107,45 @@ class Journal(object):
             name=m.replace('~', ' ').replace('_', ' ')[:-1]
             editors+=f'<a href="https://openreview.net/profile?id={m}">{name}</a></br>'
 
-        header = {
-            "title": "Transactions of Machine Learning Research",
-            "short": "TMLR",
-            "subtitle": "To de defined",
-            "location": "Everywhere",
-            "date": "Ongoing",
-            "website": "https://openreview.net",
-            "instructions": '''
-            <p>
-                <strong>Editors-in-chief:</strong></br>
-                {editors}
-            </p>
-            <p>
-                <strong>[TBD]Submission, Reviewing, Commenting, and Approval Workflow:</strong><br>
-                <p>Any OpenReview logged-in user may submit an article. The article submission form allows the Authors to suggest for their article one or
-                multiple Editors (from among people who have created OpenReview profiles). The article is not immediately visible to the public, but is sent
-                to the Editors-in-Chief, any of whom may perform a basic evaluation of the submission (e.g. checking for spam). If not immediately rejected
-                at this step, an Editor-in-Chief assigns one or more Editors to the article (perhaps from the authors’ suggestions, perhaps from their own choices),
-                and the article is made visible to the public. Authors may upload revisions to any part of their submission at any time. (The full history of past
-                revisions is  available through the "Show Revisions" link.)</p>
-            </p>
-            <p>
-                Assigned Editors are non-anonymous. The article Authors may revise their list of requested editors by revising their submission. The Editors-in-Chief
-                may add or remove Editors for the article at any time.
-            </p>
-            <p>
-                Reviewers are assigned to the article by any of the Editors of the article.  Any of the Editors can add (or remove) Reviewers at any time. Any logged-in
-                user can suggest additional Reviewers for this article; these suggestions are public and non-anonymous.  (Thus the public may apply social pressure on
-                the Editors for diversity of views in reviewing and commenting.) To avoid spam, only assigned Reviewers, Editors and the Editors-in-Chief can contribute
-                comments (or reviews) on the article.  Such comments are public and associated with their non-anonymous reviewers.  There are no system-enforced deadlines
-                for any of the above steps, (although social pressure may be applied out-of-band).
-            </p>
-            <p>
-                At some point, any of the Editors may contribute a meta-review, making an Approval recommendation to the Editors-in-Chief.  Any of the Editors-in-Chief may
-                 at any time add or remove the venue’s Approval from the article (indicating a kind of “acceptance” of the article).
-            </p>
-            <p>
-                For questions about editorial content and process, email the Editors-in-Chief.<br>
-                For questions about software infrastructure or profiles, email the OpenReview support team at
-                <a href="mailto:info@openreview.net">info@openreview.net</a>.
-            </p>
-            '''.format(editors=editors),
-            "deadline": "",
-            "contact": "info@openreview.net"
-        }
+        self.header['instructions'] = '''
+        <p>
+            <strong>Editors-in-chief:</strong></br>
+            {editors}
+        </p>
+        <p>
+            <strong>[TBD]Submission, Reviewing, Commenting, and Approval Workflow:</strong><br>
+            <p>Any OpenReview logged-in user may submit an article. The article submission form allows the Authors to suggest for their article one or
+            multiple Editors (from among people who have created OpenReview profiles). The article is not immediately visible to the public, but is sent
+            to the Editors-in-Chief, any of whom may perform a basic evaluation of the submission (e.g. checking for spam). If not immediately rejected
+            at this step, an Editor-in-Chief assigns one or more Editors to the article (perhaps from the authors’ suggestions, perhaps from their own choices),
+            and the article is made visible to the public. Authors may upload revisions to any part of their submission at any time. (The full history of past
+            revisions is  available through the "Show Revisions" link.)</p>
+        </p>
+        <p>
+            Assigned Editors are non-anonymous. The article Authors may revise their list of requested editors by revising their submission. The Editors-in-Chief
+            may add or remove Editors for the article at any time.
+        </p>
+        <p>
+            Reviewers are assigned to the article by any of the Editors of the article.  Any of the Editors can add (or remove) Reviewers at any time. Any logged-in
+            user can suggest additional Reviewers for this article; these suggestions are public and non-anonymous.  (Thus the public may apply social pressure on
+            the Editors for diversity of views in reviewing and commenting.) To avoid spam, only assigned Reviewers, Editors and the Editors-in-Chief can contribute
+            comments (or reviews) on the article.  Such comments are public and associated with their non-anonymous reviewers.  There are no system-enforced deadlines
+            for any of the above steps, (although social pressure may be applied out-of-band).
+        </p>
+        <p>
+            At some point, any of the Editors may contribute a meta-review, making an Approval recommendation to the Editors-in-Chief.  Any of the Editors-in-Chief may
+                at any time add or remove the venue’s Approval from the article (indicating a kind of “acceptance” of the article).
+        </p>
+        <p>
+            For questions about editorial content and process, email the Editors-in-Chief.<br>
+            For questions about software infrastructure or profiles, email the OpenReview support team at
+            <a href="mailto:info@openreview.net">info@openreview.net</a>.
+        </p>
+        '''.format(editors=editors)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.header) + ";")
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + venue_id + "/-/Author_Submission';")
             content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + venue_id + "/Submitted';")
@@ -154,7 +159,7 @@ class Journal(object):
         action_editors_id = self.get_action_editors_id()
         action_editor_group=self.client.post_group(openreview.Group(id=action_editors_id,
                         readers=['everyone'],
-                        writers=[editor_in_chief_id],
+                        writers=[venue_id],
                         signatures=[venue_id],
                         signatories=[],
                         members=[]))
@@ -163,11 +168,28 @@ class Journal(object):
             action_editor_group.web = content
             self.client.post_group(action_editor_group)
 
+        ## action editors invited group
+        self.client.post_group(openreview.Group(id=f'{action_editors_id}/Invited',
+                        readers=[venue_id],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        signatories=[],
+                        members=[]))
+
+        ## action editors declined group
+        self.client.post_group(openreview.Group(id=f'{action_editors_id}/Declined',
+                        readers=[venue_id],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        signatories=[],
+                        members=[]))
+
+
         ## reviewers group
         reviewers_id = self.get_reviewers_id()
         self.client.post_group(openreview.Group(id=reviewers_id,
                         readers=['everyone'],
-                        writers=[editor_in_chief_id],
+                        writers=[venue_id],
                         signatures=[venue_id],
                         signatories=[],
                         members=[]
@@ -238,3 +260,29 @@ class Journal(object):
                     label='Conflict'
                 )
                 self.client.post_edge(edge)
+
+    def invite_action_editors(self, message, subject, invitees, invitee_names=None):
+
+        action_editors_id = self.get_action_editors_id()
+        action_editors_declined_id = action_editors_id + '/Declined'
+        action_editors_invited_id = action_editors_id + '/Invited'
+        hash_seed = secrets.token_hex(16)
+
+        invitation = self.invitation_builder.set_ae_recruitment_invitation(self, hash_seed, self.header)
+
+        for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
+            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=action_editors_id)] if tools.get_group(self.client, invitee) else []
+            if action_editors_invited_id not in memberships:
+                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
+                if not name:
+                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
+                tools.recruit_reviewer(self.client, invitee, name,
+                    hash_seed,
+                    invitation['invitation']['id'],
+                    message,
+                    subject,
+                    action_editors_invited_id,
+                    verbose = False)
+
+        return self.client.get_group(id = action_editors_invited_id)
+

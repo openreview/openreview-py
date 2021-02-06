@@ -5,6 +5,7 @@ import json
 import datetime
 import random
 import os
+import re
 
 class TestJournal():
 
@@ -40,11 +41,24 @@ class TestJournal():
 
         journal.setup(editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
-    def test_invite_action_editors(self, journal):
+    def test_invite_action_editors(self, journal, client, request_page, selenium):
 
+        res=journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        assert res.id == '.TMLR/AEs/Invited'
+        assert res.members == ['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
-        journal.set_action_editors(editors=['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'], custom_papers=[5, 6, 4, 6, 6, 6, 6, 3])
+        messages = client.get_messages(subject = 'Invitation to be an Action Editor')
+        assert len(messages) == 8
 
+        messages = client.get_messages(subject = 'Invitation to be an Action Editor', to='joelle@mail.com')
+        assert len(messages) == 1
+        text = messages[0]['content']['text']
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+
+        group = client.get_group('.TMLR/AEs')
+        assert len(group.members) == 1
+        assert '~Joelle_Pineau1' in group.members
 
     def test_invite_reviewers(self, journal):
 

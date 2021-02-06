@@ -136,6 +136,7 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.Invitation(id=f'{paper_group_id}/-/Release_Review',
+                bulk=True,
                 invitees=[venue_id],
                 readers=['everyone'],
                 writers=[venue_id],

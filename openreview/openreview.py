@@ -281,6 +281,20 @@ class Client(object):
         else:
             raise OpenReviewException('Edge not found')
 
+    def get_edit(self, id):
+        """
+        Get a single Edge by id if available
+
+        :param id: id of the Edge
+        :type id: str
+
+        return: Edge object with its information
+        :rtype: Edge
+        """
+        response = requests.get(self.edits_url, params = {'id': id}, headers = self.headers)
+        response = self.__handle_response(response)
+        return Edit.from_json(response.json())
+
     def get_profile(self, email_or_id = None):
         """
         Get a single Profile by id, if available
@@ -1757,6 +1771,8 @@ class Invitation(object):
     :type nonreaders: list[str], optional
     :param web: Path to a file containing a webfield
     :type web: str, optional
+    :param web_string: String containing the webfield
+    :type web_string: str, optional
     :param process: Path to a file containing the process function
     :type process: str, optional
     :param process_string: String containing the process function
@@ -1794,6 +1810,7 @@ class Invitation(object):
         noninvitees = None,
         nonreaders = None,
         web = None,
+        web_string = None,
         process = None,
         process_string = None,
         duedate = None,
@@ -1805,6 +1822,7 @@ class Invitation(object):
         multiReply = None,
         taskCompletionCount = None,
         transform = None,
+        bulk = None,
         details = None):
 
         self.id = id
@@ -1825,6 +1843,7 @@ class Invitation(object):
         self.edit = edit
         self.tcdate = tcdate
         self.tmdate = tmdate
+        self.bulk = bulk
         self.details = details
         self.web = None
         self.process = None
@@ -1840,6 +1859,8 @@ class Invitation(object):
                 self.transform = f.read()
         if process_string:
             self.process = process_string
+        if web_string:
+            self.web = web_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1878,6 +1899,7 @@ class Invitation(object):
             'process': self.process,
             'web': self.web,
             'transform': self.transform,
+            'bulk': self.bulk,
             'details': self.details
         }
 
