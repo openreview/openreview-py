@@ -56,6 +56,8 @@ class TestJournal():
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
+        helpers.await_queue()
+
         group = client.get_group('.TMLR/AEs')
         assert len(group.members) == 1
         assert '~Joelle_Pineau1' in group.members
@@ -73,6 +75,8 @@ class TestJournal():
             text = message['content']['text']
             accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
             request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue()
 
         group = client.get_group('.TMLR/Reviewers')
         assert len(group.members) == 5
