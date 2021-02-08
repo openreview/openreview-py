@@ -292,7 +292,7 @@ class Journal(object):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                tools.recruit_reviewer(self.client, invitee, name,
+                r=tools.recruit_reviewer(self.client, invitee, name,
                     hash_seed,
                     invitation['invitation']['id'],
                     message,
@@ -317,7 +317,7 @@ class Journal(object):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                tools.recruit_reviewer(self.client, invitee, name,
+                r=tools.recruit_reviewer(self.client, invitee, name,
                     hash_seed,
                     invitation['invitation']['id'],
                     message,

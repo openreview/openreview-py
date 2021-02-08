@@ -46,7 +46,7 @@ class InvitationBuilder(object):
                             'writers': { 'values': []},
                             'note': {
                                 #'signatures': { 'values': ['${note.content.user.value}'] },
-                                'signatures': { 'values-regex': '\\(anonymous\\)' },
+                                'signatures': { 'values': ['${signatures}'] },
                                 # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
                                 'readers': { 'values': [venue_id] },
                                 'writers': { 'values': []},
@@ -88,7 +88,6 @@ class InvitationBuilder(object):
                         web_string=webfield_content
                     )
                 )
-                print(invitation)
                 return invitation
 
     def set_reviewer_recruitment_invitation(self, journal, hash_seed, header):
@@ -127,7 +126,7 @@ class InvitationBuilder(object):
                             'writers': { 'values': []},
                             'note': {
                                 #'signatures': { 'values': ['${note.content.user.value}'] },
-                                'signatures': { 'values-regex': '\\(anonymous\\)' },
+                                'signatures': { 'values': ['${signatures}'] },
                                 # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
                                 'readers': { 'values': [venue_id] },
                                 'writers': { 'values': []},

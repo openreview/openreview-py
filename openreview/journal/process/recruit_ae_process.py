@@ -8,15 +8,22 @@ def process(client, note, invitation):
     ACTION_EDITOR_DECLINED_ID = ''
     HASH_SEED = ''
 
-    #note=edit.note
-    #user = urllib.parse.unquote(note.content['user']['value'])
-    user = urllib.parse.unquote(note.content['user'])
+    if hasattr(note, 'note'):
+        note=edit.note
+        user=note.content['user']['value']
+        key=note.content['key']['value']
+        response=note.content['response']['value']
+    else:
+        user=note.content['user']
+        key=note.content['key']
+        response=note.content['response']
+
+    user = urllib.parse.unquote(user)
 
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
 
-    #if (hashkey == note.content['key']['value'] and client.get_groups(regex=ACTION_EDITOR_INVITED_ID, member=user)):
-    if (hashkey == note.content['key'] and client.get_groups(regex=ACTION_EDITOR_INVITED_ID, member=user)):
-        if (note.content['response'] == 'Yes'):
+    if (hashkey == key and client.get_groups(regex=ACTION_EDITOR_INVITED_ID, member=user)):
+        if (response == 'Yes'):
             client.remove_members_from_group(ACTION_EDITOR_DECLINED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_ACCEPTED_ID, user)
 
@@ -28,7 +35,7 @@ If you would like to change your decision, please click the Decline link in the 
 
             return client.post_message(subject, [user], message, parentGroup=ACTION_EDITOR_ACCEPTED_ID)
 
-        if (note.content['response'] == 'No'):
+        if (response == 'No'):
             client.remove_members_from_group(ACTION_EDITOR_ACCEPTED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_DECLINED_ID, user)
 
