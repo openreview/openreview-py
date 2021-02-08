@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, super_user='OpenReview.net'):
+    def __init__(self, client, venue_id, secret_key):
 
         self.client=client
         self.venue_id=venue_id
@@ -286,14 +286,16 @@ class Journal(object):
         hash_seed = self.secret_key
 
         invitation = self.invitation_builder.set_ae_recruitment_invitation(self, hash_seed, self.header)
+        invited_members = self.client.get_group(action_editors_invited_id).members
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=action_editors_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
-            if action_editors_invited_id not in memberships:
+            profile=openreview.tools.get_profile(self.client, invitee)
+            profile_invitee = profile.id if profile else invitee
+            if profile_invitee not in invited_members:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, invitee, name,
+                r=tools.recruit_reviewer(self.client, profile_invitee, name,
                     hash_seed,
                     invitation['invitation']['id'],
                     message,
@@ -311,14 +313,17 @@ class Journal(object):
         hash_seed = self.secret_key
 
         invitation = self.invitation_builder.set_reviewer_recruitment_invitation(self, hash_seed, self.header)
+        invited_members = self.client.get_group(reviewers_invited_id).members
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
-            if reviewers_invited_id not in memberships:
+            profile=openreview.tools.get_profile(self.client, invitee)
+            profile_invitee = profile.id if profile else invitee
+            if profile_invitee not in invited_members:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, invitee, name,
+                r=tools.recruit_reviewer(self.client, profile_invitee, name,
                     hash_seed,
                     invitation['invitation']['id'],
                     message,

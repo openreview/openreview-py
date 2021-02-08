@@ -14,7 +14,7 @@ class TestJournal():
     def journal(self):
         venue_id = '.TMLR'
         fabian_client=openreview.Client(username='fabian@mail.com', password='1234')
-        journal=openreview.journal.Journal(fabian_client, venue_id, '1234', super_user='openreview.net')
+        journal=openreview.journal.Journal(fabian_client, venue_id, '1234')
         return journal
 
     def test_setup(self, client, helpers):
@@ -45,17 +45,17 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
-        journal=openreview.journal.Journal(client, venue_id, '1234', super_user='openreview.net')
+        journal=openreview.journal.Journal(client, venue_id, '1234')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
     def test_invite_action_editors(self, journal, client, request_page, selenium, helpers):
 
-        res=journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        res=journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['user@mail.com', 'joelle@mail.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
         assert res.id == '.TMLR/AEs/Invited'
-        assert res.members == ['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
+        assert res.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
         messages = client.get_messages(subject = 'Invitation to be an Action Editor')
-        assert len(messages) == 8
+        assert len(messages) == 9
 
         messages = client.get_messages(subject = 'Invitation to be an Action Editor', to='joelle@mail.com')
         assert len(messages) == 1
