@@ -290,12 +290,12 @@ class Journal(object):
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
             profile=openreview.tools.get_profile(self.client, invitee)
-            profile_invitee = profile.id if profile else invitee
-            if profile_invitee not in invited_members:
+            invitee = profile.id if profile else invitee
+            if invitee not in invited_members:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, profile_invitee, name,
+                r=tools.recruit_reviewer(self.client, invitee, name,
                     hash_seed,
                     invitation['invitation']['id'],
                     message,
@@ -318,12 +318,12 @@ class Journal(object):
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
             profile=openreview.tools.get_profile(self.client, invitee)
-            profile_invitee = profile.id if profile else invitee
-            if profile_invitee not in invited_members:
+            invitee = profile.id if profile else invitee
+            if invitee not in invited_members:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, profile_invitee, name,
+                r=tools.recruit_reviewer(self.client, invitee, name,
                     hash_seed,
                     invitation['invitation']['id'],
                     message,
