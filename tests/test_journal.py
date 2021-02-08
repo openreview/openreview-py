@@ -13,7 +13,7 @@ class TestJournal():
     @pytest.fixture(scope="class")
     def journal(self, client):
         venue_id = '.TMLR'
-        journal=openreview.journal.Journal(client, venue_id, super_user='openreview.net')
+        journal=openreview.journal.Journal(client, venue_id, '1234', super_user='openreview.net')
         return journal
 
     def test_setup(self, journal, client, helpers):

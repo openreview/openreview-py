@@ -46,6 +46,6 @@ If you would like to change your decision, please click the Accept link in the p
 
 '''.format(ACTION_EDITOR_NAME=ACTION_EDITOR_NAME, SHORT_PHRASE=SHORT_PHRASE)
 
-            return client.post_message(subject, [user], message, parentGroup=REVIEWERS_DECLINED_ID)
+            return client.post_message(subject, [user], message, parentGroup=ACTION_EDITOR_DECLINED_ID)
     else:
         raise OpenReviewException(f'Invalid key or user no invited {user}')

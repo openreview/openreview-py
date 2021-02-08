@@ -11,10 +11,11 @@ from tqdm import tqdm
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, super_user):
+    def __init__(self, client, venue_id, secret_key, super_user='OpenReview.net'):
 
         self.client=client
         self.venue_id=venue_id
+        self.secret_key=secret_key
         self.editors_in_chief_name = 'EIC'
         self.action_editors_name = 'AEs'
         self.reviewers_name = 'Reviewers'
@@ -282,7 +283,7 @@ class Journal(object):
         action_editors_id = self.get_action_editors_id()
         action_editors_declined_id = action_editors_id + '/Declined'
         action_editors_invited_id = action_editors_id + '/Invited'
-        hash_seed = secrets.token_hex(16)
+        hash_seed = self.secret_key
 
         invitation = self.invitation_builder.set_ae_recruitment_invitation(self, hash_seed, self.header)
 
@@ -307,7 +308,7 @@ class Journal(object):
         reviewers_id = self.get_reviewers_id()
         reviewers_declined_id = reviewers_id + '/Declined'
         reviewers_invited_id = reviewers_id + '/Invited'
-        hash_seed = secrets.token_hex(16)
+        hash_seed = self.secret_key
 
         invitation = self.invitation_builder.set_reviewer_recruitment_invitation(self, hash_seed, self.header)
 
