@@ -664,6 +664,13 @@ class TestDoubleBlindConference():
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('other%40mail.com', 'secondother%40mail.com')
         request_page(selenium, accept_url, alert=True)
 
+        helpers.await_queue()
+
+        logs = client.get_process_logs()
+        assert logs
+        assert logs[0]['status'] == 'error'
+        assert logs[0]['error'] == 'Error: openreview.openreview.OpenReviewException: Invalid key or user not in invited group'
+
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
         assert group
         assert len(group.members) == 0
