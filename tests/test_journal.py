@@ -41,7 +41,7 @@ class TestJournal():
 
         journal.setup(editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
-    def test_invite_action_editors(self, journal, client, request_page, selenium):
+    def test_invite_action_editors(self, journal, client, request_page, selenium, helpers):
 
         res=journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
         assert res.id == '.TMLR/AEs/Invited'
@@ -62,7 +62,7 @@ class TestJournal():
         assert len(group.members) == 1
         assert '~Joelle_Pineau1' in group.members
 
-    def test_invite_reviewers(self, journal, client, request_page, selenium):
+    def test_invite_reviewers(self, journal, client, request_page, selenium, helpers):
 
         res=journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         assert res.id == '.TMLR/Reviewers/Invited'
