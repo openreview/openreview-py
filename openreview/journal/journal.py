@@ -51,8 +51,8 @@ class Journal(object):
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
 
-    def setup(self, editors=[]):
-        self.setup_groups(editors)
+    def setup(self, support_role, editors=[]):
+        self.setup_groups(support_role, editors)
         self.invitation_builder.set_submission_invitation(self)
         self.invitation_builder.set_ae_custom_papers_invitation(self)
 
@@ -80,7 +80,7 @@ class Journal(object):
     def get_reviewers(self):
         return self.client.get_group(self.get_reviewers_id()).members
 
-    def setup_groups(self, editors):
+    def setup_groups(self, support_role, editors):
         venue_id=self.venue_id
         editor_in_chief_id=self.get_editors_in_chief_id()
         ## venue group
@@ -89,7 +89,7 @@ class Journal(object):
                         writers=[venue_id],
                         signatures=['~Super_User1'],
                         signatories=[venue_id],
-                        members=[editor_in_chief_id]
+                        members=[editor_in_chief_id, support_role]
                         ))
 
         self.client.add_members_to_group('host', venue_id)
@@ -99,7 +99,7 @@ class Journal(object):
                         readers=['everyone'],
                         writers=[editor_in_chief_id],
                         signatures=[venue_id],
-                        signatories=[editor_in_chief_id],
+                        signatories=[editor_in_chief_id, venue_id],
                         members=editors
                         ))
 
@@ -162,7 +162,7 @@ class Journal(object):
                         readers=['everyone'],
                         writers=[venue_id],
                         signatures=[venue_id],
-                        signatories=[],
+                        signatories=[venue_id],
                         members=[]))
         with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
             content = f.read()
@@ -192,7 +192,7 @@ class Journal(object):
                         readers=[venue_id, action_editors_id],
                         writers=[venue_id],
                         signatures=[venue_id],
-                        signatories=[],
+                        signatories=[venue_id],
                         members=[]
                         ))
         ## TODO: add webfield console
@@ -288,7 +288,7 @@ class Journal(object):
         invitation = self.invitation_builder.set_ae_recruitment_invitation(self, hash_seed, self.header)
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=action_editors_id)] if tools.get_group(self.client, invitee) else []
+            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=action_editors_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
             if action_editors_invited_id not in memberships:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
@@ -313,7 +313,7 @@ class Journal(object):
         invitation = self.invitation_builder.set_reviewer_recruitment_invitation(self, hash_seed, self.header)
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if tools.get_group(self.client, invitee) else []
+            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
             if reviewers_invited_id not in memberships:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:

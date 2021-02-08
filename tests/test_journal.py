@@ -11,12 +11,18 @@ class TestJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, client):
+    def journal(self):
         venue_id = '.TMLR'
-        journal=openreview.journal.Journal(client, venue_id, '1234', super_user='openreview.net')
+        fabian_client=openreview.Client(username='fabian@mail.com', password='1234')
+        journal=openreview.journal.Journal(fabian_client, venue_id, '1234', super_user='openreview.net')
         return journal
 
-    def test_setup(self, journal, client, helpers):
+    def test_setup(self, client, helpers):
+
+        venue_id = '.TMLR'
+
+        ## Support Role
+        helpers.create_user('fabian@mail.com', 'Fabian', 'Pedregosa')
 
         ## Editors in Chief
         helpers.create_user('raia@mail.com', 'Raia', 'Hadsell')
@@ -39,7 +45,8 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
-        journal.setup(editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
+        journal=openreview.journal.Journal(client, venue_id, '1234', super_user='openreview.net')
+        journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
     def test_invite_action_editors(self, journal, client, request_page, selenium, helpers):
 
