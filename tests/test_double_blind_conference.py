@@ -655,6 +655,31 @@ class TestDoubleBlindConference():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == 'It seems like you already accepted an invitation to serve as a Reviewer for AKBC 2019. If you would like to change your decision and serve as a Area Chair, please click the Decline link in the Reviewer invitation email and click the Accept link in the Area Chair invitation email.'
 
+        messages = client.get_messages(to = 'other@mail.com', subject = '[AKBC 2019]: Invitation to serve as Area Chair')
+        text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of AKBC 2019' in text
+
+        # accept invitation with invalid user keeps group same
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('other%40mail.com', 'secondother%40mail.com')
+        request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue()
+
+        logs = client.get_process_logs()
+        assert logs
+        assert logs[0]['status'] == 'error'
+        assert logs[0]['error'] == 'Error: openreview.openreview.OpenReviewException: Invalid key or user not in invited group'
+
+        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
+        assert group
+        assert len(group.members) == 0
+
+        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Declined')
+        assert group
+        assert len(group.members) == 1
+        assert 'mbok@mail.com' in group.members
+
     def test_set_program_chairs(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
