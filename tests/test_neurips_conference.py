@@ -16,77 +16,6 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestNeurIPSConference():
 
-    # @pytest.fixture(scope="class")
-    # def conference(self, client):
-    #     now = datetime.datetime.utcnow()
-    #     builder = openreview.conference.ConferenceBuilder(client)
-    #     assert builder, 'builder is None'
-
-    #     builder.set_conference_id('NeurIPS.cc/2021/Conference')
-    #     builder.set_conference_short_name('NeurIPS 2021')
-    #     builder.has_area_chairs(True)
-    #     builder.set_homepage_header({
-    #         'title': 'Conference on Neural Information Processing Systems',
-    #         'subtitle': 'NeurIPS 2021',
-    #         'deadline': '',
-    #         'date': 'Dec 04 2021',
-    #         'website': 'https://neurips.cc',
-    #         'location': 'Online',
-    #         'instructions': '',
-    #         'contact': 'pc@neurips.cc'
-    #     })
-
-    #     builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
-    #     builder.set_submission_stage(double_blind = True,
-    #         public = True,
-    #         due_date = now + datetime.timedelta(minutes = 10),
-    #         second_due_date = now + datetime.timedelta(minutes = 20),
-    #         withdrawn_submission_public=True,
-    #         withdrawn_submission_reveal_authors=True,
-    #         email_pcs_on_withdraw=False,
-    #         desk_rejected_submission_public=True,
-    #         desk_rejected_submission_reveal_authors=True,
-    #         additional_fields={
-    #             "one-sentence_summary": {
-    #                 "description": "A short sentence describing your paper.",
-    #                 "order": 5,
-    #                 "value-regex": "[^\n]{0,250}",
-    #                 "required": False
-    #             },
-    #             "pdf": {
-    #                 "description": "Upload a PDF file that ends with .pdf. The maximum file size is 50MB. Note: optional before the abstract submission deadline.",
-    #                 "order": 9,
-    #                 "value-file": {
-    #                     "fileTypes": [
-    #                         "pdf"
-    #                     ],
-    #                     "size": 50
-    #                 },
-    #                 "required": False
-    #             },
-    #             "supplementary_material": {
-    #                 "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-    #                 "order": 10,
-    #                 "value-file": {
-    #                     "fileTypes": [
-    #                         "zip"
-    #                     ],
-    #                     "size": 100
-    #                 },
-    #                 "required": False
-    #             },
-    #             "code_of_ethics": {
-    #                 "description": "See the ICLR Code of Ethics: https://iclr.cc/public/CodeOfEthics",
-    #                 "order": 16,
-    #                 "value-checkbox": "I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics",
-    #                 "required": True
-    #             }
-    #         })
-
-    #     conference = builder.get_result()
-    #     conference.set_program_chairs(['pc@iclr.cc'])
-    #     return conference
-
     def test_create_conference(self, client, helpers):
 
         now = datetime.datetime.utcnow()
@@ -140,6 +69,55 @@ class TestNeurIPSConference():
         helpers.await_queue()
 
         assert client.get_group('NeurIPS.cc/2021/Conference')
+
+    def test_recruit_senior_area_chairs(self, client, selenium, request_page, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # Test Reviewer Recruitment
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token)
+        recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
+        assert recruitment_div
+        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        assert reply_row
+        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        assert [btn for btn in buttons if btn.text == 'Recruitment']
+
+        reviewer_details = '''sac1@neurips.cc, SAC One\nsac2@neurips.cc, SAC Two'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'senior area chair',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number)
+
+        messages = client.get_messages(to='sac1@neurips.cc')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
+        assert messages[0]['content']['text'].startswith('Dear SAC One,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+
+        messages = client.get_messages(to='sac2@neurips.cc')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
+        assert messages[0]['content']['text'].startswith('Dear SAC Two,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+
 
 #     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
