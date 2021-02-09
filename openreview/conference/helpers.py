@@ -94,17 +94,6 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
 
-    if submission_second_due_date:
-        submission_additional_options['pdf'] = {
-            'description': 'Upload a PDF file that ends with .pdf',
-                'order': 9,
-                'value-file': {
-                    'fileTypes': ['pdf'],
-                    'size': 50
-                },
-                'required':False
-        }
-
     submission_remove_options = note.content.get('remove_submission_options', [])
     withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
     email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')

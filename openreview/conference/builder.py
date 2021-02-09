@@ -1297,6 +1297,9 @@ class SubmissionStage(object):
             value['order'] = order
             content[key] = value
 
+        if self.second_due_date and 'pdf' in content:
+            content['pdf']['required'] = False
+
         return content
 
 class ExpertiseSelectionStage(object):
