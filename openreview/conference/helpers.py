@@ -42,15 +42,24 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         submission_start_date = None
 
     submission_due_date_str = 'TBD'
-    submission_due_date = note.content.get('Submission Deadline', '').strip()
-    if submission_due_date:
+    submission_second_due_date = note.content.get('Submission Deadline', '').strip()
+    if submission_second_due_date:
         try:
-            submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
         except ValueError:
-            submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
-        submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
+        submission_due_date = note.content.get('Abstract Registration Deadline', '').strip()
+        if submission_due_date:
+            try:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
+            submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
+        else:
+            submission_due_date = submission_second_due_date
+            submission_second_due_date = None
     else:
-        submission_due_date = None
+        submission_second_due_date = submission_due_date = None
 
     builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
     builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
@@ -85,6 +94,17 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if isinstance(submission_additional_options, str):
         submission_additional_options = json.loads(submission_additional_options.strip())
 
+    if submission_second_due_date:
+        submission_additional_options['pdf'] = {
+            'description': 'Upload a PDF file that ends with .pdf',
+                'order': 9,
+                'value-file': {
+                    'fileTypes': ['pdf'],
+                    'size': 50
+                },
+                'required':False
+        }
+
     submission_remove_options = note.content.get('remove_submission_options', [])
     withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
     email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')
@@ -105,6 +125,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         public=public,
         start_date=submission_start_date,
         due_date=submission_due_date,
+        second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
         email_pcs=False, ## Need to add this setting to the form
