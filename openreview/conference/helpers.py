@@ -77,6 +77,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
         builder.has_area_chairs(True)
 
+    if note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs':
+        builder.has_senior_area_chairs(True)
+
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
     public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])

@@ -30,12 +30,12 @@ You can use the following links to access the venue:
 - Venue home page: {baseurl}/group?id={conference_id}
 - Venue Program Chairs console: {baseurl}/group?id={program_chairs_id}
 
-If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.  
+If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
 If you have any questions, please refer to our FAQ: https://openreview.net/faq
 
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
 
-Best,  
+Best,
 The OpenReview Team
             '''.format(baseurl = FRONTEND_URL, noteId = forum.id, conference_id = conference.get_id(), program_chairs_id = conference.get_program_chairs_id())
         }
@@ -187,9 +187,12 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
         recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
         remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
+        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
+            recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+            remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
 
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
@@ -295,7 +298,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1']
     ))
 
-    if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
         client.post_invitation(openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Meta_Review_Stage',
             super = SUPPORT_GROUP + '/-/Meta_Review_Stage',
