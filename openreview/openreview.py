@@ -53,7 +53,8 @@ class Client(object):
         self.process_logs_url = self.baseurl + '/logs/process'
         self.jobs_status = self.baseurl + '/jobs/status'
         self.venues_url = self.baseurl + '/venues'
-        self.edits_url = self.baseurl + '/edits'
+        self.note_edits_url = self.baseurl + '/notes/edits'
+        self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.token = token
@@ -280,20 +281,6 @@ class Client(object):
             return Edge.from_json(edges[0])
         else:
             raise OpenReviewException('Edge not found')
-
-    def get_edit(self, id):
-        """
-        Get a single Edge by id if available
-
-        :param id: id of the Edge
-        :type id: str
-
-        return: Edge object with its information
-        :rtype: Edge
-        """
-        response = requests.get(self.edits_url, params = {'id': id}, headers = self.headers)
-        response = self.__handle_response(response)
-        return Edit.from_json(response.json())
 
     def get_profile(self, email_or_id = None):
         """
@@ -1417,7 +1404,7 @@ class Client(object):
             'invitation': invitation.to_json()
         }
 
-        response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
+        response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1431,25 +1418,10 @@ class Client(object):
             'note': note.to_json() if note else {}
         }
 
-        response = requests.post(self.edits_url, json = edit_json, headers = self.headers)
+        response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
-
-    def post_edit(self, edit):
-        """
-        Posts an Edit
-
-        :param edit: Edit to be posted
-        :type edit: Edit
-
-        :return: The posted Edit
-        :rtype: Edit
-        """
-        response = requests.post(self.edits_url, json = edit.to_json(), headers = self.headers)
-        response = self.__handle_response(response)
-
-        return Edit.from_json(response.json())
 
     def get_jobs_status(self):
         """
