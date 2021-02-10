@@ -31,9 +31,9 @@ var bidsById = {
 var sections = [];
 
 var paperDisplayOptions = {
-  pdfLink: true,
-  replyCount: true,
-  showContents: true,
+  pdfLink: false,
+  replyCount: false,
+  showContents: false,
   showTags: false,
   showEdges: true,
   edgeInvitations: [invitation], // Bid invitation automatically available
@@ -55,6 +55,24 @@ function main() {
   Webfield.ui.spinner('#notes', { inline: true });
 
   load().then(renderContent).then(Webfield.ui.done);
+}
+
+function getProfileNote(profile) {
+  var position = _.upperFirst(_.get(profile.content.history, '[0].position', '')).trim()
+  var institutionName = _.get(profile.content.history, '[0].institution.name', '').trim()
+  var institutionDomain = _.get(profile.content.history, '[0].institution.domain', '').trim()
+  var institution = institutionDomain
+    ? institutionName + ' (' + institutionDomain + ')'
+    : institutionName
+  const separator = position && institution ? ' at ' : ''
+  return {
+    id: profile.id,
+    forum: profile.id,
+    content: {
+      title: profile.id + ', ' + position + separator + institution,
+      expertise: _.flatMap(profile.content.expertise, function(entry) { return entry.keywords; })
+    }
+  }
 }
 
 function getPapersSortedByAffinity(offset) {
@@ -80,34 +98,29 @@ function getPapersSortedByAffinity(offset) {
         })
         .then(function(result) {
           // Keep affinity score order
-          return result.profiles.map(function(profile) {
-            var edge = edgesByHead[profile.id];
+          var notesById = _.keyBy(result.profiles.map(function(profile) { return getProfileNote(profile); }), function(note) {
+            return note.id;
+          });
+          return noteIds
+          .map(function(id) {
+            var note = notesById[id];
+            var edge = edgesByHead[id];
             //to render the edge widget correctly
             edge.signatures = [];
-            return {
-              id: profile.id,
-              forum: profile.id,
-              content: {
-                title: profile.id,
-                abstract: 'institution detail'
-              },
-              details: {
-                edges: [edge]
-              }
+            note.details = {
+              edges: [edge]
             }
+            return note;
           });
         });
       } else {
-        return Webfield.get('/notes', {
-          invitation: BLIND_SUBMISSION_ID,
-          details: 'invitation',
-          offset: offset,
-          limit: 50
+        return Webfield.get('/profiles', {
+          group: PROFILE_GROUP_ID
         })
         .then(function(result) {
           noteCount = result.count;
-          return result.notes;
-        });
+          return result.profiles.map(function(profile) { return getProfileNote(profile); });
+        })
       }
     });
   } else {
@@ -116,27 +129,18 @@ function getPapersSortedByAffinity(offset) {
     })
     .then(function(result) {
       noteCount = result.count;
-      return result.profiles.map(function(profile){
-        return {
-          id: profile.id,
-          forum: profile.id,
-          content: {
-            title: profile.id,
-            abstract: 'institution detail'
-          }
-        }
-      })
+      return result.profiles.map(function(profile) { return getProfileNote(profile); });
     })
   }
 }
 
 function getPapersByBids(bids, bidsByNote) {
 
-  return Webfield.post('/notes/search', {
+  return Webfield.post('/profiles/search', {
     ids: bids.map(function(bid) { return bid.head; })
   })
   .then(function(result) {
-    return addEdgesToNotes(result.notes, bidsByNote);
+    return addEdgesToNotes(result.profiles.map(function(profile) { return getProfileNote(profile); }), bidsByNote);
   });
 }
 

@@ -26,9 +26,9 @@ class TestNeurIPSConference():
 
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
         helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair')
-        helpers.create_user('ac1@mit.edu', 'Area', 'NeurIPSChair')
-        helpers.create_user('ac2@gmail.com', 'Area', 'NeurIPSChair', institution='google.com')
-        helpers.create_user('ac3@umass.edu', 'Area', 'NeurIPSChair')
+        helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
+        helpers.create_user('ac2@gmail.com', 'Area', 'GoogleChair', institution='google.com')
+        helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
 
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -135,7 +135,7 @@ class TestNeurIPSConference():
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_NeurIPSChair1', '~Area_NeurIPSChair2', '~Area_NeurIPSChair3'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
 
     def test_sac_bidding(self, client, helpers):
 
@@ -150,7 +150,7 @@ class TestNeurIPSConference():
 
         edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Conflict')
         assert len(edges) == 1
-        assert edges[0].head == '~Area_NeurIPSChair2'
+        assert edges[0].head == '~Area_GoogleChair1'
         assert edges[0].tail == '~SeniorArea_GoogleChair1'
 
         edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
