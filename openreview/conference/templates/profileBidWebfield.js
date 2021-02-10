@@ -75,28 +75,26 @@ function getPapersSortedByAffinity(offset) {
         });
         var noteIds = Object.keys(edgesByHead);
 
-        return Webfield.post('/notes/search', {
+        return Webfield.post('/profiles/search', {
           ids: noteIds
         })
         .then(function(result) {
           // Keep affinity score order
-          var notesById = _.keyBy(result.notes, function(note) {
-            return note.id;
-          });
-          return noteIds.filter(function(id) {
-            if (notesById[id] && notesById[id].invitation === BLIND_SUBMISSION_ID) {
-              return notesById[id];
-            }
-          })
-          .map(function(id) {
-            var note = notesById[id];
-            var edge = edgesByHead[id];
+          return result.profiles.map(function(profile) {
+            var edge = edgesByHead[profile.id];
             //to render the edge widget correctly
             edge.signatures = [];
-            note.details = {
-              edges: [edge]
+            return {
+              id: profile.id,
+              forum: profile.id,
+              content: {
+                title: profile.id,
+                abstract: 'institution detail'
+              },
+              details: {
+                edges: [edge]
+              }
             }
-            return note;
           });
         });
       } else {

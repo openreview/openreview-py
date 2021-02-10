@@ -10,12 +10,12 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 
 class Helpers:
     @staticmethod
-    def create_user(email, first, last, alternates=[]):
+    def create_user(email, first, last, alternates=[], institution=None):
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
         assert res, "Res i none"
-        res = client.activate_user(email, {
+        profile_content={
             'names': [
                     {
                         'first': first,
@@ -25,7 +25,17 @@ class Helpers:
                 ],
             'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
-            })
+        }
+        if institution:
+            profile_content['history'] = [{
+                'position': 'PhD Student',
+                'start': 2017,
+                'end': None,
+                'institution': {
+                    'domain': institution
+                }
+            }]
+        res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
 

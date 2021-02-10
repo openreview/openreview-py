@@ -81,7 +81,9 @@ class Matching(object):
         self.client = conference.client
         self.match_group = match_group
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
-        self.should_read_by_area_chair = not self.is_area_chair and conference.has_area_chairs
+        self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
+        self.should_read_by_area_chair = not self.is_senior_area_chair and not self.is_area_chair and conference.has_area_chairs
+
 
     def _get_edge_invitation_id(self, edge_name):
         '''
@@ -119,6 +121,11 @@ class Matching(object):
             edge_head_type = 'Group'
             edge_head_query = {
                 'id' : edge_id.split('/-/')[0]
+            }
+        if self.is_senior_area_chair:
+            edge_head_type = 'Profile'
+            edge_head_query = {
+                'group' : self.conference.get_area_chairs_id()
             }
 
         invitation = openreview.Invitation(
@@ -163,6 +170,13 @@ class Matching(object):
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles):
+        if self.is_senior_area_chair:
+            ac_group = self.client.get_group(self.conference.get_area_chairs_id())
+            ac_profiles = _get_profiles(self.client, ac_group.members)
+            return self._build_profile_conflicts(ac_profiles, user_profiles)
+        return self._build_note_conflicts(submissions, user_profiles)
+
+    def _build_note_conflicts(self, submissions, user_profiles):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
@@ -201,6 +215,48 @@ class Matching(object):
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=submission.id,
+                        tail=user_info['id'],
+                        weight=-1,
+                        label='Conflict',
+                        readers=self._get_edge_readers(tail=user_info['id']),
+                        writers=[self.conference.id],
+                        signatures=[self.conference.id]
+                    ))
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation.id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+        return invitation
+
+    def _build_profile_conflicts(self, head_profiles, user_profiles):
+        '''
+        Create conflict edges between the given Profiles and Profiles
+        '''
+        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
+        # Get profile info from the match group
+        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
+        head_profiles_info = [openreview.tools.get_profile_info(p) for p in head_profiles]
+
+        edges = []
+
+        for head_profile_info in tqdm(head_profiles_info, total=len(head_profiles_info), desc='_build_profile_conflicts'):
+
+            print('head', head_profile_info)
+            # Compute conflicts for each user and all the paper authors
+            for user_info in user_profiles_info:
+                print('tail', user_info)
+                conflicts = set()
+                conflicts.update(head_profile_info['domains'].intersection(user_info['domains']))
+                conflicts.update(head_profile_info['relations'].intersection(user_info['emails']))
+                conflicts.update(head_profile_info['emails'].intersection(user_info['relations']))
+                conflicts.update(head_profile_info['emails'].intersection(user_info['emails']))
+                if conflicts:
+                    edges.append(openreview.Edge(
+                        invitation=invitation.id,
+                        head=head_profile_info['id'],
                         tail=user_info['id'],
                         weight=-1,
                         label='Conflict',
@@ -262,6 +318,11 @@ class Matching(object):
         return invitation
 
     def _build_scores(self, score_invitation_id, score_file, submissions):
+        if self.is_senior_area_chair:
+            return self._build_profile_scores(score_invitation_id, score_file)
+        return self._build_note_scores(score_invitation_id, score_file, submissions)
+
+    def _build_note_scores(self, score_invitation_id, score_file, submissions):
         '''
         Given a csv file with affinity scores, create score edges
         '''
@@ -292,6 +353,31 @@ class Matching(object):
                     deleted_papers.add(paper_note_id)
 
         print('deleted papers', deleted_papers)
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation.id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
+        return invitation
+
+    def _build_profile_scores(self, score_invitation_id, score_file):
+        '''
+        Given a csv file with affinity scores, create score edges
+        '''
+        invitation = self._create_edge_invitation(score_invitation_id)
+        edges = []
+        with open(score_file) as file_handle:
+            for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
+                edges.append(openreview.Edge(
+                    invitation=invitation.id,
+                    head=row[0],
+                    tail=row[1],
+                    weight=float(row[2]),
+                    readers=self._get_edge_readers(tail=row[1]),
+                    writers=[self.conference.id],
+                    signatures=[self.conference.id]
+                ))
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check

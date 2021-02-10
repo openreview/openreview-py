@@ -867,12 +867,10 @@ class Conference(object):
 
         return self.webfield_builder.set_author_page(self, authors_group)
 
-    def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
-        if is_area_chair:
-            match_group = self.client.get_group(self.get_area_chairs_id())
-        else:
-            match_group = self.client.get_group(self.get_reviewers_id())
-        conference_matching = matching.Matching(self, match_group)
+    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
+        if committee_id is None:
+            committee_id=self.get_reviewers_id()
+        conference_matching = matching.Matching(self, self.client.get_group(committee_id))
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
     def set_assignment(self, user, number, is_area_chair = False):

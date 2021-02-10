@@ -24,11 +24,11 @@ class TestNeurIPSConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
 
-        helpers.create_user('sac1@neurips.cc', 'SeniorArea', 'NeurIPSChair')
-        helpers.create_user('sac2@neurips.cc', 'SeniorArea', 'NeurIPSChair')
-        helpers.create_user('ac1@neurips.cc', 'Area', 'NeurIPSChair')
-        helpers.create_user('ac2@neurips.cc', 'Area', 'NeurIPSChair')
-        helpers.create_user('ac3@neurips.cc', 'Area', 'NeurIPSChair')
+        helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
+        helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair')
+        helpers.create_user('ac1@mit.edu', 'Area', 'NeurIPSChair')
+        helpers.create_user('ac2@gmail.com', 'Area', 'NeurIPSChair', institution='google.com')
+        helpers.create_user('ac3@umass.edu', 'Area', 'NeurIPSChair')
 
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -92,7 +92,7 @@ class TestNeurIPSConference():
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
-        reviewer_details = '''sac1@neurips.cc, SAC One\nsac2@neurips.cc, SAC Two'''
+        reviewer_details = '''sac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -116,21 +116,21 @@ class TestNeurIPSConference():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number)
 
-        messages = client.get_messages(to='sac1@neurips.cc', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
         assert messages[0]['content']['text'].startswith('Dear SAC One,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
         accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
-        messages = client.get_messages(to='sac2@neurips.cc', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
+        messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
         assert messages[0]['content']['text'].startswith('Dear SAC Two,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
         accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
-        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@neurips.cc', 'sac2@neurips.cc']
+        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
 
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
@@ -144,8 +144,18 @@ class TestNeurIPSConference():
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
+        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
-        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs'))
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
+
+        edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Conflict')
+        assert len(edges) == 1
+        assert edges[0].head == '~Area_NeurIPSChair2'
+        assert edges[0].tail == '~SeniorArea_GoogleChair1'
+
+        edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
+        assert len(edges) == 6
+
 
 #     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
