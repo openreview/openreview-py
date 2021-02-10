@@ -23,6 +23,14 @@ class TestNeurIPSConference():
 
         # Post the request form note
         pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
+
+        helpers.create_user('sac1@neurips.cc', 'SeniorArea', 'NeurIPSChair')
+        helpers.create_user('sac2@neurips.cc', 'SeniorArea', 'NeurIPSChair')
+        helpers.create_user('ac1@neurips.cc', 'Area', 'NeurIPSChair')
+        helpers.create_user('ac2@neurips.cc', 'Area', 'NeurIPSChair')
+        helpers.create_user('ac3@neurips.cc', 'Area', 'NeurIPSChair')
+
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_NeurIPSChair1'],
@@ -108,16 +116,36 @@ class TestNeurIPSConference():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number)
 
-        messages = client.get_messages(to='sac1@neurips.cc')
+        messages = client.get_messages(to='sac1@neurips.cc', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
         assert messages[0]['content']['text'].startswith('Dear SAC One,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
 
-        messages = client.get_messages(to='sac2@neurips.cc')
+        messages = client.get_messages(to='sac2@neurips.cc', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
         assert messages[0]['content']['text'].startswith('Dear SAC Two,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
 
+        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@neurips.cc', 'sac2@neurips.cc']
+
+    def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_NeurIPSChair1', '~Area_NeurIPSChair2', '~Area_NeurIPSChair3'])
+
+    def test_sac_bidding(self, client, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        conference=openreview.helpers.get_conference(pc_client, request_form.id)
+
+        now = datetime.datetime.utcnow()
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs'))
 
 #     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 

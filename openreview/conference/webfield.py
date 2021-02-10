@@ -210,7 +210,9 @@ class WebfieldBuilder(object):
             'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=stage.request_count)
         }
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/bidWebfield.js')) as f:
+        template = 'templates/profileBidWebfield.js' if stage.committee_id == conference.get_senior_area_chairs_id() else 'templates/paperBidWebfield.js'
+
+        with open(os.path.join(os.path.dirname(__file__), template)) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
@@ -222,6 +224,9 @@ class WebfieldBuilder(object):
 
             if stage.score_ids:
                 content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
+
+            if stage.committee_id == conference.get_senior_area_chairs_id():
+                content = content.replace("var PROFILE_GROUP_ID = '';", "var PROFILE_GROUP_ID = '" + conference.get_area_chairs_id() + "';")
 
             return self.__update_invitation(invitation, content)
 

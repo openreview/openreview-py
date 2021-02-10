@@ -39,6 +39,7 @@ class Conference(object):
         self.authors_name = 'Authors'
         self.reviewers_name = 'Reviewers'
         self.area_chairs_name = 'Area_Chairs'
+        self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.secondary_area_chairs_name = 'Secondary_Area_Chair'
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
@@ -348,6 +349,14 @@ class Conference(object):
         else:
             area_chairs_id = area_chairs_id + self.area_chairs_name
         return area_chairs_id
+
+    def get_senior_area_chairs_id(self, number = None):
+        senior_area_chairs_id = self.id + '/'
+        if number:
+            senior_area_chairs_id = senior_area_chairs_id + 'Paper' + str(number) + '/' + self.senior_area_chairs_name
+        else:
+            senior_area_chairs_id = senior_area_chairs_id + self.senior_area_chairs_name
+        return senior_area_chairs_id
 
     def get_secondary_area_chairs_id(self, number=None):
         secondary_area_chairs_id = self.id + '/'
@@ -801,7 +810,8 @@ class Conference(object):
 
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
-            self.__create_group(self.get_area_chairs_id(), self.id, emails)
+            group_owner_id=self.get_senior_area_chairs_id() if self.use_senior_area_chairs else self.id
+            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=group_owner_id, members=emails)
 
             return self.__set_area_chair_page()
         else:
@@ -1327,6 +1337,19 @@ class BidStage(object):
         self.request_count=request_count
         self.score_ids=score_ids
         self.instructions=instructions
+
+    def get_readers(self, conference):
+        values_copied = [conference.get_id()]
+        if self.committee_id == conference.get_reviewers_id():
+            if conference.use_senior_area_chairs:
+                values_copied.append(conference.get_senior_area_chairs_id())
+            if conference.use_area_chairs:
+                values_copied.append(conference.get_area_chairs_id())
+        if self.committee_id == conference.get_area_chairs_id():
+            if conference.use_senior_area_chairs:
+                values_copied.append(conference.get_senior_area_chairs_id())
+        values_copied.append('{signatures}')
+        return values_copied
 
 class SubmissionRevisionStage():
 
