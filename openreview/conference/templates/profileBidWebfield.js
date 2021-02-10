@@ -31,13 +31,14 @@ var bidsById = {
 var sections = [];
 
 var paperDisplayOptions = {
+  path: 'profile',
+  openInNewTab: true,
   pdfLink: false,
   replyCount: false,
   showContents: false,
   showTags: false,
   showEdges: true,
-  edgeInvitations: [invitation], // Bid invitation automatically available
-  referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
+  edgeInvitations: [invitation]
 };
 
 // Main is the entry point to the webfield code and runs everything
@@ -71,7 +72,9 @@ function getProfileNote(profile) {
     content: {
       title: profile.id + ', ' + position + separator + institution,
       expertise: _.flatMap(profile.content.expertise, function(entry) { return entry.keywords; })
-    }
+    },
+    signatures: [user.profile.id],
+    tauthor: user.id
   }
 }
 
@@ -321,7 +324,7 @@ function updateNotes(notes) {
     container: '#allPapers',
     search: {
       enabled: true,
-      localSearch: false,
+      localSearch: true,
       subjectAreas: SUBJECT_AREAS,
       subjectAreaDropdown: 'basic',
       invitation: BLIND_SUBMISSION_ID,
