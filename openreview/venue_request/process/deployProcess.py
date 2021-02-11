@@ -332,6 +332,44 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures=['~Super_User1']
     ))
 
+    comment_stage_content = None
+    if forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be private.':
+        comment_stage_content = {
+            'commentary_start_date': {
+                'description': 'When does official and/or public commentary begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 27
+            },
+            'commentary_end_date': {
+                'description': 'When does official and/or public commentary end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 28
+            },
+            'participants': {
+                'description': 'Select who should be allowed to post comments on submissions.',
+                'values-checkbox' : [
+                    'Program Chairs',
+                    'Paper Area Chairs',
+                    'Paper Reviewers',
+                    'Paper Submitted Reviewers',
+                    'Authors'
+                ],
+                'required': True,
+                'default': ['Program Chairs'],
+                'order': 29
+            },
+            'email_program_chairs_about_official_comments': {
+                'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
+                'value-radio': [
+                    'Yes, email PCs for each official comment made in the venue',
+                    'No, do not email PCs for each official comment made in the venue'
+                ],
+                'required': True,
+                'default': 'No, do not email PCs for each official comment made in the venue',
+                'order': 30
+            }
+        }
+
     # comment_stage_invitation
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment_Stage',
@@ -342,7 +380,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             'readers' : {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            }
+            },
+            'content': comment_stage_content
         },
         signatures=['~Super_User1']
     ))

@@ -1278,7 +1278,7 @@ class InvitationBuilder(object):
         for note in tqdm(notes, total=len(notes), desc='set_comment_invitation'):
             invitations.append(self.client.post_invitation(OfficialCommentInvitation(conference, note)))
 
-        if conference.comment_stage.allow_public_comments:
+        if conference.comment_stage.allow_public_comments and conference.submission_stage.public:
             for note in tqdm(notes, total=len(notes), desc='set_public_comment_invitation'):
                 invitations.append(self.client.post_invitation(PublicCommentInvitation(conference, note)))
 
