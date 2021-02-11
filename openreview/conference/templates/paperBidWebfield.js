@@ -16,7 +16,7 @@ var SCORE_IDS = [];
 
 // Bid status data
 var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
-var activeTab = 0
+var activeTab = 0;
 var noteCount = 0;
 var conflictIds = [];
 var bidsByNote = {};
@@ -94,7 +94,7 @@ function getPapersSortedByAffinity(offset) {
             edge.signatures = [];
             note.details = {
               edges: [edge]
-            }
+            };
             return note;
           });
         });
@@ -121,7 +121,7 @@ function getPapersSortedByAffinity(offset) {
     .then(function(result) {
       noteCount = result.count;
       return result.notes;
-    })
+    });
   }
 }
 
@@ -211,6 +211,13 @@ function renderContent(notes, conflicts, bidEdges) {
       }
     }
 
+    // If not on the All Papers tab, fade out note when bid is changed
+    if (activeTab !== 0) {
+      setTimeout(function() {
+        $(e.currentTarget).closest('.note').fadeOut();
+      }, 500);
+    }
+
     updateCounts();
   });
 
@@ -234,7 +241,7 @@ function renderContent(notes, conflicts, bidEdges) {
 function prepareNotes(notes, conflictIds, edgesMap) {
   var validNotes = _.filter(notes, function(note) {
     return !_.includes(conflictIds, note.id);
-  })
+  });
   return addEdgesToNotes(validNotes, edgesMap);
 }
 
@@ -244,7 +251,7 @@ function addEdgesToNotes(validNotes, edgesMap) {
     if (!_.has(note, 'details.edges')) {
       note.details = {
         edges: []
-      }
+      };
     }
     if (edgesMap.hasOwnProperty(note.id)) {
       note.details.edges.push(edgesMap[note.id]);
