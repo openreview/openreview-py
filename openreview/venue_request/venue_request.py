@@ -589,7 +589,7 @@ class VenueRequest():
                 'order': 7
             },
             'senior_area_chairs': {
-                'description': 'Does your venue have Senrior Area Chairs?, you need to have Area Chairs selected in order to select Senior Area Chairs option.',
+                'description': 'Does your venue have Senior Area Chairs?, you need to have Area Chairs selected in order to select Senior Area Chairs option.',
                 'value-radio': [
                     'Yes, our venue has Senior Area Chairs',
                     'No, our venue does not have Senior Area Chairs'

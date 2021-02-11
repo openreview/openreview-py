@@ -441,6 +441,8 @@ class WebfieldBuilder(object):
             content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
             if conference.use_area_chairs:
                 content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+            if conference.use_senior_area_chairs:
+                content = content.replace("var SENIOR_AREA_CHAIRS_ID = '';", "var SENIOR_AREA_CHAIRS_ID = '" + conference.get_senior_area_chairs_id() + "';")
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
             if conference.request_form_id:
                 content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
