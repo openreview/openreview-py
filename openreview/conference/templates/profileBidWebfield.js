@@ -16,6 +16,7 @@ var CONFLICT_SCORE_ID = '';
 var SCORE_IDS = [];
 
 // Bid status data
+var pageSize = 1000;
 var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
 var activeTab = 0
 var noteCount = 0;
@@ -35,7 +36,7 @@ var paperDisplayOptions = {
   openInNewTab: true,
   pdfLink: false,
   replyCount: false,
-  showContents: false,
+  showContents: true,
   showTags: false,
   showEdges: true,
   edgeInvitations: [invitation]
@@ -70,10 +71,9 @@ function getProfileNote(profile) {
     id: profile.id,
     forum: profile.id,
     content: {
-      title: profile.id + ', ' + position + separator + institution,
-      expertise: _.flatMap(profile.content.expertise, function(entry) { return entry.keywords; })
+      title: view.prettyId(profile.id) + ', ' + position + separator + institution,
+      keywords: _.flatMap(profile.content.expertise, function(entry) { return entry.keywords; }).join(',')
     },
-    signatures: [user.profile.id],
     tauthor: user.id
   }
 }
@@ -85,7 +85,7 @@ function getPapersSortedByAffinity(offset) {
       tail: user.profile.id,
       sort: 'weight:desc',
       offset: offset,
-      limit: 50
+      limit: pageSize
     })
     .then(function(result) {
       noteCount = result.count;
@@ -101,8 +101,14 @@ function getPapersSortedByAffinity(offset) {
         })
         .then(function(result) {
           // Keep affinity score order
-          var notesById = _.keyBy(result.profiles.map(function(profile) { return getProfileNote(profile); }), function(note) {
-            return note.id;
+          var notesById = {};
+          result.profiles.forEach(function(profile) {
+            var profileNote = getProfileNote(profile);
+            profile.content.names.forEach(function(name) {
+              if (name.username) {
+                notesById[name.username] = profileNote;
+              }
+            })
           });
           return noteIds
           .map(function(id) {
@@ -223,6 +229,13 @@ function renderContent(notes, conflicts, bidEdges) {
       }
     }
 
+    // If not on the All Papers tab, fade out note when bid is changed
+    if (activeTab !== 0) {
+      setTimeout(function() {
+        $(e.currentTarget).closest('.note').fadeOut();
+      }, 500);
+    }
+
     updateCounts();
   });
 
@@ -334,13 +347,13 @@ function updateNotes(notes) {
       },
       onReset: function() {
         Webfield.ui.searchResults(notes, searchResultsOptions);
-        $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
+        $('#allPapers').append(view.paginationLinks(noteCount, pageSize, 1));
       },
     },
     displayOptions: paperDisplayOptions,
     autoLoad: false,
     noteCount: noteCount,
-    pageSize: 50,
+    pageSize: pageSize,
     onPageClick: function(offset) {
       return getPapersSortedByAffinity(offset, selectedScore)
       .then(function(notes) {
