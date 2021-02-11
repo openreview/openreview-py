@@ -36,6 +36,8 @@ If you have any questions, please refer to our FAQ: https://openreview.net/faq
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
 
 Best,
+
+
 The OpenReview Team
             '''.format(baseurl = FRONTEND_URL, noteId = forum.id, conference_id = conference.get_id(), program_chairs_id = conference.get_program_chairs_id())
         }
