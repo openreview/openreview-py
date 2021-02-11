@@ -244,10 +244,8 @@ class Matching(object):
 
         for head_profile_info in tqdm(head_profiles_info, total=len(head_profiles_info), desc='_build_profile_conflicts'):
 
-            print('head', head_profile_info)
             # Compute conflicts for each user and all the paper authors
             for user_info in user_profiles_info:
-                print('tail', user_info)
                 conflicts = set()
                 conflicts.update(head_profile_info['domains'].intersection(user_info['domains']))
                 conflicts.update(head_profile_info['relations'].intersection(user_info['emails']))
