@@ -488,13 +488,6 @@ class Conference(object):
 
     def has_senior_area_chairs(self, has_senior_area_chairs):
         self.use_senior_area_chairs = has_senior_area_chairs
-        # pc_group = tools.get_group(self.client, self.get_program_chairs_id())
-        # if pc_group and pc_group.web:
-        #     # update PC console
-        #     if self.use_area_chairs:
-        #         self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', self.get_area_chairs_id())
-        #     else:
-        #         self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', '')
 
     def has_secondary_area_chairs(self, has_secondary_area_chairs):
         self.use_secondary_area_chairs = has_secondary_area_chairs
