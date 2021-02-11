@@ -108,25 +108,35 @@ class BidInvitation(openreview.Invitation):
 
         match_group_id = bid_stage.committee_id
 
-        readers = [
+        invitation_readers = [
             conference.get_id(),
-            conference.get_program_chairs_id(),
-            conference.get_area_chairs_id(),
             match_group_id
         ]
 
         invitees = [match_group_id, conference.support_user]
 
-        values_copied = [conference.get_id()]
-        if match_group_id == conference.get_reviewers_id():
-            values_copied.append(conference.get_area_chairs_id())
-        values_copied.append('{signatures}')
+        bid_readers = bid_stage.get_readers(conference)
+        head = {
+            'type': 'Note',
+            'query' : {
+                'invitation' : conference.get_blind_submission_id()
+            },
+            'required': True
+        }
+        if match_group_id == conference.get_senior_area_chairs_id():
+            head = {
+            'type': 'Profile',
+            'query' : {
+                'group' : conference.get_area_chairs_id()
+            },
+            'required': True
+        }
 
         super(BidInvitation, self).__init__(id = conference.get_bid_id(match_group_id),
             cdate = tools.datetime_millis(bid_stage.start_date),
             duedate = tools.datetime_millis(bid_stage.due_date),
             expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
-            readers = readers,
+            readers = invitation_readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
             invitees = invitees,
@@ -134,7 +144,7 @@ class BidInvitation(openreview.Invitation):
             multiReply = False,
             reply = {
                 'readers': {
-                    'values-copied': values_copied
+                    'values-copied': bid_readers
                 },
                 'nonreaders': {
                     'values-regex': conference.get_authors_id(number='.*')
@@ -143,13 +153,7 @@ class BidInvitation(openreview.Invitation):
                     'values-regex': '~.*'
                 },
                 'content': {
-                    'head': {
-                        'type': 'Note',
-                        'query' : {
-                            'invitation' : conference.get_blind_submission_id()
-                        },
-                        'required': True
-                    },
+                    'head': head,
                     'tail': {
                         'type': 'Profile',
                         'query' : {

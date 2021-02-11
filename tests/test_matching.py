@@ -212,7 +212,7 @@ class TestMatching():
         assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment')
 
         # Set up AC matching
-        conference.setup_matching(is_area_chair=True, build_conflicts=True)
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -291,7 +291,7 @@ class TestMatching():
 
         # Set up ac matching
         conference.setup_matching(
-            is_area_chair=True,
+            committee_id=conference.get_area_chairs_id(),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
             build_conflicts=True)
 
@@ -437,7 +437,7 @@ class TestMatching():
 
         # Set up ac matching
         conference.setup_matching(
-            is_area_chair=True,
+            committee_id=conference.get_area_chairs_id(),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
             build_conflicts=True)
 
@@ -573,7 +573,7 @@ class TestMatching():
         assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
 
         # Set up AC matching
-        conference.setup_matching(is_area_chair=True, build_conflicts=True)
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
 
         assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
         assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')

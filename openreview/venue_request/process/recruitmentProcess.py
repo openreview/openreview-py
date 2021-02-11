@@ -21,10 +21,16 @@ def process(client, note, invitation):
                     name = details[1]
                 invitee_emails.append(email)
                 invitee_names.append(name)
+
+    roles={
+        'reviewer': 'Reviewers',
+        'area chair': 'Area_Chairs',
+        'senior area chair': 'Senior_Area_Chairs'
+    }
     conference.recruit_reviewers(
         invitees = invitee_emails,
         invitee_names = invitee_names,
-        reviewers_name = 'Area_Chairs' if note.content['invitee_role'].strip() == 'area chair' else 'Reviewers',
+        reviewers_name = roles[note.content['invitee_role'].strip()],
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip()
     )
