@@ -92,3 +92,11 @@ class TestSingleBlindPrivateConference():
         assert len(invitations) == 2
         assert invitations[0].id == 'MICCAI.org/2021/Challenges/Paper5/-/Desk_Reject'
         assert invitations[1].id == 'MICCAI.org/2021/Challenges/Paper5/-/Withdraw'
+
+    def test_public_comments(self, conference, helpers, test_client, client):
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        assert len(notes) == 5
+
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True, allow_public_comments=True))
+        public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
+        assert public_comment_invitation is None

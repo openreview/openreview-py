@@ -565,7 +565,7 @@ class TestVenueRequest():
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Public (non-anonymously)'],
+                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
 
             },
@@ -616,30 +616,10 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        # Assert that public comment invitation is now available
+        # Assert that public comment invitation is not available
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
-        assert public_comment_invitation
+        assert public_comment_invitation is None
 
-        # Assert that a non-anonymous public comment can be posted by a random logged in user
-        random_user = helpers.create_user(email='public_user1@mail.co', first='Public', last='User')
-        public_comment_note = random_user.post_note(openreview.Note(
-            invitation = conference.get_invitation_id('Public_Comment', number=1),
-            forum = forum_note.forum,
-            replyto = forum_note.forum,
-            readers = ['everyone'],
-            writers = ['~Public_User1'],
-            signatures = ['~Public_User1'],
-            content = {
-                'title': 'test public comment title',
-                'comment': 'test comment!'
-            }
-        ))
-        assert public_comment_note
-        helpers.await_queue()
-
-        process_logs = client.get_process_logs(id = public_comment_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
 
