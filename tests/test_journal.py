@@ -51,7 +51,7 @@ class TestJournal():
     def test_invite_action_editors(self, journal, client, request_page, selenium, helpers):
 
         res=journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['user@mail.com', 'joelle@mail.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
-        assert res.id == '.TMLR/AEs/Invited'
+        assert res.id == '.TMLR/Action_Editors/Invited'
         assert res.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
         messages = client.get_messages(subject = 'Invitation to be an Action Editor')
@@ -65,7 +65,7 @@ class TestJournal():
 
         helpers.await_queue()
 
-        group = client.get_group('.TMLR/AEs')
+        group = client.get_group('.TMLR/Action_Editors')
         assert len(group.members) == 1
         assert '~Joelle_Pineau1' in group.members
 
