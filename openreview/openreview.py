@@ -1634,6 +1634,7 @@ class Invitation(object):
         noninvitees = None,
         nonreaders = None,
         web = None,
+        web_string = None,
         process = None,
         process_string = None,
         duedate = None,
@@ -1679,6 +1680,8 @@ class Invitation(object):
                 self.transform = f.read()
         if process_string:
             self.process = process_string
+        if web_string:
+            self.web = web_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])

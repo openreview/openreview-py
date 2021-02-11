@@ -13,7 +13,8 @@ setup(
         'openreview/conference',
         'openreview/invitations',
         'openreview/agora',
-        'openreview/venue_request'
+        'openreview/venue_request',
+        'openreview/journal'
     ],
     install_requires=[
         'pycryptodome',
