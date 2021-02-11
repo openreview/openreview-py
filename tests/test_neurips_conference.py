@@ -130,6 +130,7 @@ class TestNeurIPSConference():
         accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
+        helpers.await_queue()
         assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
 
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
