@@ -470,8 +470,8 @@ class Matching(object):
                         'order': 5
                     },
                     'paper_invitation': {
-                        'value-regex': self.conference.get_blind_submission_id() + '.*',
-                        'default': self.conference.get_blind_submission_id(),
+                        'value-regex': self.conference.get_blind_submission_id() + '.*|' + self.conference.get_area_chairs_id() if self.is_senior_area_chair else self.conference.get_blind_submission_id() + '.*',
+                        'default': self.conference.get_area_chairs_id() if self.is_senior_area_chair else self.conference.get_blind_submission_id(),
                         'required': True,
                         'description': 'Invitation to get the configuration note',
                         'order': 6
