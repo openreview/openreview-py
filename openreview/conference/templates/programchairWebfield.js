@@ -27,7 +27,7 @@ var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs|/Program_Chairs)?/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/(Senior_)+Area_Chairs|/Program_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
@@ -964,6 +964,11 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
+  if (SENIOR_AREA_CHAIRS_ID) {
+    if (invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
+      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senioe Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+    }
+  }
   if (AREA_CHAIRS_ID) {
     html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
     html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
