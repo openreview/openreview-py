@@ -24,7 +24,7 @@ class Conference(object):
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_secondary_area_chairs = False
-        self.use_anonids = False
+        self.legacy_anonids = False
         self.legacy_invitation_id = False
         self.groups = []
         self.name = ''
@@ -573,7 +573,7 @@ class Conference(object):
                 self.__create_group(
                     self.get_reviewers_id(number=n.number),
                     self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
-                    is_signatory = False, anonids = self.use_anonids)
+                    is_signatory = False, anonids = not self.legacy_anonids)
 
                 # Reviewers Submitted Paper group
                 self.__create_group(
@@ -583,7 +583,7 @@ class Conference(object):
 
             # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
-                self.__create_group(self.get_area_chairs_id(number=n.number), self.id, anonids = self.use_anonids)
+                self.__create_group(self.get_area_chairs_id(number=n.number), self.id, anonids = not self.legacy_anonids)
 
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
@@ -1436,9 +1436,9 @@ class ReviewStage(object):
         return [conference.get_authors_id(number = number)]
 
     def get_signatures(self, conference, number):
-        signature_regex = conference.get_id() + '/Paper' + str(number) + '/Anon[0-9]+|' +  conference.get_program_chairs_id()
-        if conference.use_anonids:
-            signature_regex = f'{conference.id}/Paper{number}/Reviewers/Anon.*'
+        signature_regex = f'{conference.id}/Paper{number}/Reviewers/Anon.*'
+        if conference.legacy_anonids:
+            signature_regex = conference.get_id() + '/Paper' + str(number) + '/Anon[0-9]+|' +  conference.get_program_chairs_id()
 
         if self.allow_de_anonymization:
             return '~.*|' + conference.get_program_chairs_id()

@@ -383,7 +383,9 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_areachairpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/areachairWebfield.js')) as f:
+        template_file = 'legacyAreachairWebfield' if conference.legacy_anonids else 'areachairWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")

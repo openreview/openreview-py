@@ -22,7 +22,6 @@ class TestNeurIPSConference():
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         conference=openreview.helpers.get_conference(client, request_form.id)
-        conference.use_anonids=True
         return conference
 
 
