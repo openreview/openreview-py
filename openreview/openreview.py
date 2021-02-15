@@ -1437,7 +1437,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
@@ -1458,6 +1458,7 @@ class Group(object):
         if web_string:
             self.web = web_string
 
+        self.anonids = anonids
         self.details = details
 
     def __repr__(self):
@@ -1486,6 +1487,7 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
+            'anonids': self.anonids,
             'web': self.web,
             'details': self.details
         }

@@ -19,8 +19,8 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
-var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
-var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]+$';
+var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewers/Anon.*';
+var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs/Anon.*';
 var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
@@ -108,16 +108,16 @@ var getNumberfromGroup = function(groupId, name) {
   });
 
   if (paper) {
-    return parseInt(paper.replace(name, ''), 10);
+    return paper.replace(name, '');
   } else {
     return null;
   }
 };
 
 var getPaperNumbersfromGroups = function(groups) {
-  return _.filter(_.map(groups, function(group) {
-    return getNumberfromGroup(group.id, 'Paper');
-  }), _.isInteger);
+  return _.map(groups, function(group) {
+    return parseInt(getNumberfromGroup(group.id, 'Paper'));
+  });
 };
 
 var buildNoteMap = function(noteNumbers) {
@@ -220,7 +220,7 @@ var loadData = function(acPapers, secondaryAcPapers) {
       if (!rankingByForum[tag.forum]) {
         rankingByForum[tag.forum] = {};
       }
-      var index = getNumberfromGroup(tag.signatures[0], 'AnonReviewer');
+      var index = getNumberfromGroup(tag.signatures[0], 'Anon');
       rankingByForum[tag.forum][index] = tag;
       return rankingByForum;
     }, {});
@@ -258,7 +258,7 @@ var getOfficialReviews = function(noteNumbers) {
 
     _.forEach(notes, function(n) {
       var num = getNumberfromGroup(n.signatures[0], 'Paper');
-      var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
+      var index = getNumberfromGroup(n.signatures[0], 'Anon');
       if (num) {
         if (num in noteMap) {
           // Need to parse rating and confidence strings into ints
@@ -287,7 +287,7 @@ var getReviewerGroups = function(noteNumbers) {
   .then(function(groups) {
     _.forEach(groups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
-      var index = getNumberfromGroup(g.id, 'AnonReviewer');
+      var index = getNumberfromGroup(g.id, 'Anon');
       if (num) {
         if ((num in noteMap) && g.members.length) {
           noteMap[num][index] = g.members[0];
@@ -1302,13 +1302,13 @@ var registerEventHandlers = function() {
     );
     $('#reviewer-activity-modal').modal('show');
 
-    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
+    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/Reviewers/Anon' + reviewerNum })
       .then(function(response) {
         $('#reviewer-activity-modal .modal-body').empty();
         Webfield.ui.searchResults(response.notes, {
           container: '#reviewer-activity-modal .modal-body',
           openInNewTab: true,
-          emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
+          emptyMessage: 'Anon' + reviewerNum + ' has not posted any comments or reviews yet.'
         });
       });
 
