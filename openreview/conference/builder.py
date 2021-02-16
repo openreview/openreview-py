@@ -1824,7 +1824,8 @@ class ConferenceBuilder(object):
             self.conference.set_area_chairs()
 
         home_group = groups[-1]
-        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': groups[-2].id })
+        parent_group_id = groups[-2].id if len(groups) > 1 else ''
+        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_area_chairs:
