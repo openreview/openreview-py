@@ -351,6 +351,7 @@ class WebfieldBuilder(object):
         }
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
+        anon_regex = f'{conference.id}/Paper.*/AnonReviewer.*' if conference.legacy_anonids else f'{conference.id}/Paper.*/Reviewer_'
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f:
             content = f.read()
@@ -361,6 +362,7 @@ class WebfieldBuilder(object):
             content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + conference.reviewers_name + "';")
             content = content.replace("var AREACHAIR_NAME = '';", "var AREACHAIR_NAME = '" + conference.area_chairs_name + "';")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+            content = content.replace("var ANONREVIEWER_WILDCARD = '';", "var ANONREVIEWER_WILDCARD = '" + anon_regex + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load) + ";")
             return self.__update_group(group, content)
