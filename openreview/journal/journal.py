@@ -207,15 +207,14 @@ class Journal(object):
                         signatories=[],
                         members=[]))
 
-    def invite_action_editors(self, message, subject, invitees, invitee_names=None):
+    def invite_commitee(self, committee_id, message, subject, invitees, invitee_names=None):
 
-        action_editors_id = self.get_action_editors_id()
-        action_editors_declined_id = action_editors_id + '/Declined'
-        action_editors_invited_id = action_editors_id + '/Invited'
+        committee_declined_id = committee_id + '/Declined'
+        committee_invited_id = committee_id + '/Invited'
         hash_seed = self.secret_key
 
-        invitation = self.invitation_builder.set_ae_recruitment_invitation(self, hash_seed, self.header)
-        invited_members = self.client.get_group(action_editors_invited_id).members
+        invitation = self.invitation_builder.set_recruitment_invitation(self, committee_id, hash_seed, self.header)
+        invited_members = self.client.get_group(committee_invited_id).members
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
             profile=openreview.tools.get_profile(self.client, invitee)
@@ -224,41 +223,20 @@ class Journal(object):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
+                ## Use email address to build the invitation link for better tracking
                 r=tools.recruit_reviewer(self.client, invitee, name,
                     hash_seed,
                     invitation.id,
                     message,
                     subject,
-                    action_editors_invited_id,
+                    committee_invited_id,
                     verbose = False)
 
-        return self.client.get_group(id = action_editors_invited_id)
+        return self.client.get_group(id = committee_invited_id)
+
+    def invite_action_editors(self, message, subject, invitees, invitee_names=None):
+        return self.invite_commitee(self.get_action_editors_id(), message, subject, invitees, invitee_names)
 
     def invite_reviewers(self, message, subject, invitees, invitee_names=None):
-
-        reviewers_id = self.get_reviewers_id()
-        reviewers_declined_id = reviewers_id + '/Declined'
-        reviewers_invited_id = reviewers_id + '/Invited'
-        hash_seed = self.secret_key
-
-        invitation = self.invitation_builder.set_reviewer_recruitment_invitation(self, hash_seed, self.header)
-        invited_members = self.client.get_group(reviewers_invited_id).members
-
-        for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
-            profile=openreview.tools.get_profile(self.client, invitee)
-            invitee = profile.id if profile else invitee
-            if invitee not in invited_members:
-                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, invitee, name,
-                    hash_seed,
-                    invitation.id,
-                    message,
-                    subject,
-                    reviewers_invited_id,
-                    verbose = False)
-
-        return self.client.get_group(id = reviewers_invited_id)
+        return self.invite_commitee(self.get_reviewers_id(), message, subject, invitees, invitee_names)
 

@@ -71,12 +71,12 @@ class TestJournal():
 
     def test_invite_reviewers(self, journal, client, request_page, selenium, helpers):
 
-        res=journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        res=journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be a Reviewer', invitees=['zach@mail.com', '~David_Belanger1', 'javier@mail.com', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         assert res.id == '.TMLR/Reviewers/Invited'
-        assert res.members == ['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
+        assert res.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
 
-        messages = client.get_messages(subject = 'Invitation to be an Reviewer')
-        assert len(messages) == 5
+        messages = client.get_messages(subject = 'Invitation to be a Reviewer')
+        assert len(messages) == 6
 
         for message in messages:
             text = message['content']['text']
@@ -85,6 +85,6 @@ class TestJournal():
             helpers.await_queue()
 
         group = client.get_group('.TMLR/Reviewers')
-        assert len(group.members) == 5
+        assert len(group.members) == 6
         assert '~Javier_Burroni1' in group.members
 
