@@ -25,7 +25,7 @@ class Journal(object):
         self.header = {
             "title": "Transactions of Machine Learning Research",
             "short": "TMLR",
-            "subtitle": "To de defined",
+            "subtitle": "To be defined",
             "location": "Everywhere",
             "date": "Ongoing",
             "website": "https://openreview.net",
@@ -239,4 +239,3 @@ class Journal(object):
 
     def invite_reviewers(self, message, subject, invitees, invitee_names=None):
         return self.invite_commitee(self.get_reviewers_id(), message, subject, invitees, invitee_names)
-
