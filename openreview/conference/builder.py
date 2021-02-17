@@ -22,6 +22,7 @@ class Conference(object):
         self.support_user = 'OpenReview.net/Support'
         self.new = False
         self.use_area_chairs = False
+        self.use_senior_area_chairs = False
         self.use_secondary_area_chairs = False
         self.legacy_invitation_id = False
         self.groups = []
@@ -38,6 +39,7 @@ class Conference(object):
         self.authors_name = 'Authors'
         self.reviewers_name = 'Reviewers'
         self.area_chairs_name = 'Area_Chairs'
+        self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.secondary_area_chairs_name = 'Secondary_Area_Chair'
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
@@ -348,6 +350,14 @@ class Conference(object):
             area_chairs_id = area_chairs_id + self.area_chairs_name
         return area_chairs_id
 
+    def get_senior_area_chairs_id(self, number = None):
+        senior_area_chairs_id = self.id + '/'
+        if number:
+            senior_area_chairs_id = senior_area_chairs_id + 'Paper' + str(number) + '/' + self.senior_area_chairs_name
+        else:
+            senior_area_chairs_id = senior_area_chairs_id + self.senior_area_chairs_name
+        return senior_area_chairs_id
+
     def get_secondary_area_chairs_id(self, number=None):
         secondary_area_chairs_id = self.id + '/'
         if number:
@@ -475,6 +485,9 @@ class Conference(object):
                 self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', self.get_area_chairs_id())
             else:
                 self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', '')
+
+    def has_senior_area_chairs(self, has_senior_area_chairs):
+        self.use_senior_area_chairs = has_senior_area_chairs
 
     def has_secondary_area_chairs(self, has_secondary_area_chairs):
         self.use_secondary_area_chairs = has_secondary_area_chairs
@@ -790,7 +803,8 @@ class Conference(object):
 
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
-            self.__create_group(self.get_area_chairs_id(), self.id, emails)
+            group_owner_id=self.get_senior_area_chairs_id() if self.use_senior_area_chairs else self.id
+            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=group_owner_id, members=emails)
 
             return self.__set_area_chair_page()
         else:
@@ -846,12 +860,10 @@ class Conference(object):
 
         return self.webfield_builder.set_author_page(self, authors_group)
 
-    def setup_matching(self, is_area_chair=False, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
-        if is_area_chair:
-            match_group = self.client.get_group(self.get_area_chairs_id())
-        else:
-            match_group = self.client.get_group(self.get_reviewers_id())
-        conference_matching = matching.Matching(self, match_group)
+    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
+        if committee_id is None:
+            committee_id=self.get_reviewers_id()
+        conference_matching = matching.Matching(self, self.client.get_group(committee_id))
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
     def set_assignment(self, user, number, is_area_chair = False):
@@ -1320,6 +1332,19 @@ class BidStage(object):
         self.score_ids=score_ids
         self.instructions=instructions
 
+    def get_readers(self, conference):
+        values_copied = [conference.get_id()]
+        if self.committee_id == conference.get_reviewers_id():
+            if conference.use_senior_area_chairs:
+                values_copied.append(conference.get_senior_area_chairs_id())
+            if conference.use_area_chairs:
+                values_copied.append(conference.get_area_chairs_id())
+        if self.committee_id == conference.get_area_chairs_id():
+            if conference.use_senior_area_chairs:
+                values_copied.append(conference.get_senior_area_chairs_id())
+        values_copied.append('{signatures}')
+        return values_copied
+
 class SubmissionRevisionStage():
 
     def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False):
@@ -1670,6 +1695,9 @@ class ConferenceBuilder(object):
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
+    def has_senior_area_chairs(self, has_senior_area_chairs):
+        self.conference.has_senior_area_chairs(has_senior_area_chairs)
+
     def enable_reviewer_reassignment(self, enable):
         self.conference.enable_reviewer_reassignment = enable
 
@@ -1796,7 +1824,8 @@ class ConferenceBuilder(object):
             self.conference.set_area_chairs()
 
         home_group = groups[-1]
-        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': groups[-2].id })
+        parent_group_id = groups[-2].id if len(groups) > 1 else ''
+        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_area_chairs:

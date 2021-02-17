@@ -22,16 +22,18 @@ var SCORES_NAME = '';
 var AUTHORS_ID = '';
 var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
+var SENIOR_AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/Area_Chairs|/Program_Chairs)?/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/(Senior_)+Area_Chairs|/Program_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
+var SENIOR_AREA_CHAIRS_INVITED_ID = SENIOR_AREA_CHAIRS_ID ? SENIOR_AREA_CHAIRS_ID + '/Invited' : '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAPER_REVIEWS_COMPLETE_THRESHOLD = 3;
 var PAGE_SIZE = 25;
@@ -56,8 +58,9 @@ var main = function() {
   renderHeader();
 
   $.when(
-    getAllReviewers(),
-    getAllAreaChairs(),
+    getCommitteeMembers(REVIEWERS_ID),
+    getCommitteeMembers(AREA_CHAIRS_ID),
+    getCommitteeMembers(SENIOR_AREA_CHAIRS_ID),
     getReviewerGroups(),
     getAreaChairGroups(),
     getBlindedNotes(),
@@ -72,12 +75,14 @@ var main = function() {
     getAreaChairRecommendationCounts(),
     getGroupMembersCount(REVIEWERS_INVITED_ID),
     getGroupMembersCount(AREA_CHAIRS_INVITED_ID),
+    getGroupMembersCount(SENIOR_AREA_CHAIRS_INVITED_ID),
     getRequestForm(),
     getRegistrationForms(),
     getInvitationMap()
   ).then(function(
     reviewers,
     areaChairs,
+    seniorAreaChairs,
     reviewerGroups,
     areaChairGroups,
     blindedNotes,
@@ -92,6 +97,7 @@ var main = function() {
     areaChairRecommendationCounts,
     reviewersInvitedCount,
     areaChairsInvitedCount,
+    seniorAreaChairsInvitedCount,
     requestForm,
     registrationForms,
     invitationMap
@@ -124,6 +130,7 @@ var main = function() {
     conferenceStatusData = {
       reviewers: reviewers,
       areaChairs: areaChairs,
+      seniorAreaChairs: seniorAreaChairs,
       blindedNotes: blindedNotes,
       officialReviews: officialReviewMap,
       metaReviews: metaReviews,
@@ -146,8 +153,10 @@ var main = function() {
       deskRejectedSubmissionsCount: deskRejectedNotesCount,
       reviewersInvitedCount: reviewersInvitedCount,
       areaChairsInvitedCount: areaChairsInvitedCount,
+      seniorAreaChairsInvitedCount: seniorAreaChairsInvitedCount,
       reviewersCount: reviewers.length,
       areaChairsCount: areaChairs.length,
+      seniorAreaChairsCount: seniorAreaChairs.length,
       acBidsComplete: calcBidsComplete(
         areaChairBidCounts,
         invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME]
@@ -239,20 +248,12 @@ var getInvitationMap = function() {
   });
 };
 
-var getAllReviewers = function() {
-  return Webfield.get('/groups', { id: REVIEWERS_ID, limit: 1 })
-  .then(function(result) {
-    var members = _.get(result, 'groups[0].members', []);
-    return members.sort();
-  });
-};
-
-var getAllAreaChairs = function() {
-  if (!AREA_CHAIRS_ID) {
+var getCommitteeMembers = function(committeeId) {
+  if (!committeeId) {
     return $.Deferred().resolve([]);
   }
 
-  return Webfield.get('/groups', { id: AREA_CHAIRS_ID, limit: 1 })
+  return Webfield.get('/groups', { id: committeeId, limit: 1 })
   .then(function(result) {
     var members = _.get(result, 'groups[0].members', []);
     return members.sort();
@@ -835,6 +836,13 @@ var displayStatsAndConfiguration = function(conferenceStats) {
       'accepted / invited'
     );
   }
+  if (SENIOR_AREA_CHAIRS_ID) {
+    html += renderStatContainer(
+      'Senior Area Chair Recruitment:',
+      '<h3>' + conferenceStats.seniorAreaChairsCount + ' / ' + conferenceStats.seniorAreaChairsInvitedCount + '</h3>',
+      'accepted / invited'
+    );
+  }
   html += '</div>';
   html += '<hr class="spacer" style="margin-bottom: 1rem;">';
 
@@ -956,6 +964,11 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
+  if (SENIOR_AREA_CHAIRS_ID) {
+    if (invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
+      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senioe Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+    }
+  }
   if (AREA_CHAIRS_ID) {
     html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
     html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
@@ -979,6 +992,11 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
+  if (SENIOR_AREA_CHAIRS_ID) {
+      html += '<li><a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '&mode=edit">Senior Area Chairs</a> (' +
+        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
+        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
+  }
   if (AREA_CHAIRS_ID) {
     html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
       '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
