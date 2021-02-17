@@ -18,7 +18,7 @@ var ENABLE_REVIEWER_REASSIGNMENT = false;
 var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
-var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewers';
+var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
 var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
@@ -213,7 +213,7 @@ var loadData = function(acPapers, secondaryAcPapers) {
       if (!rankingByForum[tag.forum]) {
         rankingByForum[tag.forum] = {};
       }
-      var index = getNumberfromGroup(tag.signatures[0], 'Anon');
+      var index = getNumberfromGroup(tag.signatures[0], 'Reviewer_');
       rankingByForum[tag.forum][index] = tag;
       return rankingByForum;
     }, {});
@@ -251,7 +251,7 @@ var getOfficialReviews = function(noteNumbers) {
 
     _.forEach(notes, function(n) {
       var num = getNumberfromGroup(n.signatures[0], 'Paper');
-      var index = getNumberfromGroup(n.signatures[0], 'Anon');
+      var index = getNumberfromGroup(n.signatures[0], 'Reviewer_');
       if (num) {
         if (num in noteMap) {
           // Need to parse rating and confidence strings into ints
@@ -279,14 +279,14 @@ var getReviewerGroups = function(noteNumbers) {
   return Webfield.getAll('/groups', { regex: ANONREVIEWER_WILDCARD })
   .then(function(groups) {
 
-    var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewers/Anon'); });
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
     var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
 
     _.forEach(reviewerGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
       g.members.forEach(function(member, index) {
           var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
-          var anonId = getNumberfromGroup(anonGroup.id, 'Anon')
+          var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
           noteMap[num][anonId] = member;
       })
     });
@@ -1180,12 +1180,12 @@ var registerEventHandlers = function() {
     })
     .then(function(result) {
       return Webfield.get('/groups', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers/Anon.*',
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewer_.*',
         member: reviewerProfile.id
       })
     })
     .then(function(result) {
-      var nextAnonNumber = getNumberfromGroup(result.groups[0].id, 'Anon');
+      var nextAnonNumber = getNumberfromGroup(result.groups[0].id, 'Reviewer_');
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: paperForum,
         invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
@@ -1270,13 +1270,13 @@ var registerEventHandlers = function() {
     );
     $('#reviewer-activity-modal').modal('show');
 
-    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/Reviewers/Anon' + reviewerNum })
+    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/Reviewer_' + reviewerNum })
       .then(function(response) {
         $('#reviewer-activity-modal .modal-body').empty();
         Webfield.ui.searchResults(response.notes, {
           container: '#reviewer-activity-modal .modal-body',
           openInNewTab: true,
-          emptyMessage: 'Anon' + reviewerNum + ' has not posted any comments or reviews yet.'
+          emptyMessage: 'Reviewer ' + reviewerNum + ' has not posted any comments or reviews yet.'
         });
       });
 

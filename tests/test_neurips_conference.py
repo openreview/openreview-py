@@ -229,8 +229,8 @@ class TestNeurIPSConference():
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
 
-        anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs/Anon.*')
+        anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Area_Chair_.*')
         assert len(anon_groups) == 1
 
-        anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Reviewers/Anon.*')
+        anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Reviewer_.*')
         assert len(anon_groups) == 2

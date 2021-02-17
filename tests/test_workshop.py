@@ -37,6 +37,7 @@ class TestWorkshop():
 
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['program_chairs@hsdip.org'])
+        builder.use_legacy_anonids(True)
         return conference
 
 

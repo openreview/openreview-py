@@ -72,6 +72,7 @@ class TestMatching():
 
         builder.set_bid_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         builder.set_bid_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         # conference.client = pc_client
         return conference

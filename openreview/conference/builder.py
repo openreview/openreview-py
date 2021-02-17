@@ -1436,9 +1436,9 @@ class ReviewStage(object):
         return [conference.get_authors_id(number = number)]
 
     def get_signatures(self, conference, number):
-        signature_regex = f'{conference.id}/Paper{number}/Reviewers/Anon.*'
+        signature_regex = f'{conference.id}/Paper{number}/Reviewer_.*'
         if conference.legacy_anonids:
-            signature_regex = conference.get_id() + '/Paper' + str(number) + '/Anon[0-9]+|' +  conference.get_program_chairs_id()
+            signature_regex = conference.get_id() + '/Paper' + str(number) + '/AnonReviewer[0-9]+|' +  conference.get_program_chairs_id()
 
         if self.allow_de_anonymization:
             return '~.*|' + conference.get_program_chairs_id()
@@ -1794,6 +1794,9 @@ class ConferenceBuilder(object):
 
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
+
+    def use_legacy_anonids(self, legacy_anonids):
+        self.conference.legacy_anonids = legacy_anonids
 
     def set_request_form_id(self, id):
         self.conference.request_form_id = id

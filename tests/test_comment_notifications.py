@@ -33,6 +33,7 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -363,6 +364,7 @@ class TestCommentNotification():
         ])
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
         builder.set_review_stage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -641,6 +643,7 @@ class TestCommentNotification():
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -958,6 +961,7 @@ class TestCommentNotification():
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True, authors=True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -1197,6 +1201,7 @@ class TestCommentNotification():
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, authors=True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         conference.set_program_chairs(emails = ['author2@colt17.io'])
