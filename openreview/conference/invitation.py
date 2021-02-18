@@ -689,6 +689,7 @@ class OfficialCommentInvitation(openreview.Invitation):
         comment_stage = conference.comment_stage
 
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
+        anon_reviewer_regex=conference.get_anon_reviewer_id(number=note.number, anon_id='.*')
 
         readers = []
         default = None
@@ -709,7 +710,7 @@ class OfficialCommentInvitation(openreview.Invitation):
             readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
 
         if comment_stage.reader_selection:
-            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
+            readers.append(anon_reviewer_regex)
 
         if comment_stage.authors:
             readers.append(conference.get_authors_id(note.number))
@@ -748,7 +749,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name),
+                    'values-regex': '{anon_reviewer_regex}|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(anon_reviewer_regex=anon_reviewer_regex, prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name),
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -1557,7 +1558,7 @@ class InvitationBuilder(object):
                 'description': 'The users who will be allowed to read the above content.',
                 'values-regex': conference.get_id() + '|' + conference.get_area_chairs_id(number='.*') + '|~.*'
             }
-            signatures_regex = conference.get_id() + '/Paper.*/AnonReviewer[0-9]+'
+            signatures_regex = conference.get_anon_reviewer_id(number='.*', anon_id='.*')
 
         reviewer_paper_ranking_invitation = openreview.Invitation(
             id = conference.get_invitation_id('Paper_Ranking', prefix=group_id),

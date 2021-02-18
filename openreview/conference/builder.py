@@ -317,6 +317,11 @@ class Conference(object):
             reviewers_id = reviewers_id + self.reviewers_name
         return reviewers_id
 
+    def get_anon_reviewer_id(self, number=None, anon_id=None):
+        if self.legacy_anonids:
+            return f'{self.id}/Paper{number}/AnonReviewer{anon_id}'
+        return f'{self.id}/Paper{number}/Reviewer_{anon_id}'
+
     def get_reviewers_name(self, pretty=True):
         if pretty:
             return self.reviewers_name.replace('_', ' ')
@@ -1436,14 +1441,10 @@ class ReviewStage(object):
         return [conference.get_authors_id(number = number)]
 
     def get_signatures(self, conference, number):
-        signature_regex = f'{conference.id}/Paper{number}/Reviewer_.*'
-        if conference.legacy_anonids:
-            signature_regex = conference.get_id() + '/Paper' + str(number) + '/AnonReviewer[0-9]+|' +  conference.get_program_chairs_id()
-
         if self.allow_de_anonymization:
             return '~.*|' + conference.get_program_chairs_id()
 
-        return signature_regex
+        return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
 
 class ReviewRebuttalStage(object):
 

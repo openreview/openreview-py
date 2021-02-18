@@ -90,7 +90,7 @@ function(){
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
       } else {
-        var anonReviewers = note.readers.filter(reader => reader.indexOf('AnonReviewer') >= 0);
+        var anonReviewers = note.readers.filter(reader => reader.indexOf('AnonReviewer') >= 0 || reader.indexOf('Reviewer_') >= 0);
         if (anonReviewers.length) {
           var reviewer_mail = {
             groups: anonReviewers,

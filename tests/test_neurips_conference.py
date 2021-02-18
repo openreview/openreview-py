@@ -234,3 +234,10 @@ class TestNeurIPSConference():
 
         anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Reviewer_.*')
         assert len(anon_groups) == 2
+
+    def test_comment_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True))
+

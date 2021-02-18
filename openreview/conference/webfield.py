@@ -273,7 +273,7 @@ class WebfieldBuilder(object):
             if group_name == 'Area Chairs':
                 content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/Area_Chairs';")
             else:
-                content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/AnonReviewer.*';")
+                content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_anon_reviewer_id(number='.*', anon_id='.*') + "';")
             return self.__update_invitation(invitation, content)
 
     def set_reduced_load_page(self, conference_id, invitation, options = {}):
@@ -351,7 +351,7 @@ class WebfieldBuilder(object):
         }
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
-        anon_regex = f'{conference.id}/Paper.*/AnonReviewer.*' if conference.legacy_anonids else f'{conference.id}/Paper.*/Reviewer_'
+        anon_regex = conference.get_anon_reviewer_id(number='.*', anon_id='.*')
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f:
             content = f.read()

@@ -99,10 +99,10 @@ function processUpdate() {
               description: "User groups that should be able to read this review."
             },
             writers: {
-              'values-regex': paperGroup.id + '/AnonReviewer[0-9]+'
+              'values-regex': paperGroup.id + '/(AnonReviewer|Reviewer_)'
             },
             signatures: {
-              'values-regex': paperGroup.id + '/AnonReviewer[0-9]+'
+              'values-regex': paperGroup.id + '/(AnonReviewer|Reviewer_)'
             }
           }
         };
