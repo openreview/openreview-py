@@ -691,35 +691,14 @@ class OfficialCommentInvitation(openreview.Invitation):
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
         anon_reviewer_regex=conference.get_anon_reviewer_id(number=note.number, anon_id='.*')
 
-        readers = []
-        default = None
-        invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors) + [conference.support_user]
-        if comment_stage.allow_public_comments:
-            readers.append('everyone')
-        else:
-            default = [conference.get_program_chairs_id()]
-
-        readers.append(conference.get_program_chairs_id())
-
-        if conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(note.number))
-
-        if comment_stage.unsubmitted_reviewers:
-            readers.append(conference.get_reviewers_id(note.number))
-        else:
-            readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
-
-        if comment_stage.reader_selection:
-            readers.append(anon_reviewer_regex)
-
-        if comment_stage.authors:
-            readers.append(conference.get_authors_id(note.number))
+        readers = comment_stage.get_readers(conference, note.number)
+        invitees = comment_stage.get_invitees(conference, note.number)
 
         if comment_stage.reader_selection:
             reply_readers = {
                 'description': 'Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response',
                 'values-dropdown': readers,
-                'default': default
+                'default': None if comment_stage.allow_public_comments else [conference.get_program_chairs_id()]
             }
         else:
             reply_readers = {

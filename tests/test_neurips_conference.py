@@ -235,9 +235,80 @@ class TestNeurIPSConference():
         anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Reviewer_.*')
         assert len(anon_groups) == 2
 
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
+        assert len(signatory_groups) == 1
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        review_note=reviewer_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', signatory_groups[0].id],
+            nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=[signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Your review has been received on your assigned Paper number: 5, Paper title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Review posted to your assigned Paper number: 5, Paper title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        ## TODO: should we send emails to Senior Area Chairs?
+
     def test_comment_stage(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
         conference.set_comment_stage(openreview.CommentStage(reader_selection=True))
 
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
+        assert len(signatory_groups) == 1
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        review_note=reviewer_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', signatory_groups[0].id],
+            #nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=[signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'title': 'Test comment',
+                'comment': 'This is a comment'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1

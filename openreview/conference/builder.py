@@ -384,6 +384,9 @@ class Conference(object):
         else:
             committee.append(self.get_reviewers_id(number))
 
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+
         if self.use_area_chairs:
             committee.append(self.get_area_chairs_id(number))
 
@@ -514,9 +517,9 @@ class Conference(object):
             options['contact'] = self.homepage_header.get('contact')
         return options
 
-    def get_submissions(self, accepted = False, details = None, sort = None):
+    def get_submissions(self, accepted = False, number=None, details = None, sort = None):
         invitation = self.get_blind_submission_id()
-        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details, sort = sort))
+        notes = list(tools.iterget_notes(self.client, invitation = invitation, number=number, details = details, sort = sort))
         if accepted:
             decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*'))
             accepted_forums = [d.forum for d in decisions if 'Accept' in d.content['decision']]
@@ -1420,6 +1423,9 @@ class ReviewStage(object):
 
         readers = [ conference.get_program_chairs_id()]
 
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number = number))
+
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
@@ -1532,6 +1538,39 @@ class CommentStage(object):
         self.email_pcs = email_pcs
         self.authors = authors
         self.only_accepted=only_accepted
+
+    def get_readers(self, conference, number):
+        readers = []
+        default = []
+
+        if self.allow_public_comments:
+            readers.append('everyone')
+        else:
+            default = [conference.get_program_chairs_id()]
+
+        readers.append(conference.get_program_chairs_id())
+
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(number))
+
+        if self.unsubmitted_reviewers:
+            readers.append(conference.get_reviewers_id(number))
+        else:
+            readers.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        if self.reader_selection:
+            readers.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+
+        if self.authors:
+            readers.append(conference.get_authors_id(number))
+
+        return readers
+
+    def get_invitees(self, conference, number):
+        return conference.get_committee(number=number, with_authors=self.authors) + [conference.support_user]
 
 class MetaReviewStage(object):
 
