@@ -312,9 +312,10 @@ class Conference(object):
         return self.get_committee_id(self.reviewers_name, number)
 
     def get_anon_reviewer_id(self, number=None, anon_id=None):
+        single_reviewer_name=self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
         if self.legacy_anonids:
             return f'{self.id}/Paper{number}/AnonReviewer{anon_id}'
-        return f'{self.id}/Paper{number}/Reviewer_{anon_id}'
+        return f'{self.id}/Paper{number}/{single_reviewer_name}_{anon_id}'
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
@@ -860,39 +861,45 @@ class Conference(object):
 
     def set_assignment(self, user, number, is_area_chair = False):
 
-        if is_area_chair:
-            return tools.add_assignment(self.client,
-            number,
-            self.get_id(),
-            user,
-            parent_label = 'Area_Chairs',
-            individual_label = 'Area_Chair')
-        else:
-            common_readers_writers = [
-                self.get_id(),
-                self.get_program_chairs_id()
-            ]
-            if self.use_area_chairs:
-                common_readers_writers.append(self.get_area_chairs_id(number = number))
-
-            result = tools.add_assignment(
-                self.client,
+        if self.legacy_anonids:
+            if is_area_chair:
+                return tools.add_assignment(self.client,
                 number,
                 self.get_id(),
                 user,
-                parent_label = self.reviewers_name,
-                individual_label = 'AnonReviewer',
-                individual_group_params = {
-                    'readers': common_readers_writers,
-                    'writers': common_readers_writers
-                },
-                parent_group_params = {
-                    'readers': common_readers_writers,
-                    'writers': common_readers_writers
-                },
-                use_profile = True
-            )
-            return result
+                parent_label = 'Area_Chairs',
+                individual_label = 'Area_Chair')
+            else:
+                common_readers_writers = [
+                    self.get_id(),
+                    self.get_program_chairs_id()
+                ]
+                if self.use_area_chairs:
+                    common_readers_writers.append(self.get_area_chairs_id(number = number))
+
+                result = tools.add_assignment(
+                    self.client,
+                    number,
+                    self.get_id(),
+                    user,
+                    parent_label = self.reviewers_name,
+                    individual_label = 'AnonReviewer',
+                    individual_group_params = {
+                        'readers': common_readers_writers,
+                        'writers': common_readers_writers
+                    },
+                    parent_group_params = {
+                        'readers': common_readers_writers,
+                        'writers': common_readers_writers
+                    },
+                    use_profile = True
+                )
+                return result
+
+        if is_area_chair:
+            self.client.add_members_to_group(self.get_area_chairs_id(number=number), user)
+        else:
+            self.client.add_members_to_group(self.get_reviewers_id(number=number), user)
 
     def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
         if is_area_chair:

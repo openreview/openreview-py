@@ -779,7 +779,7 @@ class Matching(object):
         reviewer_name = self.conference.area_chairs_name if self.is_area_chair else self.conference.reviewers_name
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
-        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, '.*'), count=1)
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, '.*'), limit=1)
         assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select='tail')}
 
@@ -797,7 +797,7 @@ class Matching(object):
             else:
                 print('assignment not found', paper.id)
 
-            self.post_group(paper_group)
+            self.client.post_group(paper_group)
 
     def deploy(self, assignment_title, overwrite=False):
         '''
