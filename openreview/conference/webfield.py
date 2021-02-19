@@ -328,7 +328,9 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/authorWebfield.js')) as f:
+        template_file = 'legacyAuthorWebfield' if conference.legacy_anonids else 'authorWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
@@ -422,7 +424,9 @@ class WebfieldBuilder(object):
         if conference.get_submissions():
             submission_id = conference.get_blind_submission_id()
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f:
+        template_file = 'legacyProgramchairWebfield' if conference.legacy_anonids else 'programchairWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")

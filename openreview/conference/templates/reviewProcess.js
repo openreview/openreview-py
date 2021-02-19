@@ -17,8 +17,8 @@ function(){
 
       var AUTHORS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + AUTHORS_NAME;
       //TODO: use the variable instead, when we have anonymous groups integrated
-      var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Reviewers';
-      var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Area_Chairs';
+      var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + REVIEWERS_NAME;
+      var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + AREA_CHAIRS_NAME;
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 

@@ -68,6 +68,7 @@ class TestNeurIPSConference():
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
+                'reviewer_anonymity': ['Program Chairs', 'Assigned SAC', 'Assigned AC', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'

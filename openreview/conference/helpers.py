@@ -141,6 +141,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     ## Contact Emails is deprecated
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
     builder.set_conference_program_chairs_ids(program_chair_ids)
+    builder.use_legacy_anonids(note.content.get('reviewer_anonymity') is None)
 
     return builder
 

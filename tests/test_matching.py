@@ -778,21 +778,21 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='rev-matching')
 
-        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert 2 == len(revs_paper0.members)
         assert revs_paper0.members[0] == 'r1@mit.edu'
         assert revs_paper0.members[1] == 'r2@google.com'
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r1@mit.edu']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r2@google.com']
 
-        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert 2 == len(revs_paper1.members)
         assert revs_paper1.members[0] == 'r2@google.com'
         assert revs_paper1.members[1] == 'r3@fb.com'
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r3@fb.com']
 
-        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert 2 == len(revs_paper2.members)
         assert 'r3@fb.com' in revs_paper2.members
         assert 'r1@mit.edu' in revs_paper2.members
@@ -842,19 +842,19 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='rev-matching-new', overwrite=True)
 
-        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r3@fb.com']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
 
-        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert ['r1@mit.edu'] == revs_paper1.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
 
-        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
@@ -895,19 +895,19 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='rev-matching-emergency')
 
-        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com', 'r1@mit.edu', 'r2@mit.edu'] == revs_paper0.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r3@fb.com']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r1@mit.edu']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number)).members == ['r2@mit.edu']
 
 
-        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert ['r1@mit.edu', 'r2@google.com'] == revs_paper1.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
 
-        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
@@ -915,7 +915,7 @@ class TestMatching():
 
 
         pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/AnonReviewer2', ['r1@mit.edu'])
-        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/Reviewers', ['r1@mit.edu'])
+        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/Program_Committee', ['r1@mit.edu'])
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
@@ -929,19 +929,19 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='rev-matching-emergency-2')
 
-        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com', 'r2@mit.edu', 'r2@google.com'] == revs_paper0.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r3@fb.com']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r2@google.com']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number)).members == ['r2@mit.edu']
 
 
-        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert ['r1@mit.edu', 'r2@google.com'] == revs_paper1.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
 
-        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
@@ -959,7 +959,7 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True)
 
-        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number))
@@ -969,14 +969,14 @@ class TestMatching():
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number))
 
 
-        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert [] == revs_paper1.members
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number))
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
 
-        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
@@ -990,7 +990,7 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True)
 
-        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number))
@@ -1000,14 +1000,14 @@ class TestMatching():
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number))
 
 
-        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert [] == revs_paper1.members
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number))
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
 
-        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
@@ -1028,7 +1028,7 @@ class TestMatching():
             },
             readers=[
                 "auai.org/UAI/2019/Conference/Program_Chairs",
-                "auai.org/UAI/2019/Conference/Paper1/Area_Chairs",
+                "auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee",
                 'auai.org/UAI/2019/Conference/Paper1/AnonReviewer1'
             ],
             nonreaders=["auai.org/UAI/2019/Conference/Paper1/Authors"],
@@ -1088,13 +1088,13 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='rev-matching-emergency-6')
 
-        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[0].number))
+        revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
 
-        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[1].number))
+        revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert ['r1@mit.edu'] == revs_paper1.members
 
-        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Reviewers'.format(x=blinded_notes[2].number))
+        revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members
 
 
@@ -1148,13 +1148,13 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='ac-matching', is_area_chair=True)
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chairs').members == ['ac2@umass.edu']
+        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1').members == ['ac2@umass.edu']
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chairs').members == ['ac2@umass.edu']
+        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chair1').members == ['ac2@umass.edu']
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chairs').members == ['ac1@cmu.edu']
+        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Senior_Program_Committee').members == ['ac1@cmu.edu']
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac1@cmu.edu']
 
 
@@ -1180,13 +1180,12 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='ac-matching-2', is_area_chair=True, overwrite=True)
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chairs').members == ['ac2@umass.edu']
+        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac2@umass.edu']
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chairs').members == ['ac1@cmu.edu']
+        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Senior_Program_Committee').members == ['ac1@cmu.edu']
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chair1').members == ['ac1@cmu.edu']
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chairs')
+        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee').members == []
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1')

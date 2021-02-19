@@ -309,13 +309,7 @@ class Conference(object):
         return self.id + '/' + self.program_chairs_name
 
     def get_reviewers_id(self, number = None):
-        reviewers_id = self.id + '/'
-        if number:
-            # TODO: Remove the "Reviewers" label from the end of this group as this forces individual groups to be "PaperX/Reviewers"
-            reviewers_id = reviewers_id + 'Paper' + str(number) + '/Reviewers'
-        else:
-            reviewers_id = reviewers_id + self.reviewers_name
-        return reviewers_id
+        return self.get_committee_id(self.reviewers_name, number)
 
     def get_anon_reviewer_id(self, number=None, anon_id=None):
         if self.legacy_anonids:
@@ -338,40 +332,20 @@ class Conference(object):
         return self.use_secondary_area_chairs
 
     def get_authors_id(self, number = None):
-        authors_id = self.id + '/'
-        if number:
-            authors_id = authors_id + 'Paper' + str(number) + '/'
-
-        authors_id = authors_id + self.authors_name
-        return authors_id
+        return self.get_committee_id(self.authors_name, number)
 
     def get_accepted_authors_id(self):
         return self.id + '/' + self.authors_name + '/Accepted'
 
     def get_area_chairs_id(self, number = None):
-        area_chairs_id = self.id + '/'
-        if number:
-            # TODO: Remove the "Area_Chairs" label from the end of this group as this forces individual groups to be "PaperX/Area_Chairs"
-            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/Area_Chairs'
-        else:
-            area_chairs_id = area_chairs_id + self.area_chairs_name
-        return area_chairs_id
+        return self.get_committee_id(self.area_chairs_name, number)
+
 
     def get_senior_area_chairs_id(self, number = None):
-        senior_area_chairs_id = self.id + '/'
-        if number:
-            senior_area_chairs_id = senior_area_chairs_id + 'Paper' + str(number) + '/' + self.senior_area_chairs_name
-        else:
-            senior_area_chairs_id = senior_area_chairs_id + self.senior_area_chairs_name
-        return senior_area_chairs_id
+        return self.get_committee_id(self.senior_area_chairs_name, number)
 
     def get_secondary_area_chairs_id(self, number=None):
-        secondary_area_chairs_id = self.id + '/'
-        if number:
-            secondary_area_chairs_id = ''.join([secondary_area_chairs_id, 'Paper', str(number), '/Secondary_Area_Chair'])
-        else:
-            secondary_area_chairs_id = ''.join([secondary_area_chairs_id, self.secondary_area_chairs_name])
-        return secondary_area_chairs_id
+        return self.get_committee_id(self.secondary_area_chairs_name, number)
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
         committee = [self.get_id()]
@@ -393,6 +367,14 @@ class Conference(object):
         committee.append(self.get_program_chairs_id())
 
         return committee
+
+    def get_committee_id(self, name, number=None):
+        committee_id = self.id + '/'
+        if number:
+            committee_id = f'{committee_id}Paper{number}/{name}'
+        else:
+            committee_id = committee_id + name
+        return committee_id
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
@@ -898,7 +880,7 @@ class Conference(object):
                 number,
                 self.get_id(),
                 user,
-                parent_label = 'Reviewers',
+                parent_label = self.reviewers_name,
                 individual_label = 'AnonReviewer',
                 individual_group_params = {
                     'readers': common_readers_writers,

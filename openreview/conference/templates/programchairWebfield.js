@@ -72,6 +72,7 @@ var main = function() {
     getPcAssignmentTags(),
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
+    getBidCounts(SENIOR_AREA_CHAIRS_ID),
     getAreaChairRecommendationCounts(),
     getGroupMembersCount(REVIEWERS_INVITED_ID),
     getGroupMembersCount(AREA_CHAIRS_INVITED_ID),
@@ -94,6 +95,7 @@ var main = function() {
     pcAssignmentTags,
     reviewerBidCounts,
     areaChairBidCounts,
+    seniorAreaChairBidCounts,
     areaChairRecommendationCounts,
     reviewersInvitedCount,
     areaChairsInvitedCount,
@@ -139,7 +141,7 @@ var main = function() {
       decisions: decisions,
       pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION],
       acRankingByPaper: acRankingByPaper,
-      bidEnabled: invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME] || invitationMap[REVIEWERS_ID + '/-/' + BID_NAME],
+      bidEnabled: invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME] || invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME] || invitationMap[REVIEWERS_ID + '/-/' + BID_NAME],
       recommendationEnabled: invitationMap[REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME],
       requestForm: requestForm,
       registrationForms: registrationForms,
@@ -157,6 +159,10 @@ var main = function() {
       reviewersCount: reviewers.length,
       areaChairsCount: areaChairs.length,
       seniorAreaChairsCount: seniorAreaChairs.length,
+      sacBidsComplete: calcBidsComplete(
+        seniorAreaChairBidCounts,
+        invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME]
+      ),
       acBidsComplete: calcBidsComplete(
         areaChairBidCounts,
         invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME]
@@ -846,6 +852,13 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   if (bidEnabled || recommendationEnabled) {
     html += '<div class="row" style="margin-top: .5rem;">';
+    if (bidEnabled && REVIEWERS_ID) {
+      html += renderStatContainer(
+        'Reviewer Bidding Progress:',
+        renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
+        '% of Reviewers who have completed the required number of bids'
+      );
+    }
     if (bidEnabled && AREA_CHAIRS_ID) {
       html += renderStatContainer(
         'AC Bidding Progress:',
@@ -860,11 +873,11 @@ var displayStatsAndConfiguration = function(conferenceStats) {
         '% of ACs who have completed the required number of reviewer recommendations'
       );
     }
-    if (bidEnabled && REVIEWERS_ID) {
+    if (bidEnabled && SENIOR_AREA_CHAIRS_ID) {
       html += renderStatContainer(
-        'Reviewer Bidding Progress:',
-        renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
-        '% of Reviewers who have completed the required number of bids'
+        'SAC Bidding Progress:',
+        renderProgressStat(conferenceStats.sacBidsComplete, conferenceStats.seniorAreaChairsCount),
+        '% of SACs who have completed the required number of bids'
       );
     }
     html += '</div>';
@@ -1008,6 +1021,9 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     html += '<div class="col-md-4 col-xs-6">'
     html += '<h4>Bids & Recommendations:</h4><ul style="padding-left: 15px">';
     html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
+    if (SENIOR_AREA_CHAIRS_ID) {
+      html += '<li><a href="' + buildEdgeBrowserUrl(null, SENIOR_AREA_CHAIRS_ID, BID_NAME) + '">Senior Area Chair Bids</a></li>';
+    }
     if (AREA_CHAIRS_ID) {
       html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
       if (recommendationEnabled) {
@@ -2028,10 +2044,10 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   };
   reviewerSummaryMap[note.number] = reviewProgressData;
 
-  var areaChairNames = { name: areachairProfile[0].name, email: areachairProfile[0].email }
-  if (areachairProfile.length > 1) {
-    areaChairNames.name = areaChairNames.name + ', ' + areachairProfile[1].name;
-    areaChairNames.email = areaChairNames.email + ', ' + areachairProfile[1].email;
+  var areaChairNames = { name: 'No Area Chair' };
+  if (areachairProfile.length) {
+    areaChairNames.name = areachairProfile.map(function(p) { return p.name; }).join(', ');
+    areaChairNames.email = areachairProfile.map(function(p) { return p.email; }).join(', ');
   }
   var areachairProgressData = {
     numMetaReview: metaReview ? 'One' : 'No',

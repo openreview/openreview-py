@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import json
 import datetime
+import re
 import openreview
 from tqdm import tqdm
 from .. import invitations
@@ -1300,9 +1301,10 @@ class InvitationBuilder(object):
 
     def set_review_rebuttal_invitation(self, conference, reviews):
         invitations = []
+        regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(RebuttalInvitation(conference))
         for note in tqdm(reviews, desc='set_review_rebuttal_invitation'):
-            if 'AnonReviewer' in note.signatures[0]:
+            if re.search(regex, note.signatures[0]):
                 invitation = self.client.post_invitation(PaperReviewRebuttalInvitation(conference, note))
                 invitations.append(invitation)
 
@@ -1310,9 +1312,10 @@ class InvitationBuilder(object):
 
     def set_review_revision_invitation(self, conference, reviews):
         invitations = []
+        regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(ReviewRevisionInvitation(conference))
         for note in tqdm(reviews, desc='set_review_revision_invitation'):
-            if 'AnonReviewer' in note.signatures[0]:
+            if re.search(regex, note.signatures[0]):
                 invitation = self.client.post_invitation(PaperReviewRevisionInvitation(conference, note))
                 invitations.append(invitation)
 
@@ -1320,9 +1323,10 @@ class InvitationBuilder(object):
 
     def set_review_rating_invitation(self, conference, reviews):
         invitations = []
+        regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(ReviewRatingInvitation(conference))
         for note in tqdm(reviews, desc='set_review_rating_invitation'):
-            if 'AnonReviewer' in note.signatures[0]:
+            if re.search(regex, note.signatures[0]):
                 invitation = self.client.post_invitation(PaperReviewRatingInvitation(conference, note))
                 invitations.append(invitation)
 

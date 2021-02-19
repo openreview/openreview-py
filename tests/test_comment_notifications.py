@@ -353,8 +353,6 @@ class TestCommentNotification():
             <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
             </p>'''
         })
-        builder.set_conference_area_chairs_name('Senior_Program_Committee')
-        builder.set_conference_reviewers_name('Program_Committee')
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, due_date = now + datetime.timedelta(minutes = 10), subject_areas= [
             "Algorithms: Approximate Inference",
@@ -364,6 +362,7 @@ class TestCommentNotification():
         ])
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
         builder.set_review_stage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
@@ -622,7 +621,7 @@ class TestCommentNotification():
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'):
             ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
 
-        ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
+        ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Reviewers'], 'This is an invalid reminder')
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
