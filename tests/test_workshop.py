@@ -33,11 +33,11 @@ class TestWorkshop():
         'location': 'Berkeley, CA, USA'
         })
         builder.has_area_chairs(False)
+        builder.use_legacy_anonids(True)
         builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
 
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['program_chairs@hsdip.org'])
-        builder.use_legacy_anonids(True)
         return conference
 
 
