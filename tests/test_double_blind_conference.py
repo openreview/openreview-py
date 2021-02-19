@@ -1252,6 +1252,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'best paper' : {
