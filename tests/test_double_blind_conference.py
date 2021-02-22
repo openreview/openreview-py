@@ -1220,6 +1220,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100))
+        builder.use_legacy_anonids(True)
         builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
@@ -1397,6 +1398,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.enable_reviewer_reassignment(True)#enable review reassignment so that the assign_Reviewer_Textbox is rendered on page
         builder.get_result()
 
@@ -1708,6 +1710,7 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_conference_year(2019)
         builder.set_meta_review_stage(public=True, additional_fields = {
             'best paper' : {
