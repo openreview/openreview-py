@@ -632,6 +632,16 @@ class Conference(object):
                         anonids=True
                     ))
 
+            # Senior Area Chairs Paper group
+            if self.use_senior_area_chairs:
+                self.client.post_group(openreview.Group(id=self.get_senior_area_chairs_id(number=n.number),
+                    readers=[self.id, self.get_area_chairs_id(number=n.number)],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)]
+                ))
+
+
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
 

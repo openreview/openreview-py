@@ -225,6 +225,12 @@ class TestNeurIPSConference():
 
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
 
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Area_IBMChair1')
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Area_IBMChair1')
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Area_Chairs', '~Area_IBMChair1')
@@ -347,6 +353,30 @@ class TestNeurIPSConference():
         assert process_logs[0]['status'] == 'ok'
 
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        sac_client=openreview.Client(username='sac1@google.com', password='1234')
+
+        comment_note=sac_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            writers=['NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs'],
+            signatures=['NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs'],
+            content={
+                'title': 'Test an SAC comment',
+                'comment': 'This is an SAC comment'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=comment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
 
     def test_meta_review_stage(self, conference, helpers, test_client, client):
