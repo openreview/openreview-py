@@ -715,7 +715,7 @@ class Conference(object):
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
 
         if self.submission_stage.second_due_date:
             if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
