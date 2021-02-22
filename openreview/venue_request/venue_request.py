@@ -643,17 +643,18 @@ class VenueRequest():
                 'order': 18,
                 'required': True
             },
-            'reviewer_anonymity': {
+            'reviewer_identity': {
                 'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewer real names.',
                 'values-checkbox': [
                     'Program Chairs',
-                    'All SACs',
-                    'Assigned SAC',
-                    'All ACs',
-                    'Assigned AC',
+                    'All Senior Area Chairs',
+                    'Assigned Senior Area Chair',
+                    'All Area Chairs',
+                    'Assigned Area Chair',
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
+                'default': ['Program Chairs'],
                 'order': 19,
                 'required': False
             },

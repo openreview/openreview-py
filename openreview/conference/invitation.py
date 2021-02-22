@@ -729,7 +729,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': '{anon_reviewer_regex}|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(anon_reviewer_regex=anon_reviewer_regex, prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name),
+                    'values-regex': comment_stage.get_signatures_regex(conference, note.number),
                     'description': 'How your identity will be displayed.'
                 }
             }

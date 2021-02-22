@@ -68,7 +68,7 @@ class TestNeurIPSConference():
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
-                'reviewer_anonymity': ['Program Chairs', 'Assigned SAC', 'Assigned AC', 'Assigned Reviewers'],
+                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
@@ -210,6 +210,12 @@ class TestNeurIPSConference():
             'NeurIPS.cc/2021/Conference/Reviewers',
             'NeurIPS.cc/2021/Conference/Paper5/Authors']
 
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
     def test_review_stage(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
@@ -312,4 +318,32 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
 
         messages = client.get_messages(to='ac1@mit.edu', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+
+        comment_note=ac_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            #nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=[signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'title': 'Test an AC comment',
+                'comment': 'This is an AC comment'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=comment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1

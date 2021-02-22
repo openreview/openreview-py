@@ -16,6 +16,15 @@ from .. import invitations
 
 class Conference(object):
 
+    class ReviewerIdentity(Enum):
+        PROGRAM_CHAIRS = 0
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        REVIEWERS = 5
+        REVIEWERS_ASSIGNED = 6
+
     def __init__(self, client):
         self.client = client
         self.request_form_id = None
@@ -60,6 +69,7 @@ class Conference(object):
         self.enable_reviewer_reassignment = False
         self.reduced_load_on_decline = []
         self.default_reviewer_load = 0
+        self.reviewer_identity_readers = []
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False, anonids = False):
         group = tools.get_group(self.client, id = group_id)
@@ -317,6 +327,12 @@ class Conference(object):
             return f'{self.id}/Paper{number}/AnonReviewer{anon_id}'
         return f'{self.id}/Paper{number}/{single_reviewer_name}_{anon_id}'
 
+    def get_anon_area_chair_id(self, number=None, anon_id=None):
+        single_area_chair_name=self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        if self.legacy_anonids:
+            return f'{self.id}/Paper{number}/Area_Chair{anon_id}'
+        return f'{self.id}/Paper{number}/{single_area_chair_name}_{anon_id}'
+
     def get_reviewers_name(self, pretty=True):
         if pretty:
             return self.reviewers_name.replace('_', ' ')
@@ -518,6 +534,24 @@ class Conference(object):
         invitation = self.submission_stage.get_desk_rejected_submission_id(self)
         return list(tools.iterget_notes(self.client, invitation=invitation, details=details))
 
+    def get_reviewer_identity_readers(self, number):
+        readers = [self.id]
+        if self.ReviewerIdentity.PROGRAM_CHAIRS in self.reviewer_identity_readers:
+            readers.append(self.get_program_chairs_id())
+        if self.ReviewerIdentity.SENIOR_AREA_CHAIRS in self.reviewer_identity_readers:
+            readers.append(self.get_senior_area_chairs_id())
+        if self.ReviewerIdentity.SENIOR_AREA_CHAIRS_ASSIGNED in self.reviewer_identity_readers:
+            readers.append(self.get_senior_area_chairs_id(number))
+        if self.ReviewerIdentity.AREA_CHAIRS in self.reviewer_identity_readers:
+            readers.append(self.get_area_chairs_id())
+        if self.ReviewerIdentity.AREA_CHAIRS_ASSIGNED in self.reviewer_identity_readers:
+            readers.append(self.get_area_chairs_id(number))
+        if self.ReviewerIdentity.REVIEWERS in self.reviewer_identity_readers:
+            readers.append(self.get_reviewers_id())
+        if self.ReviewerIdentity.REVIEWERS_ASSIGNED in self.reviewer_identity_readers:
+            readers.append(self.get_reviewers_id(number))
+        return readers
+
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
 
         if not force and reveal_submission and not self.submission_stage.public:
@@ -561,10 +595,13 @@ class Conference(object):
 
             # Reviewers Paper group
             if reviewers:
-                self.__create_group(
-                    self.get_reviewers_id(number=n.number),
-                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
-                    is_signatory = False, anonids = not self.legacy_anonids)
+                self.client.post_group(openreview.Group(id=self.get_reviewers_id(number=n.number),
+                    readers=self.get_reviewer_identity_readers(n.number),
+                    writers=[self.id, self.get_area_chairs_id(n.number)],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    anonids=True
+                ))
 
                 # Reviewers Submitted Paper group
                 self.__create_group(
@@ -574,7 +611,13 @@ class Conference(object):
 
             # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
-                self.__create_group(self.get_area_chairs_id(number=n.number), self.id, anonids = not self.legacy_anonids)
+                self.client.post_group(openreview.Group(id=self.get_area_chairs_id(number=n.number),
+                    readers=[self.id, self.get_area_chairs_id(number=n.number)],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    anonids=True
+                ))
 
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
@@ -1558,6 +1601,23 @@ class CommentStage(object):
 
         return readers
 
+    def get_signatures_regex(self, conference, number):
+
+        committee = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs:
+            committee.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs:
+            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+
+        committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+
+        if self.authors:
+            committee.append(conference.get_authors_id(number))
+
+        return '|'.join(committee)
+
     def get_invitees(self, conference, number):
         return conference.get_committee(number=number, with_authors=self.authors) + [conference.support_user]
 
@@ -1833,6 +1893,9 @@ class ConferenceBuilder(object):
     def set_recruitment_reduced_load(self, reduced_load_options, default_reviewer_load):
         self.conference.reduced_load_on_decline = reduced_load_options
         self.conference.default_reviewer_load = default_reviewer_load
+
+    def set_reviewer_identity_readers(self, readers):
+        self.conference.reviewer_identity_readers = readers
 
     def get_result(self):
 
