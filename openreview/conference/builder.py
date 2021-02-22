@@ -71,7 +71,7 @@ class Conference(object):
         self.default_reviewer_load = 0
         self.reviewer_identity_readers = []
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False, anonids = False):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
             return self.client.post_group(openreview.Group(
@@ -80,8 +80,7 @@ class Conference(object):
                 writers = [self.id, group_owner_id],
                 signatures = [self.id],
                 signatories = [self.id, group_id] if is_signatory else [self.id, group_owner_id],
-                members = members,
-                anonids = anonids))
+                members = members))
         else:
             return self.client.add_members_to_group(group, members)
 
