@@ -723,7 +723,7 @@ class Conference(object):
             if self.submission_stage.second_due_date < now:
                 self.setup_final_deadline_stage(force, hide_fields)
         else:
-            if force or self.submission_stage.due_date < datetime.datetime.now():
+            if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
                 self.setup_final_deadline_stage(force, hide_fields)
 
     ## Deprecated
