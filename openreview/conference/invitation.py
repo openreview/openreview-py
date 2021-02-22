@@ -22,48 +22,50 @@ class SubmissionInvitation(openreview.Invitation):
         readers = submission_stage.get_invitation_readers(conference, under_submission, submission_readers)
 
         content = submission_stage.get_content()
+        file_content = ''
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
-            if submission_stage.email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
-            if submission_stage.create_groups:
-                file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
-                # Only supported for public reviews
-                if submission_stage.create_review_invitation:
-                    file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
-            if conference.use_area_chairs:
-                file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+        if under_submission:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
+                file_content = f.read()
+                file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+                file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+                if submission_stage.email_pcs:
+                    file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+                if submission_stage.create_groups:
+                    file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
+                    # Only supported for public reviews
+                    if submission_stage.create_review_invitation:
+                        file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+                if conference.use_area_chairs:
+                    file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
 
 
-            super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
-                cdate = tools.datetime_millis(start_date),
-                duedate = tools.datetime_millis(due_date),
-                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
-                readers = ['everyone'],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                invitees = ['~', conference.support_user],
-                reply = {
-                    'forum': None,
-                    'replyto': None,
-                    'readers': readers,
-                    'writers': {
-                        'values-copied': [
-                            conference.get_id(),
-                            '{content.authorids}',
-                            '{signatures}'
-                        ]
-                    },
-                    'signatures': {
-                        'values-regex': '~.*'
-                    },
-                    'content': content
+        super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
+            cdate = tools.datetime_millis(start_date),
+            duedate = tools.datetime_millis(due_date),
+            expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
+            readers = ['everyone'],
+            writers = [conference.get_id()],
+            signatures = [conference.get_id()],
+            invitees = ['~', conference.support_user],
+            reply = {
+                'forum': None,
+                'replyto': None,
+                'readers': readers,
+                'writers': {
+                    'values-copied': [
+                        conference.get_id(),
+                        '{content.authorids}',
+                        '{signatures}'
+                    ]
                 },
-                process_string = file_content
-            )
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': content
+            },
+            process_string = file_content
+        )
 
 class BlindSubmissionsInvitation(openreview.Invitation):
 
