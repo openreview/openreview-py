@@ -535,6 +535,10 @@ class Conference(object):
         return list(tools.iterget_notes(self.client, invitation=invitation, details=details))
 
     def get_reviewer_identity_readers(self, number):
+        ## default value
+        if not self.reviewer_identity_readers:
+            return [self.id, self.get_program_chairs_id(), self.get_area_chairs_id(number)]
+
         readers = [self.id]
         if self.ReviewerIdentity.PROGRAM_CHAIRS in self.reviewer_identity_readers:
             readers.append(self.get_program_chairs_id())
@@ -595,13 +599,19 @@ class Conference(object):
 
             # Reviewers Paper group
             if reviewers:
-                self.client.post_group(openreview.Group(id=self.get_reviewers_id(number=n.number),
-                    readers=self.get_reviewer_identity_readers(n.number),
-                    writers=[self.id, self.get_area_chairs_id(n.number)],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    anonids=True
-                ))
+                if self.legacy_anonids:
+                    self.__create_group(
+                        self.get_reviewers_id(number=n.number),
+                        self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
+                        is_signatory = False)
+                else:
+                    self.client.post_group(openreview.Group(id=self.get_reviewers_id(number=n.number),
+                        readers=self.get_reviewer_identity_readers(n.number),
+                        writers=[self.id, self.get_area_chairs_id(n.number)],
+                        signatures=[self.id],
+                        signatories=[self.id],
+                        anonids=True
+                    ))
 
                 # Reviewers Submitted Paper group
                 self.__create_group(
@@ -611,13 +621,16 @@ class Conference(object):
 
             # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
-                self.client.post_group(openreview.Group(id=self.get_area_chairs_id(number=n.number),
-                    readers=[self.id, self.get_area_chairs_id(number=n.number)],
-                    writers=[self.id],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    anonids=True
-                ))
+                if self.legacy_anonids:
+                    self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
+                else:
+                    self.client.post_group(openreview.Group(id=self.get_area_chairs_id(number=n.number),
+                        readers=[self.id, self.get_area_chairs_id(number=n.number)],
+                        writers=[self.id],
+                        signatures=[self.id],
+                        signatories=[self.id],
+                        anonids=True
+                    ))
 
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
@@ -1216,10 +1229,12 @@ class SubmissionStage(object):
 
     class Readers(Enum):
         EVERYONE = 0
-        AREA_CHAIRS = 1
-        AREA_CHAIRS_ASSIGNED = 2
-        REVIEWERS = 3
-        REVIEWERS_ASSIGNED = 4
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        REVIEWERS = 5
+        REVIEWERS_ASSIGNED = 6
 
     def __init__(
             self,
@@ -1271,15 +1286,24 @@ class SubmissionStage(object):
     def get_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
-            return [
-                conference.get_id(),
-                conference.get_area_chairs_id(),
-                conference.get_authors_id(number=number)
-            ]
+            under_submission_readers=[conference.get_id()]
+            if conference.use_secondary_area_chairs:
+                under_submission_readers.append(conference.get_senior_area_chairs_id())
+            if conference.use_area_chairs:
+                under_submission_readers.append(conference.get_area_chairs_id())
+            under_submission_readers.append(conference.get_authors_id(number=number))
+            return under_submission_readers
+
         if self.public:
             return ['everyone']
 
         submission_readers=[conference.get_id()]
+
+        if self.Readers.SENIOR_AREA_CHAIRS in self.readers and conference.use_senior_area_chairs:
+            submission_readers.append(conference.get_senior_area_chairs_id())
+
+        if self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers and conference.use_senior_area_chairs:
+            submission_readers.append(conference.get_senior_area_chairs_id(number=number))
 
         if self.Readers.AREA_CHAIRS in self.readers and conference.use_area_chairs:
             submission_readers.append(conference.get_area_chairs_id())
@@ -1638,12 +1662,24 @@ class MetaReviewStage(object):
 
         readers = []
 
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number = number))
+
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
         readers.append(conference.get_program_chairs_id())
 
         return readers
+
+    def get_signatures_regex(self, conference, number):
+
+        committee = [conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+
+        return '|'.join(committee)
 
 class DecisionStage(object):
 
@@ -1819,7 +1855,7 @@ class ConferenceBuilder(object):
             readers=None
         ):
 
-        submissions_readers=[SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
+        submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS, SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
         if public:
             submissions_readers=[SubmissionStage.Readers.EVERYONE]
         if readers:

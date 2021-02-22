@@ -206,6 +206,7 @@ class TestNeurIPSConference():
         submissions = conference.get_submissions()
         assert len(submissions) == 5
         assert submissions[0].readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Reviewers',
             'NeurIPS.cc/2021/Conference/Paper5/Authors']
@@ -347,3 +348,131 @@ class TestNeurIPSConference():
 
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
+
+    def test_meta_review_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        conference.set_meta_review_stage(openreview.MetaReviewStage(due_date=due_date))
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        meta_review_note=ac_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Meta_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            writers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            signatures=[signatory_groups[0].id],
+            content={
+                'metareview': 'Paper is very good!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain'
+            }
+        ))
+
+    def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+        ac_anon_id=signatory_groups[0].id
+
+        ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        assert not status.find_elements_by_class_name('tag-widget')
+
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
+        assert len(signatory_groups) == 1
+        reviewer_anon_id=signatory_groups[0].id
+
+        reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        assert not selenium.find_elements_by_class_name('tag-widget')
+
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
+
+        ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        tag = status.find_element_by_class_name('tag-widget')
+        assert tag
+
+        options = tag.find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 6
+
+        options = tag.find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 6
+
+        blinded_notes = conference.get_submissions()
+
+        ac_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '1 of 5',
+            readers = ['NeurIPS.cc/2021/Conference', ac_anon_id],
+            signatures = [ac_anon_id])
+        )
+
+        reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        tags = selenium.find_elements_by_class_name('tag-widget')
+        assert tags
+
+        options = tags[0].find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 6
+
+        options = tags[0].find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 6
+
+        reviewer_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '2 of 5',
+            readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer_anon_id],
+            signatures = [reviewer_anon_id])
+        )
+
+        reviewer2_client = openreview.Client(username='reviewer2@mit.edu', password='1234')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer2@mit.edu')
+        assert len(signatory_groups) == 1
+        reviewer2_anon_id=signatory_groups[0].id
+
+        reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '1 of 5',
+            readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
+            signatures = [reviewer2_anon_id])
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+            reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
+                forum = blinded_notes[-1].id,
+                tag = '1 of 5',
+                readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
+                signatures = [reviewer2_anon_id])
+            )
+
+
+

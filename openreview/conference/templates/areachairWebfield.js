@@ -19,7 +19,7 @@ var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
-var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chairs';
+var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair';
 var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
@@ -35,6 +35,7 @@ var paperAndReviewersWithConflict = {};
 var paperRankingInvitation = null;
 var showRankings = false;
 var availableOptions = [];
+var anonids = {};
 
 $.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
 
@@ -65,7 +66,18 @@ var getRootGroups = function() {
     member: user.id, regex: AREACHAIR_WILDCARD
   })
   .then(function(result) {
-    return getPaperNumbersfromGroups(result.groups);
+    var paperGroups=result.groups.filter(function(g) { return g.id.endsWith('Area_Chairs'); });
+    var anonGroups=result.groups.filter(function(g) { return g.id.indexOf('Area_Chair_') > 0; });
+    var paperNumbers = [];
+    _.forEach(paperGroups, function(g) {
+      var num = getNumberfromGroup(g.id, 'Paper');
+      g.members.forEach(function(member, index) {
+          var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+          anonids[num] = anonGroup.id;
+      })
+      paperNumbers.push(parseInt(num));
+    });
+    return paperNumbers;
   });
 
   secondaryAreaChairGroupsP = Webfield.get('/groups', {
@@ -826,8 +838,8 @@ var postRenderTable = function(rows) {
           var body = {
             id: id,
             tag: value,
-            signatures: [CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
-            readers: [CONFERENCE_ID, CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
+            signatures: [anonids[noteNumber]],
+            readers: [anonids[noteNumber]],
             forum: noteId,
             invitation: invitationId,
             ddate: deleted ? Date.now() : null
