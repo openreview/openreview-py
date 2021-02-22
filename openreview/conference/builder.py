@@ -782,7 +782,7 @@ class Conference(object):
             if self.submission_stage.second_due_date < now:
                 self.setup_final_deadline_stage(force, hide_fields)
         else:
-            if force or not self.submission_stage.due_date or self.submission_stage.due_date < datetime.datetime.now():
+            if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
                 self.setup_final_deadline_stage(force, hide_fields)
 
     ## Deprecated
@@ -1969,7 +1969,8 @@ class ConferenceBuilder(object):
             self.conference.set_area_chairs()
 
         home_group = groups[-1]
-        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': groups[-2].id })
+        parent_group_id = groups[-2].id if len(groups) > 1 else ''
+        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_area_chairs:
