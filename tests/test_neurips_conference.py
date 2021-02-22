@@ -474,5 +474,34 @@ class TestNeurIPSConference():
                 signatures = [reviewer2_anon_id])
             )
 
+    def test_review_rating_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        conference.set_review_rating_stage(openreview.ReviewRatingStage(due_date = now + datetime.timedelta(minutes = 40)))
+
+        ac_client = openreview.Client(username='ac1@mit.edu', password='1234')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+        ac_anon_id=signatory_groups[0].id
+
+        submissions = conference.get_submissions(number=5)
+
+        reviews = ac_client.get_notes(forum=submissions[0].id, invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 1
+
+        review_rating_note = ac_client.post_note(openreview.Note(
+            forum=submissions[0].id,
+            replyto=reviews[0].id,
+            invitation=reviews[0].signatures[0] + '/-/Review_Rating',
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            writers=[ac_anon_id],
+            signatures=[ac_anon_id],
+            content={
+                'review_quality': 'Good'
+            }
+        ))
+        assert review_rating_note
+
 
 

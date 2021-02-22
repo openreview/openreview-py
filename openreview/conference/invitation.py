@@ -1025,7 +1025,7 @@ class PaperReviewRatingInvitation(openreview.Invitation):
                 'description': 'How your identity will be displayed.'
             },
             'signatures': {
-                'values-regex': paper_group + '/Area_Chair[0-9]+|' + conference.get_program_chairs_id(),
+                'values-regex': conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'),
                 'description': 'How your identity will be displayed.'
             }
         }
