@@ -882,7 +882,7 @@ class VenueRequest():
                 'order': 2
             },
             'invitee_reduced_load': {
-                'description': 'Please enter a comma separated values of the reduced load options if the invitee rejected the invitation. (Available for reviewer role only)',
+                'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. (For reviewer role only)',
                 'values-regex': '[0-9]+',
                 'default': ['1', '2', '3'],
                 'required': False,
