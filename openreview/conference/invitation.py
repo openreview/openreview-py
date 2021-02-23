@@ -1375,7 +1375,7 @@ class InvitationBuilder(object):
                 ]
             },
             'writers': {
-                'values-copied': [
+                'values': [
                     conference.get_id()
                 ]
             },
