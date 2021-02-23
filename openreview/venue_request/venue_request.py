@@ -881,6 +881,13 @@ class VenueRequest():
                 'required': True,
                 'order': 2
             },
+            'invitee_reduced_load': {
+                'description': 'Please enter a comma separated values of the reduced load options if the invitee rejected the invitation. (Available for reviewer role only)',
+                'values-regex': '[0-9]+',
+                'default': ['1', '2', '3'],
+                'required': False,
+                'order': 2
+            },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
                 'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',

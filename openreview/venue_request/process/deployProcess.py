@@ -118,23 +118,30 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'required': True,
                     'order': 2
                 },
+                'invitee_reduced_load': {
+                    'description': 'Please enter a comma separated value of the reduced load options if the invitee rejected the invitation. (Only for reviewer role)',
+                    'values-regex': '[0-9]+',
+                    'default': ['1', '2', '3'],
+                    'required': False,
+                    'order': 3
+                },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
                     'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
                     'required': True,
-                    'order': 3
+                    'order': 4
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 4,
+                    'order': 5,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 5,
+                    'order': 6,
                     'required': True,
                     'default': recruitment_email_body
                 }
@@ -170,17 +177,24 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'required': True,
                     'order': 2
                 },
+                'invitee_reduced_load': {
+                    'description': 'Please enter a comma separated values of the reduced load options if the invitee rejected the invitation. (Available for reviewer role only)',
+                    'values-regex': '[0-9]+',
+                    'default': ['1', '2', '3'],
+                    'required': False,
+                    'order': 3
+                },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 3,
+                    'order': 4,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 4,
+                    'order': 5,
                     'required': True,
                     'default': recruitment_email_body
                 }
