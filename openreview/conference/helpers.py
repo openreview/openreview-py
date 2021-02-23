@@ -49,7 +49,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
             submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
         except ValueError:
             submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
-        submission_due_date = note.content.get('abstract_registration_deadline', '').strip() or note.content.get('Abstract Registration Deadline', '').strip()
+        submission_due_date = note.content.get('abstract_registration_deadline', '').strip()
         if submission_due_date:
             try:
                 submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
