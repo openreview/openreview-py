@@ -27,7 +27,7 @@ var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/(Senior_)+Area_Chairs|/Program_Chairs)?/-/.*';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/(Senior_)?Area_Chairs|/Program_Chairs)?/-/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
 var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
