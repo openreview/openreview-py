@@ -144,13 +144,13 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.use_legacy_anonids(note.content.get('reviewer_identity') is None)
 
     readers_map = {
-        'Program Chairs': openreview.Conference.ReviewerIdentity.PROGRAM_CHAIRS,
-        'All Senior Area Chairs': openreview.Conference.ReviewerIdentity.SENIOR_AREA_CHAIRS,
-        'Assigned Senior Area Chair': openreview.Conference.ReviewerIdentity.SENIOR_AREA_CHAIRS_ASSIGNED,
-        'All Area Chairs': openreview.Conference.ReviewerIdentity.AREA_CHAIRS,
-        'Assigned Area Chair': openreview.Conference.ReviewerIdentity.AREA_CHAIRS_ASSIGNED,
-        'All Reviewers': openreview.Conference.ReviewerIdentity.REVIEWERS,
-        'Assigned Reviewers': openreview.Conference.ReviewerIdentity.REVIEWERS_ASSIGNED
+        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
     }
 
     builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])

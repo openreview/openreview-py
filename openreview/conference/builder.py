@@ -16,7 +16,7 @@ from .. import invitations
 
 class Conference(object):
 
-    class ReviewerIdentity(Enum):
+    class IdentityReaders(Enum):
         PROGRAM_CHAIRS = 0
         SENIOR_AREA_CHAIRS = 1
         SENIOR_AREA_CHAIRS_ASSIGNED = 2
@@ -24,6 +24,25 @@ class Conference(object):
         AREA_CHAIRS_ASSIGNED = 4
         REVIEWERS = 5
         REVIEWERS_ASSIGNED = 6
+
+        @classmethod
+        def get_readers(self, conference, number, identity_readers):
+            readers = [conference.id]
+            if self.PROGRAM_CHAIRS in identity_readers:
+                readers.append(conference.get_program_chairs_id())
+            if self.SENIOR_AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id())
+            if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id(number))
+            if self.AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_area_chairs_id())
+            if self.AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_area_chairs_id(number))
+            if self.REVIEWERS in identity_readers:
+                readers.append(conference.get_reviewers_id())
+            if self.REVIEWERS_ASSIGNED in identity_readers:
+                readers.append(conference.get_reviewers_id(number))
+            return readers
 
     def __init__(self, client):
         self.client = client
@@ -70,6 +89,8 @@ class Conference(object):
         self.reduced_load_on_decline = []
         self.default_reviewer_load = 0
         self.reviewer_identity_readers = []
+        self.area_chair_identity_readers = []
+        self.senior_area_chair_identity_readers = []
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
         group = tools.get_group(self.client, id = group_id)
@@ -538,22 +559,21 @@ class Conference(object):
         if not self.reviewer_identity_readers:
             return [self.id, self.get_program_chairs_id(), self.get_area_chairs_id(number)]
 
-        readers = [self.id]
-        if self.ReviewerIdentity.PROGRAM_CHAIRS in self.reviewer_identity_readers:
-            readers.append(self.get_program_chairs_id())
-        if self.ReviewerIdentity.SENIOR_AREA_CHAIRS in self.reviewer_identity_readers:
-            readers.append(self.get_senior_area_chairs_id())
-        if self.ReviewerIdentity.SENIOR_AREA_CHAIRS_ASSIGNED in self.reviewer_identity_readers:
-            readers.append(self.get_senior_area_chairs_id(number))
-        if self.ReviewerIdentity.AREA_CHAIRS in self.reviewer_identity_readers:
-            readers.append(self.get_area_chairs_id())
-        if self.ReviewerIdentity.AREA_CHAIRS_ASSIGNED in self.reviewer_identity_readers:
-            readers.append(self.get_area_chairs_id(number))
-        if self.ReviewerIdentity.REVIEWERS in self.reviewer_identity_readers:
-            readers.append(self.get_reviewers_id())
-        if self.ReviewerIdentity.REVIEWERS_ASSIGNED in self.reviewer_identity_readers:
-            readers.append(self.get_reviewers_id(number))
-        return readers
+        return self.IdentityReaders.get_readers(self, number, self.reviewer_identity_readers)
+
+    def get_area_chair_identity_readers(self, number):
+        ## default value
+        if not self.area_chair_identity_readers:
+            return [self.id, self.get_program_chairs_id()]
+
+        return self.IdentityReaders.get_readers(self, number, self.area_chair_identity_readers)
+
+    def get_senior_area_chair_identity_readers(self, number):
+        ## default value
+        if not self.senior_area_chair_identity_readers:
+            return [self.id, self.get_program_chairs_id()]
+
+        return self.IdentityReaders.get_readers(self, number, self.senior_area_chair_identity_readers)
 
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
 
@@ -604,12 +624,15 @@ class Conference(object):
                         self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
                         is_signatory = False)
                 else:
-                    self.client.post_group(openreview.Group(id=self.get_reviewers_id(number=n.number),
+                    reviewers_id=self.get_reviewers_id(number=n.number)
+                    group = tools.get_group(self.client, id = reviewers_id)
+                    self.client.post_group(openreview.Group(id=reviewers_id,
                         readers=self.get_reviewer_identity_readers(n.number),
                         writers=[self.id, self.get_area_chairs_id(n.number)],
                         signatures=[self.id],
                         signatories=[self.id],
-                        anonids=True
+                        anonids=True,
+                        members=group.members if group else []
                     ))
 
                 # Reviewers Submitted Paper group
@@ -623,21 +646,27 @@ class Conference(object):
                 if self.legacy_anonids:
                     self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
                 else:
-                    self.client.post_group(openreview.Group(id=self.get_area_chairs_id(number=n.number),
-                        readers=[self.id, self.get_area_chairs_id(number=n.number)],
+                    area_chairs_id=self.get_area_chairs_id(number=n.number)
+                    group = tools.get_group(self.client, id = area_chairs_id)
+                    self.client.post_group(openreview.Group(id=area_chairs_id,
+                        readers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],
                         signatures=[self.id],
                         signatories=[self.id],
-                        anonids=True
+                        anonids=True,
+                        members=group.members if group else []
                     ))
 
             # Senior Area Chairs Paper group
             if self.use_senior_area_chairs:
-                self.client.post_group(openreview.Group(id=self.get_senior_area_chairs_id(number=n.number),
-                    readers=[self.id, self.get_area_chairs_id(number=n.number)],
+                senior_area_chairs_id=self.get_senior_area_chairs_id(number=n.number)
+                group = tools.get_group(self.client, id = senior_area_chairs_id)
+                self.client.post_group(openreview.Group(id=senior_area_chairs_id,
+                    readers=self.get_senior_area_chair_identity_readers(n.number),
                     writers=[self.id],
                     signatures=[self.id],
-                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)]
+                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)],
+                    members=group.members if group else []
                 ))
 
 

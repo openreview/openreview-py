@@ -22,6 +22,19 @@ class TestNeurIPSConference():
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         conference=openreview.helpers.get_conference(client, request_form.id)
+        ## should we add this to the request form?
+        conference.senior_area_chair_identity_readers=[
+            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+        ]
+        conference.area_chair_identity_readers=[
+            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+        ]
         return conference
 
 
@@ -336,6 +349,19 @@ class TestNeurIPSConference():
             'NeurIPS.cc/2021/Conference/Reviewers',
             'NeurIPS.cc/2021/Conference/Paper5/Authors']
 
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2021/Conference',
             'NeurIPS.cc/2021/Conference/Program_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
@@ -346,27 +372,50 @@ class TestNeurIPSConference():
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        conference.set_review_stage(openreview.ReviewStage(due_date=due_date))
 
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        stage_note=client.post_note(openreview.Note(
+            content={
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=['~Program_NeurIPSChair1']
+        ))
 
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        helpers.await_queue()
 
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Area_IBMChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Area_IBMChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Area_Chairs', '~Area_IBMChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Area_Chairs', '~Area_IBMChair1')
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', '~Area_IBMChair1')
+        process_logs = client.get_process_logs(id=stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', '~Area_IBMChair1')
+
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
 
         anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Area_Chair_.*')
         assert len(anon_groups) == 1
