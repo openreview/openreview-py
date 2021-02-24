@@ -416,7 +416,7 @@ class TestNeurIPSConference():
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        conference.set_comment_stage(openreview.CommentStage(reader_selection=True))
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=True))
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
 
