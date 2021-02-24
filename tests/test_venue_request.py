@@ -114,6 +114,7 @@ class TestVenueRequest():
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
+        abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=30)
 
         request_form_note = client.post_note(openreview.Note(
@@ -137,7 +138,8 @@ class TestVenueRequest():
                 'contact_email': 'new_test_user@mail.com',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
@@ -188,6 +190,11 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
+        conference = openreview.get_conference(client, request_form_id=request_form_note.forum)
+        submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
+        abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
+        assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, Abstract Registration: ' + abstract_due_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
+
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
@@ -220,7 +227,7 @@ class TestVenueRequest():
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'remove_submission_options': ['pdf']
@@ -247,6 +254,10 @@ class TestVenueRequest():
         title_tag = header_div.find_element_by_tag_name('h1')
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
+        assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, End: ' + submission_due_date_str + ' UTC-0'
 
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
