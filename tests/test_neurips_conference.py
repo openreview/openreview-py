@@ -357,14 +357,9 @@ class TestNeurIPSConference():
 
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
-            'NeurIPS.cc/2021/Conference/Program_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2021/Conference',
-            'NeurIPS.cc/2021/Conference/Program_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
 
@@ -416,6 +411,18 @@ class TestNeurIPSConference():
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+
+        assert client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0].readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+        assert client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_')[0].readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
 
         anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Area_Chair_.*')
         assert len(anon_groups) == 1

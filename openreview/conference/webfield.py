@@ -353,9 +353,10 @@ class WebfieldBuilder(object):
         }
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
-        anon_regex = conference.get_anon_reviewer_id(number='.*', anon_id='.*')
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f:
+        template_file = 'legacyReviewerWebfield' if conference.legacy_anonids else 'reviewerWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
@@ -364,7 +365,6 @@ class WebfieldBuilder(object):
             content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + conference.reviewers_name + "';")
             content = content.replace("var AREACHAIR_NAME = '';", "var AREACHAIR_NAME = '" + conference.area_chairs_name + "';")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
-            content = content.replace("var ANONREVIEWER_WILDCARD = '';", "var ANONREVIEWER_WILDCARD = '" + anon_regex + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load) + ";")
             return self.__update_group(group, content)
