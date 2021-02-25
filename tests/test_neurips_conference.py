@@ -24,13 +24,11 @@ class TestNeurIPSConference():
         conference=openreview.helpers.get_conference(client, request_form.id)
         ## should we add this to the request form?
         conference.senior_area_chair_identity_readers=[
-            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
             openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
         ]
         conference.area_chair_identity_readers=[
-            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
             openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
@@ -80,7 +78,7 @@ class TestNeurIPSConference():
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
-                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'reviewer_identity': ['Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
@@ -350,7 +348,6 @@ class TestNeurIPSConference():
             'NeurIPS.cc/2021/Conference/Paper5/Authors']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
-            'NeurIPS.cc/2021/Conference/Program_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
@@ -412,17 +409,19 @@ class TestNeurIPSConference():
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
 
-        assert client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0].readers == ['NeurIPS.cc/2021/Conference',
-            'NeurIPS.cc/2021/Conference/Program_Chairs',
+        ac_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
+        assert ac_group.readers == ['NeurIPS.cc/2021/Conference',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+            ac_group.id]
 
-        assert client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_')[0].readers == ['NeurIPS.cc/2021/Conference',
-            'NeurIPS.cc/2021/Conference/Program_Chairs',
+        reviewer_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_')[0]
+        assert reviewer_group.readers == ['NeurIPS.cc/2021/Conference',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+            reviewer_group.id]
 
         anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Area_Chair_.*')
         assert len(anon_groups) == 1

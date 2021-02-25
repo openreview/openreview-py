@@ -780,11 +780,20 @@ class TestMatchingWithAnonIds():
         assert 2 == len(revs_paper0.members)
         assert 'r3@mit.edu' in revs_paper0.members
         assert 'r3@google.com' in revs_paper0.members
+        assert revs_paper0.anonids
+        assert revs_paper0.deanonymizers
+
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
         assert len(anon_groups) == 2
         anon_members = [ a.members[0] for a in anon_groups]
         assert 'r3@mit.edu' in anon_members
         assert 'r3@google.com' in anon_members
+
+        assert anon_groups[0].readers == [
+            conference.get_id(),
+            conference.get_id()+'/Paper{x}/Senior_Program_Committee'.format(x=blinded_notes[0].number),
+            anon_groups[0].id
+        ]
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert 2 == len(revs_paper1.members)

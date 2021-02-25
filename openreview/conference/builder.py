@@ -557,21 +557,21 @@ class Conference(object):
     def get_reviewer_identity_readers(self, number):
         ## default value
         if not self.reviewer_identity_readers:
-            return [self.id, self.get_program_chairs_id(), self.get_area_chairs_id(number), self.get_reviewers_id(number)]
+            return [self.id, self.get_area_chairs_id(number)]
 
         return self.IdentityReaders.get_readers(self, number, self.reviewer_identity_readers)
 
     def get_area_chair_identity_readers(self, number):
         ## default value
         if not self.area_chair_identity_readers:
-            return [self.id, self.get_program_chairs_id(), self.get_area_chairs_id(number)]
+            return [self.id, self.get_area_chairs_id(number)]
 
         return self.IdentityReaders.get_readers(self, number, self.area_chair_identity_readers)
 
     def get_senior_area_chair_identity_readers(self, number):
         ## default value
         if not self.senior_area_chair_identity_readers:
-            return [self.id, self.get_program_chairs_id(), self.get_senior_area_chairs_id(number)]
+            return [self.id, self.get_senior_area_chairs_id(number)]
 
         return self.IdentityReaders.get_readers(self, number, self.senior_area_chair_identity_readers)
 
@@ -626,15 +626,16 @@ class Conference(object):
                 else:
                     reviewers_id=self.get_reviewers_id(number=n.number)
                     group = tools.get_group(self.client, id = reviewers_id)
-                    self.client.post_group(openreview.Group(id=reviewers_id,
-                        readers=[self.id, self.get_area_chairs_id(n.number), self.get_reviewers_id(n.number)],
-                        deanonymizers=self.get_reviewer_identity_readers(n.number),
-                        writers=[self.id, self.get_area_chairs_id(n.number)],
-                        signatures=[self.id],
-                        signatories=[self.id],
-                        anonids=True,
-                        members=group.members if group else []
-                    ))
+                    if not group:
+                        self.client.post_group(openreview.Group(id=reviewers_id,
+                            readers=[self.id, self.get_area_chairs_id(n.number), self.get_reviewers_id(n.number)],
+                            deanonymizers=self.get_reviewer_identity_readers(n.number),
+                            writers=[self.id, self.get_area_chairs_id(n.number)],
+                            signatures=[self.id],
+                            signatories=[self.id],
+                            anonids=True,
+                            members=group.members if group else []
+                        ))
 
                 # Reviewers Submitted Paper group
                 self.__create_group(

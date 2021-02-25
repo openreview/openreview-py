@@ -1519,6 +1519,7 @@ class Group(object):
             signatories = g.get('signatories'),
             signatures = g.get('signatures'),
             anonids=g.get('anonids'),
+            deanonymizers=g.get('deanonymizers'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
