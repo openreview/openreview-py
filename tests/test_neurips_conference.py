@@ -72,7 +72,7 @@ class TestNeurIPSConference():
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
-                'Abstract Registration Deadline': first_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
