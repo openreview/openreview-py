@@ -529,7 +529,7 @@ class Matching(object):
                         'order': 14
                     },
                     'solver': {
-                        'value-radio': ['MinMax', 'FairFlow'],
+                        'value-radio': ['MinMax', 'FairFlow', 'Randomized'],
                         'default': 'MinMax',
                         'required': True,
                         'order': 15
