@@ -42,21 +42,24 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         submission_start_date = None
 
     submission_due_date_str = 'TBD'
+    abstract_due_date_str = ''
     submission_second_due_date = note.content.get('Submission Deadline', '').strip()
     if submission_second_due_date:
         try:
             submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
         except ValueError:
             submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
-        submission_due_date = note.content.get('Abstract Registration Deadline', '').strip()
+        submission_due_date = note.content.get('abstract_registration_deadline', '').strip()
         if submission_due_date:
             try:
                 submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
             except ValueError:
                 submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
-            submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
+            abstract_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
+            submission_due_date_str = submission_second_due_date.strftime('%b %d %Y %I:%M%p')
         else:
             submission_due_date = submission_second_due_date
+            submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
             submission_second_due_date = None
     else:
         submission_second_due_date = submission_due_date = None
@@ -76,6 +79,10 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         'location': note.content.get('Location'),
         'contact': note.content.get('contact_email')
     }
+
+    if abstract_due_date_str:
+        homepage_header['deadline'] = 'Submission Start: ' + submission_start_date_str + ' UTC-0, Abstract Registration: ' + abstract_due_date_str +' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
+
     override_header = note.content.get('homepage_override', '')
     if override_header:
         for key in override_header.keys():
