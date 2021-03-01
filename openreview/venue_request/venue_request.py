@@ -857,10 +857,10 @@ class VenueRequest():
                         'values': [self.support_group.id]
                     },
                     'writers': {
-                        'values': [self.support_group.id]
+                        'values-copied': ['{signatures}'],
                     },
                     'signatures': {
-                        'values': [self.support_group.id]
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
                     },
                     'content': post_submission_content
                 }
