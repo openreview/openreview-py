@@ -55,6 +55,7 @@ class TestNeurIPSConference():
         helpers.create_user('reviewer3@ibm.com', 'Reviewer', 'IBM', institution='ibm.com')
         helpers.create_user('reviewer4@fb.com', 'Reviewer', 'Facebook', institution='fb.com')
         helpers.create_user('reviewer5@google.com', 'Reviewer', 'Google', institution='google.com')
+        helpers.create_user('reviewer6@amazon.com', 'Reviewer', 'Amazon', institution='amazon.com')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -316,12 +317,12 @@ class TestNeurIPSConference():
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for NeurIPS 2021.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
-        client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com'])
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
 
     def test_submit_papers(self, conference, helpers, test_client, client):
 
-        domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'NeurIPS.cc/2021/Conference/-/Submission',
                 readers = ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
@@ -367,7 +368,7 @@ class TestNeurIPSConference():
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
 
 
-    def test_setup_matching(self, conference, client):
+    def test_setup_matching(self, conference, client, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions()
@@ -447,108 +448,53 @@ class TestNeurIPSConference():
 
         ## Reviewer assignments
         # Paper 1
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number), '~Reviewer_UMass1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number)],
-            signatures = [conference.id],
-            head = submissions[0].id,
-            tail = '~Reviewer_UMass1',
-            label = 'reviewer-matching',
-            weight = 0.94
-        ))
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number), '~Reviewer_MIT1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number)],
-            signatures = [conference.id],
-            head = submissions[0].id,
-            tail = '~Reviewer_MIT1',
-            label = 'reviewer-matching',
-            weight = 0.84
-        ))
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number), '~Reviewer_IBM1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number)],
-            signatures = [conference.id],
-            head = submissions[0].id,
-            tail = '~Reviewer_IBM1',
-            label = 'reviewer-matching',
-            weight = 0.64
-        ))
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number), '~Reviewer_Facebook1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number)],
-            signatures = [conference.id],
-            head = submissions[0].id,
-            tail = '~Reviewer_Facebook1',
-            label = 'reviewer-matching',
-            weight = 0.45
-        ))
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number), '~Reviewer_Google1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[0].number)],
-            signatures = [conference.id],
-            head = submissions[0].id,
-            tail = '~Reviewer_Google1',
-            label = 'reviewer-matching',
-            weight = 0.25
-        ))
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.45)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_Google1', label='reviewer-matching', weight=0.33)
 
         # Paper 2
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[1].number), '~Reviewer_UMass1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[1].number)],
-            signatures = [conference.id],
-            head = submissions[1].id,
-            tail = '~Reviewer_UMass1',
-            label = 'reviewer-matching',
-            weight = 0.58
-        ))
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[1], '~Reviewer_Facebook1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_Google1', label='reviewer-matching', weight=0.33)
 
         # Paper 3
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[2].number), '~Reviewer_UMass1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[2].number)],
-            signatures = [conference.id],
-            head = submissions[2].id,
-            tail = '~Reviewer_UMass1',
-            label = 'reviewer-matching',
-            weight = 0.36
-        ))
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[2], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
         # Paper 4
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[3].number), '~Reviewer_UMass1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[3].number)],
-            signatures = [conference.id],
-            head = submissions[3].id,
-            tail = '~Reviewer_UMass1',
-            label = 'reviewer-matching',
-            weight = 0.24
-        ))
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
         # Paper 5
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment',
-            readers = [conference.id, conference.get_area_chairs_id(number=submissions[4].number), '~Reviewer_UMass1'],
-            writers = [conference.id, conference.get_area_chairs_id(number=submissions[4].number)],
-            signatures = [conference.id],
-            head = submissions[4].id,
-            tail = '~Reviewer_UMass1',
-            label = 'reviewer-matching',
-            weight = 0.57
-        ))
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment,label:reviewer-matching'
-        browse='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'
+        browse='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score;NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
         hide='NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
         url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={traverse}&browse={browse}&maxColumns=2'
 
