@@ -380,7 +380,7 @@ class TestNeurIPSConference():
             referent=request_form.forum,
             replyto=request_form.forum,
             signatures=['~Program_NeurIPSChair1'],
-            writers=['~Program_NeurIPSChair1']
+            writers=[]
         ))
 
         helpers.await_queue()
