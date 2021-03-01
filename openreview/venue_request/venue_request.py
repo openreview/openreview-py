@@ -49,7 +49,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-regex': '~.*',
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*'
@@ -92,7 +92,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-regex': '~.*',
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*'
@@ -176,7 +176,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -241,7 +241,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -296,7 +296,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -357,7 +357,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -441,7 +441,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|' + self.venue_request.support_group.id
@@ -485,7 +485,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|' + self.venue_request.support_group.id
@@ -857,7 +857,7 @@ class VenueRequest():
                         'values': [self.support_group.id]
                     },
                     'writers': {
-                        'values-copied': ['{signatures}'],
+                        'values':[],
                     },
                     'signatures': {
                         'values-regex': '~.*|{}'.format(self.support_group.id)

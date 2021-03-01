@@ -6,9 +6,6 @@ def process(client, note, invitation):
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
     forum_note = client.get_note(note.forum)
 
-    note.writers = []
-    note = client.post_note(note)
-
     comment_readers = forum_note.content['program_chair_emails'] + [SUPPORT_GROUP]
     comment_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment')
     if comment_readers != comment_invitation.reply['readers']['values']:
