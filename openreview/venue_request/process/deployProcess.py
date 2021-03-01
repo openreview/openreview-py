@@ -161,9 +161,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
             },
-            'writers': {
-                'values':[],
-            },
             'content': {
                 'title': {
                     'value': 'Remind Recruitment',
@@ -420,9 +417,14 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Post_Submission',
         super=SUPPORT_GROUP + '/-/Post_Submission',
+        invitees=readers,
         reply={
             'forum': forum.id,
-            'referent': forum.id
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            }
         },
         signatures=['~Super_User1']
     ))

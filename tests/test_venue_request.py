@@ -238,7 +238,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert venue_revision_note
 
@@ -375,7 +375,7 @@ class TestVenueRequest():
             invitation='{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert bid_stage_note
 
@@ -438,7 +438,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert review_stage_note
         helpers.await_queue()
@@ -533,7 +533,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert meta_review_stage_note
         helpers.await_queue()
@@ -586,7 +586,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert comment_stage_note
         helpers.await_queue()
@@ -661,7 +661,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert decision_stage_note
         helpers.await_queue()
@@ -747,7 +747,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert revision_stage_note
 
@@ -844,7 +844,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert post_decision_stage_note
         helpers.await_queue()
@@ -886,7 +886,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert revision_stage_note
 
