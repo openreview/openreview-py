@@ -98,11 +98,55 @@ class Matching(object):
         readers.append(tail)
         return readers
 
-    def _create_edge_invitation(self, edge_id):
+    def _create_edge_invitation(self, edge_id, edited_by_assigned_ac=False):
         '''
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
         '''
+
+        if (edge_id.endswith('Paper_Assignment') or edge_id.endswith('Aggregate_Score')) and self.should_read_by_area_chair:
+            invitation = openreview.Invitation(
+                id=edge_id,
+                invitees=[self.conference.get_id(), self.conference.get_area_chairs_id()],
+                readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
+                writers=[self.conference.get_id()],
+                signatures=[self.conference.get_id()],
+                reply={
+                    'readers': {
+                        'values-regex': '^(' + self.conference.get_id() + '|' + self.conference.get_area_chairs_id('.*') + '|~.*)$'
+                    },
+                    'nonreaders': {
+                        'values-regex': self.conference.get_authors_id(number='.*')
+                    },
+                    'writers': {
+                        'values-regex': '^(' + self.conference.get_id() + '|' + self.conference.get_area_chairs_id('.*') + '|~.*)$'
+                    },
+                    'signatures': {
+                        'values': [self.conference.get_id()]
+                    },
+                    'content': {
+                        'head': {
+                            'type': 'Note',
+                            'query' : {
+                                'invitation' : self.conference.get_blind_submission_id()
+                            }
+                        },
+                        'tail': {
+                            'type': 'Profile',
+                            'query' : {
+                                'group' : self.match_group.id
+                            }
+                        },
+                        'weight': {
+                            'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                        },
+                        'label': {
+                            'value-regex': '.*'
+                        }
+                    }
+                })
+
+            return self.client.post_invitation(invitation)
 
         edge_readers = [self.conference.get_id()]
         if self.should_read_by_area_chair:
@@ -604,8 +648,8 @@ class Matching(object):
 
         user_profiles = _get_profiles(self.client, self.match_group.members)
 
-        self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
-        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
+        self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id), True)
+        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'), True)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_Max_Papers'))
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
