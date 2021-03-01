@@ -389,7 +389,7 @@ class TestNeurIPSConference():
 
         ## AC assignments
         client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Assignment',
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment',
             readers = [conference.id, '~Area_IBMChair1'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -399,7 +399,7 @@ class TestNeurIPSConference():
             weight = 0.94
         ))
         client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Assignment',
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment',
             readers = [conference.id, '~Area_IBMChair1'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -409,7 +409,7 @@ class TestNeurIPSConference():
             weight = 0.94
         ))
         client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Assignment',
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment',
             readers = [conference.id, '~Area_IBMChair1'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -419,7 +419,7 @@ class TestNeurIPSConference():
             weight = 0.94
         ))
         client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Assignment',
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment',
             readers = [conference.id, '~Area_GoogleChair1'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -429,7 +429,7 @@ class TestNeurIPSConference():
             weight = 0.94
         ))
         client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Assignment',
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment',
             readers = [conference.id, '~Area_GoogleChair1'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -448,8 +448,8 @@ class TestNeurIPSConference():
 
         ## Reviewer assignments
         # Paper 1
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
@@ -457,8 +457,8 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_Google1', label='reviewer-matching', weight=0.33)
 
         # Paper 2
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[1], '~Reviewer_Facebook1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[1], '~Reviewer_Facebook1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
@@ -466,8 +466,8 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_Google1', label='reviewer-matching', weight=0.33)
 
         # Paper 3
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[2], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[2], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
@@ -475,8 +475,8 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
         # Paper 4
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
@@ -484,16 +484,16 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
         # Paper 5
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
-        helpers.create_reviewer_edge(client, conference, 'Paper_Assignment', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Assignment', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
-        start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~Area_IBMChair1'
-        traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Assignment,label:reviewer-matching'
+        start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,label:ac-matching,tail:~Area_IBMChair1'
+        traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment,label:reviewer-matching'
         browse='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score;NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
         hide='NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
         url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={traverse}&browse={browse}&maxColumns=2'

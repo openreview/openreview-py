@@ -457,7 +457,7 @@ class Conference(object):
         return self.groups
 
     def get_paper_assignment_id(self, group_id):
-        return self.get_invitation_id('Paper_Assignment', prefix=group_id)
+        return self.get_invitation_id('Assignment', prefix=group_id)
 
     def get_affinity_score_id(self, group_id):
         return self.get_invitation_id('Affinity_Score', prefix=group_id)

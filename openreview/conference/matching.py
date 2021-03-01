@@ -104,7 +104,7 @@ class Matching(object):
         e.g. "Affinity_Score"
         '''
 
-        if (edge_id.endswith('Paper_Assignment') or edge_id.endswith('Aggregate_Score')) and self.should_read_by_area_chair:
+        if (edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')) and self.should_read_by_area_chair:
             invitation = openreview.Invitation(
                 id=edge_id,
                 invitees=[self.conference.get_id(), self.conference.get_area_chairs_id()],
