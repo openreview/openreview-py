@@ -644,7 +644,7 @@ class VenueRequest():
                 'required': True
             },
             'reviewer_identity': {
-                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewer real identity.',
+                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewers' real identities.',
                 'values-checkbox': [
                     'Program Chairs',
                     'All Senior Area Chairs',
