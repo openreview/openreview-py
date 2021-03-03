@@ -33,6 +33,7 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -340,8 +341,6 @@ class TestCommentNotification():
             <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
             </p>'''
         })
-        builder.set_conference_area_chairs_name('Senior_Program_Committee')
-        builder.set_conference_reviewers_name('Program_Committee')
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, due_date = now + datetime.timedelta(minutes = 10), subject_areas= [
             "Algorithms: Approximate Inference",
@@ -351,6 +350,8 @@ class TestCommentNotification():
         ])
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
         builder.set_review_stage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -608,7 +609,7 @@ class TestCommentNotification():
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'):
             ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Paper2/AnonReviewer1'], 'This is an invalid reminder')
 
-        ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Program_Committee'], 'This is an invalid reminder')
+        ac_client.post_message(subject, ['auai.org/UAI/2020/Conference/Reviewers'], 'This is an invalid reminder')
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
@@ -629,6 +630,7 @@ class TestCommentNotification():
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -935,6 +937,7 @@ class TestCommentNotification():
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True, authors=True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
@@ -1165,6 +1168,7 @@ class TestCommentNotification():
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
         builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, authors=True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         conference.set_program_chairs(emails = ['author2@colt17.io'])

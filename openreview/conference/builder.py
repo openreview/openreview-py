@@ -16,6 +16,34 @@ from .. import invitations
 
 class Conference(object):
 
+    class IdentityReaders(Enum):
+        PROGRAM_CHAIRS = 0
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        REVIEWERS = 5
+        REVIEWERS_ASSIGNED = 6
+
+        @classmethod
+        def get_readers(self, conference, number, identity_readers):
+            readers = [conference.id]
+            if self.PROGRAM_CHAIRS in identity_readers:
+                readers.append(conference.get_program_chairs_id())
+            if self.SENIOR_AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id())
+            if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_senior_area_chairs_id(number))
+            if self.AREA_CHAIRS in identity_readers:
+                readers.append(conference.get_area_chairs_id())
+            if self.AREA_CHAIRS_ASSIGNED in identity_readers:
+                readers.append(conference.get_area_chairs_id(number))
+            if self.REVIEWERS in identity_readers:
+                readers.append(conference.get_reviewers_id())
+            if self.REVIEWERS_ASSIGNED in identity_readers:
+                readers.append(conference.get_reviewers_id(number))
+            return readers
+
     def __init__(self, client):
         self.client = client
         self.request_form_id = None
@@ -24,6 +52,7 @@ class Conference(object):
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_secondary_area_chairs = False
+        self.legacy_anonids = False
         self.legacy_invitation_id = False
         self.groups = []
         self.name = ''
@@ -59,6 +88,9 @@ class Conference(object):
         self.enable_reviewer_reassignment = False
         self.reduced_load_on_decline = []
         self.default_reviewer_load = 0
+        self.reviewer_identity_readers = []
+        self.area_chair_identity_readers = []
+        self.senior_area_chair_identity_readers = []
 
     def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
         group = tools.get_group(self.client, id = group_id)
@@ -87,6 +119,11 @@ class Conference(object):
         area_chairs_group = tools.get_group(self.client, self.get_area_chairs_id())
         if area_chairs_group:
             return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
+
+    def __set_senior_area_chair_page(self):
+        senior_area_chairs_group = tools.get_group(self.client, self.get_senior_area_chairs_id())
+        if senior_area_chairs_group:
+            return self.webfield_builder.set_senior_area_chair_page(self, senior_area_chairs_group)
 
     def __set_expertise_selection_page(self):
         expertise_selection_invitation = tools.get_invitation(self.client, self.get_expertise_selection_id())
@@ -307,13 +344,19 @@ class Conference(object):
         return self.id + '/' + self.program_chairs_name
 
     def get_reviewers_id(self, number = None):
-        reviewers_id = self.id + '/'
-        if number:
-            # TODO: Remove the "Reviewers" label from the end of this group as this forces individual groups to be "PaperX/Reviewers"
-            reviewers_id = reviewers_id + 'Paper' + str(number) + '/Reviewers'
-        else:
-            reviewers_id = reviewers_id + self.reviewers_name
-        return reviewers_id
+        return self.get_committee_id(self.reviewers_name, number)
+
+    def get_anon_reviewer_id(self, number=None, anon_id=None):
+        single_reviewer_name=self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        if self.legacy_anonids:
+            return f'{self.id}/Paper{number}/AnonReviewer{anon_id}'
+        return f'{self.id}/Paper{number}/{single_reviewer_name}_{anon_id}'
+
+    def get_anon_area_chair_id(self, number=None, anon_id=None):
+        single_area_chair_name=self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
+        if self.legacy_anonids:
+            return f'{self.id}/Paper{number}/Area_Chair{anon_id}'
+        return f'{self.id}/Paper{number}/{single_area_chair_name}_{anon_id}'
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
@@ -331,40 +374,20 @@ class Conference(object):
         return self.use_secondary_area_chairs
 
     def get_authors_id(self, number = None):
-        authors_id = self.id + '/'
-        if number:
-            authors_id = authors_id + 'Paper' + str(number) + '/'
-
-        authors_id = authors_id + self.authors_name
-        return authors_id
+        return self.get_committee_id(self.authors_name, number)
 
     def get_accepted_authors_id(self):
         return self.id + '/' + self.authors_name + '/Accepted'
 
     def get_area_chairs_id(self, number = None):
-        area_chairs_id = self.id + '/'
-        if number:
-            # TODO: Remove the "Area_Chairs" label from the end of this group as this forces individual groups to be "PaperX/Area_Chairs"
-            area_chairs_id = area_chairs_id + 'Paper' + str(number) + '/Area_Chairs'
-        else:
-            area_chairs_id = area_chairs_id + self.area_chairs_name
-        return area_chairs_id
+        return self.get_committee_id(self.area_chairs_name, number)
+
 
     def get_senior_area_chairs_id(self, number = None):
-        senior_area_chairs_id = self.id + '/'
-        if number:
-            senior_area_chairs_id = senior_area_chairs_id + 'Paper' + str(number) + '/' + self.senior_area_chairs_name
-        else:
-            senior_area_chairs_id = senior_area_chairs_id + self.senior_area_chairs_name
-        return senior_area_chairs_id
+        return self.get_committee_id(self.senior_area_chairs_name, number)
 
     def get_secondary_area_chairs_id(self, number=None):
-        secondary_area_chairs_id = self.id + '/'
-        if number:
-            secondary_area_chairs_id = ''.join([secondary_area_chairs_id, 'Paper', str(number), '/Secondary_Area_Chair'])
-        else:
-            secondary_area_chairs_id = ''.join([secondary_area_chairs_id, self.secondary_area_chairs_name])
-        return secondary_area_chairs_id
+        return self.get_committee_id(self.secondary_area_chairs_name, number)
 
     def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
         committee = [self.get_id()]
@@ -377,12 +400,23 @@ class Conference(object):
         else:
             committee.append(self.get_reviewers_id(number))
 
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+
         if self.use_area_chairs:
             committee.append(self.get_area_chairs_id(number))
 
         committee.append(self.get_program_chairs_id())
 
         return committee
+
+    def get_committee_id(self, name, number=None):
+        committee_id = self.id + '/'
+        if number:
+            committee_id = f'{committee_id}Paper{number}/{name}'
+        else:
+            committee_id = committee_id + name
+        return committee_id
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
@@ -507,9 +541,9 @@ class Conference(object):
             options['contact'] = self.homepage_header.get('contact')
         return options
 
-    def get_submissions(self, accepted = False, details = None, sort = None):
+    def get_submissions(self, accepted = False, number=None, details = None, sort = None):
         invitation = self.get_blind_submission_id()
-        notes = list(tools.iterget_notes(self.client, invitation = invitation, details = details, sort = sort))
+        notes = list(tools.iterget_notes(self.client, invitation = invitation, number=number, details = details, sort = sort))
         if accepted:
             decisions = tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*'))
             accepted_forums = [d.forum for d in decisions if 'Accept' in d.content['decision']]
@@ -524,6 +558,27 @@ class Conference(object):
     def get_desk_rejected_submissions(self, details=None):
         invitation = self.submission_stage.get_desk_rejected_submission_id(self)
         return list(tools.iterget_notes(self.client, invitation=invitation, details=details))
+
+    def get_reviewer_identity_readers(self, number):
+        ## default value
+        if not self.reviewer_identity_readers:
+            return [self.id, self.get_area_chairs_id(number)]
+
+        return self.IdentityReaders.get_readers(self, number, self.reviewer_identity_readers)
+
+    def get_area_chair_identity_readers(self, number):
+        ## default value
+        if not self.area_chair_identity_readers:
+            return [self.id, self.get_area_chairs_id(number)]
+
+        return self.IdentityReaders.get_readers(self, number, self.area_chair_identity_readers)
+
+    def get_senior_area_chair_identity_readers(self, number):
+        ## default value
+        if not self.senior_area_chair_identity_readers:
+            return [self.id, self.get_senior_area_chairs_id(number)]
+
+        return self.IdentityReaders.get_readers(self, number, self.senior_area_chair_identity_readers)
 
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
 
@@ -568,10 +623,24 @@ class Conference(object):
 
             # Reviewers Paper group
             if reviewers:
-                self.__create_group(
-                    self.get_reviewers_id(number=n.number),
-                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
-                    is_signatory = False)
+                if self.legacy_anonids:
+                    self.__create_group(
+                        self.get_reviewers_id(number=n.number),
+                        self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
+                        is_signatory = False)
+                else:
+                    reviewers_id=self.get_reviewers_id(number=n.number)
+                    group = tools.get_group(self.client, id = reviewers_id)
+                    if not group:
+                        self.client.post_group(openreview.Group(id=reviewers_id,
+                            readers=[self.id, self.get_area_chairs_id(n.number), self.get_reviewers_id(n.number)],
+                            deanonymizers=self.get_reviewer_identity_readers(n.number),
+                            writers=[self.id, self.get_area_chairs_id(n.number)],
+                            signatures=[self.id],
+                            signatories=[self.id],
+                            anonids=True,
+                            members=group.members if group else []
+                        ))
 
                 # Reviewers Submitted Paper group
                 self.__create_group(
@@ -581,7 +650,33 @@ class Conference(object):
 
             # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
-                self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
+                if self.legacy_anonids:
+                    self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
+                else:
+                    area_chairs_id=self.get_area_chairs_id(number=n.number)
+                    group = tools.get_group(self.client, id = area_chairs_id)
+                    self.client.post_group(openreview.Group(id=area_chairs_id,
+                        readers=[self.id, self.get_area_chairs_id(n.number)],
+                        deanonymizers=self.get_area_chair_identity_readers(n.number),
+                        writers=[self.id],
+                        signatures=[self.id],
+                        signatories=[self.id],
+                        anonids=True,
+                        members=group.members if group else []
+                    ))
+
+            # Senior Area Chairs Paper group
+            if self.use_senior_area_chairs:
+                senior_area_chairs_id=self.get_senior_area_chairs_id(number=n.number)
+                group = tools.get_group(self.client, id = senior_area_chairs_id)
+                self.client.post_group(openreview.Group(id=senior_area_chairs_id,
+                    readers=self.get_senior_area_chair_identity_readers(n.number),
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)],
+                    members=group.members if group else []
+                ))
+
 
         if author_group_ids:
             self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
@@ -801,6 +896,14 @@ class Conference(object):
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return pcs
 
+    def set_senior_area_chairs(self, emails = []):
+        if self.use_senior_area_chairs:
+            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails)
+
+            return self.__set_senior_area_chair_page()
+        else:
+            raise openreview.OpenReviewException('Conference "has_senior_area_chairs" setting is disabled')
+
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
             group_owner_id=self.get_senior_area_chairs_id() if self.use_senior_area_chairs else self.id
@@ -815,6 +918,24 @@ class Conference(object):
             self.__create_group(self.get_secondary_area_chairs_id(), self.id)
         else:
             raise openreview.OpenReviewException('Conference "has_secondary_area_chairs" setting is disabled')
+
+    def set_senior_area_chair_recruitment_groups(self):
+        if self.use_senior_area_chairs:
+            parent_group_id = self.get_senior_area_chairs_id()
+            parent_group_declined_id = parent_group_id + '/Declined'
+            parent_group_invited_id = parent_group_id + '/Invited'
+            parent_group_accepted_id = parent_group_id
+
+            pcs_id = self.get_program_chairs_id()
+            # parent_group_accepted_group
+            self.__create_group(parent_group_accepted_id, pcs_id)
+            # parent_group_declined_group
+            self.__create_group(parent_group_declined_id, pcs_id)
+            # parent_group_invited_group
+            self.__create_group(parent_group_invited_id, pcs_id)
+        else:
+            raise openreview.OpenReviewException('Conference "has_senior_area_chairs" setting is disabled')
+
 
     def set_area_chair_recruitment_groups(self):
         if self.use_area_chairs:
@@ -868,39 +989,45 @@ class Conference(object):
 
     def set_assignment(self, user, number, is_area_chair = False):
 
-        if is_area_chair:
-            return tools.add_assignment(self.client,
-            number,
-            self.get_id(),
-            user,
-            parent_label = 'Area_Chairs',
-            individual_label = 'Area_Chair')
-        else:
-            common_readers_writers = [
-                self.get_id(),
-                self.get_program_chairs_id()
-            ]
-            if self.use_area_chairs:
-                common_readers_writers.append(self.get_area_chairs_id(number = number))
-
-            result = tools.add_assignment(
-                self.client,
+        if self.legacy_anonids:
+            if is_area_chair:
+                return tools.add_assignment(self.client,
                 number,
                 self.get_id(),
                 user,
-                parent_label = 'Reviewers',
-                individual_label = 'AnonReviewer',
-                individual_group_params = {
-                    'readers': common_readers_writers,
-                    'writers': common_readers_writers
-                },
-                parent_group_params = {
-                    'readers': common_readers_writers,
-                    'writers': common_readers_writers
-                },
-                use_profile = True
-            )
-            return result
+                parent_label = 'Area_Chairs',
+                individual_label = 'Area_Chair')
+            else:
+                common_readers_writers = [
+                    self.get_id(),
+                    self.get_program_chairs_id()
+                ]
+                if self.use_area_chairs:
+                    common_readers_writers.append(self.get_area_chairs_id(number = number))
+
+                result = tools.add_assignment(
+                    self.client,
+                    number,
+                    self.get_id(),
+                    user,
+                    parent_label = self.reviewers_name,
+                    individual_label = 'AnonReviewer',
+                    individual_group_params = {
+                        'readers': common_readers_writers,
+                        'writers': common_readers_writers
+                    },
+                    parent_group_params = {
+                        'readers': common_readers_writers,
+                        'writers': common_readers_writers
+                    },
+                    use_profile = True
+                )
+                return result
+
+        if is_area_chair:
+            self.client.add_members_to_group(self.get_area_chairs_id(number=number), user)
+        else:
+            self.client.add_members_to_group(self.get_reviewers_id(number=number), user)
 
     def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
         if is_area_chair:
@@ -1174,10 +1301,12 @@ class SubmissionStage(object):
 
     class Readers(Enum):
         EVERYONE = 0
-        AREA_CHAIRS = 1
-        AREA_CHAIRS_ASSIGNED = 2
-        REVIEWERS = 3
-        REVIEWERS_ASSIGNED = 4
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        REVIEWERS = 5
+        REVIEWERS_ASSIGNED = 6
 
     def __init__(
             self,
@@ -1229,15 +1358,24 @@ class SubmissionStage(object):
     def get_readers(self, conference, number, under_submission):
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
-            return [
-                conference.get_id(),
-                conference.get_area_chairs_id(),
-                conference.get_authors_id(number=number)
-            ]
+            under_submission_readers=[conference.get_id()]
+            if conference.use_secondary_area_chairs:
+                under_submission_readers.append(conference.get_senior_area_chairs_id())
+            if conference.use_area_chairs:
+                under_submission_readers.append(conference.get_area_chairs_id())
+            under_submission_readers.append(conference.get_authors_id(number=number))
+            return under_submission_readers
+
         if self.public:
             return ['everyone']
 
         submission_readers=[conference.get_id()]
+
+        if self.Readers.SENIOR_AREA_CHAIRS in self.readers and conference.use_senior_area_chairs:
+            submission_readers.append(conference.get_senior_area_chairs_id())
+
+        if self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers and conference.use_senior_area_chairs:
+            submission_readers.append(conference.get_senior_area_chairs_id(number=number))
 
         if self.Readers.AREA_CHAIRS in self.readers and conference.use_area_chairs:
             submission_readers.append(conference.get_area_chairs_id())
@@ -1413,6 +1551,9 @@ class ReviewStage(object):
 
         readers = [ conference.get_program_chairs_id()]
 
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number = number))
+
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
@@ -1434,12 +1575,10 @@ class ReviewStage(object):
         return [conference.get_authors_id(number = number)]
 
     def get_signatures(self, conference, number):
-        signature_regex = conference.get_id() + '/Paper' + str(number) + '/AnonReviewer[0-9]+|' +  conference.get_program_chairs_id()
-
         if self.allow_de_anonymization:
             return '~.*|' + conference.get_program_chairs_id()
 
-        return signature_regex
+        return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
 
 class ReviewRebuttalStage(object):
 
@@ -1528,6 +1667,56 @@ class CommentStage(object):
         self.authors = authors
         self.only_accepted=only_accepted
 
+    def get_readers(self, conference, number):
+        readers = []
+        default = []
+
+        if self.allow_public_comments:
+            readers.append('everyone')
+        else:
+            default = [conference.get_program_chairs_id()]
+
+        readers.append(conference.get_program_chairs_id())
+
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs:
+            readers.append(conference.get_area_chairs_id(number))
+
+        if self.unsubmitted_reviewers:
+            readers.append(conference.get_reviewers_id(number))
+        else:
+            readers.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        if self.reader_selection:
+            readers.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+
+        if self.authors:
+            readers.append(conference.get_authors_id(number))
+
+        return readers
+
+    def get_signatures_regex(self, conference, number):
+
+        committee = [conference.get_program_chairs_id()]
+
+        if conference.use_senior_area_chairs:
+            committee.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs:
+            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+
+        committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+
+        if self.authors:
+            committee.append(conference.get_authors_id(number))
+
+        return '|'.join(committee)
+
+    def get_invitees(self, conference, number):
+        return conference.get_committee(number=number, with_authors=self.authors) + [conference.support_user]
+
 class MetaReviewStage(object):
 
     def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}, process = None):
@@ -1545,12 +1734,24 @@ class MetaReviewStage(object):
 
         readers = []
 
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number = number))
+
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
         readers.append(conference.get_program_chairs_id())
 
         return readers
+
+    def get_signatures_regex(self, conference, number):
+
+        committee = [conference.get_program_chairs_id()]
+
+        if conference.use_area_chairs:
+            committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
+
+        return '|'.join(committee)
 
 class DecisionStage(object):
 
@@ -1726,7 +1927,7 @@ class ConferenceBuilder(object):
             readers=None
         ):
 
-        submissions_readers=[SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
+        submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS, SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
         if public:
             submissions_readers=[SubmissionStage.Readers.EVERYONE]
         if readers:
@@ -1791,12 +1992,18 @@ class ConferenceBuilder(object):
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
 
+    def use_legacy_anonids(self, legacy_anonids):
+        self.conference.legacy_anonids = legacy_anonids
+
     def set_request_form_id(self, id):
         self.conference.request_form_id = id
 
     def set_recruitment_reduced_load(self, reduced_load_options, default_reviewer_load):
         self.conference.reduced_load_on_decline = reduced_load_options
         self.conference.default_reviewer_load = default_reviewer_load
+
+    def set_reviewer_identity_readers(self, readers):
+        self.conference.reviewer_identity_readers = readers
 
     def get_result(self):
 
@@ -1820,6 +2027,8 @@ class ConferenceBuilder(object):
         self.conference.set_program_chairs(emails=self.program_chairs_ids)
         self.conference.set_authors()
         self.conference.set_reviewers()
+        if self.conference.use_senior_area_chairs:
+            self.conference.set_senior_area_chairs()
         if self.conference.use_area_chairs:
             self.conference.set_area_chairs()
 
@@ -1828,6 +2037,8 @@ class ConferenceBuilder(object):
         groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
 
         self.conference.set_conference_groups(groups)
+        if self.conference.use_senior_area_chairs:
+            self.conference.set_senior_area_chair_recruitment_groups()
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()

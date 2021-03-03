@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import json
 import datetime
+import re
 import openreview
 from tqdm import tqdm
 from .. import invitations
@@ -691,36 +692,16 @@ class OfficialCommentInvitation(openreview.Invitation):
         comment_stage = conference.comment_stage
 
         prefix = conference.get_id() + '/Paper' + str(note.number) + '/'
+        anon_reviewer_regex=conference.get_anon_reviewer_id(number=note.number, anon_id='.*')
 
-        readers = []
-        default = None
-        invitees = conference.get_committee(number=note.number, with_authors=comment_stage.authors) + [conference.support_user]
-        if comment_stage.allow_public_comments:
-            readers.append('everyone')
-        else:
-            default = [conference.get_program_chairs_id()]
-
-        readers.append(conference.get_program_chairs_id())
-
-        if conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(note.number))
-
-        if comment_stage.unsubmitted_reviewers:
-            readers.append(conference.get_reviewers_id(note.number))
-        else:
-            readers.append(conference.get_reviewers_id(note.number) + '/Submitted')
-
-        if comment_stage.reader_selection:
-            readers.append(conference.get_reviewers_id(note.number).replace('Reviewers', 'AnonReviewer.*'))
-
-        if comment_stage.authors:
-            readers.append(conference.get_authors_id(note.number))
+        readers = comment_stage.get_readers(conference, note.number)
+        invitees = comment_stage.get_invitees(conference, note.number)
 
         if comment_stage.reader_selection:
             reply_readers = {
                 'description': 'Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response',
                 'values-dropdown': readers,
-                'default': default
+                'default': None if comment_stage.allow_public_comments else [conference.get_program_chairs_id()]
             }
         else:
             reply_readers = {
@@ -750,7 +731,7 @@ class OfficialCommentInvitation(openreview.Invitation):
                     ]
                 },
                 'signatures': {
-                    'values-regex': '{prefix}AnonReviewer[0-9]+|{prefix}{authors_name}|{prefix}Area_Chair[0-9]+|{conference_id}/{program_chairs_name}'.format(prefix=prefix, conference_id=conference.id, authors_name = conference.authors_name, program_chairs_name = conference.program_chairs_name),
+                    'values-regex': comment_stage.get_signatures_regex(conference, note.number),
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -1046,7 +1027,7 @@ class PaperReviewRatingInvitation(openreview.Invitation):
                 'description': 'How your identity will be displayed.'
             },
             'signatures': {
-                'values-regex': paper_group + '/Area_Chair[0-9]+|' + conference.get_program_chairs_id(),
+                'values-regex': conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'),
                 'description': 'How your identity will be displayed.'
             }
         }
@@ -1092,13 +1073,11 @@ class PaperMetaReviewInvitation(openreview.Invitation):
 
         meta_review_stage = conference.meta_review_stage
         readers = meta_review_stage.get_readers(conference, note.number)
-        regex = conference.get_program_chairs_id()
         invitees = [conference.get_program_chairs_id()]
         writers = [conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
             paper_area_chair = conference.get_area_chairs_id(number = note.number)
-            regex = regex + '|' + paper_area_chair[:-1] + '[0-9]+'
             invitees = [paper_area_chair]
             writers.append(paper_area_chair)
 
@@ -1121,7 +1100,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                     'description': 'Who can edit this meta-review.'
                 },
                 'signatures': {
-                    'values-regex': regex,
+                    'values-regex': meta_review_stage.get_signatures_regex(conference, note.number),
                     'description': 'How your identity will be displayed.'
                 }
             }
@@ -1322,9 +1301,10 @@ class InvitationBuilder(object):
 
     def set_review_rebuttal_invitation(self, conference, reviews):
         invitations = []
+        regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(RebuttalInvitation(conference))
         for note in tqdm(reviews, desc='set_review_rebuttal_invitation'):
-            if 'AnonReviewer' in note.signatures[0]:
+            if re.search(regex, note.signatures[0]):
                 invitation = self.client.post_invitation(PaperReviewRebuttalInvitation(conference, note))
                 invitations.append(invitation)
 
@@ -1332,9 +1312,10 @@ class InvitationBuilder(object):
 
     def set_review_revision_invitation(self, conference, reviews):
         invitations = []
+        regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(ReviewRevisionInvitation(conference))
         for note in tqdm(reviews, desc='set_review_revision_invitation'):
-            if 'AnonReviewer' in note.signatures[0]:
+            if re.search(regex, note.signatures[0]):
                 invitation = self.client.post_invitation(PaperReviewRevisionInvitation(conference, note))
                 invitations.append(invitation)
 
@@ -1342,9 +1323,10 @@ class InvitationBuilder(object):
 
     def set_review_rating_invitation(self, conference, reviews):
         invitations = []
+        regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(ReviewRatingInvitation(conference))
         for note in tqdm(reviews, desc='set_review_rating_invitation'):
-            if 'AnonReviewer' in note.signatures[0]:
+            if re.search(regex, note.signatures[0]):
                 invitation = self.client.post_invitation(PaperReviewRatingInvitation(conference, note))
                 invitations.append(invitation)
 
@@ -1552,14 +1534,14 @@ class InvitationBuilder(object):
             'values-copied': [conference.get_id(), '{signatures}']
         }
 
-        signatures_regex = conference.get_id() + '/Paper.*/Area_Chair[0-9]+'
+        signatures_regex = conference.get_anon_area_chair_id(number='.*', anon_id='.*')
 
         if group_id == conference.get_reviewers_id() and conference.use_area_chairs:
             readers = {
                 'description': 'The users who will be allowed to read the above content.',
                 'values-regex': conference.get_id() + '|' + conference.get_area_chairs_id(number='.*') + '|~.*'
             }
-            signatures_regex = conference.get_id() + '/Paper.*/AnonReviewer[0-9]+'
+            signatures_regex = conference.get_anon_reviewer_id(number='.*', anon_id='.*')
 
         reviewer_paper_ranking_invitation = openreview.Invitation(
             id = conference.get_invitation_id('Paper_Ranking', prefix=group_id),

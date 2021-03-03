@@ -230,14 +230,14 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         request_page(selenium, reject_url, alert=True)
-        time.sleep(2)
+        helpers.await_queue()
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 1
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 0
 
         request_page(selenium, accept_url, alert=True)
-        time.sleep(2)
+        helpers.await_queue()
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 0
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')

@@ -16,10 +16,33 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestNeurIPSConference():
 
+    @pytest.fixture(scope="class")
+    def conference(self, client):
+        #pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        conference=openreview.helpers.get_conference(client, request_form.id)
+        ## should we add this to the request form?
+        conference.senior_area_chair_identity_readers=[
+            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+        ]
+        conference.area_chair_identity_readers=[
+            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+        ]
+        return conference
+
+
     def test_create_conference(self, client, helpers):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
+        first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
         pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
@@ -51,11 +74,13 @@ class TestNeurIPSConference():
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
+                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
@@ -134,12 +159,23 @@ class TestNeurIPSConference():
         helpers.await_queue()
         assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
 
+        sac_client = openreview.Client(username='sac1@google.com', password='1234')
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Senior Area Chair Console' == console.find_element_by_tag_name('a').text
+
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
 
-    def test_sac_bidding(self, client, helpers):
+    def test_sac_bidding(self, conference, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -290,488 +326,408 @@ class TestNeurIPSConference():
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for NeurIPS 2021.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
+    def test_submit_papers(self, conference, helpers, test_client, client):
+
+        domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
+        for i in range(1,6):
+            note = openreview.Note(invitation = 'NeurIPS.cc/2021/Conference/-/Submission',
+                readers = ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
+                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~Test_User1'],
+                content = {
+                    'title': 'Paper title ' + str(i) ,
+                    'abstract': 'This is an abstract ' + str(i),
+                    'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
+                    'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                }
+            )
+            note = test_client.post_note(note)
+
+        conference.setup_first_deadline_stage(force=True)
+
+        blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        assert len(blinded_notes) == 5
+
+    def test_post_submission_stage(self, conference, helpers, test_client, client):
+
+        conference.setup_final_deadline_stage(force=True)
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 5
+        assert submissions[0].readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Reviewers',
+            'NeurIPS.cc/2021/Conference/Paper5/Authors']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+    def test_review_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        stage_note=client.post_note(openreview.Note(
+            content={
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
+
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Area_Chairs', '~Area_IBMChair1')
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', '~Area_IBMChair1')
+
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+
+        ac_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
+        assert ac_group.readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+            ac_group.id]
+
+        reviewer_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_')[0]
+        assert reviewer_group.readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+            reviewer_group.id]
+
+        anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Area_Chair_.*')
+        assert len(anon_groups) == 1
+
+        anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Reviewer_.*')
+        assert len(anon_groups) == 2
+
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
+        assert len(signatory_groups) == 1
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        review_note=reviewer_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', signatory_groups[0].id],
+            nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=[signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'title': 'Review title',
+                'review': 'Paper is very good!',
+                'rating': '9: Top 15% of accepted papers, strong accept',
+                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Your review has been received on your assigned Paper number: 5, Paper title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Review posted to your assigned Paper number: 5, Paper title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        ## TODO: should we send emails to Senior Area Chairs?
+
+    def test_comment_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=True))
+
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
+        assert len(signatory_groups) == 1
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        review_note=reviewer_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', signatory_groups[0].id],
+            #nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=[signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'title': 'Test comment',
+                'comment': 'This is a comment'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=review_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+
+        comment_note=ac_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            #nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=[signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'title': 'Test an AC comment',
+                'comment': 'This is an AC comment'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=comment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+        sac_client=openreview.Client(username='sac1@google.com', password='1234')
+
+        comment_note=sac_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            writers=['NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs'],
+            signatures=['NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs'],
+            content={
+                'title': 'Test an SAC comment',
+                'comment': 'This is an SAC comment'
+            }
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=comment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
+    def test_meta_review_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        conference.set_meta_review_stage(openreview.MetaReviewStage(due_date=due_date))
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        meta_review_note=ac_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Meta_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            writers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            signatures=[signatory_groups[0].id],
+            content={
+                'metareview': 'Paper is very good!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain'
+            }
+        ))
+
+    def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+        ac_anon_id=signatory_groups[0].id
+
+        ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        assert not status.find_elements_by_class_name('tag-widget')
+
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
+        assert len(signatory_groups) == 1
+        reviewer_anon_id=signatory_groups[0].id
+
+        reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        assert not selenium.find_elements_by_class_name('tag-widget')
+
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
+
+        ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        status = selenium.find_element_by_id("1-metareview-status")
+        assert status
+
+        tag = status.find_element_by_class_name('tag-widget')
+        assert tag
+
+        options = tag.find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 6
+
+        options = tag.find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 6
+
+        blinded_notes = conference.get_submissions()
+
+        ac_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '1 of 5',
+            readers = ['NeurIPS.cc/2021/Conference', ac_anon_id],
+            signatures = [ac_anon_id])
+        )
+
+        reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
+        request_page(selenium, reviewer_url, reviewer_client.token)
+
+        tags = selenium.find_elements_by_class_name('tag-widget')
+        assert tags
+
+        options = tags[0].find_elements_by_tag_name("li")
+        assert options
+        assert len(options) == 6
+
+        options = tags[0].find_elements_by_tag_name("a")
+        assert options
+        assert len(options) == 6
+
+        reviewer_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '2 of 5',
+            readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer_anon_id],
+            signatures = [reviewer_anon_id])
+        )
+
+        reviewer2_client = openreview.Client(username='reviewer2@mit.edu', password='1234')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer2@mit.edu')
+        assert len(signatory_groups) == 1
+        reviewer2_anon_id=signatory_groups[0].id
+
+        reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
+            forum = blinded_notes[-1].id,
+            tag = '1 of 5',
+            readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
+            signatures = [reviewer2_anon_id])
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+            reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
+                forum = blinded_notes[-1].id,
+                tag = '1 of 5',
+                readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
+                signatures = [reviewer2_anon_id])
+            )
+
+    def test_review_rating_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        conference.set_review_rating_stage(openreview.ReviewRatingStage(due_date = now + datetime.timedelta(minutes = 40)))
+
+        ac_client = openreview.Client(username='ac1@mit.edu', password='1234')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
+        assert len(signatory_groups) == 1
+        ac_anon_id=signatory_groups[0].id
+
+        submissions = conference.get_submissions(number=5)
+
+        reviews = ac_client.get_notes(forum=submissions[0].id, invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 1
+
+        review_rating_note = ac_client.post_note(openreview.Note(
+            forum=submissions[0].id,
+            replyto=reviews[0].id,
+            invitation=reviews[0].signatures[0] + '/-/Review_Rating',
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            writers=[ac_anon_id],
+            signatures=[ac_anon_id],
+            content={
+                'review_quality': 'Good'
+            }
+        ))
+        assert review_rating_note
 
 
-#     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
-
-#         result = conference.recruit_reviewers(['iclr2021_one@mail.com',
-#         'iclr2021_two@mail.com',
-#         'iclr2021_three@mail.com',
-#         'iclr2021_four@mail.com',
-#         'iclr2021_five@mail.com',
-#         'iclr2021_six@mail.com',
-#         'iclr2021_seven@mail.com',
-#         'iclr2021_one_alternate@mail.com'])
-
-#         assert result
-#         assert result.id == 'ICLR.cc/2021/Conference/Reviewers/Invited'
-#         assert len(result.members) == 7
-#         assert 'iclr2021_one@mail.com' in result.members
-#         assert 'iclr2021_two@mail.com' in result.members
-#         assert 'iclr2021_three@mail.com' in result.members
-#         assert 'iclr2021_four@mail.com' in result.members
-#         assert 'iclr2021_five@mail.com' in result.members
-#         assert 'iclr2021_six@mail.com' in result.members
-#         assert 'iclr2021_seven@mail.com' in result.members
-#         assert 'iclr2021_one_alternate@mail.com' not in result.members
-
-#         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
-#         text = messages[0]['content']['text']
-#         assert 'Dear invitee,' in text
-#         assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
-
-#         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-#         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-
-#         request_page(selenium, reject_url, alert=True)
-#         time.sleep(2)
-#         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
-#         assert len(declined_group.members) == 1
-#         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
-#         assert len(accepted_group.members) == 0
-
-#         request_page(selenium, accept_url, alert=True)
-#         time.sleep(2)
-#         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
-#         assert len(declined_group.members) == 0
-#         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
-#         assert len(accepted_group.members) == 1
-
-#         messages = client.get_messages(to = 'iclr2021_two@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
-#         text = messages[0]['content']['text']
-#         assert 'Dear invitee,' in text
-#         assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
-
-#         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-#         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-
-#         request_page(selenium, reject_url, alert=True)
-#         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
-#         assert len(declined_group.members) == 1
-#         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
-#         assert len(accepted_group.members) == 1
-
-#         messages = client.get_messages(to = 'iclr2021_four@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
-#         text = messages[0]['content']['text']
-#         assert 'Dear invitee,' in text
-#         assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
-
-#         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-#         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-
-#         request_page(selenium, accept_url, alert=True)
-#         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
-#         assert len(declined_group.members) == 1
-#         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
-#         assert len(accepted_group.members) == 2
-
-#         messages = client.get_messages(to = 'iclr2021_five@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
-#         text = messages[0]['content']['text']
-#         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-#         request_page(selenium, accept_url, alert=True)
-#         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
-#         assert len(declined_group.members) == 1
-#         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
-#         assert len(accepted_group.members) == 3
-
-#         messages = client.get_messages(to = 'iclr2021_six_alternate@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
-#         text = messages[0]['content']['text']
-#         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-#         request_page(selenium, accept_url, alert=True)
-#         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
-#         assert len(declined_group.members) == 1
-#         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
-#         assert len(accepted_group.members) == 4
-
-#     def test_registration(self, conference, helpers, selenium, request_page):
-
-#         reviewer_client = openreview.Client(username='iclr2021_one@mail.com', password='1234')
-#         reviewer_tasks_url = 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers#reviewer-tasks'
-#         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
-
-#         assert selenium.find_element_by_link_text('Reviewer Registration')
-#         assert selenium.find_element_by_link_text('Expertise Selection')
-
-#         registration_notes = reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Form')
-#         assert registration_notes
-#         assert len(registration_notes) == 1
-
-#         registration_forum = registration_notes[0].forum
-
-#         registration_note = reviewer_client.post_note(
-#             openreview.Note(
-#                 invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration',
-#                 forum = registration_forum,
-#                 replyto = registration_forum,
-#                 content = {
-#                     'profile_confirmed': 'Yes',
-#                     'expertise_confirmed': 'Yes',
-#                     'TPMS_registration_confirmed': 'Yes',
-#                     'reviewer_instructions_confirm': 'Yes',
-#                     'emergency_review_count': '0'
-#                 },
-#                 signatures = [
-#                     '~ReviewerOne_ICLR1'
-#                 ],
-#                 readers = [
-#                     conference.get_id(),
-#                     '~ReviewerOne_ICLR1'
-#                 ],
-#                 writers = [
-#                     conference.get_id(),
-#                     '~ReviewerOne_ICLR1'
-#                 ]
-#             ))
-#         assert registration_note
-
 
-#         request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token)
-#         header = selenium.find_element_by_id('header')
-#         assert header
-#         notes = header.find_elements_by_class_name("description")
-#         assert notes
-#         assert len(notes) == 1
-#         assert notes[0].text == 'This page provides information and status updates for the ICLR 2021. It will be regularly updated as the conference progresses, so please check back frequently.'
-
-#         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
-
-#         assert selenium.find_element_by_link_text('Reviewer Registration')
-#         assert selenium.find_element_by_link_text('Expertise Selection')
-#         tasks = selenium.find_element_by_id('reviewer-tasks')
-#         assert tasks
-#         assert len(tasks.find_elements_by_class_name('note')) == 2
-#         assert len(tasks.find_elements_by_class_name('completed')) == 2
-
-#     def test_remind_registration(self, conference, helpers, client):
-
-#         five_reviewer_client = openreview.Client(username='iclr2021_five@mail.com', password='1234')
-#         six_reviewer_client = openreview.Client(username='iclr2021_six_alternate@mail.com', password='1234')
-
-#         subject = '[ICLR 2021] Please complete your profile'
-#         message = '''
-# Dear Reviewer,
-
-
-# Thank you for accepting our invitation to serve on the program committee for ICLR 2021. The first task we ask of you is to complete your profile, which is essential in order for us to:
-
-# - Assign you relevant submissions.
-
-# - Identify gaps in reviewer expertise.
-
-
-# To complete your profile, please log into OpenReview and navigate to the reviewer console(https://openreview.net/group?id=ICLR.cc/2021/Conference/Reviewers).
-# There you will see a task to "Reviewer Registration". This task should not take more than 10-15 minutes.
-# Please complete it by September 4th. Note that you will have to create an OpenReview account if you don’t already have one.
-
-
-# Thanks again for your ongoing service to our community.
-
-
-# ICLR2021 Programme Chairs,
-
-# Naila, Katja, Alice, and Ivan
-#         '''
-
-#         reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
-#         assert reminders
-#         assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com', 'iclr2021_six@mail.com']
-
-#         registration_notes = six_reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Form')
-#         assert registration_notes
-#         assert len(registration_notes) == 1
-
-#         registration_forum = registration_notes[0].forum
-
-#         registration_note = six_reviewer_client.post_note(
-#             openreview.Note(
-#                 invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration',
-#                 forum = registration_forum,
-#                 replyto = registration_forum,
-#                 content = {
-#                     'profile_confirmed': 'Yes',
-#                     'expertise_confirmed': 'Yes',
-#                     'TPMS_registration_confirmed': 'Yes',
-#                     'reviewer_instructions_confirm': 'Yes',
-#                     'emergency_review_count': '0'
-#                 },
-#                 signatures = [
-#                     '~ReviewerSix_ICLR1'
-#                 ],
-#                 readers = [
-#                     conference.get_id(),
-#                     '~ReviewerSix_ICLR1'
-#                 ],
-#                 writers = [
-#                     conference.get_id(),
-#                     '~ReviewerSix_ICLR1'
-#                 ]
-#             ))
-
-#         reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
-#         assert reminders
-#         assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com']
-
-
-#     def test_retry_declined_reviewers(self, conference, helpers, client, selenium, request_page):
-
-#         title = '[ICLR 2021] Please reconsider serving as a reviewer'
-#         message = '''
-# Dear Reviewer,
-
-
-# Thank you for responding to our invitation to serve as a reviewer for ICLR 2021. We would still very much benefit from your expertise and wonder whether you would reconsider our invitation in light of the fact that we will guarantee you a maximum load of 3 papers.
-
-
-# If you would now like to ACCEPT the invitation, please click on the following link:
-
-
-# {accept_url}
-
-
-# We would appreciate an answer by Friday September 4th (in 7 days).
-
-
-# If you have any questions, please don’t hesitate to reach out to us at iclr2021programchairs@googlegroups.com.
-
-
-# We do hope you will reconsider and we thank you as always for your ongoing service to our community.
-
-
-# ICLR2021 Programme Chairs,
-
-# Naila, Katja, Alice, and Ivan
-#         '''
-
-#         result = conference.recruit_reviewers(title=title, message=message, retry_declined=True)
-
-#         messages = client.get_messages(subject = '[ICLR 2021] Please reconsider serving as a reviewer')
-#         assert len(messages) == 1
-#         assert messages[0]['content']['to'] == 'iclr2021_two@mail.com'
-#         text = messages[0]['content']['text']
-
-#         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-
-#         request_page(selenium, accept_url, alert=True)
-#         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
-#         assert len(declined_group.members) == 0
-#         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
-#         assert len(accepted_group.members) == 5
-
-#     def test_invite_suggested_reviewers(self, conference, helpers, client, selenium, request_page):
-
-#         result = conference.recruit_reviewers(['iclr2021_one@mail.com',
-#         'iclr2021_two@mail.com',
-#         'iclr2021_three@mail.com',
-#         'iclr2021_four@mail.com',
-#         'iclr2021_five@mail.com',
-#         'iclr2021_six@mail.com',
-#         'iclr2021_seven@mail.com',
-#         'iclr2021_eight@mail.com',
-#         'iclr2021_nine@mail.com',
-#         'iclr2021_six_alternate@mail.com'], invitee_names=['', '', '', '', '', '', '', '', 'Melisa Bok', ''])
-
-#         messages = client.get_messages(subject = '[ICLR 2021]: Invitation to serve as Reviewer')
-#         assert len(messages) == 9
-
-#         assert 'Melisa Bok' in messages[8]['content']['text']
-
-
-#     def test_submit_papers(self, conference, helpers, test_client, client):
-
-#         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
-#         for i in range(1,6):
-#             note = openreview.Note(invitation = 'ICLR.cc/2021/Conference/-/Submission',
-#                 readers = ['ICLR.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-#                 writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-#                 signatures = ['~Test_User1'],
-#                 content = {
-#                     'title': 'Paper title ' + str(i) ,
-#                     'abstract': 'This is an abstract ' + str(i),
-#                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-#                     'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
-#                     'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics'
-#                 }
-#             )
-#             note = test_client.post_note(note)
-
-#         conference.setup_first_deadline_stage(force=True)
-
-#         blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
-#         assert len(blinded_notes) == 5
-
-#         invitations = test_client.get_invitations(replyForum=blinded_notes[0].id)
-#         assert len(invitations) == 1
-#         assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
-
-#         invitations = test_client.get_invitations(replyForum=blinded_notes[0].original)
-#         assert len(invitations) == 1
-#         assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Revision'
-
-#         invitations = client.get_invitations(replyForum=blinded_notes[0].id)
-#         assert len(invitations) == 2
-#         assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject'
-#         assert invitations[1].id == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
-
-#         # Add a revision
-#         pdf_url = test_client.put_attachment(
-#             os.path.join(os.path.dirname(__file__), 'data/paper.pdf'),
-#             'ICLR.cc/2021/Conference/Paper5/-/Revision',
-#             'pdf'
-#         )
-
-#         supplementary_material_url = test_client.put_attachment(
-#             os.path.join(os.path.dirname(__file__), 'data/paper.pdf.zip'),
-#             'ICLR.cc/2021/Conference/Paper5/-/Revision',
-#             'supplementary_material'
-#         )
-
-#         note = openreview.Note(referent=blinded_notes[0].original,
-#             forum=blinded_notes[0].original,
-#             invitation = 'ICLR.cc/2021/Conference/Paper5/-/Revision',
-#             readers = ['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-#             writers = ['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-#             signatures = ['ICLR.cc/2021/Conference/Paper5/Authors'],
-#             content = {
-#                 'title': 'EDITED Paper title 5',
-#                 'abstract': 'This is an abstract 5',
-#                 'authorids': ['test@mail.com', 'peter@mail.com', 'melisa@mail.com'],
-#                 'authors': ['Test User', 'Peter Test', 'Melisa Bok'],
-#                 'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
-#                 'pdf': pdf_url,
-#                 'supplementary_material': supplementary_material_url
-#             }
-#         )
-
-#         test_client.post_note(note)
-
-#         helpers.await_queue()
-
-#         author_group = client.get_group('ICLR.cc/2021/Conference/Paper5/Authors')
-#         assert len(author_group.members) == 3
-#         assert 'melisa@mail.com' in author_group.members
-#         assert 'test@mail.com' in author_group.members
-#         assert 'peter@mail.com' in author_group.members
-
-#         messages = client.get_messages(subject='ICLR 2021 has received a new revision of your submission titled EDITED Paper title 5')
-#         assert len(messages) == 3
-#         recipients = [m['content']['to'] for m in messages]
-#         assert 'melisa@mail.com' in recipients
-#         assert 'test@mail.com' in recipients
-#         assert 'peter@mail.com' in recipients
-#         assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been posted.\n\nTitle: EDITED Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
-
-#         ## Edit revision
-#         references = client.get_references(invitation='ICLR.cc/2021/Conference/Paper5/-/Revision')
-#         assert len(references) == 1
-#         revision_note = references[0]
-#         revision_note.content['title'] = 'EDITED Rev 2 Paper title 5'
-#         test_client.post_note(revision_note)
-
-#         helpers.await_queue()
-
-#         messages = client.get_messages(subject='ICLR 2021 has received a new revision of your submission titled EDITED Rev 2 Paper title 5')
-#         assert len(messages) == 3
-#         recipients = [m['content']['to'] for m in messages]
-#         assert 'melisa@mail.com' in recipients
-#         assert 'test@mail.com' in recipients
-#         assert 'peter@mail.com' in recipients
-
-#         assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
-
-#         ## Withdraw paper
-#         test_client.post_note(openreview.Note(invitation='ICLR.cc/2021/Conference/Paper1/-/Withdraw',
-#             forum = blinded_notes[4].forum,
-#             replyto = blinded_notes[4].forum,
-#             readers = [
-#                 'ICLR.cc/2021/Conference',
-#                 'ICLR.cc/2021/Conference/Paper1/Authors',
-#                 'ICLR.cc/2021/Conference/Paper1/Reviewers',
-#                 'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
-#                 'ICLR.cc/2021/Conference/Program_Chairs'],
-#             writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper1/Authors'],
-#             signatures = ['ICLR.cc/2021/Conference/Paper1/Authors'],
-#             content = {
-#                 'title': 'Submission Withdrawn by the Authors',
-#                 'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-#             }
-#         ))
-
-#         helpers.await_queue()
-
-#         withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
-#         assert len(withdrawn_notes) == 1
-#         withdrawn_notes[0].readers == [
-#             'ICLR.cc/2021/Conference/Paper1/Authors',
-#             'ICLR.cc/2021/Conference/Paper1/Reviewers',
-#             'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
-#             'ICLR.cc/2021/Conference/Program_Chairs'
-#         ]
-#         assert len(conference.get_submissions()) == 4
-
-#     def test_post_submission_stage(self, conference, helpers, test_client, client):
-
-#         conference.setup_final_deadline_stage(force=True)
-
-#         submissions = conference.get_submissions()
-#         assert len(submissions) == 4
-#         assert submissions[0].readers == ['everyone']
-#         assert submissions[1].readers == ['everyone']
-#         assert submissions[2].readers == ['everyone']
-#         assert submissions[3].readers == ['everyone']
-
-#         ## Withdraw paper
-#         test_client.post_note(openreview.Note(invitation='ICLR.cc/2021/Conference/Paper2/-/Withdraw',
-#             forum = submissions[3].forum,
-#             replyto = submissions[3].forum,
-#             readers = [
-#                 'everyone'],
-#             writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper2/Authors'],
-#             signatures = ['ICLR.cc/2021/Conference/Paper2/Authors'],
-#             content = {
-#                 'title': 'Submission Withdrawn by the Authors',
-#                 'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-#             }
-#         ))
-
-#         helpers.await_queue()
-
-#         withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
-#         assert len(withdrawn_notes) == 2
-#         withdrawn_notes[0].readers == [
-#             'everyone'
-#         ]
-#         withdrawn_notes[1].readers == [
-#             'ICLR.cc/2021/Conference/Paper1/Authors',
-#             'ICLR.cc/2021/Conference/Paper1/Reviewers',
-#             'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
-#             'ICLR.cc/2021/Conference/Program_Chairs'
-#         ]
-
-
-#     def test_revision_stage(self, conference, helpers, test_client, client):
-
-#         now = datetime.datetime.utcnow()
-#         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True))
-
-#         submissions = conference.get_submissions()
-
-#         print(submissions[0])
-
-#         test_client.post_note(openreview.Note(
-#             invitation='ICLR.cc/2021/Conference/Paper5/-/Revision',
-#             referent=submissions[0].original,
-#             forum=submissions[0].original,
-#             readers=['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-#             writers=['ICLR.cc/2021/Conference', 'ICLR.cc/2021/Conference/Paper5/Authors'],
-#             signatures=['ICLR.cc/2021/Conference/Paper5/Authors'],
-#             content={
-#                 'title': 'EDITED V3 Paper title 5',
-#                 'abstract': 'This is an abstract 5',
-#                 'authorids': ['peter@mail.com', 'test@mail.com', 'melisa@mail.com'],
-#                 'authors': ['Peter Test', 'Test User', 'Melisa Bok'],
-#                 'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
-#                 'pdf': submissions[0].content['pdf'],
-#                 'supplementary_material': submissions[0].content['supplementary_material']
-#             }
-
-#         ))

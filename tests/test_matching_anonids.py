@@ -13,38 +13,38 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
 
-class TestMatching():
+class TestMatchingWithAnonIds():
 
     @pytest.fixture(scope="class")
     def pc_client(self):
-        return openreview.Client(username='pc1@mail.com', password='1234')
+        return openreview.Client(username='pc1@uai.com', password='1234')
 
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
-        pc_client = helpers.create_user('pc1@mail.com', 'TestPC', 'UAI')
+        pc_client = helpers.create_user('pc1@uai.com', 'TestPC', 'UAI')
         builder = openreview.conference.ConferenceBuilder(client)
-        builder.set_conference_id('auai.org/UAI/2019/Conference')
+        builder.set_conference_id('auai.org/UAI/2021/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
-        builder.set_conference_short_name('UAI 2019')
+        builder.set_conference_short_name('UAI 2021')
         builder.set_homepage_header({
-        'title': 'UAI 2019',
+        'title': 'UAI 2021',
         'subtitle': 'Conference on Uncertainty in Artificial Intelligence',
-        'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2019, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2019',
-        'date': 'July 22 - July 25, 2019',
-        'website': 'http://auai.org/uai2019/',
+        'deadline': 'Abstract Submission Deadline: 11:59 pm Samoa Standard Time, March 4, 2021, Full Submission Deadline: 11:59 pm Samoa Standard Time, March 8, 2021',
+        'date': 'July 22 - July 25, 2021',
+        'website': 'http://auai.org/uai2021/',
         'location': 'Tel Aviv, Israel',
         'instructions': '''<p><strong>Important Information about Anonymity:</strong><br>
-            When you post a submission to UAI 2019, please provide the real names and email addresses of authors in the submission form below (but NOT in the manuscript).
+            When you post a submission to UAI 2021, please provide the real names and email addresses of authors in the submission form below (but NOT in the manuscript).
             The <em>original</em> record of your submission will be private, and will contain your real name(s).
             The PDF in your submission should not contain the names of the authors. </p>
             <p><strong>Conflict of Interest:</strong><br>
             Please make sure that your current and previous affiliations listed on your OpenReview <a href=\"/profile\">profile page</a> is up-to-date to avoid conflict of interest.</p>
-            <p><strong>Questions or Concerns:</strong><br> Please contact the UAI 2019 Program chairs at <a href=\"mailto:uai2019chairs@gmail.com\">uai2019chairs@gmail.com</a>.
+            <p><strong>Questions or Concerns:</strong><br> Please contact the UAI 2021 Program chairs at <a href=\"mailto:uai2021chairs@gmail.com\">uai2021chairs@gmail.com</a>.
             <br>Please contact the OpenReview support team at <a href=\"mailto:info@openreview.net\">info@openreview.net</a> with any OpenReview related questions or concerns.
             </p>'''
         })
         print ('Homepage header set')
-        builder.set_conference_program_chairs_ids(['pc1@mail.com', 'pc3@mail.com'])
+        builder.set_conference_program_chairs_ids(['pc1@uai.com', 'pc4@mail.com'])
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
         now = datetime.datetime.utcnow()
@@ -70,18 +70,16 @@ class TestMatching():
         }
         builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
 
-        builder.set_bid_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
-        builder.set_bid_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
-        builder.use_legacy_anonids(True)
+        builder.set_bid_stage('auai.org/UAI/2021/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
+        builder.set_bid_stage('auai.org/UAI/2021/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         conference = builder.get_result()
-        # conference.client = pc_client
         return conference
 
     def test_setup_matching(self, conference, pc_client, test_client, helpers):
 
         ## Set committee
-        conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
-        conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com'])
+        conference.set_area_chairs(['ac2@cmu.edu', 'ac2@umass.edu'])
+        conference.set_reviewers(['r3@mit.edu', 'r3@google.com', 'r3@fb.com'])
 
         ## Paper 1
         note_1 = openreview.Note(invitation = conference.get_submission_id(),
@@ -147,55 +145,55 @@ class TestMatching():
         conference.setup_post_submission_stage(force=True)
         blinded_notes = conference.get_submissions()
 
-        ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
+        ac1_client = helpers.create_user('ac2@cmu.edu', 'AreaChair', 'CMUOne')
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            writers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            signatures = ['~AreaChair_CMUOne1'],
             head = blinded_notes[0].id,
-            tail = '~AreaChair_One1',
+            tail = '~AreaChair_CMUOne1',
             label = 'High'
         ))
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            writers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            signatures = ['~AreaChair_CMUOne1'],
             head = blinded_notes[1].id,
-            tail = '~AreaChair_One1',
+            tail = '~AreaChair_CMUOne1',
             label = 'Low'
         ))
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            writers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            signatures = ['~AreaChair_CMUOne1'],
             head = blinded_notes[2].id,
-            tail = '~AreaChair_One1',
+            tail = '~AreaChair_CMUOne1',
             label = 'Very Low'
         ))
 
-        r1_client = helpers.create_user('r1@mit.edu', 'Reviewer', 'One')
+        r1_client = helpers.create_user('r3@mit.edu', 'Reviewer', 'MITOne')
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
-            signatures = ['~Reviewer_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
+            writers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
+            signatures = ['~Reviewer_MITOne1'],
             head = blinded_notes[0].id,
-            tail = '~Reviewer_One1',
+            tail = '~Reviewer_MITOne1',
             label = 'Neutral'
         ))
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
-            signatures = ['~Reviewer_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
+            writers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
+            signatures = ['~Reviewer_MITOne1'],
             head = blinded_notes[1].id,
-            tail = '~Reviewer_One1',
+            tail = '~Reviewer_MITOne1',
             label = 'Very High'
         ))
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
-            readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
-            writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
-            signatures = ['~Reviewer_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
+            writers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
+            signatures = ['~Reviewer_MITOne1'],
             head = blinded_notes[2].id,
-            tail = '~Reviewer_One1',
+            tail = '~Reviewer_MITOne1',
             label = 'Low'
         ))
 
@@ -203,26 +201,26 @@ class TestMatching():
         conference.setup_matching(build_conflicts=True)
 
 
-        invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
+        invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment')
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Aggregate_Score')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment')
 
         # Set up AC matching
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
 
-        invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
+        invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment')
+        assert 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Aggregate_Score')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment')
 
         bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -233,37 +231,37 @@ class TestMatching():
         assert 3 == len(bids)
 
         reviewer_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
         ac_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
         reviewer_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
-            tail='~AreaChair_One1')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict',
+            tail='~AreaChair_CMUOne1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Conflict'
 
         r1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict',
-            tail='~Reviewer_One1')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict',
+            tail='~Reviewer_MITOne1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Conflict'
 
         ac2_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict',
             tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
@@ -277,18 +275,18 @@ class TestMatching():
 
         print(conference.get_reviewers_id())
 
-        invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
+        invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/-/Recommendation' not in invitation.reply['content']['scores_specification']['default']
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/-/Recommendation' not in invitation.reply['content']['scores_specification']['default']
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Aggregate_Score')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
 
         # Set up ac matching
         conference.setup_matching(
@@ -296,17 +294,17 @@ class TestMatching():
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
             build_conflicts=True)
 
-        invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
+        invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
+        assert 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Aggregate_Score')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
 
         bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -317,35 +315,35 @@ class TestMatching():
         assert 3 == len(bids)
 
         reviewer_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
         ac_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
         reviewer_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_One1')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_CMUOne1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Conflict'
 
         r1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict', tail='~Reviewer_One1')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict', tail='~Reviewer_MITOne1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Conflict'
 
         ac2_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail = 'ac2@umass.edu')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict', tail = 'ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
@@ -355,15 +353,15 @@ class TestMatching():
         assert 3 == len(submissions)
 
         reviewer_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
         assert 9 == len(reviewer_tpms_scores)
 
         ac_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
         assert 6 == len(ac_tpms_scores)
 
         r3_s0_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[0].id)
         assert r3_s0_tpms_scores
@@ -371,7 +369,7 @@ class TestMatching():
         assert r3_s0_tpms_scores[0].weight == 0.21
 
         r3_s1_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[1].id)
         assert r3_s1_tpms_scores
@@ -379,7 +377,7 @@ class TestMatching():
         assert r3_s1_tpms_scores[0].weight == 0.31
 
         r3_s2_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[2].id)
         assert r3_s2_tpms_scores
@@ -396,27 +394,27 @@ class TestMatching():
         conference.open_recommendations(assignment_title='', due_date = now + datetime.timedelta(minutes = 40))
 
         ## Recommend reviewers
-        ac1_client = helpers.get_user('ac1@cmu.edu')
+        ac1_client = helpers.get_user('ac2@cmu.edu')
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
-            writers = ['~AreaChair_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            signatures = ['~AreaChair_CMUOne1'],
+            writers = ['~AreaChair_CMUOne1'],
             head = blinded_notes[0].id,
-            tail = '~Reviewer_One1',
+            tail = '~Reviewer_MITOne1',
             weight = 1
         ))
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
-            writers = ['~AreaChair_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            signatures = ['~AreaChair_CMUOne1'],
+            writers = ['~AreaChair_CMUOne1'],
             head = blinded_notes[1].id,
-            tail = 'r2@google.com',
+            tail = 'r3@google.com',
             weight = 2
         ))
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_recommendation_id(),
-            readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-            signatures = ['~AreaChair_One1'],
-            writers = ['~AreaChair_One1'],
+            readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+            signatures = ['~AreaChair_CMUOne1'],
+            writers = ['~AreaChair_CMUOne1'],
             head = blinded_notes[1].id,
             tail = 'r3@fb.com',
             weight = 3
@@ -427,14 +425,14 @@ class TestMatching():
 
         print(conference.get_reviewers_id())
 
-        invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
+        invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
 
         # Set up ac matching
         conference.setup_matching(
@@ -442,16 +440,16 @@ class TestMatching():
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
             build_conflicts=True)
 
-        invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment_Configuration')
+        invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
-        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
-        assert 'auai.org/UAI/2019/Conference/Program_Committee/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Bid' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score' in invitation.reply['content']['scores_specification']['default']
+        assert 'auai.org/UAI/2021/Conference/Program_Committee/-/Recommendation' in invitation.reply['content']['scores_specification']['default']
 
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
 
         bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -466,35 +464,35 @@ class TestMatching():
         assert 3 == len(recommendations)
 
         reviewer_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
         ac_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
         reviewer_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_One1')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_CMUOne1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Conflict'
 
         r1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict', tail='~Reviewer_One1')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict', tail='~Reviewer_MITOne1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Conflict'
 
         ac2_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict', tail='ac2@umass.edu')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict', tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
@@ -504,15 +502,15 @@ class TestMatching():
         assert 3 == len(submissions)
 
         reviewer_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
         assert 9 == len(reviewer_tpms_scores)
 
         ac_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
         assert 6 == len(ac_tpms_scores)
 
         r3_s0_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[0].id)
         assert r3_s0_tpms_scores
@@ -520,7 +518,7 @@ class TestMatching():
         assert r3_s0_tpms_scores[0].weight == 0.21
 
         r3_s1_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[1].id)
         assert r3_s1_tpms_scores
@@ -528,7 +526,7 @@ class TestMatching():
         assert r3_s1_tpms_scores[0].weight == 0.31
 
         r3_s2_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[2].id)
         assert r3_s2_tpms_scores
@@ -540,20 +538,20 @@ class TestMatching():
 
         blinded_notes = list(conference.get_submissions())
 
-        registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Form')
+        registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
         registration_forum = registration_notes[0].forum
 
         ## Recommend reviewers
-        ac1_client = helpers.get_user('ac1@cmu.edu')
+        ac1_client = helpers.get_user('ac2@cmu.edu')
         ac1_client.post_note(
             openreview.Note(
-                invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration',
-                readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-                writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
-                signatures = ['~AreaChair_One1'],
+                invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Registration',
+                readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+                writers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
+                signatures = ['~AreaChair_CMUOne1'],
                 forum = registration_forum,
                 replyto = registration_forum,
                 content = {
@@ -569,16 +567,16 @@ class TestMatching():
         # Set up reviewer matching
         conference.setup_matching(build_conflicts=True)
 
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Subject_Areas_Score')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
 
         # Set up AC matching
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
 
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
-        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
 
         bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -593,37 +591,37 @@ class TestMatching():
         assert 3 == len(recommendations)
 
         reviewer_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
         ac_custom_loads = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
         reviewer_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
         assert 1 == len(reviewer_conflicts)
 
         ac_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
         assert 2 == len(ac_conflicts)
 
         ac1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
-            tail='~AreaChair_One1')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict',
+            tail='~AreaChair_CMUOne1')
         assert ac1_conflicts
         assert len(ac1_conflicts)
         assert ac1_conflicts[0].label == 'Conflict'
 
         r1_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict',
-            tail='~Reviewer_One1')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict',
+            tail='~Reviewer_MITOne1')
         assert r1_conflicts
         assert len(r1_conflicts)
         assert r1_conflicts[0].label == 'Conflict'
 
         ac2_conflicts = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Conflict',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict',
             tail='ac2@umass.edu')
         assert ac2_conflicts
         assert len(ac2_conflicts)
@@ -634,15 +632,15 @@ class TestMatching():
         assert 3 == len(submissions)
 
         reviewer_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
         assert 9 == len(reviewer_tpms_scores)
 
         ac_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/TPMS_Score')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
         assert 6 == len(ac_tpms_scores)
 
         r3_s0_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[0].id)
         assert r3_s0_tpms_scores
@@ -650,7 +648,7 @@ class TestMatching():
         assert r3_s0_tpms_scores[0].weight == 0.21
 
         r3_s1_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[1].id)
         assert r3_s1_tpms_scores
@@ -658,7 +656,7 @@ class TestMatching():
         assert r3_s1_tpms_scores[0].weight == 0.31
 
         r3_s2_tpms_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/TPMS_Score',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
             tail='r3@fb.com',
             head=submissions[2].id)
         assert r3_s2_tpms_scores
@@ -666,32 +664,32 @@ class TestMatching():
         assert r3_s2_tpms_scores[0].weight == 0.51
 
         reviewer_subject_area_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Subject_Areas_Score')
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Subject_Areas_Score')
         assert not reviewer_subject_area_scores
 
         ac_subject_areas_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
         assert 3 == len(ac_subject_areas_scores)
 
         ac1_s0_subject_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
-            tail='~AreaChair_One1',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
+            tail='~AreaChair_CMUOne1',
             head=submissions[0].id)
         assert ac1_s0_subject_scores
         assert 1 == len(ac1_s0_subject_scores)
         assert ac1_s0_subject_scores[0].weight ==  0
 
         ac1_s1_subject_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
-            tail='~AreaChair_One1',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
+            tail='~AreaChair_CMUOne1',
             head=submissions[1].id)
         assert ac1_s1_subject_scores
         assert 1 == len(ac1_s1_subject_scores)
         assert ac1_s1_subject_scores[0].weight ==  0.3333333333333333
 
         ac1_s2_subject_scores = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
-            tail='~AreaChair_One1',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
+            tail='~AreaChair_CMUOne1',
             head=submissions[2].id)
         assert ac1_s2_subject_scores
         assert 1 == len(ac1_s2_subject_scores)
@@ -704,38 +702,38 @@ class TestMatching():
         blinded_notes = list(conference.get_submissions())
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment',
             label='rev-matching'
         )
         assert 0 == len(edges)
 
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, 'r3@mit.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r1@mit.edu',
+            tail = 'r3@mit.edu',
             label = 'rev-matching',
             weight = 0.98
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r2@google.com'],
+            readers = [conference.id, 'r3@google.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r2@google.com',
+            tail = 'r3@google.com',
             label = 'rev-matching',
             weight = 0.87
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r2@google.com'],
+            readers = [conference.id, 'r3@google.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r2@google.com',
+            tail = 'r3@google.com',
             label = 'rev-matching',
             weight = 0.87
         ))
@@ -761,17 +759,17 @@ class TestMatching():
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, 'r3@mit.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r1@mit.edu',
+            tail = 'r3@mit.edu',
             label = 'rev-matching',
             weight = 0.98
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment',
             label='rev-matching'
         )
         assert 6 == len(edges)
@@ -780,24 +778,42 @@ class TestMatching():
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert 2 == len(revs_paper0.members)
-        assert revs_paper0.members[0] == 'r1@mit.edu'
-        assert revs_paper0.members[1] == 'r2@google.com'
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r1@mit.edu']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r2@google.com']
+        assert 'r3@mit.edu' in revs_paper0.members
+        assert 'r3@google.com' in revs_paper0.members
+        assert revs_paper0.anonids
+        assert revs_paper0.deanonymizers
+
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
+        assert len(anon_groups) == 2
+        anon_members = [ a.members[0] for a in anon_groups]
+        assert 'r3@mit.edu' in anon_members
+        assert 'r3@google.com' in anon_members
+
+        assert anon_groups[0].readers == [
+            conference.get_id(),
+            conference.get_id()+'/Paper{x}/Senior_Program_Committee'.format(x=blinded_notes[0].number),
+            anon_groups[0].id
+        ]
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert 2 == len(revs_paper1.members)
-        assert revs_paper1.members[0] == 'r2@google.com'
-        assert revs_paper1.members[1] == 'r3@fb.com'
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r3@fb.com']
+        assert 'r3@fb.com' in revs_paper1.members
+        assert 'r3@google.com' in revs_paper1.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[1].number))
+        assert len(anon_groups) == 2
+        anon_members = [ a.members[0] for a in anon_groups]
+        assert 'r3@fb.com' in anon_members
+        assert 'r3@google.com' in anon_members
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert 2 == len(revs_paper2.members)
         assert 'r3@fb.com' in revs_paper2.members
-        assert 'r1@mit.edu' in revs_paper2.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r3@fb.com')+1)).members == ['r3@fb.com']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r1@mit.edu')+1)).members == ['r1@mit.edu']
+        assert 'r3@mit.edu' in revs_paper2.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
+        assert len(anon_groups) == 2
+        anon_members = [ a.members[0] for a in anon_groups]
+        assert 'r3@fb.com' in anon_members
+        assert 'r3@mit.edu' in anon_members
 
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
@@ -815,27 +831,27 @@ class TestMatching():
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, 'r3@mit.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r1@mit.edu',
+            tail = 'r3@mit.edu',
             label = 'rev-matching-new',
             weight = 0.98
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r2@google.com'],
+            readers = [conference.id, 'r3@google.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r2@google.com',
+            tail = 'r3@google.com',
             label = 'rev-matching-new',
             weight = 0.98
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment',
             label='rev-matching-new'
         )
         assert 3 == len(edges)
@@ -844,31 +860,38 @@ class TestMatching():
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r3@fb.com']
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
+        assert len(anon_groups) == 3
+        anon_members = [ a.members[0] for a in anon_groups]
+        assert 'r3@fb.com' in anon_members
+        assert 'r3@mit.edu' in anon_members
+        assert 'r3@google.com' in anon_members
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu'] == revs_paper1.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
+        assert ['r3@mit.edu'] == revs_paper1.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[1].number))
+        assert len(anon_groups) == 3
+        assert 'r3@fb.com' in anon_members
+        assert 'r3@google.com' in anon_members
+        assert 'r3@mit.edu' in anon_members
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
-        assert ['r2@google.com'] == revs_paper2.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
-
+        assert ['r3@google.com'] == revs_paper2.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
+        assert len(anon_groups) == 3
+        anon_members = [ a.members[0] for a in anon_groups]
+        assert 'r3@fb.com' in anon_members
+        assert 'r3@mit.edu' in anon_members
+        assert 'r3@google.com' in anon_members
 
         ## Emergency reviewers, append reviewers
-        conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com', 'r2@mit.edu'])
+        conference.set_reviewers(['r3@mit.edu', 'r3@google.com', 'r3@fb.com', 'r2@mit.edu'])
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, 'r3@mit.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r1@mit.edu',
+            tail = 'r3@mit.edu',
             label = 'rev-matching-emergency',
             weight = 0.98
         ))
@@ -884,11 +907,11 @@ class TestMatching():
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r2@google.com'],
+            readers = [conference.id, 'r3@google.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r2@google.com',
+            tail = 'r3@google.com',
             label = 'rev-matching-emergency',
             weight = 0.98
         ))
@@ -896,33 +919,28 @@ class TestMatching():
         conference.set_assignments(assignment_title='rev-matching-emergency')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
-        assert ['r3@fb.com', 'r1@mit.edu', 'r2@mit.edu'] == revs_paper0.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r3@fb.com']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r1@mit.edu']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number)).members == ['r2@mit.edu']
-
+        assert ['r3@fb.com', 'r3@mit.edu', 'r2@mit.edu'] == revs_paper0.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
+        assert len(anon_groups) == 4
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu', 'r2@google.com'] == revs_paper1.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
+        assert ['r3@mit.edu', 'r3@google.com'] == revs_paper1.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[1].number))
+        assert len(anon_groups) == 3
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
-        assert ['r2@google.com'] == revs_paper2.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
+        assert ['r3@google.com'] == revs_paper2.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
+        assert len(anon_groups) == 3
 
-
-        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/AnonReviewer2', ['r1@mit.edu'])
-        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/Program_Committee', ['r1@mit.edu'])
+        pc_client.remove_members_from_group('auai.org/UAI/2021/Conference/Paper3/Program_Committee', ['r3@mit.edu'])
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r2@google.com'],
+            readers = [conference.id, 'r3@google.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r2@google.com',
+            tail = 'r3@google.com',
             label = 'rev-matching-emergency-2',
             weight = 0.98
         ))
@@ -930,29 +948,26 @@ class TestMatching():
         conference.set_assignments(assignment_title='rev-matching-emergency-2')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
-        assert ['r3@fb.com', 'r2@mit.edu', 'r2@google.com'] == revs_paper0.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r3@fb.com']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r2@google.com']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number)).members == ['r2@mit.edu']
-
+        assert ['r3@fb.com', 'r2@mit.edu', 'r3@google.com'] == revs_paper0.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
+        assert len(anon_groups) == 4
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu', 'r2@google.com'] == revs_paper1.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
+        assert ['r3@mit.edu', 'r3@google.com'] == revs_paper1.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[1].number))
+        assert len(anon_groups) == 3
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
-        assert ['r2@google.com'] == revs_paper2.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
+        assert ['r3@google.com'] == revs_paper2.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
+        assert len(anon_groups) == 3
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r2@google.com'],
+            readers = [conference.id, 'r3@google.com'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r2@google.com',
+            tail = 'r3@google.com',
             label = 'rev-matching-emergency-3',
             weight = 0.98
         ))
@@ -961,63 +976,38 @@ class TestMatching():
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number))
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number))
-
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
+        assert len(anon_groups) == 4
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert [] == revs_paper1.members
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number))
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
-        assert ['r2@google.com'] == revs_paper2.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
+        assert ['r3@google.com'] == revs_paper2.members
 
         now = datetime.datetime.now()
         conference.set_review_stage(openreview.ReviewStage(start_date = now))
 
-        invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/-/Official_Review')
+        invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/-/Official_Review')
         assert invitation
 
         conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True)
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number))
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number))
-
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert [] == revs_paper1.members
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number))
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
-        assert ['r2@google.com'] == revs_paper2.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[2].number)).members == ['r2@google.com']
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
+        assert ['r3@google.com'] == revs_paper2.members
+        anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number), signatory='r3@google.com')
+        assert len(anon_groups) == 1
 
-        reviewer_client = helpers.create_user('r2@google.com', 'Reviewer', 'Two')
-        conference.set_assignment('ac1@cmu.edu', 1, is_area_chair = True)
+        reviewer_client = helpers.create_user('r3@google.com', 'Reviewer', 'Two')
 
         review_note = reviewer_client.post_note(openreview.Note(
-            invitation='auai.org/UAI/2019/Conference/Paper1/-/Official_Review',
+            invitation='auai.org/UAI/2021/Conference/Paper1/-/Official_Review',
             forum=blinded_notes[2].id,
             replyto=blinded_notes[2].id,
             content={
@@ -1027,16 +1017,16 @@ class TestMatching():
                 'confidence': "1: The reviewer's evaluation is an educated guess"
             },
             readers=[
-                "auai.org/UAI/2019/Conference/Program_Chairs",
-                "auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee",
-                'auai.org/UAI/2019/Conference/Paper1/AnonReviewer1'
+                "auai.org/UAI/2021/Conference/Program_Chairs",
+                "auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee",
+                anon_groups[0].id
             ],
-            nonreaders=["auai.org/UAI/2019/Conference/Paper1/Authors"],
+            nonreaders=["auai.org/UAI/2021/Conference/Paper1/Authors"],
             writers=[
-                "auai.org/UAI/2019/Conference",
-                'auai.org/UAI/2019/Conference/Paper1/AnonReviewer1'
+                "auai.org/UAI/2021/Conference",
+                anon_groups[0].id
             ],
-            signatures=['auai.org/UAI/2019/Conference/Paper1/AnonReviewer1']
+            signatures=[anon_groups[0].id]
         ))
 
         helpers.await_queue()
@@ -1045,11 +1035,11 @@ class TestMatching():
         assert process_logs[0]['status'] == 'ok'
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, 'r3@mit.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r1@mit.edu',
+            tail = 'r3@mit.edu',
             label = 'rev-matching-emergency-4',
             weight = 0.98
         ))
@@ -1059,7 +1049,7 @@ class TestMatching():
 
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
-        pc2_client = helpers.create_user('pc3@mail.com', 'PC', 'Three')
+        pc2_client = helpers.create_user('pc4@mail.com', 'PC', 'Four')
         pc2_client.impersonate(conference.id)
 
         conference.client = pc2_client
@@ -1067,11 +1057,11 @@ class TestMatching():
         blinded_notes = list(conference.get_submissions())
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, 'r3@mit.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r1@mit.edu',
+            tail = 'r3@mit.edu',
             label = 'rev-matching-emergency-6',
             weight = 0.98
         ))
@@ -1092,35 +1082,35 @@ class TestMatching():
         assert ['r3@fb.com'] == revs_paper0.members
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu'] == revs_paper1.members
+        assert ['r3@mit.edu'] == revs_paper1.members
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
-        assert ['r2@google.com'] == revs_paper2.members
+        assert ['r3@google.com'] == revs_paper2.members
 
 
     def test_set_ac_assigments(self, conference, pc_client, test_client, helpers):
 
-        conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
+        conference.set_area_chairs(['ac2@cmu.edu', 'ac2@umass.edu'])
         blinded_notes = list(conference.get_submissions())
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
             label='ac-matching'
         )
         assert 0 == len(edges)
 
         #AC assignments
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
-            readers = [conference.id, 'ac1@cmu.edu'],
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            readers = [conference.id, 'ac2@cmu.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'ac1@cmu.edu',
+            tail = 'ac2@cmu.edu',
             label = 'ac-matching',
             weight = 0.98
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1130,7 +1120,7 @@ class TestMatching():
             weight = 0.87
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1141,34 +1131,34 @@ class TestMatching():
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
             label='ac-matching'
         )
         assert 3 == len(edges)
 
         conference.set_assignments(assignment_title='ac-matching', is_area_chair=True)
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1').members == ['ac2@umass.edu']
+        assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
+        assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee_')
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Senior_Program_Committee').members == ['ac2@umass.edu']
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chair1').members == ['ac2@umass.edu']
+        assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper2/Senior_Program_Committee').members == ['ac2@umass.edu']
+        assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper2/Senior_Program_Committee_')
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Senior_Program_Committee').members == ['ac1@cmu.edu']
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac1@cmu.edu']
+        assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee').members == ['ac2@cmu.edu']
+        assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee_')
 
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
-            readers = [conference.id, 'ac1@cmu.edu'],
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            readers = [conference.id, 'ac2@cmu.edu'],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'ac1@cmu.edu',
+            tail = 'ac2@cmu.edu',
             label = 'ac-matching-2',
             weight = 0.98
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1180,12 +1170,8 @@ class TestMatching():
 
         conference.set_assignments(assignment_title='ac-matching-2', is_area_chair=True, overwrite=True)
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Senior_Program_Committee').members == ['ac2@umass.edu']
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac2@umass.edu']
+        assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee').members == ['ac2@umass.edu']
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Senior_Program_Committee').members == ['ac1@cmu.edu']
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper2/Area_Chair1').members == ['ac1@cmu.edu']
+        assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper2/Senior_Program_Committee').members == ['ac2@cmu.edu']
 
-        assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee').members == []
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-            assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1')
+        assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee').members == []

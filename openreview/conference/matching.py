@@ -666,22 +666,26 @@ class Matching(object):
             raise openreview.OpenReviewException('Can not overwrite assignments when there are meta reviews posted.')
 
         for paper in tqdm(papers, total=len(papers)):
+            ac_group = self.client.get_group('{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.area_chairs_name))
+
             if overwrite:
-                groups = self.client.get_groups(regex='{conference_id}/Paper{number}/Area_Chair(s|[0-9]+)'.format(conference_id=self.conference.id, number=paper.number))
+                ac_group.members = []
+                self.client.post_group(ac_group)
+                groups = self.client.get_groups(regex='{conference_id}/Paper{number}/Area_Chair[0-9]+'.format(conference_id=self.conference.id, number=paper.number))
                 for group in groups:
                     self.client.delete_group(group.id)
 
             if paper.id in assignment_edges:
 
-                ac_group = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
+                ac_group_id = '{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.area_chairs_name)
                 author_group = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
                 members = [v['tail'] for v in assignment_edges[paper.id]]
 
-                group = openreview.Group(id=ac_group,
+                group = openreview.Group(id=ac_group_id,
                                         members=members,
-                                        readers=[self.conference.id, ac_group],
+                                        readers=[self.conference.id, ac_group_id],
                                         nonreaders=[author_group],
-                                        signatories=[self.conference.id, ac_group],
+                                        signatories=[self.conference.id, ac_group_id],
                                         signatures=[self.conference.id],
                                         writers=[self.conference.id]
                                         )
@@ -719,7 +723,7 @@ class Matching(object):
 
         for paper in tqdm(papers, total=len(papers)):
 
-            reviewers_group = self.client.get_group('{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number))
+            reviewers_group = self.client.get_group('{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.reviewers_name))
             anon_groups = self.client.get_groups(regex='{conference_id}/Paper{number}/AnonReviewer[0-9]+'.format(conference_id=self.conference.id, number=paper.number))
             anon_groups_dict = {}
 
@@ -733,8 +737,8 @@ class Matching(object):
 
             if paper.id in assignment_edges:
 
-                ac_group_id = '{conference_id}/Paper{number}/Area_Chairs'.format(conference_id=self.conference.id, number=paper.number)
-                reviewer_group_id = '{conference_id}/Paper{number}/Reviewers'.format(conference_id=self.conference.id, number=paper.number)
+                ac_group_id = '{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.area_chairs_name)
+                reviewer_group_id = '{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.reviewers_name)
                 author_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
                 new_reviewers = [v['tail'] for v in assignment_edges[paper.id]]
                 members = reviewers_group.members + new_reviewers
@@ -768,14 +772,42 @@ class Matching(object):
             else:
                 print('assignment not found', paper.id)
 
+    def deploy_assignments(self, assignment_title, overwrite):
+
+        committee_id=self.match_group.id
+        review_name = 'Meta_Review' if self.is_area_chair else 'Official_Review'
+        reviewer_name = self.conference.area_chairs_name if self.is_area_chair else self.conference.reviewers_name
+
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, '.*'), limit=1)
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+
+        if overwrite and reviews:
+            raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
+
+        for paper in tqdm(papers, total=len(papers)):
+
+            paper_group = self.client.get_group(self.conference.get_committee_id(name=reviewer_name, number=paper.number))
+
+            if overwrite:
+                paper_group.members = []
+            if paper.id in assignment_edges:
+                paper_group.members = paper_group.members + [v['tail'] for v in assignment_edges[paper.id]]
+            else:
+                print('assignment not found', paper.id)
+
+            self.client.post_group(paper_group)
 
     def deploy(self, assignment_title, overwrite=False):
         '''
         WARNING: This function untested
 
         '''
-        # pylint: disable=too-many-locals
-        if self.is_area_chair:
-            return self.deploy_acs(assignment_title, overwrite)
+        if self.conference.legacy_anonids:
+            if self.is_area_chair:
+                return self.deploy_acs(assignment_title, overwrite)
 
-        return self.deploy_reviewers(assignment_title, overwrite)
+            return self.deploy_reviewers(assignment_title, overwrite)
+
+        return self.deploy_assignments(assignment_title, overwrite)

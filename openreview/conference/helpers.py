@@ -148,6 +148,19 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     ## Contact Emails is deprecated
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
     builder.set_conference_program_chairs_ids(program_chair_ids)
+    builder.use_legacy_anonids(note.content.get('reviewer_identity') is None)
+
+    readers_map = {
+        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+    }
+
+    builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])
 
     return builder
 

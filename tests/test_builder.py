@@ -82,6 +82,7 @@ class TestBuilder():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(False)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         conference.set_program_chairs()

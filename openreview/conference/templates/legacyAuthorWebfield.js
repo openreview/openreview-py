@@ -247,7 +247,10 @@ function buildTableRow(note, completedReviews, metaReview) {
   var reviewsFormatted = [];
   completedReviews.forEach(function(review) {
     var reviewFormatted = Object.assign({ id: review.id, forum: note.id }, review.content);
-    reviewFormatted.signature = view.prettyId(review.signatures[0], true);
+    var sig = view.prettyId(review.signatures[0], true);
+    reviewFormatted.signature = _.startsWith(sig, 'Paper')
+      ? sig.split(' ').pop().replace('AnonReviewer', 'Reviewer ')
+      : sig;
     reviewFormatted.referrer = referrerUrl;
 
     // Need to parse rating and confidence strings into ints
