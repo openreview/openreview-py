@@ -159,6 +159,17 @@ class TestNeurIPSConference():
         helpers.await_queue()
         assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
 
+        sac_client = openreview.Client(username='sac1@google.com', password='1234')
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Senior Area Chair Console' == console.find_element_by_tag_name('a').text
+
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
