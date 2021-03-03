@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -644,7 +644,7 @@ class VenueRequest():
                 'required': True
             },
             'reviewer_identity': {
-                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewer real names.',
+                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewer real identity.',
                 'values-checkbox': [
                     'Program Chairs',
                     'All Senior Area Chairs',
