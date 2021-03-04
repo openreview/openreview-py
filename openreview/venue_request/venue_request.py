@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -49,7 +49,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-regex': '~.*',
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*'
@@ -92,7 +92,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-regex': '~.*',
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*'
@@ -176,7 +176,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -241,7 +241,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -296,7 +296,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -357,7 +357,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -441,7 +441,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|' + self.venue_request.support_group.id
@@ -485,7 +485,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|' + self.venue_request.support_group.id
@@ -644,8 +644,9 @@ class VenueRequest():
                 'required': True
             },
             'reviewer_identity': {
-                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewer real names.',
+                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewers\' real identities.',
                 'values-checkbox': [
+                    'Program Chairs',
                     'All Senior Area Chairs',
                     'Assigned Senior Area Chair',
                     'All Area Chairs',
@@ -653,6 +654,7 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
+                'default': ['Program Chairs'],
                 'order': 19,
                 'required': False
             },
@@ -870,10 +872,10 @@ class VenueRequest():
                         'values': [self.support_group.id]
                     },
                     'writers': {
-                        'values': [self.support_group.id]
+                        'values':[],
                     },
                     'signatures': {
-                        'values': [self.support_group.id]
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
                     },
                     'content': post_submission_content
                 }

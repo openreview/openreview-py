@@ -120,6 +120,11 @@ class Conference(object):
         if area_chairs_group:
             return self.webfield_builder.set_area_chair_page(self, area_chairs_group)
 
+    def __set_senior_area_chair_page(self):
+        senior_area_chairs_group = tools.get_group(self.client, self.get_senior_area_chairs_id())
+        if senior_area_chairs_group:
+            return self.webfield_builder.set_senior_area_chair_page(self, senior_area_chairs_group)
+
     def __set_expertise_selection_page(self):
         expertise_selection_invitation = tools.get_invitation(self.client, self.get_expertise_selection_id())
         if expertise_selection_invitation:
@@ -891,6 +896,14 @@ class Conference(object):
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return pcs
 
+    def set_senior_area_chairs(self, emails = []):
+        if self.use_senior_area_chairs:
+            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails)
+
+            return self.__set_senior_area_chair_page()
+        else:
+            raise openreview.OpenReviewException('Conference "has_senior_area_chairs" setting is disabled')
+
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
             group_owner_id=self.get_senior_area_chairs_id() if self.use_senior_area_chairs else self.id
@@ -905,6 +918,24 @@ class Conference(object):
             self.__create_group(self.get_secondary_area_chairs_id(), self.id)
         else:
             raise openreview.OpenReviewException('Conference "has_secondary_area_chairs" setting is disabled')
+
+    def set_senior_area_chair_recruitment_groups(self):
+        if self.use_senior_area_chairs:
+            parent_group_id = self.get_senior_area_chairs_id()
+            parent_group_declined_id = parent_group_id + '/Declined'
+            parent_group_invited_id = parent_group_id + '/Invited'
+            parent_group_accepted_id = parent_group_id
+
+            pcs_id = self.get_program_chairs_id()
+            # parent_group_accepted_group
+            self.__create_group(parent_group_accepted_id, pcs_id)
+            # parent_group_declined_group
+            self.__create_group(parent_group_declined_id, pcs_id)
+            # parent_group_invited_group
+            self.__create_group(parent_group_invited_id, pcs_id)
+        else:
+            raise openreview.OpenReviewException('Conference "has_senior_area_chairs" setting is disabled')
+
 
     def set_area_chair_recruitment_groups(self):
         if self.use_area_chairs:
@@ -1996,6 +2027,8 @@ class ConferenceBuilder(object):
         self.conference.set_program_chairs(emails=self.program_chairs_ids)
         self.conference.set_authors()
         self.conference.set_reviewers()
+        if self.conference.use_senior_area_chairs:
+            self.conference.set_senior_area_chairs()
         if self.conference.use_area_chairs:
             self.conference.set_area_chairs()
 
@@ -2004,6 +2037,8 @@ class ConferenceBuilder(object):
         groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
 
         self.conference.set_conference_groups(groups)
+        if self.conference.use_senior_area_chairs:
+            self.conference.set_senior_area_chair_recruitment_groups()
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()

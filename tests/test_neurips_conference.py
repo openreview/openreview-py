@@ -24,11 +24,13 @@ class TestNeurIPSConference():
         conference=openreview.helpers.get_conference(client, request_form.id)
         ## should we add this to the request form?
         conference.senior_area_chair_identity_readers=[
+            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
             openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
         ]
         conference.area_chair_identity_readers=[
+            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
             openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
             openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
@@ -82,7 +84,7 @@ class TestNeurIPSConference():
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores'],
                 'Author and Reviewer Anonymity': 'Double-blind',
-                'reviewer_identity': ['Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
@@ -160,6 +162,17 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
         assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
+
+        sac_client = openreview.Client(username='sac1@google.com', password='1234')
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token)
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('your-consoles')
+        assert len(tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')) == 1
+        console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
+        assert 'Senior Area Chair Console' == console.find_element_by_tag_name('a').text
 
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
