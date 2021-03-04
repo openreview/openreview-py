@@ -368,6 +368,7 @@ class TestNeurIPSConference():
             'NeurIPS.cc/2021/Conference/Paper5/Authors']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
@@ -512,7 +513,7 @@ class TestNeurIPSConference():
         url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={traverse}&browse={browse}&maxColumns=2'
 
         print(url)
-        assert False
+        #assert False
 
     def test_review_stage(self, conference, helpers, test_client, client):
 
@@ -534,7 +535,7 @@ class TestNeurIPSConference():
             referent=request_form.forum,
             replyto=request_form.forum,
             signatures=['~Program_NeurIPSChair1'],
-            writers=['~Program_NeurIPSChair1']
+            writers=[]
         ))
 
         helpers.await_queue()
@@ -559,6 +560,7 @@ class TestNeurIPSConference():
 
         ac_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
         assert ac_group.readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
@@ -566,6 +568,7 @@ class TestNeurIPSConference():
 
         reviewer_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_')[0]
         assert reviewer_group.readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
@@ -745,7 +748,7 @@ class TestNeurIPSConference():
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
-        status = selenium.find_element_by_id("1-metareview-status")
+        status = selenium.find_element_by_id("3-metareview-status")
         assert status
 
         assert not status.find_elements_by_class_name('tag-widget')
@@ -768,7 +771,7 @@ class TestNeurIPSConference():
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
-        status = selenium.find_element_by_id("1-metareview-status")
+        status = selenium.find_element_by_id("3-metareview-status")
         assert status
 
         tag = status.find_element_by_class_name('tag-widget')
@@ -776,17 +779,17 @@ class TestNeurIPSConference():
 
         options = tag.find_elements_by_tag_name("li")
         assert options
-        assert len(options) == 6
+        assert len(options) == 4
 
         options = tag.find_elements_by_tag_name("a")
         assert options
-        assert len(options) == 6
+        assert len(options) == 4
 
         blinded_notes = conference.get_submissions()
 
         ac_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
-            tag = '1 of 5',
+            tag = '1 of 3',
             readers = ['NeurIPS.cc/2021/Conference', ac_anon_id],
             signatures = [ac_anon_id])
         )
