@@ -113,13 +113,13 @@ class Matching(object):
                 signatures=[self.conference.get_id()],
                 reply={
                     'readers': {
-                        'values-regex': '^(' + self.conference.get_id() + '|' + self.conference.get_area_chairs_id('.*') + '|~.*)$'
+                        'values-regex': '^(' + self.conference.get_id() + '|' + self.conference.get_area_chairs_id('.*') + '|~.*|.*@.*)$'
                     },
                     'nonreaders': {
                         'values-regex': self.conference.get_authors_id(number='.*')
                     },
                     'writers': {
-                        'values-regex': '^(' + self.conference.get_id() + '|' + self.conference.get_area_chairs_id('.*') + '|~.*)$'
+                        'values-regex': '^(' + self.conference.get_id() + '|' + self.conference.get_area_chairs_id('.*') + '|~.*|.*@.*)$'
                     },
                     'signatures': {
                         'values': [self.conference.get_id()]
