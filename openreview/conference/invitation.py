@@ -1462,7 +1462,8 @@ class InvitationBuilder(object):
             },
             'writers': {
                 'values': [
-                    conference.get_id()
+                    conference.get_id(),
+                    '(anonymous)'
                 ]
             },
             'content': invitations.recruitment
