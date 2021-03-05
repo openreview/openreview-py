@@ -217,5 +217,12 @@ recruitment = {
         'order': 4,
         'value-radio': ['Yes', 'No'],
         'required':True
+    },
+    'comment': {
+        'order': 5,
+        'value-regex': '[\\S\\s]{1,5000}',
+        'description': 'Add your comment',
+        'required': False,
+        'markdown': True
     }
 }

@@ -1069,7 +1069,7 @@ class Conference(object):
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
-        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options())
+        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reviewers_name'])
 
         role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
         recruit_message = '''Dear {name},
