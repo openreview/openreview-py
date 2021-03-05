@@ -2006,11 +2006,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         name: reviewer.name,
         email: reviewer.email,
         forum: note.forum,
-        forumUrl: '/forum?' + $.param({
-          id: note.forum,
-          noteId: note.id,
-          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
-        }),
+        forumUrl: forumUrl,
         paperNumber: note.number,
         reviewerNumber: reviewerNum,
         lastReminderSent: lastReminderSent ?

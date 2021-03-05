@@ -78,7 +78,7 @@ class TestNeurIPSConference():
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
-                    'Reviewer Recommendation Scores'],
+                    'OpenReview Affinity'],
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
