@@ -60,7 +60,7 @@ function render() {
           $response.append([
             '<form>',
               '<div class="form-group">',
-                '<h5 style="line-height:normal;">Please tell us the reason why you are declining the invitation:</h5>',
+                '<h5 style="line-height:normal;">Please tell us why you are declining the invitation:</h5>',
                 '<textarea id="comment" class="form-control" style="width: 50%"></textarea>',
               '</div>',
               '<button type="submit" class="btn btn-sm btn-submit">Submit</button>',
@@ -72,7 +72,7 @@ function render() {
               note.content.comment = comment;
               Webfield.post('/notes', note)
               .then(function(result) {
-                $('#notes').empty().append('<div><h5 style="line-height:normal;">Thanks!</h5></div>');
+                $('#notes').empty().append('<div><h5 style="line-height:normal;">Thank you for your response.</h5></div>');
              });
             }
             return false;
