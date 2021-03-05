@@ -57,14 +57,24 @@ function render() {
         } else {
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
-          $response.append('<form><textarea id="comment" class="form-control"></textarea><button type="submit" class="btn btn-sm btn-submit">Submit</button></form>');
+          $response.append([
+            '<form>',
+              '<div class="form-group">',
+                '<h5 style="line-height:normal;">Please tell us the reason why you are declining the invitation:</h5>',
+                '<textarea id="comment" class="form-control" style="width: 50%"></textarea>',
+              '</div>',
+              '<button type="submit" class="btn btn-sm btn-submit">Submit</button>',
+            '</form>'
+          ].join('\n'));
           $('#notes').on('click', 'button.btn.btn-submit', function(e) {
-            console.log('save');
-            note.content.comment = $('#comment').val();
-            Webfield.post('/notes', note)
-            .then(function(result) {
-              console.log('TODO: Clear the form!');
-            });
+            var comment = $('#comment').val();
+            if (comment && comment.length) {
+              note.content.comment = comment;
+              Webfield.post('/notes', note)
+              .then(function(result) {
+                $('#notes').empty().append('<div><h5 style="line-height:normal;">Thanks!</h5></div>');
+             });
+            }
             return false;
           });
         }
