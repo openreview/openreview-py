@@ -28,14 +28,14 @@ function render() {
   if (note && note.content.response) {
     var accepted = (note.content.response === 'Yes');
     var declined = (note.content.response === 'No');
-    var user = note.content.user;
+    var userEmail = note.content.user;
     var key = note.content.key;
 
     if (accepted) {
       // Display response text
       var message = 'Thank you for accepting this invitation from ' + HEADER.title;
       $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
-      var email = user.indexOf('@') > -1 ? '(<strong>' + user + '</strong>)' : '';
+      var email = userEmail.indexOf('@') > -1 ? '(<strong>' + userEmail + '</strong>)' : '';
 
       $response.append([
         '<div>',
@@ -55,7 +55,7 @@ function render() {
           invitation = result.invitations[0];
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
-          $response.append('<div><h3 style="line-height:normal;">In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + REDUCED_LOAD_INVITATION_ID + '&user=' + user + '&key=' + key + '">Request reduced load</a></h3></div>');
+          $response.append('<div><h3 style="line-height:normal;">In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + REDUCED_LOAD_INVITATION_ID + '&user=' + userEmail + '&key=' + key + '">Request reduced load</a></h3></div>');
         } else {
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
