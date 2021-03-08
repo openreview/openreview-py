@@ -115,12 +115,13 @@ class Matching(object):
                     'readers': {
                         'values-copied': [
                             self.conference.get_id(),
+                            self.conference.get_senior_area_chairs_id(number='{head.number}'),
                             self.conference.get_area_chairs_id(number='{head.number}'),
                             '{tail}'
                         ]
                     },
                     'nonreaders': {
-                        'values-regex': self.conference.get_authors_id(number='.*')
+                        'values': [ self.conference.get_authors_id(number='{head.number}') ]
                     },
                     'writers': {
                         'values-copied': [
