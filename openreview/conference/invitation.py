@@ -107,7 +107,7 @@ class BlindSubmissionsInvitation(openreview.Invitation):
         )
 
 class BidInvitation(openreview.Invitation):
-    def __init__(self, conference, bid_stage):
+    def __init__(self, conference, bid_stage, current_invitation):
 
         match_group_id = bid_stage.committee_id
 
@@ -169,11 +169,12 @@ class BidInvitation(openreview.Invitation):
                         'required': True
                     }
                 }
-            }
+            },
+            web_string = current_invitation.web if current_invitation else None
         )
 
 class ExpertiseSelectionInvitation(openreview.Invitation):
-    def __init__(self, conference):
+    def __init__(self, conference, current_invitation):
 
         expertise_selection_stage = conference.expertise_selection_stage
 
@@ -187,6 +188,10 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id())
             invitees.append(conference.get_area_chairs_id())
+
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id())
+            invitees.append(conference.get_senior_area_chairs_id())
 
         super(ExpertiseSelectionInvitation, self).__init__(id = conference.get_expertise_selection_id(),
             cdate = tools.datetime_millis(expertise_selection_stage.start_date),
@@ -216,7 +221,8 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
                         'required': True
                     }
                 }
-            }
+            },
+            web_string = current_invitation.web if current_invitation else None
         )
 
 class CommentInvitation(openreview.Invitation):
@@ -1237,13 +1243,18 @@ class InvitationBuilder(object):
 
     def set_expertise_selection_invitation(self, conference):
 
-        invitation = ExpertiseSelectionInvitation(conference)
+        invitation_id=conference.get_expertise_selection_id()
+        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
+
+        invitation = ExpertiseSelectionInvitation(conference, current_invitation)
 
         return self.client.post_invitation(invitation)
 
     def set_bid_invitation(self, conference, stage):
 
-        return self.client.post_invitation(BidInvitation(conference, stage))
+        invitation_id=conference.get_bid_id(stage.committee_id)
+        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
+        return self.client.post_invitation(BidInvitation(conference, stage, current_invitation))
 
     def set_comment_invitation(self, conference, notes):
 
@@ -1380,7 +1391,7 @@ class InvitationBuilder(object):
                 ]
             },
             'signatures': {
-                'values-regex': '\\(anonymous\\)|~.*'
+                'values-regex': '\\(anonymous\\)'
             },
             'content': {
                 'user': {
@@ -1410,6 +1421,9 @@ class InvitationBuilder(object):
             }
         }
 
+        invitation_id=conference.get_invitation_id('Reduced_Load')
+        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadProcess.js')) as f:
             content = f.read()
             content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
@@ -1419,7 +1433,7 @@ class InvitationBuilder(object):
             content = content.replace("var HASH_SEED = '';", "var HASH_SEED = '" + options.get('hash_seed') + "';")
 
             reduced_load_invitation = openreview.Invitation(
-                    id = conference.get_invitation_id('Reduced_Load'),
+                    id = invitation_id,
                     duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
                     readers = ['everyone'],
                     nonreaders = [],
@@ -1428,7 +1442,8 @@ class InvitationBuilder(object):
                     writers = [conference.get_id()],
                     signatures = [conference.get_id()],
                     reply = reduced_load_invitation_reply,
-                    process_string = content)
+                    process_string = content,
+                    web_string = current_invitation.web if current_invitation else None)
             return self.client.post_invitation(reduced_load_invitation)
 
     def set_reviewer_recruiter_invitation(self, conference, options = {}):
@@ -1437,17 +1452,26 @@ class InvitationBuilder(object):
             'forum': None,
             'replyto': None,
             'readers': {
-                'values': [conference.get_id()]
+                'values-copied': [
+                    conference.get_id(),
+                    '{content.user}'
+                ]
             },
             'signatures': {
                 'values-regex': '\\(anonymous\\)'
             },
             'writers': {
-                'values': []
+                'values': [
+                    conference.get_id(),
+                    '(anonymous)'
+                ]
             },
             'content': invitations.recruitment
         }
         reply = self.__build_options(default_reply, options.get('reply', {}))
+
+        invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
+        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.py')) as f:
             content = f.read()
@@ -1466,7 +1490,7 @@ class InvitationBuilder(object):
             content = content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
             if conference.reduced_load_on_decline and options.get('reviewers_name', '') == 'Reviewers':
                 content = content.replace("REDUCED_LOAD_INVITATION_NAME = ''", "REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load'")
-            invitation = openreview.Invitation(id = conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers')),
+            invitation = openreview.Invitation(id = invitation_id,
                 duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
                 readers = ['everyone'],
                 nonreaders = [],
@@ -1475,14 +1499,18 @@ class InvitationBuilder(object):
                 writers = [conference.get_id()],
                 signatures = [conference.get_id()],
                 reply = reply,
-                process_string = content)
+                process_string = content,
+                web_string = current_invitation.web if current_invitation else None)
 
             return self.client.post_invitation(invitation)
 
     def set_recommendation_invitation(self, conference, start_date, due_date, total_recommendations):
 
+        invitation_id=conference.get_recommendation_id()
+        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
+
         recommendation_invitation = openreview.Invitation(
-            id = conference.get_recommendation_id(),
+            id = invitation_id,
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
             expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
@@ -1522,7 +1550,8 @@ class InvitationBuilder(object):
                         'required': True
                     }
                 }
-            }
+            },
+            web_string = current_invitation.web if current_invitation else None
         )
 
         return self.client.post_invitation(recommendation_invitation)

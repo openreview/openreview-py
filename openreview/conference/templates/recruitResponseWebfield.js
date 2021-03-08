@@ -4,7 +4,7 @@
 // Constants
 var CONFERENCE_ID = '';
 var HEADER = {};
-var REDUCED_LOAD_INVITATION_NAME = '';
+var REDUCED_LOAD_INVITATION_ID = '';
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -47,17 +47,36 @@ function render() {
       ].join('\n'));
     } else if (declined) {
       // Get invitation to request max load
-      var reduced_load_invitation_id = CONFERENCE_ID + '/-/' + REDUCED_LOAD_INVITATION_NAME;
-      Webfield.get('/invitations', { regex: reduced_load_invitation_id })
+      Webfield.get('/invitations', { regex: REDUCED_LOAD_INVITATION_ID })
       .then(function(result) {
         if (result.hasOwnProperty('invitations') && result.invitations.length) {
           invitation = result.invitations[0];
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
-          $response.append('<div><h3 style="line-height:normal;">In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + reduced_load_invitation_id + '&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3></div>');
+          $response.append('<div><h3 style="line-height:normal;">In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + REDUCED_LOAD_INVITATION_ID + '&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3></div>');
         } else {
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
+          $response.append([
+            '<form>',
+              '<div class="form-group">',
+                '<h5 style="line-height:normal;">Please tell us why you are declining the invitation:</h5>',
+                '<textarea id="comment" class="form-control" style="width: 50%"></textarea>',
+              '</div>',
+              '<button type="submit" class="btn btn-sm btn-submit">Submit</button>',
+            '</form>'
+          ].join('\n'));
+          $('#notes').on('click', 'button.btn.btn-submit', function(e) {
+            var comment = $('#comment').val();
+            if (comment && comment.length) {
+              note.content.comment = comment;
+              Webfield.post('/notes', note)
+              .then(function(result) {
+                $('#notes').empty().append('<div><h5 style="line-height:normal;">Thank you for your response.</h5></div>');
+             });
+            }
+            return false;
+          });
         }
       })
       .fail(function(error) {
