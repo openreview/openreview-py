@@ -82,7 +82,7 @@ class Matching(object):
         self.match_group = match_group
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
         self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
-        self.should_read_by_area_chair = not self.is_senior_area_chair and not self.is_area_chair and conference.has_area_chairs
+        self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.has_area_chairs
 
 
     def _get_edge_invitation_id(self, edge_name):
@@ -103,63 +103,26 @@ class Matching(object):
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
         '''
-
-        if (edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')) and self.should_read_by_area_chair:
-            invitation = openreview.Invitation(
-                id=edge_id,
-                invitees=[self.conference.get_id(), self.conference.get_area_chairs_id()],
-                readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
-                writers=[self.conference.get_id()],
-                signatures=[self.conference.get_id()],
-                reply={
-                    'readers': {
-                        'values-copied': [
-                            self.conference.get_id(),
-                            self.conference.get_senior_area_chairs_id(number='{head.number}'),
-                            self.conference.get_area_chairs_id(number='{head.number}'),
-                            '{tail}'
-                        ]
-                    },
-                    'nonreaders': {
-                        'values': [ self.conference.get_authors_id(number='{head.number}') ]
-                    },
-                    'writers': {
-                        'values-copied': [
-                            self.conference.get_id(),
-                            self.conference.get_area_chairs_id(number='{head.number}')
-                        ]
-                    },
-                    'signatures': {
-                        'values-regex': self.conference.get_id() + '$|' + self.conference.get_area_chairs_id(number='{head.number}')
-                    },
-                    'content': {
-                        'head': {
-                            'type': 'Note',
-                            'query' : {
-                                'invitation' : self.conference.get_blind_submission_id()
-                            }
-                        },
-                        'tail': {
-                            'type': 'Profile',
-                            'query' : {
-                                'group' : self.match_group.id
-                            }
-                        },
-                        'weight': {
-                            'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                        },
-                        'label': {
-                            'value-regex': '.*'
-                        }
-                    }
-                })
-
-            return self.client.post_invitation(invitation)
+        is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
+        paper_number='{head.number}' if is_assignment_invitation else None
 
         edge_readers = [self.conference.get_id()]
+        edge_writers = [self.conference.get_id()]
+        edge_signatures = self.conference.get_id() + '$'
+        edge_nonreaders = {
+            'values-regex': self.conference.get_authors_id(number='.*')
+        }
         if self.should_read_by_area_chair:
+            if self.conference.has_senior_area_chairs:
+                edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
             ## Area Chairs should read the edges of the reviewer invitations.
-            edge_readers.append(self.conference.get_area_chairs_id())
+            edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
+            if is_assignment_invitation:
+                edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
+                edge_signatures = edge_signatures + '|' + self.conference.get_area_chairs_id(number=paper_number)
+                edge_nonreaders = {
+                    'values': [self.conference.get_authors_id(number=paper_number)]
+                }
 
         readers = {
             'values-copied': edge_readers + ['{tail}']
@@ -188,14 +151,12 @@ class Matching(object):
             signatures=[self.conference.get_id()],
             reply={
                 'readers': readers,
-                'nonreaders': {
-                    'values-regex': self.conference.get_authors_id(number='.*')
-                },
+                'nonreaders': edge_nonreaders,
                 'writers': {
-                    'values': [self.conference.get_id()]
+                    'values': edge_writers
                 },
                 'signatures': {
-                    'values': [self.conference.get_id()]
+                    'values-regex': edge_signatures
                 },
                 'content': {
                     'head': {
