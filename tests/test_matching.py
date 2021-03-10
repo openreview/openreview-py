@@ -712,7 +712,8 @@ class TestMatching():
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r1@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r1@mit.edu',
@@ -722,7 +723,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r2@google.com',
@@ -732,7 +734,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r2@google.com',
@@ -742,7 +745,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r3@fb.com',
@@ -752,7 +756,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r3@fb.com',
@@ -762,7 +767,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r1@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r1@mit.edu',
@@ -806,7 +812,8 @@ class TestMatching():
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r3@fb.com',
@@ -816,7 +823,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r1@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r1@mit.edu',
@@ -826,7 +834,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r2@google.com',
@@ -865,7 +874,8 @@ class TestMatching():
         conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com', 'r2@mit.edu'])
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r1@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r1@mit.edu',
@@ -875,7 +885,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r2@mit.edu',
@@ -885,7 +896,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r2@google.com',
@@ -919,7 +931,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r2@google.com',
@@ -949,7 +962,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r2@google.com',
@@ -1046,7 +1060,8 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r1@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r1@mit.edu',
@@ -1068,7 +1083,8 @@ class TestMatching():
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r1@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r1@mit.edu',
@@ -1078,7 +1094,8 @@ class TestMatching():
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r3@fb.com',
