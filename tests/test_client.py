@@ -73,7 +73,7 @@ class TestClient():
         try:
             guest.login_user(username = "openreview.net", password = "1111")
         except openreview.OpenReviewException as e:
-            assert ["Invalid username or password"] in e.args, "super user log in did not produce correct error"
+            assert "Invalid username or password" in e.args[0].get('message'), "super user log in did not produce correct error"
 
         response = guest.login_user(username = "openreview.net", password = "1234")
         assert response
