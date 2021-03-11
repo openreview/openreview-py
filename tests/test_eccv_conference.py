@@ -639,12 +639,12 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_recommend_reviewers(self, conference, test_client, helpers, selenium, request_page):
 
-        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV_One')
-        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV_Two')
-        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV_Three')
-        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV_Four')
-        ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV_One')
-        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV_Two')
+        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV One')
+        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV Two')
+        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV Three')
+        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV Four')
+        ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
+        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
