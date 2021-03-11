@@ -119,7 +119,7 @@ class Matching(object):
             edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
             if is_assignment_invitation:
                 edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
-                edge_signatures = edge_signatures + '|' + self.conference.get_area_chairs_id(number=paper_number)
+                edge_signatures = edge_signatures + '|' + self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*')
                 edge_nonreaders = {
                     'values': [self.conference.get_authors_id(number=paper_number)]
                 }
