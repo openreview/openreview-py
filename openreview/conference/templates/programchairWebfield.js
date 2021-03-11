@@ -351,7 +351,8 @@ var getUserProfiles = function(userIds, reviewerBidCounts, areaChairBidCounts, a
           email: profile.content.preferredEmail || profile.content.emailsConfirmed[0],
           allEmails: profile.content.emailsConfirmed,
           bidCount: reviewerBidCounts[profile.id] || areaChairBidCounts[profile.id] || 0,
-          acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0
+          acRecommendationCount: areaChairRecommendationCounts[profile.id] || 0,
+          affiliation: profile.content.history && profile.content.history[0]
         };
         return profileMap;
       }, {});
@@ -1683,6 +1684,28 @@ var displayAreaChairsStatusTable = function() {
   renderTable(container, rowData);
 };
 
+var findReview = function(reviews, profile) {
+  var found;
+  profile.allNames.forEach(function(name) {
+    if (reviews[name]) {
+      found = reviews[name];
+    }
+  })
+  return found;
+}
+
+// Reviewer group map can have either reviewer id or reviewer email as key.
+// Have to check all possible keys to get note numbers assigned to reviewer
+var getReviewerNoteNumbers = function(reviewerProfile, reviewerById) {
+  var keyOptions = reviewerProfile.allNames.concat(reviewerProfile.allEmails);
+  for (var i = 0; i < keyOptions.length; i++) {
+    var numbers = reviewerById[keyOptions[i]];
+    if (numbers) {
+      return numbers;
+    }
+  }
+}
+
 var displayReviewerStatusTable = function() {
   var container = '#reviewer-status';
   var notes = conferenceStatusData.blindedNotes;
@@ -1691,32 +1714,10 @@ var displayReviewerStatusTable = function() {
   var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes;
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
 
-  var findReview = function(reviews, profile) {
-    var found;
-    profile.allNames.forEach(function(name) {
-      if (reviews[name]) {
-        found = reviews[name];
-      }
-    })
-    return found;
-  }
-
-  // Reviewer group map can have either reviewer id or reviewer email as key.
-  // Have to check all possible keys to get note numbers assigned to reviewer
-  var getReviewerNoteNumbers = function(reviewerProfile) {
-    var keyOptions = reviewerProfile.allNames.concat(reviewerProfile.allEmails);
-    for (var i = 0; i < keyOptions.length; i++) {
-      var numbers = reviewerById[keyOptions[i]];
-      if (numbers) {
-        return numbers;
-      }
-    }
-  }
-
   var rowData = [];
   _.forEach(conferenceStatusData.reviewers, function(reviewer, index) {
     var reviewerProfile = findProfile(conferenceStatusData.profiles, reviewer);
-    var numbers = getReviewerNoteNumbers(reviewerProfile);
+    var numbers = getReviewerNoteNumbers(reviewerProfile, reviewerById);
 
     var papers = [];
     _.forEach(numbers, function(number) {
@@ -1890,7 +1891,8 @@ var displayReviewerStatusTable = function() {
         (conferenceStatusData.bidEnabled ? '<li><a class="msg-no-bids">Reviewers with 0 bids</a></li>' : '') +
         '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
       '</ul>' +
-    '</div>'
+    '</div>'+
+    '<div class="btn-group"><button class="btn btn-export-reviewers">Export</button></div>'
   );
   renderTable(container, rowData);
 };
@@ -2671,7 +2673,77 @@ var buildCSV = function(){
   return [rowData.join('')];
 };
 
+var buildReviewersCSV = function(){
+  var rowData = [];
+  rowData.push(['id',
+  'name',
+  'email',
+  'institution name',
+  'institution domain',
+  'num assigned papers',
+  'num submitted reviews'
+  ].join(',') + '\n');
+
+  var notes = conferenceStatusData.blindedNotes;
+  var completedReviews = conferenceStatusData.officialReviews;
+  var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes;
+  var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
+  _.forEach(conferenceStatusData.reviewers, function(reviewer, index) {
+    var reviewerProfile = findProfile(conferenceStatusData.profiles, reviewer);
+    var numbers = getReviewerNoteNumbers(reviewerProfile, reviewerById);
+
+    var reviewerPapers = [];
+    var reviewerReviews = [];
+    _.forEach(numbers, function(number) {
+      var note = _.find(notes, ['number', number]);
+      if (!note) {
+        return;
+      }
+
+      var reviewerNum = 0;
+      var reviewers = reviewerByNote[number];
+      for (var revNumber in reviewers) {
+        var profile = reviewers[revNumber];
+        if (_.includes(profile.allNames, reviewer) || _.includes(profile.allEmails, reviewer)) {
+          reviewerNum = revNumber;
+          break;
+        }
+      }
+
+      var reviews = completedReviews[number];
+      var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
+      if (review) {
+        reviewerReviews.push(review);
+      }
+      reviewerPapers.push(note)
+
+    });
+
+    var institution = (reviewerProfile.affiliation && reviewerProfile.affiliation.institution) || {};
+    var institutionName = institution && institution.name;
+    var institutionDomain = institution && institution.domain;
+
+
+    rowData.push([
+      reviewerProfile.id,
+      '"' + reviewerProfile.name + '"',
+      reviewerProfile.email,
+      '"' + (institutionName || '') + '"',
+      institutionDomain,
+      reviewerPapers.length,
+      reviewerReviews.length
+    ].join(',') + '\n');
+  });
+
+  return [rowData.join('')];
+};
+
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv'});
   saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv',);
+});
+
+$('#group-container').on('click', 'button.btn.btn-export-reviewers', function(e) {
+  var blob = new Blob(buildReviewersCSV(), {type: 'text/csv'});
+  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_reviewer_status.csv',);
 });
