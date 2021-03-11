@@ -220,7 +220,8 @@ class TestTools():
                     'last': 'Name',
                     'username': '~Another_Name1'
                     }
-                ]
+                ],
+                'emails': ['alternate@mail.com']
             }
         ))
 
@@ -247,6 +248,18 @@ class TestTools():
         replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
         assert len(replaced_group.members) == 3
         assert '~Invalid_Profile1' not in invalid_member_group.members
+
+        ## Replace emails with only profile with confirmed emails
+        posted_group = client.post_group(openreview.Group(id='test.org',
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            signatories=['~Super_User1'],
+            members=['~Super_User1', 'alternate@mail.com', 'noprofile@mail.com']
+        ))
+        replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
+        assert replaced_group
+        assert replaced_group.members == ['~Super_User1', 'alternate@mail.com', 'noprofile@mail.com']
 
     def test_get_conflicts(self, client, helpers):
 
