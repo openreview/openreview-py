@@ -1198,6 +1198,27 @@ class PaperDecisionInvitation(openreview.Invitation):
             }
         )
 
+
+class PaperGroupInvitation(openreview.Invitation):
+
+    def __init__(self, conference, committee_id):
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paper_group_process.py')) as f:
+            file_content = f.read()
+
+        super(PaperGroupInvitation, self).__init__(id = conference.get_invitation_id('Paper_Group', prefix=committee_id),
+            readers = [conference.id],
+            writers = [conference.id],
+            signatures = [conference.id],
+            reply = {
+                'content': {
+                    'dummy': 'dummy'
+                }
+            },
+            process_string=file_content
+
+        )
+
 class InvitationBuilder(object):
 
     def __init__(self, client):
@@ -1731,3 +1752,7 @@ class InvitationBuilder(object):
         committee_name=conference.get_reviewers_name()))
 
         return invitations
+
+    def set_paper_group_invitation(self, conference, committee_id):
+
+        return self.client.post_invitation(PaperGroupInvitation(conference, committee_id))

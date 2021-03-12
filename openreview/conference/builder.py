@@ -604,6 +604,8 @@ class Conference(object):
 
         notes_iterator = self.get_submissions(sort='number:asc', details='original')
         author_group_ids = []
+        paper_reviewer_group_invitation=self.invitation_builder.set_paper_group_invitation(self, self.get_reviewers_id())
+        paper_area_chair_group_invitation=self.invitation_builder.set_paper_group_invitation(self, self.get_area_chairs_id())
 
         for n in tqdm(list(notes_iterator), desc='create_paper_groups'):
             # Paper group
@@ -633,6 +635,7 @@ class Conference(object):
                     group = tools.get_group(self.client, id = reviewers_id)
                     if not group:
                         self.client.post_group(openreview.Group(id=reviewers_id,
+                            invitation=paper_reviewer_group_invitation.id,
                             readers=[self.id, self.get_area_chairs_id(n.number), self.get_reviewers_id(n.number)],
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
                             writers=[self.id, self.get_area_chairs_id(n.number)],
@@ -656,6 +659,7 @@ class Conference(object):
                     area_chairs_id=self.get_area_chairs_id(number=n.number)
                     group = tools.get_group(self.client, id = area_chairs_id)
                     self.client.post_group(openreview.Group(id=area_chairs_id,
+                        invitation=paper_area_chair_group_invitation.id,
                         readers=[self.id, self.get_area_chairs_id(n.number)],
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],

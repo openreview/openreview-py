@@ -515,6 +515,26 @@ class TestNeurIPSConference():
         print(url)
         #assert False
 
+        conference.set_assignments(assignment_title='reviewer-matching', overwrite=True)
+
+        assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').members
+        assert '~Reviewer_MIT1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').members
+
+        assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers').members
+        assert '~Reviewer_Facebook1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers').members
+
+        assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers').members
+        assert '~Reviewer_Google1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers').members
+
+        assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers').members
+        assert '~Reviewer_IBM1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers').members
+
+        assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
+        assert '~Reviewer_MIT1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
+
+
+
+
     def test_review_stage(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()

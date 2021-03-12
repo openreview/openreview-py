@@ -1437,9 +1437,10 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
         # post attributes
         self.id=id
+        self.invitation=invitation
         self.cdate = cdate
         self.ddate = ddate
         self.tcdate = tcdate
@@ -1480,6 +1481,7 @@ class Group(object):
         """
         body = {
             'id': self.id,
+            'invitation': self.invitation,
             'cdate': self.cdate,
             'ddate': self.ddate,
             'signatures': self.signatures,
@@ -1508,6 +1510,7 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            invitation=g.get('invitation'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),
