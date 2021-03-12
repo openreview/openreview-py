@@ -513,7 +513,7 @@ class TestNeurIPSConference():
         url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={traverse}&browse={browse}&maxColumns=2'
 
         print(url)
-        #assert False
+#        assert False
 
     def test_review_stage(self, conference, helpers, test_client, client):
 

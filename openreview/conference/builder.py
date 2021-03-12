@@ -637,7 +637,7 @@ class Conference(object):
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
                             writers=[self.id, self.get_area_chairs_id(n.number)],
                             signatures=[self.id],
-                            signatories=[self.id],
+                            signatories=[],
                             anonids=True,
                             members=group.members if group else []
                         ))
@@ -660,7 +660,7 @@ class Conference(object):
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],
                         signatures=[self.id],
-                        signatories=[self.id],
+                        signatories=[],
                         anonids=True,
                         members=group.members if group else []
                     ))
@@ -673,7 +673,7 @@ class Conference(object):
                     readers=self.get_senior_area_chair_identity_readers(n.number),
                     writers=[self.id],
                     signatures=[self.id],
-                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)],
+                    signatories=[senior_area_chairs_id],
                     members=group.members if group else []
                 ))
 
