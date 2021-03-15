@@ -171,9 +171,8 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        if self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.utcnow():
-            return self.invitation_builder.set_submission_invitation(self, under_submission=False)
-        return self.invitation_builder.set_submission_invitation(self)
+        under_submission = not self.submission_stage.due_date or datetime.datetime.utcnow() < self.submission_stage.due_date
+        return self.invitation_builder.set_submission_invitation(self, under_submission=under_submission)
 
     def __create_expertise_selection_stage(self):
 
