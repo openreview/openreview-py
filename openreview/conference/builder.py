@@ -637,7 +637,7 @@ class Conference(object):
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
                             writers=[self.id, self.get_area_chairs_id(n.number)],
                             signatures=[self.id],
-                            signatories=[],
+                            signatories=[self.id],
                             anonids=True,
                             members=group.members if group else []
                         ))
@@ -660,7 +660,7 @@ class Conference(object):
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],
                         signatures=[self.id],
-                        signatories=[],
+                        signatories=[self.id],
                         anonids=True,
                         members=group.members if group else []
                     ))
@@ -673,7 +673,7 @@ class Conference(object):
                     readers=self.get_senior_area_chair_identity_readers(n.number),
                     writers=[self.id],
                     signatures=[self.id],
-                    signatories=[senior_area_chairs_id],
+                    signatories=[self.id, senior_area_chairs_id],
                     members=group.members if group else []
                 ))
 
@@ -815,7 +815,10 @@ class Conference(object):
         if self.submission_stage.second_due_date:
             if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
                 self.setup_first_deadline_stage(force, hide_fields)
-            if self.submission_stage.second_due_date < now:
+            elif self.submission_stage.second_due_date < now:
+                self.setup_final_deadline_stage(force, hide_fields)
+            elif force:
+                ## For testing purposes
                 self.setup_final_deadline_stage(force, hide_fields)
         else:
             if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):

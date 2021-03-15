@@ -156,7 +156,8 @@ class Matching(object):
                     'values': edge_writers
                 },
                 'signatures': {
-                    'values-regex': edge_signatures
+                    'values-regex': edge_signatures,
+                    'default': self.conference.get_program_chairs_id()
                 },
                 'content': {
                     'head': {
