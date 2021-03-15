@@ -677,7 +677,7 @@ class Conference(object):
                     readers=self.get_senior_area_chair_identity_readers(n.number),
                     writers=[self.id],
                     signatures=[self.id],
-                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)],
+                    signatories=[self.id, senior_area_chairs_id],
                     members=group.members if group else []
                 ))
 
@@ -819,7 +819,10 @@ class Conference(object):
         if self.submission_stage.second_due_date:
             if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
                 self.setup_first_deadline_stage(force, hide_fields)
-            if self.submission_stage.second_due_date < now:
+            elif self.submission_stage.second_due_date < now:
+                self.setup_final_deadline_stage(force, hide_fields)
+            elif force:
+                ## For testing purposes
                 self.setup_final_deadline_stage(force, hide_fields)
         else:
             if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
@@ -1175,7 +1178,7 @@ class Conference(object):
     def remind_registration_stage(self, subject, message, committee_id):
 
         reviewers = self.client.get_group(committee_id).members
-        profiles_by_email = self.client.search_profiles(emails=[m for m in reviewers if '@' in m])
+        profiles_by_email = self.client.search_profiles(confirmedEmails=[m for m in reviewers if '@' in m])
         confirmations = {c.tauthor: c for c in list(tools.iterget_notes(self.client, invitation=self.get_registration_id(committee_id)))}
         print('reviewers:', len(reviewers))
         print('profiles:', len(profiles_by_email))

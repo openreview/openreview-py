@@ -44,7 +44,7 @@ def _get_profiles(client, ids_or_emails):
 
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
-        batch_profile_by_email = client.search_profiles(emails=batch_emails)
+        batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
         profile_by_email.update(batch_profile_by_email)
 
     for email in emails:
@@ -109,7 +109,7 @@ class Matching(object):
 
         edge_readers = [self.conference.get_id()]
         edge_writers = [self.conference.get_id()]
-        edge_signatures = self.conference.get_id() + '$'
+        edge_signatures = self.conference.get_id() + '$|' + self.conference.get_program_chairs_id()
         edge_nonreaders = {
             'values-regex': self.conference.get_authors_id(number='.*')
         }
@@ -157,7 +157,8 @@ class Matching(object):
                     'values': edge_writers
                 },
                 'signatures': {
-                    'values-regex': edge_signatures
+                    'values-regex': edge_signatures,
+                    'default': self.conference.get_program_chairs_id()
                 },
                 'content': {
                     'head': {

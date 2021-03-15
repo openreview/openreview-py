@@ -284,7 +284,7 @@ class Client(object):
         """
         Get a single Profile by id, if available
 
-        :param email_or_id: e-mail or id of the profile
+        :param email_or_id: e-mail confirmed or id of the profile
         :type email_or_id: str, optional
 
         :return: Profile object with its information
@@ -296,7 +296,7 @@ class Client(object):
             if tildematch.match(email_or_id):
                 att = 'id'
             else:
-                att = 'email'
+                att = 'confirmedEmail'
             params[att] = email_or_id
         response = requests.get(self.profiles_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -306,76 +306,12 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile not found'])
 
-    @deprecated(version='0.9.20', reason="Use search_profiles instead")
-    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
-        """
-        Gets a list of profiles
-
-        :param email_or_id_list: List of ids or emails
-        :type email_or_id_list: list, optional
-        :param id: OpenReview username id
-        :type id: str, optional
-        :param email: e-mail registered in OpenReview
-        :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-
-        :return: List of profiles
-        :rtype: list[Profile]
-        """
-
-        ## Deprecated, don't use it
-        if email_or_id_list is not None:
-            pure_tilde_ids = all(['~' in i for i in email_or_id_list])
-            pure_emails = all(['@' in i for i in email_or_id_list])
-
-            def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return [Profile.from_json(p) for p in response.json()['profiles']]
-
-            def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return { p['email'] : Profile.from_json(p['profile'])
-                    for p in response.json()['profiles'] }
-
-            if pure_tilde_ids:
-                get_response = get_ids_response
-                update_result = lambda result, response: result.extend(response)
-                result = []
-            elif pure_emails:
-                get_response = get_emails_response
-                update_result = lambda result, response: result.update(response)
-                result = {}
-            else:
-                raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
-
-            done = False
-            offset = 0
-            limit = 1000
-            while not done:
-                current_batch = email_or_id_list[offset:offset+limit]
-                offset += limit
-                response = get_response(current_batch)
-                update_result(result, response)
-                if len(current_batch) < limit:
-                    done = True
-
-            return result
-
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
-        response = self.__handle_response(response)
-        return [Profile.from_json(p) for p in response.json()['profiles']]
-
-    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
+        :param confirmedEmails: List of confirmed emails registered in OpenReview
+        :type confirmedEmails: list, optional
         :param emails: List of emails registered in OpenReview
         :type emails: list, optional
         :param ids: List of OpenReview username ids
@@ -389,7 +325,7 @@ class Client(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles
+        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
         :rtype: list[Profile]
         """
 
@@ -417,7 +353,28 @@ class Client(object):
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
-            return {p['email']: Profile.from_json(p) for p in full_response}
+            profiles_by_email = {}
+            for p in full_response:
+                if p['email'] not in profiles_by_email:
+                    profiles_by_email[p['email']] = []
+                profiles_by_email[p['email']].append(Profile.from_json(p))
+            return profiles_by_email
+
+        if confirmedEmails:
+            full_response = []
+            for email_batch in batches(confirmedEmails):
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            profiles_by_email = {}
+            for p in full_response:
+                profile = Profile.from_json(p)
+                if p['email'] in profile.content['emailsConfirmed']:
+                    profiles_by_email[p['email']] = profile
+            return profiles_by_email
+
+
 
         if ids:
             full_response = []
