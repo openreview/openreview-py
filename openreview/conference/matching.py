@@ -108,7 +108,7 @@ class Matching(object):
 
         edge_readers = [self.conference.get_id()]
         edge_writers = [self.conference.get_id()]
-        edge_signatures = self.conference.get_id() + '|' + self.conference.get_program_chairs_id()
+        edge_signatures = self.conference.get_id() + '$|' + self.conference.get_program_chairs_id()
         edge_nonreaders = {
             'values-regex': self.conference.get_authors_id(number='.*')
         }
