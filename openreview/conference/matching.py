@@ -43,7 +43,7 @@ def _get_profiles(client, ids_or_emails):
 
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
-        batch_profile_by_email = client.search_profiles(emails=batch_emails)
+        batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
         profile_by_email.update(batch_profile_by_email)
 
     for email in emails:

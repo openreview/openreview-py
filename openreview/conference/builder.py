@@ -1171,7 +1171,7 @@ class Conference(object):
     def remind_registration_stage(self, subject, message, committee_id):
 
         reviewers = self.client.get_group(committee_id).members
-        profiles_by_email = self.client.search_profiles(emails=[m for m in reviewers if '@' in m])
+        profiles_by_email = self.client.search_profiles(confirmedEmails=[m for m in reviewers if '@' in m])
         confirmations = {c.tauthor: c for c in list(tools.iterget_notes(self.client, invitation=self.get_registration_id(committee_id)))}
         print('reviewers:', len(reviewers))
         print('profiles:', len(profiles_by_email))

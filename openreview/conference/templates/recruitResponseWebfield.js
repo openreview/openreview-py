@@ -25,23 +25,25 @@ function render() {
   var $response = $('#notes');
   $response.empty();
 
-  if (args.response) {
-    var accepted = (args.response === 'Yes');
-    var declined = (args.response === 'No');
+  if (note && note.content.response) {
+    var accepted = (note.content.response === 'Yes');
+    var declined = (note.content.response === 'No');
+    var userEmail = note.content.user;
+    var key = note.content.key;
 
     if (accepted) {
       // Display response text
       var message = 'Thank you for accepting this invitation from ' + HEADER.title;
       $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
-      var email = args.user.indexOf('@') > -1 ? '(<strong>' + args.user + '</strong>)' : '';
+      var email = userEmail.indexOf('@') > -1 ? '(<strong>' + userEmail + '</strong>)' : '';
 
       $response.append([
         '<div>',
           '<h4>Please complete the following steps now:</h4>',
           '<ol>',
-            '<li><p>Log in to your OpenReview account. If you do not already have an account, you can sign up <a style="font-weight:bold;" href="/signup">here</a>.</p></li>',
-            '<li><p>Ensure that the email address ' + email + ' that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit">profile page</a> and has been confirmed.</p></li>',
-            '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks">tasks</a> (if any) for ' + HEADER.subtitle + '.</p></li>',
+            '<li><p>Log in to your OpenReview account. If you do not already have an account, you can sign up <a style="font-weight:bold;" href="/signup" target="_blank" rel="nofollow">here</a>.</p></li>',
+            '<li><p>Ensure that the email address ' + email + ' that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit" target="_blank" rel="nofollow">profile page</a> and has been confirmed.</p></li>',
+            '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks" target="_blank" rel="nofollow">tasks</a> (if any) for ' + HEADER.subtitle + '.</p></li>',
           '</ol>',
         '</div>',
       ].join('\n'));
@@ -53,7 +55,7 @@ function render() {
           invitation = result.invitations[0];
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
-          $response.append('<div><h3 style="line-height:normal;">In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + REDUCED_LOAD_INVITATION_ID + '&user=' + args.user + '&key=' + args.key + '">Request reduced load</a></h3></div>');
+          $response.append('<div><h3 style="line-height:normal;">In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: <a style="font-weight:bold;" href="/invitation?id=' + REDUCED_LOAD_INVITATION_ID + '&user=' + userEmail + '&key=' + key + '">Request reduced load</a></h3></div>');
         } else {
           var message = 'You have declined the invitation from ' + HEADER.title + '.';
           $response.append('<div><h3 style="line-height:normal;">' + message + '</h3></div>');
