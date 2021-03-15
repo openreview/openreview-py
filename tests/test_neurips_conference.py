@@ -532,7 +532,7 @@ class TestNeurIPSConference():
         url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={traverse}&browse={browse}&maxColumns=2'
 
         print(url)
-        #assert False
+        # assert False
 
         conference.set_assignments(assignment_title='reviewer-matching', overwrite=True)
 
@@ -550,8 +550,6 @@ class TestNeurIPSConference():
 
         assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
         assert '~Reviewer_MIT1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
-
-
 
 
     def test_review_stage(self, conference, helpers, test_client, client):
@@ -583,7 +581,7 @@ class TestNeurIPSConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        # pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
 
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
@@ -591,11 +589,13 @@ class TestNeurIPSConference():
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
 
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        # pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        # pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        # pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        # pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+        # pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
+
+        # assert False
 
         ac_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
         # assert ac_group.readers == ['NeurIPS.cc/2021/Conference',

@@ -1205,6 +1205,9 @@ class PaperGroupInvitation(openreview.Invitation):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/paper_group_process.py')) as f:
             file_content = f.read()
+            file_content = file_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.id + "'")
+            file_content = file_content.replace("SUBMISSION_INVITATION_ID = ''", "SUBMISSION_INVITATION_ID = '" + conference.get_blind_submission_id() + "'")
+            file_content = file_content.replace("EDGE_INVITATION_ID = ''", "EDGE_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
 
         super(PaperGroupInvitation, self).__init__(id = conference.get_invitation_id('Paper_Group', prefix=committee_id),
             readers = [conference.id],
