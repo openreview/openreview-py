@@ -902,7 +902,7 @@ class Conference(object):
 
     def set_senior_area_chairs(self, emails = []):
         if self.use_senior_area_chairs:
-            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails)
+            self.__create_group(group_id=self.get_senior_area_chairs_id(), group_owner_id=self.id, members=emails)
 
             return self.__set_senior_area_chair_page()
         else:

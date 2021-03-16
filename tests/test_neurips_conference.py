@@ -107,6 +107,12 @@ class TestNeurIPSConference():
         helpers.await_queue()
 
         assert client.get_group('NeurIPS.cc/2021/Conference')
+        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs')
+        acs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert acs
+        assert 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs' in acs.readers
+        assert client.get_group('NeurIPS.cc/2021/Conference/Reviewers')
+        assert client.get_group('NeurIPS.cc/2021/Conference/Authors')
 
     def test_recruit_senior_area_chairs(self, client, selenium, request_page, helpers):
 
@@ -202,6 +208,9 @@ class TestNeurIPSConference():
         assert invitation
         assert invitation.reply['content']['paper_invitation']['value-regex'] == 'NeurIPS.cc/2021/Conference/Area_Chairs'
         assert invitation.reply['content']['paper_invitation']['default'] == 'NeurIPS.cc/2021/Conference/Area_Chairs'
+
+        sac_client=openreview.Client(username='sac1@google.com', password='1234')
+        assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
 
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
