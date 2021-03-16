@@ -758,3 +758,6 @@ url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + notes[0].forum + '''}
 }'''
+
+        assert notes[0].content['_bibtex'] == valid_bibtex
+        assert ['everyone'] == notes[0].readers

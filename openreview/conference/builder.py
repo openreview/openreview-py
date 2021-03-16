@@ -171,7 +171,8 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        return self.invitation_builder.set_submission_invitation(self)
+        under_submission = not self.submission_stage.due_date or datetime.datetime.utcnow() < self.submission_stage.due_date
+        return self.invitation_builder.set_submission_invitation(self, under_submission=under_submission)
 
     def __create_expertise_selection_stage(self):
 
@@ -1250,7 +1251,7 @@ class Conference(object):
         decisions_by_forum = {n.forum: n for n in list(tools.iterget_notes(self.client, invitation = self.get_invitation_id(self.decision_stage.name, '.*')))}
 
         if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
-            self.invitation_builder.set_submission_invitation(self, submission_readers=['everyone'])
+            self.invitation_builder.set_submission_invitation(self, under_submission=False, submission_readers=['everyone'])
 
         def is_release_note(is_note_accepted):
             return release_all_notes or (release_notes_accepted and is_note_accepted)
