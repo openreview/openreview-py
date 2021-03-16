@@ -461,8 +461,11 @@ class Conference(object):
     def get_conference_groups(self):
         return self.groups
 
-    def get_paper_assignment_id(self, group_id):
-        return self.get_invitation_id('Assignment', prefix=group_id)
+    def get_paper_assignment_id(self, group_id, deployed=False):
+        if deployed:
+            return self.get_invitation_id('Assignment', prefix=group_id)
+        return self.get_invitation_id('Proposed_Assignment', prefix=group_id)
+
 
     def get_affinity_score_id(self, group_id):
         return self.get_invitation_id('Affinity_Score', prefix=group_id)

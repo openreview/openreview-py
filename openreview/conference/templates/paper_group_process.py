@@ -4,6 +4,8 @@ def process_update(client, group, invitation, existing_group):
     VENUE_ID = ''
     SUBMISSION_INVITATION_ID = ''
     EDGE_INVITATION_ID = ''
+    EDGE_READERS = []
+    EDGE_WRITERS = []
     now=openreview.tools.datetime_millis(datetime.utcnow())
     print(group.id)
     print(group.members)
@@ -24,23 +26,17 @@ def process_update(client, group, invitation, existing_group):
     for member in members:
         if member not in edges:
             print(f'Create edge for {member}')
+            readers=[r.replace('{number}', paper_number) for r in EDGE_READERS]
+            writers=[r.replace('{number}', paper_number) for r in EDGE_WRITERS]
             client.post_edge(openreview.Edge(
                 invitation=EDGE_INVITATION_ID,
                 head=submission_note.id,
                 tail=member,
-                readers=[
-                    VENUE_ID,
-                    f'{VENUE_ID}/Paper{paper_number}/Senior_Area_Chairs',
-                    f'{VENUE_ID}/Paper{paper_number}/Area_Chairs',
-                    member
-                ],
+                readers=[VENUE_ID] + readers + [member],
                 nonreaders=[
                     f'{VENUE_ID}/Paper{paper_number}/Authors'
                 ],
-                writers=[
-                    VENUE_ID,
-                    f'{VENUE_ID}/Paper{paper_number}/Area_Chairs',
-                ],
+                writers=[VENUE_ID] + writers,
                 signatures=[VENUE_ID]
             ))
 

@@ -104,7 +104,7 @@ class Matching(object):
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
         '''
-        is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
+        is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score') or edge_id.endswith('Proposed_Assignment')
         paper_number='{head.number}' if is_assignment_invitation else None
 
         edge_readers = [self.conference.get_id()]
@@ -620,12 +620,13 @@ class Matching(object):
         user_profiles = _get_profiles(self.client, self.match_group.members)
 
         invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id), True)
-        # if not self.is_senior_area_chair:
-        #     with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_process.py')) as f:
-        #         content = f.read()
-        #         content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + (self.conference.get_area_chairs_id(number='{number}') if self.is_area_chair else self.conference.get_reviewers_id(number='{number}')) + "'")
-        #         invitation.process=content
-        #         self.client.post_invitation(invitation)
+        invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, deployed=True), True)
+        if not self.is_senior_area_chair:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_process.py')) as f:
+                content = f.read()
+                content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + (self.conference.get_area_chairs_id(number='{number}') if self.is_area_chair else self.conference.get_reviewers_id(number='{number}')) + "'")
+                invitation.process=content
+                self.client.post_invitation(invitation)
 
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'), True)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_Max_Papers'))

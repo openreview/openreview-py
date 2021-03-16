@@ -1207,7 +1207,18 @@ class PaperGroupInvitation(openreview.Invitation):
             file_content = f.read()
             file_content = file_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.id + "'")
             file_content = file_content.replace("SUBMISSION_INVITATION_ID = ''", "SUBMISSION_INVITATION_ID = '" + conference.get_blind_submission_id() + "'")
-            file_content = file_content.replace("EDGE_INVITATION_ID = ''", "EDGE_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
+            file_content = file_content.replace("EDGE_INVITATION_ID = ''", "EDGE_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
+
+            edge_readers = []
+            edge_writers = []
+            if conference.has_area_chairs:
+                if conference.has_senior_area_chairs and committee_id.endswith(conference.reviewers_name):
+                    edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                    edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                    edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+
+            file_content = file_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
+            file_content = file_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
 
         super(PaperGroupInvitation, self).__init__(id = conference.get_invitation_id('Paper_Group', prefix=committee_id),
             readers = [conference.id],
