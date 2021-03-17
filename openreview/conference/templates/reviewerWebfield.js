@@ -40,7 +40,7 @@ var main = function() {
 
   loadReviewerData()
     .then(function(
-      blindedNotes, officialReviews, invitations, edgeInvitations, tagInvitations, customLoad, groupByNumber
+      blindedNotes, officialReviews, invitations, customLoad, groupByNumber
     ) {
       if (customLoad > 0) {
         $('#header .description').append(
@@ -49,6 +49,20 @@ var main = function() {
       }
 
       displayStatusTable(blindedNotes, officialReviews);
+
+      var filterNoteInvitations = function(inv) {
+        return _.has(inv, 'reply.replyto') && inv.reply.replyto || _.has(inv, 'reply.referent') && inv.reply.referent;
+      };
+      var filterEdgeInvitations = function(inv) {
+        return _.has(inv, 'reply.content.head');
+      };
+      var filterTagInvitations = function(inv) {
+        return _.has(inv, 'reply.content.tag');
+      };
+
+      var noteInvitations = _.filter(invitations, filterNoteInvitations);
+      var edgeInvitations = _.filter(invitations, filterEdgeInvitations);
+      var tagInvitations = _.filter(invitations, filterTagInvitations);
 
       // Add paper ranking tag widgets to the table of submissions
       // If tag invitation does not exist, get existing tags and display read-only
@@ -66,7 +80,7 @@ var main = function() {
           });
       }
 
-      displayTasks(invitations, edgeInvitations, tagInvitations);
+      displayTasks(noteInvitations, edgeInvitations, tagInvitations);
       Webfield.ui.done();
     })
     .fail(function(error) {
@@ -130,6 +144,7 @@ var getBlindedNotes = function(noteNumbers) {
   return Webfield.get('/notes', {
     invitation: BLIND_SUBMISSION_ID,
     number: noteNumbers.join(','),
+    select: 'id,number,forum,content.title,content.authors,content.authorDomains,content.pdf',
     details: 'invitation'
   }).then(function(result) {
     return result.notes || [];
@@ -141,45 +156,29 @@ var getOfficialReviews = function(noteNumbers) {
     return $.Deferred().resolve([]);
   }
 
-  return Webfield.get('/notes', {
-    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true
-  }).then(function(result) {
-    return result.notes || [];
+  var promises = _.map(noteNumbers, function(noteNumber) {
+    return Webfield.get('/notes', {
+      invitation: getInvitationId(OFFICIAL_REVIEW_NAME, noteNumber),
+      tauthor: true,
+      select: 'id,invitation,forum,content.review,content.' + REVIEW_RATING_NAME
+    }).then(function(result) {
+      return result.notes || [];
+    });
+  });
+
+  return $.when.apply($, promises).then(function() {
+    return _.flatten(_.values(arguments));
   });
 };
 
-var getNoteInvitations = function() {
+var getAllInvitations = function() {
   return Webfield.get('/invitations', {
     regex: WILDCARD_INVITATION,
     invitee: true,
     duedate: true,
-    replyto: true,
-    type: 'notes',
-    details: 'replytoNote,repliedNotes'
-  }).then(function(result) {
-    return result.invitations || [];
-  });
-};
-
-var getEdgeInvitations = function() {
-  return Webfield.get('/invitations', {
-    regex: WILDCARD_INVITATION,
-    invitee: true,
-    duedate: true,
-    type: 'edges',
-    details: 'repliedEdges'
-  }).then(function(result) {
-    return result.invitations || [];
-  });
-};
-
-var getTagInvitations = function() {
-  return Webfield.get('/invitations', {
-    regex: WILDCARD_INVITATION,
-    invitee: true,
-    duedate: true,
-    type: 'tags',
-    details: 'repliedTags'
+    type: 'all',
+    select: 'id,duedate,reply.forum,taskCompletionCount,details',
+    details: 'repliedTags,repliedEdges,replytoNote,repliedNotes'
   }).then(function(result) {
     return result.invitations || [];
   });
@@ -190,7 +189,7 @@ var getCustomLoad = function(userIds) {
     return $.Deferred().resolve(0);
   }
 
-  return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION })
+  return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user' })
     .then(function(result) {
       if (!result.notes || !result.notes.length) {
         return REVIEW_LOAD;
@@ -216,9 +215,7 @@ var loadReviewerData = function() {
       return $.when(
         getBlindedNotes(noteNumbers),
         getOfficialReviews(noteNumbers),
-        getNoteInvitations(),
-        getEdgeInvitations(),
-        getTagInvitations(),
+        getAllInvitations(),
         getCustomLoad(userIds),
         groupByNumber
       );
