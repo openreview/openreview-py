@@ -96,7 +96,7 @@ function load() {
     invitee: true,
     duedate: true,
     type: 'all',
-    select: 'id,duedate,reply.forum,taskCompletionCount',
+    select: 'id,duedate,reply.forum,taskCompletionCount,details',
     details:'replytoNote,repliedNotes,repliedEdges'
   }).then(function(result) {
     return result.invitations || [];
@@ -161,10 +161,10 @@ function renderContent(notes, invitations) {
     return _.has(inv, 'reply.content.head');
   };
 
-  edgeInvitations = _.filter(_.filter(invitations, filterEdgeInvitations), filterFunc);
-  invitations = _.filter(_.filter(invitations, filterNoteInvitations), filterFunc);
+  var edgeInvitations = _.filter(_.filter(invitations, filterEdgeInvitations), filterFunc);
+  var noteInvitations = _.filter(_.filter(invitations, filterNoteInvitations), filterFunc);
 
-  Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
+  Webfield.ui.newTaskList(noteInvitations, edgeInvitations, tasksOptions);
 
   // Render table like AC console
   renderStatusTable(authorNotes, officialReviews, metaReviews);
