@@ -111,7 +111,11 @@ class TestNeurIPSConference():
         acs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
         assert acs
         assert 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs' in acs.readers
-        assert client.get_group('NeurIPS.cc/2021/Conference/Reviewers')
+        reviewers=client.get_group('NeurIPS.cc/2021/Conference/Reviewers')
+        assert reviewers
+        assert 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs' in reviewers.readers
+        assert 'NeurIPS.cc/2021/Conference/Area_Chairs' in reviewers.readers
+
         assert client.get_group('NeurIPS.cc/2021/Conference/Authors')
 
     def test_recruit_senior_area_chairs(self, client, selenium, request_page, helpers):
