@@ -278,6 +278,38 @@ class TestNeurIPSConference():
             label = 'Very Low'
         ))
 
+        ## SAC assignments
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
@@ -480,7 +512,14 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions()
 
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                writer.writerow([submission.id, '~Area_IBMChair1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
+
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)

@@ -94,6 +94,8 @@ class Matching(object):
     def _get_edge_readers(self, tail):
         readers = [self.conference.id]
         if self.should_read_by_area_chair:
+            if self.conference.use_senior_area_chairs:
+                readers.append(self.conference.get_senior_area_chairs_id())
             readers.append(self.conference.get_area_chairs_id())
         readers.append(tail)
         return readers
