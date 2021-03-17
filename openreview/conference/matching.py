@@ -108,7 +108,7 @@ class Matching(object):
 
         edge_readers = [self.conference.get_id()]
         edge_writers = [self.conference.get_id()]
-        edge_signatures = self.conference.get_id() + '$|' + self.conference.get_program_chairs_id()
+        edge_signatures = [self.conference.get_id() + '$', self.conference.get_program_chairs_id()]
         edge_nonreaders = {
             'values-regex': self.conference.get_authors_id(number='.*')
         }
@@ -118,8 +118,11 @@ class Matching(object):
             ## Area Chairs should read the edges of the reviewer invitations.
             edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
             if is_assignment_invitation:
+                if self.conference.has_senior_area_chairs:
+                    edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+                    edge_signatures.append(self.conference.get_senior_area_chairs_id(number=paper_number))
                 edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
-                edge_signatures = edge_signatures + '|' + self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*')
+                edge_signatures.append(self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'))
                 edge_nonreaders = {
                     'values': [self.conference.get_authors_id(number=paper_number)]
                 }
@@ -156,7 +159,7 @@ class Matching(object):
                     'values': edge_writers
                 },
                 'signatures': {
-                    'values-regex': edge_signatures,
+                    'values-regex': '|'.join(edge_signatures),
                     'default': self.conference.get_program_chairs_id()
                 },
                 'content': {

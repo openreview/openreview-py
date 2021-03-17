@@ -66,7 +66,7 @@ class Helpers:
             invitation=f'{conference.id}/Reviewers/-/{name}',
             readers = [conference_id, conference.get_senior_area_chairs_id(number=note.number), conference.get_area_chairs_id(number=note.number), reviewer],
             nonreaders = [conference.get_authors_id(number=note.number)],
-            writers = [conference_id, conference.get_area_chairs_id(number=note.number)],
+            writers = [conference_id, conference.get_senior_area_chairs_id(number=note.number), conference.get_area_chairs_id(number=note.number)],
             signatures = [conference_id],
             head = note.id,
             tail = reviewer,

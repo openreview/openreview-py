@@ -216,6 +216,67 @@ class TestNeurIPSConference():
         sac_client=openreview.Client(username='sac1@google.com', password='1234')
         assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
 
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'Very High'
+        ))
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'High'
+        ))
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'Very Low'
+        ))
+
+        sac2_client=openreview.Client(username='sac2@gmail.com', password='1234')
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very Low'
+        ))
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very High'
+        ))
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very Low'
+        ))
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
