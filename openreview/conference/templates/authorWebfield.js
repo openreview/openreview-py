@@ -42,21 +42,8 @@ function main() {
 function getReviews(forums) {
   if (OFFICIAL_REVIEW_NAME) {
     return Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_REVIEW_NAME,
-      forum: forums
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    return $.Deferred().resolve([]);
-  }
-}
-
-function getMetaReviews(forums) {
-  if (OFFICIAL_META_REVIEW_NAME) {
-    return Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_META_REVIEW_NAME,
-      forum: forums
+      forum: forums,
+      select: 'id,invitation,signatures,content.recommendation,content.' + REVIEW_RATING_NAME + ',content.' + REVIEW_CONFIDENCE_NAME
     }).then(function(result) {
       return result.notes || [];
     });
@@ -108,24 +95,14 @@ function load() {
     regex: CONFERENCE_ID + '.*',
     invitee: true,
     duedate: true,
-    replyto: true,
-    type: 'notes',
-    details:'replytoNote,repliedNotes'
+    type: 'all',
+    select: 'id,duedate,reply.forum,taskCompletionCount',
+    details:'replytoNote,repliedNotes,repliedEdges'
   }).then(function(result) {
     return result.invitations || [];
   });
 
-  var edgeInvitationsP = Webfield.get('/invitations', {
-    regex: CONFERENCE_ID + '.*',
-    invitee: true,
-    duedate: true,
-    type: 'edges',
-    details: 'repliedEdges'
-  }).then(function(result) {
-    return result.invitations || [];
-  });
-
-  return $.when(notesP, invitationsP, edgeInvitationsP);
+  return $.when(notesP, invitationsP);
 }
 
 
@@ -155,11 +132,17 @@ function renderHeader() {
   });
 }
 
-function renderContent(notes, invitations, edgeInvitations) {
-  console.log(notes);
+function renderContent(notes, invitations) {
   var authorNotes = notes[0];
-  var officialReviews = notes[1];
-  var metaReviews = notes[2];
+  var reviews = notes[1];
+  var filterOfficialReviews = function(note) {
+    return _.endsWith(note.invitation, OFFICIAL_REVIEW_NAME);
+  };
+  var filterMetaReviews = function(note) {
+    return _.endsWith(note.invitation, OFFICIAL_META_REVIEW_NAME);
+  };
+  var officialReviews = _.filter(reviews, filterOfficialReviews);
+  var metaReviews = _.filter(reviews, filterMetaReviews);
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',
@@ -171,8 +154,15 @@ function renderContent(notes, invitations, edgeInvitations) {
   var filterFunc = function(inv) {
     return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
   };
-  invitations = _.filter(invitations, filterFunc);
-  edgeInvitations = _.filter(edgeInvitations, filterFunc);
+  var filterNoteInvitations = function(inv) {
+    return _.has(inv, 'reply.replyto') && inv.reply.replyto || _.has(inv, 'reply.referent') && inv.reply.referent;
+  };
+  var filterEdgeInvitations = function(inv) {
+    return _.has(inv, 'reply.content.head');
+  };
+
+  edgeInvitations = _.filter(_.filter(invitations, filterEdgeInvitations), filterFunc);
+  invitations = _.filter(_.filter(invitations, filterNoteInvitations), filterFunc);
 
   Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
 
