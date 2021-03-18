@@ -88,7 +88,7 @@ function load() {
     }
   }).then(function(notes) {
     var forums = notes.map(function(n) { return n.id; });
-    return $.when(notes, getReviews(forums), getMetaReviews(forums));
+    return $.when(notes, getReviews(forums));
   });
 
   var invitationsP = Webfield.get('/invitations', {
