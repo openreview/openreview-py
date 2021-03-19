@@ -72,7 +72,7 @@ var getRootGroups = function() {
 
   var allAreaChairGroupsP = Webfield.getAll('/groups', {
     member: user.id,
-    regex: WILDCARD_INVITATION,
+    regex: CONFERENCE_ID + '/Paper.*',
     select: 'id'
   })
   .then(function(groups) {
@@ -293,7 +293,7 @@ var getReviewerGroups = function(noteNumbers) {
   }
 
   return Webfield.getAll('/groups', {
-    regex: WILDCARD_INVITATION,
+    regex: CONFERENCE_ID + '/Paper.*',
     select: 'id,members'
   })
   .then(function(groups) {
