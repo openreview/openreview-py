@@ -401,11 +401,11 @@ class Conference(object):
         else:
             committee.append(self.get_reviewers_id(number))
 
-        if self.use_senior_area_chairs:
-            committee.append(self.get_senior_area_chairs_id(number))
-
         if self.use_area_chairs:
             committee.append(self.get_area_chairs_id(number))
+
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
 
         committee.append(self.get_program_chairs_id())
 
