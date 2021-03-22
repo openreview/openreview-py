@@ -516,11 +516,13 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
     g.members.forEach(function(member, index) {
         var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
         var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
-        noteMap[num][anonId] = member;
-        if (!(member in areaChairMap)) {
-          areaChairMap[member] = [];
+        if (num in noteMap) {
+          noteMap[num][anonId] = member;
+          if (!(member in areaChairMap)) {
+            areaChairMap[member] = [];
+          }
+          areaChairMap[member].push(num);
         }
-        areaChairMap[member].push(num);
     })
   });
 
@@ -574,11 +576,13 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
     g.members.forEach(function(member, index) {
         var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
         var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
-        noteMap[num][anonId] = member;
-        if (!(member in reviewerMap)) {
-          reviewerMap[member] = [];
+        if (num in noteMap) {
+          noteMap[num][anonId] = member;
+          if (!(member in reviewerMap)) {
+            reviewerMap[member] = [];
+          }
+          reviewerMap[member].push(num);
         }
-        reviewerMap[member].push(num);
     })
   });
 
