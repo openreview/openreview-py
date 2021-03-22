@@ -115,13 +115,13 @@ var main = function() {
     reviewerGroups = groups.anonReviewerGroups;
     areaChairGroups = groups.areaChairGroups;
 
-    var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, areaChairGroups);
-    var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, reviewerGroups);
-    var officialReviewMap = buildOfficialReviewMap(noteNumbers, officialReviews);
-
     var officialReviews = reviews.officialReviews;
     var metaReviews = reviews.metaReviews;
     var decisions = reviews.decisionReviews;
+
+    var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, areaChairGroups);
+    var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, reviewerGroups);
+    var officialReviewMap = buildOfficialReviewMap(noteNumbers, officialReviews);
 
     pcAssignmentTags.forEach(function(tag) {
       if (!(tag.forum in pcTags)) {
@@ -278,7 +278,7 @@ var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
     details: 'invitation,tags,original,replyCount',
-    select: 'id,number,content,details'
+    select: 'id,number,forum,content,details'
   }).then(function(notes) {
     return notes;
   })
@@ -311,7 +311,10 @@ var getReviewsWithReplytoHelper = function(replytoRequests, reviews) {
     return  $.Deferred().resolve(reviews);;
   }
   var replytoRequest = replytoRequests.pop();
-  return Webfield.getAll('/notes', { replyto: replytoRequest.join(',') }).then(function(notes) {
+  return Webfield.getAll('/notes', {
+    replyto: replytoRequest.join(','),
+    select: 'id,forum,content.decision,invitation,signatures,content.' + REVIEW_RATING_NAME + ',content.' + REVIEW_CONFIDENCE_NAME
+  }).then(function(notes) {
     _.forEach(notes, function(note) {
       if (_.includes(note.invitation, OFFICIAL_REVIEW_NAME)) {
         reviews.officialReviews.push(note);
