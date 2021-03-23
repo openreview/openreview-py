@@ -1391,13 +1391,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
                 forum = blinded_notes[-1].id,
                 tag = '1 of 2',
                 readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
                 signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
             )
+        assert  openReviewError.value.args[0].get('name') == 'TooManyError'
 
     def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
