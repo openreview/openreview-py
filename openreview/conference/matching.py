@@ -525,29 +525,35 @@ class Matching(object):
                         'description': 'Invitation to store paper user assignments',
                         'order': 11
                     },
+                    'deployed_assignment_invitation': {
+                        'value': self.conference.get_paper_assignment_id(self.match_group.id, deployed=True),
+                        'required': True,
+                        'description': 'Invitation to store deployed paper user assignments',
+                        'order': 12
+                    },
                     'custom_user_demand_invitation': {
                         'value-regex': '{}/.*/-/Custom_User_Demands$'.format(self.conference.id),
                         'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
                         'description': 'Invitation to store custom number of users required by papers',
-                        'order': 12,
+                        'order': 13,
                         'required': False
                     },
                     'custom_max_papers_invitation': {
                         'value-regex': '{}/.*/-/Custom_Max_Papers$'.format(self.conference.id),
                         'default': '{}/-/Custom_Max_Papers'.format(self.match_group.id),
                         'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
-                        'order': 13,
+                        'order': 14,
                         'required': False
                     },
                     'config_invitation': {
                         'value': self._get_edge_invitation_id('Assignment_Configuration'),
-                        'order': 14
+                        'order': 15
                     },
                     'solver': {
                         'value-radio': ['MinMax', 'FairFlow'],
                         'default': 'MinMax',
                         'required': True,
-                        'order': 15
+                        'order': 16
                     },
                     'status': {
                         'default': 'Initialized',
@@ -561,19 +567,19 @@ class Matching(object):
                             'Deployed',
                             'Deployment Error'
                         ],
-                        'order': 16
+                        'order': 17
                     },
                     'error_message': {
                         'value-regex': '.*',
                         'required': False,
-                        'order': 17
+                        'order': 18
                     },
                     'allow_zero_score_assignments': {
                         'description': 'Select "Yes" only if you want to allow assignments with 0 scores',
                         'value-radio': ['Yes', 'No'],
                         'required': False,
                         'default': 'No',
-                        'order': 18
+                        'order': 19
                     }
                 }
             })
@@ -802,7 +808,8 @@ class Matching(object):
         reviewer_name = self.conference.area_chairs_name if self.is_area_chair else self.conference.reviewers_name
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
-        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, '.*'), limit=1)
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, number='.*'), limit=1)
+        print('REviews', reviews, self.conference.get_invitation_id(review_name, number='.*'))
         assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select='tail')}
 
