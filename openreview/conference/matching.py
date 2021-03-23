@@ -115,12 +115,12 @@ class Matching(object):
             'values-regex': self.conference.get_authors_id(number='.*')
         }
         if self.should_read_by_area_chair:
-            if self.conference.has_senior_area_chairs:
+            if self.conference.use_senior_area_chairs:
                 edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
             ## Area Chairs should read the edges of the reviewer invitations.
             edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
             if is_assignment_invitation:
-                if self.conference.has_senior_area_chairs:
+                if self.conference.use_senior_area_chairs:
                     edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
                     edge_signatures.append(self.conference.get_senior_area_chairs_id(number=paper_number))
                 edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
