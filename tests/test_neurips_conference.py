@@ -475,11 +475,15 @@ class TestNeurIPSConference():
         ## Deploy assignments
         conference.set_assignments(assignment_title='ac-matching', overwrite=True, is_area_chair=True )
 
+        helpers.await_queue()
+
         assert '~Area_IBMChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert '~Area_IBMChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs').members
         assert '~Area_IBMChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper3/Area_Chairs').members
         assert '~Area_GoogleChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Area_Chairs').members
         assert '~Area_GoogleChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Area_Chairs').members
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
 
 
         ## Reviewer assignments
@@ -539,6 +543,8 @@ class TestNeurIPSConference():
 
         conference.set_assignments(assignment_title='reviewer-matching', overwrite=True)
 
+        helpers.await_queue()
+
         assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').members
         assert '~Reviewer_MIT1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').members
 
@@ -553,6 +559,8 @@ class TestNeurIPSConference():
 
         assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
         assert '~Reviewer_MIT1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment')) == 10
 
 
     def test_review_stage(self, conference, helpers, test_client, client):
@@ -659,7 +667,7 @@ class TestNeurIPSConference():
         url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={traverse}&browse={browse}&maxColumns=2'
 
         print(url)
-        assert False
+        # assert False
 
     def test_comment_stage(self, conference, helpers, test_client, client):
 

@@ -7,10 +7,12 @@ def process_update(client, group, invitation, existing_group):
     EDGE_READERS = []
     EDGE_WRITERS = []
     now=openreview.tools.datetime_millis(datetime.utcnow())
-    print(group.id)
-    print(group.members)
-    print(invitation.id)
-    print(existing_group)
+
+    new_members=group.members
+    deleted_members=[]
+    if existing_group:
+        new_members=list(set(group.members) - set(existing_group.members))
+        deleted_members=list(set(existing_group.members) - set(group.members))
 
     paper_number=group.id.replace(VENUE_ID + '/Paper', '').split('/')[0]
     notes=client.get_notes(invitation=SUBMISSION_INVITATION_ID, number=paper_number)
@@ -19,11 +21,9 @@ def process_update(client, group, invitation, existing_group):
     submission_note=notes[0]
 
     edges={ e.tail: e for e in client.get_edges(invitation=EDGE_INVITATION_ID, head=submission_note.id)}
-    print('edges', edges)
-    members={ m: m for m in group.members}
 
     ## Create edges
-    for member in members:
+    for member in new_members:
         if member not in edges:
             print(f'Create edge for {member}')
             readers=[r.replace('{number}', paper_number) for r in EDGE_READERS]
@@ -41,9 +41,10 @@ def process_update(client, group, invitation, existing_group):
             ))
 
     ## Remove edges
-    for tail, edge in edges.items():
-        if tail not in members:
-            print(f'Delete edge for {tail}', now)
+    for member in deleted_members:
+        if member in edges:
+            edge=edges[member]
+            print(f'Delete edge for {member}', now)
             edge.ddate=now
             client.post_edge(edge)
 
