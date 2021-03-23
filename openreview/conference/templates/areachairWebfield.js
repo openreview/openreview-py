@@ -196,7 +196,7 @@ var loadData = function(paperNums) {
     invitee: true,
     duedate: true,
     type: 'all',
-    select: 'id,duedate,reply.forum,taskCompletionCount,details',
+    select: 'id,duedate,reply.forum,reply.replyto,reply.referent,reply.content.head,reply.content.tag,taskCompletionCount,details',
     details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
   });
 
@@ -288,24 +288,21 @@ var getReviewerGroups = function(noteNumbers) {
 
   var noteMap = buildNoteMap(noteNumbers);
 
-  var filterAnonReviewerGroups = function(group) {
-    return _.includes(group.id, 'Paper') && _.includes(group.id, 'AnonReviewer');
-  }
-
   return Webfield.getAll('/groups', {
     regex: CONFERENCE_ID + '/Paper.*',
     select: 'id,members'
   })
   .then(function(groups) {
-    var filteredGroups = _.filter(groups, filterAnonReviewerGroups);
-    _.forEach(filteredGroups, function(g) {
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
+    var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
+
+    _.forEach(reviewerGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
-      var index = getNumberfromGroup(g.id, 'AnonReviewer');
-      if (num) {
-        if ((num in noteMap) && g.members.length) {
-          noteMap[num][index] = g.members[0];
-        }
-      }
+      g.members.forEach(function(member, index) {
+        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+        var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
+        noteMap[num][anonId] = member;
+      })
     });
 
     return noteMap;

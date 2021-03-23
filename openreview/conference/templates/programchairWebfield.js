@@ -357,10 +357,10 @@ var getReviewsWithReplyto = function() {
 
 var getGroups = function() {
   var filterAnonReviewerGroups = function(group) {
-    return _.includes(group.id, 'AnonReviewer');
+    return _.includes(group.id, 'Reviewer');
   }
   var filterAreaChairGroups = function(group) {
-    return _.includes(group.id, 'Area_Chairs');
+    return _.includes(group.id, 'Area_Chair');
   }
   return Webfield.getAll('/groups', {
     id: CONFERENCE_ID + '/Paper.*',

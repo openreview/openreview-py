@@ -177,7 +177,7 @@ var getAllInvitations = function() {
     invitee: true,
     duedate: true,
     type: 'all',
-    select: 'id,duedate,reply.forum,taskCompletionCount,details',
+    select: 'id,duedate,reply.forum,reply.referent,reply.replyto,reply.content.head,reply.content.tag,taskCompletionCount,details',
     details: 'repliedTags,repliedEdges,replytoNote,repliedNotes'
   }).then(function(result) {
     return result.invitations || [];
