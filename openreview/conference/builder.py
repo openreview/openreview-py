@@ -977,7 +977,7 @@ class Conference(object):
 
         self.__create_group(
             group_id = self.get_reviewers_id(),
-            group_owner_id = self.id,
+            group_owner_id = self.get_area_chairs_id() if self.use_area_chairs else self.id,
             members = emails,
             additional_readers = readers)
 
