@@ -133,9 +133,10 @@ class TestESWCConference():
 
         invitations = client.get_invitations(replyForum=notes[0].id)
         assert len(invitations) == 3
-        assert invitations[0].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Desk_Reject'
-        assert invitations[1].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw'
-        assert invitations[2].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision'
+        invitation_ids = [invitation.id for invitation in invitations]
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Desk_Reject' in invitation_ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw' in invitation_ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision' in invitation_ids
 
         ## Withdraw paper
         test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw',
