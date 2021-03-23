@@ -51,7 +51,7 @@ var main = function() {
       displayStatusTable(blindedNotes, officialReviews);
 
       var filterNoteInvitations = function(inv) {
-        return _.has(inv, 'reply.replyto') && inv.reply.replyto || _.has(inv, 'reply.referent') && inv.reply.referent;
+        return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent');
       };
       var filterEdgeInvitations = function(inv) {
         return _.has(inv, 'reply.content.head');

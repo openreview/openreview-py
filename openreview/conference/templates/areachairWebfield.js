@@ -63,11 +63,11 @@ var main = function() {
 var getRootGroups = function() {
 
   var filterAreaChairGroups = function(group) {
-    return _.includes(group.id, 'Paper') && _.includes(group.id, 'Area_Chair');
+    return _.includes(group.id, 'Area_Chair');
   }
 
   var filterSecondaryAreaChairGroups = function(group) {
-    return _.includes(group.id, 'Paper') && _.includes(group.id, SECONDARY_AREA_CHAIR_NAME);
+    return _.includes(group.id, SECONDARY_AREA_CHAIR_NAME);
   }
 
   var allAreaChairGroupsP = Webfield.getAll('/groups', {
@@ -312,7 +312,7 @@ var getReviewerGroups = function(noteNumbers) {
 var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryMetaReviews, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers) {
 
   var filterNoteInvitations = function(inv) {
-    return _.has(inv, 'reply.replyto') && inv.reply.replyto || _.has(inv, 'reply.referent') && inv.reply.referent;
+    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent');
   };
   var filterEdgeInvitations = function(inv) {
     return _.has(inv, 'reply.content.head');
