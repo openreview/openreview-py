@@ -1214,11 +1214,19 @@ class PaperGroupInvitation(openreview.Invitation):
 
             edge_readers = []
             edge_writers = []
-            if conference.has_area_chairs:
-                if conference.has_senior_area_chairs and committee_id.endswith(conference.reviewers_name):
+            #if committee_id.endswith(conference.area_chairs_name):
+                #if conference.has_senior_area_chairs :
+                    #TODO: decide what to do with area chair assignments
+                    #edge_readers.append(conference.get_senior_area_chairs_id())
+                    #edge_writers.append(conference.get_senior_area_chairs_id())
+
+            if committee_id.endswith(conference.reviewers_name):
+                if conference.has_senior_area_chairs :
                     edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
-                    edge_readers.append(conference.get_area_chairs_id(number='{number}'))
-                    edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+                    edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
+
+                edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
             file_content = file_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
             file_content = file_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))

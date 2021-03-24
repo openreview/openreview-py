@@ -673,8 +673,20 @@ class TestNeurIPSConference():
         assert '~Reviewer_UMass1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
         assert '~Reviewer_MIT1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment')) == 10
+        assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment')
+        assert len(assignments) == 10
 
+        assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', tail='~Reviewer_UMass1')
+        assert len(assignments) == 5
+
+        assert assignments[0].readers == ["NeurIPS.cc/2021/Conference",
+            "NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs",
+            "NeurIPS.cc/2021/Conference/Paper5/Area_Chairs",
+            "~Reviewer_UMass1"]
+
+        assert assignments[0].writers == ["NeurIPS.cc/2021/Conference",
+            "NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs",
+            "NeurIPS.cc/2021/Conference/Paper5/Area_Chairs"]
 
     def test_review_stage(self, conference, helpers, test_client, client):
 
