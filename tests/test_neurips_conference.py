@@ -107,6 +107,16 @@ class TestNeurIPSConference():
         helpers.await_queue()
 
         assert client.get_group('NeurIPS.cc/2021/Conference')
+        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs')
+        acs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert acs
+        assert 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs' in acs.readers
+        reviewers=client.get_group('NeurIPS.cc/2021/Conference/Reviewers')
+        assert reviewers
+        assert 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs' in reviewers.readers
+        assert 'NeurIPS.cc/2021/Conference/Area_Chairs' in reviewers.readers
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Authors')
 
     def test_recruit_senior_area_chairs(self, client, selenium, request_page, helpers):
 
@@ -203,6 +213,102 @@ class TestNeurIPSConference():
         assert invitation.reply['content']['paper_invitation']['value-regex'] == 'NeurIPS.cc/2021/Conference/Area_Chairs'
         assert invitation.reply['content']['paper_invitation']['default'] == 'NeurIPS.cc/2021/Conference/Area_Chairs'
 
+        sac_client=openreview.Client(username='sac1@google.com', password='1234')
+        assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'Very High'
+        ))
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'High'
+        ))
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'Very Low'
+        ))
+
+        sac2_client=openreview.Client(username='sac2@gmail.com', password='1234')
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very Low'
+        ))
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very High'
+        ))
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very Low'
+        ))
+
+        ## SAC assignments
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
@@ -406,7 +512,14 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions()
 
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                writer.writerow([submission.id, '~Area_IBMChair1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
+
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
