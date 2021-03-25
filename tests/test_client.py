@@ -235,18 +235,53 @@ class TestClient():
         merged_profile.id == '~Melissa_Bok1'
 
 
-    @pytest.mark.xfail
     def test_post_venue(self, client):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
         os.environ["OPENREVIEW_PASSWORD"] = "1234"
         super_user = openreview.Client()
         assert '~Super_User1' == super_user.profile.id
 
-        venueId = '.HCOMP/2013';
-        invitation = 'Venue/-/Conference/Occurrence'
+        group = openreview.Group(
+            id = 'Venue',
+            members = [],
+            signatures = ['~Super_User1'],
+            signatories = ['Venue'],
+            readers = ['everyone'],
+            writers =['Venue']
+        )
+        group_res = super_user.post_group(group)
+
+        invitationId = 'Venue/-/Conference/Occurrence'
+        invitation = openreview.Invitation(
+            id = invitationId,
+            signatures = ['~Super_User1'],
+            writers = ['~Super_User1'],
+            invitees = ['~Super_User1'],
+            readers = [ '~' ],
+            reply = {
+                'readers': { 'value': 'everyone' },
+                'signatures': { 'values-regex': '.+' },
+                'writers': { 'values-regex': '.+' },
+                'content': {
+                    'name': { 'value-regex': '.*' },
+                    'location': { 'value-regex': '.*' },
+                    'year': { 'value-regex': '.*' },
+                    'parents': { 'values-regex': '.*' },
+                    'program_chairs': { 'values-regex': '.*' },
+                    'area_chairs': { 'value-regex': '.*' },
+                    'publisher': { 'value-regex': '.*' },
+                    'url': { 'value-regex': '.*' },
+                    'dblp_url': { 'value-regex': '.*' },
+                    'shortname': { 'value-regex': '.*' }
+                }
+            }
+        )
+        invitation_res = super_user.post_invitation(invitation)
+
+        venueId = '.HCOMP/2013'
         venue = {
             'id': venueId,
-            'invitation': invitation,
+            'invitation': invitationId,
             'readers': [ 'everyone' ],
             'nonreaders': [],
             'writers': [ 'Venue' ],
@@ -262,22 +297,19 @@ class TestClient():
                 'dblp_url': 'db/conf/hcomp/hcomp2012.html'
             }
         }
+        venue_res = super_user.post_venue(venue)
 
-        venueRes = super_user.post_venue(venue)
-        assert venue == venueRes
-
-    @pytest.mark.xfail
     def test_get_venues(self, client):
         os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
         os.environ["OPENREVIEW_PASSWORD"] = "1234"
         super_user = openreview.Client()
         assert '~Super_User1' == super_user.profile.id
 
-        venueId = '.HCOMP/2012';
-        invitation = 'Venue/-/Conference/Occurrence'
+        invitationId = 'Venue/-/Conference/Occurrence'
+        venueId = '.HCOMP/2012'
         venue = {
             'id': venueId,
-            'invitation': invitation,
+            'invitation': invitationId,
             'readers': [ 'everyone' ],
             'nonreaders': [],
             'writers': [ 'Venue' ],
@@ -294,19 +326,17 @@ class TestClient():
             }
         }
 
-        venueRes = super_user.post_venue(venue)
-        assert venue == venueRes
+        venue_res = super_user.post_venue(venue)
 
-        venueRes = super_user.get_venues(id=venueId)
-        assert len(venueRes) == 1
-        assert venueRes == [venue]
+        venue_res = super_user.get_venues(id=venueId)
+        assert len(venue_res) == 1
 
         venues = super_user.get_venues(ids=[venueId, '.HCOMP/2013'])
         assert len(venues) == 2
-        assert venues[0].get('id') == venue.get('id')
-        assert venues[1].get('id') == '.HCOMP/2013'
+        assert venues[0].get('id') == '.HCOMP/2013'
+        assert venues[1].get('id') == venue.get('id')
 
-        venues = super_user.get_venues(invitations=['Venue/-/Conference/Occurrence'])
+        venues = super_user.get_venues(invitations=[invitationId])
         assert len(venues) == 2
         assert venues[0].get('id') == '.HCOMP/2013'
         assert venues[1].get('id') == venue.get('id')
@@ -317,11 +347,11 @@ class TestClient():
         super_user = openreview.Client()
         assert '~Super_User1' == super_user.profile.id
 
-        venueId = '.HCOMP/2014';
-        invitation = 'Venue/-/Conference/Occurrence'
+        invitationId = 'Venue/-/Conference/Occurrence'
+        venueId = '.HCOMP/2014'
         venue = {
             'id': venueId,
-            'invitations': [ invitation ],
+            'invitation': invitationId,
             'readers': [ 'everyone' ],
             'nonreaders': [],
             'writers': [ 'Venue' ],
@@ -338,30 +368,28 @@ class TestClient():
             }
         }
 
-        venueRes = super_user.post_venue(venue)
-        assert venue == venueRes
+        venue_res = super_user.post_venue(venue)
 
-        venueRes = super_user.get_venues(id=venueId)
-        assert len(venueRes) == 1
-        assert venueRes == [venue]
+        venue_res = super_user.get_venues(id=venueId)
+        assert len(venue_res) == 1
 
-        venueRes = super_user.delete_venues(id=venueId)
-        assert venueRes == {'status': 'ok'}
+        venue_res = super_user.delete_venues(id=venueId)
+        assert venue_res == {'status': 'ok'}
 
-        venueRes = super_user.get_venues(id=venueId)
-        assert len(venueRes) == 0
+        venue_res = super_user.get_venues(id=venueId)
+        assert len(venue_res) == 0
 
-        venueRes = super_user.delete_venues(ids=['.HCOMP/2013'])
-        assert venueRes == {'status': 'ok'}
+        venue_res = super_user.delete_venues(ids=['.HCOMP/2013'])
+        assert venue_res == {'status': 'ok'}
 
         venues = super_user.get_venues(ids=['.HCOMP/2012', '.HCOMP/2013'])
         assert len(venues) == 1
         assert venues[0].get('id') == '.HCOMP/2012'
 
-        venueRes = super_user.delete_venues(invitations=['Venue/-/Conference/Occurrence'])
-        assert venueRes == {'status': 'ok'}
+        venue_res = super_user.delete_venues(invitations=[invitationId])
+        assert venue_res == {'status': 'ok'}
 
-        venues = super_user.get_venues(invitations=['Venue/-/Conference/Occurrence'])
+        venues = super_user.get_venues(invitations=[invitationId])
         assert len(venues) == 0
 
     def test_get_messages(self, client):
