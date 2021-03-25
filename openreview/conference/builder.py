@@ -1168,21 +1168,15 @@ class Conference(object):
                         reviewers_invited_id,
                         verbose = False)
 
-        def check_invited_roles(memberships):
-            ## Check user wasn't already invited
-            for role in committee_roles:
-                invited_group_id=f'{self.id}/{role}/Invited'
-                if invited_group_id in memberships:
-                    return invited_group_id
-            return False
-
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=email, regex=self.id)] if tools.get_group(self.client, email) else []
+            invited_roles = [f'{self.id}/{role}/Invited' for role in committee_roles]
 
-            invited_group_id=check_invited_roles(memberships)
+            invited_group_ids=list(set(invited_roles) & set(memberships))
 
-            if invited_group_id:
+            if invited_group_ids:
+                invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
                     recruitment_status['already_invited'][invited_group_id] = []
                 recruitment_status['already_invited'][invited_group_id].append(email)
