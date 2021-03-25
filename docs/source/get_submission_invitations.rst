@@ -3,11 +3,10 @@ Getting Submissions
 
 All the Invitation Ids for Submissions can be retrieved like this::
 
-    >>> from __future__ import print_function
     >>> import openreview
-    >>> c = openreview.Client(baseurl='https://openreview.net')
-    >>> invi = openreview.tools.get_submission_invitations(c)
-    >>> print(*inv,sep="\n")
+    >>> c = openreview.Client(baseurl='https://api.openreview.net')
+    >>> invitations = openreview.tools.get_submission_invitations(c)
+    >>> print(*inv, sep="\n")
     machineintelligence.cc/MIC/2018/Conference/-/Submission
     machineintelligence.cc/MIC/2018/Abstract/-/Submission
     ICLR.cc/2018/Workshop/-/Withdraw_Submission

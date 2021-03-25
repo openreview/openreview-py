@@ -49,7 +49,7 @@ Getting coauthorship relations from Notes:
 
 
 Finding conflicts of interest between users
-----------------------------------------
+---------------------------------------------
 
 One of the ways that OpenReview computes conflicts-of-interest is by using relations between profiles. The simplest and fastest way of computing these conflicts is by using the `get_conflicts` function in `openreview.tools`:
 
@@ -68,16 +68,18 @@ Conflicts of interest are represented by direct relationships or by common domai
 
 
 Add evidence to a profile
-----------------------------------------
+----------------------------
 
 Add DBLP link:
 
-    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
-    >>>                    invitation = '~/-/invitation',
-    >>>                    signatures = ['~Melisa_TestBok1'],
-    >>>                    content = {
-    >>>                     'dblp': 'http://dblp.org/mbok'
-    >>>                  }))
+    >>> updated_profile = client.post_profile(
+    >>>     openreview.Profile(
+    >>>>        referent = '~Melisa_TestBok1',
+    >>>         invitation = '~/-/invitation',
+    >>>         signatures = ['~Melisa_TestBok1'],
+    >>>         content = {
+    >>>             'dblp': 'http://dblp.org/mbok'
+    >>>         }))
 
 
 Get references:
@@ -87,47 +89,54 @@ Get references:
 
 Add a history record:
 
-    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
-    >>>                    invitation = '~/-/invitation',
-    >>>                    signatures = ['~Melisa_TestBok1'],
-    >>>                    content = {
-    >>>                     'history': {
-    >>>                        'position': 'Developer',
-    >>>                        'institution': { 'name': 'UBA', 'domain': 'uba.ar'},
-    >>>                        'start': 2000,
-    >>>                        'end': 2006
-    >>>                     }
-    >>>                   }))
+    >>> updated_profile = client.post_profile(
+    >>>     openreview.Profile(
+    >>>         referent = '~Melisa_TestBok1',
+    >>>         invitation = '~/-/invitation',
+    >>>         signatures = ['~Melisa_TestBok1'],
+    >>>         content = {
+    >>>             'history': {
+    >>>                 'position': 'Developer',
+    >>>                 'institution': { 'name': 'UBA', 'domain': 'uba.ar'},
+    >>>                 'start': 2000,
+    >>>                 'end': 2006
+    >>>             }}))
 
 Add email:
 
-    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
-    >>>                    invitation = '~/-/invitation',
-    >>>                    signatures = ['~Melisa_TestBok1'],
-    >>>                    content = {
-    >>>                     'emails': 'test@mail.com'
-    >>>                   }))
+    >>> updated_profile = client.post_profile(
+    >>>     openreview.Profile(
+    >>>         referent = '~Melisa_TestBok1',
+    >>>         invitation = '~/-/invitation',
+    >>>         signatures = ['~Melisa_TestBok1'],
+    >>>         content = {
+    >>>             'emails': 'test@mail.com'
+    >>>         }))
 
 
 Remove email:
 
-    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
-    >>>                    invitation = '~/-/invitation',
-    >>>                    signatures = ['~Melisa_TestBok1'],
-    >>>                    content = {},
-    >>>                    metaContent = {
-    >>>                     'emails': { 'values': ['test@mail.com'], 'weights': [-1] }
-    >>>                   }))
+    >>> updated_profile = client.post_profile(
+    >>>     openreview.Profile(
+    >>>         referent = '~Melisa_TestBok1',
+    >>>         invitation = '~/-/invitation',
+    >>>         signatures = ['~Melisa_TestBok1'],
+    >>>         content = {},
+    >>>         metaContent = {
+    >>>             'emails': { 'values': ['test@mail.com'], 'weights': [-1] }
+    >>>         }))
 
 Remove name:
 
-    >>> updated_profile = client.post_profile(openreview.Profile(referent = '~Melisa_TestBok1',
-    >>>                    invitation = '~/-/invitation',
-    >>>                    signatures = ['~Melisa_TestBok1'],
-    >>>                    content = {},
-    >>>                    metaContent = {
-    >>>                     'names': { 'values': [{ 'first': 'Melissa',
-    >>>                                             'last': 'Bok',
-    >>>                                             'username': '~Melissa_Bok1' }],
-    >>>                                'weights': [-1] }
-    >>>                   }))
+    >>> updated_profile = client.post_profile(
+    >>>     openreview.Profile(
+    >>>         referent = '~Melisa_TestBok1',
+    >>>         invitation = '~/-/invitation',
+    >>>         signatures = ['~Melisa_TestBok1'],
+    >>>         content = {},
+    >>>         metaContent = {
+    >>>             'names': {'values': [{'first': 'Melissa',
+    >>>                                   'last': 'Bok',
+    >>>                                   'username': '~Melissa_Bok1' }],
+    >>>                       'weights': [-1] }
+    >>>             }))

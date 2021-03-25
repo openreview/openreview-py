@@ -1,10 +1,10 @@
-Getting all Venues
+Getting All Venues
 ==========================
 
 ::
 
     >>> import openreview
-    >>> c = openreview.Client(baseurl='https://openreview.net')
+    >>> c = openreview.Client(baseurl='https://api.openreview.net')
     >>> venues = openreview.tools.get_all_venues(c)
     >>> print(*venues,sep="\n")
 	ICLR.cc

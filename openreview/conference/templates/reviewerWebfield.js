@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // Constants
 var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
@@ -11,14 +14,27 @@ var LEGACY_INVITATION_ID = false;
 var REVIEW_LOAD = 0;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
-var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
+var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
 var CUSTOM_LOAD_INVITATION = CONFERENCE_ID + '/-/Reduced_Load';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
 
 var main = function() {
+  // In the future this should not be necessary as the group's readers
+  // will prevent unauthenticated users
+  if (!user || !user.profile) {
+    location.href = '/login?redirect=' + encodeURIComponent(
+      location.pathname + location.search + location.hash
+    );
+    return;
+  }
+
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   displayHeader();
 
@@ -86,20 +102,23 @@ var buildNoteMap = function(noteNumbers) {
 
 // AJAX functions
 var getReviewerNoteNumbers = function() {
-  return Webfield.get('/groups', {
+  return Webfield.getAll('/groups', {
     regex: ANONREVIEWER_WILDCARD,
     member: user.id
-  }).then(function(result) {
-    if (!result.groups) {
-      return [];
-    }
-    return result.groups.reduce(function(groupByNumber, group) {
-      var number = getNumberFromGroup(group.id, 'Paper');
-      if (number) {
-        groupByNumber[number] = group.id;
-      }
-      return groupByNumber;
-    }, {});
+  }).then(function(groups) {
+
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
+    var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
+
+    var groupByNumber = {};
+    _.forEach(reviewerGroups, function(reviewerGroup) {
+      var num = getNumberFromGroup(reviewerGroup.id, 'Paper');
+      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num); });
+      groupByNumber[num] = anonGroup.id;
+    });
+
+    return groupByNumber;
+
   });
 };
 
@@ -283,10 +302,15 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
   var invitation = paperRankingInvitation ? _.cloneDeep(paperRankingInvitation) : null;
   if (invitation) {
     var availableOptions = ['No Ranking'];
+    var validTags = [];
     notes.forEach(function(note, index) {
       availableOptions.push((index + 1) + ' of ' + notes.length );
+      noteTags = paperRankingTags.filter(function(tag) { return tag.forum === note.forum; })
+      if (noteTags.length) {
+        validTags.push(noteTags[0]);
+      }
     })
-    var currentRankings = paperRankingTags.map(function(tag) {
+    var currentRankings = validTags.map(function(tag) {
       if (!tag.tag || tag.tag === 'No Ranking') {
         return null;
       }
@@ -302,11 +326,11 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
       return;
     }
 
-    var index = _.findIndex(paperRankingTags, ['forum', note.forum]);
+    var index = _.findIndex(validTags, ['forum', note.forum]);
     var $tagWidget = view.mkTagInput(
       'tag',
       invitation && invitation.reply.content.tag,
-      index !== -1 ? [paperRankingTags[index]] : [],
+      index !== -1 ? [validTags[index]] : [],
       {
         forum: note.id,
         placeholder: (invitation && invitation.reply.content.tag.description) || view.prettyInvitationId(invitationId),
@@ -322,14 +346,15 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
             invitation: invitationId,
             ddate: deleted ? Date.now() : null
           };
+          $('.tag-widget button').attr('disabled', true);
           Webfield.post('/tags', body)
             .then(function(result) {
               if (index !== -1) {
-                paperRankingTags.splice(index, 1, result);
+                validTags.splice(index, 1, result);
               } else {
-                paperRankingTags.push(result);
+                validTags.push(result);
               }
-              displayPaperRanking(notes, paperRankingInvitation, paperRankingTags, groupByNumber);
+              displayPaperRanking(notes, paperRankingInvitation, validTags, groupByNumber);
               done(result);
             })
             .fail(function(error) {
@@ -352,15 +377,7 @@ var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  // Filter out non-reviewer tasks
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) > -1; });
-  };
-  var reviewerInvitations = invitations.filter(filterFunc);
-  var reviewerEdgeInvitations = edgeInvitations.filter(filterFunc);
-  var reviewerTagInvitations = tagInvitations.filter(filterFunc);
-
-  Webfield.ui.newTaskList(reviewerInvitations, reviewerEdgeInvitations.concat(reviewerTagInvitations), tasksOptions)
+  Webfield.ui.newTaskList(invitations, edgeInvitations.concat(tagInvitations), tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
 };
 
@@ -379,22 +396,4 @@ $('#group-container').on('click', 'a.note-contents-toggle', function(e) {
   var visibleText = 'Hide paper details';
   var updated = $(this).text() === hiddenText ? visibleText : hiddenText;
   $(this).text(updated);
-});
-
-$('#group-container').on('click', 'a.send-reminder-link', function(e) {
-  var userId = $(this).data('userId');
-  var forumUrl = $(this).data('forumUrl');
-  var postData = {
-    groups: [userId],
-    subject: SHORT_PHRASE + ' Reminder',
-    message: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
-      'Click on the link below to go to the review page:\n\n' + location.origin + forumUrl + '\n\nThank you.'
-  };
-
-  return Webfield.post('/messages', postData).then(function() {
-    // Save the timestamp in the local storage
-    localStorage.setItem(forumUrl + '|' + userId, Date.now());
-    promptMessage('A reminder email has been sent to ' + view.prettyId(userId));
-    renderTable();
-  });
 });

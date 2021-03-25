@@ -18,7 +18,7 @@ class OpenReviewException(Exception):
 
 class Client(object):
     """
-    :param baseurl: URL to the host, example: https://openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
     :type username: str, optional
@@ -53,6 +53,8 @@ class Client(object):
         self.messages_url = self.baseurl + '/messages'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
+        self.jobs_status = self.baseurl + '/jobs/status'
+        self.venues_url = self.baseurl + '/venues'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.token = token
@@ -106,6 +108,12 @@ class Client(object):
                 raise OpenReviewException(response.json())
 
     ## PUBLIC FUNCTIONS
+    def impersonate(self, group_id):
+        response = requests.get(self.baseurl + '/impersonate', params={ 'groupId': group_id }, headers=self.headers)
+        response = self.__handle_response(response)
+        json_response = response.json()
+        self.__handle_token(json_response)
+        return json_response
 
     def login_user(self,username=None, password=None, expiresIn=None):
         """
@@ -280,7 +288,7 @@ class Client(object):
         """
         Get a single Profile by id, if available
 
-        :param email_or_id: e-mail or id of the profile
+        :param email_or_id: e-mail confirmed or id of the profile
         :type email_or_id: str, optional
 
         :return: Profile object with its information
@@ -292,7 +300,7 @@ class Client(object):
             if tildematch.match(email_or_id):
                 att = 'id'
             else:
-                att = 'email'
+                att = 'confirmedEmail'
             params[att] = email_or_id
         response = requests.get(self.profiles_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -302,76 +310,12 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile not found'])
 
-    @deprecated(version='0.9.20', reason="Use search_profiles instead")
-    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
-        """
-        Gets a list of profiles
-
-        :param email_or_id_list: List of ids or emails
-        :type email_or_id_list: list, optional
-        :param id: OpenReview username id
-        :type id: str, optional
-        :param email: e-mail registered in OpenReview
-        :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-
-        :return: List of profiles
-        :rtype: list[Profile]
-        """
-
-        ## Deprecated, don't use it
-        if email_or_id_list is not None:
-            pure_tilde_ids = all(['~' in i for i in email_or_id_list])
-            pure_emails = all(['@' in i for i in email_or_id_list])
-
-            def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return [Profile.from_json(p) for p in response.json()['profiles']]
-
-            def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return { p['email'] : Profile.from_json(p['profile'])
-                    for p in response.json()['profiles'] }
-
-            if pure_tilde_ids:
-                get_response = get_ids_response
-                update_result = lambda result, response: result.extend(response)
-                result = []
-            elif pure_emails:
-                get_response = get_emails_response
-                update_result = lambda result, response: result.update(response)
-                result = {}
-            else:
-                raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
-
-            done = False
-            offset = 0
-            limit = 1000
-            while not done:
-                current_batch = email_or_id_list[offset:offset+limit]
-                offset += limit
-                response = get_response(current_batch)
-                update_result(result, response)
-                if len(current_batch) < limit:
-                    done = True
-
-            return result
-
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
-        response = self.__handle_response(response)
-        return [Profile.from_json(p) for p in response.json()['profiles']]
-
-    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
+        :param confirmedEmails: List of confirmed emails registered in OpenReview
+        :type confirmedEmails: list, optional
         :param emails: List of emails registered in OpenReview
         :type emails: list, optional
         :param ids: List of OpenReview username ids
@@ -385,7 +329,7 @@ class Client(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles
+        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
         :rtype: list[Profile]
         """
 
@@ -413,7 +357,28 @@ class Client(object):
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
-            return {p['email']: Profile.from_json(p) for p in full_response}
+            profiles_by_email = {}
+            for p in full_response:
+                if p['email'] not in profiles_by_email:
+                    profiles_by_email[p['email']] = []
+                profiles_by_email[p['email']].append(Profile.from_json(p))
+            return profiles_by_email
+
+        if confirmedEmails:
+            full_response = []
+            for email_batch in batches(confirmedEmails):
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            profiles_by_email = {}
+            for p in full_response:
+                profile = Profile.from_json(p)
+                if p['email'] in profile.content['emailsConfirmed']:
+                    profiles_by_email[p['email']] = profile
+            return profiles_by_email
+
+
 
         if ids:
             full_response = []
@@ -465,6 +430,56 @@ class Client(object):
         response = requests.get(url, params = params, headers = headers)
         response = self.__handle_response(response)
         return response.content
+
+    def get_attachment(self, id, field_name):
+        """
+        Gets the binary content of a attachment using the provided note id
+        If the pdf is not found then this returns an error message with "status":404.
+
+        :param id: Note id or Reference id of the pdf
+        :type id: str
+        :param field_name: name of the field associated with the attachment file
+        :type field_name: str
+
+        :return: The binary content of a pdf
+        :rtype: bytes
+
+        Example:
+
+        >>> f = get_attachment(id='Place Note-ID here', field_name='pdf')
+        >>> with open('output.pdf','wb') as op: op.write(f)
+
+        """
+        response = requests.get(self.baseurl + '/attachment', params = { 'id': id, 'name': field_name }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.content
+
+    def get_venues(self, id=None, ids=None, invitations=None):
+        """
+        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
+
+        :param id: a Venue ID. If provided, returns Notes whose ID matches the given ID.
+        :type id: str, optional
+        :param ids: A list of Venue IDs. If provided, returns Notes containing these IDs.
+        :type ids: list, optional
+        :param invitations: A list of Invitation IDs. If provided, returns Venues whose "invitation" field is this Invitation ID.
+        :type invitations: list, optional
+
+        :return: List of Venues
+        :rtype: list[dict]
+        """
+        params = {}
+        if id is not None:
+            params['id'] = id
+        if ids is not None:
+            params['ids'] = ','.join(ids)
+        if invitations is not None:
+            params['invitations'] = ','.join(invitations)
+
+        response = requests.get(self.venues_url, params=params, headers=self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['venues']
 
     @deprecated(version='1.0.3', reason="Use put_attachment instead")
     def put_pdf(self, fname):
@@ -555,7 +570,7 @@ class Client(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, limit = None, offset = None):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -567,6 +582,8 @@ class Client(object):
         :type member: str, optional
         :param signatory: Groups that contain this signatory
         :type signatory: str, optional
+        :param web: Groups that contain a web field value
+        :type web: bool, optional
         :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
@@ -576,10 +593,11 @@ class Client(object):
         :rtype: list[Group]
         """
         params = {}
-        if id != None: params['id'] = id
-        if regex != None: params['regex'] = regex
-        if member != None: params['member'] = member
-        if signatory != None: params['signatory'] = signatory
+        if id is not None: params['id'] = id
+        if regex is not None: params['regex'] = regex
+        if member is not None: params['member'] = member
+        if signatory is not None: params['signatory'] = signatory
+        if web: params['web'] = web
         params['limit'] = limit
         params['offset'] = offset
 
@@ -629,17 +647,17 @@ class Client(object):
         :rtype: list[Invitation]
         """
         params = {}
-        if id!=None:
+        if id is not None:
             params['id'] = id
-        if invitee!=None:
+        if invitee is not None:
             params['invitee'] = invitee
-        if replytoNote!=None:
+        if replytoNote is not None:
             params['replytoNote'] = replytoNote
-        if replyForum!=None:
+        if replyForum is not None:
             params['replyForum'] = replyForum
-        if signature!=None:
+        if signature is not None:
             params['signature'] = signature
-        if note!=None:
+        if note is not None:
             params['note']=note
         if regex:
             params['regex'] = regex
@@ -724,36 +742,36 @@ class Client(object):
         :rtype: list[Note]
         """
         params = {}
-        if id != None:
+        if id is not None:
             params['id'] = id
-        if paperhash != None:
+        if paperhash is not None:
             params['paperhash'] = paperhash
-        if forum != None:
+        if forum is not None:
             params['forum'] = forum
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if replyto != None:
+        if replyto is not None:
             params['replyto'] = replyto
-        if tauthor != None:
+        if tauthor is not None:
             params['tauthor'] = tauthor
-        if signature != None:
+        if signature is not None:
             params['signature'] = signature
-        if writer != None:
+        if writer is not None:
             params['writer'] = writer
         if trash == True:
             params['trash']=True
-        if number != None:
+        if number is not None:
             params['number'] = number
-        if content != None:
+        if content is not None:
             for k in content:
                 params['content.' + k] = content[k]
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
-        if mintcdate != None:
+        if mintcdate is not None:
             params['mintcdate'] = mintcdate
-        if details != None:
+        if details is not None:
             params['details'] = details
         params['sort'] = sort
         params['original'] = original
@@ -778,7 +796,7 @@ class Client(object):
         n = response.json()['references'][0]
         return Note.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
+    def get_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -799,15 +817,18 @@ class Client(object):
         :rtype: list[Note]
         """
         params = {}
-        if referent != None:
+        if referent is not None:
             params['referent'] = referent
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if mintcdate != None:
+        if mintcdate is not None:
             params['mintcdate'] = mintcdate
-        if limit != None:
+        if content is not None:
+            for k in content:
+                params['content.' + k] = content[k]
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
         if original == True:
             params['original'] = "true"
@@ -835,19 +856,19 @@ class Client(object):
         """
         params = {}
 
-        if id != None:
+        if id is not None:
             params['id'] = id
-        if forum != None:
+        if forum is not None:
             params['forum'] = forum
-        if invitation != None:
+        if invitation is not None:
             params['invitation'] = invitation
-        if signature != None:
+        if signature is not None:
             params['signature'] = signature
-        if tag != None:
+        if tag is not None:
             params['tag'] = tag
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
 
         response = requests.get(self.tags_url, params = params, headers = self.headers)
@@ -863,7 +884,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -888,7 +909,7 @@ class Client(object):
         :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
-        :arg label
+        :arg label: Label ID of the match
         """
         params = {}
 
@@ -1020,17 +1041,45 @@ class Client(object):
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
         return edge_objects
 
-    def delete_edges(self, invitation):
+    def post_venue(self, venue):
         """
-        Deletes edges by invitation.
+        Posts the venue. Upon success, returns the posted Venue object.
+        """
+
+        response = requests.post(self.venues_url, json=venue, headers=self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
+        """
+        Deletes edges by a combination of invitation id and one or more of the optional filters.
 
         :param invitation: an invitation ID
-        type invitation: str
+        :type invitation: str
+        :param label: a matching label ID
+        :type label: str, optional
+        :param head: id of the edge head (head type defined by the edge invitation)
+        :type head: str, optional
+        :param tail: id of the edge tail (tail type defined by the edge invitation)
+        :type tail: str, optional
+        :param wait_to_finish: True if execution should pause until deletion of edges is finished
+        :type wait_to_finish: bool, optional
 
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.edges_url, json = { 'invitation': invitation }, headers = self.headers)
+        delete_query = {'invitation': invitation}
+        if label:
+            delete_query['label'] = label
+        if head:
+            delete_query['head'] = head
+        if tail:
+            delete_query['tail'] = tail
+
+        delete_query['waitToFinish'] = wait_to_finish
+
+        response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1078,7 +1127,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1088,6 +1137,14 @@ class Client(object):
         :type recipients: list[str]
         :param message: Message in the e-mail
         :type message: str
+        :param ignoreRecipients: List of groups ids to be ignored from the recipient list
+        :type subject: list[str]
+        :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
+        :type sender: dict
+        :param replyTo: e-mail address used when recipients reply to this message
+        :type replyTo: str
+        :param parentGroup: parent group recipients of e-mail belong to
+        :type parentGroup: str
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
@@ -1097,7 +1154,9 @@ class Client(object):
             'subject': subject ,
             'message': message,
             'ignoreGroups': ignoreRecipients,
-            'from': sender
+            'from': sender,
+            'replyTo': replyTo,
+            'parentGroup': parentGroup
             }, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1225,12 +1284,17 @@ class Client(object):
             'source': source
         }
 
-        if limit != None:
+        if limit is not None:
             params['limit'] = limit
-        if offset != None:
+        if offset is not None:
             params['offset'] = offset
 
         response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
+        response = self.__handle_response(response)
+        return [Note.from_json(n) for n in response.json()['notes']]
+
+    def get_notes_by_ids(self, ids):
+        response = requests.post(self.notes_url + '/search', json = { 'ids': ids }, headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
@@ -1253,7 +1317,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, offset = None, limit = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1261,12 +1325,14 @@ class Client(object):
         :type to: list[str], optional
         :param subject: Subject of the e-mail
         :type subject: str, optional
+        :param status: Commad separated list of status values corresponding to the message: delivered, bounce, droppped, etc
+        :type status: str, optional
 
         :return: Messages that match the passed parameters
         :rtype: dict
         """
 
-        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'offset': offset, 'limit': limit }, headers = self.headers)
+        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 
@@ -1287,6 +1353,17 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
+    def get_jobs_status(self):
+        """
+        **Only for Super User**. Retrieves the jobs status of the queue
+
+        :return: Jobs status
+        :rtype: dict
+        """
+
+        response = requests.get(self.jobs_status, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
 class Group(object):
     """
@@ -1306,30 +1383,44 @@ class Group(object):
     :type cdate: int, optional
     :param ddate: Deletion date of the Group
     :type ddate: int, optional
+    :param tcdate: true creation date of the Group
+    :type tcdate: int, optional
+    :param tmdate: true modification date of the Group
+    :type tmdate: int, optional
     :param members: List of members in the Group, each member is a Group id
     :type members: list[str], optional
     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
     :type nonreaders: list[str], optional
     :param web: Path to a file that contains the webfield
     :type web: optional
+    :param web_string: String containing the webfield for this Group
+    :type web_string: str, optional
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, members = None, nonreaders = None, web = None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
         # post attributes
         self.id=id
         self.cdate = cdate
         self.ddate = ddate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
         self.writers = writers
-        self.members = [] if members==None else members
+        self.members = [] if members is None else members
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
         self.signatories = signatories
         self.web=None
-        if web != None:
+        if web is not None:
             with open(web) as f:
                 self.web = f.read()
+
+        if web_string:
+            self.web = web_string
+
+        self.anonids = anonids
+        self.deanonymizers = deanonymizers
         self.details = details
 
     def __repr__(self):
@@ -1358,11 +1449,12 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
+            'anonids': self.anonids,
+            'deanonymizers': self.deanonymizers,
             'web': self.web,
             'details': self.details
         }
-        # if self.web !=None:
-        #     body['web']=self.web
+
         return body
 
     @classmethod
@@ -1379,12 +1471,16 @@ class Group(object):
         group = Group(g['id'],
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
+            tcdate = g.get('tcdate'),
+            tmdate = g.get('tmdate'),
             writers = g.get('writers'),
             members = g.get('members'),
             readers = g.get('readers'),
             nonreaders = g.get('nonreaders'),
             signatories = g.get('signatories'),
             signatures = g.get('signatures'),
+            anonids=g.get('anonids'),
+            deanonymizers=g.get('deanonymizers'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
@@ -1471,7 +1567,7 @@ class Invitation(object):
     :type web: str, optional
     :param process: Path to a file containing the process function
     :type process: str, optional
-    :param process_string: String containin the process function
+    :param process_string: String containing the process function
     :type process_string: str, optional
     :param duedate: Due date
     :type duedate: int, optional
@@ -1505,6 +1601,7 @@ class Invitation(object):
         noninvitees = None,
         nonreaders = None,
         web = None,
+        web_string = None,
         process = None,
         process_string = None,
         duedate = None,
@@ -1538,18 +1635,20 @@ class Invitation(object):
         self.details = details
         self.web = None
         self.process = None
-        if web != None:
+        if web is not None:
             with open(web) as f:
                 self.web = f.read()
-        if process != None:
+        if process is not None:
             with open(process) as f:
                 self.process = f.read()
         self.transform = None
-        if transform != None:
+        if transform is not None:
             with open(transform) as f:
                 self.transform = f.read()
         if process_string:
             self.process = process_string
+        if web_string:
+            self.web = web_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1706,7 +1805,7 @@ class Note(object):
         self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
         self.writers = writers
         self.number = number
@@ -1820,7 +1919,7 @@ class Tag(object):
         self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders==None else nonreaders
+        self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
 
     def to_json(self):
@@ -1950,7 +2049,6 @@ class Edge(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
-
 class Profile(object):
     """
     :param id: Profile id
@@ -2020,7 +2118,6 @@ class Profile(object):
         """
         body = {
             'id': self.id,
-            'number': self.number,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
             'referent': self.referent,

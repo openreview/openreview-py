@@ -25,7 +25,6 @@ class TestOpenSubmissions():
 
         builder.set_conference_id('aclweb.org/ACL/2020/Workshop/NLP-COVID')
         builder.set_conference_short_name('NLP-COVID-2020')
-        builder.set_override_homepage(True)
         builder.has_area_chairs(False)
         builder.set_submission_stage(double_blind=False, public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True, create_groups=True, create_review_invitation=True)
         builder.set_review_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True)
@@ -37,10 +36,10 @@ class TestOpenSubmissions():
         return conference
 
 
-    def test_post_submission(self, client, conference, test_client):
+    def test_post_submission(self, client, conference, test_client, helpers):
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -54,7 +53,7 @@ class TestOpenSubmissions():
         note.content['pdf'] = url
         note = test_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)
@@ -79,7 +78,7 @@ class TestOpenSubmissions():
         assert client.get_group('aclweb.org/ACL/2020/Workshop/NLP-COVID/Paper1/Reviewers/Submitted')
         assert client.get_invitation('aclweb.org/ACL/2020/Workshop/NLP-COVID/Paper1/-/Official_Review')
 
-    def test_post_comments(self, client, conference, test_client):
+    def test_post_comments(self, client, conference, test_client, helpers):
 
         submissions = conference.get_submissions()
         assert submissions
@@ -102,7 +101,7 @@ class TestOpenSubmissions():
         )
         note = test_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)
@@ -135,7 +134,7 @@ class TestOpenSubmissions():
         )
         note = pc_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)

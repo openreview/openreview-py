@@ -1,7 +1,9 @@
 import openreview
+import pytest
 import random
 import types
 import sys
+import os
 
 def do_work(value):
     return value.id
@@ -218,7 +220,8 @@ class TestTools():
                     'last': 'Name',
                     'username': '~Another_Name1'
                     }
-                ]
+                ],
+                'emails': ['alternate@mail.com']
             }
         ))
 
@@ -245,6 +248,18 @@ class TestTools():
         replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
         assert len(replaced_group.members) == 3
         assert '~Invalid_Profile1' not in invalid_member_group.members
+
+        ## Replace emails with only profile with confirmed emails
+        posted_group = client.post_group(openreview.Group(id='test.org',
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            signatories=['~Super_User1'],
+            members=['~Super_User1', 'alternate@mail.com', 'noprofile@mail.com']
+        ))
+        replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
+        assert replaced_group
+        assert replaced_group.members == ['~Super_User1', 'alternate@mail.com', 'noprofile@mail.com']
 
     def test_get_conflicts(self, client, helpers):
 
@@ -295,3 +310,28 @@ class TestTools():
         conflicts = openreview.tools.get_conflicts([profile1], profile2)
         assert len(conflicts) == 1
         assert conflicts[0] == 'cmu.edu'
+
+    def test_add_assignments(self, client):
+
+        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
+        assert len(groups) == 2
+
+        for n in range(0, 10):
+            result = openreview.tools.add_assignment(client, 1, 'auai.org/UAI/2020/Conference', 'reviewer{}@mail.com'.format(n))
+            assert result
+
+        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
+        assert len(groups) == 12
+
+    def test_group(self, client):
+
+        assert openreview.tools.get_group(client, '~Super_User1')
+        assert openreview.tools.get_group(client, '~Super_User2') == None
+
+        os.environ["OPENREVIEW_USERNAME"] = ""
+        os.environ["OPENREVIEW_PASSWORD"] = ""
+        guest_client = openreview.Client()
+
+        with pytest.raises(openreview.OpenReviewException, match=r'forbidden'):
+            assert openreview.tools.get_group(guest_client, '~Super_User1')
+

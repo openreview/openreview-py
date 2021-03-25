@@ -9,7 +9,7 @@ class TestClient():
 
     def test_get_groups(self, client):
         groups = client.get_groups()
-        assert len(groups) == 86, 'missing groups'
+        assert groups, 'missing groups'
         group_names = [g.id for g in groups]
         assert '(anonymous)' in group_names
         assert 'everyone' in group_names
@@ -80,7 +80,7 @@ class TestClient():
         try:
             guest.login_user(username = "openreview.net", password = "1111")
         except openreview.OpenReviewException as e:
-            assert ["Invalid username or password"] in e.args, "super user log in did not produce correct error"
+            assert "Invalid username or password" in e.args[0].get('message'), "super user log in did not produce correct error"
 
         response = guest.login_user(username = "openreview.net", password = "1234")
         assert response
@@ -98,7 +98,7 @@ class TestClient():
             group = client.get_group("openreview.net")
         except openreview.OpenReviewException as e:
             error = e.args[0]
-            assert e.args[0]['name'] == 'Token Expired'
+            assert e.args[0]['name'] == 'TokenExpiredError'
 
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
@@ -121,37 +121,47 @@ class TestClient():
         assert openreview.tools.get_profile(client, '~Super_User1')
         assert not openreview.tools.get_profile(client, 'mbok@sss.edu')
 
-    def test_get_profiles(self, client):
+    def test_search_profiles(self, client, helpers):
         guest = openreview.Client()
         guest.register_user(email = 'mbok@mail.com', first = 'Melisa', last = 'Bok', password = '1234')
         guest.register_user(email = 'andrew@mail.com', first = 'Andrew', last = 'McCallum', password = '1234')
 
-        profiles = client.get_profiles(['mbok@mail.com'])
+        profiles = client.search_profiles(confirmedEmails=['mbok@mail.com'])
         assert profiles, "Could not get the profile by email"
         assert isinstance(profiles, dict)
         assert isinstance(profiles['mbok@mail.com'], openreview.Profile)
         assert profiles['mbok@mail.com'].id == '~Melisa_Bok1'
 
-        profiles = client.get_profiles(['~Melisa_Bok1', '~Andrew_McCallum1'])
+        profiles = client.search_profiles(ids=['~Melisa_Bok1', '~Andrew_McCallum1'])
         assert profiles, "Could not get the profile by id"
         assert isinstance(profiles, list)
         assert len(profiles) == 2
         assert '~Melisa_Bok1' in profiles[1].id
         assert '~Andrew_McCallum1' in profiles[0].id
 
-        profiles = client.get_profiles([])
+        profiles = client.search_profiles(emails=[])
         assert len(profiles) == 0
 
-        profiles = client.get_profiles()
-        assert len(profiles) == 1
-        assert profiles[0].id == '~Super_User1'
+        assert client.profile
+        assert client.profile.id == '~Super_User1'
 
-        assert '~Melisa_Bok1' == client.get_profiles(id = '~Melisa_Bok1')[0].id
-        assert '~Melisa_Bok1' == client.get_profiles(email = 'mbok@mail.com')[0].id
-        assert '~Melisa_Bok1' == client.get_profiles(first = 'Melisa')[0].id
-        assert len(client.get_profiles(id = '~Melisa_Bok2')) == 0
-        assert len(client.get_profiles(email = 'mail@mail.com')) == 0
-        assert len(client.get_profiles(first = 'Anna')) == 0
+        assert '~Melisa_Bok1' == client.search_profiles(ids = ['~Melisa_Bok1'])[0].id
+        assert '~Melisa_Bok1' == client.search_profiles(confirmedEmails = ['mbok@mail.com'])['mbok@mail.com'].id
+        assert '~Melisa_Bok1' == client.search_profiles(first = 'Melisa')[0].id
+        assert len(client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
+        assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
+        assert len(client.search_profiles(first = 'Anna')) == 0
+
+        user_a = helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
+        user_b = helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
+        profiles = client.search_profiles(emails = ['users@alternate.com'])
+        assert profiles
+        assert 'users@alternate.com' in profiles
+        assert len(profiles['users@alternate.com']) == 2
+
+        profiles = client.search_profiles(confirmedEmails = ['users@alternate.com'])
+        assert not profiles
+
 
     def test_confirm_registration(self):
 
@@ -174,7 +184,7 @@ class TestClient():
 
     def test_get_invitations_by_invitee(self, client):
         invitations = client.get_invitations(invitee = '~', pastdue = False)
-        assert len(invitations) == 0
+        assert invitations
 
         invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
         assert len(invitations) == 0
@@ -213,13 +223,13 @@ class TestClient():
         assert note
 
         notes = client.get_notes(content = { 'title': 'Paper title'})
-        assert len(notes) == 3
+        assert len(notes) == 4
 
         notes = client.get_notes(content = { 'title': 'Paper title3333'})
         assert len(notes) == 0
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title'}))
-        assert len(notes) == 3
+        assert len(notes) == 4
 
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
@@ -246,7 +256,94 @@ class TestClient():
         merged_profile.id == '~Melissa_Bok1'
 
 
+    @pytest.mark.xfail
+    def test_post_venue(self, client):
+        os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
+        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        super_user = openreview.Client()
+        assert '~Super_User1' == super_user.profile.id
 
+        venueId = '.HCOMP/2013';
+        invitation = 'Venue/-/Conference/Occurrence'
+        venue = {
+            'id': venueId,
+            'invitation': invitation,
+            'readers': [ 'everyone' ],
+            'nonreaders': [],
+            'writers': [ 'Venue' ],
+            'content': {
+                'name': 'The 4th Human Computation Workshop',
+                'location': 'Toronto, Ontario, Canada',
+                'year': '2012',
+                'parents': [ '.HCOMP', '.AAAI/2012' ],
+                'program_chairs': [ '~Yiling_Chen1', 'Panagiotis_G._Ipeirotis1' ],
+                'area_chairs': 'HCOMP.org/2020/ACs',
+                'publisher': 'AAAI Press',
+                'url': 'http://www.aaai.org/Library/Workshops/ws12-08.php',
+                'dblp_url': 'db/conf/hcomp/hcomp2012.html'
+            }
+        }
 
+        venueRes = super_user.post_venue(venue)
+        assert venue == venueRes
 
+    @pytest.mark.xfail
+    def test_get_venues(self, client):
+        os.environ["OPENREVIEW_USERNAME"] = "openreview.net"
+        os.environ["OPENREVIEW_PASSWORD"] = "1234"
+        super_user = openreview.Client()
+        assert '~Super_User1' == super_user.profile.id
+
+        venueId = '.HCOMP/2012';
+        invitation = 'Venue/-/Conference/Occurrence'
+        venue = {
+            'id': venueId,
+            'invitation': invitation,
+            'readers': [ 'everyone' ],
+            'nonreaders': [],
+            'writers': [ 'Venue' ],
+            'content': {
+                'name': 'The 4th Human Computation Workshop',
+                'location': 'Toronto, Ontario, Canada',
+                'year': '2012',
+                'parents': [ '.HCOMP', '.AAAI/2012' ],
+                'program_chairs': [ '~Yiling_Chen1', 'Panagiotis_G._Ipeirotis1' ],
+                'area_chairs': 'HCOMP.org/2020/ACs',
+                'publisher': 'AAAI Press',
+                'url': 'http://www.aaai.org/Library/Workshops/ws12-08.php',
+                'dblp_url': 'db/conf/hcomp/hcomp2012.html'
+            }
+        }
+
+        venueRes = super_user.post_venue(venue)
+        assert venue == venueRes
+
+        venueRes = super_user.get_venues(id=venueId)
+        assert len(venueRes) == 1
+        assert venueRes == [venue]
+
+        venues = super_user.get_venues(ids=[venueId, '.HCOMP/2013'])
+        assert len(venues) == 2
+        assert venues[0].get('id') == venue.get('id')
+        assert venues[1].get('id') == '.HCOMP/2013'
+
+        venues = super_user.get_venues(invitations=['Venue/-/Conference/Occurrence'])
+        assert len(venues) == 2
+        assert venues[0].get('id') == '.HCOMP/2013'
+        assert venues[1].get('id') == venue.get('id')
+
+    def test_get_messages(self, client):
+
+        messages = client.get_messages()
+        assert messages
+
+        messages = client.get_messages(status='sent')
+        assert messages
+
+        messages = openreview.tools.iterget_messages(client, status='sent')
+        assert messages
+
+    def test_get_notes_by_ids(self, client):
+        notes = client.get_notes_by_ids(ids = [])
+        assert len(notes) == 0, 'notes is empty'
 

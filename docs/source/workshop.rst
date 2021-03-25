@@ -1,4 +1,4 @@
-Creating a conference
+Creating a Conference
 ========================
 
 Demo Workshop
@@ -19,11 +19,11 @@ Login
 Login can be done through the API ::
 
     >>> import openreview
-    >>> client = openreview.Client(baseurl='https://openreview.net',username=<your username>,password=<your password>)
+    >>> client = openreview.Client(baseurl='https://api.openreview.net',username=<your username>,password=<your password>)
 
 
-Creating a conference
-------------------------
+Conference creation
+----------------------
 
 You need admin privileges for creating subgroups within a group representing your conference (e.g. ICML.cc). When you create new groups, they must be subgroups of this conference (e.g. ICML.cc/2019)"
 

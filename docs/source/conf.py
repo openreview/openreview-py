@@ -14,18 +14,12 @@
 #
 import os
 import sys
-#sys.path.insert(0, os.path.abspath('.'))
-sys.path.append(os.path.abspath('.'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../../'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview'))
-sys.path.append(os.path.join(os.path.abspath('.'), '../../openreview/invitations'))
-
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = u'OpenReview Python API'
-copyright = u'2018, OpenReview Team'
+project = u'OpenReview Python Client'
+copyright = u'2020, OpenReview Team'
 author = u'OpenReview Team'
 
 # The short X.Y version
@@ -78,7 +72,7 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-highlight_language = 'javascript'
+highlight_language = 'python'
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -99,7 +93,7 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ['../_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

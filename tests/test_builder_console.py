@@ -82,7 +82,6 @@ class TestBuilderConsoles():
         assert word_after(pc_group.web, 'ENABLE_REVIEWER_REASSIGNMENT = ') == 'false'
 
         assert "Blind" not in word_after(pc_group.web, 'BLIND_SUBMISSION_ID = ')
-        conference.close_submissions()
-        conference.create_blind_submissions()
+        conference.setup_post_submission_stage(force=True)
         pc_group = client.get_group(conference.get_program_chairs_id())
         assert "Blind"  in word_after(pc_group.web, 'BLIND_SUBMISSION_ID = ')

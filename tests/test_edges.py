@@ -1,5 +1,6 @@
 import openreview
 import openreview.tools
+import time
 
 class TestEdges:
 
@@ -32,7 +33,7 @@ class TestEdges:
 
         # Sample note
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['everyone'],
+            readers = [conference.id],
             writers = [conference.id],
             signatures = ['~Super_User1'],
             content = {
@@ -47,15 +48,20 @@ class TestEdges:
 
         # Edges
         edges = []
-        for p in range(1000):
-            edge = openreview.Edge(head=note.id, tail='~Super_User1', label='High', weight=0.5,
+        for _ in range(1000):
+            edge1 = openreview.Edge(head=note.id, tail='~Super_User1', label='High', weight='0.5',
                 invitation=inv1.id, readers=['everyone'], writers=[conference.id],
                 signatures=['~Super_User1'])
-            edges.append(edge)
+            
+            edge2 = openreview.Edge(head=note.id, tail='~Super_User1', label='Very High', weight='1.0',
+                invitation=inv1.id, readers=['everyone'], writers=[conference.id],
+                signatures=['~Super_User1'])
+            
+            edges.extend([edge1, edge2])
 
         openreview.tools.post_bulk_edges(client, edges)
-        them = list(openreview.tools.iterget_edges(client, invitation=inv1.id))
-        assert len(edges) == len(them)
+        posted_edges = list(openreview.tools.iterget_edges(client, invitation=inv1.id))
+        assert len(edges) == len(posted_edges)
 
     def test_get_edges(self, client):
         invitation_id = 'NIPS.cc/2020/Workshop/MLITS/-/affinity'
@@ -69,4 +75,18 @@ class TestEdges:
     def test_get_edges_count(self, client):
         invitation_id = 'NIPS.cc/2020/Workshop/MLITS/-/affinity'
         count = client.get_edges_count(invitation=invitation_id)
-        assert count == 1000
+        assert count == 2000
+
+    def test_delete_edges(self, client):
+        edges_before = list(openreview.tools.iterget_edges(client, invitation='NIPS.cc/2020/Workshop/MLITS/-/affinity', label='High'))
+        assert len(edges_before) == 1000
+        client.delete_edges(invitation='NIPS.cc/2020/Workshop/MLITS/-/affinity', label='High')
+        time.sleep(0.5)
+        edges_after = list(openreview.tools.iterget_edges(client, invitation='NIPS.cc/2020/Workshop/MLITS/-/affinity', label='High'))
+        assert len(edges_after) == 0
+
+        client.delete_edges(invitation='NIPS.cc/2020/Workshop/MLITS/-/affinity')
+        time.sleep(0.5)
+        edges_after2 = list(openreview.tools.iterget_edges(client, invitation='NIPS.cc/2020/Workshop/MLITS/-/affinity'))
+        assert len(edges_after2) == 0
+

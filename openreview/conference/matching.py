@@ -43,7 +43,7 @@ def _get_profiles(client, ids_or_emails):
 
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
-        batch_profile_by_email = client.search_profiles(emails=batch_emails)
+        batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
         profile_by_email.update(batch_profile_by_email)
 
     for email in emails:
@@ -81,7 +81,9 @@ class Matching(object):
         self.client = conference.client
         self.match_group = match_group
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
-        self.should_read_by_area_chair = not self.is_area_chair and conference.has_area_chairs
+        self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
+        self.should_read_by_area_chair = not self.is_senior_area_chair and not self.is_area_chair and conference.has_area_chairs
+
 
     def _get_edge_invitation_id(self, edge_name):
         '''
@@ -120,10 +122,15 @@ class Matching(object):
             edge_head_query = {
                 'id' : edge_id.split('/-/')[0]
             }
+        if self.is_senior_area_chair:
+            edge_head_type = 'Profile'
+            edge_head_query = {
+                'group' : self.conference.get_area_chairs_id()
+            }
 
         invitation = openreview.Invitation(
             id=edge_id,
-            invitees=[self.conference.get_id()],
+            invitees=[self.conference.get_id(), self.conference.support_user],
             readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
@@ -163,6 +170,13 @@ class Matching(object):
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles):
+        if self.is_senior_area_chair:
+            ac_group = self.client.get_group(self.conference.get_area_chairs_id())
+            ac_profiles = _get_profiles(self.client, ac_group.members)
+            return self._build_profile_conflicts(ac_profiles, user_profiles)
+        return self._build_note_conflicts(submissions, user_profiles)
+
+    def _build_note_conflicts(self, submissions, user_profiles):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
@@ -203,7 +217,47 @@ class Matching(object):
                         head=submission.id,
                         tail=user_info['id'],
                         weight=-1,
-                        label=_conflict_label(conflicts),
+                        label='Conflict',
+                        readers=self._get_edge_readers(tail=user_info['id']),
+                        writers=[self.conference.id],
+                        signatures=[self.conference.id]
+                    ))
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation.id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+        return invitation
+
+    def _build_profile_conflicts(self, head_profiles, user_profiles):
+        '''
+        Create conflict edges between the given Profiles and Profiles
+        '''
+        invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
+        # Get profile info from the match group
+        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
+        head_profiles_info = [openreview.tools.get_profile_info(p) for p in head_profiles]
+
+        edges = []
+
+        for head_profile_info in tqdm(head_profiles_info, total=len(head_profiles_info), desc='_build_profile_conflicts'):
+
+            # Compute conflicts for each user and all the paper authors
+            for user_info in user_profiles_info:
+                conflicts = set()
+                conflicts.update(head_profile_info['domains'].intersection(user_info['domains']))
+                conflicts.update(head_profile_info['relations'].intersection(user_info['emails']))
+                conflicts.update(head_profile_info['emails'].intersection(user_info['relations']))
+                conflicts.update(head_profile_info['emails'].intersection(user_info['emails']))
+                if conflicts:
+                    edges.append(openreview.Edge(
+                        invitation=invitation.id,
+                        head=head_profile_info['id'],
+                        tail=user_info['id'],
+                        weight=-1,
+                        label='Conflict',
                         readers=self._get_edge_readers(tail=user_info['id']),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
@@ -262,6 +316,11 @@ class Matching(object):
         return invitation
 
     def _build_scores(self, score_invitation_id, score_file, submissions):
+        if self.is_senior_area_chair:
+            return self._build_profile_scores(score_invitation_id, score_file)
+        return self._build_note_scores(score_invitation_id, score_file, submissions)
+
+    def _build_note_scores(self, score_invitation_id, score_file, submissions):
         '''
         Given a csv file with affinity scores, create score edges
         '''
@@ -292,6 +351,31 @@ class Matching(object):
                     deleted_papers.add(paper_note_id)
 
         print('deleted papers', deleted_papers)
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation.id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
+        return invitation
+
+    def _build_profile_scores(self, score_invitation_id, score_file):
+        '''
+        Given a csv file with affinity scores, create score edges
+        '''
+        invitation = self._create_edge_invitation(score_invitation_id)
+        edges = []
+        with open(score_file) as file_handle:
+            for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
+                edges.append(openreview.Edge(
+                    invitation=invitation.id,
+                    head=row[0],
+                    tail=row[1],
+                    weight=float(row[2]),
+                    readers=self._get_edge_readers(tail=row[1]),
+                    writers=[self.conference.id],
+                    signatures=[self.conference.id]
+                ))
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
@@ -343,7 +427,7 @@ class Matching(object):
         '''
         config_inv = openreview.Invitation(
             id='{}/-/{}'.format(self.match_group.id, 'Assignment_Configuration'),
-            invitees=[self.conference.get_id()],
+            invitees=[self.conference.get_id(), self.conference.support_user],
             readers=[self.conference.get_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
@@ -386,14 +470,14 @@ class Matching(object):
                         'order': 5
                     },
                     'paper_invitation': {
-                        'value-regex': self.conference.get_blind_submission_id() + '.*',
-                        'default': self.conference.get_blind_submission_id(),
+                        'value-regex': self.conference.get_area_chairs_id() if self.is_senior_area_chair else self.conference.get_blind_submission_id() + '.*',
+                        'default': self.conference.get_area_chairs_id() if self.is_senior_area_chair else self.conference.get_blind_submission_id(),
                         'required': True,
-                        'description': 'Invitation to get the configuration note',
+                        'description': 'Invitation to get the paper metadata or Group id to get the users to be matched',
                         'order': 6
                     },
                     'match_group': {
-                        'value-regex': '.*',
+                        'value-regex': '{}/.*'.format(self.conference.id),
                         'default': self.match_group.id,
                         'required': True,
                         'description': 'Group id containing users to be matched',
@@ -407,13 +491,15 @@ class Matching(object):
                         'default': scores_specification
                     },
                     'aggregate_score_invitation': {
-                        'value': self._get_edge_invitation_id('Aggregate_Score'),
+                        'value-regex': '{}/.*'.format(self.conference.id),
+                        'default': self._get_edge_invitation_id('Aggregate_Score'),
                         'required': True,
                         'description': 'Invitation to store aggregated scores',
                         'order': 9
                     },
                     'conflicts_invitation': {
-                        'value': self.conference.get_conflict_score_id(self.match_group.id),
+                        'value-regex': '{}/.*'.format(self.conference.id),
+                        'default': self.conference.get_conflict_score_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store conflict scores',
                         'order': 10
@@ -425,17 +511,17 @@ class Matching(object):
                         'order': 11
                     },
                     'custom_user_demand_invitation': {
+                        'value-regex': '{}/.*/-/Custom_User_Demands$'.format(self.conference.id),
+                        'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
                         'description': 'Invitation to store custom number of users required by papers',
-                        'default': self.match_group.id + '/-/Custom_User_Demands',
                         'order': 12,
-                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'custom_max_papers_invitation': {
+                        'value-regex': '{}/.*/-/Custom_Max_Papers$'.format(self.conference.id),
+                        'default': '{}/-/Custom_Max_Papers'.format(self.match_group.id),
                         'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
-                        'default': self.match_group.id + '/-/Custom_Max_Papers',
                         'order': 13,
-                        'value-regex': self.conference.id + '/.*/-/.*',
                         'required': False
                     },
                     'config_invitation': {
@@ -456,7 +542,9 @@ class Matching(object):
                             'Error',
                             'No Solution',
                             'Complete',
-                            'Deployed'
+                            'Deploying',
+                            'Deployed',
+                            'Deployment Error'
                         ],
                         'order': 16
                     },
@@ -464,6 +552,13 @@ class Matching(object):
                         'value-regex': '.*',
                         'required': False,
                         'order': 17
+                    },
+                    'allow_zero_score_assignments': {
+                        'description': 'Select "Yes" only if you want to allow assignments with 0 scores',
+                        'value-radio': ['Yes', 'No'],
+                        'required': False,
+                        'default': 'No',
+                        'order': 18
                     }
                 }
             })
@@ -560,45 +655,159 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
+    def deploy_acs(self, assignment_title, overwrite):
 
-    def deploy(self, assignment_title, is_area_chair, overwrite):
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id('Meta_Review', '.*'))
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+
+        if overwrite and reviews:
+            raise openreview.OpenReviewException('Can not overwrite assignments when there are meta reviews posted.')
+
+        for paper in tqdm(papers, total=len(papers)):
+            ac_group = self.client.get_group('{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.area_chairs_name))
+
+            if overwrite:
+                ac_group.members = []
+                self.client.post_group(ac_group)
+                groups = self.client.get_groups(regex='{conference_id}/Paper{number}/Area_Chair[0-9]+'.format(conference_id=self.conference.id, number=paper.number))
+                for group in groups:
+                    self.client.delete_group(group.id)
+
+            if paper.id in assignment_edges:
+
+                ac_group_id = '{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.area_chairs_name)
+                author_group = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
+                members = [v['tail'] for v in assignment_edges[paper.id]]
+
+                group = openreview.Group(id=ac_group_id,
+                                        members=members,
+                                        readers=[self.conference.id, ac_group_id],
+                                        nonreaders=[author_group],
+                                        signatories=[self.conference.id, ac_group_id],
+                                        signatures=[self.conference.id],
+                                        writers=[self.conference.id]
+                                        )
+                r = self.client.post_group(group)
+
+                for index,member in enumerate(members):
+                    anon_ac_group = '{conference_id}/Paper{number}/Area_Chair{index}'.format(conference_id=self.conference.id, number=paper.number, index=index+1)
+                    group = openreview.Group(id=anon_ac_group,
+                                            members=[member],
+                                            readers=[self.conference.id, anon_ac_group],
+                                            nonreaders=[author_group],
+                                            signatories=[self.conference.id, anon_ac_group],
+                                            signatures=[self.conference.id],
+                                            writers=[self.conference.id]
+                                            )
+                    r = self.client.post_group(group)
+            else:
+                print('assignment not found', paper.id)
+
+    def get_next_anon_id(self, start, end, prefix, anon_group_dict):
+        for index in range(start, end):
+            if prefix + str(index) not in anon_group_dict:
+                return index
+        return end
+
+    def deploy_reviewers(self, assignment_title, overwrite):
+
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id('Official_Review', '.*'))
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+
+        if overwrite and reviews:
+            raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
+
+        for paper in tqdm(papers, total=len(papers)):
+
+            reviewers_group = self.client.get_group('{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.reviewers_name))
+            anon_groups = self.client.get_groups(regex='{conference_id}/Paper{number}/AnonReviewer[0-9]+'.format(conference_id=self.conference.id, number=paper.number))
+            anon_groups_dict = {}
+
+            if overwrite:
+                reviewers_group.members = []
+                self.client.post_group(reviewers_group)
+                for group in anon_groups:
+                    self.client.delete_group(group.id)
+            else:
+                anon_groups_dict = { g.id: g for g in anon_groups if len(g.members) > 0 }
+
+            if paper.id in assignment_edges:
+
+                ac_group_id = '{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.area_chairs_name)
+                reviewer_group_id = '{conference_id}/Paper{number}/{name}'.format(conference_id=self.conference.id, number=paper.number, name=self.conference.reviewers_name)
+                author_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id=self.conference.id, number=paper.number)
+                new_reviewers = [v['tail'] for v in assignment_edges[paper.id]]
+                members = reviewers_group.members + new_reviewers
+
+                group = openreview.Group(id=reviewer_group_id,
+                                        members=members,
+                                        readers=[self.conference.id, ac_group_id, reviewer_group_id],
+                                        nonreaders=[author_group_id],
+                                        signatories=[self.conference.id, ac_group_id],
+                                        signatures=[self.conference.id],
+                                        writers=[self.conference.id, ac_group_id]
+                                        )
+                r = self.client.post_group(group)
+
+                number = 1
+                for reviewer in new_reviewers:
+                    prefix = '{conference_id}/Paper{number}/AnonReviewer'.format(conference_id=self.conference.id, number=paper.number)
+                    number = self.get_next_anon_id(number, len(members), prefix, anon_groups_dict)
+                    anon_reviewer_group_id = prefix + str(number)
+                    number += 1
+
+                    group = openreview.Group(id=anon_reviewer_group_id,
+                                            members=[reviewer],
+                                            readers=[self.conference.id, ac_group_id, anon_reviewer_group_id],
+                                            nonreaders=[author_group_id],
+                                            signatories=[self.conference.id, anon_reviewer_group_id],
+                                            signatures=[self.conference.id],
+                                            writers=[self.conference.id, ac_group_id]
+                                            )
+                    r = self.client.post_group(group)
+            else:
+                print('assignment not found', paper.id)
+
+    def deploy_assignments(self, assignment_title, overwrite):
+
+        committee_id=self.match_group.id
+        review_name = 'Meta_Review' if self.is_area_chair else 'Official_Review'
+        reviewer_name = self.conference.area_chairs_name if self.is_area_chair else self.conference.reviewers_name
+
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, '.*'), limit=1)
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+
+        if overwrite and reviews:
+            raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
+
+        for paper in tqdm(papers, total=len(papers)):
+
+            paper_group = self.client.get_group(self.conference.get_committee_id(name=reviewer_name, number=paper.number))
+
+            if overwrite:
+                paper_group.members = []
+            if paper.id in assignment_edges:
+                paper_group.members = paper_group.members + [v['tail'] for v in assignment_edges[paper.id]]
+            else:
+                print('assignment not found', paper.id)
+
+            self.client.post_group(paper_group)
+
+    def deploy(self, assignment_title, overwrite=False):
         '''
         WARNING: This function untested
 
         '''
-        # pylint: disable=too-many-locals
+        if self.conference.legacy_anonids:
+            if self.is_area_chair:
+                return self.deploy_acs(assignment_title, overwrite)
 
-        # Get the configuration note to check the group to assign
-        client = self.conference.client
+            return self.deploy_reviewers(assignment_title, overwrite)
 
-        submissions = openreview.tools.iterget_notes(
-            client,
-            invitation=self.conference.get_blind_submission_id())
-
-        if overwrite:
-            groups = []
-            if is_area_chair:
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chairs'))
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Area_Chair[0-9]+'))
-            else:
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/Reviewers'))
-                groups.extend(client.get_groups(regex=self.conference.get_id()+'/Paper[0-9]+/AnonReviewer[0-9]+'))
-            for group in tqdm(groups, total=len(groups), desc='Deleting groups'):
-                client.delete_group(group.id)
-
-        edges_count = client.get_edges_count(invitation=self.conference.get_paper_assignment_id(self.match_group.id), label=assignment_title)
-
-        assignment_edges = openreview.tools.iterget_edges(
-            client,
-            invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-            label=assignment_title)
-
-        paper_by_forum = {n.forum: n for n in submissions}
-
-        for edge in tqdm(assignment_edges, total=edges_count):
-            if edge.head in paper_by_forum:
-                paper_number = paper_by_forum.get(edge.head).number
-                user = edge.tail
-                self.conference.set_assignment(user, paper_number, self.is_area_chair)
-            else:
-                print('paper not found', edge.head)
+        return self.deploy_assignments(assignment_title, overwrite)

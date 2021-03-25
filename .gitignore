@@ -8,7 +8,9 @@ openreview_py.egg-info/
 build/
 pytest_report.xml
 *.log
-drivers/
-tests/data/reviewer_affinity_scores.csv
 cov.xml
-.coverage
+.coverage*
+tests/drivers/geckodriver
+tests/data/reviewer_affinity_scores.csv
+tests/data/ac_affinity_scores.csv
+tests/data/temp.csv

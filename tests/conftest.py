@@ -1,6 +1,7 @@
 import openreview
 import pytest
 import requests
+import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,12 +10,12 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 
 class Helpers:
     @staticmethod
-    def create_user(email, first, last):
+    def create_user(email, first, last, alternates=[], institution=None):
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
         assert res, "Res i none"
-        res = client.activate_user(email, {
+        profile_content={
             'names': [
                     {
                         'first': first,
@@ -22,9 +23,19 @@ class Helpers:
                         'username': '~' + first + '_' + last + '1'
                     }
                 ],
-            'emails': [email],
+            'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
-            })
+        }
+        if institution:
+            profile_content['history'] = [{
+                'position': 'PhD Student',
+                'start': 2017,
+                'end': None,
+                'institution': {
+                    'domain': institution
+                }
+            }]
+        res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
 
@@ -32,15 +43,29 @@ class Helpers:
     def get_user(email):
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
-@pytest.fixture
+    @staticmethod
+    def await_queue():
+        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
+        assert super_client is not None, 'Super Client is none'
+
+        while True:
+            jobs = super_client.get_jobs_status()
+            jobCount = 0
+            for jobName, job in jobs.items():
+                jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
+
+            if jobCount == 0:
+                break
+
+            time.sleep(0.5)
+
+@pytest.fixture(scope="class")
 def helpers():
     return Helpers
 
 @pytest.fixture(scope="session")
 def client():
-    requests.put('http://localhost:3000/reset/openreview.net', json = {'password': '1234'})
-    client = openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
-    yield client
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
 
 @pytest.fixture(scope="session")
 def test_client():
@@ -52,6 +77,11 @@ def peter_client():
     client = Helpers.create_user('peter@mail.com', 'Peter', 'Test')
     yield client
 
+@pytest.fixture(scope="session")
+def support_client():
+    client = Helpers.create_user('support_user@mail.com', 'Support', 'User')
+    yield client
+
 @pytest.fixture
 def firefox_options(firefox_options):
     firefox_options.add_argument('--headless')
@@ -59,10 +89,10 @@ def firefox_options(firefox_options):
 
 @pytest.fixture
 def request_page():
-    def request(selenium, url, token = None, alert=False):
+    def request(selenium, url, token = None, alert=False, wait_for_element='content'):
         if token:
-            selenium.get('http://localhost:3000')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', '')})
+            selenium.get('http://localhost:3030')
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
@@ -76,8 +106,9 @@ def request_page():
                 print("No alert is present")
 
         try:
-            element_present = EC.presence_of_element_located((By.ID, 'container'))
+            element_present = EC.presence_of_element_located((By.ID, wait_for_element))
             WebDriverWait(selenium, timeout).until(element_present)
+            time.sleep(2) ## temporally sleep time to wait until the whole page is loaded
         except TimeoutException:
             print("Timed out waiting for page to load")
 

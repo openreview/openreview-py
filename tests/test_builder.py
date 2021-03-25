@@ -13,7 +13,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 class TestBuilder():
 
-    def test_override_homepage(self, client):
+    def test_override_homepage(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -27,19 +27,16 @@ class TestBuilder():
         assert len(groups) == 3
         home_group = groups[-1]
         assert home_group.id == 'test.org/2019/Conference'
-        assert 'Venue homepage template' in home_group.web
 
-        home_group.web = 'This is a webfield'
-        client.post_group(home_group)
+        request_page(selenium, 'http://localhost:3030/group?id=test.org/2019/Conference')
+        assert selenium.find_element_by_tag_name('h3').text == 'test.org/2019/Conference'
 
+        builder.set_homepage_header({ 'subtitle': 'TEST 2019' })
         conference = builder.get_result()
-        groups = conference.get_conference_groups()
-        assert 'This is a webfield' in groups[-1].web
 
-        builder.set_override_homepage(True)
-        conference = builder.get_result()
-        groups = conference.get_conference_groups()
-        assert 'Venue homepage template' in groups[-1].web
+        request_page(selenium, 'http://localhost:3030/group?id=test.org/2019/Conference')
+        assert selenium.find_element_by_tag_name('h3').text == 'TEST 2019'
+
 
     def test_web_set_landing_page(self, client):
         builder = openreview.conference.ConferenceBuilder(client)
@@ -56,7 +53,6 @@ class TestBuilder():
         start_pos = group.web.find('VENUE_LINKS')
         insert_pos = group.web.find('];', start_pos)
         group.web = group.web[:insert_pos] + child_str + group.web[insert_pos:]
-        print(group.web)
         client.post_group(group)
 
         builder.set_conference_id("ds.cs.umass.edu/Test_I/2019/Workshop/WS_1")
@@ -86,6 +82,7 @@ class TestBuilder():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(False)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         conference.set_program_chairs()
@@ -111,13 +108,8 @@ class TestBuilder():
         assert original_notes
         assert len(original_notes) == 1
 
-        with pytest.raises(openreview.OpenReviewException, match=r'.*Submission invitation is still due. Aborted blind note creation.*'):
-            conference.create_blind_submissions()
-
-        builder.set_submission_stage(double_blind = True, public = False, due_date = now)
-        conference = builder.get_result()
-
-        blind_submissions = conference.create_blind_submissions()
+        conference.setup_post_submission_stage(force=True)
+        blind_submissions = conference.get_submissions()
         assert blind_submissions
         assert len(blind_submissions) == 1
 
@@ -127,7 +119,7 @@ class TestBuilder():
 
         conference.set_assignment('reviewer_test1@mail.com', blind_submissions[0].number)
 
-        request_page(selenium, "http://localhost:3000/forum?id=" + blind_submissions[0].id, reviewer_client.token)
+        request_page(selenium=selenium, url="http://localhost:3030/forum?id=" + blind_submissions[0].id, token=reviewer_client.token, wait_for_element='note_{}'.format(blind_submissions[0].id))
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
@@ -220,7 +212,7 @@ class TestBuilder():
         conference.create_blind_submissions()
 
         pc_client = helpers.create_user('pc_testconsole1@mail.com', 'Test', 'PCConsole')
-        request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token, wait_for_element='venue-configuration')
 
         assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')
         assert selenium.find_element_by_xpath('//div[@id="venue-configuration"]//h3')
@@ -241,7 +233,7 @@ class TestBuilder():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        request_page(selenium, 'http://localhost:3000/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token, wait_for_element='paper-status')
 
         expected_options.append('Meta Review Missing')
         for option in expected_options:
