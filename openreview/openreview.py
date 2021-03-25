@@ -26,7 +26,7 @@ class Client(object):
     :type password: str, optional
     :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
-    :param tokenExpiresIn: Time in seconds before the token expires. This parameter only works when providing a username and a password. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
+    :param tokenExpiresIn: Time in seconds before the token expires. This parameter only works when providing a username and a password. If none is set, the value will be set automatically to one day. The max value that it can be set to is 1 week.
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
