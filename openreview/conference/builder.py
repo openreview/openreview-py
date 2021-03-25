@@ -411,6 +411,17 @@ class Conference(object):
 
         return committee
 
+    def get_committee_names(self):
+        committee=[self.reviewers_name]
+
+        if self.use_area_chairs:
+            committee=[self.area_chairs_name]
+
+        if self.senior_area_chairs_name:
+            committee=[self.senior_area_chairs_name]
+
+        return committee
+
     def get_committee_id(self, name, number=None):
         committee_id = self.id + '/'
         if number:
@@ -1057,6 +1068,13 @@ class Conference(object):
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
+        committee_roles = self.get_committee_names()
+        recruitment_status = {
+            'invited': [],
+            'reminded': [],
+            'already_invited': {}
+        }
+
         options = {
             'reviewers_name': reviewers_name,
             'reviewers_accepted_id': reviewers_accepted_id,
@@ -1128,6 +1146,7 @@ class Conference(object):
                         'Reminder: ' + recruit_message_subj,
                         reviewers_invited_id,
                         verbose = False)
+                    recruitment_status['reminded'].append(reviewer_id)
 
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
@@ -1149,10 +1168,25 @@ class Conference(object):
                         reviewers_invited_id,
                         verbose = False)
 
+        def check_invited_roles(memberships):
+            ## Check user wasn't already invited
+            for role in committee_roles:
+                invited_group_id=f'{self.id}/{role}/Invited'
+                if invited_group_id in memberships:
+                    return invited_group_id
+            return False
+
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=email, regex=reviewers_id)] if tools.get_group(self.client, email) else []
-            if reviewers_invited_id not in memberships:
+            memberships = [g.id for g in self.client.get_groups(member=email, regex=self.id)] if tools.get_group(self.client, email) else []
+
+            invited_group_id=check_invited_roles(memberships)
+
+            if invited_group_id:
+                if invited_group_id not in recruitment_status['already_invited']:
+                    recruitment_status['already_invited'][invited_group_id] = []
+                recruitment_status['already_invited'][invited_group_id].append(email)
+            else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
@@ -1163,8 +1197,9 @@ class Conference(object):
                     recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False)
+                recruitment_status['invited'].append(email)
 
-        return self.client.get_group(id = reviewers_invited_id)
+        return recruitment_status
 
 
 
