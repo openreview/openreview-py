@@ -1244,6 +1244,76 @@ class PaperGroupInvitation(openreview.Invitation):
 
         )
 
+class PaperRecruitmentInvitation(openreview.Invitation):
+
+    def __init__(self, conference, invitation_id, committee_id, web):
+
+        content=invitations.recruitment
+        content['submission_id'] = {
+            'description': 'submission id',
+            'order': 6,
+            'value-regex': '.*',
+            'required':True
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as f:
+            file_content = f.read()
+            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+            file_content = file_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
+            file_content = file_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
+            file_content = file_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
+            file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
+            edge_readers = []
+            edge_writers = []
+            #if committee_id.endswith(conference.area_chairs_name):
+                #if conference.has_senior_area_chairs :
+                    #TODO: decide what to do with area chair assignments
+                    #edge_readers.append(conference.get_senior_area_chairs_id())
+                    #edge_writers.append(conference.get_senior_area_chairs_id())
+
+            if committee_id.endswith(conference.reviewers_name):
+                if conference.has_senior_area_chairs :
+                    edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                    edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
+
+                edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+
+            file_content = file_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
+            file_content = file_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
+
+            super(PaperRecruitmentInvitation, self).__init__(id = invitation_id,
+                duedate = None,
+                readers = ['everyone'],
+                nonreaders = [],
+                invitees = ['everyone'],
+                noninvitees = [],
+                writers = [conference.get_id()],
+                signatures = [conference.get_id()],
+                reply = {
+                    'forum': None,
+                    'replyto': None,
+                    'readers': {
+                        'values-copied': [
+                            conference.get_id(),
+                            '{content.user}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': '\\(anonymous\\)'
+                    },
+                    'writers': {
+                        'values': [
+                            conference.get_id(),
+                            '(anonymous)'
+                        ]
+                    },
+                    'content': content
+                },
+                process_string = file_content,
+                web_string = web
+            )
+
 class InvitationBuilder(object):
 
     def __init__(self, client):
@@ -1781,3 +1851,9 @@ class InvitationBuilder(object):
     def set_paper_group_invitation(self, conference, committee_id):
 
         return self.client.post_invitation(PaperGroupInvitation(conference, committee_id))
+
+    def set_paper_recruitment_invitation(self, conference, committee_id):
+
+        invitation_id=conference.get_invitation_id('Paper_Recruitment', prefix=committee_id)
+        current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
+        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, current_invitation.web if current_invitation else None))

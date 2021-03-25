@@ -462,9 +462,11 @@ class Conference(object):
     def get_conference_groups(self):
         return self.groups
 
-    def get_paper_assignment_id(self, group_id, deployed=False):
+    def get_paper_assignment_id(self, group_id, deployed=False, invite=False):
         if deployed:
             return self.get_invitation_id('Assignment', prefix=group_id)
+        if invite:
+            return self.get_invitation_id('Invite_Assignment', prefix=group_id)
         return self.get_invitation_id('Proposed_Assignment', prefix=group_id)
 
 
@@ -1052,8 +1054,13 @@ class Conference(object):
             match_group = self.client.get_group(self.get_area_chairs_id())
         else:
             match_group = self.client.get_group(self.get_reviewers_id())
+            ## TODO: disable reassingment from the console
+            self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
+
+            invitation = self.invitation_builder.set_paper_recruitment_invitation(self, match_group.id)
+            invitation = self.webfield_builder.set_paper_recruitment_page(self, invitation)
+
         conference_matching = matching.Matching(self, match_group)
-        self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
         return conference_matching.deploy(assignment_title, overwrite)
 
 

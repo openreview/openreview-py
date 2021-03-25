@@ -305,6 +305,13 @@ class WebfieldBuilder(object):
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/no_name' + "';")
             return self.__update_invitation(invitation, content)
 
+    def set_paper_recruitment_page(self, conference, invitation):
+
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paperRecruitResponseWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
+            return self.__update_invitation(invitation, content)
 
     def set_author_page(self, conference, group):
 
