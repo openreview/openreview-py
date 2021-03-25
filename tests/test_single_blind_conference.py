@@ -140,7 +140,7 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_tag_name('ul')) == 0
 
-    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page):
+    def test_post_submissions(self, client, test_client, peter_client, selenium, request_page, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -148,9 +148,17 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         now = datetime.datetime.utcnow()
-        builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True, email_pcs=True, create_groups=True)
+        builder.set_submission_stage(
+            due_date = now + datetime.timedelta(minutes = 40),
+            public=True,
+            email_pcs=True,
+            create_groups=True,
+            withdrawn_submission_public=True,
+            withdrawn_submission_reveal_authors=True,
+            desk_rejected_submission_public=True,
+            desk_rejected_submission_reveal_authors=True)
+
         builder.has_area_chairs(True)
-        builder.set_override_homepage(True)
         conference = builder.get_result()
 
         invitation = client.get_invitation(conference.get_submission_id())
@@ -166,7 +174,7 @@ class TestSingleBlindConference():
         assert not content.get('archival_status')
 
         note = openreview.Note(invitation = invitation.id,
-            readers = ['everyone'],
+            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Test_User1'],
             content = {
@@ -180,7 +188,7 @@ class TestSingleBlindConference():
         note.content['pdf'] = url
         note = test_client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)
@@ -198,6 +206,12 @@ class TestSingleBlindConference():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'pc2@mail.com' in recipients
+
+        conference.setup_final_deadline_stage()
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+        assert submissions[0].readers == ['everyone']
 
         # Author user
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token)
@@ -298,16 +312,6 @@ class TestSingleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
-        conference.close_submissions()
-        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
-        submission = notes[0]
-        assert [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'] == submission.writers
-
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
-
-        assert len(selenium.find_elements_by_class_name('edit_button')) == 0
-        assert len(selenium.find_elements_by_class_name('trash_button')) == 0
-
     def test_open_comments(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -324,8 +328,9 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert len(reply_row.find_elements_by_class_name('btn')) == 2
         assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[1].text
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
@@ -343,7 +348,8 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
@@ -377,6 +383,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
@@ -410,7 +417,8 @@ class TestSingleBlindConference():
         request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
 
         reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 0
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
@@ -429,7 +437,7 @@ class TestSingleBlindConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
@@ -476,7 +484,7 @@ class TestSingleBlindConference():
         review_note = reviewer2_client.post_note(note)
         assert review_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 2
@@ -499,6 +507,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
@@ -645,4 +654,110 @@ class TestSingleBlindConference():
         assert tabs.find_element_by_id('areachair-status')
         assert tabs.find_element_by_id('reviewer-status')
 
+    def test_post_decisions(self, client, selenium, request_page):
 
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2018)
+        builder.set_conference_name('NIPS Workshop MLITS')
+        conference = builder.get_result()
+
+        conference.set_decision_stage(openreview.DecisionStage(public=True))
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Decision',
+            forum = submissions[0].id,
+            replyto = submissions[0].id,
+            readers = ['everyone'],
+            writers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs'],
+            signatures = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs'],
+            content = {
+                'title': 'Paper Decision',
+                'decision': 'Accept (Oral)'
+            }
+        )
+        note = client.post_note(note)
+
+        conference.post_decision_stage(release_notes_accepted=True)
+
+        submissions = conference.get_submissions()
+        assert len(submissions) == 1
+
+        valid_bibtex = '''@inproceedings{
+user2018new,
+title={New paper title},
+author={Test User and Peter Test and Andrew Mc},
+booktitle={NIPS Workshop MLITS},
+year={2018},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + submissions[0].forum + '''}
+}'''
+
+        assert submissions[0].content['_bibtex'] == valid_bibtex
+
+    def test_enable_camera_ready_revisions(self, client, test_client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2018)
+        builder.set_conference_name('NIPS Workshop MLITS')
+        conference = builder.get_result()
+
+        conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Camera_Ready_Revision',
+            forum = notes[0].id,
+            referent = notes[0].id,
+            readers = ['NIPS.cc/2018/Workshop/MLITS', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
+            writers = [conference.id, 'NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
+            signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
+            content = {
+                'title': 'New paper title Version 2',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com', 'melisa@mail.com'],
+                'authors': ['Test User', 'Peter Test', 'Andrew Mc', 'Melisa Bok'],
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
+            }
+        )
+
+        posted_note = test_client.post_note(note)
+        assert posted_note
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        valid_bibtex = '''@inproceedings{
+user2018new,
+title={New paper title Version 2},
+author={Test User and Peter Test and Andrew Mc and Melisa Bok},
+booktitle={NIPS Workshop MLITS},
+year={2018},
+url={https://openreview.net/forum?id='''
+
+        valid_bibtex = valid_bibtex + notes[0].forum + '''}
+}'''
+
+        assert notes[0].content['_bibtex'] == valid_bibtex
+        assert ['everyone'] == notes[0].readers

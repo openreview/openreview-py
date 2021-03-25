@@ -27,14 +27,16 @@ We have set up the venue based on the information that you provided here: {baseu
 
 You can use the following links to access the venue:
 
-Venue home page: {baseurl}/group?id={conference_id}
-Venue Program Chairs console: {baseurl}/group?id={program_chairs_id}
+- Venue home page: {baseurl}/group?id={conference_id}
+- Venue Program Chairs console: {baseurl}/group?id={program_chairs_id}
 
 If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
+If you have any questions, please refer to our FAQ: https://openreview.net/faq
 
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
 
 Best,
+
 
 The OpenReview Team
             '''.format(baseurl = FRONTEND_URL, noteId = forum.id, conference_id = conference.get_id(), program_chairs_id = conference.get_program_chairs_id())
@@ -59,7 +61,7 @@ The OpenReview Team
                 'values' : readers
             }
         },
-        signatures = [SUPPORT_GROUP]
+        signatures = ['~Super_User1']
     ))
 
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
@@ -116,22 +118,79 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'required': True,
                     'order': 2
                 },
+                'invitee_reduced_load': {
+                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. (For reviewer role only)',
+                    'values-regex': '[0-9]+',
+                    'default': ['1', '2', '3'],
+                    'required': False,
+                    'order': 3
+                },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
                     'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
                     'required': True,
-                    'order': 3
+                    'order': 4
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 4,
+                    'order': 5,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
+                    'order': 6,
+                    'required': True,
+                    'default': recruitment_email_body
+                }
+            }
+        },
+        signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
+    )
+
+    remind_recruitment_invitation = openreview.Invitation(
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Remind_Recruitment',
+        super = SUPPORT_GROUP + '/-/Remind_Recruitment',
+        invitees = readers,
+        reply = {
+            'forum': forum.id,
+            'replyto': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            },
+            'content': {
+                'title': {
+                    'value': 'Remind Recruitment',
+                    'required': True,
+                    'order': 1
+                },
+                'invitee_role': {
+                    'description': 'Please select the role of the invitees you would like to remind.',
+                    'value-radio': ['reviewer'],
+                    'default': 'reviewer',
+                    'required': True,
+                    'order': 2
+                },
+                'invitee_reduced_load': {
+                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. (For reviewer role only)',
+                    'values-regex': '[0-9]+',
+                    'default': ['1', '2', '3'],
+                    'required': False,
+                    'order': 3
+                },
+                'invitation_email_subject': {
+                    'value-regex': '.*',
+                    'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
+                    'order': 4,
+                    'required': True,
+                    'default': recruitment_email_subject
+                },
+                'invitation_email_content': {
+                    'value-regex': '[\\S\\s]{1,10000}',
+                    'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
                     'order': 5,
                     'required': True,
                     'default': recruitment_email_body
@@ -141,10 +200,15 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
         recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
+        remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
+        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
+            recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+            remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
 
     client.post_invitation(recruitment_invitation)
+    client.post_invitation(remind_recruitment_invitation)
 
     if 'Reviewer Bid Scores' in forum.content.get('Paper Matching', []):
         client.post_invitation(openreview.Invitation(
@@ -159,7 +223,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values' : readers
                 }
             },
-            signatures = [SUPPORT_GROUP]
+            signatures = ['~Super_User1']
         ))
 
     review_stage_content = None
@@ -197,13 +261,15 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'order': 25
             },
             'release_reviews_to_reviewers': {
-                'description': 'Should the reviews be visible immediately upon posting to paper\'s reviewers regardless of whether they have reviewed the paper or not? Based on your earlier selections, default is "Yes, reviews should be immediately revealed to the all paper\'s reviewers".',
+                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting? Based on your earlier selections, default is "Reviews should be immediately revealed to all reviewers".',
                 'value-radio': [
-                    'Yes, reviews should be immediately revealed to the all paper\'s reviewers',
-                    'No, reviews should be immediately revealed only to the reviewers who have already reviewed the paper'
+                    'Reviews should be immediately revealed to all reviewers',
+                    'Reviews should be immediately revealed to the paper\'s reviewers',
+                    'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                    'Review should not be revealed to any reviewer, except to the author of the review'
                 ],
                 'required': True,
-                'default': 'Yes, reviews should be immediately revealed to the all paper\'s reviewers',
+                'default': 'Reviews should be immediately revealed to all reviewers',
                 'order': 26
             },
             'email_program_chairs_about_reviews': {
@@ -242,10 +308,10 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             },
             'content': review_stage_content
         },
-        signatures = [SUPPORT_GROUP]
+        signatures = ['~Super_User1']
     ))
 
-    if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
         client.post_invitation(openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Meta_Review_Stage',
             super = SUPPORT_GROUP + '/-/Meta_Review_Stage',
@@ -258,24 +324,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values' : readers
                 }
             },
-            signatures = [SUPPORT_GROUP]
+            signatures = ['~Super_User1']
         ))
-
-    # revision_stage_invitation
-    client.post_invitation(openreview.Invitation(
-        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
-        super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',
-        invitees=readers,
-        reply={
-            'forum': forum.id,
-            'referent': forum.id,
-            'readers' : {
-                'description': 'The users who will be allowed to read the above content.',
-                'values' : readers
-            }
-        },
-        signatures=[SUPPORT_GROUP]
-    ))
 
     # decision_stage_invitation
     client.post_invitation(openreview.Invitation(
@@ -290,5 +340,91 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'values' : readers
             }
         },
-        signatures=[SUPPORT_GROUP]
+        signatures=['~Super_User1']
+    ))
+
+    comment_stage_content = None
+    if forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be private.':
+        comment_stage_content = {
+            'commentary_start_date': {
+                'description': 'When does official and/or public commentary begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 27
+            },
+            'commentary_end_date': {
+                'description': 'When does official and/or public commentary end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 28
+            },
+            'participants': {
+                'description': 'Select who should be allowed to post comments on submissions.',
+                'values-checkbox' : [
+                    'Program Chairs',
+                    'Paper Area Chairs',
+                    'Paper Reviewers',
+                    'Paper Submitted Reviewers',
+                    'Authors'
+                ],
+                'required': True,
+                'default': ['Program Chairs'],
+                'order': 29
+            },
+            'email_program_chairs_about_official_comments': {
+                'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
+                'value-radio': [
+                    'Yes, email PCs for each official comment made in the venue',
+                    'No, do not email PCs for each official comment made in the venue'
+                ],
+                'required': True,
+                'default': 'No, do not email PCs for each official comment made in the venue',
+                'order': 30
+            }
+        }
+
+    # comment_stage_invitation
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment_Stage',
+        super=SUPPORT_GROUP + '/-/Comment_Stage',
+        reply={
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            },
+            'content': comment_stage_content
+        },
+        signatures=['~Super_User1']
+    ))
+
+    # revision_stage_invitation
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Submission_Revision_Stage',
+        super=SUPPORT_GROUP + '/-/Submission_Revision_Stage',
+        invitees=readers,
+        reply={
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
+
+    # post submission stage
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Post_Submission',
+        super=SUPPORT_GROUP + '/-/Post_Submission',
+        invitees=readers,
+        reply={
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            }
+        },
+        signatures=['~Super_User1']
     ))

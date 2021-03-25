@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Author Console Webfield
 // ------------------------------------
@@ -16,25 +19,56 @@ var AUTHOR_NAME = 'Authors';
 function main() {
   // In the future this should not be necessary as the group's readers
   // will prevent unauthenticated users
-  if (!user || _.startsWith(user.id, 'guest_')) {
+  if (!user || !user.profile) {
     location.href = '/login?redirect=' + encodeURIComponent(
       location.pathname + location.search + location.hash
     );
+    return;
   }
 
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
   renderHeader();
 
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   load().then(renderContent).then(Webfield.ui.done);
+}
+
+function getReviews(forums) {
+  if (OFFICIAL_REVIEW_NAME) {
+    return Webfield.get('/notes', {
+      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_REVIEW_NAME,
+      forum: forums
+    }).then(function(result) {
+      return result.notes || [];
+    });
+  } else {
+    return $.Deferred().resolve([]);
+  }
+}
+
+function getMetaReviews(forums) {
+  if (OFFICIAL_META_REVIEW_NAME) {
+    return Webfield.get('/notes', {
+      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_META_REVIEW_NAME,
+      forum: forums
+    }).then(function(result) {
+      return result.notes || [];
+    });
+  } else {
+    return $.Deferred().resolve([]);
+  }
 }
 
 
 // Load makes all the API calls needed to get the data to render the page
 function load() {
-  var authorNotesP = Webfield.get('/notes', {
+  var notesP = Webfield.get('/notes', {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
     details: 'invitation,overwriting'
@@ -65,29 +99,10 @@ function load() {
     } else {
       return result.notes;
     }
+  }).then(function(notes) {
+    var forums = notes.map(function(n) { return n.id; });
+    return $.when(notes, getReviews(forums), getMetaReviews(forums));
   });
-
-  var officialReviewsP;
-  if (OFFICIAL_REVIEW_NAME) {
-    officialReviewsP = Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_REVIEW_NAME
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    officialReviewsP = $.Deferred().resolve([]);
-  }
-
-  var metaReviewsP;
-  if (OFFICIAL_META_REVIEW_NAME) {
-    metaReviewsP = Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_META_REVIEW_NAME
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    metaReviewsP = $.Deferred().resolve([]);
-  }
 
   var invitationsP = Webfield.get('/invitations', {
     regex: CONFERENCE_ID + '.*',
@@ -110,7 +125,7 @@ function load() {
     return result.invitations || [];
   });
 
-  return $.when(authorNotesP, officialReviewsP, metaReviewsP, invitationsP, edgeInvitationsP);
+  return $.when(notesP, invitationsP, edgeInvitationsP);
 }
 
 
@@ -140,7 +155,11 @@ function renderHeader() {
   });
 }
 
-function renderContent(authorNotes, officialReviews, metaReviews, invitations, edgeInvitations) {
+function renderContent(notes, invitations, edgeInvitations) {
+  console.log(notes);
+  var authorNotes = notes[0];
+  var officialReviews = notes[1];
+  var metaReviews = notes[2];
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',
@@ -228,10 +247,7 @@ function buildTableRow(note, completedReviews, metaReview) {
   var reviewsFormatted = [];
   completedReviews.forEach(function(review) {
     var reviewFormatted = Object.assign({ id: review.id, forum: note.id }, review.content);
-    var sig = view.prettyId(review.signatures[0], true);
-    reviewFormatted.signature = _.startsWith(sig, 'Paper')
-      ? sig.split(' ').pop().replace('AnonReviewer', 'Reviewer ')
-      : sig;
+    reviewFormatted.signature = view.prettyId(review.signatures[0], true);
     reviewFormatted.referrer = referrerUrl;
 
     // Need to parse rating and confidence strings into ints

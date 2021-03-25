@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Advanced venue homepage template
 //
@@ -7,6 +10,7 @@
 
 // Constants
 var CONFERENCE_ID = '';
+var PARENT_GROUP_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var WITHDRAWN_SUBMISSION_ID = '';
 var DESK_REJECTED_SUBMISSION_ID = '';
@@ -26,6 +30,11 @@ var sections = [];
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else if (PARENT_GROUP_ID.length){
+    OpenBanner.venueHomepageLink(PARENT_GROUP_ID);
+  }
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
   renderConferenceHeader();
@@ -82,7 +91,8 @@ function renderConferenceHeader() {
 }
 
 function getElementId(decision) {
-  return decision.replace(' ', '-')
+  if (!decision) return decision;
+  return decision.replace(/\W/g, '-')
     .replace('(', '')
     .replace(')', '')
     .toLowerCase();
@@ -93,12 +103,17 @@ function renderConferenceTabs() {
     heading: 'Your Consoles',
     id: 'your-consoles',
   });
+  var tabNames = new Set();
   for (var decision in DECISION_HEADING_MAP) {
-    sections.push({
-      heading: DECISION_HEADING_MAP[decision],
-      id: getElementId(decision)
-    });
+    tabNames.add(DECISION_HEADING_MAP[decision]);
   }
+  var tabArray = Array.from(tabNames);
+  tabArray.forEach(function(tabName) {
+    sections.push({
+      heading: tabName,
+      id: getElementId(tabName)
+    });
+  })
 
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
@@ -129,18 +144,24 @@ function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejected
 
   var papersByDecision = {};
   for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[getElementId(decision)] = [];
+    papersByDecision[getElementId(DECISION_HEADING_MAP[decision])] = [];
   }
 
   decisionNotes.forEach(function(d) {
-    var decisionKey = getElementId(d.content.decision);
-    if (notesDict[d.forum] && papersByDecision[decisionKey]) {
-      papersByDecision[decisionKey].push(notesDict[d.forum]);
+    var tabName = DECISION_HEADING_MAP[d.content.decision];
+    if (tabName) {
+      var decisionKey = getElementId(tabName);
+      if (notesDict[d.forum] && papersByDecision[decisionKey]) {
+        papersByDecision[decisionKey].push(notesDict[d.forum]);
+      }
     }
+
   });
 
-  papersByDecision['reject'] = papersByDecision['reject'].concat(withdrawnNotes.concat(deskRejectedNotes));
-
+  if (DECISION_HEADING_MAP['Reject']) {
+    var decisionKey = getElementId(DECISION_HEADING_MAP['Reject']);
+    papersByDecision[decisionKey] = papersByDecision[decisionKey].concat(withdrawnNotes.concat(deskRejectedNotes));
+  }
   return papersByDecision;
 }
 

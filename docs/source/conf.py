@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = u'OpenReview Python API'
-copyright = u'2018, OpenReview Team'
+project = u'OpenReview Python Client'
+copyright = u'2020, OpenReview Team'
 author = u'OpenReview Team'
 
 # The short X.Y version
@@ -72,7 +72,7 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-highlight_language = 'javascript'
+highlight_language = 'python'
 
 # -- Options for HTML output -------------------------------------------------
 

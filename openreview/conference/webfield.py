@@ -16,11 +16,33 @@ class WebfieldBuilder(object):
             merged_options[k] = default[k]
 
         for o in options:
-            merged_options[o] = options[o]
+            if options[o] is not None:
+                merged_options[o] = options[o]
 
         return merged_options
 
-    def set_landing_page(self, group, options = {}):
+    def __should_update(self, entity):
+        return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template'))
+
+    def __update_invitation(self, invitation, content):
+        current_invitation=self.client.get_invitation(invitation.id)
+        if self.__should_update(current_invitation):
+            current_invitation.web = content
+            return self.client.post_invitation(current_invitation)
+        else:
+            return current_invitation
+
+    def __update_group(self, group, content, signature=None):
+        current_group=self.client.get_group(group.id)
+        if signature:
+            current_group.signatures=[signature]
+        if self.__should_update(current_group):
+            current_group.web = content
+            return self.client.post_group(current_group)
+        else:
+            return current_group
+
+    def set_landing_page(self, group, parentGroup, options = {}):
         # sets webfield to show links to child groups
 
         children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
@@ -41,10 +63,11 @@ class WebfieldBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'templates/landingWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("var GROUP_ID = '';", "var GROUP_ID = '" + group.id + "';")
+                if parentGroup:
+                    content = content.replace("var PARENT_GROUP_ID = '';", "var PARENT_GROUP_ID = '" + parentGroup.id + "';")
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-                group.web = content
-                return self.client.post_group(group)
+                return self.__update_group(group, content)
 
         elif links:
             # parse existing webfield and add new links
@@ -52,11 +75,10 @@ class WebfieldBuilder(object):
             link_str = json.dumps(links)
             link_str = link_str[1:-1]
             start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
-            group.web = group.web[:start_pos] +link_str + ','+ group.web[start_pos:]
-            return self.client.post_group(group)
+            return self.__update_group(group, group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
 
 
-    def set_home_page(self, group, layout, options = {}):
+    def set_home_page(self, conference, group, layout, options = {}):
 
         default_header = {
             'title': group.id,
@@ -68,7 +90,7 @@ class WebfieldBuilder(object):
             'deadline': 'TBD'
         }
 
-        header = self.__build_options(default_header, options)
+        header = self.__build_options(default_header, conference.get_homepage_options())
 
         template_name = 'simpleConferenceWebfield.js'
 
@@ -81,26 +103,23 @@ class WebfieldBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'templates/' + template_name)) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + group.id + "';")
+            content = content.replace("var PARENT_GROUP_ID = '';", "var PARENT_GROUP_ID = '" + options.get('parent_group_id', '')+ "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + options.get('reviewers_name', '') + "';")
-            content = content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + options.get('area_chairs_name', '') + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + options.get('submission_id', '') + "';")
-            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + options.get('blind_submission_id') + "';")
-            content = content.replace("var WITHDRAWN_INVITATION = '';", "var WITHDRAWN_INVITATION = '" + options.get('withdrawn_invitation', '') + "';")
+            content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            content = content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var DECISION_INVITATION_REGEX = '';", "var DECISION_INVITATION_REGEX = '" + options.get('decision_invitation_regex', '') + "';")
-            content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + options.get('area_chairs_id', '') + "';")
-            content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + options.get('reviewers_id', '') + "';")
-            content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + options.get('program_chairs_id', '') + "';")
-            content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + options.get('authors_id', '') + "';")
+            content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+            content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
+            content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+            content = content.replace("var AUTHORS_ID = '';", "var AUTHORS_ID = '" + conference.get_authors_id() + "';")
             content = content.replace("var DECISION_HEADING_MAP = {};", "var DECISION_HEADING_MAP = " + json.dumps(options.get('decision_heading_map', '{}'), sort_keys=True) + ";")
-            content = content.replace("var WITHDRAWN_SUBMISSION_ID = '';", "var WITHDRAWN_SUBMISSION_ID = '" + options.get('withdrawn_submission_id', '') + "';")
-            content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + options.get('desk_rejected_submission_id', '') + "';")
-            content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if options.get('public', False) else "var PUBLIC = false;")
+            content = content.replace("var WITHDRAWN_SUBMISSION_ID = '';", "var WITHDRAWN_SUBMISSION_ID = '" + conference.submission_stage.get_withdrawn_submission_id(conference) + "';")
+            content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + conference.submission_stage.get_desk_rejected_submission_id(conference) + "';")
+            content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if conference.submission_stage.public else "var PUBLIC = false;")
 
-            current_group = self.client.get_group(group.id)
-            current_group.web = content
-            current_group.signatures = [group.id]
-            return self.client.post_group(current_group)
+            return self.__update_group(group, content, conference.id)
 
     def set_expertise_selection_page(self, conference, invitation):
 
@@ -113,7 +132,7 @@ class WebfieldBuilder(object):
                         <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
                         <br>
                         <br>
-                        Your previously authored papers from selected conferences were imported automatically from <a href=https://dblp.org>DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process.
+                        Your previously authored papers from selected conferences were imported automatically from <a href=https://dblp.org>DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your <a href=/profile?mode=edit>OpenReview profile</a> and then clicking on 'Add DBLP Papers to Profile'.
                 </p>
                 <br>
                     Papers not automatically included as part of this import process can be uploaded by using the <b>Upload</b> button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
@@ -133,18 +152,22 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var EXPERTISE_BID_ID = '';", "var EXPERTISE_BID_ID = '" + conference.get_expertise_selection_id() + "';")
 
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
-    def set_bid_page(self, conference, invitation, group_id, request_count, instructions):
+    def set_bid_page(self, conference, invitation, stage):
 
         sorted_tip = ''
-        if conference.bid_stage.use_affinity_score:
+        if stage.score_ids:
             sorted_tip = '''
             <li>
                 Papers are sorted based on keyword similarity with the papers
                 that you provided in the Expertise Selection Interface.
             </li>'''
+            if conference.get_invitation_id(name='TPMS_Score', prefix=stage.committee_id) in stage.score_ids:
+                sorted_tip += '''
+                <li>
+                    Papers can be also sorted by TPMS score, change the sorting criteria using the 'Sort By' dropdown.
+                </li>'''
 
         default_instructions = '''
             <p class="dark"><strong>Instructions:</strong></p>
@@ -180,16 +203,16 @@ class WebfieldBuilder(object):
             </ul>
             <br>'''
 
-        instructions_html = instructions if instructions else default_instructions
+        instructions_html = stage.instructions if stage.instructions else default_instructions
 
-        default_header = {
-            'title': conference.get_short_name() + ' Bidding Console',
-            'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=request_count)
+        header = {
+            'title': stage.committee_id.split('/')[-1].replace('_', ' ') + ' Bidding Console',
+            'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=stage.request_count)
         }
 
-        header = self.__build_options(default_header, conference.get_bidpage_header())
+        template = 'templates/profileBidWebfield.js' if stage.committee_id == conference.get_senior_area_chairs_id() else 'templates/paperBidWebfield.js'
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/bidWebfield.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), template)) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
@@ -197,13 +220,15 @@ class WebfieldBuilder(object):
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + invitation.id + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
-            content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(group_id) + "';")
+            content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(stage.committee_id) + "';")
 
-            if conference.bid_stage.use_affinity_score:
-                content = content.replace("var AFFINITY_SCORE_ID = '';", "var AFFINITY_SCORE_ID = '" + conference.get_affinity_score_id(group_id) + "';")
+            if stage.score_ids:
+                content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
 
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            if stage.committee_id == conference.get_senior_area_chairs_id():
+                content = content.replace("var PROFILE_GROUP_ID = '';", "var PROFILE_GROUP_ID = '" + conference.get_area_chairs_id() + "';")
+
+            return self.__update_invitation(invitation, content)
 
     def set_recommendation_page(self, conference, invitation, assignment_title, score_ids, conflict_id, total_recommendations):
 
@@ -233,25 +258,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
 
-            invitation.web = content
-            return self.client.post_invitation(invitation)
-
-    def set_paper_ranking_page(self, conference, invitation, group_name):
-
-        header = {}
-        with open(os.path.join(os.path.dirname(__file__), 'templates/paperRankingWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var PAPER_RANKING_ID = '';", "var PAPER_RANKING_ID = '" + invitation.id + "';")
-            content = content.replace("var GROUP_NAME = '';", "var GROUP_NAME = '" + group_name + "';")
-
-            if group_name == 'Area Chairs':
-                content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/Area_Chairs';")
-            else:
-                content = content.replace("var WILDCARD = '';", "var WILDCARD = '" + conference.get_id() + "/Paper.*/AnonReviewer.*';")
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
     def set_reduced_load_page(self, conference_id, invitation, options = {}):
 
@@ -271,10 +278,9 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            return self.__update_invitation(invitation, content)
 
-    def set_recruit_page(self, conference_id, invitation, options = {}):
+    def set_recruit_page(self, conference_id, invitation, options = {}, reviewers_name='Reviewers'):
 
         default_header = {
             'title': conference_id,
@@ -292,9 +298,12 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var REDUCED_LOAD_INVITATION_NAME = '';", "var REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load';")
-            invitation.web = content
-            return self.client.post_invitation(invitation)
+            if reviewers_name == 'Reviewers':
+                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/Reduced_Load' + "';")
+            else:
+                ## Reduce load is disabled, so we should set an invalid invitation
+                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/no_name' + "';")
+            return self.__update_invitation(invitation, content)
 
 
     def set_author_page(self, conference, group):
@@ -307,7 +316,9 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/authorWebfield.js')) as f:
+        template_file = 'legacyAuthorWebfield' if conference.legacy_anonids else 'authorWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
@@ -315,8 +326,7 @@ class WebfieldBuilder(object):
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
 
     def set_reviewer_page(self, conference, group):
 
@@ -332,7 +342,9 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_reviewerpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/reviewerWebfield.js')) as f:
+        template_file = 'legacyReviewerWebfield' if conference.legacy_anonids else 'reviewerWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
@@ -343,8 +355,8 @@ class WebfieldBuilder(object):
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load) + ";")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
+
 
     def set_area_chair_page(self, conference, group):
 
@@ -363,7 +375,9 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_areachairpage_header())
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/areachairWebfield.js')) as f:
+        template_file = 'legacyAreachairWebfield' if conference.legacy_anonids else 'areachairWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
@@ -379,8 +393,43 @@ class WebfieldBuilder(object):
             if conference.use_secondary_area_chairs:
                 content = content.replace("var SECONDARY_AREA_CHAIR_NAME = '';", "var SECONDARY_AREA_CHAIR_NAME = '" + conference.secondary_area_chairs_name + "';")
                 content = content.replace("var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';", "var OFFICIAL_SECONDARY_META_REVIEW_NAME = 'Secondary_Meta_Review';")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
+
+
+    def set_senior_area_chair_page(self, conference, group):
+
+        senior_area_chair_name = conference.senior_area_chairs_name
+
+        default_header = {
+            'title': senior_area_chair_name.replace('_', ' ') + ' Console',
+            'instructions': '<p class="dark">This page provides information and status \
+            updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
+            progresses, so please check back frequently.</p>',
+            'schedule': '<h4>Coming Soon</h4>\
+            <p>\
+                <em><strong>Please check back later for updates.</strong></em>\
+            </p>'
+        }
+
+        header = self.__build_options(default_header, conference.get_areachairpage_header())
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/seniorAreaChairWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var AREA_CHAIR_NAME = '';", "var AREA_CHAIR_NAME = '" + conference.area_chairs_name + "';")
+            content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + conference.reviewers_name + "';")
+            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+            content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
+            content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
+            content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
+            if conference.use_secondary_area_chairs:
+                content = content.replace("var SECONDARY_AREA_CHAIR_NAME = '';", "var SECONDARY_AREA_CHAIR_NAME = '" + conference.secondary_area_chairs_name + "';")
+                content = content.replace("var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';", "var OFFICIAL_SECONDARY_META_REVIEW_NAME = 'Secondary_Meta_Review';")
+            return self.__update_group(group, content)
 
     def set_program_chair_page(self, conference, group):
 
@@ -399,7 +448,9 @@ class WebfieldBuilder(object):
         if conference.get_submissions():
             submission_id = conference.get_blind_submission_id()
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/programchairWebfield.js')) as f:
+        template_file = 'legacyProgramchairWebfield' if conference.legacy_anonids else 'programchairWebfield'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
             content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
@@ -413,8 +464,7 @@ class WebfieldBuilder(object):
             content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
             if conference.comment_stage:
                 content = content.replace("var COMMENT_NAME = '';", "var COMMENT_NAME = '" + conference.comment_stage.official_comment_name + "';")
-            if conference.bid_stage:
-                content = content.replace("var BID_NAME = '';", "var BID_NAME = '" + conference.bid_stage.name + "';")
+            content = content.replace("var BID_NAME = '';", "var BID_NAME = 'Bid';")
             content = content.replace("var RECOMMENDATION_NAME = '';", "var RECOMMENDATION_NAME = '" + conference.recommendation_name + "';")
             content = content.replace("var SCORES_NAME = '';", "var SCORES_NAME = 'Affinity_Score';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
@@ -423,11 +473,13 @@ class WebfieldBuilder(object):
             content = content.replace("var ENABLE_REVIEWER_REASSIGNMENT = false;", "var ENABLE_REVIEWER_REASSIGNMENT = true;" if conference.enable_reviewer_reassignment else "var ENABLE_REVIEWER_REASSIGNMENT = false;")
             if conference.use_area_chairs:
                 content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+            if conference.use_senior_area_chairs:
+                content = content.replace("var SENIOR_AREA_CHAIRS_ID = '';", "var SENIOR_AREA_CHAIRS_ID = '" + conference.get_senior_area_chairs_id() + "';")
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
             if conference.request_form_id:
                 content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
-            group.web = content
-            return self.client.post_group(group)
+            return self.__update_group(group, content)
+
 
     def edit_web_value(self, group, global_name, new_value):
         # replaces a value (ex. true)

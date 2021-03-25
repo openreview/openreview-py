@@ -25,7 +25,6 @@ class TestECCVConference():
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.set_conference_short_name('ECCV 2020')
-        builder.set_override_homepage(True)
         builder.has_area_chairs(True)
         builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
         builder.set_homepage_header({
@@ -239,10 +238,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             },
             remove_fields=['keywords'],
             withdrawn_submission_public=False,
-            withdrawn_submission_author_anonymous=True,
+            withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=True,
             desk_rejected_submission_public=False,
-            desk_rejected_submission_author_anonymous=True)
+            desk_rejected_submission_reveal_authors=False)
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
@@ -269,7 +268,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage(due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, use_affinity_score=True, instructions = instructions, ac_request_count=60)
+        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions)
+        builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
         return conference
@@ -282,6 +283,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
@@ -304,14 +306,14 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'test_reviewer_eccv@mail.com' in result.members
         assert 'mohit+1@mail.com' in result.members
 
-        messages = client.get_messages(to = 'mohit+1@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'mohit+1@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as a reviewer' in text
+        assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as reviewer' in text
 
         # Test to check that a user is not able to accept/decline if they are not a part of the invited group
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         # Removing reviewer from the invited group
         invited_group = client.remove_members_from_group('thecvf.com/ECCV/2020/Conference/Reviewers/Invited', 'mohit+1@mail.com')
@@ -369,10 +371,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             }
         ))
 
-        messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = 'thecvf.com/ECCV/2020/Conference: Invitation to Review')
+        messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3000')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group(conference.get_reviewers_id())
@@ -399,7 +401,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
 By default, we consider all of these papers to formulate your expertise. Please click on "Exclude" for papers that you do NOT want to be used to represent your expertise.
 
-Your previously authored papers from selected conferences were imported automatically from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process.
+Your previously authored papers from selected conferences were imported automatically from DBLP.org. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your OpenReview profile and then clicking on 'Add DBLP Papers to Profile'.
 
 Papers not automatically included as part of this import process can be uploaded by using the Upload button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.
 
@@ -490,12 +492,12 @@ Please contact info@openreview.net with any questions or concerns about this int
             )
             test_client.post_note(note)
 
-    def test_submission_edit(self, conference, client, test_client):
+    def test_submission_edit(self, conference, client, helpers, test_client):
 
         existing_notes = client.get_notes(invitation = conference.get_submission_id())
         assert len(existing_notes) == 5
 
-        time.sleep(2)
+        helpers.await_queue()
         note = existing_notes[0]
         process_logs = client.get_process_logs(id = note.id)
         assert len(process_logs) == 1
@@ -509,7 +511,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         note.content['title'] = 'I have been updated'
         client.post_note(note)
 
-        time.sleep(2)
+        helpers.await_queue()
         note = client.get_note(note.id)
 
         process_logs = client.get_process_logs(id = note.id)
@@ -534,7 +536,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_revise_additional_files(self, conference, client, test_client):
 
-        conference.create_blind_submissions(force=True, hide_fields=['pdf', 'supplementary_material'])
+        conference.setup_post_submission_stage(force=True, hide_fields=['pdf', 'supplementary_material'])
 
         submissions = conference.get_submissions()
         assert submissions
@@ -638,12 +640,12 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_recommend_reviewers(self, conference, test_client, helpers, selenium, request_page):
 
-        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV_One')
-        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV_Two')
-        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV_Three')
-        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV_Four')
-        ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV_One')
-        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV_Two')
+        r1_client = helpers.create_user('reviewer1@fb.com', 'Reviewer', 'ECCV One')
+        r2_client = helpers.create_user('reviewer2@google.com', 'Reviewer', 'ECCV Two')
+        r3_client = helpers.create_user('reviewer3@umass.edu', 'Reviewer', 'ECCV Three')
+        r4_client = helpers.create_user('reviewer4@mit.edu', 'Reviewer', 'ECCV Four')
+        ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
+        ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
 
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
@@ -668,6 +670,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
 
         conference.setup_matching(
+            build_conflicts=True,
             affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
         )
@@ -685,7 +688,7 @@ Please contact info@openreview.net with any questions or concerns about this int
                 writer.writerow([submission.number, 'ac1@eccv.org', round(random.random(), 2)])
                 writer.writerow([submission.number, 'ac2@eccv.org', round(random.random(), 2)])
 
-        conference.setup_matching(is_area_chair=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
 
         request_page(selenium, url='http://localhost:3030/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token)
@@ -883,7 +886,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         hide = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict'
         referrer = '[Return%20Instructions](/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation)'
 
-        url = 'http://localhost:3030/edge/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
+        url = 'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&referrer={referrer}&maxColumns=2'.format(start=start, edit=edit, browse=browse, hide=hide, referrer=referrer)
 
         request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation', ac1_client.token)
         panel = selenium.find_element_by_id('notes')
@@ -919,10 +922,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             weight = 1
         ))
 
-    def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page):
+    def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
-        conference.close_submissions()
-        conference.setup_post_submission_stage()
+        conference.setup_post_submission_stage(force=True)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 5
@@ -948,7 +950,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         posted_note = pc_client.post_note(desk_reject_note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = posted_note.id)
         assert logs
@@ -985,9 +987,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 5
 
-    def test_withdraw_submission(self, conference, client, test_client, selenium, request_page):
+    def test_withdraw_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
-        conference.setup_post_submission_stage()
+        conference.setup_post_submission_stage(force=True)
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 4
@@ -1013,7 +1015,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         posted_note = test_client.post_note(withdrawal_note)
         assert posted_note
 
-        time.sleep(2)
+        helpers.await_queue()
 
         logs = client.get_process_logs(id = posted_note.id)
         assert logs
@@ -1026,7 +1028,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].content['authors'] == ['Anonymous']
-        assert withdrawn_notes[0].content['authorids'] == ['thecvf.com/ECCV/2020/Conference/Paper4/Authors']
+        assert withdrawn_notes[0].content['authorids'] == ['Anonymous']
         assert withdrawn_notes[0].readers == [
             'thecvf.com/ECCV/2020/Conference/Paper4/Authors',
             'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
@@ -1046,7 +1048,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 4
 
-    def test_review_stage(self, conference, client, test_client, selenium, request_page):
+    def test_review_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         conference.set_assignment('~AreaChair_ECCV_One1', 1, is_area_chair=True)
         conference.set_assignment('~AreaChair_ECCV_One1', 2, is_area_chair=True)
@@ -1142,7 +1144,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1182,7 +1184,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
 
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1205,7 +1207,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         ## Authors
         assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
 
-    def test_comment_stage(self, conference, client, test_client, selenium, request_page):
+    def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True))
 
@@ -1226,12 +1228,12 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
         assert comment_note
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = comment_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[ECCV 2020] Comment posted to a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
+        messages = client.get_messages(subject = '[ECCV 2020] AnonReviewer2 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac1@eccv.org' in recipients
@@ -1331,7 +1333,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert not selenium.find_elements_by_class_name('tag-widget')
 
         now = datetime.datetime.utcnow()
-        conference.open_paper_ranking(due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
+        conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
 
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
@@ -1396,7 +1399,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
             )
 
-    def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page):
+    def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         blinded_notes = conference.get_submissions()
 
@@ -1431,7 +1434,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
         assert rebuttal_note
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = rebuttal_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1452,7 +1455,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert 'reviewer1@fb.com' in recipients
         assert 'ac1@eccv.org' in recipients
 
-    def test_revise_review_stage(self, conference, client, test_client, selenium, request_page):
+    def test_revise_review_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
         blinded_notes = conference.get_submissions()
 
@@ -1510,7 +1513,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             }
         ))
         assert review_revision_note
-        time.sleep(2)
+        helpers.await_queue()
         process_logs = client.get_process_logs(id = review_revision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -1547,7 +1550,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 'description': 'Justification of the rating. Max length: 5000',
                 'required': False
             }
-        }, remove_fields = ['title', 'novelty', 'soundness']))
+        }, remove_fields = ['review_quality']))
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
 
@@ -1571,8 +1574,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             replyto=reviews[1].id,
             invitation=reviews[1].signatures[0] + '/-/Review_Rating',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted'],
+            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs'],
             writers=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
             signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
             content={

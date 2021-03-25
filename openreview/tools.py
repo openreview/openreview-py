@@ -53,7 +53,9 @@ def get_group(client, id):
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         error = e.args[0][0]
-        if not error.startswith('Group Not Found'):
+        if isinstance(error, str) and error.startswith('Group Not Found'):
+            return None
+        else:
             raise e
     return group
 
@@ -144,12 +146,13 @@ def create_profile(client, email, first, last, middle=None, allow_duplicates=Fal
                         'last': last,
                         'username': tilde_id
                     }
-                ]
+                ],
+                'homepage': 'http://no_url'
             }
             client.post_group(tilde_group)
             client.post_group(email_group)
 
-            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content))
+            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content, signatures=[tilde_id]))
 
             return profile
 
@@ -201,7 +204,7 @@ def create_authorid_profiles(client, note, print=print):
                             created_profiles.append(profile)
                             print('{}: profile created with id {}'.format(note.id, profile.id))
                         except openreview.OpenReviewException as e:
-                            print('Error while creating profile for note id {}, author {author_id}, '.format(note.id, e))
+                            print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
                     else:
                         print('{}: invalid author name {}'.format(note.id, author_name))
         else:
@@ -603,15 +606,15 @@ def iterget_tags(client, id = None, invitation = None, forum = None, signature =
     """
     params = {}
 
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if forum != None:
+    if forum is not None:
         params['forum'] = forum
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if signature != None:
+    if signature is not None:
         params['signature'] = signature
-    if tag != None:
+    if tag is not None:
         params['tag'] = tag
 
     return iterget(client.get_tags, **params)
@@ -623,15 +626,15 @@ def iterget_edges (client,
                    label = None,
                    limit = None):
     params = {}
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if head != None:
+    if head is not None:
         params['head'] = head
-    if tail != None:
+    if tail is not None:
         params['tail'] = tail
-    if label != None:
+    if label is not None:
         params['label'] = label
-    if limit != None:
+    if limit is not None:
         params['limit'] = limit
     return iterget(client.get_edges, **params)
 
@@ -715,31 +718,31 @@ def iterget_notes(client,
     :rtype: iterget
     """
     params = {}
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if paperhash != None:
+    if paperhash is not None:
         params['paperhash'] = paperhash
-    if forum != None:
+    if forum is not None:
         params['forum'] = forum
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if replyto != None:
+    if replyto is not None:
         params['replyto'] = replyto
-    if tauthor != None:
+    if tauthor is not None:
         params['tauthor'] = tauthor
-    if signature != None:
+    if signature is not None:
         params['signature'] = signature
-    if writer != None:
+    if writer is not None:
         params['writer'] = writer
     if trash == True:
         params['trash']=True
-    if number != None:
+    if number is not None:
         params['number'] = number
-    if mintcdate != None:
+    if mintcdate is not None:
         params['mintcdate'] = mintcdate
-    if content != None:
+    if content is not None:
         params['content'] = content
-    if details != None:
+    if details is not None:
         params['details'] = details
     params['sort'] = sort
 
@@ -763,11 +766,11 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
     """
 
     params = {}
-    if referent != None:
+    if referent is not None:
         params['referent'] = referent
-    if invitation != None:
+    if invitation is not None:
         params['invitation'] = invitation
-    if mintcdate != None:
+    if mintcdate is not None:
         params['mintcdate'] = mintcdate
 
     return iterget(client.get_references, **params)
@@ -812,37 +815,37 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
     """
 
     params = {}
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if invitee != None:
+    if invitee is not None:
         params['invitee'] = invitee
-    if regex != None:
+    if regex is not None:
         params['regex'] = regex
-    if tags != None:
+    if tags is not None:
         params['tags'] = tags
-    if minduedate != None:
+    if minduedate is not None:
         params['minduedate'] = minduedate
-    if duedate != None:
+    if duedate is not None:
         params['duedate'] = duedate
-    if pastdue != None:
+    if pastdue is not None:
         params['pastdue'] = pastdue
-    if details != None:
+    if details is not None:
         params['details'] = details
-    if replytoNote != None:
+    if replytoNote is not None:
         params['replytoNote'] = replytoNote
-    if replyForum != None:
+    if replyForum is not None:
         params['replyForum'] = replyForum
-    if signature != None:
+    if signature is not None:
         params['signature'] = signature
-    if note != None:
+    if note is not None:
         params['note'] = note
-    if replyto != None:
+    if replyto is not None:
         params['replyto'] = replyto
     params['expired'] = expired
 
     return iterget(client.get_invitations, **params)
 
-def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None):
+def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None, web = None):
     """
     Returns an iterator over groups filtered by the provided parameters ignoring API limit.
 
@@ -858,22 +861,26 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
     :type host: str, optional
     :param signatory: a Group ID. If provided, returns Groups whose signatory field contains the given Group ID.
     :type signatory: str, optional
+    :param web: Groups that contain a web field value
+    :type web: bool, optional
 
     :return: Iterator over Groups filtered by the provided parameters
     :rtype: iterget
     """
 
     params = {}
-    if id != None:
+    if id is not None:
         params['id'] = id
-    if regex != None:
+    if regex is not None:
         params['regex'] = regex
-    if member != None:
+    if member is not None:
         params['member'] = member
-    if host != None:
+    if host is not None:
         params['host'] = host
-    if signatory != None:
+    if signatory is not None:
         params['signatory'] = signatory
+    if web is not None:
+        params['web'] = web
 
     return iterget(client.get_groups, **params)
 
@@ -916,14 +923,12 @@ def next_individual_suffix(unassigned_individual_groups, individual_groups, indi
         anonreviewer_suffix = anonreviewer_group.id.split('/')[-1]
         return anonreviewer_suffix
     elif len(individual_groups) > 0:
-        anonreviewer_group_ids = [g.id for g in individual_groups]
+        anonreviewer_group_ids = [int(g.id.split(individual_label)[1]) for g in individual_groups]
 
         # reverse=True lets us get the AnonReviewer group with the highest index
         highest_anonreviewer_id = sorted(anonreviewer_group_ids, reverse=True)[0]
 
-        # find the number of the highest anonreviewer group
-        highest_anonreviewer_index = highest_anonreviewer_id[-1]
-        return '{}{}'.format(individual_label, int(highest_anonreviewer_index)+1)
+        return '{}{}'.format(individual_label, highest_anonreviewer_id+1)
     else:
         return '{}1'.format(individual_label)
 
@@ -1322,11 +1327,10 @@ def recruit_reviewer(client, user, first,
         decline_url = url + "No"
     )
 
-    # send the email through openreview
-    response = client.post_message(recruit_message_subj, [user], personalized_message)
+    client.add_members_to_group(reviewers_invited_id, [user])
 
-    if 'groups' in response and response['groups']:
-        client.add_members_to_group(reviewers_invited_id, [user])
+    # send the email through openreview
+    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id)
 
     if verbose:
         print("Sent to the following: ", response)

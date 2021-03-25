@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Public Commentary', 'Paper Matching']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -24,8 +24,8 @@ class VenueStages():
         }
         revision_content['remove_submission_options'] = {
             'order': 19,
-            'values-dropdown':  ['keywords', 'pdf', 'TL;DR'],
-            'description': 'Fields to remove from the default form: keywords, pdf, TL;DR'
+            'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
+            'description': 'Fields to remove from the default form: abstract, keywords, pdf, TL;DR'
         }
         revision_content['homepage_override'] = {
             'order': 20,
@@ -49,7 +49,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-regex': '~.*',
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*'
@@ -92,7 +92,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-regex': '~.*',
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*'
@@ -126,7 +126,7 @@ class VenueStages():
                 'order': 25
             },
             'release_reviews_to_reviewers': {
-                'description': 'Should the reviews be visible to the reviewers',
+                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting?',
                 'value-radio': [
                     'Reviews should be immediately revealed to all reviewers',
                     'Reviews should be immediately revealed to the paper\'s reviewers',
@@ -176,12 +176,77 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
                 },
                 'content': review_stage_content
+            }
+        ))
+
+    def setup_comment_stage(self):
+
+        comment_stage_content = {
+            'commentary_start_date': {
+                'description': 'When does official and/or public commentary begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 27
+            },
+            'commentary_end_date': {
+                'description': 'When does official and/or public commentary end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 28
+            },
+            'participants': {
+                'description': 'Select who should be allowed to post comments on submissions.',
+                'values-checkbox' : [
+                    'Program Chairs',
+                    'Paper Area Chairs',
+                    'Paper Reviewers',
+                    'Paper Submitted Reviewers',
+                    'Authors',
+                    'Public (anonymously)',
+                    'Public (non-anonymously)'
+                ],
+                'required': True,
+                'default': ['Program Chairs'],
+                'order': 29
+            },
+            'email_program_chairs_about_official_comments': {
+                'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
+                'value-radio': [
+                    'Yes, email PCs for each official comment made in the venue',
+                    'No, do not email PCs for each official comment made in the venue'
+                ],
+                'required': True,
+                'default': 'No, do not email PCs for each official comment made in the venue',
+                'order': 30
+            }
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Comment_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        '{content["program_chair_emails"]}',
+                        self.venue_request.support_group.id
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                },
+                'content': comment_stage_content
             }
         ))
 
@@ -231,7 +296,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -292,7 +357,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
@@ -338,7 +403,7 @@ class VenueStages():
                 'default': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'order': 32
             },
-            'release_decision_to_reviewers': {
+            'release_decisions_to_reviewers': {
                 'description': 'Should the decisions be immediately revealed to paper\'s reviewers? Default is "No, decisions should not be immediately revealed to the paper\'s reviewers"',
                 'value-radio': [
                     'Yes, decisions should be immediately revealed to the paper\'s reviewers',
@@ -348,7 +413,7 @@ class VenueStages():
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'order': 33
             },
-            'notify_to_authors': {
+            'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
                 'value-radio': [
                     'Yes, send an email notification to the authors',
@@ -376,7 +441,7 @@ class VenueStages():
                     ]
                 },
                 'writers': {
-                    'values-copied': ['{signatures}'],
+                    'values':[],
                 },
                 'signatures': {
                     'values-regex': '~.*|' + self.venue_request.support_group.id
@@ -384,7 +449,50 @@ class VenueStages():
                 'content': decision_stage_content
             }
         ))
+    def setup_post_decision_stage(self):
+        post_decision_content = {
+            'release_submissions': {
+                'description': 'Would you like to release submissions to the public?',
+                'value-radio': [
+                    'Release all submissions to the public',
+                    'Release only accepted submission to the public',
+                    'No, I don\'t want to release any submissions'],
+                'required': True
+            },
+            'reveal_authors': {
+                'description': 'Would you like to release author identities of submissions to the public?',
+                'value-radio': [
+                    'Reveal author identities of all submissions to the public',
+                    'Reveal author identities of only accepted submissions to the public',
+                    'No, I don\'t want to reveal any author identities.'],
+                'required': True
+            }
+        }
 
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Post_Decision_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': post_decision_content
+            }
+        ))
 
 class VenueRequest():
 
@@ -412,21 +520,26 @@ class VenueRequest():
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
+        self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
         self.setup_venue_comments()
         self.setup_venue_deployment()
+        self.setup_venue_post_submission()
         self.setup_venue_recruitment()
+        self.setup_venue_remind_recruitment()
 
         # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
         self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
         self.review_stage_super_invitation = venue_stages.setup_review_stage()
+        self.comment_stage_super_invitation = venue_stages.setup_comment_stage()
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
         self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
+        self.post_decision_stage_invitation = venue_stages.setup_post_decision_stage()
 
     def setup_request_form(self):
 
@@ -472,23 +585,37 @@ class VenueRequest():
                     'Yes, our venue has Area Chairs',
                     'No, our venue does not have Area Chairs'
                 ],
-                'required': True,
+                'required': False,
                 'order': 7
+            },
+            'senior_area_chairs': {
+                'description': 'Does your venue have Senior Area Chairs?, you need to have Area Chairs selected in order to select Senior Area Chairs option.',
+                'value-radio': [
+                    'Yes, our venue has Senior Area Chairs',
+                    'No, our venue does not have Senior Area Chairs'
+                ],
+                'required': False,
+                'order': 8
             },
             'Submission Start Date': {
                 'description': 'When would you (ideally) like to have your OpenReview submission portal opened? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Skip this if only requesting paper matching service)',
                 'value-regex': '.*',
-                'order': 8
+                'order': 9
+            },
+            'abstract_registration_deadline': {
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'description': 'By when do authors need to register their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59) (Skip this if there is no abstract registration deadline)',
+                'order': 9
             },
             'Submission Deadline': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when do authors need to submit their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
-                'order': 9
+                'order': 10
             },
             'Venue Start Date': {
                 'description': 'What date does the venue start? Please use the following format: YYYY/MM/DD (e.g. 2019/01/31)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 10,
+                'order': 11,
                 'required': True
             },
             'Location': {
@@ -497,17 +624,14 @@ class VenueRequest():
                 'order': 16
             },
             'Paper Matching': {
-                'description': 'Choose options for assigning papers to reviewers. If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type.',
+                'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, do not select any options.',
                 'values-checkbox': [
-                    'Organizers will assign papers manually',
                     'Reviewer Bid Scores',
                     'Reviewer Recommendation Scores',
-                    'OpenReview Affinity',
-                    'TPMS'
+                    'OpenReview Affinity'
                 ],
                 'order': 17,
-                'required': True,
-                'default': ['OpenReview Affinity']
+                'required': False
             },
             'Author and Reviewer Anonymity': {
                 'description': 'What policy best describes your anonymity policy? (If none of the options apply then please describe your request below)',
@@ -519,6 +643,21 @@ class VenueRequest():
                 'order': 18,
                 'required': True
             },
+            'reviewer_identity': {
+                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the reviewers\' real identities.',
+                'values-checkbox': [
+                    'Program Chairs',
+                    'All Senior Area Chairs',
+                    'Assigned Senior Area Chair',
+                    'All Area Chairs',
+                    'Assigned Area Chair',
+                    'All Reviewers',
+                    'Assigned Reviewers'
+                ],
+                'default': ['Program Chairs'],
+                'order': 19,
+                'required': False
+            },
             'Open Reviewing Policy': {
                 'description': 'Should submitted papers and/or reviews be visible to the public? (This is independent of anonymity policy)',
                 'value-radio': [
@@ -526,32 +665,23 @@ class VenueRequest():
                     'Submissions should be public, but reviews should be private.',
                     'Submissions and reviews should both be public.'
                 ],
-                'order': 19,
+                'order': 20,
                 'required': True
-            },
-            'Public Commentary': {
-                'description': 'Would you like to allow members of the public to comment on papers?',
-                'value-radio': [
-                    'No, do not allow public commentary.',
-                    'Yes, allow members of the public to comment non-anonymously.',
-                    'Yes, allow members of the public to comment anonymously.',
-                ],
-                'order': 20
             },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
                 'value-radio': [
-                    'Yes, withdrawn submissions should be made public.', 
+                    'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
                 'order': 21
             },
             'withdrawn_submissions_author_anonymity': {
-                'description': 'Would you like to make authors of withdrawn papers anonymous? Note: Authors can only be anonymized for Double blind submissions.',
+                'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of withdrawn submissions should be anonymized.', 
-                    'No, authors of withdrawn submissions should not be anonymized.'],
-                'default': 'No, authors of withdrawn submissions should not be anonymized.',
+                    'Yes, author identities of withdrawn submissions should be revealed.',
+                    'No, author identities of withdrawn submissions should not be revealed.'],
+                'default': 'No, author identities of withdrawn submissions should not be revealed.',
                 'order': 22
             },
             'email_pcs_for_withdrawn_submissions': {
@@ -566,17 +696,17 @@ class VenueRequest():
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
                 'value-radio': [
-                    'Yes, desk rejected submissions should be made public.', 
+                    'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
                 'order': 24
             },
             'desk_rejected_submissions_author_anonymity': {
-                'description': 'Would you like to make authors of desk rejected papers anonymous?  Note: Authors can only be anonymized for Double blind submissions.',
+                'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
                 'value-radio': [
-                    'Yes, authors of desk rejected submissions should be anonymized.', 
-                    'No, authors of desk rejected submissions should not be anonymized.'],
-                'default': 'No, authors of desk rejected submissions should not be anonymized.',
+                    'Yes, author identities of desk rejected submissions should be revealed.',
+                    'No, author identities of desk rejected submissions should not be revealed.'],
+                'default': 'No, author identities of desk rejected submissions should not be revealed.',
                 'order': 25
             },
             'Expected Submissions': {
@@ -668,7 +798,8 @@ class VenueRequest():
                             'order': 2,
                             'value-regex': '[\\S\\s]{1,5000}',
                             'description': 'Your comment or reply (max 5000 characters).',
-                            'required': True
+                            'required': True,
+                            'markdown': True
                         }
                     }
                 }
@@ -701,12 +832,52 @@ class VenueRequest():
                         'values': [self.support_group.id]
                     },
                     'writers': {
-                        'values-regex': '~.*'
+                        'values': [self.support_group.id]
                     },
                     'signatures': {
                         'values': [self.support_group.id]
                     },
                     'content': deploy_content
+                }
+            ))
+
+    def setup_venue_post_submission(self):
+
+        post_submission_content = {
+            'force': {
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+                'description': 'Force creating blind submissions if conference is double blind'
+            },
+            'hide_fields': {
+                'values-regex': '.*',
+                'required': False,
+                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden.'
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/postSubmissionProcess.py'), 'r') as f:
+            file_content = f.read()
+
+            self.post_submission_content = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Post_Submission',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': [self.support_group.id]
+                    },
+                    'writers': {
+                        'values':[],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': post_submission_content
                 }
             ))
 
@@ -723,6 +894,13 @@ class VenueRequest():
                 'value-radio': ['reviewer', 'area chair'],
                 'default': 'reviewer',
                 'required': True,
+                'order': 2
+            },
+            'invitee_reduced_load': {
+                'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. (For reviewer role only)',
+                'values-regex': '[0-9]+',
+                'default': ['1', '2', '3'],
+                'required': False,
                 'order': 2
             },
             'invitee_details': {
@@ -793,5 +971,85 @@ class VenueRequest():
                         'values-regex': '~.*|{}'.format(self.support_group.id)
                     },
                     'content': recruitment_content
+                }
+            ))
+
+    def setup_venue_remind_recruitment(self):
+
+        remind_recruitment_content = {
+            'title': {
+                'value': 'Remind Recruitment',
+                'required': True,
+                'order': 1
+            },
+            'invitee_role': {
+                'description': 'Please select the role of the invitees you would like to remind.',
+                'value-radio': ['reviewer', 'area chair'],
+                'default': 'reviewer',
+                'required': True,
+                'order': 2
+            },
+            'invitation_email_subject': {
+                'value-regex': '.*',
+                'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
+                'order': 3,
+                'required': True,
+                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
+            },
+            'invitation_email_content': {
+                'value-regex': '[\\S\\s]{1,10000}',
+                'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
+                'order': 4,
+                'required': True,
+                'default': '''Dear {name},
+
+        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+
+        You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
+
+        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+        To ACCEPT the invitation, please click on the following link:
+
+        {accept_url}
+
+        To DECLINE the invitation, please click on the following link:
+
+        {decline_url}
+
+        Please answer within 10 days.
+
+        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+        If you have any questions, please contact us at info@openreview.net.
+
+        Cheers!
+
+        Program Chairs
+        '''
+        }}
+
+        with open(self.remind_recruitment_process, 'r') as f:
+            file_content = f.read()
+
+            self.remind_recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Remind_Recruitment',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values':[],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': remind_recruitment_content
                 }
             ))

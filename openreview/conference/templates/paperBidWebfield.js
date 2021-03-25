@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // ------------------------------------
 // Add Bid Interface
 // ------------------------------------
@@ -8,12 +11,42 @@ var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
 var BID_ID = '';
 var SUBJECT_AREAS = '';
-var AFFINITY_SCORE_ID = '';
 var CONFLICT_SCORE_ID = '';
+var SCORE_IDS = [];
+
+// Bid status data
+var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
+var activeTab = 0;
 var noteCount = 0;
+var conflictIds = [];
+var bidsByNote = {};
+var bidsById = {
+  'Very High': [],
+  'High': [],
+  'Neutral': [],
+  'Very Low': [],
+  'Low': []
+};
+var sections = [];
+
+var paperDisplayOptions = {
+  pdfLink: true,
+  replyCount: true,
+  showContents: true,
+  showTags: false,
+  showEdges: true,
+  edgeInvitations: [invitation], // Bid invitation automatically available
+  referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
+};
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
+
   Webfield.ui.setup('#invitation-container', CONFERENCE_ID);  // required
 
   Webfield.ui.header(HEADER.title, HEADER.instructions);
@@ -24,9 +57,9 @@ function main() {
 }
 
 function getPapersSortedByAffinity(offset) {
-  if (AFFINITY_SCORE_ID) {
+  if (selectedScore) {
     return Webfield.get('/edges', {
-      invitation: AFFINITY_SCORE_ID,
+      invitation: selectedScore,
       tail: user.profile.id,
       sort: 'weight:desc',
       offset: offset,
@@ -45,7 +78,7 @@ function getPapersSortedByAffinity(offset) {
           ids: noteIds
         })
         .then(function(result) {
-          //Keep affinity score order
+          // Keep affinity score order
           var notesById = _.keyBy(result.notes, function(note) {
             return note.id;
           });
@@ -61,7 +94,7 @@ function getPapersSortedByAffinity(offset) {
             edge.signatures = [];
             note.details = {
               edges: [edge]
-            }
+            };
             return note;
           });
         });
@@ -88,9 +121,8 @@ function getPapersSortedByAffinity(offset) {
     .then(function(result) {
       noteCount = result.count;
       return result.notes;
-    })
+    });
   }
-
 }
 
 function getPapersByBids(bids, bidsByNote) {
@@ -106,7 +138,7 @@ function getPapersByBids(bids, bidsByNote) {
 // Perform all the required API calls
 function load() {
 
-  var sortedNotesP = getPapersSortedByAffinity(0);
+  var sortedNotesP = getPapersSortedByAffinity(0, selectedScore);
 
   var conflictIdsP = Webfield.getAll('/edges', {
     invitation: CONFLICT_SCORE_ID,
@@ -128,18 +160,9 @@ function load() {
 
 
 // Display the bid interface populated with loaded data
-function renderContent(notes, conflictIds, bidEdges) {
+function renderContent(notes, conflicts, bidEdges) {
 
-  var activeTab = 0;
-  var sections;
-  var bidsByNote = {};
-  var bidsById = {
-    'Very High': [],
-    'High': [],
-    'Neutral': [],
-    'Very Low': [],
-    'Low': []
-  };
+  conflictIds = conflicts;
 
   bidEdges.forEach(function(edge) {
     bidsByNote[edge.head] = edge;
@@ -147,16 +170,6 @@ function renderContent(notes, conflictIds, bidEdges) {
   });
 
   var validNotes = prepareNotes(notes, conflictIds, bidsByNote);
-
-  var paperDisplayOptions = {
-    pdfLink: true,
-    replyCount: true,
-    showContents: true,
-    showTags: false,
-    showEdges: true,
-    edgeInvitations: [invitation], // Bid invitation automatically available
-    referrer: encodeURIComponent('[Bidding Console](/invitation?id=' + invitation.id + ')')
-  };
 
   $('#invitation-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
     activeTab = $(e.target).data('tabIndex');
@@ -198,6 +211,13 @@ function renderContent(notes, conflictIds, bidEdges) {
       }
     }
 
+    // If not on the All Papers tab, fade out note when bid is changed
+    if (activeTab !== 0) {
+      setTimeout(function() {
+        $(e.currentTarget).closest('.note').fadeOut();
+      }, 500);
+    }
+
     updateCounts();
   });
 
@@ -207,126 +227,21 @@ function renderContent(notes, conflictIds, bidEdges) {
     }
   });
 
-  function updateNotes(notes) {
-
-    var bidCount = 0;
-    $('#bidcount').remove();
-    $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
-
-    var loadingContent = Handlebars.templates.spinner({ extraClasses: 'spinner-inline' });
-    sections = [
-      {
-        heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
-        id: 'allPapers',
-        content: null
-      },
-      {
-        heading: 'Very High',
-        headingCount: bidsById['Very High'].length,
-        id: 'veryHigh',
-        content: loadingContent
-      },
-      {
-        heading: 'High',
-        headingCount: bidsById['High'].length,
-        id: 'high',
-        content: loadingContent
-      },
-      {
-        heading: 'Neutral',
-        headingCount: bidsById['Neutral'].length,
-        id: 'neutral',
-        content: loadingContent
-      },
-      {
-        heading: 'Low',
-        headingCount: bidsById['Low'].length,
-        id: 'low',
-        content: loadingContent
-      },
-      {
-        heading: 'Very Low',
-        headingCount: bidsById['Very Low'].length,
-        id: 'veryLow',
-        content: loadingContent
-      }
-    ];
-    sections[activeTab].active = true;
-
-    $('#notes .tabs-container').remove();
-
-    Webfield.ui.tabPanel(sections, {
-      container: '#notes',
-      hidden: true
+  $('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
+    selectedScore = $(this).val();
+    return getPapersSortedByAffinity(0, selectedScore)
+    .then(function(notes) {
+      return updateNotes(prepareNotes(notes, conflictIds, bidsByNote));
     });
-
-    // Render the contents of the All Papers tab
-    var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
-    var submissionListOptions = {
-      heading: null,
-      container: '#allPapers',
-      search: {
-        enabled: true,
-        localSearch: false,
-        subjectAreas: SUBJECT_AREAS,
-        subjectAreaDropdown: 'basic',
-        invitation: BLIND_SUBMISSION_ID,
-        sort: false,
-        onResults: function(searchResults) {
-          Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
-        },
-        onReset: function() {
-          Webfield.ui.searchResults(notes, searchResultsOptions);
-          $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
-        },
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: noteCount,
-      pageSize: 50,
-      onPageClick: function(offset) {
-        return getPapersSortedByAffinity(offset)
-        .then(function(notes) {
-          return prepareNotes(notes, conflictIds, bidsByNote);
-        });
-      },
-      fadeIn: false
-    };
-
-    Webfield.ui.submissionList(notes, submissionListOptions);
-
-    $('#notes > .spinner-container').remove();
-    $('#notes .tabs-container').show();
-  }
-
-  function updateCounts() {
-
-    var totalCount = 0;
-
-    for(var i = 1; i < sections.length; i++) {
-      var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
-      var numPapers = bidsById[sections[i].heading].length;
-
-      $tab.find('span.badge').remove();
-      if (numPapers) {
-        $tab.append('<span class="badge">' + numPapers + '</span>');
-      }
-
-      totalCount += numPapers;
-    };
-
-    $('#bidcount').remove();
-    $('#header').append('<h4 id="bidcount">You have completed ' + totalCount + ' bids</h4>');
-  }
+  });
 
   updateNotes(validNotes);
-  updateCounts();
 }
 
 function prepareNotes(notes, conflictIds, edgesMap) {
-  var validNotes = _.filter(notes, function(note){
+  var validNotes = _.filter(notes, function(note) {
     return !_.includes(conflictIds, note.id);
-  })
+  });
   return addEdgesToNotes(validNotes, edgesMap);
 }
 
@@ -336,13 +251,145 @@ function addEdgesToNotes(validNotes, edgesMap) {
     if (!_.has(note, 'details.edges')) {
       note.details = {
         edges: []
-      }
+      };
     }
     if (edgesMap.hasOwnProperty(note.id)) {
       note.details.edges.push(edgesMap[note.id]);
     };
   }
   return validNotes;
+}
+
+function updateNotes(notes) {
+  var bidCount = 0;
+  $('#bidcount').remove();
+  $('#header').append('<h4 id="bidcount">You have completed ' + bidCount + ' bids</h4>');
+
+  var loadingContent = Handlebars.templates.spinner({ extraClasses: 'spinner-inline' });
+  sections = [
+    {
+      heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
+      id: 'allPapers',
+      content: null
+    },
+    {
+      heading: 'Very High',
+      headingCount: bidsById['Very High'].length,
+      id: 'veryHigh',
+      content: loadingContent
+    },
+    {
+      heading: 'High',
+      headingCount: bidsById['High'].length,
+      id: 'high',
+      content: loadingContent
+    },
+    {
+      heading: 'Neutral',
+      headingCount: bidsById['Neutral'].length,
+      id: 'neutral',
+      content: loadingContent
+    },
+    {
+      heading: 'Low',
+      headingCount: bidsById['Low'].length,
+      id: 'low',
+      content: loadingContent
+    },
+    {
+      heading: 'Very Low',
+      headingCount: bidsById['Very Low'].length,
+      id: 'veryLow',
+      content: loadingContent
+    }
+  ];
+  sections[activeTab].active = true;
+
+  $('#notes .tabs-container').remove();
+
+  Webfield.ui.tabPanel(sections, {
+    container: '#notes',
+    hidden: true
+  });
+
+  // Render the contents of the All Papers tab
+  var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
+  var submissionListOptions = {
+    heading: null,
+    container: '#allPapers',
+    search: {
+      enabled: true,
+      localSearch: false,
+      subjectAreas: SUBJECT_AREAS,
+      subjectAreaDropdown: 'basic',
+      invitation: BLIND_SUBMISSION_ID,
+      sort: false,
+      onResults: function(searchResults) {
+        Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
+      },
+      onReset: function() {
+        Webfield.ui.searchResults(notes, searchResultsOptions);
+        $('#allPapers').append(view.paginationLinks(noteCount, 50, 1));
+      },
+    },
+    displayOptions: paperDisplayOptions,
+    autoLoad: false,
+    noteCount: noteCount,
+    pageSize: 50,
+    onPageClick: function(offset) {
+      return getPapersSortedByAffinity(offset, selectedScore)
+      .then(function(notes) {
+        return prepareNotes(notes, conflictIds, bidsByNote);
+      });
+    },
+    fadeIn: false
+  };
+
+  Webfield.ui.submissionList(notes, submissionListOptions);
+
+
+  if (SCORE_IDS.length) {
+
+    var optionsHtml = '';
+    SCORE_IDS.forEach(function(scoreId) {
+      var label = view.prettyInvitationId(scoreId);
+      var selectedClass = selectedScore == scoreId && 'selected';
+      optionsHtml = optionsHtml + '<option value="' + scoreId + '" ' + selectedClass + '>' + label + '</option>';
+    })
+
+    $('#notes .form-inline.notes-search-form').append(
+      '<div class="form-group score">' +
+      '<label for="score-dropdown">Sort By:</label>' +
+      '<select class="score-dropdown form-control">' +
+      optionsHtml +
+      '</select>' +
+      '</div>'
+    );
+  }
+
+  $('#notes > .spinner-container').remove();
+  $('#notes .tabs-container').show();
+
+  updateCounts();
+}
+
+function updateCounts() {
+  var totalCount = 0;
+
+  for (var i = 1; i < sections.length; i++) {
+    var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
+    var numPapers = bidsById[sections[i].heading].length;
+
+    $tab.find('span.badge').remove();
+    if (numPapers) {
+      $tab.append('<span class="badge">' + numPapers + '</span>');
+    }
+
+    totalCount += numPapers;
+  };
+
+  $('#bidcount').remove();
+  $('#header').append('<h4 id="bidcount">You have completed ' + totalCount + ' bids</h4>');
 }
 
 // Go!

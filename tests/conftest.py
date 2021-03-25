@@ -10,12 +10,12 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 
 class Helpers:
     @staticmethod
-    def create_user(email, first, last):
+    def create_user(email, first, last, alternates=[], institution=None):
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
         assert res, "Res i none"
-        res = client.activate_user(email, {
+        profile_content={
             'names': [
                     {
                         'first': first,
@@ -23,9 +23,19 @@ class Helpers:
                         'username': '~' + first + '_' + last + '1'
                     }
                 ],
-            'emails': [email],
+            'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
-            })
+        }
+        if institution:
+            profile_content['history'] = [{
+                'position': 'PhD Student',
+                'start': 2017,
+                'end': None,
+                'institution': {
+                    'domain': institution
+                }
+            }]
+        res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
 
@@ -33,15 +43,29 @@ class Helpers:
     def get_user(email):
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
-@pytest.fixture
+    @staticmethod
+    def await_queue():
+        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
+        assert super_client is not None, 'Super Client is none'
+
+        while True:
+            jobs = super_client.get_jobs_status()
+            jobCount = 0
+            for jobName, job in jobs.items():
+                jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
+
+            if jobCount == 0:
+                break
+
+            time.sleep(0.5)
+
+@pytest.fixture(scope="class")
 def helpers():
     return Helpers
 
 @pytest.fixture(scope="session")
 def client():
-    requests.put('http://localhost:3000/reset/openreview.net', json = {'password': '1234'})
-    client = openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
-    yield client
+    yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
 
 @pytest.fixture(scope="session")
 def test_client():
@@ -68,7 +92,7 @@ def request_page():
     def request(selenium, url, token = None, alert=False, wait_for_element='content'):
         if token:
             selenium.get('http://localhost:3030')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': True})
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)

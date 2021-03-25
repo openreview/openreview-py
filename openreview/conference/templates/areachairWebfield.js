@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // Constants
 var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
@@ -11,13 +14,12 @@ var OFFICIAL_REVIEW_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
-var LEGACY_INVITATION_ID = false;
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
-var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
-var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]+$';
+var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
+var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair';
 var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
@@ -27,15 +29,23 @@ var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';
 var SECONDARY_AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/' + SECONDARY_AREA_CHAIR_NAME + '$';
 
 var reviewerSummaryMap = {};
+var conferenceStatusData = {};
 var reviewerOptions = [];
 var paperAndReviewersWithConflict = {};
 var paperRankingInvitation = null;
 var showRankings = false;
 var availableOptions = [];
+var anonids = {};
+
+$.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
 
 // Main function is the entry point to the webfield code
 var main = function() {
-  OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  if (args && args.referrer) {
+    OpenBanner.referrerLink(args.referrer);
+  } else {
+    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+  }
 
   renderHeader();
 
@@ -56,7 +66,18 @@ var getRootGroups = function() {
     member: user.id, regex: AREACHAIR_WILDCARD
   })
   .then(function(result) {
-    return getPaperNumbersfromGroups(result.groups);
+    var paperGroups=result.groups.filter(function(g) { return g.id.endsWith('Area_Chairs'); });
+    var anonGroups=result.groups.filter(function(g) { return g.id.indexOf('Area_Chair_') > 0; });
+    var paperNumbers = [];
+    _.forEach(paperGroups, function(g) {
+      var num = getNumberfromGroup(g.id, 'Paper');
+      g.members.forEach(function(member, index) {
+          var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+          anonids[num] = anonGroup.id;
+      })
+      paperNumbers.push(parseInt(num));
+    });
+    return paperNumbers;
   });
 
   secondaryAreaChairGroupsP = Webfield.get('/groups', {
@@ -98,16 +119,16 @@ var getNumberfromGroup = function(groupId, name) {
   });
 
   if (paper) {
-    return parseInt(paper.replace(name, ''), 10);
+    return paper.replace(name, '');
   } else {
     return null;
   }
 };
 
 var getPaperNumbersfromGroups = function(groups) {
-  return _.filter(_.map(groups, function(group) {
-    return getNumberfromGroup(group.id, 'Paper');
-  }), _.isInteger);
+  return _.map(groups, function(group) {
+    return parseInt(getNumberfromGroup(group.id, 'Paper'));
+  });
 };
 
 var buildNoteMap = function(noteNumbers) {
@@ -120,16 +141,10 @@ var buildNoteMap = function(noteNumbers) {
 };
 
 var getInvitationId = function(name, number) {
-  if (LEGACY_INVITATION_ID) {
-    return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
-  }
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
 };
 
 var getInvitationRegex = function(name, numberStr) {
-  if (LEGACY_INVITATION_ID) {
-    return '^' + CONFERENCE_ID + '/-/Paper(' + numberStr + ')/' + name;
-  }
   return '^' + CONFERENCE_ID + '/Paper(' + numberStr + ')/-/' + name;
 };
 
@@ -210,7 +225,7 @@ var loadData = function(acPapers, secondaryAcPapers) {
       if (!rankingByForum[tag.forum]) {
         rankingByForum[tag.forum] = {};
       }
-      var index = getNumberfromGroup(tag.signatures[0], 'AnonReviewer');
+      var index = getNumberfromGroup(tag.signatures[0], 'Reviewer_');
       rankingByForum[tag.forum][index] = tag;
       return rankingByForum;
     }, {});
@@ -248,12 +263,12 @@ var getOfficialReviews = function(noteNumbers) {
 
     _.forEach(notes, function(n) {
       var num = getNumberfromGroup(n.signatures[0], 'Paper');
-      var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
+      var index = getNumberfromGroup(n.signatures[0], 'Reviewer_');
       if (num) {
         if (num in noteMap) {
           // Need to parse rating and confidence strings into ints
-          ratingMatch = n.content[REVIEW_RATING_NAME] && n.content[REVIEW_RATING_NAME].match(ratingExp);
-          n.rating = ratingMatch ? parseInt(ratingMatch[1], 10) : null;
+          ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
+          n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
           confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
           n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
 
@@ -275,14 +290,17 @@ var getReviewerGroups = function(noteNumbers) {
 
   return Webfield.getAll('/groups', { regex: ANONREVIEWER_WILDCARD })
   .then(function(groups) {
-    _.forEach(groups, function(g) {
+
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
+    var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
+
+    _.forEach(reviewerGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
-      var index = getNumberfromGroup(g.id, 'AnonReviewer');
-      if (num) {
-        if ((num in noteMap) && g.members.length) {
-          noteMap[num][index] = g.members[0];
-        }
-      }
+      g.members.forEach(function(member, index) {
+          var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+          var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
+          noteMap[num][anonId] = member;
+      })
     });
 
     return noteMap;
@@ -305,7 +323,7 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryM
       }
     });
 
-    return {
+    conferenceStatusData = {
       profiles: profiles,
       blindedNotes: blindedNotes,
       officialReviews: officialReviews,
@@ -320,6 +338,7 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryM
       acPapers: acPapers,
       secondaryAcPapers: secondaryAcPapers,
     };
+    return conferenceStatusData;
   });
 };
 
@@ -566,6 +585,7 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
         '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
+    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>' +
     '<div class="pull-right">' +
       '<strong>Sort By:</strong> ' +
       '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
@@ -818,8 +838,8 @@ var postRenderTable = function(rows) {
           var body = {
             id: id,
             tag: value,
-            signatures: [CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
-            readers: [CONFERENCE_ID, CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chair1'],
+            signatures: [anonids[noteNumber]],
+            readers: [anonids[noteNumber]],
             forum: noteId,
             invitation: invitationId,
             ddate: deleted ? Date.now() : null
@@ -994,6 +1014,7 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     minConfidence: minConfidence,
     maxConfidence: maxConfidence,
     sendReminder: true,
+    showActivityModal: true,
     expandReviewerList: false,
     enableReviewerReassignment : ENABLE_REVIEWER_REASSIGNMENT,
     referrer: referrerUrl
@@ -1022,16 +1043,6 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
 
   return [cellCheck, cell0, cell1, cell2, cell3];
 };
-
-var findNextAnonGroupNumber = function(paperNumber){
-  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort();
-  for (var i = 1; i < paperReviewerNums.length + 1; i++) {
-    if (i.toString() !== paperReviewerNums[i-1]) {
-      return i;
-    }
-  }
-  return paperReviewerNums.length + 1;
-}
 
 // Event Handlers
 var registerEventHandlers = function() {
@@ -1156,7 +1167,6 @@ var registerEventHandlers = function() {
       userToAdd = userToAdd.toLowerCase();
     }
 
-    var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
     var reviewerProfile = {
       'email' : userToAdd,
       'id' : userToAdd,
@@ -1175,30 +1185,19 @@ var registerEventHandlers = function() {
       })
     })
     .then(function(result) {
-      return Webfield.post('/groups', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
-        members: [reviewerProfile.id],
-        nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
-        readers: [
-          CONFERENCE_ID,
-          CONFERENCE_ID + '/Program_Chairs',
-          CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs',
-          CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber],
-        writers: [
-          CONFERENCE_ID,
-          CONFERENCE_ID + '/Program_Chairs',
-          CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
-        signatures: [CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs'],
-        signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
-      })
-    })
-    .then(function(result) {
       return Webfield.put('/groups/members', {
         id: REVIEWER_GROUP,
         members: [reviewerProfile.id]
       })
     })
-    .then(function(results) {
+    .then(function(result) {
+      return Webfield.get('/groups', {
+        id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewer_.*',
+        member: reviewerProfile.id
+      })
+    })
+    .then(function(result) {
+      var nextAnonNumber = getNumberfromGroup(result.groups[0].id, 'Reviewer_');
       var forumUrl = 'https://openreview.net/forum?' + $.param({
         id: paperForum,
         invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
@@ -1217,6 +1216,7 @@ var registerEventHandlers = function() {
       reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers + 1 : 1;
       reviewerSummaryMap[paperNumber].expandReviewerList = true;
       reviewerSummaryMap[paperNumber].sendReminder = true;
+      reviewerSummaryMap[paperNumber].showActivityModal = true;
       reviewerSummaryMap[paperNumber].enableReviewerReassignment = ENABLE_REVIEWER_REASSIGNMENT;
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       $revProgressDiv.html(Handlebars.templates.noteReviewers(reviewerSummaryMap[paperNumber]));
@@ -1248,12 +1248,6 @@ var registerEventHandlers = function() {
       members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
     })
     .then(function(result) {
-      return Webfield.delete('/groups/members', {
-        id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
-        members: [reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].id, reviewerSummaryMap[paperNumber].reviewers[reviewerNumber].email]
-      });
-    })
-    .then(function(result) {
       var $revProgressDiv = $('#' + paperNumber + '-reviewer-progress');
       delete reviewerSummaryMap[paperNumber].reviewers[reviewerNumber];
       reviewerSummaryMap[paperNumber].numReviewers = reviewerSummaryMap[paperNumber].numReviewers ? reviewerSummaryMap[paperNumber].numReviewers - 1 : 0;
@@ -1262,6 +1256,42 @@ var registerEventHandlers = function() {
       updateReviewerContainer(paperNumber);
       promptMessage('Reviewer ' + view.prettyId(userId) + ' has been unassigned for paper ' + paperNumber, { overlay: true });
     })
+    return false;
+  });
+
+  $('#group-container').on('click', 'a.show-activity-modal', function(e) {
+    var paperNum = $(this).data('paperNum');
+    var reviewerNum = $(this).data('reviewerNum');
+    var reviewerName = $(this).data('reviewerName');
+    var reviewerEmail = $(this).data('reviewerEmail');
+
+    $('#reviewer-activity-modal').remove();
+
+    $('#content').append(Handlebars.templates.genericModal({
+      id: 'reviewer-activity-modal',
+      showHeader: true,
+      title: 'Paper ' + paperNum + ' Reviewer ' + reviewerNum + ' Activity',
+      body: Handlebars.templates.spinner({ extraClasses: 'spinner-inline' }),
+      showFooter: false,
+    }));
+    $('#reviewer-activity-modal .modal-header').append(
+      '<ul class="list-inline">' +
+      '<li><strong>Name:</strong> ' + reviewerName + '</li>' +
+      '<li><strong>Email:</strong> ' + reviewerEmail + '</li>' +
+      '</ul>'
+    );
+    $('#reviewer-activity-modal').modal('show');
+
+    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/Reviewer_' + reviewerNum })
+      .then(function(response) {
+        $('#reviewer-activity-modal .modal-body').empty();
+        Webfield.ui.searchResults(response.notes, {
+          container: '#reviewer-activity-modal .modal-body',
+          openInNewTab: true,
+          emptyMessage: 'Reviewer ' + reviewerNum + ' has not posted any comments or reviews yet.'
+        });
+      });
+
     return false;
   });
 
@@ -1296,6 +1326,78 @@ var registerEventHandlers = function() {
       $msgReviewerButton.attr('disabled', true);
       $superCheckBox.prop('checked', false);
     }
+  });
+
+  var buildCSV = function(){
+    var profiles = conferenceStatusData.profiles;
+    var notes = conferenceStatusData.blindedNotes;
+    var completedReviews = conferenceStatusData.officialReviews;
+    var metaReviews = conferenceStatusData.metaReviews;
+    var reviewerIds = conferenceStatusData.noteToReviewerIds;
+    var reviewerRankingByPaper = conferenceStatusData.reviewerRankingByPaper;
+    var acRankingByPaper = conferenceStatusData.acRankingByPaper;
+
+    var rowData = [];
+    rowData.push(['number',
+    'forum',
+    'title',
+    'abstract',
+    'num reviewers',
+    'num submitted reviewers',
+    'missing reviewers',
+    'min rating',
+    'max rating',
+    'average rating',
+    'min confidence',
+    'max confidence',
+    'average confidence',
+    'ac recommendation'].join(',') + '\n');
+
+    _.forEach(notes, function(note) {
+      var revIds = reviewerIds[note.number] || Object.create(null);
+      for (var revNumber in revIds) {
+        var uId = revIds[revNumber];
+        revIds[revNumber] = findProfile(profiles, uId);
+      }
+      var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+      var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
+      var paperTableRow = buildTableRow(note, revIds, noteCompletedReviews, metaReview, null, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {});
+
+      var title = paperTableRow[2]['content']['title'].replace(/"/g, '""');
+      var abstract = paperTableRow[2]['content']['abstract'].replace(/"/g, '""');
+      var reviewersData = _.values(paperTableRow[3]['reviewers']);
+      var allReviewers = [];
+      var missingReviewers = [];
+      reviewersData.forEach(function(r) {
+        allReviewers.push(r.id);
+        if (!r.completedReview) {
+          missingReviewers.push(r.id);
+        }
+      });
+
+      rowData.push([paperTableRow[1]['number'],
+      '"https://openreview.net/forum?id=' + paperTableRow[2]['id'] + '"',
+      '"' + title + '"',
+      '"' + abstract + '"',
+      paperTableRow[3]['numReviewers'],
+      paperTableRow[3]['numSubmittedReviews'],
+      '"' + missingReviewers.join('|') + '"',
+      paperTableRow[3]['minRating'],
+      paperTableRow[3]['maxRating'],
+      paperTableRow[3]['averageRating'],
+      paperTableRow[3]['minConfidence'],
+      paperTableRow[3]['maxConfidence'],
+      paperTableRow[3]['averageConfidence'],
+      metaReview && metaReview.content.recommendation
+      ].join(',') + '\n');
+    });
+    return [rowData.join('')];
+  };
+
+  $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
+    var blob = new Blob(buildCSV(), {type: 'text/csv'});
+    saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_AC_paper_status.csv',);
+    return false;
   });
 };
 

@@ -2,18 +2,19 @@ from setuptools import setup
 
 setup(
     name='openreview-py',
-    version='1.0.16',
-    description='OpenReview client library',
+    version='1.0.20',
+    description='OpenReview API Python client library',
     url='https://github.com/openreview/openreview-py',
-    author='Michael Spector, Melisa Bok, Pam Mander, Mohit Uniyal',
-    author_email='spector@cs.umass.edu, mbok@cs.umass.edu, mandler@cs.umass.edu, muniyal@cs.umass.edu',
+    author='OpenReview Team',
+    author_email='info@openreview.net',
     license='MIT',
     packages=[
         'openreview',
         'openreview/conference',
         'openreview/invitations',
         'openreview/agora',
-        'openreview/venue_request'
+        'openreview/venue_request',
+        'openreview/journal'
     ],
     install_requires=[
         'pycryptodome',
@@ -22,7 +23,8 @@ setup(
         'tqdm',
         'Deprecated',
         'pylatexenc',
-        'tld==0.10'
+        'tld==0.10',
+        'setuptools==49.6.0'
     ],
     extras_require={
         'docs': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
