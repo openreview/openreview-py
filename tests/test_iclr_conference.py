@@ -210,16 +210,15 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         'iclr2021_one_alternate@mail.com'])
 
         assert result
-        assert result.id == 'ICLR.cc/2021/Conference/Reviewers/Invited'
-        assert len(result.members) == 7
-        assert 'iclr2021_one@mail.com' in result.members
-        assert 'iclr2021_two@mail.com' in result.members
-        assert 'iclr2021_three@mail.com' in result.members
-        assert 'iclr2021_four@mail.com' in result.members
-        assert 'iclr2021_five@mail.com' in result.members
-        assert 'iclr2021_six@mail.com' in result.members
-        assert 'iclr2021_seven@mail.com' in result.members
-        assert 'iclr2021_one_alternate@mail.com' not in result.members
+        assert len(result['invited']) == 7
+        assert 'iclr2021_one@mail.com' in result['invited']
+        assert 'iclr2021_two@mail.com' in result['invited']
+        assert 'iclr2021_three@mail.com' in result['invited']
+        assert 'iclr2021_four@mail.com' in result['invited']
+        assert 'iclr2021_five@mail.com' in result['invited']
+        assert 'iclr2021_six@mail.com' in result['invited']
+        assert 'iclr2021_seven@mail.com' in result['invited']
+        assert 'iclr2021_one_alternate@mail.com' not in result['invited']
 
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']

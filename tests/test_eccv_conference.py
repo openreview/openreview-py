@@ -302,9 +302,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'])
         assert result
-        assert result.id == 'thecvf.com/ECCV/2020/Conference/Reviewers/Invited'
-        assert 'test_reviewer_eccv@mail.com' in result.members
-        assert 'mohit+1@mail.com' in result.members
+        assert len(result['invited']) == 2
+        assert 'test_reviewer_eccv@mail.com' in result['invited']
+        assert 'mohit+1@mail.com' in result['invited']
 
         messages = client.get_messages(to = 'mohit+1@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']

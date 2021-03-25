@@ -415,10 +415,10 @@ class Conference(object):
         committee=[self.reviewers_name]
 
         if self.use_area_chairs:
-            committee=[self.area_chairs_name]
+            committee.append(self.area_chairs_name)
 
-        if self.senior_area_chairs_name:
-            committee=[self.senior_area_chairs_name]
+        if self.use_senior_area_chairs:
+            committee.append(self.senior_area_chairs_name)
 
         return committee
 
