@@ -375,10 +375,7 @@ class TestClient():
         messages = openreview.tools.iterget_messages(client, status='sent')
         assert messages
 
-<<<<<<< HEAD
-=======
     def test_get_notes_by_ids(self, client):
         notes = client.get_notes_by_ids(ids = [])
         assert len(notes) == 0, 'notes is empty'
->>>>>>> master
 
