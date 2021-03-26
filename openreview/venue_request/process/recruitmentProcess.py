@@ -43,7 +43,7 @@ def process(client, note, invitation):
         message = note.content['invitation_email_content'].strip()
     )
 
-    non_invited_status=f'''No invitation sent because the user was already invited:
+    non_invited_status=f'''No recruitment invitation was sent to the following users because they have already been invited:
 
 {recruitment_status.get('already_invited', {})}''' if recruitment_status.get('already_invited') else ''
 
