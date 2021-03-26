@@ -973,6 +973,46 @@ class TestNeurIPSConference():
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Pending Sign Up'
 
+        ## Invite external reviewer 5 with no profile
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer5@gmail.com'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = 'external_reviewer5@gmail.com',
+            label = 'Invite'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## External reviewer is invited
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer5@gmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == 'external_reviewer5@gmail.com'
+        assert invite_edges[0].label == 'Invited'
+
+        ## External reviewer accepts the invitation
+        messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=No', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        ## Externel reviewer is set pending profile creation
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer5@gmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined: reason unspecified'
+
         assert False
 
     def test_comment_stage(self, conference, helpers, test_client, client):
