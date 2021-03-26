@@ -1788,7 +1788,7 @@ class TestDoubleBlindConference():
 
         valid_bibtex = r'''@inproceedings{
 user2019paper,
-title={Paper title {\{}REVISED{\}}},
+title={Paper title {REVISED}},
 author={Test User and Peter User and Andrew Mc},
 booktitle={Automated Knowledge Base Construction Conference},
 year={2019},
@@ -1886,7 +1886,7 @@ url={'''
 
         valid_bibtex = r'''@inproceedings{
 user2019paper,
-title={Paper title {\{}REVISED{\}} {\{}AGAIN{\}}},
+title={Paper title {REVISED} {AGAIN}},
 author={Test User and Peter User and Andrew Mc},
 booktitle={Automated Knowledge Base Construction Conference},
 year={2019},
