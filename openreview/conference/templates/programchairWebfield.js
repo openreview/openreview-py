@@ -112,13 +112,15 @@ var main = function() {
 
     reviewerSummaryMap = buildNoteMap(noteNumbers);
 
-    reviewerGroups = groups.anonReviewerGroups;
-    areaChairGroups = groups.areaChairGroups;
+    var reviewerGroups = groups.anonReviewerGroups;
+    var areaChairGroups = groups.areaChairGroups;
+    var seniorAreaChairGroups = groups.seniorAreaChairGroups;
 
     var officialReviews = reviews.officialReviews;
     var metaReviews = reviews.metaReviews;
     var decisions = reviews.decisionReviews;
 
+    var seniorAreaChairGroupMaps = buildSeniorAreaChairGroupMaps(noteNumbers, seniorAreaChairGroups);
     var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, areaChairGroups);
     var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, reviewerGroups);
     var officialReviewMap = buildOfficialReviewMap(noteNumbers, officialReviews);
@@ -139,6 +141,7 @@ var main = function() {
       metaReviews: metaReviews,
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
+      seniorAreaChairGroups: seniorAreaChairGroupMaps,
       decisions: decisions,
       pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION],
       acRankingByPaper: acRankingByPaper,
@@ -189,7 +192,7 @@ var main = function() {
     };
     displayStatsAndConfiguration(conferenceStats);
 
-    var uniqueIds = _.union(reviewers, areaChairs);
+    var uniqueIds = _.union(reviewers, areaChairs, seniorAreaChairs);
     return getUserProfiles(uniqueIds, reviewerBidCounts, areaChairBidCounts, areaChairRecommendationCounts);
   })
   .then(function(profiles) {
@@ -356,20 +359,32 @@ var getReviewsWithReplyto = function() {
 }
 
 var getGroups = function() {
-  var filterAnonReviewerGroups = function(group) {
-    return _.includes(group.id, 'Reviewer');
-  }
-  var filterAreaChairGroups = function(group) {
-    return _.includes(group.id, 'Area_Chair');
-  }
   return Webfield.getAll('/groups', {
     id: CONFERENCE_ID + '/Paper.*',
     select: 'id,members'
   }).then(function(groups) {
+    var anonReviewerGroups = [];
+    var seniorAreaChairGroups = [];
+    var areaChairGroups = [];
+    _.forEach(groups, function(group) {
+      if (_.includes(group.id, 'Reviewer')) {
+        anonReviewerGroups.push(group);
+        return;
+      }
+      if (_.includes(group.id, 'Senior_Area_Chair')) {
+        seniorAreaChairGroups.push(group);
+        return;
+      }
+      if (_.includes(group.id, 'Area_Chair')) {
+        areaChairGroups.push(group);
+        return;
+      }
+    });
     return {
-      anonReviewerGroups: _.filter(groups, filterAnonReviewerGroups),
-      areaChairGroups: _.filter(groups, filterAreaChairGroups),
-    }
+      anonReviewerGroups: anonReviewerGroups,
+      areaChairGroups: areaChairGroups,
+      seniorAreaChairGroups: seniorAreaChairGroups
+    };
   });
 };
 
@@ -573,6 +588,31 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
   };
 };
 
+var buildSeniorAreaChairGroupMaps = function(noteNumbers, groups) {
+  var noteMap = buildNoteMap(noteNumbers);
+  var seniorAreaChairMap = {};
+
+  var seniorAcGroups = _.filter(groups, function(g) { return g.id.endsWith('/Senior_Area_Chairs'); });
+
+  _.forEach(seniorAcGroups, function(g) {
+    var num = getNumberfromGroup(g.id, 'Paper');
+    g.members.forEach(function(member, index) {
+        if (num in noteMap) {
+          noteMap[num][member] = member;
+          if (!(member in seniorAreaChairMap)) {
+            seniorAreaChairMap[member] = [];
+          }
+          seniorAreaChairMap[member].push(num);
+        }
+    })
+  });
+
+  return {
+    byNotes: noteMap,
+    byAreaChairs: seniorAreaChairMap
+  };
+};
+
 var buildOfficialReviewMap = function(noteNumbers, notes) {
   if (!noteNumbers || !noteNumbers.length) {
     return $.Deferred().resolve({});
@@ -768,6 +808,15 @@ var renderHeader = function() {
     tabs.push({
       heading: 'Area Chair Status',
       id: 'areachair-status',
+      content: loadingMessage,
+      extraClasses: 'horizontal-scroll'
+    });
+  }
+
+  if (SENIOR_AREA_CHAIRS_ID) {
+    tabs.push({
+      heading: 'Senior Area Chair Status',
+      id: 'seniorareachair-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll'
     });
@@ -1731,6 +1780,107 @@ var displayAreaChairsStatusTable = function() {
   renderTable(container, rowData);
 };
 
+var displaySeniorAreaChairsStatusTable = function() {
+  var container = '#seniorareachair-status';
+  var areaChairByNoteNumber = conferenceStatusData.areaChairGroups.byNotes;
+  var noteNumbersBySeniorAc = conferenceStatusData.seniorAreaChairGroups.byAreaChairs;
+
+  var rowData = [];
+  _.forEach(conferenceStatusData.seniorAreaChairs, function(seniorAreaChair, index) {
+    var numbers = noteNumbersBySeniorAc[seniorAreaChair];
+    var areaChairData = [];
+    var seenAreaChairs = {};
+    _.forEach(numbers, function(number) {
+      var areaChair = areaChairByNoteNumber[number];
+      if (!areaChair) {
+        return;
+      }
+
+      _.forEach(areaChair, function(areaChairTildeId, areaChairHash) {
+        if (seenAreaChairs[areaChairTildeId]) return;
+        seenAreaChairs[areaChairTildeId] = true;
+        areaChairData.push({
+          id: areaChairTildeId,
+          hash: areaChairHash,
+          profile: findProfile(conferenceStatusData.profiles, areaChairTildeId)
+        });
+      });
+    });
+
+    var seniorAreaChairProfile = findProfile(conferenceStatusData.profiles, seniorAreaChair);
+    rowData.push({
+      index: index + 1,
+      seniorAreaChairProfile: seniorAreaChairProfile,
+      areaChairData: areaChairData
+    });
+  });
+
+  var order = 'asc';
+  var sortOptions = {
+    Senior_Area_Chair: function(row) { return row.seniorAreaChairProfile.name.toLowerCase(); }
+  };
+
+  var sortResults = function(newOption, switchOrder) {
+    $(container + ' .form-search').val('');
+
+    if (switchOrder) {
+      order = order === 'asc' ? 'desc' : 'asc';
+    }
+    rowData = _.orderBy(rowData, sortOptions[newOption], order);
+    renderTable(container, rowData);
+  }
+
+  var searchResults = function(searchText) {
+    $(container).data('lastPageNum', 1);
+    $(container + ' .form-sort').val('Senior_Area_Chair');
+
+    // Currently only searching on senior area chair name
+    var filterFunc = function(row) {
+      return row.seniorAreaChairProfile.name.toLowerCase().indexOf(searchText) !== -1;
+    };
+    var filteredRows = searchText
+      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Senior_Area_Chair'], 'asc')
+      : rowData;
+    renderTable(container, filteredRows);
+  };
+
+  var renderTable = function(container, data) {
+    var rowData = data.map(function(d) {
+      var number = '<strong class="note-number">' + d.index + '</strong>';
+      var areaChairs = d.areaChairData.map(function(ac) {
+        return Handlebars.templates.committeeSummary({
+          id: ac.profile.id,
+          name: ac.profile.name,
+          email: ac.profile.email
+        });
+      }).join('');
+      var summaryHtml = Handlebars.templates.committeeSummary({
+        id: d.seniorAreaChairProfile.id,
+        name: d.seniorAreaChairProfile.name,
+        email: d.seniorAreaChairProfile.email
+      });
+      return [ number, summaryHtml, areaChairs ];
+    });
+
+    var $container = $(container);
+    var tableData = {
+      headings: ['#', 'Senior Area Chair', 'Area Chairs'],
+      rows: rowData,
+      extraClasses: 'console-table'
+    };
+    var pageNum = $container.data('lastPageNum') || 1;
+    renderPaginatedTable($container, tableData, pageNum);
+
+    $container.on('click', 'ul.pagination > li > a', function(e) {
+      paginationOnClick($(this).parent(), $container, tableData);
+      return false;
+    });
+  }
+
+  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  renderTable(container, rowData);
+};
+
 var findReview = function(reviews, profile) {
   var found;
   profile.allNames.forEach(function(name) {
@@ -2554,6 +2704,8 @@ $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
     displayPaperStatusTable();
   } else if (containerId === '#areachair-status') {
     displayAreaChairsStatusTable();
+  } else if (containerId === '#seniorareachair-status') {
+    displaySeniorAreaChairsStatusTable();
   } else if (containerId === '#reviewer-status') {
     displayReviewerStatusTable();
   }
