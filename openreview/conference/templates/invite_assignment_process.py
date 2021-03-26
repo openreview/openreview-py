@@ -29,6 +29,8 @@ def process(client, edge, invitation):
         if conflicts:
             ## Post a conflict edge instead?
             edge.label='Conflict'
+            edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
+            edge.tail=user_profile.id
             client.post_edge(edge)
             ## TODO: send an email to the AC the reviewer has a conflict?
             return
@@ -68,6 +70,7 @@ Paper {submission.number} Area Chair ({edge.tauthor})
 
         ## - Update edge to 'Invited'
         edge.label='Invited'
+        edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
         client.post_edge(edge)
 

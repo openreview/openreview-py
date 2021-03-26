@@ -30,7 +30,15 @@ def process(client, note, invitation):
 
     if (note.content['response'] == 'Yes') and edge.label != 'Accepted':
 
+        user_profile=openreview.tools.get_profile(client, edge.tail)
+
+        if not user_profile:
+            edge.label='Pending Sign Up'
+            return client.post_edge(edge)
+
         edge.label='Accepted'
+        edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
+        edge.tail=user_profile.id
         client.post_edge(edge)
 
         assignment_edges = client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=submission.id, tail=user)
