@@ -598,7 +598,7 @@ var buildSeniorAreaChairGroupMaps = function(noteNumbers, groups) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
         if (num in noteMap) {
-          noteMap[num][member] = member;
+          noteMap[num] = member;
           if (!(member in seniorAreaChairMap)) {
             seniorAreaChairMap[member] = [];
           }
@@ -1597,11 +1597,13 @@ var displayAreaChairsStatusTable = function() {
   var metaReviews = conferenceStatusData.metaReviews;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
   var areachairIds = conferenceStatusData.areaChairGroups.byAreaChairs;
+  var seniorAreaChairsByNoteNumber = conferenceStatusData.seniorAreaChairGroups.byNotes;
 
   var rowData = [];
   _.forEach(conferenceStatusData.areaChairs, function(areaChair, index) {
     var numbers = areachairIds[areaChair];
     var papers = [];
+    // Area Chairs can only have 1 Senior Area Chair
     _.forEach(numbers, function(number) {
       var note = _.find(notes, ['number', parseInt(number)]);
       if (!note) {
@@ -1619,8 +1621,14 @@ var displayAreaChairsStatusTable = function() {
       });
     });
 
+    var seniorAreaChairProfile;
+    if (numbers && numbers.length) {
+      var seniorAreaChair = seniorAreaChairsByNoteNumber[numbers[0]];
+      seniorAreaChairProfile = findProfile(conferenceStatusData.profiles, seniorAreaChair);
+    }
+
     var areaChairProfile = findProfile(conferenceStatusData.profiles, areaChair);
-    rowData.push(buildSPCTableRow(index + 1, areaChairProfile, papers));
+    rowData.push(buildSPCTableRow(index + 1, areaChairProfile, seniorAreaChairProfile, papers));
   });
 
   var order = 'asc';
@@ -1715,19 +1723,25 @@ var displayAreaChairsStatusTable = function() {
     var rowData = data.map(function(d, index) {
       var number = '<strong class="note-number">' + (index + 1) + '</strong>';
       var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
+      var seniorSummaryHtml = Handlebars.templates.committeeSummary(d.seniorSummary);
       var progressHtml = Handlebars.templates.notesAreaChairProgress(d.reviewProgressData);
       var statusHtml = Handlebars.templates.notesAreaChairStatus(d.reviewProgressData);
-      return [number, summaryHtml, progressHtml, statusHtml];
+      return [number, summaryHtml, seniorSummaryHtml, progressHtml, statusHtml];
     });
 
     var $container = $(container);
     var tableData = {
-      headings: ['#', 'Area Chair', 'Review Progress', 'Status'],
+      headings: ['#', 'Area Chair', 'Senior Area Chair', 'Review Progress', 'Status'],
       rows: rowData,
       extraClasses: 'console-table'
     };
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
+    $('.console-table th').eq(0).css('width', '4%');
+    $('.console-table th').eq(1).css('width', '20%');
+    $('.console-table th').eq(2).css('width', '20%');
+    $('.console-table th').eq(3).css('width', '28%');
+    $('.console-table th').eq(4).css('width', '28%');
 
     $container.on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
@@ -2266,7 +2280,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
 
 var acTableeferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
 
-var buildSPCTableRow = function(index, areaChair, papers) {
+var buildSPCTableRow = function(index, areaChair, seniorAreaChair, papers) {
 
   var summary = {
     id: areaChair.id,
@@ -2278,6 +2292,15 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     showRecommendations: !!conferenceStatusData.recommendationEnabled,
     completedRecs: areaChair.acRecommendationCount || 0,
     edgeBrowserRecsUrl: buildEdgeBrowserUrl('signatory:' + areaChair.id, REVIEWERS_ID, RECOMMENDATION_NAME)
+  }
+
+  var seniorSummary;
+  if (seniorAreaChair) {
+    seniorSummary = {
+      id: seniorAreaChair.id,
+      name: seniorAreaChair.name,
+      email: seniorAreaChair.email
+    };
   }
 
   var numCompletedReviews = 0;
@@ -2331,6 +2354,7 @@ var buildSPCTableRow = function(index, areaChair, papers) {
 
   return {
     summary: summary,
+    seniorSummary: seniorSummary,
     reviewProgressData: reviewProgressData
   }
 
