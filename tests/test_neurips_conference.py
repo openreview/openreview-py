@@ -324,8 +324,7 @@ class TestNeurIPSConference():
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
-
-        reviewer_details = '''reviewer1@umass.edu, Reviewer UMass\nreviewer2@mit.edu, Reviewer MIT'''
+        reviewer_details = '''reviewer1@umass.edu, Reviewer UMass\nreviewer2@mit.edu, Reviewer MIT\nsac1@google.com, SAC One\nsac2@gmail.com, SAC Two'''
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -349,6 +348,11 @@ class TestNeurIPSConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number)
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'No recruitment invitation was sent to the following users because they have already been invited' in recruitment_status_notes[0].content['comment']
+        assert "{'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/Invited': ['sac1@google.com', 'sac2@gmail.com']}" in recruitment_status_notes[0].content['comment']
 
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Invitation to serve as reviewer')
         assert messages and len(messages) == 1
