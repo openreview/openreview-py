@@ -7,7 +7,7 @@ import openreview
 import re
 import datetime
 import time
-from pylatexenc.latexencode import utf8tolatex
+from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -335,17 +335,6 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
     :rtype: str
     """
 
-    def capitalize_title(title):
-        capitalization_regex = re.compile('[A-Z]{2,}')
-        words = re.split('(\W)', title)
-        for idx, word in enumerate(words):
-            m = capitalization_regex.search(word)
-            if m:
-                new_word = '{' + word[m.start():m.end()] + '}'
-                words[idx] = words[idx].replace(word[m.start():m.end()], new_word)
-        return ''.join(words)
-
-
     first_word = re.sub('[^a-zA-Z]', '', note.content['title'].split(' ')[0].lower())
 
     forum = note.forum if not url_forum else url_forum
@@ -366,12 +355,22 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         else:
             authors = ' and '.join(note.content['authors'])
 
-    bibtex_title = capitalize_title(note.content['title'])
+    u = UnicodeToLatexEncoder(
+        conversion_rules=[
+            UnicodeToLatexConversionRule(
+                rule_type=RULE_REGEX,
+                rule=[
+                    (re.compile(r'[A-Z]{2,}'), r'{\g<0>}')
+                ]),
+            'defaults'
+        ]
+    )
+    bibtex_title = u.unicode_to_latex(note.content['title'])
 
     under_review_bibtex = [
         '@inproceedings{',
         utf8tolatex(first_author_last_name + year + first_word + ','),
-        'title={' + utf8tolatex(bibtex_title) + '},',
+        'title={' + bibtex_title + '},',
         'author={' + utf8tolatex(authors) + '},',
         'booktitle={Submitted to ' + utf8tolatex(venue_fullname) + '},',
         'year={' + year + '},',
@@ -383,7 +382,7 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
     rejected_bibtex = [
         '@misc{',
         utf8tolatex(first_author_last_name + year + first_word + ','),
-        'title={' + utf8tolatex(bibtex_title) + '},',
+        'title={' + bibtex_title + '},',
         'author={' + utf8tolatex(authors) + '},',
         'year={' + year + '},',
         'url={'+baseurl+'/forum?id=' + forum + '}',
@@ -393,7 +392,7 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
     accepted_bibtex = [
         '@inproceedings{',
         utf8tolatex(first_author_last_name + year + first_word + ','),
-        'title={' + utf8tolatex(bibtex_title) + '},',
+        'title={' + bibtex_title + '},',
         'author={' + utf8tolatex(authors) + '},',
         'booktitle={' + utf8tolatex(venue_fullname) + '},',
         'year={' + year + '},',
