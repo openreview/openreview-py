@@ -715,12 +715,19 @@ class Matching(object):
 
         invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label='Invite')
         with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_process.py')) as f:
-            content = f.read()
-            content = content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
-            content = content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
-            invitation.process=content
+            file_content = f.read()
+            file_content = file_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
+            if assignment_title:
+                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
+                file_content = file_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+            else:
+                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
+
+            file_content = file_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+            invitation.process=file_content
             invitation.due_date=tools.datetime_millis(due_date)
             invitation.exp_date=tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None
+            invitation.multiReply=False
             invite_assignment_invitation=self.client.post_invitation(invitation)
 
             invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference, recruitment_invitation_id, self.match_group.id, hash_seed, assignment_title, due_date)

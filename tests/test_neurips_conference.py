@@ -1119,6 +1119,63 @@ class TestNeurIPSConference():
 
         assert len(pc_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper4/Reviewer_', signatory='~External_Reviewer_Amazon1')) == 1
 
+        ## Invite the same reviewer again
+        with pytest.raises(openreview.OpenReviewException, match=r'tooMany'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer1@amazon.com'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+                writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs'],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~External_Reviewer_Amazon1',
+                label = 'Invite'
+            ))
+
+        ## Invite the same reviewer again
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer1@amazon.com'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs'],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = 'external_reviewer1@amazon.com',
+            label = 'Invite'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer1@amazon.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Already Invited as ~External_Reviewer_Amazon1'
+
+
+        ## Invite reviewer already assigned
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Reviewer_UMass1'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs'],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = '~Reviewer_UMass1',
+            label = 'Invite'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_UMass1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Already Assigned as ~External_Reviewer_Amazon1'
 
 
 

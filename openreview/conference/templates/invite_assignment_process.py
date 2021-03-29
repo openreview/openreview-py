@@ -1,6 +1,8 @@
 def process(client, edge, invitation):
 
     RECRUITMENT_INVITATION_ID = ''
+    ASSIGNMENT_INVITATION_ID = ''
+    ASSIGNMENT_LABEL = None
     HASH_SEED = ''
     print(edge.id)
 
@@ -10,12 +12,30 @@ def process(client, edge, invitation):
         user = edge.tail
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
+
+
+        if user_profile:
+            ## - Check if the reviewer is already invited
+            edges=client.get_edges(invitation=edge.invitation, head=edge.head, tail=user_profile.id)
+            if edges:
+                edge.label='Already Invited as ' + user_profile.id
+                client.post_edge(edge)
+                return
+
+            ## - Check if the reviewer is already assigned
+            edges=client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=edge.head, tail=user_profile.id, label=ASSIGNMENT_LABEL)
+            if edges:
+                edge.label='Already Assigned as ' + user_profile.id
+                client.post_edge(edge)
+                return
+
         if not user_profile:
             user_profile=openreview.Profile(id=user,
                 content={
                     'emails': [user],
                     'preferredEmail': user
                 })
+
 
         print(f'Check conflicts for {user_profile.id}')
         ## - Check conflicts
