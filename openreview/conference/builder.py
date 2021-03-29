@@ -622,7 +622,8 @@ class Conference(object):
         notes_iterator = self.get_submissions(sort='number:asc', details='original')
         author_group_ids = []
         paper_reviewer_group_invitation=self.invitation_builder.set_paper_group_invitation(self, self.get_reviewers_id())
-        paper_area_chair_group_invitation=self.invitation_builder.set_paper_group_invitation(self, self.get_area_chairs_id())
+        if self.use_area_chairs:
+            paper_area_chair_group_invitation=self.invitation_builder.set_paper_group_invitation(self, self.get_area_chairs_id())
 
         for n in tqdm(list(notes_iterator), desc='create_paper_groups'):
             # Paper group

@@ -101,7 +101,7 @@ class Matching(object):
         readers.append(tail)
         return readers
 
-    def _create_edge_invitation(self, edge_id, any_tail=False):
+    def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
         '''
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
@@ -160,6 +160,14 @@ class Matching(object):
             tail['query'] = {
                 'value-regex': '~.*|.+@.+'
             }
+            tail['description'] = 'Enter a valid email address or profile ID'
+
+        label={
+            'value-regex': '.*'
+        }
+
+        if default_label:
+            label['default']=default_label
 
         invitation = openreview.Invitation(
             id=edge_id,
@@ -186,9 +194,7 @@ class Matching(object):
                     'weight': {
                         'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
                     },
-                    'label': {
-                        'value-regex': '.*'
-                    }
+                    'label': label
                 }
             })
 
@@ -645,7 +651,7 @@ class Matching(object):
                 content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + (self.conference.get_area_chairs_id(number='{number}') if self.is_area_chair else self.conference.get_reviewers_id(number='{number}')) + "'")
                 invitation.process=content
                 self.client.post_invitation(invitation)
-            invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True)
+            invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label='Invite')
             with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_process.py')) as f:
                 content = f.read()
                 content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + (self.conference.get_area_chairs_id(number='{number}') if self.is_area_chair else self.conference.get_reviewers_id(number='{number}')) + "'")
