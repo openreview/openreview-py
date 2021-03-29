@@ -15,12 +15,14 @@ def process(client, edge, invitation):
 
 
         if user_profile:
-            ## - Check if the reviewer is already invited
-            edges=client.get_edges(invitation=edge.invitation, head=edge.head, tail=user_profile.id)
-            if edges:
-                edge.label='Already Invited as ' + user_profile.id
-                client.post_edge(edge)
-                return
+
+            if user_profile.id != user:
+                ## - Check if the reviewer is already invited
+                edges=client.get_edges(invitation=edge.invitation, head=edge.head, tail=user_profile.id)
+                if edges:
+                    edge.label='Already Invited as ' + user_profile.id
+                    client.post_edge(edge)
+                    return
 
             ## - Check if the reviewer is already assigned
             edges=client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=edge.head, tail=user_profile.id, label=ASSIGNMENT_LABEL)

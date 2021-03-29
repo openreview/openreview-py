@@ -1175,7 +1175,7 @@ class TestNeurIPSConference():
 
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_UMass1')
         assert len(invite_edges) == 1
-        assert invite_edges[0].label == 'Already Assigned as ~External_Reviewer_Amazon1'
+        assert invite_edges[0].label == 'Already Assigned as ~Reviewer_UMass1'
 
 
 
