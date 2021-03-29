@@ -8,7 +8,7 @@ def process(client, note, invitation):
     EDGE_WRITERS = []
     HASH_SEED = '112255'
     INVITE_ASSIGNMENT_INVITATION_ID = ''
-    ASSIGNMENT_INVITATION_ID = 'NeurIPS.cc/2021/Conference/Reviewers/-/Assignment'
+    ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
 
     user = urllib.parse.unquote(note.content['user'])

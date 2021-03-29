@@ -1005,7 +1005,14 @@ class Conference(object):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
+
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
+
+    def setup_assignment_recruitment(self, committee_id, assignment_title, due_date=None):
+
+        invitation = self.invitation_builder.set_paper_recruitment_invitation(self, committee_id, assignment_title, due_date)
+        invitation = self.webfield_builder.set_paper_recruitment_page(self, invitation)
+
 
     def set_assignment(self, user, number, is_area_chair = False):
 
