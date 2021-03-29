@@ -895,6 +895,8 @@ class TestNeurIPSConference():
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3
 
+        assert False
+
     def test_deployment_stage(self, conference, client, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
