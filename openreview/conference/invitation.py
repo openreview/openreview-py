@@ -149,6 +149,9 @@ class BidInvitation(openreview.Invitation):
                 'readers': {
                     'values-copied': bid_readers
                 },
+                'writers': {
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
                 'nonreaders': {
                     'values-regex': conference.get_authors_id(number='.*')
                 },
