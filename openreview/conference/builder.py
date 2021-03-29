@@ -1020,10 +1020,10 @@ class Conference(object):
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
-    def setup_assignment_recruitment(self, committee_id, assignment_title, due_date=None):
+    def setup_assignment_recruitment(self, committee_id, hash_seed, assignment_title=None, due_date=None):
 
-        invitation = self.invitation_builder.set_paper_recruitment_invitation(self, committee_id, assignment_title, due_date)
-        invitation = self.webfield_builder.set_paper_recruitment_page(self, invitation)
+        conference_matching = matching.Matching(self, self.client.get_group(committee_id))
+        return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date)
 
 
     def set_assignment(self, user, number, is_area_chair = False):
@@ -1075,9 +1075,6 @@ class Conference(object):
             match_group = self.client.get_group(self.get_reviewers_id())
             ## TODO: disable reassingment from the console
             self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
-
-            invitation = self.invitation_builder.set_paper_recruitment_invitation(self, match_group.id)
-            invitation = self.webfield_builder.set_paper_recruitment_page(self, invitation)
 
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.deploy(assignment_title, overwrite)

@@ -6,7 +6,7 @@ def process(client, note, invitation):
     REVIEWER_NAME = ''
     EDGE_READERS = []
     EDGE_WRITERS = []
-    HASH_SEED = '112255'
+    HASH_SEED = ''
     INVITE_ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None

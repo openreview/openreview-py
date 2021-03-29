@@ -9,6 +9,7 @@ import openreview
 import tld
 import re
 from tqdm import tqdm
+from .. import tools
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -707,6 +708,25 @@ class Matching(object):
             self._build_conflicts(submissions, user_profiles)
 
         self._build_config_invitation(score_spec)
+
+    def setup_invite_assignment(self, hash_seed, assignment_title, due_date):
+
+        recruitment_invitation_id=self.conference.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
+
+        invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label='Invite')
+        with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_process.py')) as f:
+            content = f.read()
+            content = content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
+            content = content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+            invitation.process=content
+            invitation.due_date=tools.datetime_millis(due_date)
+            invitation.exp_date=tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None
+            invite_assignment_invitation=self.client.post_invitation(invitation)
+
+            invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference, recruitment_invitation_id, self.match_group.id, hash_seed, assignment_title, due_date)
+            invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)
+
+            return invite_assignment_invitation
 
     def deploy_acs(self, assignment_title, overwrite):
 

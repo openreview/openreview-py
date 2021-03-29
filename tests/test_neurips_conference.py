@@ -664,7 +664,7 @@ class TestNeurIPSConference():
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        conference.setup_assignment_recruitment(conference.get_reviewers_id(), assignment_title='reviewer-matching')
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', assignment_title='reviewer-matching')
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
@@ -716,7 +716,7 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
 
-        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Recruitment')
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -798,7 +798,7 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
 
-        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Recruitment')
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
         assert len(process_logs) == 2
         assert process_logs[0]['status'] == 'ok'
 
@@ -895,7 +895,7 @@ class TestNeurIPSConference():
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3
 
-        assert False
+        #assert False
 
     def test_deployment_stage(self, conference, client, helpers):
 

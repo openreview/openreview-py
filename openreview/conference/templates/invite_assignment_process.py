@@ -1,8 +1,7 @@
 def process(client, edge, invitation):
 
-    GROUP_ID = 'NeurIPS.cc/2021/Conference/Paper{number}/Reviewers'
-    RECRUITMENT_INVITATION_ID='NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Recruitment'
-    hash_seed='112255'
+    RECRUITMENT_INVITATION_ID = ''
+    HASH_SEED = ''
     print(edge.id)
 
     if edge.ddate is None and edge.label == 'Invite':
@@ -38,7 +37,7 @@ def process(client, edge, invitation):
         ## - Build invitation link
         print(f'Send invitation to {user_profile.id}')
         from Crypto.Hash import HMAC, SHA256
-        hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user_profile.id.encode('utf-8'), digestmod=SHA256).hexdigest()
+        hashkey = HMAC.new(HASH_SEED.encode('utf-8'), msg=user_profile.id.encode('utf-8'), digestmod=SHA256).hexdigest()
         baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
         # build the URL to send in the message

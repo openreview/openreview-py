@@ -1246,7 +1246,7 @@ class PaperGroupInvitation(openreview.Invitation):
 
 class PaperRecruitmentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, invitation_id, committee_id, assignment_title, due_date, web):
+    def __init__(self, conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, web):
 
         content=invitations.recruitment
         content['submission_id'] = {
@@ -1262,6 +1262,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
             file_content = file_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
             file_content = file_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
             file_content = file_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
+            file_content = file_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
 
             ## Add to the proposed assignment or the deployed one.
             if assignment_title:
@@ -1860,8 +1861,7 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(PaperGroupInvitation(conference, committee_id))
 
-    def set_paper_recruitment_invitation(self, conference, committee_id, assignment_title=None, due_date=None):
+    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, hash_seed, assignment_title=None, due_date=None):
 
-        invitation_id=conference.get_invitation_id('Paper_Recruitment', prefix=committee_id)
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
-        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, assignment_title, due_date, current_invitation.web if current_invitation else None))
+        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None))
