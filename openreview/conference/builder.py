@@ -92,12 +92,12 @@ class Conference(object):
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = []):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
             return self.client.post_group(openreview.Group(
                 id = group_id,
-                readers = ['everyone'] if public else [self.id, group_owner_id, group_id],
+                readers = ['everyone'] if 'everyone' in additional_readers else [self.id, group_owner_id, group_id] + additional_readers,
                 writers = [self.id, group_owner_id],
                 signatures = [self.id],
                 signatories = [self.id, group_id] if is_signatory else [self.id, group_owner_id],
@@ -474,7 +474,7 @@ class Conference(object):
         return self.groups
 
     def get_paper_assignment_id(self, group_id):
-        return self.get_invitation_id('Paper_Assignment', prefix=group_id)
+        return self.get_invitation_id('Assignment', prefix=group_id)
 
     def get_affinity_score_id(self, group_id):
         return self.get_invitation_id('Affinity_Score', prefix=group_id)
@@ -685,13 +685,13 @@ class Conference(object):
                     readers=self.get_senior_area_chair_identity_readers(n.number),
                     writers=[self.id],
                     signatures=[self.id],
-                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)],
+                    signatories=[self.id, senior_area_chairs_id],
                     members=group.members if group else []
                 ))
 
 
         if author_group_ids:
-            self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
+            self.__create_group(self.get_authors_id(), self.id, author_group_ids, additional_readers=['everyone'])
 
         # Add this group to active_venues
         active_venues = self.client.get_group('active_venues')
@@ -827,7 +827,10 @@ class Conference(object):
         if self.submission_stage.second_due_date:
             if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
                 self.setup_first_deadline_stage(force, hide_fields)
-            if self.submission_stage.second_due_date < now:
+            elif self.submission_stage.second_due_date < now:
+                self.setup_final_deadline_stage(force, hide_fields)
+            elif force:
+                ## For testing purposes
                 self.setup_final_deadline_stage(force, hide_fields)
         else:
             if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
@@ -910,7 +913,7 @@ class Conference(object):
 
     def set_senior_area_chairs(self, emails = []):
         if self.use_senior_area_chairs:
-            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails)
+            self.__create_group(group_id=self.get_senior_area_chairs_id(), group_owner_id=self.id, members=emails)
 
             return self.__set_senior_area_chair_page()
         else:
@@ -918,8 +921,8 @@ class Conference(object):
 
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
-            group_owner_id=self.get_senior_area_chairs_id() if self.use_senior_area_chairs else self.id
-            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=group_owner_id, members=emails)
+            readers=[self.get_senior_area_chairs_id()] if self.use_senior_area_chairs else []
+            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails, additional_readers=readers)
 
             return self.__set_area_chair_page()
         else:
@@ -977,16 +980,23 @@ class Conference(object):
         self.__create_group(parent_group_invited_id, pcs_id)
 
     def set_reviewers(self, emails = []):
+        readers = []
+        if self.use_senior_area_chairs:
+            readers.append(self.get_senior_area_chairs_id())
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id())
+
         self.__create_group(
             group_id = self.get_reviewers_id(),
             group_owner_id = self.get_area_chairs_id() if self.use_area_chairs else self.id,
-            members = emails)
+            members = emails,
+            additional_readers = readers)
 
         return self.__set_reviewer_page()
 
     def set_authors(self):
         # Creating venue level authors group
-        authors_group = self.__create_group(self.get_authors_id(), self.id, public=True)
+        authors_group = self.__create_group(self.get_authors_id(), self.id, additional_readers=['everyone'])
 
         # Creating venue level accepted authors group
         self.__create_group(self.get_accepted_authors_id(), self.id)

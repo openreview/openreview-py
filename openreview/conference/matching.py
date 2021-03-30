@@ -82,7 +82,7 @@ class Matching(object):
         self.match_group = match_group
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
         self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
-        self.should_read_by_area_chair = not self.is_senior_area_chair and not self.is_area_chair and conference.has_area_chairs
+        self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.has_area_chairs
 
 
     def _get_edge_invitation_id(self, edge_name):
@@ -94,20 +94,40 @@ class Matching(object):
     def _get_edge_readers(self, tail):
         readers = [self.conference.id]
         if self.should_read_by_area_chair:
+            if self.conference.use_senior_area_chairs:
+                readers.append(self.conference.get_senior_area_chairs_id())
             readers.append(self.conference.get_area_chairs_id())
         readers.append(tail)
         return readers
 
-    def _create_edge_invitation(self, edge_id):
+    def _create_edge_invitation(self, edge_id, edited_by_assigned_ac=False):
         '''
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
         '''
+        is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
+        paper_number='{head.number}' if is_assignment_invitation else None
 
         edge_readers = [self.conference.get_id()]
+        edge_writers = [self.conference.get_id()]
+        edge_signatures = [self.conference.get_id() + '$', self.conference.get_program_chairs_id()]
+        edge_nonreaders = {
+            'values-regex': self.conference.get_authors_id(number='.*')
+        }
         if self.should_read_by_area_chair:
+            if self.conference.use_senior_area_chairs:
+                edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
             ## Area Chairs should read the edges of the reviewer invitations.
-            edge_readers.append(self.conference.get_area_chairs_id())
+            edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
+            if is_assignment_invitation:
+                if self.conference.use_senior_area_chairs:
+                    edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+                    edge_signatures.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+                edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
+                edge_signatures.append(self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'))
+                edge_nonreaders = {
+                    'values': [self.conference.get_authors_id(number=paper_number)]
+                }
 
         readers = {
             'values-copied': edge_readers + ['{tail}']
@@ -131,19 +151,18 @@ class Matching(object):
         invitation = openreview.Invitation(
             id=edge_id,
             invitees=[self.conference.get_id(), self.conference.support_user],
-            readers=[self.conference.get_id(), self.conference.get_area_chairs_id()],
+            readers=[self.conference.get_id(), self.conference.get_senior_area_chairs_id(), self.conference.get_area_chairs_id()],
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
             reply={
                 'readers': readers,
-                'nonreaders': {
-                    'values-regex': self.conference.get_authors_id(number='.*')
-                },
+                'nonreaders': edge_nonreaders,
                 'writers': {
-                    'values': [self.conference.get_id()]
+                    'values': edge_writers
                 },
                 'signatures': {
-                    'values': [self.conference.get_id()]
+                    'values-regex': '|'.join(edge_signatures),
+                    'default': self.conference.get_program_chairs_id()
                 },
                 'content': {
                     'head': {
@@ -604,8 +623,8 @@ class Matching(object):
 
         user_profiles = _get_profiles(self.client, self.match_group.members)
 
-        self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
-        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
+        self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id), True)
+        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'), True)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_Max_Papers'))
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 

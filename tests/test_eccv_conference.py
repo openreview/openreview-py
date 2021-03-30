@@ -878,7 +878,7 @@ Please contact info@openreview.net with any questions or concerns about this int
             weight = 5))
 
         ## Go to edge browser to recommend reviewers
-        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
+        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
         edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
         browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
 thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
