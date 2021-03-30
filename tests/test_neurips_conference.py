@@ -187,6 +187,46 @@ class TestNeurIPSConference():
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        result = conference.recruit_reviewers(['ac1@mit.edu'], reviewers_name='Area_Chairs')
+        assert result
+        assert len(result['invited']) == 1
+        assert len(result['reminded']) == 0
+        assert not result['already_invited']
+        assert 'ac1@mit.edu' in result['invited']
+
+        messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2021]: Invitation to serve as Area Chair')
+        text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as area chair' in text
+
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+
+        request_page(selenium, accept_url, alert=True)
+        accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(accepted_group.members) == 1
+        assert 'ac1@mit.edu' in accepted_group.members
+
+        openreview.tools.replace_members_with_ids(client, accepted_group)
+        accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(accepted_group.members) == 1
+        assert '~Area_IBMChair1' in accepted_group.members
+
+        rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
+        assert len(rejected_group.members) == 0
+
+        request_page(selenium, reject_url, alert=True)
+        rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
+        assert len(rejected_group.members) == 1
+        assert 'ac1@mit.edu' in rejected_group.members
+
+        accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(accepted_group.members) == 0
+
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
 
     def test_sac_bidding(self, conference, helpers):
