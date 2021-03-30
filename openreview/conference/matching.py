@@ -185,7 +185,6 @@ class Matching(object):
             })
 
         invitation = self.client.post_invitation(invitation)
-        self.client.delete_edges(invitation.id)
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles):
@@ -242,6 +241,9 @@ class Matching(object):
                         signatures=[self.conference.id]
                     ))
 
+        ## Delete previous conflicts
+        self.client.delete_edges(invitation.id, wait_to_finish=True)
+
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
         # Perform sanity check
@@ -281,6 +283,9 @@ class Matching(object):
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
+
+        ## Delete previous conflicts
+        self.client.delete_edges(invitation.id, wait_to_finish=True)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
@@ -327,6 +332,9 @@ class Matching(object):
                         signatures=[self.conference.id]
                     ))
 
+        ## Delete previous scores
+        self.client.delete_edges(invitation.id, wait_to_finish=True)
+
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
         edges_posted = self.client.get_edges_count(invitation=invitation.id)
@@ -371,6 +379,9 @@ class Matching(object):
 
         print('deleted papers', deleted_papers)
 
+        ## Delete previous scores
+        self.client.delete_edges(invitation.id, wait_to_finish=True)
+
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
         edges_posted = self.client.get_edges_count(invitation=invitation.id)
@@ -395,6 +406,9 @@ class Matching(object):
                     writers=[self.conference.id],
                     signatures=[self.conference.id]
                 ))
+
+        ## Delete previous scores
+        self.client.delete_edges(invitation.id, wait_to_finish=True)
 
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
         # Perform sanity check
@@ -431,6 +445,9 @@ class Matching(object):
                         writers=[self.conference.id],
                         signatures=[self.conference.id]
                     ))
+
+        ## Delete previous scores
+        self.client.delete_edges(invitation.id, wait_to_finish=True)
 
         openreview.tools.post_bulk_edges(client=self.conference.client, edges=edges)
         # Perform sanity check
