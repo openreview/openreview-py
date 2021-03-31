@@ -587,7 +587,47 @@ class TestNeurIPSConference():
             signatures = [conference.id],
             head = 'NeurIPS.cc/2021/Conference/Reviewers',
             tail = '~Reviewer_UMass1',
+            weight = 5
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_MIT1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_MIT1',
             weight = 4
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_IBM1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_IBM1',
+            weight = 2
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_Facebook1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_Facebook1',
+            weight = 6
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_Google1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_Google1',
+            weight = 6
         ))
 
         ## AC assignments
@@ -719,7 +759,7 @@ class TestNeurIPSConference():
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
-        edit='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment'
+        edit='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment;NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers,head:ignore'
         browse='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score;NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
         hide='NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
         url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={edit}&browse={browse}&maxColumns=2'

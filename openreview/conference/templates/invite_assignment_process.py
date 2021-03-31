@@ -1,5 +1,6 @@
 def process(client, edge, invitation):
 
+    SHORT_PHRASE = ''
     RECRUITMENT_INVITATION_ID = ''
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
@@ -66,7 +67,7 @@ def process(client, edge, invitation):
         url = f'{baseurl}/invitation?id={RECRUITMENT_INVITATION_ID}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&response='
 
         # format the message defined above
-        subject=f'[NeurIPS 2021] Invitation to review paper titled {submission.content["title"]}'
+        subject=f'[{SHORT_PHRASE}] Invitation to review paper titled {submission.content["title"]}'
         message =f'''Hi {{name}},
 You were invited to review the paper number: {submission.number}, title: {submission.content['title']}.
 Abstract: {submission.content['abstract']}

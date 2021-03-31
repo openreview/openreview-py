@@ -139,25 +139,29 @@ class Matching(object):
         edge_head_query = {
             'invitation' : self.conference.get_blind_submission_id()
         }
-        weight={
+        edge_weight={
             'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+        }
+        edge_label={
+            'value-regex': '.*'
         }
         if 'Custom_Max_Papers' in edge_id:
             edge_head_type = 'Group'
             edge_head_query = {
                 'id' : edge_id.split('/-/')[0]
             }
-            weight={
+            edge_weight={
                 'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                 'required': True
             }
+            edge_label=None
         if self.is_senior_area_chair:
             edge_head_type = 'Profile'
             edge_head_query = {
                 'group' : self.conference.get_area_chairs_id()
             }
 
-        tail={
+        edge_tail={
             'type': 'Profile',
             'query' : {
                 'group' : self.match_group.id
@@ -165,17 +169,25 @@ class Matching(object):
         }
 
         if any_tail:
-            tail['query'] = {
+            edge_tail['query'] = {
                 'value-regex': '~.*|.+@.+'
             }
-            tail['description'] = 'Enter a valid email address or profile ID'
-
-        label={
-            'value-regex': '.*'
-        }
+            edge_tail['description'] = 'Enter a valid email address or profile ID'
 
         if default_label:
-            label['default']=default_label
+            edge_label['default']=default_label
+
+        content={
+            'head': {
+                'type': edge_head_type,
+                'query' : edge_head_query
+            },
+            'tail': edge_tail,
+            'weight': edge_weight
+        }
+
+        if edge_label:
+            content['label']=edge_label
 
         invitation = openreview.Invitation(
             id=edge_id,
@@ -193,15 +205,7 @@ class Matching(object):
                     'values-regex': '|'.join(edge_signatures),
                     'default': self.conference.get_program_chairs_id()
                 },
-                'content': {
-                    'head': {
-                        'type': edge_head_type,
-                        'query' : edge_head_query
-                    },
-                    'tail': tail,
-                    'weight': weight,
-                    'label': label
-                }
+                'content': content
             })
 
         invitation = self.client.post_invitation(invitation)
@@ -738,6 +742,7 @@ class Matching(object):
         invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label='Invite')
         with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_process.py')) as f:
             file_content = f.read()
+            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
             file_content = file_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
             if assignment_title:
                 file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
