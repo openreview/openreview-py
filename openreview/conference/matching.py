@@ -107,7 +107,7 @@ class Matching(object):
         Creates an edge invitation given an edge name
         e.g. "Affinity_Score"
         '''
-        is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score') or edge_id.endswith('Proposed_Assignment')
+        is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
         paper_number='{head.number}' if is_assignment_invitation else None
 
         edge_readers = [self.conference.get_id()]
@@ -173,6 +173,7 @@ class Matching(object):
                 'value-regex': '~.*|.+@.+'
             }
             edge_tail['description'] = 'Enter a valid email address or profile ID'
+            edge_writers = [self.conference.get_id()]
 
         if default_label:
             edge_label['default']=default_label
@@ -685,7 +686,7 @@ class Matching(object):
                 invitation.process=content
                 self.client.post_invitation(invitation)
 
-        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'), True)
+        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_Max_Papers'))
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
