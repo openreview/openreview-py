@@ -17,9 +17,13 @@ def process(client, note, invitation):
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
     
     if (hashkey == note.content['key'] and client.get_groups(regex=REVIEWERS_INVITED_ID, member=user)):
+        members_to_remove=[user]
+        profile=openreview.tools.get_profile(client, user)
+        if profile:
+            members_to_remove.append(profile.id)
         if (note.content['response'] == 'Yes'):
             if (AREA_CHAIRS_ACCEPTED_ID and client.get_groups(regex=AREA_CHAIRS_ACCEPTED_ID, member=user)):
-                client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, user)
+                client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, members_to_remove)
                 client.add_members_to_group(REVIEWERS_DECLINED_ID, user)
 
                 subject = '[{}] {} Invitation not accepted'.format(SHORT_PHRASE, REVIEWER_NAME)
@@ -27,7 +31,7 @@ def process(client, note, invitation):
                 client.post_message(subject, [user], message)
 
             else:
-                client.remove_members_from_group(REVIEWERS_DECLINED_ID, user)
+                client.remove_members_from_group(REVIEWERS_DECLINED_ID, members_to_remove)
                 client.add_members_to_group(REVIEWERS_ACCEPTED_ID, user)
 
                 subject = '[{}] {} Invitation accepted'.format(SHORT_PHRASE, REVIEWER_NAME)
@@ -39,7 +43,7 @@ If you would like to change your decision, please click the Decline link in the 
                 client.post_message(subject, [user], message, parentGroup=REVIEWERS_ACCEPTED_ID)
 
         elif (note.content['response'] == 'No'):
-            client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, user)
+            client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, members_to_remove)
             client.add_members_to_group(REVIEWERS_DECLINED_ID, user)
 
             subject = '[{}] {} Invitation declined'.format(SHORT_PHRASE, REVIEWER_NAME)
