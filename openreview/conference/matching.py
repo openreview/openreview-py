@@ -139,10 +139,17 @@ class Matching(object):
         edge_head_query = {
             'invitation' : self.conference.get_blind_submission_id()
         }
+        weight={
+            'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+        }
         if 'Custom_Max_Papers' in edge_id:
             edge_head_type = 'Group'
             edge_head_query = {
                 'id' : edge_id.split('/-/')[0]
+            }
+            weight={
+                'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                'required': True
             }
         if self.is_senior_area_chair:
             edge_head_type = 'Profile'
@@ -192,9 +199,7 @@ class Matching(object):
                         'query' : edge_head_query
                     },
                     'tail': tail,
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
+                    'weight': weight,
                     'label': label
                 }
             })
