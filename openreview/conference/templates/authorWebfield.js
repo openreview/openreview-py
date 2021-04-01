@@ -39,26 +39,12 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-function getReviews(forums) {
-  if (OFFICIAL_REVIEW_NAME) {
-    return Webfield.get('/notes', {
-      forum: forums,
-      select: 'id,invitation,signatures,content.recommendation,content.' + REVIEW_RATING_NAME + ',content.' + REVIEW_CONFIDENCE_NAME
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    return $.Deferred().resolve([]);
-  }
-}
-
-
 // Load makes all the API calls needed to get the data to render the page
 function load() {
   var notesP = Webfield.get('/notes', {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
-    details: 'invitation,overwriting'
+    details: 'invitation,overwriting,directReplies'
   }).then(function(result) {
     //Get the blind submissions to have backward compatibility with the paper number
     var originalNotes = result.notes;
@@ -70,8 +56,9 @@ function load() {
     });
 
     if (blindNoteIds.length) {
-      return Webfield.post('/notes/search', {
-        ids: blindNoteIds
+      return Webfield.get('/notes', {
+        ids: blindNoteIds,
+        details: 'directReplies'
       })
       .then(function(result) {
         return (result.notes || []).filter(function(note) {
@@ -87,8 +74,15 @@ function load() {
       return result.notes;
     }
   }).then(function(notes) {
-    var forums = notes.map(function(n) { return n.id; });
-    return $.when(notes, getReviews(forums));
+    var reviews = [];
+    _.forEach(notes, function(note) {
+      _.forEach(note.details.directReplies, function(directReply) {
+        if (_.includes(directReply.invitation, OFFICIAL_REVIEW_NAME)) {
+          reviews.push(directReply);
+        }
+      });
+    });
+    return $.when(notes, reviews);
   });
 
   var invitationsP = Webfield.get('/invitations', {
