@@ -951,6 +951,7 @@ class VenueRequest():
 
         with open(self.recruitment_process, 'r') as f:
             file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
             self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Recruitment',
@@ -1031,6 +1032,7 @@ class VenueRequest():
 
         with open(self.remind_recruitment_process, 'r') as f:
             file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
             self.remind_recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Remind_Recruitment',

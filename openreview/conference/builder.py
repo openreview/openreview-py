@@ -92,12 +92,12 @@ class Conference(object):
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, public = False):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = []):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
             return self.client.post_group(openreview.Group(
                 id = group_id,
-                readers = ['everyone'] if public else [self.id, group_owner_id, group_id],
+                readers = ['everyone'] if 'everyone' in additional_readers else [self.id, group_owner_id, group_id] + additional_readers,
                 writers = [self.id, group_owner_id],
                 signatures = [self.id],
                 signatories = [self.id, group_id] if is_signatory else [self.id, group_owner_id],
@@ -411,6 +411,17 @@ class Conference(object):
 
         return committee
 
+    def get_committee_names(self):
+        committee=[self.reviewers_name]
+
+        if self.use_area_chairs:
+            committee.append(self.area_chairs_name)
+
+        if self.use_senior_area_chairs:
+            committee.append(self.senior_area_chairs_name)
+
+        return committee
+
     def get_committee_id(self, name, number=None):
         committee_id = self.id + '/'
         if number:
@@ -463,7 +474,7 @@ class Conference(object):
         return self.groups
 
     def get_paper_assignment_id(self, group_id):
-        return self.get_invitation_id('Paper_Assignment', prefix=group_id)
+        return self.get_invitation_id('Assignment', prefix=group_id)
 
     def get_affinity_score_id(self, group_id):
         return self.get_invitation_id('Affinity_Score', prefix=group_id)
@@ -674,13 +685,13 @@ class Conference(object):
                     readers=self.get_senior_area_chair_identity_readers(n.number),
                     writers=[self.id],
                     signatures=[self.id],
-                    signatories=[self.id, self.get_senior_area_chairs_id(number=n.number)],
+                    signatories=[self.id, senior_area_chairs_id],
                     members=group.members if group else []
                 ))
 
 
         if author_group_ids:
-            self.__create_group(self.get_authors_id(), self.id, author_group_ids, public=True)
+            self.__create_group(self.get_authors_id(), self.id, author_group_ids, additional_readers=['everyone'])
 
         # Add this group to active_venues
         active_venues = self.client.get_group('active_venues')
@@ -816,7 +827,10 @@ class Conference(object):
         if self.submission_stage.second_due_date:
             if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
                 self.setup_first_deadline_stage(force, hide_fields)
-            if self.submission_stage.second_due_date < now:
+            elif self.submission_stage.second_due_date < now:
+                self.setup_final_deadline_stage(force, hide_fields)
+            elif force:
+                ## For testing purposes
                 self.setup_final_deadline_stage(force, hide_fields)
         else:
             if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
@@ -899,7 +913,7 @@ class Conference(object):
 
     def set_senior_area_chairs(self, emails = []):
         if self.use_senior_area_chairs:
-            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails)
+            self.__create_group(group_id=self.get_senior_area_chairs_id(), group_owner_id=self.id, members=emails)
 
             return self.__set_senior_area_chair_page()
         else:
@@ -907,8 +921,8 @@ class Conference(object):
 
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
-            group_owner_id=self.get_senior_area_chairs_id() if self.use_senior_area_chairs else self.id
-            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=group_owner_id, members=emails)
+            readers=[self.get_senior_area_chairs_id()] if self.use_senior_area_chairs else []
+            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails, additional_readers=readers)
 
             return self.__set_area_chair_page()
         else:
@@ -966,16 +980,23 @@ class Conference(object):
         self.__create_group(parent_group_invited_id, pcs_id)
 
     def set_reviewers(self, emails = []):
+        readers = []
+        if self.use_senior_area_chairs:
+            readers.append(self.get_senior_area_chairs_id())
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id())
+
         self.__create_group(
             group_id = self.get_reviewers_id(),
             group_owner_id = self.get_area_chairs_id() if self.use_area_chairs else self.id,
-            members = emails)
+            members = emails,
+            additional_readers = readers)
 
         return self.__set_reviewer_page()
 
     def set_authors(self):
         # Creating venue level authors group
-        authors_group = self.__create_group(self.get_authors_id(), self.id, public=True)
+        authors_group = self.__create_group(self.get_authors_id(), self.id, additional_readers=['everyone'])
 
         # Creating venue level accepted authors group
         self.__create_group(self.get_accepted_authors_id(), self.id)
@@ -1057,6 +1078,13 @@ class Conference(object):
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
+        committee_roles = self.get_committee_names()
+        recruitment_status = {
+            'invited': [],
+            'reminded': [],
+            'already_invited': {}
+        }
+
         options = {
             'reviewers_name': reviewers_name,
             'reviewers_accepted_id': reviewers_accepted_id,
@@ -1128,6 +1156,7 @@ class Conference(object):
                         'Reminder: ' + recruit_message_subj,
                         reviewers_invited_id,
                         verbose = False)
+                    recruitment_status['reminded'].append(reviewer_id)
 
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
@@ -1151,8 +1180,17 @@ class Conference(object):
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=email, regex=reviewers_id)] if tools.get_group(self.client, email) else []
-            if reviewers_invited_id not in memberships:
+            memberships = [g.id for g in self.client.get_groups(member=email, regex=self.id)] if tools.get_group(self.client, email) else []
+            invited_roles = [f'{self.id}/{role}/Invited' for role in committee_roles]
+
+            invited_group_ids=list(set(invited_roles) & set(memberships))
+
+            if invited_group_ids:
+                invited_group_id=invited_group_ids[0]
+                if invited_group_id not in recruitment_status['already_invited']:
+                    recruitment_status['already_invited'][invited_group_id] = []
+                recruitment_status['already_invited'][invited_group_id].append(email)
+            else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
@@ -1163,8 +1201,9 @@ class Conference(object):
                     recruit_message_subj,
                     reviewers_invited_id,
                     verbose = False)
+                recruitment_status['invited'].append(email)
 
-        return self.client.get_group(id = reviewers_invited_id)
+        return recruitment_status
 
 
 
