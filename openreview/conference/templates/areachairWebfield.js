@@ -71,11 +71,11 @@ var getRootGroups = function() {
     var paperNumbers = [];
     _.forEach(paperGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
-      g.members.forEach(function(member, index) {
-          var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
-          anonids[num] = anonGroup.id;
-      })
-      paperNumbers.push(parseInt(num));
+      var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == user.id; });
+      if (anonGroup) {
+        anonids[num] = anonGroup.id;
+        paperNumbers.push(parseInt(num));
+      }
     });
     return paperNumbers;
   });
@@ -296,11 +296,13 @@ var getReviewerGroups = function(noteNumbers) {
 
     _.forEach(reviewerGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
-      g.members.forEach(function(member, index) {
+      if (num in noteMap) {
+        g.members.forEach(function(member, index) {
           var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
           var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
           noteMap[num][anonId] = member;
-      })
+        })
+      }
     });
 
     return noteMap;
