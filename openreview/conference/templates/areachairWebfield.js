@@ -155,35 +155,33 @@ var loadData = function(paperNums) {
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
 
+    var metaReviews = [];
+    var secondaryMetaReviews = [];
+
     blindedNotesP = Webfield.getAll('/notes', {
       invitation: BLIND_SUBMISSION_ID,
       number: noteNumbersStr,
       select: 'id,number,forum,content,details',
-      details: 'invitation,replyCount'
+      details: 'invitation,replyCount,directReplies'
     }).then(function(notes) {
+      _.forEach(notes, function(note) {
+        _.forEach(note.details.directReplies, function(directReply) {
+          if (_.includes(directReply.invitation, OFFICIAL_META_REVIEW_NAME)) {
+            metaReviews.push(directReply);
+          } else if (_.includes(directReply.invitation, OFFICIAL_SECONDARY_META_REVIEW_NAME)) {
+            secondaryMetaReviews.push(directReply);
+          }
+        });
+      });
       return _.sortBy(notes, 'number');
     });
 
-    metaReviewsP = _.map(noteNumbers, function(noteNumber) {
-      return Webfield.getAll('/notes', {
-        invitation: getInvitationId(OFFICIAL_META_REVIEW_NAME, noteNumber),
-        select: 'id,invitation,content.recommendation'
-      });
+    metaReviewsP = $.when(blindedNotesP).then(function() {
+      return metaReviews;
     });
 
-    secondaryMetaReviewsP = _.map(noteNumbers, function(noteNumber) {
-      return Webfield.getAll('/notes', {
-        invitation: getInvitationId(OFFICIAL_SECONDARY_META_REVIEW_NAME, noteNumber),
-        select: 'id,invitation,content.recommendation'
-      });
-    });
-
-    metaReviewsP = $.when.apply($, metaReviewsP).then(function() {
-      return _.flatten(_.values(arguments));
-    });
-
-    secondaryMetaReviewsP = $.when.apply($, secondaryMetaReviewsP).then(function() {
-      return _.flatten(_.values(arguments));
+    secondaryMetaReviewsP = $.when(blindedNotesP).then(function() {
+      return secondaryMetaReviews;
     });
   } else {
     blindedNotesP = $.Deferred().resolve([]);
