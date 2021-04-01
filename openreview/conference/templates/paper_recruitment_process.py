@@ -7,6 +7,7 @@ def process(client, note, invitation):
     EDGE_READERS = []
     EDGE_WRITERS = []
     HASH_SEED = ''
+    REVIEWERS_ID = ''
     INVITE_ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
@@ -28,13 +29,29 @@ def process(client, note, invitation):
     if edge.label not in ['Invited', 'Accepted', 'Declined']:
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
-    if (note.content['response'] == 'Yes') and edge.label != 'Accepted':
 
-        user_profile=openreview.tools.get_profile(client, edge.tail)
+    user_profile=openreview.tools.get_profile(client, edge.tail)
+    preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
+
+    if (note.content['response'] == 'Yes') and edge.label != 'Accepted':
 
         if not user_profile:
             edge.label='Pending Sign Up'
-            return client.post_edge(edge)
+            client.post_edge(edge)
+
+            ## Send email to reviewer
+            subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation accepted for paper {submission.number}, conflict detection pending'
+            message =f'''Hi {preferred_name},
+Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']}.
+
+Please signup in OpenReview using the email address {edge.tail} and complete your profile.
+After your profile is complete, the conflict of interest detection will be computed against the submission {submission.number} and you will be assigned if no conflicts are detected.
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+            response = client.post_message(subject, [edge.tail], message)
+            return
 
         edge.label='Accepted'
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
@@ -48,7 +65,7 @@ def process(client, note, invitation):
             client.post_edge(openreview.Edge(
                 invitation=ASSIGNMENT_INVITATION_ID,
                 head=edge.head,
-                tail=edge.tail, # get profile first?
+                tail=edge.tail,
                 label=ASSIGNMENT_LABEL,
                 readers=[VENUE_ID] + readers + [edge.tail],
                 nonreaders=[
@@ -58,7 +75,25 @@ def process(client, note, invitation):
                 signatures=[VENUE_ID]
             ))
 
-            ## TODO: send message to AC and user?
+            if ASSIGNMENT_LABEL:
+                instructions=f'The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
+            else:
+                client.add_members_to_group(REVIEWERS_ID, edge.tail)
+                instructions=f'Please go to the {SHORT_PHRASE} Reviewers Console and check your pending tasks: https://openreview.net/group?id={REVIEWERS_ID}'
+
+            ## Send email to reviewer
+            subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation accepted for paper {submission.number}'
+            message =f'''Hi {preferred_name},
+Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']}.
+
+{instructions}
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+            ## - Send email
+            response = client.post_message(subject, [edge.tail], message)
 
 
     elif (note.content['response'] == 'No') and edge.label != 'Declined':
@@ -66,7 +101,17 @@ def process(client, note, invitation):
         edge.label='Declined: ' + note.content.get('comment', 'reason unspecified')
         client.post_edge(edge)
 
-        ## TODO: send message to AC and user?
+        ## Send email to reviewer
+        subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation declined for paper {submission.number}'
+        message =f'''Hi {preferred_name},
+You have declined the invitation to review the paper number: {submission.number}, title: {submission.content['title']}.
+
+If you would like to change your decision, please click the Accept link in the previous invitation email.
+
+OpenReview Team'''
+
+        ## - Send email
+        response = client.post_message(subject, [edge.tail], message)
 
     else:
         raise openreview.OpenReviewException('Invalid response')

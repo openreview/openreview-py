@@ -797,6 +797,7 @@ class TestNeurIPSConference():
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
+
         accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
@@ -821,9 +822,8 @@ class TestNeurIPSConference():
         assert len(assignment_edges) == 3
         assert '~External_Reviewer_Amazon1' in [e.tail for e in assignment_edges]
 
-        #assert '~External_Reviewer_Amazon1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').members
-
-        #assert len(pc_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='~External_Reviewer_Amazon1')) == 1
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
+        assert messages and len(messages) == 1
 
         ## Invite external reviewer 2
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -900,6 +900,9 @@ class TestNeurIPSConference():
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3
 
+        messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
+        assert messages and len(messages) == 1
+
         ## Invite external reviewer 4 with no profile
         posted_edge=ac_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
@@ -935,6 +938,8 @@ class TestNeurIPSConference():
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems' == messages[0].text
 
+        helpers.await_queue()
+
         ## Externel reviewer is set pending profile creation
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
         assert len(invite_edges) == 1
@@ -942,6 +947,9 @@ class TestNeurIPSConference():
 
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3
+
+        messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, conflict detection pending')
+        assert messages and len(messages) == 1
 
         ## Invite external reviewer 5 with no profile
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -978,6 +986,8 @@ class TestNeurIPSConference():
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
+        helpers.await_queue()
+
         ## Externel reviewer is set pending profile creation
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer5@gmail.com')
         assert len(invite_edges) == 1
@@ -986,7 +996,8 @@ class TestNeurIPSConference():
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3
 
-        #assert False
+        messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
+        assert messages and len(messages) == 1
 
     def test_deployment_stage(self, conference, client, helpers):
 

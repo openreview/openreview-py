@@ -9,13 +9,22 @@ def process(client, edge, invitation):
 
     if edge.ddate is None and edge.label == 'Invite':
 
+        ## Get the submission
+        notes=client.get_notes(id=edge.head, details='original')
+        if not notes:
+            raise OpenReviewException(f'Note not found: {edge.head}')
+        submission=notes[0]
+
         ## - Get profile
         user = edge.tail
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
-
+        inviter_id=openreview.tools.pretty_id(edge.signatures[0])
+        inviter_profile=openreview.tools.get_profile(client, edge.tauthor)
+        inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
 
         if user_profile:
+            preferred_name=user_profile.get_preferred_name(pretty=True)
 
             if user_profile.id != user:
                 ## - Check if the reviewer is already invited
@@ -23,6 +32,19 @@ def process(client, edge, invitation):
                 if edges:
                     edge.label='Already Invited as ' + user_profile.id
                     client.post_edge(edge)
+
+                    # format the message defined above
+                    subject=f'[{SHORT_PHRASE}] {preferred_name} is already assigned to paper {submission.number}'
+                    message =f'''Hi {inviter_preferred_name},
+The user {preferred_name} is already assigned to the paper number: {submission.number}, title: {submission.content['title']}.
+
+Best,
+
+OpenReview Team
+                    '''
+
+                    ## - Send email
+                    response = client.post_message(subject, edge.signatures, message)
                     return
 
             ## - Check if the reviewer is already assigned
@@ -32,17 +54,18 @@ def process(client, edge, invitation):
                 client.post_edge(edge)
                 return
 
-        if not user_profile:
+        else:
             user_profile=openreview.Profile(id=user,
                 content={
+                    'names': [],
                     'emails': [user],
                     'preferredEmail': user
                 })
 
+            preferred_name=user_profile.get_preferred_name(pretty=True)
 
         print(f'Check conflicts for {user_profile.id}')
         ## - Check conflicts
-        submission=client.get_notes(id=edge.head, details='original')[0]
         authorids = submission.content['authorids']
         if submission.details and submission.details.get('original'):
             authorids = submission.details['original']['content']['authorids']
@@ -54,7 +77,18 @@ def process(client, edge, invitation):
             edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
             edge.tail=user_profile.id
             client.post_edge(edge)
-            ## TODO: send an email to the AC the reviewer has a conflict?
+
+            # format the message defined above
+            subject=f'[{SHORT_PHRASE}] Conflict detected for {preferred_name} and paper {submission.number}'
+            message =f'''Hi {inviter_preferred_name},
+A conflict was detected for the invited user {preferred_name} and the paper number: {submission.number}, title: {submission.content['title']} and the assignment can not be made.
+
+Best,
+
+OpenReview Team'''
+
+            ## - Send email
+            response = client.post_message(subject, edge.signatures, message)
             return
 
         ## - Build invitation link
@@ -68,7 +102,7 @@ def process(client, edge, invitation):
 
         # format the message defined above
         subject=f'[{SHORT_PHRASE}] Invitation to review paper titled {submission.content["title"]}'
-        message =f'''Hi {{name}},
+        message =f'''Hi {preferred_name},
 You were invited to review the paper number: {submission.number}, title: {submission.content['title']}.
 Abstract: {submission.content['abstract']}
 
@@ -81,8 +115,8 @@ or decline:
 
 Thanks,
 
-Paper {submission.number} Area Chair ({edge.tauthor})
-        '''
+{inviter_id}
+{inviter_preferred_name} ({edge.tauthor})'''
 
         ## Should we do this?
         ## client.add_members_to_group(reviewers_invited_id, [user])

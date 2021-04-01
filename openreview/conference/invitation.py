@@ -1261,6 +1261,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
             file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
             file_content = file_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
             file_content = file_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
+            file_content = file_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
             file_content = file_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
             file_content = file_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
 
