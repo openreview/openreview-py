@@ -1729,19 +1729,29 @@ var displayAreaChairsStatusTable = function() {
       return [number, summaryHtml, seniorSummaryHtml, progressHtml, statusHtml];
     });
 
+    var headings;
+    if (SENIOR_AREA_CHAIRS_ID) {
+      headings = ['#', 'Area Chair', 'Senior Area Chair', 'Review Progress', 'Status'];
+    } else {
+      headings = ['#', 'Area Chair', 'Review Progress', 'Status'];
+    }
+
     var $container = $(container);
     var tableData = {
-      headings: ['#', 'Area Chair', 'Senior Area Chair', 'Review Progress', 'Status'],
+      headings: headings,
       rows: rowData,
       extraClasses: 'console-table'
     };
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
-    $('.console-table th').eq(0).css('width', '4%');
-    $('.console-table th').eq(1).css('width', '20%');
-    $('.console-table th').eq(2).css('width', '20%');
-    $('.console-table th').eq(3).css('width', '28%');
-    $('.console-table th').eq(4).css('width', '28%');
+
+    if (SENIOR_AREA_CHAIRS_ID) {
+      $('.console-table th').eq(0).css('width', '4%');
+      $('.console-table th').eq(1).css('width', '20%');
+      $('.console-table th').eq(2).css('width', '20%');
+      $('.console-table th').eq(3).css('width', '28%');
+      $('.console-table th').eq(4).css('width', '28%');
+    }
 
     $container.on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
