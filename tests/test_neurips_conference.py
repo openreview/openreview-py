@@ -824,6 +824,14 @@ class TestNeurIPSConference():
 
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,
+Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
+
+The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
 
         ## Invite external reviewer 2
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -851,6 +859,10 @@ class TestNeurIPSConference():
         ## External reviewer declines the invitation
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert len(messages) == 0
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Conflict detected for External Reviewer MIT and paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nA conflict was detected for the invited user External Reviewer MIT and the paper number: 5, title: Paper title 5 and the assignment can not be made.\n\nBest,\n\nOpenReview Team'
 
         ## Invite external reviewer 3
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -902,6 +914,7 @@ class TestNeurIPSConference():
 
         messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi External Reviewer Adobe,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'
 
         ## Invite external reviewer 4 with no profile
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -950,6 +963,7 @@ class TestNeurIPSConference():
 
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, conflict detection pending')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi external_reviewer4@gmail.com,\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.\n\nPlease signup in OpenReview using the email address external_reviewer4@gmail.com and complete your profile.\nAfter your profile is complete, the conflict of interest detection will be computed against the submission 5 and you will be assigned if no conflicts are detected.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team'
 
         ## Invite external reviewer 5 with no profile
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -998,6 +1012,7 @@ class TestNeurIPSConference():
 
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi external_reviewer5@gmail.com,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'
 
     def test_deployment_stage(self, conference, client, helpers):
 
