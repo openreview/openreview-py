@@ -797,8 +797,9 @@ class TestNeurIPSConference():
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
+        invitation_message=messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -832,6 +833,66 @@ The NeurIPS 2021 program chairs will be contacting you with more information reg
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
 OpenReview Team'''
+
+        ## External reviewer declines the invitation, assignment rollback
+        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, decline_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
+        assert len(process_logs) == 2
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[1]['status'] == 'ok'
+
+        ## Externel reviewer is assigned to the paper 5
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
+        assert invite_edges[0].label == 'Declined'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 2
+        assert '~External_Reviewer_Amazon1' not in [e.tail for e in assignment_edges]
+
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'''
+
+        ## External reviewer accepts the invitation again
+        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems' == messages[0].text
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
+        assert len(process_logs) == 3
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[1]['status'] == 'ok'
+        assert process_logs[2]['status'] == 'ok'
+
+        ## Externel reviewer is assigned to the paper 5
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
+        assert invite_edges[0].label == 'Accepted'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 3
+        assert '~External_Reviewer_Amazon1' in [e.tail for e in assignment_edges]
+
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
+        assert messages and len(messages) == 2
 
         ## Invite external reviewer 2
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -902,12 +963,12 @@ OpenReview Team'''
         helpers.await_queue()
 
         process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
-        assert len(process_logs) == 2
+        assert len(process_logs) == 4
         assert process_logs[0]['status'] == 'ok'
 
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~External_Reviewer_Adobe1')
         assert len(invite_edges) == 1
-        assert invite_edges[0].label == 'Declined: reason unspecified'
+        assert invite_edges[0].label == 'Declined'
 
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3
@@ -1005,7 +1066,7 @@ OpenReview Team'''
         ## Externel reviewer is set pending profile creation
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer5@gmail.com')
         assert len(invite_edges) == 1
-        assert invite_edges[0].label == 'Declined: reason unspecified'
+        assert invite_edges[0].label == 'Declined'
 
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3

@@ -1,6 +1,7 @@
 def process(client, note, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
+    from datetime import datetime
     VENUE_ID = ''
     SHORT_PHRASE = ''
     REVIEWER_NAME = ''
@@ -32,8 +33,11 @@ def process(client, note, invitation):
 
     user_profile=openreview.tools.get_profile(client, edge.tail)
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
+    assignment_edges = client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=submission.id, tail=edge.tail, label=ASSIGNMENT_LABEL)
 
     if (note.content['response'] == 'Yes') and edge.label != 'Accepted':
+
+        print('Invitation accepted', edge.tail, submission.number)
 
         if not user_profile:
             edge.label='Pending Sign Up'
@@ -58,7 +62,6 @@ OpenReview Team'''
         edge.tail=user_profile.id
         client.post_edge(edge)
 
-        assignment_edges = client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=submission.id, tail=user)
         if not assignment_edges:
             readers=[r.replace('{number}', str(submission.number)) for r in EDGE_READERS]
             writers=[r.replace('{number}', str(submission.number)) for r in EDGE_WRITERS]
@@ -98,7 +101,17 @@ OpenReview Team'''
 
     elif (note.content['response'] == 'No') and edge.label != 'Declined':
 
-        edge.label='Declined: ' + note.content.get('comment', 'reason unspecified')
+        print('Invitation declined', edge.tail, submission.number)
+        if assignment_edges:
+            print('Delete current assignment')
+            assignment_edge=assignment_edges[0]
+            assignment_edge.ddate=openreview.tools.datetime_millis(datetime.utcnow())
+            client.post_edge(assignment_edge)
+
+
+        edge.label='Declined'
+        if 'comment' in note.content:
+            edge.label=edge.label + ': ' + note.content['comment']
         client.post_edge(edge)
 
         ## Send email to reviewer
