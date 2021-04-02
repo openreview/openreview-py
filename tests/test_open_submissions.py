@@ -27,7 +27,15 @@ class TestOpenSubmissions():
         builder.set_conference_short_name('NLP-COVID-2020')
         builder.has_area_chairs(False)
         builder.has_senior_area_chairs(False)
-        builder.set_submission_stage(double_blind=False, public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True, create_groups=True, create_review_invitation=True)
+        builder.set_submission_stage(double_blind=False,
+            public=True,
+            due_date=now + datetime.timedelta(minutes = 40),
+            email_pcs=True,
+            create_groups=True,
+            create_review_invitation=True,
+            withdrawn_submission_reveal_authors=True,
+            desk_rejected_submission_reveal_authors=True
+        )
         builder.set_review_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True)
         builder.set_comment_stage(allow_public_comments=True, email_pcs=True, reader_selection=True, authors=True)
         builder.set_decision_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), options = ['Accept', 'Reject'], email_authors=True)
@@ -83,6 +91,14 @@ class TestOpenSubmissions():
         assert reviewer_group.readers == ['aclweb.org/ACL/2020/Workshop/NLP-COVID', 'aclweb.org/ACL/2020/Workshop/NLP-COVID/Paper1/Reviewers']
         assert client.get_group('aclweb.org/ACL/2020/Workshop/NLP-COVID/Paper1/Reviewers/Submitted')
         assert client.get_invitation('aclweb.org/ACL/2020/Workshop/NLP-COVID/Paper1/-/Official_Review')
+
+        ## call post submission stage and keep the submissions public
+        conference.setup_post_submission_stage(force=True)
+        submissions=conference.get_submissions()
+        assert submissions
+        assert submissions[0].readers == ['everyone']
+        assert submissions[0].tcdate == submissions[0].tmdate
+
 
     def test_post_reviews(self, client, conference, test_client, helpers):
 
