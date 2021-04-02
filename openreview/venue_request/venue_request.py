@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'submissions_visibility']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -669,7 +669,7 @@ class VenueRequest():
                 'required': True
             },
             'submissions_visibility': {
-                'description': 'This option is only available for non blind public submissions. Otherwise the submissions will be released to their respective readers after the submission deadline.',
+                'description': 'This option is only available for non-blind, public submissions. Double-blind submissions will be released to their respective readers after the submission deadline.',
                 'value-radio': [
                     'Yes, submissions should be immediately revealed to the public.',
                     'No, wait until the submission deadline has passed to make them public.'],
