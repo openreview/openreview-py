@@ -1297,6 +1297,17 @@ OpenReview Team'''
 
         assert len(pc_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper4/Reviewer_', signatory='~External_Reviewer_Amazon1')) == 1
 
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,
+Thank you for accepting the invitation to review the paper number: 4, title: Paper title 4.
+
+Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
         ## Invite the same reviewer again
         with pytest.raises(openreview.OpenReviewException, match=r'tooMany'):
             posted_edge=ac_client.post_edge(openreview.Edge(
@@ -1332,6 +1343,9 @@ OpenReview Team'''
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Already Invited as ~External_Reviewer_Amazon1'
 
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] External Reviewer Amazon is already invited to paper 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nThe user External Reviewer Amazon is already invited to the paper number: 4, title: Paper title 4.\n\nBest,\n\nOpenReview Team'
 
         ## Invite reviewer already assigned
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -1355,6 +1369,9 @@ OpenReview Team'''
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Already Assigned as ~Reviewer_UMass1'
 
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer UMass is already assigned to paper 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nThe user Reviewer UMass is already invited to the paper number: 4, title: Paper title 4.\n\nBest,\n\nOpenReview Team'
 
 
     def test_comment_stage(self, conference, helpers, test_client, client):

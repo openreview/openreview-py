@@ -34,14 +34,13 @@ def process(client, edge, invitation):
                     client.post_edge(edge)
 
                     # format the message defined above
-                    subject=f'[{SHORT_PHRASE}] {preferred_name} is already assigned to paper {submission.number}'
+                    subject=f'[{SHORT_PHRASE}] {preferred_name} is already invited to paper {submission.number}'
                     message =f'''Hi {inviter_preferred_name},
-The user {preferred_name} is already assigned to the paper number: {submission.number}, title: {submission.content['title']}.
+The user {preferred_name} is already invited to the paper number: {submission.number}, title: {submission.content['title']}.
 
 Best,
 
-OpenReview Team
-                    '''
+OpenReview Team'''
 
                     ## - Send email
                     response = client.post_message(subject, edge.signatures, message)
@@ -52,6 +51,16 @@ OpenReview Team
             if edges:
                 edge.label='Already Assigned as ' + user_profile.id
                 client.post_edge(edge)
+                subject=f'[{SHORT_PHRASE}] {preferred_name} is already assigned to paper {submission.number}'
+                message =f'''Hi {inviter_preferred_name},
+The user {preferred_name} is already assigned to the paper number: {submission.number}, title: {submission.content['title']}.
+
+Best,
+
+OpenReview Team'''
+
+                ## - Send email
+                response = client.post_message(subject, edge.signatures, message)
                 return
 
         else:
