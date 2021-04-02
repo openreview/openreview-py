@@ -574,14 +574,23 @@ class Conference(object):
     def get_reviewer_identity_readers(self, number):
         ## default value
         if not self.reviewer_identity_readers:
-            return [self.id, self.get_area_chairs_id(number)]
+            identity_readers=[self.id]
+            if self.use_senior_area_chairs:
+                identity_readers.append(self.get_senior_area_chairs_id(number))
+            if self.use_area_chairs:
+                identity_readers.append(self.get_area_chairs_id(number))
+            return identity_readers
 
         return self.IdentityReaders.get_readers(self, number, self.reviewer_identity_readers)
 
     def get_area_chair_identity_readers(self, number):
         ## default value
         if not self.area_chair_identity_readers:
-            return [self.id, self.get_area_chairs_id(number)]
+            identity_readers=[self.id]
+            if self.use_senior_area_chairs:
+                identity_readers.append(self.get_senior_area_chairs_id(number))
+            identity_readers.append(self.get_area_chairs_id(number))
+            return identity_readers
 
         return self.IdentityReaders.get_readers(self, number, self.area_chair_identity_readers)
 
