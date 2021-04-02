@@ -145,6 +145,9 @@ class TestMatchingWithAnonIds():
         conference.setup_post_submission_stage(force=True)
         blinded_notes = conference.get_submissions()
 
+        # Set up reviewer matching
+        conference.setup_matching(build_conflicts=True)
+
         ac1_client = helpers.create_user('ac2@cmu.edu', 'AreaChair', 'CMUOne')
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
             readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
@@ -196,10 +199,6 @@ class TestMatchingWithAnonIds():
             tail = '~Reviewer_MITOne1',
             label = 'Low'
         ))
-
-        # Set up reviewer matching
-        conference.setup_matching(build_conflicts=True)
-
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
