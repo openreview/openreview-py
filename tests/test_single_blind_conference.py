@@ -152,7 +152,7 @@ class TestSingleBlindConference():
             due_date = now + datetime.timedelta(minutes = 40),
             public=True,
             email_pcs=True,
-            create_groups=True,
+            create_groups=False,
             withdrawn_submission_public=True,
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
