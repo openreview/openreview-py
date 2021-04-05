@@ -684,12 +684,6 @@ class Matching(object):
                 content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + (self.conference.get_area_chairs_id(number='{number}') if self.is_area_chair else self.conference.get_reviewers_id(number='{number}')) + "'")
                 invitation.process=content
                 self.client.post_invitation(invitation)
-            invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label='Invite')
-            with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_process.py')) as f:
-                content = f.read()
-                content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + (self.conference.get_area_chairs_id(number='{number}') if self.is_area_chair else self.conference.get_reviewers_id(number='{number}')) + "'")
-                invitation.process=content
-                self.client.post_invitation(invitation)
 
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_Max_Papers'))
@@ -746,62 +740,68 @@ class Matching(object):
         recruitment_invitation_id=self.conference.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
 
         invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label='Invite')
-        with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_process.py')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
-            file_content = file_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
-            if assignment_title:
-                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
-                file_content = file_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
-            else:
-                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
+        with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_pre_process.py')) as pre:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_post_process.py')) as post:
+                pre_content = pre.read()
+                post_content = post.read()
+                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
+                post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
+                if assignment_title:
+                    pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
+                    pre_content = pre_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
+                    post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                else:
+                    pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
 
-            file_content = file_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
-            invitation.process=file_content
+                post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+                invitation.preprocess=pre_content
+                invitation.process=post_content
 
-            invitation.due_date=tools.datetime_millis(due_date)
-            invitation.exp_date=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
-            invitation.multiReply=False
+                invitation.due_date=tools.datetime_millis(due_date)
+                invitation.exp_date=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
+                invitation.multiReply=False
 
-            header = {
-                'title': self.conference.get_short_name() + ' Reviewer Proposed Assignments',
-                'instructions': '<p class="dark">Recommend a ranked list of reviewers for each of your assigned papers.</p>\
-                    <p class="dark"><strong>Instructions:</strong></p>\
-                    <ul>\
-                        <li>For each of your assigned papers, please select 1 reviewers to recommend.</li>\
-                        <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
-                        <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
-                        <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
-                        <li>To get started click the button below.</li>\
-                    </ul>\
-                    <br>'
-            }
+                header = {
+                    'title': self.conference.get_short_name() + ' Reviewer Proposed Assignments',
+                    'instructions': '<p class="dark">Recommend a ranked list of reviewers for each of your assigned papers.</p>\
+                        <p class="dark"><strong>Instructions:</strong></p>\
+                        <ul>\
+                            <li>For each of your assigned papers, please select 1 reviewers to recommend.</li>\
+                            <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
+                            <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
+                            <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
+                            <li>To get started click the button below.</li>\
+                        </ul>\
+                        <br>'
+                }
 
-            score_ids = []
-            invitation_ids = [
-                self.conference.get_invitation_id('TPMS_Score', prefix=self.match_group.id),
-                self.conference.get_invitation_id('Affinity_Score', prefix=self.match_group.id),
-                self.conference.get_bid_id(self.match_group.id)
-            ]
+                score_ids = []
+                invitation_ids = [
+                    self.conference.get_invitation_id('TPMS_Score', prefix=self.match_group.id),
+                    self.conference.get_invitation_id('Affinity_Score', prefix=self.match_group.id),
+                    self.conference.get_bid_id(self.match_group.id)
+                ]
 
-            for invitation_id in invitation_ids:
-                if openreview.tools.get_invitation(self.client, invitation_id):
-                    score_ids.append(invitation_id)
+                for invitation_id in invitation_ids:
+                    if openreview.tools.get_invitation(self.client, invitation_id):
+                        score_ids.append(invitation_id)
 
-            start_param = self.conference.get_paper_assignment_id(self.conference.get_area_chairs_id(), deployed=True) + ',tail:{userId}'
-            traverse= self.conference.get_paper_assignment_id(self.match_group.id) + f',label:{assignment_title}' if assignment_title else ''
-            edit_param = f'{traverse};{invitation.id};{self.match_group.id}/-/Custom_Max_Papers,head:ignore'
-            browse_param = ';'.join(score_ids)
-            hide=f'{self.match_group.id}/-/Conflict'
-            params = f'start={start_param}&traverse={traverse}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'
-            with open(os.path.join(os.path.dirname(__file__), 'templates/assignmentWebfield.js')) as f:
-                content = f.read()
-                content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + self.conference.get_id() + "';")
-                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-                content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
-                content = content.replace("var BUTTON_NAME = '';", "var BUTTON_NAME = '" + 'Propose Assignments' + "';")
-                invitation.web=content
-                invite_assignment_invitation=self.client.post_invitation(invitation)
+                start_param = self.conference.get_paper_assignment_id(self.conference.get_area_chairs_id(), deployed=True) + ',tail:{userId}'
+                traverse= self.conference.get_paper_assignment_id(self.match_group.id) + f',label:{assignment_title}' if assignment_title else ''
+                edit_param = f'{traverse};{invitation.id};{self.match_group.id}/-/Custom_Max_Papers,head:ignore'
+                browse_param = ';'.join(score_ids)
+                hide=f'{self.match_group.id}/-/Conflict'
+                params = f'start={start_param}&traverse={traverse}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'
+                with open(os.path.join(os.path.dirname(__file__), 'templates/assignmentWebfield.js')) as f:
+                    content = f.read()
+                    content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + self.conference.get_id() + "';")
+                    content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+                    content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+                    content = content.replace("var BUTTON_NAME = '';", "var BUTTON_NAME = '" + 'Propose Assignments' + "';")
+                    invitation.web=content
+                    invite_assignment_invitation=self.client.post_invitation(invitation)
 
         invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference, recruitment_invitation_id, self.match_group.id, hash_seed, assignment_title, due_date)
         invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)

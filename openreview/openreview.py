@@ -1604,6 +1604,7 @@ class Invitation(object):
         web_string = None,
         process = None,
         process_string = None,
+        preprocess = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -1649,6 +1650,8 @@ class Invitation(object):
             self.process = process_string
         if web_string:
             self.web = web_string
+        if preprocess:
+            self.preprocess=preprocess
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1693,6 +1696,8 @@ class Invitation(object):
             body['web']=self.web
         if hasattr(self,'process'):
             body['process']=self.process
+        if hasattr(self,'preprocess'):
+            body['preprocess']=self.preprocess
         return body
 
     @classmethod
@@ -1731,6 +1736,8 @@ class Invitation(object):
             invitation.process = i['process']
         if 'transform' in i:
             invitation.transform = i['transform']
+        if 'preprocess' in i:
+            invitation.process = i['preprocess']
         return invitation
 
 class Note(object):
