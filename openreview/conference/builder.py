@@ -574,14 +574,23 @@ class Conference(object):
     def get_reviewer_identity_readers(self, number):
         ## default value
         if not self.reviewer_identity_readers:
-            return [self.id, self.get_area_chairs_id(number)]
+            identity_readers=[self.id]
+            if self.use_senior_area_chairs:
+                identity_readers.append(self.get_senior_area_chairs_id(number))
+            if self.use_area_chairs:
+                identity_readers.append(self.get_area_chairs_id(number))
+            return identity_readers
 
         return self.IdentityReaders.get_readers(self, number, self.reviewer_identity_readers)
 
     def get_area_chair_identity_readers(self, number):
         ## default value
         if not self.area_chair_identity_readers:
-            return [self.id, self.get_area_chairs_id(number)]
+            identity_readers=[self.id]
+            if self.use_senior_area_chairs:
+                identity_readers.append(self.get_senior_area_chairs_id(number))
+            identity_readers.append(self.get_area_chairs_id(number))
+            return identity_readers
 
         return self.IdentityReaders.get_readers(self, number, self.area_chair_identity_readers)
 
@@ -798,7 +807,7 @@ class Conference(object):
         if self.submission_stage.double_blind and not (self.submission_stage.author_names_revealed or self.submission_stage.papers_released):
             self.create_blind_submissions(hide_fields)
 
-        if not self.submission_stage.double_blind and not self.submission_stage.papers_released:
+        if not self.submission_stage.double_blind and not self.submission_stage.papers_released and not self.submission_stage.create_groups:
             self.invitation_builder.set_submission_invitation(self, under_submission=False)
             for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='set_final_readers'):
                 note.readers = self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
@@ -1396,6 +1405,7 @@ class SubmissionStage(object):
         self.public = self.Readers.EVERYONE in self.readers
 
     def get_readers(self, conference, number, under_submission):
+
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
             under_submission_readers=[conference.get_id()]
@@ -1433,6 +1443,11 @@ class SubmissionStage(object):
         return submission_readers
 
     def get_invitation_readers(self, conference, under_submission, submission_readers):
+
+        ## Rolling review should be release right away
+        if self.create_groups:
+            return {'values': ['everyone']}
+
         if under_submission:
             readers = {
                 'values-copied': [
