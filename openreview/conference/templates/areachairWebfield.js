@@ -71,7 +71,7 @@ var getRootGroups = function() {
     var paperNumbers = [];
     _.forEach(paperGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
-      var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == user.id; });
+      var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num); });
       if (anonGroup) {
         anonids[num] = anonGroup.id;
         paperNumbers.push(parseInt(num));
