@@ -111,10 +111,7 @@ class BidInvitation(openreview.Invitation):
 
         match_group_id = bid_stage.committee_id
 
-        invitation_readers = [
-            conference.get_id(),
-            match_group_id
-        ]
+        invitation_readers = bid_stage.get_invitation_readers(conference)
 
         invitees = [match_group_id, conference.support_user]
 

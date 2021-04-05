@@ -1020,7 +1020,7 @@ class Conference(object):
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
-    def setup_assignment_recruitment(self, committee_id, hash_seed, assignment_title=None, due_date=None):
+    def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None):
 
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date)
@@ -1528,6 +1528,18 @@ class BidStage(object):
         self.request_count=request_count
         self.score_ids=score_ids
         self.instructions=instructions
+
+    def get_invitation_readers(self, conference):
+        readers = [conference.get_id()]
+        if self.committee_id == conference.get_reviewers_id():
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id())
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id())
+        if self.committee_id == conference.get_area_chairs_id():
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id())
+        return readers
 
     def get_readers(self, conference):
         values_copied = [conference.get_id()]

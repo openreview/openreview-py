@@ -556,6 +556,8 @@ class TestNeurIPSConference():
 
     def test_setup_matching(self, conference, client, helpers):
 
+        now = datetime.datetime.utcnow()
+
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions()
 
@@ -577,7 +579,12 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Reviewer_Facebook1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Reviewer_Google1', round(random.random(), 2)])
 
+
         conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score']))
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score']))
+
 
         ## Reviewer quotas
         client.post_edge(openreview.Edge(
@@ -753,9 +760,10 @@ class TestNeurIPSConference():
 
     def test_reassignment_stage(self, conference, helpers, client, selenium, request_page):
 
+        now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', assignment_title='reviewer-matching')
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching')
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
@@ -805,7 +813,7 @@ class TestNeurIPSConference():
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
-        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems' == messages[0].text
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
         helpers.await_queue()
 
@@ -871,7 +879,7 @@ OpenReview Team'''
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
-        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems' == messages[0].text
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
         helpers.await_queue()
 
@@ -1010,7 +1018,7 @@ OpenReview Team'''
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
-        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems' == messages[0].text
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
         helpers.await_queue()
 
@@ -1074,6 +1082,8 @@ OpenReview Team'''
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == 'Hi external_reviewer5@gmail.com,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'
+
+        #assert False
 
     def test_deployment_stage(self, conference, client, helpers):
 
@@ -1225,9 +1235,10 @@ OpenReview Team'''
 
     def test_emergency_reviewer_stage(self, conference, helpers, client, request_page, selenium):
 
+        now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678')
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=6))
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment'
@@ -1275,7 +1286,7 @@ OpenReview Team'''
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
-        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems' == messages[0].text
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
         helpers.await_queue()
 
@@ -1371,7 +1382,7 @@ OpenReview Team'''
 
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer UMass is already assigned to paper 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nThe user Reviewer UMass is already invited to the paper number: 4, title: Paper title 4.\n\nBest,\n\nOpenReview Team'
+        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nThe user Reviewer UMass is already assigned to the paper number: 4, title: Paper title 4.\n\nBest,\n\nOpenReview Team'
 
 
     def test_comment_stage(self, conference, helpers, test_client, client):
