@@ -1539,6 +1539,7 @@ class BidStage(object):
         if self.committee_id == conference.get_area_chairs_id():
             if conference.use_senior_area_chairs:
                 readers.append(conference.get_senior_area_chairs_id())
+        readers.append(self.committee_id)
         return readers
 
     def get_readers(self, conference):
