@@ -37,6 +37,10 @@ class SubmissionInvitation(openreview.Invitation):
                     # Only supported for public reviews
                     if submission_stage.create_review_invitation:
                         file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+                    if not conference.legacy_anonids:
+                        file_content = file_content.replace("var ANON_IDS = false;", "var ANON_IDS = true;")
+                        file_content = file_content.replace("var DEANONYMIZERS = [];", "var DEANONYMIZERS = " + json.dumps(conference.get_reviewer_identity_readers('{number}')) + ";")
+
                 if conference.use_area_chairs:
                     file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
 

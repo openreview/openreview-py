@@ -114,7 +114,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     desk_rejected_submission_reveal_authors = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
-    create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
+    submission_release=(note.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
+    create_groups=(not double_blind) and public and submission_release
+    create_review_invitation = create_groups and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
 
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
@@ -128,7 +130,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
         email_pcs=False, ## Need to add this setting to the form
-        create_groups=(not double_blind),
+        create_groups=create_groups,
         create_review_invitation=create_review_invitation,
         withdrawn_submission_public=withdrawn_submission_public,
         withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,

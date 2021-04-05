@@ -7,6 +7,8 @@ function processUpdate() {
   var AREA_CHAIRS_ID = '';
   var OFFICIAL_REVIEW_NAME = '';
   var CREATE_GROUPS = false;
+  var ANON_IDS = false;
+  var DEANONYMIZERS = [];
 
   var authorSubject = SHORT_PHRASE + ' has received your submission titled ' + note.content.title;
   var noteAbstract = (note.content.abstract ? `\n\nAbstract: ${note.content.abstract}` : '');
@@ -66,7 +68,9 @@ function processUpdate() {
         members: [],
         readers: committee.concat(reviewerGroupId),
         signatories: committee,
-        nonreaders: [authorGroupId]
+        nonreaders: [authorGroupId],
+        anonids: ANON_IDS,
+        deanonymizers: DEANONYMIZERS.map(d => d.replace('{number}', note.number))
       };
 
       await or3client.or3request(or3client.grpUrl, reviewerGroup, 'POST', token);
@@ -99,10 +103,10 @@ function processUpdate() {
               description: "User groups that should be able to read this review."
             },
             writers: {
-              'values-regex': paperGroup.id + '/(AnonReviewer|Reviewer_)'
+              'values-regex': paperGroup.id + ( ANON_IDS ? '/Reviewer_.*' : '/AnonReviewer.*' )
             },
             signatures: {
-              'values-regex': paperGroup.id + '/(AnonReviewer|Reviewer_)'
+              'values-regex': paperGroup.id + ( ANON_IDS ? '/Reviewer_.*' : '/AnonReviewer.*' )
             }
           }
         };
