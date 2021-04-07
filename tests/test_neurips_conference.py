@@ -614,7 +614,7 @@ class TestNeurIPSConference():
             signatures = [conference.id],
             head = 'NeurIPS.cc/2021/Conference/Reviewers',
             tail = '~Reviewer_IBM1',
-            weight = 2
+            weight = 1
         ))
 
         client.post_edge(openreview.Edge(
@@ -903,35 +903,17 @@ OpenReview Team'''
         assert messages and len(messages) == 2
 
         ## Invite external reviewer 2
-        posted_edge=ac_client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
-            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer2@mit.edu'],
-            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
-            writers = [conference.id],
-            signatures = [signatory_group.id],
-            head = submission.id,
-            tail = 'external_reviewer2@mit.edu',
-            label = 'Invite'
-        ))
-
-        helpers.await_queue()
-
-        process_logs = client.get_process_logs(id=posted_edge.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-
-        ## External reviewer is invited
-        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~External_Reviewer_MIT1')
-        assert len(invite_edges) == 1
-        assert invite_edges[0].label == 'Conflict'
-
-        ## External reviewer declines the invitation
-        messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
-        assert len(messages) == 0
-
-        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Conflict detected for External Reviewer MIT and paper 5')
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nA conflict was detected for the invited user External Reviewer MIT and the paper number: 5, title: Paper title 5 and the assignment can not be made.\n\nBest,\n\nOpenReview Team'
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for ~External_Reviewer_MIT1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer2@mit.edu'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'external_reviewer2@mit.edu',
+                label = 'Invite'
+            ))
 
         ## Invite external reviewer 3
         posted_edge=ac_client.post_edge(openreview.Edge(
@@ -1083,7 +1065,33 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == 'Hi external_reviewer5@gmail.com,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'
 
-        #assert False
+
+        ## Invite external reviewer with wrong tilde id
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found ~External_Melisa1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~External_Melisa1'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~External_Melisa1',
+                label = 'Invite'
+            ))
+
+        ## Propose a reviewer that reached the quota
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for ~Reviewer_IBM1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Reviewer_IBM1'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~Reviewer_IBM1',
+                label = 'reviewer-matching'
+            ))
+
 
     def test_deployment_stage(self, conference, client, helpers):
 
@@ -1319,6 +1327,10 @@ If you would like to change your decision, please click the Decline link in the 
 
 OpenReview Team'''
 
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\nNeurIPS 2021 Conference(NeurIPS.cc/2021/Conference)'''
+
         ## Invite the same reviewer again
         with pytest.raises(openreview.OpenReviewException, match=r'tooMany'):
             posted_edge=ac_client.post_edge(openreview.Edge(
@@ -1333,41 +1345,39 @@ OpenReview Team'''
             ))
 
         ## Invite the same reviewer again
-        posted_edge=ac_client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
-            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer1@amazon.com'],
-            nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
-            writers = [conference.id],
-            signatures = [signatory_group.id],
-            head = submission.id,
-            tail = 'external_reviewer1@amazon.com',
-            label = 'Invite'
-        ))
-
-        helpers.await_queue()
-
-        process_logs = client.get_process_logs(id=posted_edge.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-
-        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer1@amazon.com')
-        assert len(invite_edges) == 1
-        assert invite_edges[0].label == 'Already Invited as ~External_Reviewer_Amazon1'
-
-        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] External Reviewer Amazon is already invited to paper 4')
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nThe user External Reviewer Amazon is already invited to the paper number: 4, title: Paper title 4.\n\nBest,\n\nOpenReview Team'
+        with pytest.raises(openreview.OpenReviewException, match=r'Already invited as ~External_Reviewer_Amazon1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer1@amazon.com'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'external_reviewer1@amazon.com',
+                label = 'Invite'
+            ))
 
         ## Invite reviewer already assigned
+        with pytest.raises(openreview.OpenReviewException, match=r'Already assigned as ~Reviewer_UMass1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Reviewer_UMass1'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~Reviewer_UMass1',
+                label = 'Invite'
+            ))
+
         posted_edge=ac_client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
-            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Reviewer_UMass1'],
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Reviewer_Amazon1'],
             nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
-            writers = [conference.id],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs'],
             signatures = [signatory_group.id],
             head = submission.id,
-            tail = '~Reviewer_UMass1',
-            label = 'Invite'
+            tail = '~Reviewer_Amazon1'
         ))
 
         helpers.await_queue()
@@ -1376,13 +1386,10 @@ OpenReview Team'''
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_UMass1')
-        assert len(invite_edges) == 1
-        assert invite_edges[0].label == 'Already Assigned as ~Reviewer_UMass1'
-
-        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer UMass is already assigned to paper 4')
+        messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == 'Hi Area IBMChair,\nThe user Reviewer UMass is already assigned to the paper number: 4, title: Paper title 4.\n\nBest,\n\nOpenReview Team'
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\n{openreview.tools.pretty_id(signatory_group.id)}(ac1@mit.edu)'''
+
 
 
     def test_comment_stage(self, conference, helpers, test_client, client):

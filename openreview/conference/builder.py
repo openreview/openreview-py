@@ -361,12 +361,14 @@ class Conference(object):
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
-            return self.reviewers_name.replace('_', ' ')
+            name=self.reviewers_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
-            return self.area_chairs_name.replace('_', ' ')
+            name=self.area_chairs_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
 
     def get_secondary_area_chairs_name(self, pretty=True):
@@ -489,6 +491,9 @@ class Conference(object):
 
     def get_conflict_score_id(self, group_id):
         return self.get_invitation_id('Conflict', prefix=group_id)
+
+    def get_custom_max_papers_id(self, group_id):
+        return self.get_invitation_id('Custom_Max_Papers', prefix=group_id)
 
     def set_homepage_header(self, header):
         self.homepage_header = header
