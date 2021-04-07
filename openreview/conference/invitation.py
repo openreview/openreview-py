@@ -1745,7 +1745,7 @@ class InvitationBuilder(object):
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     'title': {
-                        'value': committee_name[:-1] + ' Information'
+                        'value': committee_name + ' Information'
                     },
                     'instructions': {
                         'order': 1,
@@ -1766,7 +1766,7 @@ class InvitationBuilder(object):
             forum = None,
             content = {
                 'instructions': instructions,
-                'title': committee_name[:-1] + ' Information'
+                'title': committee_name + ' Information'
             }
         ))
 
@@ -1843,7 +1843,7 @@ class InvitationBuilder(object):
             additional_fields=stage.ac_additional_fields,
             instructions=stage.ac_instructions,
             committee_id=conference.get_area_chairs_id(),
-            committee_name=conference.get_area_chairs_name()))
+            committee_name=conference.get_area_chairs_name(pretty=True)))
 
         invitations.append(self.__set_registration_invitation(conference=conference,
         start_date=stage.start_date,
@@ -1851,7 +1851,7 @@ class InvitationBuilder(object):
         additional_fields=stage.additional_fields,
         instructions=stage.instructions,
         committee_id=conference.get_reviewers_id(),
-        committee_name=conference.get_reviewers_name()))
+        committee_name=conference.get_reviewers_name(pretty=True)))
 
         return invitations
 

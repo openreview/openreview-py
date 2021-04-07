@@ -361,12 +361,14 @@ class Conference(object):
 
     def get_reviewers_name(self, pretty=True):
         if pretty:
-            return self.reviewers_name.replace('_', ' ')
+            name=self.reviewers_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
-            return self.area_chairs_name.replace('_', ' ')
+            name=self.area_chairs_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
 
     def get_secondary_area_chairs_name(self, pretty=True):

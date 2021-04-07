@@ -1327,6 +1327,10 @@ If you would like to change your decision, please click the Decline link in the 
 
 OpenReview Team'''
 
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\nNeurIPS 2021 Conference(NeurIPS.cc/2021/Conference)'''
+
         ## Invite the same reviewer again
         with pytest.raises(openreview.OpenReviewException, match=r'tooMany'):
             posted_edge=ac_client.post_edge(openreview.Edge(
@@ -1365,6 +1369,27 @@ OpenReview Team'''
                 tail = '~Reviewer_UMass1',
                 label = 'Invite'
             ))
+
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Reviewer_Amazon1'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs'],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = '~Reviewer_Amazon1'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\n{openreview.tools.pretty_id(signatory_group.id)}(ac1@mit.edu)'''
+
 
 
     def test_comment_stage(self, conference, helpers, test_client, client):
