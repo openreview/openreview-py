@@ -614,7 +614,7 @@ class TestNeurIPSConference():
             signatures = [conference.id],
             head = 'NeurIPS.cc/2021/Conference/Reviewers',
             tail = '~Reviewer_IBM1',
-            weight = 2
+            weight = 1
         ))
 
         client.post_edge(openreview.Edge(
@@ -1077,6 +1077,19 @@ OpenReview Team'''
                 head = submission.id,
                 tail = '~External_Melisa1',
                 label = 'Invite'
+            ))
+
+        ## Propose a reviewer that reached the quota
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for ~Reviewer_IBM1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Reviewer_IBM1'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~Reviewer_IBM1',
+                label = 'reviewer-matching'
             ))
 
 

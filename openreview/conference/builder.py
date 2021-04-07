@@ -490,6 +490,9 @@ class Conference(object):
     def get_conflict_score_id(self, group_id):
         return self.get_invitation_id('Conflict', prefix=group_id)
 
+    def get_custom_max_papers_id(self, group_id):
+        return self.get_invitation_id('Custom_Max_Papers', prefix=group_id)
+
     def set_homepage_header(self, header):
         self.homepage_header = header
 
