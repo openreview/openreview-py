@@ -212,6 +212,7 @@ class TestMatching():
         assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Conflict')
         assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Aggregate_Score')
         assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment')
+        assert pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Proposed_Assignment')
 
         # Set up AC matching
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
@@ -705,7 +706,7 @@ class TestMatching():
         blinded_notes = list(conference.get_submissions())
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
         assert 0 == len(edges)
@@ -778,7 +779,7 @@ class TestMatching():
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
         assert 6 == len(edges)
@@ -845,7 +846,7 @@ class TestMatching():
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment',
+            invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching-new'
         )
         assert 3 == len(edges)
@@ -1122,13 +1123,13 @@ class TestMatching():
         blinded_notes = list(conference.get_submissions())
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
         assert 0 == len(edges)
 
         #AC assignments
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac1@cmu.edu'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1138,7 +1139,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1148,7 +1149,7 @@ class TestMatching():
             weight = 0.87
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1159,7 +1160,7 @@ class TestMatching():
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment',
+            invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
         assert 3 == len(edges)
@@ -1176,7 +1177,7 @@ class TestMatching():
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac1@cmu.edu']
 
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac1@cmu.edu'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -1186,7 +1187,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
             writers = [conference.id],
             signatures = [conference.id],
