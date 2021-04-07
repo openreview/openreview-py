@@ -82,6 +82,9 @@ class TestMatching():
         ## Set committee
         conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
         conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com'])
+        ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
+        r1_client = helpers.create_user('r1@mit.edu', 'Reviewer', 'One')
+
 
         ## Paper 1
         note_1 = openreview.Note(invitation = conference.get_submission_id(),
@@ -145,9 +148,12 @@ class TestMatching():
 
         ## Create blind submissions
         conference.setup_post_submission_stage(force=True)
+        # Set up reviewer matching
+        conference.setup_matching(committee_id=conference.get_area_chairs_id())
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
+
         blinded_notes = conference.get_submissions()
 
-        ac1_client = helpers.create_user('ac1@cmu.edu', 'AreaChair', 'One')
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
@@ -173,7 +179,6 @@ class TestMatching():
             label = 'Very Low'
         ))
 
-        r1_client = helpers.create_user('r1@mit.edu', 'Reviewer', 'One')
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
             writers = ['auai.org/UAI/2019/Conference', '~Reviewer_One1'],
@@ -198,10 +203,6 @@ class TestMatching():
             tail = '~Reviewer_One1',
             label = 'Low'
         ))
-
-        # Set up reviewer matching
-        conference.setup_matching(build_conflicts=True)
-
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -711,12 +712,12 @@ class TestMatching():
 
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, '~Reviewer_One1'],
             nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
             writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r1@mit.edu',
+            tail = '~Reviewer_One1',
             label = 'rev-matching',
             weight = 0.98
         ))
@@ -766,12 +767,12 @@ class TestMatching():
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, '~Reviewer_One1'],
             nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Authors'],
             writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r1@mit.edu',
+            tail = '~Reviewer_One1',
             label = 'rev-matching',
             weight = 0.98
         ))
@@ -786,10 +787,10 @@ class TestMatching():
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert 2 == len(revs_paper0.members)
-        assert revs_paper0.members[0] == 'r1@mit.edu'
-        assert revs_paper0.members[1] == 'r2@google.com'
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r1@mit.edu']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r2@google.com']
+        assert '~Reviewer_One1' in revs_paper0.members
+        assert 'r2@google.com' in revs_paper0.members
+        assert pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/AnonReviewer.*'.format(x=blinded_notes[0].number), member='~Reviewer_One1')
+        assert pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/AnonReviewer.*'.format(x=blinded_notes[0].number), member='r2@google.com')
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert 2 == len(revs_paper1.members)
@@ -801,9 +802,9 @@ class TestMatching():
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert 2 == len(revs_paper2.members)
         assert 'r3@fb.com' in revs_paper2.members
-        assert 'r1@mit.edu' in revs_paper2.members
+        assert '~Reviewer_One1' in revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r3@fb.com')+1)).members == ['r3@fb.com']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r1@mit.edu')+1)).members == ['r1@mit.edu']
+        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('~Reviewer_One1')+1)).members == ['~Reviewer_One1']
 
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
@@ -822,12 +823,12 @@ class TestMatching():
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, '~Reviewer_One1'],
             nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Authors'],
             writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r1@mit.edu',
+            tail = '~Reviewer_One1',
             label = 'rev-matching-new',
             weight = 0.98
         ))
@@ -858,8 +859,8 @@ class TestMatching():
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number))
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu'] == revs_paper1.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
+        assert ['~Reviewer_One1'] == revs_paper1.members
+        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['~Reviewer_One1']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number))
 
@@ -871,14 +872,14 @@ class TestMatching():
 
 
         ## Emergency reviewers, append reviewers
-        conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com', 'r2@mit.edu'])
+        conference.set_reviewers(['~Reviewer_One1', 'r2@google.com', 'r3@fb.com', 'r2@mit.edu'])
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, '~Reviewer_One1'],
             nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Authors'],
             writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r1@mit.edu',
+            tail = '~Reviewer_One1',
             label = 'rev-matching-emergency',
             weight = 0.98
         ))
@@ -908,15 +909,15 @@ class TestMatching():
         conference.set_assignments(assignment_title='rev-matching-emergency')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
-        assert ['r3@fb.com', 'r1@mit.edu', 'r2@mit.edu'] == revs_paper0.members
+        assert ['r3@fb.com', '~Reviewer_One1', 'r2@mit.edu'] == revs_paper0.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[0].number)).members == ['r3@fb.com']
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['r1@mit.edu']
+        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[0].number)).members == ['~Reviewer_One1']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer3'.format(x=blinded_notes[0].number)).members == ['r2@mit.edu']
 
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu', 'r2@google.com'] == revs_paper1.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
+        assert ['~Reviewer_One1', 'r2@google.com'] == revs_paper1.members
+        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['~Reviewer_One1']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
@@ -926,8 +927,8 @@ class TestMatching():
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
 
 
-        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/AnonReviewer2', ['r1@mit.edu'])
-        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/Program_Committee', ['r1@mit.edu'])
+        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/AnonReviewer2', ['~Reviewer_One1'])
+        pc_client.remove_members_from_group('auai.org/UAI/2019/Conference/Paper3/Program_Committee', ['~Reviewer_One1'])
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@google.com'],
@@ -950,8 +951,8 @@ class TestMatching():
 
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu', 'r2@google.com'] == revs_paper1.members
-        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['r1@mit.edu']
+        assert ['~Reviewer_One1', 'r2@google.com'] == revs_paper1.members
+        assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer1'.format(x=blinded_notes[1].number)).members == ['~Reviewer_One1']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[1].number)).members == ['r2@google.com']
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
@@ -1059,12 +1060,12 @@ class TestMatching():
         assert process_logs[0]['status'] == 'ok'
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, '~Reviewer_One1'],
             nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Authors'],
             writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r1@mit.edu',
+            tail = '~Reviewer_One1',
             label = 'rev-matching-emergency-4',
             weight = 0.98
         ))
@@ -1082,12 +1083,12 @@ class TestMatching():
         blinded_notes = list(conference.get_submissions())
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r1@mit.edu'],
+            readers = [conference.id, '~Reviewer_One1'],
             nonreaders = [f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Authors'],
             writers = [conference.id, f'auai.org/UAI/2019/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r1@mit.edu',
+            tail = '~Reviewer_One1',
             label = 'rev-matching-emergency-6',
             weight = 0.98
         ))
@@ -1109,7 +1110,7 @@ class TestMatching():
         assert ['r3@fb.com'] == revs_paper0.members
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r1@mit.edu'] == revs_paper1.members
+        assert ['~Reviewer_One1'] == revs_paper1.members
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r2@google.com'] == revs_paper2.members

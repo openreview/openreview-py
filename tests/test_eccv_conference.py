@@ -647,7 +647,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
         ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
 
-        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
+        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
 
         blinded_notes = conference.get_submissions()
