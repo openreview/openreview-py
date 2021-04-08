@@ -1067,7 +1067,7 @@ OpenReview Team'''
 
 
         ## Invite external reviewer with wrong tilde id
-        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found ~External_Melisa1'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             posted_edge=ac_client.post_edge(openreview.Edge(
                 invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
                 readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~External_Melisa1'],
@@ -1078,6 +1078,8 @@ OpenReview Team'''
                 tail = '~External_Melisa1',
                 label = 'Invite'
             ))
+        assert openReviewError.value.args[0].get('name') == 'Not Found'
+        assert openReviewError.value.args[0].get('message') == '~External_Melisa1 was not found'
 
         ## Propose a reviewer that reached the quota
         with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for ~Reviewer_IBM1'):
@@ -1332,7 +1334,7 @@ OpenReview Team'''
         assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\nNeurIPS 2021 Conference(NeurIPS.cc/2021/Conference)'''
 
         ## Invite the same reviewer again
-        with pytest.raises(openreview.OpenReviewException, match=r'tooMany'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             posted_edge=ac_client.post_edge(openreview.Edge(
                 invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
                 readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer1@amazon.com'],
@@ -1343,6 +1345,7 @@ OpenReview Team'''
                 tail = '~External_Reviewer_Amazon1',
                 label = 'Invite'
             ))
+        assert openReviewError.value.args[0].get('name') == 'TooManyError'
 
         ## Invite the same reviewer again
         with pytest.raises(openreview.OpenReviewException, match=r'Already invited as ~External_Reviewer_Amazon1'):
