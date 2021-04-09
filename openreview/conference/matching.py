@@ -932,15 +932,57 @@ class Matching(object):
 
             self.client.post_group(paper_group)
 
+    def deploy_sac_assignments(self, assignment_title, overwrite):
+
+        print('deploy_sac_assignments', assignment_title)
+
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+
+        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+
+        ac_groups = {g.id:g for g in openreview.tools.iterget_groups(self.client, regex=self.conference.get_area_chairs_id('.*'))}
+
+        if not papers:
+            raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
+
+        for paper in papers:
+
+            ac_group_id=self.conference.get_area_chairs_id(paper.number)
+
+            ac_group=ac_groups[ac_group_id]
+
+            if len(ac_group.members) == 0:
+                raise openreview.OpenReviewException('AC assignments must be deployed first')
+
+            for ac in ac_group.members:
+                sac_assignments = assignment_edges.get(ac)
+                for sac_assignment in sac_assignments:
+                    sac=sac_assignment['tail']
+                    print('sac assignment', sac, ac_group.id)
+                    sac_group_id=ac_group.id.replace(self.conference.area_chairs_name, self.conference.senior_area_chairs_name)
+                    print(sac_group_id)
+                    sac_group=self.client.get_group(sac_group_id)
+                    if overwrite:
+                        sac_group.members=[]
+                    sac_group.members.append(sac)
+                    self.client.post_group(sac_group)
+
+
     def deploy(self, assignment_title, overwrite=False):
         '''
         WARNING: This function untested
 
         '''
+
         if self.conference.legacy_anonids:
             if self.is_area_chair:
                 return self.deploy_acs(assignment_title, overwrite)
 
             return self.deploy_reviewers(assignment_title, overwrite)
+
+
+        if self.match_group.id == self.conference.get_senior_area_chairs_id():
+            return self.deploy_sac_assignments(assignment_title, overwrite)
 
         return self.deploy_assignments(assignment_title, overwrite)

@@ -323,7 +323,7 @@ class TestNeurIPSConference():
 
         ## SAC assignments
         pc_client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
             readers = [conference.id, '~SeniorArea_GoogleChair1'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -333,17 +333,17 @@ class TestNeurIPSConference():
             weight = 0.94
         ))
         pc_client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
-            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = '~Area_GoogleChair1',
-            tail = '~SeniorArea_GoogleChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
             label = 'sac-matching',
             weight = 0.94
         ))
         pc_client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment',
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
             readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
             writers = [conference.id],
             signatures = [conference.id],
@@ -352,6 +352,13 @@ class TestNeurIPSConference():
             label = 'sac-matching',
             weight = 0.94
         ))
+
+        url='http://localhost:3030/edges/browse?traverse=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment,label:sac-matching&edit=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment,label:sac-matching&browse=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Aggregate_Score,label:sac-matching;NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score;NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Conflict'
+
+        print(url)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'No submissions to deploy SAC assignment'):
+            conference.set_assignments(assignment_title='sac-matching', committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', overwrite=True)
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
@@ -689,8 +696,13 @@ class TestNeurIPSConference():
             weight = 0.94
         ))
 
+
         ## Deploy assignments
-        conference.set_assignments(assignment_title='ac-matching', overwrite=True, is_area_chair=True )
+        with pytest.raises(openreview.OpenReviewException, match=r'AC assignments must be deployed first'):
+            conference.set_assignments(assignment_title='sac-matching', committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', overwrite=True)
+
+        conference.set_assignments(assignment_title='ac-matching', committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', overwrite=True)
+        conference.set_assignments(assignment_title='sac-matching', committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', overwrite=True)
 
         helpers.await_queue()
 
@@ -702,6 +714,13 @@ class TestNeurIPSConference():
 
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
 
+        assert '~SeniorArea_GoogleChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
+        assert '~SeniorArea_GoogleChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs').members
+        assert '~SeniorArea_GoogleChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper3/Senior_Area_Chairs').members
+        assert '~SeniorArea_NeurIPSChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs').members
+        assert '~SeniorArea_NeurIPSChair1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs').members
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 0
 
         ## Reviewer assignments
         # Paper 1
@@ -1100,7 +1119,7 @@ OpenReview Team'''
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions()
 
-        conference.set_assignments(assignment_title='reviewer-matching', overwrite=True)
+        conference.set_assignments(assignment_title='reviewer-matching', committee_id='NeurIPS.cc/2021/Conference/Reviewers', overwrite=True)
 
         helpers.await_queue()
 

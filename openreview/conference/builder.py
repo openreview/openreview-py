@@ -1082,11 +1082,11 @@ class Conference(object):
         else:
             self.client.add_members_to_group(self.get_reviewers_id(number=number), user)
 
-    def set_assignments(self, assignment_title, is_area_chair=False, enable_reviewer_reassignment=False, overwrite=False):
-        if is_area_chair:
-            match_group = self.client.get_group(self.get_area_chairs_id())
-        else:
-            match_group = self.client.get_group(self.get_reviewers_id())
+    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
+
+        match_group = self.client.get_group(committee_id)
+
+        if match_group.id == self.get_reviewers_id():
             ## TODO: disable reassingment from the console
             self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
 
