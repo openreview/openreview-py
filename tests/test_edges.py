@@ -14,6 +14,15 @@ class TestEdges:
 
         # Edge invitation
         inv1 = openreview.Invitation(id=conference.id + '/-/affinity', signatures=['~Super_User1'], reply={
+            'readers': {
+                'values': ['everyone']
+            },
+            'writers': {
+                'values': [conference.id]
+            },
+            'signatures': {
+                'values': ['~Super_User1']
+            },
             'content': {
                 'head': {
                     'type': 'Note'
@@ -52,11 +61,11 @@ class TestEdges:
             edge1 = openreview.Edge(head=note.id, tail='~Super_User1', label='High', weight='0.5',
                 invitation=inv1.id, readers=['everyone'], writers=[conference.id],
                 signatures=['~Super_User1'])
-            
+
             edge2 = openreview.Edge(head=note.id, tail='~Super_User1', label='Very High', weight='1.0',
                 invitation=inv1.id, readers=['everyone'], writers=[conference.id],
                 signatures=['~Super_User1'])
-            
+
             edges.extend([edge1, edge2])
 
         openreview.tools.post_bulk_edges(client, edges)

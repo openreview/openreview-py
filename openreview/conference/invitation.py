@@ -1536,6 +1536,10 @@ class InvitationBuilder(object):
                     'description': 'How your identity will be displayed with the above content.',
                     'values-regex': '~.*'
                 },
+                'writers': {
+                    'description': 'The users who will be allowed to edit the above content.',
+                    'values-regex': '~.*'
+                },
                 'content': {
                     'head': {
                         'type': 'Note',
