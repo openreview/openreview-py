@@ -260,6 +260,48 @@ class WebfieldBuilder(object):
 
             return self.__update_invitation(invitation, content)
 
+    def set_reviewer_proposed_assignment_page(self, conference, assignment_invitation, assignment_title, invite_assignment_invitation):
+
+        reviewers_id=conference.get_reviewers_id()
+
+        header = {
+            'title': conference.get_short_name() + ' Reviewer Proposed Assignments',
+            'instructions': '<p class="dark">Review the proposed reviewer assignments for each of your assigned papers.</p>\
+                <p class="dark"><strong>Instructions:</strong></p>\
+                <ul>\
+                    <li>For each of your assigned papers, TODO.</li>\
+                    <li>TODO.</li>\
+                    <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
+                    <li>Reviewers that reached their custom max papers quota can not be assigned to other papers.</li>\
+                    <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name, email or institution.</li>\
+                    <li>To get started click the button below.</li>\
+                </ul>\
+                <br>'
+        }
+
+        score_ids = [
+            conference.get_invitation_id('Affinity_Score', prefix=reviewers_id),
+            conference.get_bid_id(reviewers_id),
+            conference.get_custom_max_papers_id(reviewers_id) + ',head:ignore'
+        ]
+
+        start_param = f'{conference.get_paper_assignment_id(conference.get_area_chairs_id(), deployed=True)},tail:{{userId}}'
+        traverse= f'{assignment_invitation.id}' + f',label:{assignment_title}' if assignment_title else ''
+        edit_param = f'{traverse}' + f';{invite_assignment_invitation.id}' if invite_assignment_invitation else ''
+        browse_param = ';'.join(score_ids)
+        hide=conference.get_conflict_score_id(reviewers_id)
+        params = f'start={start_param}&traverse={traverse}&edit={edit_param}&browse={browse_param}&hide={hide}&maxColumns=2&referrer=[Return Instructions](/invitation?id={assignment_invitation.id})'
+        with open(os.path.join(os.path.dirname(__file__), 'templates/assignmentWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+            content = content.replace("var BUTTON_NAME = '';", "var BUTTON_NAME = '" + 'Propose Assignments' + "';")
+            assignment_invitation.web=content
+            assignment_invitation=self.client.post_invitation(assignment_invitation)
+
+            return self.__update_invitation(assignment_invitation, content)
+
     def set_reduced_load_page(self, conference_id, invitation, options = {}):
 
         default_header = {

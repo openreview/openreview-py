@@ -1636,6 +1636,7 @@ class Invitation(object):
         self.details = details
         self.web = None
         self.process = None
+        self.preprocess = None
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1650,7 +1651,7 @@ class Invitation(object):
             self.process = process_string
         if web_string:
             self.web = web_string
-        if preprocess:
+        if preprocess is not None:
             self.preprocess=preprocess
 
     def __repr__(self):
@@ -1737,7 +1738,7 @@ class Invitation(object):
         if 'transform' in i:
             invitation.transform = i['transform']
         if 'preprocess' in i:
-            invitation.process = i['preprocess']
+            invitation.preprocess = i['preprocess']
         return invitation
 
 class Note(object):

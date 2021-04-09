@@ -766,55 +766,23 @@ class Matching(object):
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
 
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+
                 invitation.preprocess=pre_content
                 invitation.process=post_content
-
-                invitation.due_date=tools.datetime_millis(due_date)
-                invitation.exp_date=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
                 invitation.multiReply=False
-
-                header = {
-                    'title': self.conference.get_short_name() + ' Reviewer Proposed Assignments',
-                    'instructions': '<p class="dark">Recommend a ranked list of reviewers for each of your assigned papers.</p>\
-                        <p class="dark"><strong>Instructions:</strong></p>\
-                        <ul>\
-                            <li>For each of your assigned papers, please select 1 reviewers to recommend.</li>\
-                            <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
-                            <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
-                            <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
-                            <li>To get started click the button below.</li>\
-                        </ul>\
-                        <br>'
-                }
-
-                score_ids = []
-                invitation_ids = [
-                    self.conference.get_invitation_id('TPMS_Score', prefix=self.match_group.id),
-                    self.conference.get_invitation_id('Affinity_Score', prefix=self.match_group.id),
-                    self.conference.get_bid_id(self.match_group.id)
-                ]
-
-                for invitation_id in invitation_ids:
-                    if openreview.tools.get_invitation(self.client, invitation_id):
-                        score_ids.append(invitation_id)
-
-                start_param = self.conference.get_paper_assignment_id(self.conference.get_area_chairs_id(), deployed=True) + ',tail:{userId}'
-                traverse= self.conference.get_paper_assignment_id(self.match_group.id) + f',label:{assignment_title}' if assignment_title else ''
-                edit_param = f'{traverse};{invitation.id};{self.conference.get_custom_max_papers_id(self.match_group.id)},head:ignore'
-                browse_param = ';'.join(score_ids)
-                hide=f'{self.match_group.id}/-/Conflict'
-                params = f'start={start_param}&traverse={traverse}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'
-                with open(os.path.join(os.path.dirname(__file__), 'templates/assignmentWebfield.js')) as f:
-                    content = f.read()
-                    content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + self.conference.get_id() + "';")
-                    content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-                    content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
-                    content = content.replace("var BUTTON_NAME = '';", "var BUTTON_NAME = '" + 'Propose Assignments' + "';")
-                    invitation.web=content
-                    invite_assignment_invitation=self.client.post_invitation(invitation)
+                invite_assignment_invitation=self.client.post_invitation(invitation)
 
         invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference, recruitment_invitation_id, self.match_group.id, hash_seed, assignment_title, due_date)
         invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)
+
+        ## Only for reviewers, allow ACs and SACs to review the proposed assignments
+        if assignment_title and self.match_group.id == self.conference.get_reviewers_id():
+            invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
+            invitation.duedate=tools.datetime_millis(due_date)
+            invitation.expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
+            invitation=self.client.post_invitation(invitation)
+            invitation = self.conference.webfield_builder.set_reviewer_proposed_assignment_page(self.conference, invitation, assignment_title, invite_assignment_invitation)
+
 
         return invite_assignment_invitation
 
