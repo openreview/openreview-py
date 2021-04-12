@@ -12,6 +12,7 @@ def process(client, note, invitation):
     INVITE_ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
+    EXTERNAL_COMMITTEE_ID = ''
 
     user = urllib.parse.unquote(note.content['user'])
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
@@ -80,6 +81,7 @@ OpenReview Team'''
 
             if ASSIGNMENT_LABEL:
                 instructions=f'The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
+                client.add_members_to_group(EXTERNAL_COMMITTEE_ID, edge.tail)
             else:
                 client.add_members_to_group(REVIEWERS_ID, edge.tail)
                 instructions=f'Please go to the {SHORT_PHRASE} Reviewers Console and check your pending tasks: https://openreview.net/group?id={REVIEWERS_ID}'

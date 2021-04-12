@@ -1003,6 +1003,13 @@ class Conference(object):
         self.__create_group(parent_group_declined_id, pcs_id)
         self.__create_group(parent_group_invited_id, pcs_id)
 
+    def set_external_reviewer_recruitment_groups(self):
+        parent_group_id = self.get_committee_id(name='External_Reviewers')
+        parent_group_invited_id = parent_group_id + '/Invited'
+
+        self.__create_group(parent_group_id, self.id)
+        self.__create_group(parent_group_invited_id, self.id)
+
     def set_reviewers(self, emails = []):
         readers = []
         if self.use_senior_area_chairs:

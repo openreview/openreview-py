@@ -821,6 +821,8 @@ class TestNeurIPSConference():
         assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
         assert invite_edges[0].label == 'Invited'
 
+        assert '~External_Reviewer_Amazon1' in client.get_group('NeurIPS.cc/2021/Conference/External_Reviewers/Invited').members
+
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
@@ -845,6 +847,9 @@ class TestNeurIPSConference():
         assert len(invite_edges) == 1
         assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
         assert invite_edges[0].label == 'Accepted'
+
+        assert '~External_Reviewer_Amazon1' in client.get_group('NeurIPS.cc/2021/Conference/External_Reviewers').members
+        assert '~External_Reviewer_Amazon1' not in client.get_group('NeurIPS.cc/2021/Conference/Reviewers').members
 
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3

@@ -5,6 +5,7 @@ def process(client, edge, invitation):
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
     HASH_SEED = ''
+    REVIEWERS_INVITED_ID = ''
     print(edge.id)
 
     if edge.ddate is None and edge.label == 'Invite':
@@ -60,11 +61,11 @@ Thanks,
 {inviter_id}
 {inviter_preferred_name} ({edge.tauthor})'''
 
-        ## Should we do this?
-        ## client.add_members_to_group(reviewers_invited_id, [user])
+        if REVIEWERS_INVITED_ID:
+            client.add_members_to_group(REVIEWERS_INVITED_ID, [user_profile.id])
 
         ## - Send email
-        response = client.post_message(subject, [user], message) ##, parentGroup=reviewers_invited_id)
+        response = client.post_message(subject, [user_profile.id], message, parentGroup=REVIEWERS_INVITED_ID)
 
         ## - Update edge to 'Invited'
         edge.label='Invited'
