@@ -800,6 +800,10 @@ class TestMatchingWithAnonIds():
             anon_groups[0].id
         ]
 
+        assert anon_groups[0].nonreaders == [
+            conference.get_id()+'/Paper{x}/Authors'.format(x=blinded_notes[0].number)
+        ]
+
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
         assert 2 == len(revs_paper1.members)
         assert 'r3@fb.com' in revs_paper1.members
