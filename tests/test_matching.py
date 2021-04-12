@@ -784,7 +784,7 @@ class TestMatching():
         )
         assert 6 == len(edges)
 
-        conference.set_assignments(assignment_title='rev-matching', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+        conference.set_assignments(assignment_title='rev-matching', committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert 2 == len(revs_paper0.members)
@@ -851,7 +851,7 @@ class TestMatching():
         )
         assert 3 == len(edges)
 
-        conference.set_assignments(assignment_title='rev-matching-new', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+        conference.set_assignments(assignment_title='rev-matching-new', overwrite=True, committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
@@ -907,7 +907,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+        conference.set_assignments(assignment_title='rev-matching-emergency', committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com', '~Reviewer_One1', 'r2@mit.edu'] == revs_paper0.members
@@ -942,7 +942,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-2', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+        conference.set_assignments(assignment_title='rev-matching-emergency-2', committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com', 'r2@mit.edu', 'r2@google.com'] == revs_paper0.members
@@ -973,7 +973,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True, committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
@@ -1004,7 +1004,7 @@ class TestMatching():
         invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/-/Official_Review')
         assert invitation
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True, committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
@@ -1072,7 +1072,7 @@ class TestMatching():
         ))
 
         with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignments when there are reviews posted.'):
-            conference.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+            conference.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True, committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
@@ -1105,7 +1105,7 @@ class TestMatching():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-6', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+        conference.set_assignments(assignment_title='rev-matching-emergency-6', committee_id='auai.org/UAI/2019/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
@@ -1165,7 +1165,7 @@ class TestMatching():
         )
         assert 3 == len(edges)
 
-        conference.set_assignments(assignment_title='ac-matching', committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee')
+        conference.set_assignments(assignment_title='ac-matching', committee_id='auai.org/UAI/2019/Conference/Senior_Program_Committee')
 
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1').members == ['ac2@umass.edu']
@@ -1197,7 +1197,7 @@ class TestMatching():
             weight = 0.87
         ))
 
-        conference.set_assignments(assignment_title='ac-matching-2', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee')
+        conference.set_assignments(assignment_title='ac-matching-2', overwrite=True, committee_id='auai.org/UAI/2019/Conference/Senior_Program_Committee')
 
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper3/Area_Chair1').members == ['ac2@umass.edu']
