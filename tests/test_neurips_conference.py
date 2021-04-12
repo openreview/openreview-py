@@ -1124,7 +1124,7 @@ OpenReview Team'''
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions()
 
-        conference.set_assignments(assignment_title='reviewer-matching', committee_id='NeurIPS.cc/2021/Conference/Reviewers', overwrite=True)
+        conference.set_assignments(assignment_title='reviewer-matching', committee_id='NeurIPS.cc/2021/Conference/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
 
         helpers.await_queue()
 
@@ -1271,8 +1271,6 @@ OpenReview Team'''
 
         now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-
-        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=6))
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment'

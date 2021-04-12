@@ -1092,13 +1092,8 @@ class Conference(object):
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
         match_group = self.client.get_group(committee_id)
-
-        if match_group.id == self.get_reviewers_id():
-            ## TODO: disable reassingment from the console
-            self.set_reviewer_reassignment(enabled=enable_reviewer_reassignment)
-
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.deploy(assignment_title, overwrite)
+        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
 
     def set_recruitment_reduced_load(self, reduced_load_options):

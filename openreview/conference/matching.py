@@ -7,6 +7,8 @@ import os
 import csv
 import datetime
 import json
+import random
+import string
 import openreview
 import tld
 import re
@@ -561,7 +563,8 @@ class Matching(object):
                         'default': self._get_edge_invitation_id('Aggregate_Score'),
                         'required': True,
                         'description': 'Invitation to store aggregated scores',
-                        'order': 9
+                        'order': 9,
+                        'hidden': True
                     },
                     'conflicts_invitation': {
                         'value-regex': '{}/.*'.format(self.conference.id),
@@ -574,37 +577,47 @@ class Matching(object):
                         'value': self.conference.get_paper_assignment_id(self.match_group.id),
                         'required': True,
                         'description': 'Invitation to store paper user assignments',
-                        'order': 11
+                        'order': 11,
+                        'hidden': True
                     },
                     'deployed_assignment_invitation': {
                         'value': self.conference.get_paper_assignment_id(self.match_group.id, deployed=True),
                         'required': True,
                         'description': 'Invitation to store deployed paper user assignments',
-                        'order': 12
+                        'order': 12,
+                        'hidden': True
+                    },
+                    'invite_assignment_invitation': {
+                        'value': self.conference.get_paper_assignment_id(self.match_group.id, invite=True),
+                        'required': True,
+                        'description': 'Invitation used to invite external or emergency reviewers',
+                        'order': 13,
+                        'hidden': True
                     },
                     'custom_user_demand_invitation': {
                         'value-regex': '{}/.*/-/Custom_User_Demands$'.format(self.conference.id),
                         'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
                         'description': 'Invitation to store custom number of users required by papers',
-                        'order': 13,
+                        'order': 14,
                         'required': False
                     },
                     'custom_max_papers_invitation': {
                         'value-regex': '{}/.*/-/Custom_Max_Papers$'.format(self.conference.id),
                         'default': self.conference.get_custom_max_papers_id(self.match_group.id),
                         'description': "Invitation to store custom max number of papers that can be assigned to reviewers",
-                        'order': 14,
+                        'order': 15,
                         'required': False
                     },
                     'config_invitation': {
                         'value': self._get_edge_invitation_id('Assignment_Configuration'),
-                        'order': 15
+                        'order': 16,
+                        'hidden': True
                     },
                     'solver': {
                         'value-radio': ['MinMax', 'FairFlow'],
                         'default': 'MinMax',
                         'required': True,
-                        'order': 16
+                        'order': 17
                     },
                     'status': {
                         'default': 'Initialized',
@@ -618,19 +631,20 @@ class Matching(object):
                             'Deployed',
                             'Deployment Error'
                         ],
-                        'order': 17
+                        'order': 18
                     },
                     'error_message': {
                         'value-regex': '.*',
                         'required': False,
-                        'order': 18
+                        'order': 18,
+                        'hidden': True
                     },
                     'allow_zero_score_assignments': {
                         'description': 'Select "Yes" only if you want to allow assignments with 0 scores',
                         'value-radio': ['Yes', 'No'],
                         'required': False,
                         'default': 'No',
-                        'order': 19
+                        'order': 20
                     }
                 }
             })
@@ -745,9 +759,7 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
-    def setup_invite_assignment(self, hash_seed, assignment_title, due_date):
-
-        self.conference.set_external_reviewer_recruitment_groups()
+    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None):
 
         recruitment_invitation_id=self.conference.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
 
@@ -780,6 +792,7 @@ class Matching(object):
 
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
         if assignment_title and self.match_group.id == self.conference.get_reviewers_id():
+            self.conference.set_external_reviewer_recruitment_groups()
             invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
             invitation.duedate=tools.datetime_millis(due_date)
             invitation.expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
@@ -972,7 +985,7 @@ class Matching(object):
                     self.client.post_group(sac_group)
 
 
-    def deploy(self, assignment_title, overwrite=False):
+    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
         '''
         WARNING: This function untested
 
@@ -988,4 +1001,9 @@ class Matching(object):
         if self.match_group.id == self.conference.get_senior_area_chairs_id():
             return self.deploy_sac_assignments(assignment_title, overwrite)
 
-        return self.deploy_assignments(assignment_title, overwrite)
+        self.deploy_assignments(assignment_title, overwrite)
+
+        if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
+            hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+            self.setup_invite_assignment(hash_seed=hash_seed)
+
