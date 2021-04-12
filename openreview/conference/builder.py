@@ -669,6 +669,7 @@ class Conference(object):
                         self.client.post_group(openreview.Group(id=reviewers_id,
                             invitation=paper_reviewer_group_invitation.id,
                             readers=[self.id, self.get_area_chairs_id(n.number), self.get_reviewers_id(n.number)],
+                            nonreaders=[self.get_authors_id(n.number)],
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
                             writers=[self.id, self.get_area_chairs_id(n.number)],
                             signatures=[self.id],
@@ -693,6 +694,7 @@ class Conference(object):
                     self.client.post_group(openreview.Group(id=area_chairs_id,
                         invitation=paper_area_chair_group_invitation.id,
                         readers=[self.id, self.get_area_chairs_id(n.number)],
+                        nonreaders=[self.get_authors_id(n.number)],
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],
                         signatures=[self.id],
@@ -707,6 +709,7 @@ class Conference(object):
                 group = tools.get_group(self.client, id = senior_area_chairs_id)
                 self.client.post_group(openreview.Group(id=senior_area_chairs_id,
                     readers=self.get_senior_area_chair_identity_readers(n.number),
+                    nonreaders=[self.get_authors_id(n.number)],
                     writers=[self.id],
                     signatures=[self.id],
                     signatories=[self.id, senior_area_chairs_id],
