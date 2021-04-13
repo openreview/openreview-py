@@ -1569,7 +1569,7 @@ def post_bulk_edges (client, edges, batch_size = 50000):
     result = []
     for i in tqdm(range(0, num_edges, batch_size), total=(num_edges // batch_size + 1)):
         end = min(i + batch_size, num_edges)
-        batch = client.post_edges(())[i:end])
+        batch = client.post_edges(edges[i:end])
         result += batch
     return result
 
