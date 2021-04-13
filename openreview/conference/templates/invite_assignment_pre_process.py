@@ -15,7 +15,7 @@ def process(client, edge, invitation):
         ## - Get profile
         user = edge.tail
         print(f'Get profile for {user}')
-        user_profile=openreview.tools.get_profile(client, user)
+        user_profile=openreview.conference.matching._get_profiles(client, [user])[0]
 
         if user_profile:
             if user_profile.id != user:
