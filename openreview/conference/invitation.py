@@ -1868,3 +1868,22 @@ class InvitationBuilder(object):
 
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
         return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None))
+
+    def set_assignment_invitation(self, conference, committee_id):
+
+        invitation=self.client.get_invitation(conference.get_paper_assignment_id(committee_id, deployed=True))
+        is_area_chair=committee_id == conference.get_area_chairs_id()
+        with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_pre_process.py')) as pre:
+            pre_content = pre.read()
+            pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + conference.get_invitation_id(conference.meta_review_stage.name if is_area_chair else conference.review_stage.name, '{number}') + "'")
+            pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + conference.get_anon_area_chair_id('{number}', '.*') if is_area_chair else conference.get_anon_reviewer_id('{number}', '.*') + "'")
+            with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_post_process.py')) as post:
+                post_content = post.read()
+                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
+                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + (conference.get_area_chairs_id(number='{number}') if is_area_chair else conference.get_reviewers_id(number='{number}')) + "'")
+                post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + (conference.get_area_chairs_name(pretty=True) if is_area_chair else conference.get_reviewers_name(pretty=True)) + "'")
+                post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + (conference.get_area_chairs_id() if is_area_chair else conference.get_reviewers_id()) + "'")
+                invitation.process=post_content
+                invitation.preprocess=pre_content
+                invitation.signatures=[conference.get_program_chairs_id()] ## Program Chairs can see the reviews
+                return self.client.post_invitation(invitation)

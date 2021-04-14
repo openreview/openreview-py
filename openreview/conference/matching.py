@@ -698,17 +698,7 @@ class Matching(object):
                 invitation.preprocess=content
                 self.client.post_invitation(invitation)
 
-        invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, deployed=True))
-        if not self.is_senior_area_chair:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_process.py')) as f:
-                content = f.read()
-                content = content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
-                content = content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + (self.conference.get_area_chairs_id(number='{number}') if self.is_area_chair else self.conference.get_reviewers_id(number='{number}')) + "'")
-                content = content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + (self.conference.get_area_chairs_name(pretty=True) if self.is_area_chair else self.conference.get_reviewers_name(pretty=True)) + "'")
-                content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + (self.conference.get_area_chairs_id() if self.is_area_chair else self.conference.get_reviewers_id()) + "'")
-                invitation.process=content
-                self.client.post_invitation(invitation)
-
+        self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, deployed=True))
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
@@ -1029,6 +1019,7 @@ class Matching(object):
 
         ## Add sync process function
         self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)
+        self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
 
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))

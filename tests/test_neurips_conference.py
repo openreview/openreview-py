@@ -1421,6 +1421,12 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\n{openreview.tools.pretty_id(signatory_group.id)}(ac1@mit.edu)'''
 
+        ## Delete assignment when there is a review should throw an error
+        submission=conference.get_submissions(number=5)[0]
+        assignment_edge=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', head=submission.id, tail='~Reviewer_UMass1')[0]
+        assignment_edge.ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_UMass1 already posted a review.'):
+            client.post_edge(assignment_edge)
 
 
     def test_comment_stage(self, conference, helpers, test_client, client):
