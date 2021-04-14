@@ -274,7 +274,7 @@ var getOfficialReviews = function(notes) {
 var getReviewerGroups = function(noteNumbers) {
   if (!noteNumbers.length) {
     return $.Deferred().resolve({});
-  };
+  }
 
   var noteMap = buildNoteMap(noteNumbers);
 
@@ -292,7 +292,7 @@ var getReviewerGroups = function(noteNumbers) {
         var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
         var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
         noteMap[num][anonId] = member;
-      })
+      });
     });
 
     return noteMap;

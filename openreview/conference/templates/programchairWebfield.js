@@ -46,7 +46,7 @@ var selectedNotesById = {};
 var matchingNoteIds = [];
 var paperStatusNeedsRerender = false;
 
-$.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js')
+$.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js');
 
 var main = function() {
   if (args && args.referrer) {
@@ -102,12 +102,12 @@ var main = function() {
     var acRankingByPaper = {};
     blindedNotes.forEach(function(n) {
       selectedNotesById[n.id] = false;
-      var tags = n.details['tags'];
+      var tags = n.details.tags;
       tags.forEach(function(t) {
         if (t.invitation === AREA_CHAIRS_ID + '/-/Paper_Ranking') {
           acRankingByPaper[n.forum] = t;
         }
-      })
+      });
     });
 
     reviewerSummaryMap = buildNoteMap(noteNumbers);
@@ -560,10 +560,14 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
   var anonGroups = _.filter(groups, function(g) { return g.id.includes('Area_Chair_'); });
   var acGroups = _.filter(groups, function(g) { return g.id.endsWith('/Area_Chairs'); });
 
-  _.forEach(acGroups, function(g) {
+  acGroups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+        var anonGroup = anonGroups.find(function(grp) {
+          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num) && grp.members[0] == member;
+        });
+        if (!anonGroup) return;
+
         var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
         if (num in noteMap) {
           noteMap[num][anonId] = member;
@@ -587,7 +591,7 @@ var buildSeniorAreaChairGroupMaps = function(noteNumbers, groups) {
 
   var seniorAcGroups = _.filter(groups, function(g) { return g.id.endsWith('/Senior_Area_Chairs'); });
 
-  _.forEach(seniorAcGroups, function(g) {
+  seniorAcGroups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
         if (num in noteMap) {
@@ -645,18 +649,22 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
   var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
   var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
 
-  _.forEach(reviewerGroups, function(g) {
+  reviewerGroups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
-        var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
-        if (num in noteMap) {
-          noteMap[num][anonId] = member;
-          if (!(member in reviewerMap)) {
-            reviewerMap[member] = [];
-          }
-          reviewerMap[member].push(num);
+      var anonGroup = anonGroups.find(function(grp) {
+        return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num) && grp.members[0] == member;
+      });
+      if (!anonGroup) return;
+
+      var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
+      if (num in noteMap) {
+        noteMap[num][anonId] = member;
+        if (!(member in reviewerMap)) {
+          reviewerMap[member] = [];
         }
+        reviewerMap[member].push(num);
+      }
     })
   });
 
