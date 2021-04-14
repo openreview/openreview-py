@@ -282,8 +282,6 @@ var getBlindedNotes = function() {
     invitation: BLIND_SUBMISSION_ID,
     details: 'invitation,tags,original,replyCount',
     select: 'id,number,forum,content,details'
-  }).then(function(notes) {
-    return notes;
   })
 };
 
@@ -366,20 +364,15 @@ var getGroups = function() {
     var anonReviewerGroups = [];
     var seniorAreaChairGroups = [];
     var areaChairGroups = [];
-    _.forEach(groups, function(group) {
+    for (var groupIdx = 0; groupIdx < groups.length; groupIdx++) {
       if (_.includes(group.id, 'Reviewer')) {
         anonReviewerGroups.push(group);
-        return;
-      }
-      if (_.includes(group.id, 'Senior_Area_Chair')) {
+      } else if (_.includes(group.id, 'Senior_Area_Chair')) {
         seniorAreaChairGroups.push(group);
-        return;
-      }
-      if (_.includes(group.id, 'Area_Chair')) {
+      } else if (_.includes(group.id, 'Area_Chair')) {
         areaChairGroups.push(group);
-        return;
       }
-    });
+    }
     return {
       anonReviewerGroups: anonReviewerGroups,
       areaChairGroups: areaChairGroups,

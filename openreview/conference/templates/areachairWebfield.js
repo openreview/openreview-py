@@ -165,8 +165,10 @@ var loadData = function(paperNums) {
       select: 'id,number,forum,content,details,invitation',
       details: 'invitation,replyCount,directReplies'
     }).then(function(notes) {
-      _.forEach(notes, function(note) {
-        _.forEach(note.details.directReplies, function(directReply) {
+      for (var noteIdx = 0; noteIdx < notes.length; noteIdx++) {
+        var directReplies = notes[noteIdx].details && notes[noteIdx].details.directReplies || [];
+        for (var directReplyIdx = 0; directReplyIdx < directReplies.length; directReplyIdx++) {
+          var directReply = directReplies[directReplyIdx];
           if (OFFICIAL_META_REVIEW_NAME && _.includes(directReply.invitation, OFFICIAL_META_REVIEW_NAME)) {
             metaReviews.push(directReply);
           } else if (OFFICIAL_SECONDARY_META_REVIEW_NAME && _.includes(directReply.invitation, OFFICIAL_SECONDARY_META_REVIEW_NAME)) {
@@ -174,8 +176,8 @@ var loadData = function(paperNums) {
           } else if (OFFICIAL_REVIEW_NAME && _.includes(directReply.invitation, OFFICIAL_REVIEW_NAME)) {
             unformattedOfficialReviews.push(directReply);
           }
-        });
-      });
+        }
+      }
       return _.sortBy(notes, 'number');
     });
 
