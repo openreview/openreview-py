@@ -1205,7 +1205,7 @@ class PaperDecisionInvitation(openreview.Invitation):
 
 class PaperGroupInvitation(openreview.Invitation):
 
-    def __init__(self, conference, committee_id):
+    def __init__(self, conference, committee_id, with_process_function):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/paper_group_process.py')) as f:
             file_content = f.read()
@@ -1215,19 +1215,15 @@ class PaperGroupInvitation(openreview.Invitation):
 
             edge_readers = []
             edge_writers = []
-            #if committee_id.endswith(conference.area_chairs_name):
-                #if conference.has_senior_area_chairs :
-                    #TODO: decide what to do with area chair assignments
-                    #edge_readers.append(conference.get_senior_area_chairs_id())
-                    #edge_writers.append(conference.get_senior_area_chairs_id())
 
             if committee_id.endswith(conference.reviewers_name):
                 if conference.has_senior_area_chairs :
                     edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
                     edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-                edge_readers.append(conference.get_area_chairs_id(number='{number}'))
-                edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+                if conference.has_area_chairs :
+                    edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                    edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
             file_content = file_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
             file_content = file_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
@@ -1241,7 +1237,7 @@ class PaperGroupInvitation(openreview.Invitation):
                     'dummy': 'dummy'
                 }
             },
-            process_string=file_content
+            process_string=file_content if with_process_function else None
 
         )
 
@@ -1864,9 +1860,9 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_paper_group_invitation(self, conference, committee_id):
+    def set_paper_group_invitation(self, conference, committee_id, with_process_function=False):
 
-        return self.client.post_invitation(PaperGroupInvitation(conference, committee_id))
+        return self.client.post_invitation(PaperGroupInvitation(conference, committee_id, with_process_function))
 
     def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, hash_seed, assignment_title=None, due_date=None):
 

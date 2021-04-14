@@ -785,6 +785,7 @@ class Matching(object):
                 invitation.preprocess=pre_content
                 invitation.process=post_content
                 invitation.multiReply=False
+                invitation.signatures=[self.conference.get_program_chairs_id()] ## Program Chairs have permission to see full profile data
                 invite_assignment_invitation=self.client.post_invitation(invitation)
 
         invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference, recruitment_invitation_id, self.match_group.id, hash_seed, assignment_title, due_date)
@@ -929,11 +930,16 @@ class Matching(object):
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
         reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, number='.*'), limit=1)
         print('REviews', reviews, self.conference.get_invitation_id(review_name, number='.*'))
-        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-            label=assignment_title, groupby='head', select='tail')}
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select=None)}
+        print('proposed_assignment_edges', proposed_assignment_edges)
+        assignment_edges = []
+        assginment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
 
-        if overwrite and reviews:
-            raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
+        if overwrite:
+            if reviews:
+                raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
+            self.client.delete_edges(invitation=assginment_invitation_id, wait_to_finish=True)
 
         for paper in tqdm(papers, total=len(papers)):
 
@@ -941,12 +947,29 @@ class Matching(object):
 
             if overwrite:
                 paper_group.members = []
-            if paper.id in assignment_edges:
-                paper_group.members = paper_group.members + [v['tail'] for v in assignment_edges[paper.id]]
+            if paper.id in proposed_assignment_edges:
+                proposed_edges=proposed_assignment_edges[paper.id]
+                for proposed_edge in proposed_edges:
+                    print('proposed_edge', proposed_edge)
+                    paper_group.members.append(proposed_edge['tail'])
+                    assignment_edges.append(openreview.Edge(
+                        invitation=assginment_invitation_id,
+                        head=paper.id,
+                        tail=proposed_edge['tail'],
+                        readers=proposed_edge['readers'],
+                        nonreaders=proposed_edge['nonreaders'],
+                        writers=proposed_edge['writers'],
+                        signatures=proposed_edge['signatures'],
+                        weight=proposed_edge.get('weight')
+                    ))
+
             else:
                 print('assignment not found', paper.id)
 
             self.client.post_group(paper_group)
+
+        print('POsting assignments edges', len(assignment_edges))
+        openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)
 
     def deploy_sac_assignments(self, assignment_title, overwrite):
 
@@ -1001,7 +1024,11 @@ class Matching(object):
         if self.match_group.id == self.conference.get_senior_area_chairs_id():
             return self.deploy_sac_assignments(assignment_title, overwrite)
 
+        ## Deploy assingments creating groups and assignment edges
         self.deploy_assignments(assignment_title, overwrite)
+
+        ## Add sync process function
+        self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)
 
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
