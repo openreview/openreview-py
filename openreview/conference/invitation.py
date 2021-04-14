@@ -1876,7 +1876,7 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_pre_process.py')) as pre:
             pre_content = pre.read()
             pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + conference.get_invitation_id(conference.meta_review_stage.name if is_area_chair else conference.review_stage.name, '{number}') + "'")
-            pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + conference.get_anon_area_chair_id('{number}', '.*') if is_area_chair else conference.get_anon_reviewer_id('{number}', '.*') + "'")
+            pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + (conference.get_anon_area_chair_id('{number}', '.*') if is_area_chair else conference.get_anon_reviewer_id('{number}', '.*')) + "'")
             with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_post_process.py')) as post:
                 post_content = post.read()
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
