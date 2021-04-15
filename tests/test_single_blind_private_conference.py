@@ -179,3 +179,15 @@ class TestSingleBlindPrivateConference():
             notes_panel.find_element_by_class_name('spinner-container')
         assert tabs.find_element_by_id('oral')
         assert tabs.find_element_by_id('poster')
+
+    def test_enable_public_comments(self, conference, helpers, test_client, client):
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        assert len(notes) == 5
+
+        conference.submission_stage.papers_released=True
+        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True, allow_public_comments=True))
+        public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=4))
+        assert public_comment_invitation
+
+        public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=5))
+        assert public_comment_invitation is None

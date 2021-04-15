@@ -226,75 +226,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             signatures = ['~Super_User1']
         ))
 
-    review_stage_content = None
-    if forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.':
-        review_stage_content = {
-            'review_start_date': {
-                'description': 'When does reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 10
-            },
-            'review_deadline': {
-                'description': 'When does reviewing of submissions end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'required': True,
-                'order': 11
-            },
-            'make_reviews_public': {
-                'description': 'Should the reviews be made public immediately upon posting? Based on your earlier selections, default is "Yes, reviews should be revealed publicly when they are posted".',
-                'value-radio': [
-                    'Yes, reviews should be revealed publicly when they are posted',
-                    'No, reviews should NOT be revealed publicly when they are posted'
-                ],
-                'required': True,
-                'default': 'Yes, reviews should be revealed publicly when they are posted',
-                'order': 24
-            },
-            'release_reviews_to_authors': {
-                'description': 'Should the reviews be visible to paper\'s authors immediately upon posting? Based on your earlier selections, default is "Yes, reviews should be revealed publicly when they are posted".',
-                'value-radio': [
-                    'Yes, reviews should be revealed when they are posted to the paper\'s authors',
-                    'No, reviews should NOT be revealed when they are posted to the paper\'s authors'
-                ],
-                'required': True,
-                'default': 'Yes, reviews should be revealed publicly when they are posted',
-                'order': 25
-            },
-            'release_reviews_to_reviewers': {
-                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting? Based on your earlier selections, default is "Reviews should be immediately revealed to all reviewers".',
-                'value-radio': [
-                    'Reviews should be immediately revealed to all reviewers',
-                    'Reviews should be immediately revealed to the paper\'s reviewers',
-                    'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                    'Review should not be revealed to any reviewer, except to the author of the review'
-                ],
-                'required': True,
-                'default': 'Reviews should be immediately revealed to all reviewers',
-                'order': 26
-            },
-            'email_program_chairs_about_reviews': {
-                'description': 'Should Program Chairs be emailed when each review is received? Default is "No, do not email program chairs about received reviews".',
-                'value-radio': [
-                    'Yes, email program chairs for each review received',
-                    'No, do not email program chairs about received reviews'],
-                'required': True,
-                'default': 'No, do not email program chairs about received reviews',
-                'order': 27
-            },
-            'additional_review_form_options': {
-                'order' : 28,
-                'value-dict': {},
-                'required': False,
-                'description': 'Configure additional options in the review form. Valid JSON expected.'
-            },
-            'remove_review_form_options': {
-                'order': 29,
-                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
-                'required': False,
-                'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
-            }
-        }
-
     client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Review_Stage',
         super = SUPPORT_GROUP + '/-/Review_Stage',
@@ -305,8 +236,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            },
-            'content': review_stage_content
+            }
         },
         signatures = ['~Super_User1']
     ))
@@ -343,44 +273,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures=['~Super_User1']
     ))
 
-    comment_stage_content = None
-    if forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be private.':
-        comment_stage_content = {
-            'commentary_start_date': {
-                'description': 'When does official and/or public commentary begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 27
-            },
-            'commentary_end_date': {
-                'description': 'When does official and/or public commentary end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 28
-            },
-            'participants': {
-                'description': 'Select who should be allowed to post comments on submissions.',
-                'values-checkbox' : [
-                    'Program Chairs',
-                    'Paper Area Chairs',
-                    'Paper Reviewers',
-                    'Paper Submitted Reviewers',
-                    'Authors'
-                ],
-                'required': True,
-                'default': ['Program Chairs'],
-                'order': 29
-            },
-            'email_program_chairs_about_official_comments': {
-                'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
-                'value-radio': [
-                    'Yes, email PCs for each official comment made in the venue',
-                    'No, do not email PCs for each official comment made in the venue'
-                ],
-                'required': True,
-                'default': 'No, do not email PCs for each official comment made in the venue',
-                'order': 30
-            }
-        }
-
     # comment_stage_invitation
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment_Stage',
@@ -391,8 +283,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             'readers' : {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            },
-            'content': comment_stage_content
+            }
         },
         signatures=['~Super_User1']
     ))
