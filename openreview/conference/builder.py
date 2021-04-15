@@ -1307,7 +1307,7 @@ class Conference(object):
         for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            if is_release_note(note_accepted):
+            if is_release_note(note_accepted) or 'everyone' in submission.readers:
                 submission.readers = ['everyone']
                 if self.submission_stage.double_blind:
                     release_authors = is_release_authors(note_accepted)
