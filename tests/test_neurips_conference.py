@@ -701,6 +701,7 @@ class TestNeurIPSConference():
         stage_note=client.post_note(openreview.Note(
             content={
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
                 'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
