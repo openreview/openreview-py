@@ -1226,7 +1226,7 @@ class InvitationBuilder(object):
         notes = self.client.get_notes(invitation=invitation.id)
 
         ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
-        if 'values' in invitation.reply['readers'] and 'everyone' in invitation.reply['readers']['everyone'] and 'everyone' not in submission.readers:
+        if 'values' in invitation.reply['readers'] and 'everyone' in invitation.reply['readers']['values'] and 'everyone' not in submission.readers:
             return
 
         for note in notes:
