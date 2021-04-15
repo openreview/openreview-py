@@ -1307,40 +1307,40 @@ class Conference(object):
         for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            if is_release_note(note_accepted):
+            if is_release_note(note_accepted) or 'everyone' in submission.readers:
                 submission.readers = ['everyone']
-            if self.submission_stage.double_blind:
-                release_authors = is_release_authors(note_accepted)
-                submission.content = {
-                    '_bibtex': tools.get_bibtex(
-                                openreview.Note.from_json(submission.details['original']),
-                                venue_fullname=self.name,
-                                year=str(self.year),
-                                url_forum=submission.forum,
-                                accepted=note_accepted,
-                                anonymous=(not release_authors))
-                }
-                if not release_authors:
-                    submission.content['authors'] = ['Anonymous']
-                    submission.content['authorids'] = ['Anonymous']
-            else:
-                submission.content['_bibtex'] = tools.get_bibtex(
-                                submission,
-                                venue_fullname=self.name,
-                                year=str(self.year),
-                                url_forum=submission.forum,
-                                accepted=note_accepted,
-                                anonymous=False)
-            if note_accepted:
-                decision = decision_note.content['decision'].replace('Accept', '')
-                decision = re.sub(r'[()\W]+', '', decision)
-                venueid = self.id
-                venue = self.short_name
-                if decision:
-                    venue += ' ' + decision
-                submission.content['venueid'] = venueid
-                submission.content['venue'] = venue
-            self.client.post_note(submission)
+                if self.submission_stage.double_blind:
+                    release_authors = is_release_authors(note_accepted)
+                    submission.content = {
+                        '_bibtex': tools.get_bibtex(
+                                    openreview.Note.from_json(submission.details['original']),
+                                    venue_fullname=self.name,
+                                    year=str(self.year),
+                                    url_forum=submission.forum,
+                                    accepted=note_accepted,
+                                    anonymous=(not release_authors))
+                    }
+                    if not release_authors:
+                        submission.content['authors'] = ['Anonymous']
+                        submission.content['authorids'] = ['Anonymous']
+                else:
+                    submission.content['_bibtex'] = tools.get_bibtex(
+                                    submission,
+                                    venue_fullname=self.name,
+                                    year=str(self.year),
+                                    url_forum=submission.forum,
+                                    accepted=note_accepted,
+                                    anonymous=False)
+                if note_accepted:
+                    decision = decision_note.content['decision'].replace('Accept', '')
+                    decision = re.sub(r'[()\W]+', '', decision)
+                    venueid = self.id
+                    venue = self.short_name
+                    if decision:
+                        venue += ' ' + decision
+                    submission.content['venueid'] = venueid
+                    submission.content['venue'] = venue
+                self.client.post_note(submission)
 
         if decision_heading_map:
             self.set_homepage_decisions(decision_heading_map=decision_heading_map)
