@@ -482,7 +482,11 @@ class TestNeurIPSConference():
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
 
-    def test_submit_papers(self, conference, helpers, test_client, client):
+    def test_submit_papers(self, test_client, client):
+
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
@@ -499,10 +503,65 @@ class TestNeurIPSConference():
             )
             note = test_client.post_note(note)
 
-        #conference.setup_first_deadline_stage(force=True)
+        conference.setup_first_deadline_stage(force=True)
 
-        #blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
-        #assert len(blinded_notes) == 5
+        blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        assert len(blinded_notes) == 5
+
+        assert blinded_notes[0].readers == ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper5/Authors']
+
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Withdraw')
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Desk_Reject')
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
+
+        ## Add supplementary material
+        submissions=client.get_submissions()
+        for submission in submissions:
+            id = conference.get_invitation_id('Supplementary_Material', submission.number)
+            invitation = openreview.Invitation(
+                id = id,
+                expdate = openreview.tools.datetime_millis(datetime.datetime(2021, 6, 2, 20, 0)),
+                readers = [conference.id, conference.get_authors_id(number=submission.number)],
+                writers = [conference.id],
+                signatures = [conference.id],
+                invitees = [conference.get_authors_id(number=submission.number)],
+                multiReply = False,
+                reply = {
+                    'forum': submission.details['original'].id,
+                    'referent': submission.details['original'].id,
+                    'readers': {
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
+                    },
+                    'writers': {
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': '~.*'
+                    },
+                    'content': {
+                        'supplementary_material': {
+                            'order': 1,
+                            'required': True,
+                            'description': 'You can upload a single ZIP or a single PDF or a single MP4 file. Make sure that you do not use specialized codecs and the video runs on all computers. The maximum file size is 100MB.',
+                            'value-file': {
+                                'fileTypes': [
+                                    'pdf',
+                                    'zip',
+                                    'mp4'
+                                ],
+                                'size': 100
+                            }
+                        }
+                    }
+                }
+            )
+            client.post_invitation(invitation)
+
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Supplementary_Material')
 
     def test_post_submission_stage(self, conference, helpers, test_client, client):
 

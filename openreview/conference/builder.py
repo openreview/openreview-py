@@ -740,7 +740,7 @@ class Conference(object):
         active_venues = self.client.get_group('active_venues')
         self.client.add_members_to_group(active_venues, self.id)
 
-    def create_blind_submissions(self, hide_fields=[], under_submission=False):
+    def create_blind_submissions(self, hide_fields=[], under_submission=False, under_submission_readers=[]):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
@@ -767,7 +767,7 @@ class Conference(object):
             for field in hide_fields:
                 blind_content[field] = ''
 
-            blind_readers = self.submission_stage.get_readers(self, note.number, under_submission)
+            blind_readers = self.submission_stage.get_readers(self, note.number, under_submission, under_submission_readers)
 
             if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
 
@@ -801,10 +801,10 @@ class Conference(object):
 
         return blinded_notes
 
-    def setup_first_deadline_stage(self, force=False, hide_fields=[], submission_readers=None):
+    def setup_first_deadline_stage(self, force=False, hide_fields=[], submission_readers=[]):
 
         if self.submission_stage.double_blind:
-            self.create_blind_submissions(hide_fields=hide_fields, under_submission=True)
+            self.create_blind_submissions(hide_fields=hide_fields, under_submission=True, under_submission_readers=submission_readers)
         else:
             if submission_readers:
                 self.invitation_builder.set_submission_invitation(conference=self, under_submission=True, submission_readers=submission_readers)
@@ -1449,17 +1449,14 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
 
-    def get_readers(self, conference, number, under_submission):
+    def get_readers(self, conference, number, under_submission, under_submission_readers):
 
         ## the paper is still under submission and shouldn't be released yet
         if under_submission:
-            under_submission_readers=[conference.get_id()]
-            if conference.use_secondary_area_chairs:
-                under_submission_readers.append(conference.get_senior_area_chairs_id())
-            if conference.use_area_chairs:
-                under_submission_readers.append(conference.get_area_chairs_id())
-            under_submission_readers.append(conference.get_authors_id(number=number))
-            return under_submission_readers
+            submission_readers=[conference.get_id()]
+            submission_readers=submission_readers + under_submission_readers
+            submission_readers.append(conference.get_authors_id(number=number))
+            return submission_readers
 
         if self.public:
             return ['everyone']
