@@ -515,7 +515,7 @@ class TestNeurIPSConference():
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
 
         ## Add supplementary material
-        submissions=client.get_submissions()
+        submissions=conference.get_submissions(details='original')
         for submission in submissions:
             id = conference.get_invitation_id('Supplementary_Material', submission.number)
             invitation = openreview.Invitation(
@@ -527,8 +527,8 @@ class TestNeurIPSConference():
                 invitees = [conference.get_authors_id(number=submission.number)],
                 multiReply = False,
                 reply = {
-                    'forum': submission.details['original'].id,
-                    'referent': submission.details['original'].id,
+                    'forum': submission.details['original']['id'],
+                    'referent': submission.details['original']['id'],
                     'readers': {
                         'values': [
                             conference.id, conference.get_authors_id(number=submission.number)
