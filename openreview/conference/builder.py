@@ -611,6 +611,22 @@ class Conference(object):
 
         return self.IdentityReaders.get_readers(self, number, self.senior_area_chair_identity_readers)
 
+    def get_reviewer_paper_group_readers(self, number):
+        readers=[self.id]
+        if self.use_senior_area_chairs:
+            readers.append(self.get_senior_area_chairs_id(number))
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id(number))
+        readers.append(self.get_reviewers_id(number))
+        return readers
+
+    def get_area_chair_paper_group_readers(self, number):
+        readers=[self.id]
+        if self.use_senior_area_chairs:
+            readers.append(self.get_senior_area_chairs_id(number))
+        readers.append(self.get_area_chairs_id(number))
+        return readers
+
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
 
         if not force and reveal_submission and not self.submission_stage.public:
@@ -668,7 +684,7 @@ class Conference(object):
                     if not group:
                         self.client.post_group(openreview.Group(id=reviewers_id,
                             invitation=paper_reviewer_group_invitation.id,
-                            readers=[self.id, self.get_area_chairs_id(n.number), self.get_reviewers_id(n.number)],
+                            readers=self.get_reviewer_paper_group_readers(n.number),
                             nonreaders=[self.get_authors_id(n.number)],
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
                             writers=[self.id, self.get_area_chairs_id(n.number)],
@@ -693,7 +709,7 @@ class Conference(object):
                     group = tools.get_group(self.client, id = area_chairs_id)
                     self.client.post_group(openreview.Group(id=area_chairs_id,
                         invitation=paper_area_chair_group_invitation.id,
-                        readers=[self.id, self.get_area_chairs_id(n.number)],
+                        readers=self.get_area_chair_paper_group_readers(n.number),
                         nonreaders=[self.get_authors_id(n.number)],
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],
@@ -2101,6 +2117,12 @@ class ConferenceBuilder(object):
 
     def set_reviewer_identity_readers(self, readers):
         self.conference.reviewer_identity_readers = readers
+
+    def set_area_chair_identity_readers(self, readers):
+        self.conference.area_chair_identity_readers = readers
+
+    def set_senior_area_chair_identity_readers(self, readers):
+        self.conference.senior_area_chair_identity_readers = readers
 
     def get_result(self):
 

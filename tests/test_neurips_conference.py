@@ -22,19 +22,6 @@ class TestNeurIPSConference():
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
-        ## should we add this to the request form?
-        conference.senior_area_chair_identity_readers=[
-            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
-            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
-        ]
-        conference.area_chair_identity_readers=[
-            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
-            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
-        ]
         return conference
 
 
@@ -88,6 +75,8 @@ class TestNeurIPSConference():
                     'OpenReview Affinity'],
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
@@ -546,21 +535,33 @@ class TestNeurIPSConference():
             'NeurIPS.cc/2021/Conference/Reviewers',
             'NeurIPS.cc/2021/Conference/Paper5/Authors']
 
-        # assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
-        #     'NeurIPS.cc/2021/Conference/Program_Chairs',
-        #     'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
-        #     'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-        #     'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').nonreaders == ['NeurIPS.cc/2021/Conference/Paper5/Authors']
 
-
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs']
 
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').deanonymizers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').nonreaders == ['NeurIPS.cc/2021/Conference/Paper5/Authors']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').deanonymizers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
 
