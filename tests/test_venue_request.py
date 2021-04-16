@@ -427,6 +427,7 @@ class TestVenueRequest():
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'remove_review_form_options': 'title',
@@ -910,3 +911,77 @@ class TestVenueRequest():
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
+
+    def test_venue_public_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 3
+
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Public (non-anonymously)'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=[]
+        ))
+        assert comment_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=comment_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        # Assert that official comment invitation is now available
+        official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
+        assert official_comment_invitation
+
+        # Assert that public comment invitation is not available
+        public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
+        assert public_comment_invitation
+
+
+    def test_release_reviews(self, client, test_client, selenium, request_page, helpers, venue):
+
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to all reviewers',
+                'remove_review_form_options': 'title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=[]
+        ))
+        assert review_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = review_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
