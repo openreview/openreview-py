@@ -210,6 +210,9 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']
                 },
+                'writers': {
+                    'values-copied': [conference.get_id(), '{signatures}']
+                },
                 'signatures': {
                     'values-regex': '~.*'
                 },
