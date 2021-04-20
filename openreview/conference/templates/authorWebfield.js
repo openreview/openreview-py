@@ -73,16 +73,6 @@ function load() {
     } else {
       return result.notes;
     }
-  }).then(function(notes) {
-    var reviews = [];
-    _.forEach(notes, function(note) {
-      _.forEach(note.details.directReplies, function(directReply) {
-        if (_.includes(directReply.invitation, OFFICIAL_REVIEW_NAME)) {
-          reviews.push(directReply);
-        }
-      });
-    });
-    return $.when(notes, reviews);
   });
 
   var invitationsP = Webfield.get('/invitations', {
@@ -126,17 +116,7 @@ function renderHeader() {
   });
 }
 
-function renderContent(notes, invitations) {
-  var authorNotes = notes[0];
-  var reviews = notes[1];
-  var filterOfficialReviews = function(note) {
-    return _.endsWith(note.invitation, OFFICIAL_REVIEW_NAME);
-  };
-  var filterMetaReviews = function(note) {
-    return _.endsWith(note.invitation, OFFICIAL_META_REVIEW_NAME);
-  };
-  var officialReviews = _.filter(reviews, filterOfficialReviews);
-  var metaReviews = _.filter(reviews, filterMetaReviews);
+function renderContent(authorNotes, invitations) {
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',
@@ -161,19 +141,25 @@ function renderContent(notes, invitations) {
   Webfield.ui.newTaskList(noteInvitations, edgeInvitations, tasksOptions);
 
   // Render table like AC console
-  renderStatusTable(authorNotes, officialReviews, metaReviews);
+  renderStatusTable(authorNotes);
 
   // Remove spinner and show content
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();
 }
 
-function renderStatusTable(notes, completedReviews, metaReviews, reviewerIds) {
+function renderStatusTable(notes) {
   var $container = $('#your-submissions');
   var rows = notes.map(function(note) {
     var invitationPrefix = CONFERENCE_ID + '/Paper' + note.number + '/-/';
-    var metaReview = _.find(metaReviews, ['invitation', invitationPrefix + OFFICIAL_META_REVIEW_NAME]);
-    var noteCompletedReviews = _.filter(completedReviews, ['invitation', invitationPrefix + OFFICIAL_REVIEW_NAME]);
+    // Fix this in the backend response
+    if (!note.deails) {
+      note.details = {
+        directReplies: []
+      }
+    }
+    var metaReview = _.find(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_META_REVIEW_NAME]);
+    var noteCompletedReviews = _.filter(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_REVIEW_NAME]);
 
     return buildTableRow(note, noteCompletedReviews, metaReview);
   });
