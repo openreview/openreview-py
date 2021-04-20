@@ -365,6 +365,7 @@ var getGroups = function() {
     var seniorAreaChairGroups = [];
     var areaChairGroups = [];
     for (var groupIdx = 0; groupIdx < groups.length; groupIdx++) {
+      var group = groups[groupIdx];
       if (_.includes(group.id, 'Reviewer')) {
         anonReviewerGroups.push(group);
       } else if (_.includes(group.id, 'Senior_Area_Chair')) {
