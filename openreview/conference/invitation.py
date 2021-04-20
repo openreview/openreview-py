@@ -1069,6 +1069,10 @@ class MetaReviewInvitation(openreview.Invitation):
         for key in additional_fields:
             content[key] = additional_fields[key]
 
+        for field in meta_review_stage.remove_fields:
+            if field in content:
+                del content[field]
+
         super(MetaReviewInvitation, self).__init__(id = conference.get_invitation_id(meta_review_stage.name),
             cdate = tools.datetime_millis(start_date),
             duedate = tools.datetime_millis(due_date),
