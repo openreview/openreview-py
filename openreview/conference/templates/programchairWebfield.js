@@ -1084,22 +1084,22 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<div class="row" style="margin-top: .5rem;">';
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
-    '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
+    '<li><a href="/group/edit?id=' + PROGRAM_CHAIRS_ID + '">Program Chairs</a></li>';
   if (SENIOR_AREA_CHAIRS_ID) {
-      html += '<li><a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '&mode=edit">Senior Area Chairs</a> (' +
-        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
-        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
+      html += '<li><a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '">Senior Area Chairs</a> (' +
+        '<a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '/Invited">Invited</a>, ' +
+        '<a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '/Declined">Declined</a>)</li>';
   }
   if (AREA_CHAIRS_ID) {
-    html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
+    html += '<li><a href="/group/edit?id=' + AREA_CHAIRS_ID + '">Area Chairs</a> (' +
+      '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Invited">Invited</a>, ' +
+      '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Declined">Declined</a>)</li>';
   }
-  html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
-    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a> (' +
-    '<a href="/group?id=' + AUTHORS_ID + '/Accepted&mode=edit">Accepted</a>)</li></ul>';
+  html += '<li><a href="/group/edit?id=' + REVIEWERS_ID + '">Reviewers</a> (' +
+    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Invited">Invited</a>, ' +
+    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Declined">Declined</a>)</li>' +
+    '<li><a href="/group/edit?id=' + AUTHORS_ID + '">Authors</a> (' +
+    '<a href="/group/edit?id=' + AUTHORS_ID + '/Accepted">Accepted</a>)</li></ul>';
   html += '</div>';
 
   // Registration Forms
