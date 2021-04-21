@@ -331,7 +331,7 @@ function updateNotes(notes) {
   });
 
   // Render the contents of the All Papers tab
-  var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers' });
+  var searchResultsOptions = _.assign({}, paperDisplayOptions, { container: '#allPapers', emptyMessage: 'No Area Chairs to display at this time' });
   var submissionListOptions = {
     heading: null,
     container: '#allPapers',
@@ -341,6 +341,7 @@ function updateNotes(notes) {
       subjectAreas: SUBJECT_AREAS,
       subjectAreaDropdown: 'basic',
       invitation: BLIND_SUBMISSION_ID,
+      placeholder: 'Search by name and metadata',
       sort: false,
       onResults: function(searchResults) {
         Webfield.ui.searchResults(prepareNotes(searchResults, conflictIds, bidsByNote), searchResultsOptions);
