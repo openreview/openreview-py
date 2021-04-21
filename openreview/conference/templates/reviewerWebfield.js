@@ -17,6 +17,7 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
 var CUSTOM_LOAD_INVITATION = CONFERENCE_ID + '/-/Reduced_Load';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
+var CUSTOM_MAX_PAPERS_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Custom_Max_Papers';
 
 var main = function() {
   // In the future this should not be necessary as the group's readers
@@ -128,7 +129,9 @@ var getReviewerNoteNumbers = function() {
     _.forEach(reviewerGroups, function(reviewerGroup) {
       var num = getNumberFromGroup(reviewerGroup.id, 'Paper');
       var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num); });
-      groupByNumber[num] = anonGroup.id;
+      if (anonGroup) {
+        groupByNumber[num] = anonGroup.id;
+      }
     });
 
     return groupByNumber;
@@ -189,21 +192,28 @@ var getCustomLoad = function(userIds) {
     return $.Deferred().resolve(0);
   }
 
-  return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user' })
+  return Webfield.get('/edges', { invitation: CUSTOM_MAX_PAPERS_ID, tail: user.id })
     .then(function(result) {
-      if (!result.notes || !result.notes.length) {
-        return REVIEW_LOAD;
+      if (result.edges && result.edges.length) {
+        return result.edges[0].weight;
       }
-      if (result.notes.length === 1) {
-        return result.notes[0].content.reviewer_load;
-      } else {
-        // If there is more than one there might be a Program Chair
-        var loads = result.notes.filter(function(note) {
-          return userIds.indexOf(note.content.user) > -1;
-        });
-        return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
-      }
-    });
+      return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user' })
+      .then(function(result) {
+        if (!result.notes || !result.notes.length) {
+          return REVIEW_LOAD;
+        }
+        if (result.notes.length === 1) {
+          return result.notes[0].content.reviewer_load;
+        } else {
+          // If there is more than one there might be a Program Chair
+          var loads = result.notes.filter(function(note) {
+            return userIds.indexOf(note.content.user) > -1;
+          });
+          return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
+        }
+      });
+    })
+
 };
 
 var loadReviewerData = function() {
