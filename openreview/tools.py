@@ -1597,3 +1597,28 @@ def overwrite_pdf(client, note_id, file_path):
                 updated_references.append(client.post_note(reference))
 
     return updated_references
+
+def pretty_id(group_id):
+
+    if not group_id:
+        return ''
+
+    if group_id.startswith('~') and len(group_id):
+        return re.sub('[0-9]+', '', group_id.replace('~', '').replace('_', ' '))
+
+    if group_id in ['everyone', '(anonymous)', '(guest)', '~']:
+        return group_id
+
+    tokens = group_id.split('/')
+
+    transformed_tokens = []
+
+    for token in tokens:
+        transformed_token=re.sub('\..+', '', token).replace('-', '').replace('_', ' ')
+        letters_only=re.sub('\d|\W', '', transformed_token)
+
+        if letters_only != transformed_token.lower():
+            transformed_tokens.append(transformed_token)
+
+
+    return ' '.join(transformed_tokens)

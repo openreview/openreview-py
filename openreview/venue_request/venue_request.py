@@ -741,6 +741,38 @@ class VenueRequest():
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
                 'order': 29
+            },
+            'area_chair_identity': {
+                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the area chair\' real identities.',
+                'values-checkbox': [
+                    'Program Chairs',
+                    'All Senior Area Chairs',
+                    'Assigned Senior Area Chair',
+                    'All Area Chairs',
+                    'Assigned Area Chair',
+                    'All Reviewers',
+                    'Assigned Reviewers'
+                ],
+                'default': ['Program Chairs'],
+                'order': 30,
+                'required': False,
+                'hidden': True
+            },
+            'senior_area_chair_identity': {
+                'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the senior area chair\' real identities.',
+                'values-checkbox': [
+                    'Program Chairs',
+                    'All Senior Area Chairs',
+                    'Assigned Senior Area Chair',
+                    'All Area Chairs',
+                    'Assigned Area Chair',
+                    'All Reviewers',
+                    'Assigned Reviewers'
+                ],
+                'default': ['Program Chairs'],
+                'order': 31,
+                'required': False,
+                'hidden': True
             }
         }
 

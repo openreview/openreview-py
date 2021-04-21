@@ -1284,10 +1284,60 @@ class TestDoubleBlindConference():
         )
         with pytest.raises(openreview.OpenReviewException, match=r'missing'):
             meta_review_note = ac_client.post_note(note)
-        note.content['best paper'] = 'Yes'
+
+    def test_open_meta_reviews_remove_fields(self, client, test_client, selenium, request_page, helpers):
+
+        now = datetime.datetime.utcnow()
+        ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='meta_additional@mail.com', password='1234')
+        assert ac_client is not None, "Client is none"
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+            'best paper' : {
+                'description' : 'Nominate as best paper?',
+                'value-radio' : ['Yes', 'No'],
+                'required' : True
+            }
+        }, remove_fields = ['confidence'])
+        conference = builder.get_result()
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[2]
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            content = {
+                'metareview': 'Excellent Paper!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain',
+                'best paper': 'Yes'
+            }
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid Field'):
+            meta_review_note = ac_client.post_note(note)
+
+        note.content = {
+            'metareview': 'Excellent Paper!',
+            'recommendation': 'Accept (Oral)',
+            'best paper': 'Yes'
+        }
+
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
         assert meta_review_note.content['best paper'] == 'Yes', 'Additional field not initialized'
+        assert 'confidence' not in meta_review_note.content, 'Field not removed'
 
     def test_open_decisions(self, client, helpers):
 
@@ -1718,6 +1768,16 @@ class TestDoubleBlindConference():
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
                 'required' : False
+            },
+            'confidence': {
+                'value-radio': [
+                    '5: The area chair is absolutely certain',
+                    '4: The area chair is confident but not absolutely certain',
+                    '3: The area chair is somewhat confident',
+                    '2: The area chair is not sure',
+                    '1: The area chair\'s evaluation is an educated guess'
+                ],
+                'required': False
             }
         })
         builder.get_result()
