@@ -499,10 +499,16 @@ Naila, Katja, Alice, and Ivan
             )
             note = test_client.post_note(note)
 
-        conference.setup_first_deadline_stage(force=True)
+        conference.setup_first_deadline_stage(force=True, submission_readers=['ICLR.cc/2021/Conference/Area_Chairs'])
 
         blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
         assert len(blinded_notes) == 5
+
+        assert blinded_notes[0].readers == [
+            'ICLR.cc/2021/Conference',
+            'ICLR.cc/2021/Conference/Area_Chairs',
+            'ICLR.cc/2021/Conference/Paper5/Authors'
+        ]
 
         invitations = test_client.get_invitations(replyForum=blinded_notes[0].id)
         assert len(invitations) == 1

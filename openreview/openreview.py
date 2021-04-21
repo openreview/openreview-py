@@ -7,6 +7,7 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
+from . import tools
 import requests
 import pprint
 import os
@@ -1395,9 +1396,10 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
         # post attributes
         self.id=id
+        self.invitation=invitation
         self.cdate = cdate
         self.ddate = ddate
         self.tcdate = tcdate
@@ -1438,6 +1440,7 @@ class Group(object):
         """
         body = {
             'id': self.id,
+            'invitation': self.invitation,
             'cdate': self.cdate,
             'ddate': self.ddate,
             'signatures': self.signatures,
@@ -1466,6 +1469,7 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            invitation=g.get('invitation'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),
@@ -1601,6 +1605,7 @@ class Invitation(object):
         web_string = None,
         process = None,
         process_string = None,
+        preprocess = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -1632,6 +1637,7 @@ class Invitation(object):
         self.details = details
         self.web = None
         self.process = None
+        self.preprocess = None
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1646,6 +1652,8 @@ class Invitation(object):
             self.process = process_string
         if web_string:
             self.web = web_string
+        if preprocess is not None:
+            self.preprocess=preprocess
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1690,6 +1698,8 @@ class Invitation(object):
             body['web']=self.web
         if hasattr(self,'process'):
             body['process']=self.process
+        if hasattr(self,'preprocess'):
+            body['preprocess']=self.preprocess
         return body
 
     @classmethod
@@ -1728,6 +1738,8 @@ class Invitation(object):
             invitation.process = i['process']
         if 'transform' in i:
             invitation.transform = i['transform']
+        if 'preprocess' in i:
+            invitation.preprocess = i['preprocess']
         return invitation
 
 class Note(object):
@@ -2034,7 +2046,8 @@ class Edge(object):
             head = e.get('head'),
             tail = e.get('tail'),
             weight = e.get('weight'),
-            label = e.get('label')
+            label = e.get('label'),
+            tauthor=e.get('tauthor')
         )
         return edge
 
@@ -2105,6 +2118,30 @@ class Profile(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+
+    def get_preferred_name(self, pretty=False):
+        username=self.id
+        for name in self.content['names']:
+            if 'username' in name and name.get('preferred', False):
+                username=name['username']
+        if pretty:
+            return tools.pretty_id(username)
+        return username
+
+    def get_preferred_email(self):
+        preferred_email=self.content.get('preferredEmail')
+        if preferred_email:
+            return preferred_email
+
+        if self.content['emailsConfirmed']:
+            return self.content['emailsConfirmed'][0]
+
+        if self.content['emails']:
+            return self.content['emails'][0]
+
+        return None
+
 
     def to_json(self):
         """
