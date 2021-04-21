@@ -11,7 +11,7 @@ var AREACHAIR_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var LEGACY_INVITATION_ID = false;
-var REVIEW_LOAD = 0;
+var REVIEW_LOAD = '';
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
@@ -43,7 +43,7 @@ var main = function() {
     .then(function(
       blindedNotes, officialReviews, invitations, customLoad, groupByNumber
     ) {
-      if (customLoad > 0) {
+      if (customLoad) {
         $('#header .description').append(
           '<p class="dark">You have agreed to review up to <strong>' + customLoad + ' papers</strong>.</p>'
         );
@@ -188,10 +188,6 @@ var getAllInvitations = function() {
 };
 
 var getCustomLoad = function(userIds) {
-  if (REVIEW_LOAD <= 0) {
-    return $.Deferred().resolve(0);
-  }
-
   return Webfield.get('/edges', { invitation: CUSTOM_MAX_PAPERS_ID, tail: user.id })
     .then(function(result) {
       if (result.edges && result.edges.length) {
