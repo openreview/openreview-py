@@ -284,9 +284,21 @@ class VenueStages():
                 'order': 28
             },
             'recommendation_options': {
-                'description': 'What are the meta review recommendation options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
+                'description': 'What are the meta review recommendation options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - Accept (Oral), Accept (Poster), Reject',
                 'value-regex': '.*',
                 'order': 29
+            },
+            'additional_meta_review_form_options': {
+                'order' : 30,
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the meta review form. Valid JSON expected.'
+            },
+            'remove_meta_review_form_options': {
+                'order': 31,
+                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
+                'required': False,
+                'description': 'Comma separated list of fields (metareview, recommendation, confidence) that you want removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
             }
         }
 
