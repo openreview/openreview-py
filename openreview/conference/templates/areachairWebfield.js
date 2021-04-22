@@ -63,7 +63,11 @@ var main = function() {
 var getRootGroups = function() {
 
   var filterAreaChairGroups = function(group) {
-    return _.includes(group.id, 'Area_Chair');
+    return group.id.endsWith('Area_Chairs');
+  }
+
+  var filterAnonAreaChairGroups = function(group) {
+    return _.includes(group.id, 'Area_Chair_');
   }
 
   var filterSecondaryAreaChairGroups = function(group) {
@@ -76,10 +80,20 @@ var getRootGroups = function() {
     select: 'id'
   })
   .then(function(groups) {
+    var paperNumbers = [];
     var areaChairGroups = _.filter(groups, filterAreaChairGroups);
+    var anonGroups = _.filter(groups, filterAnonAreaChairGroups);
+    areaChairGroups.forEach(function(areaChairGroup) {
+      var num = getNumberfromGroup(areaChairGroup.id, 'Paper');
+      var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num); });
+      if (anonGroup) {
+        anonids[num] = anonGroup.id;
+        paperNumbers.push(parseInt(num));
+      }
+    });
     var secondaryAreaChairGroups = _.filter(groups, filterSecondaryAreaChairGroups);
     return {
-      areaChairPaperNums: getPaperNumbersfromGroups(areaChairGroups),
+      areaChairPaperNums: paperNumbers,
       secondaryAreaChairPaperNums: getPaperNumbersfromGroups(secondaryAreaChairGroups)
     };
   });
@@ -147,17 +161,10 @@ var loadData = function(paperNums) {
   var secondaryAcPapers = paperNums.secondaryAreaChairPaperNums;
   var noteNumbers = _.uniq(_.concat(acPapers, secondaryAcPapers));
   var blindedNotesP;
-  var metaReviewsP;
   var allReviewersP;
-  var secondaryMetaReviewsP;
-  var unformattedOfficialReviewsP;
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
-
-    var metaReviews = [];
-    var secondaryMetaReviews = [];
-    var unformattedOfficialReviews = [];
 
     blindedNotesP = Webfield.getAll('/notes', {
       invitation: BLIND_SUBMISSION_ID,
@@ -165,38 +172,11 @@ var loadData = function(paperNums) {
       select: 'id,number,forum,content,details,invitation',
       details: 'invitation,replyCount,directReplies'
     }).then(function(notes) {
-      for (var noteIdx = 0; noteIdx < notes.length; noteIdx++) {
-        var directReplies = notes[noteIdx].details && notes[noteIdx].details.directReplies || [];
-        for (var directReplyIdx = 0; directReplyIdx < directReplies.length; directReplyIdx++) {
-          var directReply = directReplies[directReplyIdx];
-          if (OFFICIAL_META_REVIEW_NAME && _.includes(directReply.invitation, OFFICIAL_META_REVIEW_NAME)) {
-            metaReviews.push(directReply);
-          } else if (OFFICIAL_SECONDARY_META_REVIEW_NAME && _.includes(directReply.invitation, OFFICIAL_SECONDARY_META_REVIEW_NAME)) {
-            secondaryMetaReviews.push(directReply);
-          } else if (OFFICIAL_REVIEW_NAME && _.includes(directReply.invitation, OFFICIAL_REVIEW_NAME)) {
-            unformattedOfficialReviews.push(directReply);
-          }
-        }
-      }
       return _.sortBy(notes, 'number');
     });
 
-    metaReviewsP = $.when(blindedNotesP).then(function() {
-      return metaReviews;
-    });
-
-    secondaryMetaReviewsP = $.when(blindedNotesP).then(function() {
-      return secondaryMetaReviews;
-    });
-
-    unformattedOfficialReviewsP = $.when(blindedNotesP).then(function() {
-      return unformattedOfficialReviews;
-    });
   } else {
     blindedNotesP = $.Deferred().resolve([]);
-    metaReviewsP = $.Deferred().resolve([]);
-    secondaryMetaReviewsP = $.Deferred().resolve([]);
-    unformattedOfficialReviewsP = $.Deferred().resolve([]);
   }
 
   var invitationsP = Webfield.getAll('/invitations', {
@@ -236,9 +216,6 @@ var loadData = function(paperNums) {
 
   return $.when(
     blindedNotesP,
-    unformattedOfficialReviewsP.then(function(unformattedOfficialReviews) { return getOfficialReviews(unformattedOfficialReviews) }),
-    metaReviewsP,
-    secondaryMetaReviewsP,
     getReviewerGroups(noteNumbers),
     invitationsP,
     allReviewersP,
@@ -252,23 +229,19 @@ var loadData = function(paperNums) {
 var getOfficialReviews = function(notes) {
   var ratingExp = /^(\d+): .*/;
 
-  var noteMap = {};
+  var reviewByAnonId = {};
 
   _.forEach(notes, function(n) {
-    var num = getNumberfromGroup(n.signatures[0], 'Paper');
-    var index = getNumberfromGroup(n.signatures[0], 'Reviewer_');
-    if (num) {
-      // Need to parse rating and confidence strings into ints
-      ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
-      n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
-      confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
-      n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
-      noteMap[num] = _.assign({}, noteMap[num], { [index]: n })
-      // noteMap[num][index] = n;
-    }
+    var anonId = getNumberfromGroup(n.signatures[0], 'Reviewer_');
+    // Need to parse rating and confidence strings into ints
+    ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
+    n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
+    confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
+    n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
+    reviewByAnonId[anonId] = n;
   });
 
-  return noteMap;
+  return reviewByAnonId;
 };
 
 var getReviewerGroups = function(noteNumbers) {
@@ -288,18 +261,22 @@ var getReviewerGroups = function(noteNumbers) {
 
     _.forEach(reviewerGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
-      g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
-        var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
-        noteMap[num][anonId] = member;
-      });
+      if (num in noteMap) {
+          g.members.forEach(function(member, index) {
+            var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+            if (anonGroup) {
+              var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
+              noteMap[num][anonId] = member;
+            }
+          });
+      }
     });
 
     return noteMap;
   });
 };
 
-var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryMetaReviews, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers) {
+var formatData = function(blindedNotes, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers) {
 
   var filterNoteInvitations = function(inv) {
     return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent');
@@ -333,9 +310,6 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryM
     conferenceStatusData = {
       profiles: profiles,
       blindedNotes: blindedNotes,
-      officialReviews: officialReviews,
-      metaReviews: metaReviews,
-      secondaryMetaReviews: secondaryMetaReviews,
       noteToReviewerIds: noteToReviewerIds,
       invitations: noteInvitations,
       edgeInvitations: edgeInvitations,
@@ -440,19 +414,15 @@ var renderTable = function(rows, container, secondary_meta) {
   }
 }
 
-var renderStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, acRankingByPaper, reviewerRankingByPaper, container) {
-  var rows = _.map(notes, function(note) {
-    var revIds = reviewerIds[note.number] || Object.create(null);
-    for (var revNumber in revIds) {
-      var uId = revIds[revNumber];
-      revIds[revNumber] = findProfile(profiles, uId);
-    }
+var renderStatusTable = function(conferenceStatusData, container) {
+  var rows = _.map(conferenceStatusData.blindedNotes, function(note) {
+    var reviewersById = conferenceStatusData.noteToReviewerIds[note.number] || Object.create(null);
 
-    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
-    var metaReviewInvitation = _.find(allInvitations, ['id', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var noteCompletedReviews = getOfficialReviews((note.details.directReplies || []).filter(function(reply) { return reply.invitation === getInvitationId(OFFICIAL_REVIEW_NAME, note.number); }));
+    var metaReviewInvitation = _.find(conferenceStatusData.invitations, ['id', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, metaReviewInvitation, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {});
+    return buildTableRow(note, reviewersById, noteCompletedReviews, metaReview, metaReviewInvitation, conferenceStatusData.acRankingByPaper[note.forum], conferenceStatusData.reviewerRankingByPaper[note.forum] || {});
   });
 
   // Sort form handler
@@ -651,18 +621,14 @@ var renderStatusTable = function(profiles, notes, allInvitations, completedRevie
   }
 };
 
-var renderSecondaryStatusTable = function(profiles, notes, allInvitations, completedReviews, metaReviews, reviewerIds, acRankingByPaper, reviewerRankingByPaper, container) {
-  var rows = _.map(notes, function(note) {
-    var revIds = reviewerIds[note.number] || Object.create(null);
-    for (var revNumber in revIds) {
-      var uId = revIds[revNumber];
-      revIds[revNumber] = findProfile(profiles, uId);
-    }
+var renderSecondaryStatusTable = function(conferenceStatusData, container) {
+  var rows = _.map(conferenceStatusData.blindedNotes, function(note) {
+    var revIds = conferenceStatusData.noteToReviewerIds[note.number] || Object.create(null);
+    var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var noteCompletedReviews = getOfficialReviews((note.details.directReplies || []).filter(function(reply) { return reply.invitation === getInvitationId(OFFICIAL_REVIEW_NAME, note.number); }));
 
-    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
 
-    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}, 'secondary');
+    return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, conferenceStatusData.acRankingByPaper[note.forum], conferenceStatusData.reviewerRankingByPaper[note.forum] || {}, 'secondary');
   });
 
   var order = 'desc';
@@ -900,27 +866,13 @@ var renderTableAndTasks = function(fetchedData) {
   }
 
   renderStatusTable(
-    fetchedData.profiles,
-    primaryAssignments,
-    fetchedData.invitations,
-    fetchedData.officialReviews,
-    fetchedData.metaReviews,
-    _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
-    fetchedData.acRankingByPaper,
-    fetchedData.reviewerRankingByPaper,
+    fetchedData,
     '#assigned-papers'
   );
 
   if (SECONDARY_AREA_CHAIR_NAME) {
     renderSecondaryStatusTable(
-      fetchedData.profiles,
-      _.filter(fetchedData.blindedNotes, function(note) { return fetchedData.secondaryAcPapers.indexOf(note.number) > -1; }),
-      fetchedData.invitations,
-      fetchedData.officialReviews,
-      fetchedData.metaReviews,
-      _.cloneDeep(fetchedData.noteToReviewerIds), // Need to clone this dictionary because some values are missing after the first refresh
-      fetchedData.acRankingByPaper,
-      fetchedData.reviewerRankingByPaper,
+      fetchedData,
       '#secondary-papers'
     );
   }
@@ -951,7 +903,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
   var ratings = [];
   var confidences = [];
   for (var reviewerNum in reviewerIds) {
-    var reviewer = reviewerIds[reviewerNum];
+    var reviewerId = reviewerIds[reviewerNum];
+    var reviewer = findProfile(conferenceStatusData.profiles, reviewerId);
     if (reviewerNum in completedReviews) {
       reviewObj = completedReviews[reviewerNum];
       paperRanking = reviewerPaperRanking[reviewerNum];
@@ -1338,8 +1291,6 @@ var registerEventHandlers = function() {
   var buildCSV = function(){
     var profiles = conferenceStatusData.profiles;
     var notes = conferenceStatusData.blindedNotes;
-    var completedReviews = conferenceStatusData.officialReviews;
-    var metaReviews = conferenceStatusData.metaReviews;
     var reviewerIds = conferenceStatusData.noteToReviewerIds;
     var reviewerRankingByPaper = conferenceStatusData.reviewerRankingByPaper;
     var acRankingByPaper = conferenceStatusData.acRankingByPaper;
@@ -1362,12 +1313,8 @@ var registerEventHandlers = function() {
 
     _.forEach(notes, function(note) {
       var revIds = reviewerIds[note.number] || Object.create(null);
-      for (var revNumber in revIds) {
-        var uId = revIds[revNumber];
-        revIds[revNumber] = findProfile(profiles, uId);
-      }
-      var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-      var noteCompletedReviews = completedReviews[note.number] || Object.create(null);
+      var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+      var noteCompletedReviews = getOfficialReviews((note.details.directReplies || []).filter(function(reply) { return reply.invitation === getInvitationId(OFFICIAL_REVIEW_NAME, note.number); }));
       var paperTableRow = buildTableRow(note, revIds, noteCompletedReviews, metaReview, null, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {});
 
       var title = paperTableRow[2]['content']['title'].replace(/"/g, '""');
