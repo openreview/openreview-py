@@ -1416,13 +1416,13 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         button = notes[1].find_element_by_class_name('btn')
         assert button
 
-        reviews = test_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
-        assert len(reviews) == 2
+        reviews = test_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review', signature='thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2')
+        assert len(reviews) == 1
 
         rebuttal_note = test_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
-            replyto=reviews[1].id,
-            invitation=reviews[1].signatures[0] + '/-/Rebuttal',
+            replyto=reviews[0].id,
+            invitation=reviews[0].signatures[0] + '/-/Rebuttal',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',
@@ -1494,13 +1494,13 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         buttons = notes[1].find_elements_by_class_name('btn')
         assert len(buttons) == 7
 
-        reviews = reviewer_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
-        assert len(reviews) == 2
+        reviews = reviewer_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review', signature='thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2')
+        assert len(reviews) == 1
 
         review_revision_note = reviewer_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
-            referent=reviews[1].id,
-            invitation=reviews[1].signatures[0] + '/-/Review_Revision',
+            referent=reviews[0].id,
+            invitation=reviews[0].signatures[0] + '/-/Review_Revision',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',

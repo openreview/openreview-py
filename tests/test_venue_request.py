@@ -869,7 +869,7 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Assert that submisions are not blind anymore
@@ -911,7 +911,7 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Assert that submisions are still not blind
