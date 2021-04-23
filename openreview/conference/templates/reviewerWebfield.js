@@ -14,7 +14,6 @@ var LEGACY_INVITATION_ID = false;
 var REVIEW_LOAD = '';
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
-var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
 var CUSTOM_LOAD_INVITATION = CONFERENCE_ID + '/-/Reduced_Load';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
 var CUSTOM_MAX_PAPERS_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Custom_Max_Papers';
@@ -104,7 +103,7 @@ var buildNoteMap = function(noteNumbers) {
 // AJAX functions
 var getReviewerNoteNumbers = function() {
   return Webfield.getAll('/groups', {
-    regex: ANONREVIEWER_WILDCARD,
+    regex: WILDCARD_INVITATION,
     member: user.id
   }).then(function(groups) {
 
