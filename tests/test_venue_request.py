@@ -526,7 +526,16 @@ class TestVenueRequest():
             content={
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
-                'meta_review_deadline': due_date.strftime('%Y/%m/%d')
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'recommendation_options': 'Accept, Reject',
+                'additional_meta_review_form_options': {
+                    'suggestions' : {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
+                'remove_meta_review_form_options': 'confidence'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -558,6 +567,12 @@ class TestVenueRequest():
 
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
+
+        meta_review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Meta_Review$'.format(venue['venue_id']))
+        assert meta_review_invitations and len(meta_review_invitations) == 2
+        assert 'confidence' not in meta_review_invitations[0].reply['content']
+        assert 'suggestions' in meta_review_invitations[0].reply['content']
+        assert 'Accept' in meta_review_invitations[0].reply['content']['recommendation']['value-dropdown']
 
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
