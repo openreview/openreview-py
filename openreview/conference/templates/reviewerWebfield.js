@@ -51,23 +51,9 @@ var main = function() {
 
       displayStatusTable(blindedNotes, officialReviews);
 
-      var filterNoteInvitations = function(inv) {
-        return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent');
-      };
-      var filterEdgeInvitations = function(inv) {
-        return _.has(inv, 'reply.content.head');
-      };
-      var filterTagInvitations = function(inv) {
-        return _.has(inv, 'reply.content.tag');
-      };
-
-      var noteInvitations = _.filter(invitations, filterNoteInvitations);
-      var edgeInvitations = _.filter(invitations, filterEdgeInvitations);
-      var tagInvitations = _.filter(invitations, filterTagInvitations);
-
       // Add paper ranking tag widgets to the table of submissions
       // If tag invitation does not exist, get existing tags and display read-only
-      var paperRankingInvitation = _.find(tagInvitations, ['id', PAPER_RANKING_ID]);
+      var paperRankingInvitation = _.find(invitations, ['id', PAPER_RANKING_ID]);
       if (paperRankingInvitation) {
         var paperRankingTags = paperRankingInvitation.details.repliedTags || [];
         displayPaperRanking(blindedNotes, paperRankingInvitation, paperRankingTags, groupByNumber);
@@ -81,7 +67,7 @@ var main = function() {
           });
       }
 
-      displayTasks(noteInvitations, edgeInvitations, tagInvitations);
+      displayTasks(invitations);
       Webfield.ui.done();
     })
     .fail(function(error) {
@@ -175,15 +161,23 @@ var getOfficialReviews = function(noteNumbers) {
 };
 
 var getAllInvitations = function() {
-  return Webfield.get('/invitations', {
+
+  var filterInvitee = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) !== -1; });
+  };
+
+  var filterReply = function(inv) {
+    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
+  }
+
+  return Webfield.getAll('/invitations', {
     regex: WILDCARD_INVITATION,
     invitee: true,
     duedate: true,
     type: 'all',
-    select: 'id,duedate,reply.forum,reply.referent,reply.replyto,reply.content.head,reply.content.tag,taskCompletionCount,details',
     details: 'repliedTags,repliedEdges,replytoNote,repliedNotes'
-  }).then(function(result) {
-    return result.invitations || [];
+  }).then(function(invitations) {
+    return _.filter(_.filter(invitations, filterInvitee), filterReply);
   });
 };
 
@@ -371,7 +365,7 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
   });
 };
 
-var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
+var displayTasks = function(invitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',
@@ -380,7 +374,7 @@ var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
   }
   $(tasksOptions.container).empty();
 
-  Webfield.ui.newTaskList(invitations, edgeInvitations.concat(tagInvitations), tasksOptions)
+  Webfield.ui.newTaskList(invitations, [], tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
 };
 
