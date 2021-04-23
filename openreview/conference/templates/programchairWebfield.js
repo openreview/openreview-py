@@ -1151,7 +1151,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
   var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
     '<strong style="vertical-align: middle;">Sort By:</strong> ' +
     '<select class="form-sort form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
-    '<button class="form-order btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
+    '<button type="button" class="form-order btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
     '';
 
   $(container).html(
@@ -1312,10 +1312,14 @@ var displayPaperStatusTable = function() {
 
     // Currently only searching on note number and note title
     var filterFunc = function(row) {
-      return (
-        (row.note.number + '').indexOf(searchText) === 0 ||
-        row.note.content.title.toLowerCase().indexOf(searchText) !== -1
-      );
+      var search = [
+        row.note.number,
+        row.note.content.title,
+        row.note.content.keywords.join('\n'),
+        row.note.content.authors.join('\n'),
+        row.note.content.authorids.join('\n')
+      ].join('\n').toLowerCase()
+      return search.indexOf(searchText) !== -1;
     };
 
     var filteredRows;
@@ -1532,7 +1536,7 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
-    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
+    '<div class="btn-group"><button type="button" class="btn btn-export-data">Export</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -2116,7 +2120,7 @@ var displayReviewerStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>'+
-    '<div class="btn-group"><button class="btn btn-export-reviewers">Export</button></div>'
+    '<div class="btn-group"><button type="button" class="btn btn-export-reviewers">Export</button></div>'
   );
   renderTable(container, rowData);
 };
@@ -2167,7 +2171,7 @@ var updateReviewerContainer = function(paperNumber) {
 
   $addReviewerContainer.empty().append(
     $dropdown,
-    '<button class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber +
+    '<button type="button" class="btn btn-xs btn-assign-reviewer" data-paper-number=' + paperNumber +
       ' data-paper-forum=' + paperForum + '>Assign</button>'
   );
 }
