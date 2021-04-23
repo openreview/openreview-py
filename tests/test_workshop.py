@@ -584,7 +584,7 @@ class TestWorkshop():
         assert accepted_authors
         assert accepted_authors.members == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors']
 
-        notes = conference.get_submissions(accepted=True)
+        notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 2
 
         test_client.post_note(openreview.Note(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Withdraw',
@@ -605,7 +605,7 @@ class TestWorkshop():
 
         helpers.await_queue()
 
-        notes = conference.get_submissions(accepted=True)
+        notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 1
 
         withdrawn_notes = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Withdrawn_Submission')
