@@ -221,7 +221,7 @@ class TestNeurIPSConference():
 
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
 
-    def test_sac_bidding(self, conference, helpers):
+    def test_sac_bidding(self, conference, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -247,6 +247,17 @@ class TestNeurIPSConference():
 
         sac_client=openreview.Client(username='sac1@google.com', password='1234')
         assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+
+        tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
+        request_page(selenium, tasks_url, sac_client.token)
+
+        assert selenium.find_element_by_link_text('Senior Area Chair Bid')
+
+
+        bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid'
+        request_page(selenium, bid_url, sac_client.token)
+
+        assert selenium.find_element_by_id('notes')
 
         sac_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
