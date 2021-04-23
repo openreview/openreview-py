@@ -851,7 +851,7 @@ var renderTasks = function(invitations) {
 var renderTableAndTasks = function(fetchedData) {
   renderTasks(fetchedData.invitations);
 
-  paperRankingInvitation = _.find(fetchedData.tagInvitations, ['id', PAPER_RANKING_ID]);
+  paperRankingInvitation = _.find(fetchedData.invitations, ['id', PAPER_RANKING_ID]);
   var primaryAssignments = _.filter(fetchedData.blindedNotes, function(note) { return fetchedData.acPapers.indexOf(note.number) > -1; });
   if (paperRankingInvitation) {
     availableOptions = ['No Ranking'];
