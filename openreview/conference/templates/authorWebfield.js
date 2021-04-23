@@ -75,15 +75,22 @@ function load() {
     }
   });
 
-  var invitationsP = Webfield.get('/invitations', {
+  var filterInvitee = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
+  };
+
+  var filterReply = function(inv) {
+    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
+  }
+
+  var invitationsP = Webfield.getAll('/invitations', {
     regex: CONFERENCE_ID + '.*',
     invitee: true,
     duedate: true,
     type: 'all',
-    select: 'id,duedate,reply.forum,taskCompletionCount,details',
-    details:'replytoNote,repliedNotes,repliedEdges'
-  }).then(function(result) {
-    return result.invitations || [];
+    details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
+  }).then(function(invitations) {
+    return _.filter(_.filter(invitations, filterInvitee), filterReply);
   });
 
   return $.when(notesP, invitationsP);
@@ -125,20 +132,7 @@ function renderContent(authorNotes, invitations) {
   };
   $(tasksOptions.container).empty();
 
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
-  };
-  var filterNoteInvitations = function(inv) {
-    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent');
-  };
-  var filterEdgeInvitations = function(inv) {
-    return _.has(inv, 'reply.content.head');
-  };
-
-  var edgeInvitations = _.filter(_.filter(invitations, filterEdgeInvitations), filterFunc);
-  var noteInvitations = _.filter(_.filter(invitations, filterNoteInvitations), filterFunc);
-
-  Webfield.ui.newTaskList(noteInvitations, edgeInvitations, tasksOptions);
+  Webfield.ui.newTaskList(invitations, [], tasksOptions);
 
   // Render table like AC console
   renderStatusTable(authorNotes);
@@ -152,12 +146,6 @@ function renderStatusTable(notes) {
   var $container = $('#your-submissions');
   var rows = notes.map(function(note) {
     var invitationPrefix = CONFERENCE_ID + '/Paper' + note.number + '/-/';
-    // Fix this in the backend response
-    if (!note.deails) {
-      note.details = {
-        directReplies: []
-      }
-    }
     var metaReview = _.find(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_META_REVIEW_NAME]);
     var noteCompletedReviews = _.filter(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_REVIEW_NAME]);
 
