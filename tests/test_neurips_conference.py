@@ -492,6 +492,40 @@ class TestNeurIPSConference():
 
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
+    def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
+
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
+        assert result['invited'] == ['reviewer2@mit.edu']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
+        assert client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers/Declined')
+        group = client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers/Invited')
+        assert group
+        assert len(group.members) == 1
+        assert 'reviewer2@mit.edu' in group.members
+
+        messages = client.get_messages(to='reviewer2@mit.edu', subject='Ethics Review invitation')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue()
+
+        group = client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'reviewer2@mit.edu' in group.members
+
+        result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
+        assert result['invited'] == []
+        assert result['already_invited'] == {
+            'NeurIPS.cc/2021/Conference/Ethics_Reviewers/Invited': ['reviewer2@mit.edu']
+        }
+
 
     def test_submit_papers(self, test_client, client):
 
