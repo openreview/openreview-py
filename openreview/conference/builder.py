@@ -1132,7 +1132,8 @@ class Conference(object):
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
-        committee_roles = self.get_committee_names()
+        official_committee_roles=self.get_committee_names()
+        committee_roles = official_committee_roles if reviewers_name in official_committee_roles else [reviewers_name]
         recruitment_status = {
             'invited': [],
             'reminded': [],
