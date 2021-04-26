@@ -574,7 +574,7 @@ class TestNeurIPSConference():
 
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Supplementary_Material')
 
-    def test_post_submission_stage(self, conference, helpers, test_client, client):
+    def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
         #conference.setup_final_deadline_stage(force=True)
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
@@ -637,6 +637,14 @@ class TestNeurIPSConference():
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').nonreaders == ['NeurIPS.cc/2021/Conference/Paper5/Authors']
 
+        ## Open Author paper ranking
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(committee_id=conference.get_authors_id(), due_date=now + datetime.timedelta(days=3))
+
+        authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
+        request_page(selenium, authors_url, test_client.token)
+
+        assert selenium.find_elements_by_class_name('tag-widget')
 
     def test_setup_matching(self, conference, client, helpers):
 
