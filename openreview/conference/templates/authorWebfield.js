@@ -39,39 +39,12 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-function getReviews(forums) {
-  if (OFFICIAL_REVIEW_NAME) {
-    return Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_REVIEW_NAME,
-      forum: forums
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    return $.Deferred().resolve([]);
-  }
-}
-
-function getMetaReviews(forums) {
-  if (OFFICIAL_META_REVIEW_NAME) {
-    return Webfield.get('/notes', {
-      invitation: CONFERENCE_ID + '/Paper.*/-/' + OFFICIAL_META_REVIEW_NAME,
-      forum: forums
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  } else {
-    return $.Deferred().resolve([]);
-  }
-}
-
-
 // Load makes all the API calls needed to get the data to render the page
 function load() {
   var notesP = Webfield.get('/notes', {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
-    details: 'invitation,overwriting'
+    details: 'invitation,overwriting,directReplies'
   }).then(function(result) {
     //Get the blind submissions to have backward compatibility with the paper number
     var originalNotes = result.notes;
@@ -83,8 +56,9 @@ function load() {
     });
 
     if (blindNoteIds.length) {
-      return Webfield.post('/notes/search', {
-        ids: blindNoteIds
+      return Webfield.get('/notes', {
+        ids: blindNoteIds,
+        details: 'directReplies'
       })
       .then(function(result) {
         return (result.notes || []).filter(function(note) {
@@ -99,33 +73,27 @@ function load() {
     } else {
       return result.notes;
     }
-  }).then(function(notes) {
-    var forums = notes.map(function(n) { return n.id; });
-    return $.when(notes, getReviews(forums), getMetaReviews(forums));
   });
 
-  var invitationsP = Webfield.get('/invitations', {
+  var filterInvitee = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
+  };
+
+  var filterReply = function(inv) {
+    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
+  }
+
+  var invitationsP = Webfield.getAll('/invitations', {
     regex: CONFERENCE_ID + '.*',
     invitee: true,
     duedate: true,
-    replyto: true,
-    type: 'notes',
-    details:'replytoNote,repliedNotes'
-  }).then(function(result) {
-    return result.invitations || [];
+    type: 'all',
+    details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
+  }).then(function(invitations) {
+    return _.filter(_.filter(invitations, filterInvitee), filterReply);
   });
 
-  var edgeInvitationsP = Webfield.get('/invitations', {
-    regex: CONFERENCE_ID + '.*',
-    invitee: true,
-    duedate: true,
-    type: 'edges',
-    details: 'repliedEdges'
-  }).then(function(result) {
-    return result.invitations || [];
-  });
-
-  return $.when(notesP, invitationsP, edgeInvitationsP);
+  return $.when(notesP, invitationsP);
 }
 
 
@@ -155,11 +123,7 @@ function renderHeader() {
   });
 }
 
-function renderContent(notes, invitations, edgeInvitations) {
-  console.log(notes);
-  var authorNotes = notes[0];
-  var officialReviews = notes[1];
-  var metaReviews = notes[2];
+function renderContent(authorNotes, invitations) {
   // Author Tasks tab
   var tasksOptions = {
     container: '#author-tasks',
@@ -168,28 +132,22 @@ function renderContent(notes, invitations, edgeInvitations) {
   };
   $(tasksOptions.container).empty();
 
-  var filterFunc = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
-  };
-  invitations = _.filter(invitations, filterFunc);
-  edgeInvitations = _.filter(edgeInvitations, filterFunc);
-
-  Webfield.ui.newTaskList(invitations, edgeInvitations, tasksOptions);
+  Webfield.ui.newTaskList(invitations, [], tasksOptions);
 
   // Render table like AC console
-  renderStatusTable(authorNotes, officialReviews, metaReviews);
+  renderStatusTable(authorNotes);
 
   // Remove spinner and show content
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();
 }
 
-function renderStatusTable(notes, completedReviews, metaReviews, reviewerIds) {
+function renderStatusTable(notes) {
   var $container = $('#your-submissions');
   var rows = notes.map(function(note) {
     var invitationPrefix = CONFERENCE_ID + '/Paper' + note.number + '/-/';
-    var metaReview = _.find(metaReviews, ['invitation', invitationPrefix + OFFICIAL_META_REVIEW_NAME]);
-    var noteCompletedReviews = _.filter(completedReviews, ['invitation', invitationPrefix + OFFICIAL_REVIEW_NAME]);
+    var metaReview = _.find(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_META_REVIEW_NAME]);
+    var noteCompletedReviews = _.filter(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_REVIEW_NAME]);
 
     return buildTableRow(note, noteCompletedReviews, metaReview);
   });
@@ -247,7 +205,7 @@ function buildTableRow(note, completedReviews, metaReview) {
   var reviewsFormatted = [];
   completedReviews.forEach(function(review) {
     var reviewFormatted = Object.assign({ id: review.id, forum: note.id }, review.content);
-    reviewFormatted.signature = view.prettyId(review.signatures[0], true);
+    reviewFormatted.signature = view.prettyId(_.last(review.signatures[0].split('/')))
     reviewFormatted.referrer = referrerUrl;
 
     // Need to parse rating and confidence strings into ints
