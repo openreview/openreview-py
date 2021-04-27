@@ -810,8 +810,9 @@ class Conference(object):
                 self.invitation_builder.set_submission_invitation(conference=self, under_submission=True, submission_readers=submission_readers)
                 submissions = self.get_submissions()
                 for s in submissions:
-                    s.readers = s.readers + submission_readers
-                    self.client.post_note(s)
+                    if not set(submission_readers).issubset(set(s.readers)):
+                        s.readers = s.readers + submission_readers
+                        self.client.post_note(s)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
