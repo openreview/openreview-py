@@ -1137,7 +1137,8 @@ class Conference(object):
         recruitment_status = {
             'invited': [],
             'reminded': [],
-            'already_invited': {}
+            'already_invited': {},
+            'errors': []
         }
 
         options = {
@@ -1249,18 +1250,18 @@ class Conference(object):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-                tools.recruit_reviewer(self.client, email, name,
-                    hash_seed,
-                    invitation.id,
-                    recruit_message,
-                    recruit_message_subj,
-                    reviewers_invited_id,
-                    verbose = False)
-                recruitment_status['invited'].append(email)
-
+                try:
+                    tools.recruit_reviewer(self.client, email, name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
+                    recruitment_status['invited'].append(email)
+                except openreview.OpenReviewException as e:
+                    recruitment_status['errors'].append(e)
         return recruitment_status
-
-
 
     ## temporary function, move to somewhere else
     def remind_registration_stage(self, subject, message, committee_id):

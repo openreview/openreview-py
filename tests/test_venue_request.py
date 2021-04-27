@@ -270,7 +270,7 @@ class TestVenueRequest():
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
-        reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
+        reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate3@email.com Reviewer Three\nreviewer_candidate2@email.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -303,6 +303,14 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+
+        #check recrutiment status note
+        recruitment_status = client.get_notes(replyto=recruitment_note.id)
+        assert recruitment_status[0]
+        assert '[\'invalid group id reviewer_candidate3@email.com reviewer three\']' in recruitment_status[0].content['comment']
+
+        invited_group = client.get_group(id='{}/Reviewers/Invited'.format(venue['venue_id']))
+        assert len(invited_group.members) == 2
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
