@@ -1703,14 +1703,16 @@ class InvitationBuilder(object):
             'values-copied': [conference.get_id(), '{signatures}']
         }
 
-        signatures_regex = conference.get_anon_area_chair_id(number='.*', anon_id='.*')
+        signatures_regex = '~.*'
 
-        if group_id == conference.get_reviewers_id() and conference.use_area_chairs:
-            readers = {
-                'description': 'The users who will be allowed to read the above content.',
-                'values-regex': conference.get_id() + '|' + conference.get_area_chairs_id(number='.*') + '|~.*'
-            }
-            signatures_regex = conference.get_anon_reviewer_id(number='.*', anon_id='.*')
+        if group_id in [conference.get_area_chairs_id(), conference.get_reviewers_id()]:
+            signatures_regex = conference.get_anon_area_chair_id(number='.*', anon_id='.*')
+
+            if group_id == conference.get_reviewers_id() and conference.use_area_chairs:
+                readers = {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values-regex': conference.get_id() + '|' + conference.get_area_chairs_id(number='.*') + '|~.*'
+                }
 
         reviewer_paper_ranking_invitation = openreview.Invitation(
             id = conference.get_invitation_id('Paper_Ranking', prefix=group_id),
