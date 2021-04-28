@@ -700,7 +700,7 @@ class TestNeurIPSConference():
                 'content': {
                     'percent_chance': {
                         'description': 'What is your best estimate of the percent chance that this submission will be accepted?  Please use a scale of 0 to 100, where 0 = “no chance” and 100 = “certain to be accepted',
-                        'value-regex': '[0-9]+',
+                        'value-regex': '^(0|[1-9][0-9]?|100)$',
                         'required': True
                     }
                 }
