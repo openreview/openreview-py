@@ -979,23 +979,24 @@ class Matching(object):
 
             ac_group_id=self.conference.get_area_chairs_id(paper.number)
 
-            ac_group=ac_groups[ac_group_id]
+            ac_group=ac_groups.get(ac_group_id)
 
-            if len(ac_group.members) == 0:
-                raise openreview.OpenReviewException('AC assignments must be deployed first')
+            if ac_group:
+                if len(ac_group.members) == 0:
+                    raise openreview.OpenReviewException('AC assignments must be deployed first')
 
-            for ac in ac_group.members:
-                sac_assignments = assignment_edges.get(ac)
-                for sac_assignment in sac_assignments:
-                    sac=sac_assignment['tail']
-                    print('sac assignment', sac, ac_group.id)
-                    sac_group_id=ac_group.id.replace(self.conference.area_chairs_name, self.conference.senior_area_chairs_name)
-                    print(sac_group_id)
-                    sac_group=self.client.get_group(sac_group_id)
-                    if overwrite:
-                        sac_group.members=[]
-                    sac_group.members.append(sac)
-                    self.client.post_group(sac_group)
+                for ac in ac_group.members:
+                    sac_assignments = assignment_edges.get(ac)
+                    for sac_assignment in sac_assignments:
+                        sac=sac_assignment['tail']
+                        print('sac assignment', sac, ac_group.id)
+                        sac_group_id=ac_group.id.replace(self.conference.area_chairs_name, self.conference.senior_area_chairs_name)
+                        print(sac_group_id)
+                        sac_group=self.client.get_group(sac_group_id)
+                        if overwrite:
+                            sac_group.members=[]
+                        sac_group.members.append(sac)
+                        self.client.post_group(sac_group)
 
 
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
