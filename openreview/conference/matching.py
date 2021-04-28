@@ -986,7 +986,8 @@ class Matching(object):
                     raise openreview.OpenReviewException('AC assignments must be deployed first')
 
                 for ac in ac_group.members:
-                    sac_assignments = assignment_edges.get(ac)
+                    sac_assignments = assignment_edges.get(ac, [])
+
                     for sac_assignment in sac_assignments:
                         sac=sac_assignment['tail']
                         print('sac assignment', sac, ac_group.id)
