@@ -680,6 +680,33 @@ class TestNeurIPSConference():
 
         assert selenium.find_elements_by_class_name('tag-widget')
 
+        client.post_invitation(openreview.Invitation(id=f'{conference.get_authors_id()}/-/Perceived_Likelihood',
+            invitees=[conference.get_authors_id()],
+            readers=[conference.get_authors_id()],
+            signatures=[conference.id],
+            writers=[conference.id],
+            multiReply=False,
+            reply={
+                'invitation': f'{conference.id}/-/Blind_Submission',
+                'readers': {
+                    'values-copied': ['{signatures}']
+                },
+                'writers': {
+                    'values-copied': ['{signatures}']
+                },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'percent_chance': {
+                        'description': 'What is your best estimate of the percent chance that this submission will be accepted?  Please use a scale of 0 to 100, where 0 = “no chance” and 100 = “certain to be accepted',
+                        'value-regex': '[0-9]+',
+                        'required': True
+                    }
+                }
+
+            }))
+
     def test_setup_matching(self, conference, client, helpers):
 
         now = datetime.datetime.utcnow()
