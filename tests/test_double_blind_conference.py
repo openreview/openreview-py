@@ -671,7 +671,7 @@ class TestDoubleBlindConference():
         logs = client.get_process_logs()
         assert logs
         assert logs[0]['status'] == 'error'
-        assert logs[0]['error'] == 'Error: openreview.openreview.OpenReviewException: Invalid key or user not in invited group'
+        assert logs[0]['error'] == {'message': 'Invalid key or user not in invited group', 'name': 'Error', 'status': 400}
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
         assert group
