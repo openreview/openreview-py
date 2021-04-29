@@ -5,10 +5,15 @@
 var CONFERENCE_ID = '';
 var SHORT_PHRASE = '';
 var BLIND_SUBMISSION_ID = '';
+var OFFICIAL_REVIEW_NAME = '';
+var REVIEW_RATING_NAME = 'rating';
+var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
 var HEADER = {};
 var SENIOR_AREA_CHAIR_NAME = '';
 var AREA_CHAIRS_ID = '';
+var ASSIGNMENT_INVITATION = 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment';
+var ASSIGNMENT_LABEL = null;
 var EMAIL_SENDER = null;
 
 
@@ -59,23 +64,54 @@ var renderHeader = function() {
   Webfield.ui.tabPanel(tabsList);
 };
 
-var getRootGroups = function() {
-  // Get paper groups or assignments
-
-  return $.Deferred().resolve([]);
-
+var getGroups = function() {
+  return Webfield.getAll('/groups', {
+    id: CONFERENCE_ID + '/Paper.*',
+    select: 'id,members'
+  }).then(function(groups) {
+    var reviewerGroups = [];
+    var anonReviewerGroups = [];
+    var areaChairGroups = [];
+    var anonAreaChairGroups = [];
+    var seniorAreaChairGroups = [];
+    for (var groupIdx = 0; groupIdx < groups.length; groupIdx++) {
+      var group = groups[groupIdx];
+      if (group.id.endsWith('Reviewers')) {
+        reviewerGroups.push(group);
+      } else if (_.includes(group.id, 'Reviewer_')) {
+        anonReviewerGroups.push(group);
+      } else if (group.id.endsWith('Area_Chairs')) {
+        areaChairGroups.push(group);
+      } else if (_.includes(group.id, 'Area_Chair_')) {
+        anonAreaChairGroups.push(group);
+      } else if (group.id.endsWith('Senior_Area_Chairs')) {
+        seniorAreaChairGroups.push(group);
+      }
+    }
+    return {
+      anonReviewerGroups: anonReviewerGroups,
+      reviewerGroups: reviewerGroups,
+      anonAreaChairGroups: anonAreaChairGroups,
+      areaChairGroups: areaChairGroups,
+      seniorAreaChairGroups: seniorAreaChairGroups
+    };
+  });
 };
 
 var loadData = function() {
 
-  var assignmentsP = Webfield.getAll('/edges', {
-    invitation: 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-    tail: user.profile.id
-  });
+  var assignmentsP = $.Deferred().resolve([]);
+  if (ASSIGNMENT_INVITATION) {
+    assignmentsP = Webfield.getAll('/edges', {
+      invitation: ASSIGNMENT_INVITATION,
+      label: ASSIGNMENT_LABEL,
+      tail: user.profile.id
+    });
+  }
 
   var submissionsP = Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'invitation,tags,original,replyCount',
+    details: 'invitation,tags,original,replyCount,directReplies',
     sort: 'number:asc'
   });
 
@@ -93,17 +129,170 @@ var loadData = function() {
   });
 
   return $.when(
+    getGroups(),
     assignmentsP,
     submissionsP,
     invitationsP
   );
 };
 
-var formatData = function(assignmentEdges, submissions, invitations) {
+// Util functions
+var getNumberfromGroup = function(groupId, name) {
+  var tokens = groupId.split('/');
+  var paper = _.find(tokens, function(token) {
+    return _.startsWith(token, name);
+  });
+
+  return paper ? paper.replace(name, '') : null;
+};
+
+var getPaperNumbersfromGroups = function(groups) {
+  return _.map(groups, function(group) {
+    return parseInt(getNumberfromGroup(group.id, 'Paper'));
+  });
+};
+
+var getInvitationId = function(name, number) {
+  return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
+};
+
+var findProfile = function(profiles, id) {
+  if (profiles[id]) {
+    return profiles[id];
+  }
+  var profile = _.find(profiles, function(p) {
+    return _.includes(p.allNames, id) || _.includes(p.allEmails, id);
+  });
+  return profile || {
+    id: id,
+    name: id.indexOf('~') === 0 ? view.prettyId(id) : id,
+    email: id,
+    allEmails: [id],
+    allNames: [id]
+  }
+};
+
+var buildNoteMap = function(noteNumbers) {
+  var noteMap = Object.create(null);
+  for (var i = 0; i < noteNumbers.length; i++) {
+    noteMap[noteNumbers[i]] = Object.create(null);
+  }
+  return noteMap;
+};
+
+var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerGroups) {
+  var noteMap = buildNoteMap(noteNumbers);
+  var reviewerMap = {};
+
+  reviewerGroups.forEach(function(g) {
+    var num = getNumberfromGroup(g.id, 'Paper');
+
+    if(num in noteMap) {
+      g.members.forEach(function(member, index) {
+        var anonGroup = anonReviewerGroups.find(function(grp) {
+          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num) && grp.members.length && grp.members[0] == member;
+        });
+        if (anonGroup) {
+          var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
+          noteMap[num][anonId] = member;
+          if (!(member in reviewerMap)) {
+            reviewerMap[member] = [];
+          }
+          reviewerMap[member].push(num);
+        }
+      })
+    }
+  });
+
+  return {
+    byNotes: noteMap,
+    byReviewers: reviewerMap
+  };
+};
+
+var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaChairGroups) {
+  var noteMap = buildNoteMap(noteNumbers);
+  var areaChairMap = {};
+
+  areaChairGroups.forEach(function(g) {
+    var num = getNumberfromGroup(g.id, 'Paper');
+    if (num in noteMap) {
+      g.members.forEach(function(member, index) {
+        var anonGroup = anonAreaChairGroups.find(function(grp) {
+          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num) && grp.members.length && grp.members[0] == member;
+        });
+        if (anonGroup) {
+          var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
+          noteMap[num][anonId] = member;
+          if (!(member in areaChairMap)) {
+            areaChairMap[member] = [];
+          }
+          areaChairMap[member].push(num);
+        }
+      })
+    }
+  });
+
+  return {
+    byNotes: noteMap,
+    byAreaChairs: areaChairMap
+  };
+};
+
+var buildSeniorAreaChairGroupMaps = function(noteNumbers, seniorAreaChairGroups) {
+  var noteMap = buildNoteMap(noteNumbers);
+  var seniorAreaChairMap = {};
+
+  seniorAreaChairGroups.forEach(function(g) {
+    var num = getNumberfromGroup(g.id, 'Paper');
+    if (num in noteMap) {
+      g.members.forEach(function(member, index) {
+        noteMap[num] = member;
+        if (!(member in seniorAreaChairMap)) {
+          seniorAreaChairMap[member] = [];
+        }
+        seniorAreaChairMap[member].push(num);
+      })
+    }
+  });
+
+  return {
+    byNotes: noteMap,
+    bySeniorAreaChairs: seniorAreaChairMap
+  };
+};
+
+var getOfficialReviews = function(notes) {
+  var ratingExp = /^(\d+): .*/;
+
+  var reviewByAnonId = {};
+
+  _.forEach(notes, function(n) {
+    var anonId = getNumberfromGroup(n.signatures[0], 'Reviewer_');
+    // Need to parse rating and confidence strings into ints
+    ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
+    n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
+    confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
+    n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
+    reviewByAnonId[anonId] = n;
+  });
+
+  return reviewByAnonId;
+};
+
+var formatData = function(groups, assignmentEdges, submissions, invitations) {
+
+  var noteNumbers = submissions.map(function(s) { return s.number; });
+  var seniorAreaChairGroupMaps = buildSeniorAreaChairGroupMaps(noteNumbers, groups.seniorAreaChairGroups);
+  var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, groups.areaChairGroups, groups.anonAreaChairGroups);
+  var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, groups.reviewerGroups, groups.anonReviewerGroups);
+
+  var areaChairs = assignmentEdges.map(function(edge) { return edge.head; });
+
   conferenceStatusData = {
-    areaChairs: assignmentEdges.map(function(edge) { return edge.head; }),
-    areaChairGroups: { byAreaChairs: {} },
-    reviewerGroups: { byNotes: {} },
+    areaChairs: areaChairs,
+    areaChairGroups: areaChairGroupMaps,
+    reviewerGroups: reviewerGroupMaps,
     assignmentEdges: assignmentEdges,
     submissions: submissions,
     invitations: invitations
@@ -369,7 +558,7 @@ var displayAreaChairsStatusTable = function(conferenceStatusData) {
       }
 
       var reviewers = reviewerIds[number];
-      var reviews = []; //get the reviews from direct replies
+      var reviews = getOfficialReviews(_.filter(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, number)]));
       var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
       papers.push({
         note: note,
