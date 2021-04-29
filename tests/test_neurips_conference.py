@@ -1320,6 +1320,33 @@ OpenReview Team'''
 
     def test_review_stage(self, conference, helpers, test_client, client):
 
+
+        ## make submissions visible to assigned commmittee
+        invitation = client.get_invitation('NeurIPS.cc/2021/Conference/-/Submission')
+        invitation.reply['readers'] = {
+            'values-regex': '.*'
+        }
+        client.post_invitation(invitation)
+        original_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
+        for note in original_notes:
+            note.readers = note.readers + [f'NeurIPS.cc/2021/Conference/Paper{note.number}/Senior_Area_Chairs']
+            client.post_note(note)
+
+        blind_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        for note in blind_notes:
+            note.content = {
+                'authors': ['Anonymous'],
+                'authorids': [f'NeurIPS.cc/2021/Conference/Paper{note.number}/Authors']
+            }
+            note.readers = [
+                'NeurIPS.cc/2021/Conference',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Senior_Area_Chairs',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Area_Chairs',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Reviewers',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Authors'
+            ]
+            client.post_note(note)
+
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
 
@@ -1731,7 +1758,7 @@ OpenReview Team'''
         assert options
         assert len(options) == 3
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='number:asc')
 
         ac_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Ranking',
             forum = blinded_notes[-1].id,

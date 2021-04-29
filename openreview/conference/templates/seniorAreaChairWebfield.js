@@ -9,6 +9,7 @@ var OFFICIAL_REVIEW_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
+var DECISION_NAME = '';
 var HEADER = {};
 var SENIOR_AREA_CHAIR_NAME = '';
 var AREA_CHAIRS_ID = '';
@@ -21,7 +22,10 @@ var EMAIL_SENDER = null;
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var PAGE_SIZE = 25;
 
+// Page State
 var conferenceStatusData = {};
+var selectedNotesById = {};
+var matchingNoteIds = [];
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -48,7 +52,13 @@ var renderHeader = function() {
   var loadingMessage = '<p class="empty-message">No assigned Area Chairs.</p>';
   var tabsList = [
     {
-      heading: 'Assigned Area Chairs',
+      heading: 'Paper Status',
+      id: 'paper-status',
+      content: loadingMessage,
+      extraClasses: 'horizontal-scroll'
+    },
+    {
+      heading: 'Area Chair Status',
       id: 'areachair-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll',
@@ -316,9 +326,7 @@ var renderTasks = function(invitations) {
 
 var renderTableAndTasks = function(conferenceStatusData) {
 
-  displayAreaChairsStatusTable(conferenceStatusData);
-
-  renderTasks(conferenceStatusData.invitations);
+  displayPaperStatusTable();
 
   registerEventHandlers();
 
@@ -541,7 +549,7 @@ var buildSPCTableRow = function(index, areaChair, papers) {
 };
 
 
-var displayAreaChairsStatusTable = function(conferenceStatusData) {
+var displayAreaChairsStatusTable = function() {
   var container = '#areachair-status';
   var notes = conferenceStatusData.submissions;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
@@ -729,10 +737,580 @@ var displayAreaChairsStatusTable = function(conferenceStatusData) {
   renderTable(container, rowData);
 };
 
+var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
+
+  var paperTableReferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#paper-status)');
+
+  // Checkbox for selecting each row
+  var cellCheck = { selected: false, noteId: note.id };
+
+  // Build Note Summary Cell
+  var cell1 = note;
+  cell1.referrer = paperTableReferrerUrl;
+
+  // Build Review Progress Cell
+  var reviewObj;
+  var combinedObj = {};
+  var ratings = [];
+  var confidences = [];
+  for (var reviewerNum in reviewerIds) {
+    var reviewer = reviewerIds[reviewerNum];
+    if (reviewerNum in completedReviews || reviewer.id in completedReviews) {
+      reviewObj = completedReviews[reviewerNum] || completedReviews[reviewer.id];
+      combinedObj[reviewerNum] = _.assign({}, reviewer, {
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
+        completedReview: true,
+        forum: reviewObj.forum,
+        note: reviewObj.id,
+        rating: reviewObj.rating,
+        confidence: reviewObj.confidence,
+        reviewLength: reviewObj.content.review && reviewObj.content.review.length,
+      });
+      ratings.push(reviewObj.rating);
+      confidences.push(reviewObj.confidence);
+    } else {
+      var forumUrl = 'https://openreview.net/forum?' + $.param({
+        id: note.forum,
+        noteId: note.id,
+        invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
+      });
+      var lastReminderSent = localStorage.getItem(forumUrl + '|' + reviewer.id);
+      combinedObj[reviewerNum] = _.assign({}, reviewer, {
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
+        forum: note.forum,
+        forumUrl: '/forum?' + $.param({
+          id: note.forum,
+          noteId: note.id,
+          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
+        }),
+        paperNumber: note.number,
+        reviewerNumber: reviewerNum,
+        lastReminderSent: lastReminderSent ?
+          new Date(parseInt(lastReminderSent)).toLocaleDateString() :
+          lastReminderSent
+      });
+    }
+  }
+  var averageRating = 'N/A';
+  var minRating = 'N/A';
+  var maxRating = 'N/A';
+  if (ratings.length) {
+    averageRating = _.round(_.sum(ratings) / ratings.length, 2);
+    minRating = _.min(ratings);
+    maxRating = _.max(ratings);
+  }
+
+  var averageConfidence = 'N/A';
+  var minConfidence = 'N/A';
+  var maxConfidence = 'N/A';
+  if (confidences.length) {
+    averageConfidence = _.round(_.sum(confidences) / confidences.length, 2);
+    minConfidence = _.min(confidences);
+    maxConfidence = _.max(confidences);
+  }
+
+  var reviewProgressData = {
+    noteId: note.id,
+    paperNumber: note.number,
+    forumReplyCount: note.details['replyCount'],
+    numSubmittedReviews: Object.keys(completedReviews).length,
+    numReviewers: Object.keys(reviewerIds).length,
+    reviewers: combinedObj,
+    averageRating: averageRating,
+    maxRating: maxRating,
+    minRating: minRating,
+    averageConfidence: averageConfidence,
+    minConfidence: minConfidence,
+    maxConfidence: maxConfidence,
+    sendReminder: true,
+    showActivityModal: true,
+    expandReviewerList: false,
+    enableReviewerReassignment : false,
+    referrer: paperTableReferrerUrl
+  };
+
+  var areaChairNames = { name: 'No Area Chair' };
+  if (areachairProfile.length) {
+    areaChairNames.name = areachairProfile.map(function(p) { return p.name; }).join(', ');
+    areaChairNames.email = areachairProfile.map(function(p) { return p.email; }).join(', ');
+  }
+  var areachairProgressData = {
+    numMetaReview: metaReview ? 'One' : 'No',
+    areachair: areaChairNames,
+    metaReview: metaReview,
+    referrer: paperTableReferrerUrl
+  };
+
+  return {
+    cellCheck: cellCheck,
+    note: cell1,
+    reviewProgressData: reviewProgressData,
+    areachairProgressData: areachairProgressData,
+    decision: decision
+  }
+};
+
+var displayPaperStatusTable = function() {
+
+  var container = '#paper-status';
+  //var profiles = conferenceStatusData.profiles;
+  var notes = conferenceStatusData.submissions;
+  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+
+  var rowData = _.map(notes, function(note) {
+    var revIds = reviewerIds[note.number];
+    var acIds = areachairIds[note.number];
+    var acProfiles = Object.keys(acIds).map(function(areachairId) {
+      return { id: acIds[areachairId], name: acIds[areachairId], email: acIds[areachairId] };
+    });
+
+    var reviews = getOfficialReviews(_.filter(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]));
+    var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    var decision = _.find(note.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
+    return buildPaperTableRow(note, revIds, reviews, metaReview, acProfiles, decision);
+  });
+
+  var toNumber = function(value) {
+    return value === 'N/A' ? 0 : value;
+  }
+  var order = 'desc';
+  var sortOptions = {
+    Paper_Number: function(row) { return row.note.number; },
+    Paper_Title: function(row) { return _.trim(row.note.content.title).toLowerCase(); },
+    Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
+    Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
+    Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
+    Average_Confidence: function(row) { return toNumber(row.reviewProgressData.averageConfidence); },
+    Max_Confidence: function(row) { return toNumber(row.reviewProgressData.maxConfidence); },
+    Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
+    Reviewers_Assigned: function(row) { return row.reviewProgressData.numReviewers; },
+    Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
+    Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+    Number_of_Forum_Replies: function(row) { return row.reviewProgressData.forumReplyCount; },
+  };
+  if (AREA_CHAIRS_ID) {
+    sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
+  }
+  sortOptions['Decision'] = function(row) { return row.decision ? row.decision.content.decision : 'No Decision'; }
+
+  var sortResults = function(newOption, switchOrder) {
+    $(container + ' .form-search').val('');
+
+    if (switchOrder) {
+      order = order === 'asc' ? 'desc' : 'asc';
+    }
+    rowData = _.orderBy(rowData, sortOptions[newOption], order);
+    renderTable(container, rowData);
+  };
+
+  var searchResults = function(searchText) {
+    $(container).data('lastPageNum', 1);
+    $(container + ' .form-sort').val('Paper_Number');
+
+    // Currently only searching on note number and note title
+    var filterFunc = function(row) {
+      return (
+        (row.note.number + '').indexOf(searchText) === 0 ||
+        row.note.content.title.toLowerCase().indexOf(searchText) !== -1
+      );
+    };
+
+    var filteredRows;
+    if (searchText) {
+      filteredRows = _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc');
+      matchingNoteIds = filteredRows.map(function(row) { return row.note.id; });
+    } else {
+      filteredRows = rowData;
+      matchingNoteIds = [];
+    }
+    renderTable(container, filteredRows);
+  };
+
+  // Message modal handler
+  var sendReviewerReminderEmailsStep1 = function(e) {
+    var subject = $('#message-reviewers-modal input[name="subject"]').val().trim();
+    var message = $('#message-reviewers-modal textarea[name="message"]').val().trim();
+    var filter  = $(this)[0].dataset['filter'];
+
+    var count = 0;
+    var reviewerMessages = [];
+    var reviewerCounts = Object.create(null);
+
+    rowData.forEach(function(row) {
+      if (!selectedNotesById[row.note.forum]) {
+        return;
+      }
+
+      var reviewers = _.map(row.reviewProgressData.reviewers, function(rev) {
+        if (rev && rev.hasOwnProperty('note')) {
+          rev['completedReview'] = true;
+        }
+        return rev;
+      });
+      var users = Object.values(reviewers);
+      if (filter === 'msg-submitted-reviewers') {
+        users = users.filter(function(u) {
+          return u.completedReview;
+        });
+      } else if (filter === 'msg-unsubmitted-reviewers') {
+        users = users.filter(function(u) {
+          return !u.completedReview;
+        });
+      }
+      if (!users.length) {
+        return;
+      }
+
+      var forumUrl = 'https://openreview.net/forum?' + $.param({
+        id: row.note.forum,
+        noteId: row.note.id,
+        invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row.note.number)
+      });
+      reviewerMessages.push({
+        groups: _.map(users, 'id'),
+        forumUrl: forumUrl,
+        subject: subject,
+        message: message,
+      });
+
+      users.forEach(function(u) {
+        if (u.id in reviewerCounts) {
+          reviewerCounts[u.id].count++;
+        } else {
+          reviewerCounts[u.id] = {
+            name: u.name,
+            email: u.email,
+            count: 1
+          };
+        }
+      });
+
+      count += users.length;
+    });
+    localStorage.setItem('reviewerMessages', JSON.stringify(reviewerMessages));
+    localStorage.setItem('messageCount', count);
+
+    // Show step 2
+    var namesHtml = _.flatMap(reviewerCounts, function(obj) {
+      var text = obj.name + ' <span>&lt;' + obj.email + '&gt;</span>';
+      if (obj.count > 1) {
+        text += ' (&times;' + obj.count + ')';
+      }
+      return text;
+    }).join(', ');
+    $('#message-reviewers-modal .reviewer-list').html(namesHtml);
+    $('#message-reviewers-modal .num-reviewers').text(count);
+    $('#message-reviewers-modal .step-1').hide();
+    $('#message-reviewers-modal .step-2').show();
+
+    return false;
+  };
+
+  var renderTable = function(container, data) {
+    var paperNumbers = [];
+    var rowData = _.map(data, function(d) {
+      paperNumbers.push(d.note.number);
+
+      var numberHtml = '<strong class="note-number">' + d.note.number + '</strong>';
+      var checked = '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
+        d.note.id + '" ' + (selectedNotesById[d.note.id] ? 'checked="checked"' : '') + '></label>';
+      var numberHtml = '<strong class="note-number">' + d.note.number + '</strong>';
+      var summaryHtml = Handlebars.templates.noteSummary(d.note);
+      var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
+      var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
+      var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
+
+      var rows = [checked, numberHtml, summaryHtml, reviewHtml];
+      if (AREA_CHAIRS_ID) {
+        rows.push(areachairHtml);
+      }
+      rows.push(decisionHtml);
+      return rows;
+    });
+
+    var headings = ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary', 'Review Progress'];
+    if (AREA_CHAIRS_ID) {
+      headings.push('Status');
+    }
+    headings.push('Decision');
+
+    var $container = $(container);
+    var tableData = {
+      headings: headings,
+      rows: rowData,
+      extraClasses: 'console-table paper-table'
+    };
+    var pageNum = $container.data('lastPageNum') || 1;
+    renderPaginatedTable($container, tableData, pageNum);
+    postRenderTable(data, pageNum);
+
+    $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
+      paginationOnClick($(this).parent(), $container, tableData);
+
+      var newPageNum = parseInt($(this).parent().data('pageNumber'), 10);
+      postRenderTable(data, newPageNum);
+      return false;
+    });
+
+    $('.message-papers-container li > a', container).off('click').on('click', function(e) {
+      var filter = $(this).attr('class');
+      $('#message-reviewers-modal').remove();
+
+      var defaultBody = '';
+      if (filter === 'msg-unsubmitted-reviewers') {
+        defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n'
+      }
+      defaultBody += 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair';
+
+      var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+        filter: filter,
+        defaultSubject: SHORT_PHRASE + ' Reminder',
+        defaultBody: defaultBody,
+      });
+      $('body').append(modalHtml);
+
+      $('#message-reviewers-modal .btn-primary.step-1').on('click', sendReviewerReminderEmailsStep1);
+      $('#message-reviewers-modal .btn-primary.step-2').on('click', sendReviewerReminderEmailsStep2);
+      $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmailsStep1);
+
+      $('#message-reviewers-modal').modal();
+
+      if ($('.ac-console-table input.select-note-reviewers:checked').length) {
+        $('#message-reviewers-modal select[name="group"]').val('selected');
+      }
+      return false;
+    });
+  };
+
+  var postRenderTable = function(data, pageNum) {
+    $('#paper-status .console-table th').eq(0).css('width', '3%');
+    $('#paper-status .console-table th').eq(1).css('width', '5%');
+    $('#paper-status .console-table th').eq(2).css('width', '22%');
+    $('#paper-status .console-table th').eq(3).css('width', '30%');
+    $('#paper-status .console-table th').eq(4).css('width', '28%');
+    $('#paper-status .console-table th').eq(5).css('width', '12%');
+
+    var offset = (pageNum - 1) * PAGE_SIZE;
+    var pageData = data.slice(offset, offset + PAGE_SIZE);
+
+    $(container + ' .console-table > tbody > tr .select-note-reviewers').each(function() {
+      var noteId = $(this).data('noteId');
+      $(this).prop('checked', selectedNotesById[noteId]);
+    });
+
+    var allSelected = _.every(Object.values(selectedNotesById));
+    $(container + ' .console-table #select-all-papers').prop('checked', allSelected);
+  };
+
+  if (rowData.length) {
+    displaySortPanel(container, sortOptions, sortResults, searchResults);
+    $(container).find('form.search-form .pull-left').html('<div class="btn-group message-papers-container" role="group">' +
+      '<button type="button" class="message-papers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="caret"></span>' +
+      '</button>' +
+      '<ul class="dropdown-menu">' +
+        '<li><a class="msg-all-reviewers">All Reviewers of selected papers</a></li>' +
+        '<li><a class="msg-submitted-reviewers">Reviewers of selected papers with submitted reviews</a></li>' +
+        '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
+      '</ul>' +
+    '</div>' +
+    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
+    renderTable(container, rowData);
+  } else {
+    $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
+      'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
+  }
+  paperStatusNeedsRerender = false;
+
+};
+
+
 
 
 // Event Handlers
 var registerEventHandlers = function() {
+
+  $('#group-container').on('click', 'a.note-contents-toggle', function(e) {
+    var hiddenText = 'Show paper details';
+    var visibleText = 'Hide paper details';
+    var updated = $(this).text() === hiddenText ? visibleText : hiddenText;
+    $(this).text(updated);
+  });
+
+  $('#group-container').on('click', 'a.send-reminder-link', function(e) {
+    var $link = $(this);
+    var userId = $link.data('userId');
+    var forumUrl = $link.data('forumUrl');
+
+    var sendReviewerReminderEmails = function(e) {
+      var postData = {
+        groups: [userId],
+        forumUrl: forumUrl,
+        subject: $('#message-reviewers-modal input[name="subject"]').val().trim(),
+        message: $('#message-reviewers-modal textarea[name="message"]').val().trim(),
+      };
+
+      $('#message-reviewers-modal').modal('hide');
+      postReviewerEmails(postData);
+      promptMessage('A reminder email has been sent to ' + view.prettyId(userId), { overlay: true });
+      $link.after(' (Last sent: ' + (new Date()).toLocaleDateString() + ')');
+
+      return false;
+    };
+
+    var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
+      singleRecipient: true,
+      reviewerId: userId,
+      forumUrl: forumUrl,
+      defaultSubject: SHORT_PHRASE + ' Reminder',
+      defaultBody: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
+        'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair',
+    });
+    $('#message-reviewers-modal').remove();
+    $('body').append(modalHtml);
+
+    $('#message-reviewers-modal .btn-primary').on('click', sendReviewerReminderEmails);
+    $('#message-reviewers-modal form').on('submit', sendReviewerReminderEmails);
+
+    $('#message-reviewers-modal').modal();
+    return false;
+  });
+
+  $('#group-container').on('click', 'a.collapse-btn', function(e) {
+    $(this).next().slideToggle();
+    if ($(this).text() === 'Show reviewers') {
+      $(this).text('Hide reviewers');
+    } else {
+      $(this).text('Show reviewers');
+    }
+    return false;
+  });
+
+  $('#group-container').on('click', 'a.show-activity-modal', function(e) {
+    var paperNum = $(this).data('paperNum');
+    var reviewerNum = $(this).data('reviewerNum');
+    var reviewerName = $(this).data('reviewerName');
+    var reviewerEmail = $(this).data('reviewerEmail');
+
+    $('#reviewer-activity-modal').remove();
+
+    $('#content').append(Handlebars.templates.genericModal({
+      id: 'reviewer-activity-modal',
+      showHeader: true,
+      title: 'Paper ' + paperNum + ' Reviewer ' + reviewerNum + ' Activity',
+      body: Handlebars.templates.spinner({ extraClasses: 'spinner-inline' }),
+      showFooter: false,
+    }));
+    $('#reviewer-activity-modal .modal-header').append(
+      '<ul class="list-inline">' +
+      '<li><strong>Name:</strong> ' + reviewerName + '</li>' +
+      '<li><strong>Email:</strong> ' + reviewerEmail + '</li>' +
+      '</ul>'
+    );
+    $('#reviewer-activity-modal').modal('show');
+
+    Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/Reviewer_' + reviewerNum })
+      .then(function(response) {
+        $('#reviewer-activity-modal .modal-body').empty();
+        Webfield.ui.searchResults(response.notes, {
+          container: '#reviewer-activity-modal .modal-body',
+          openInNewTab: true,
+          emptyMessage: 'Reviewer ' + reviewerNum + ' has not posted any comments or reviews yet.'
+        });
+      });
+
+    return false;
+  });
+
+  $('#group-container').on('show.bs.tab', 'ul.nav-tabs li a', function(e) {
+    // Don't allow the user to switch tabs until all data is finished loading
+    return !$(e.target).parent().hasClass('loading');
+  });
+
+  $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
+    var containerId = $(e.target).attr('href');
+    if (containerId === '#paper-status') {
+      displayPaperStatusTable();
+    } else if (containerId === '#areachair-status') {
+      displayAreaChairsStatusTable();
+    } else if (containerId === '#senior-areachair-tasks') {
+      renderTasks(conferenceStatusData.invitations);
+    }
+
+    // Reset select note state
+    for (var noteId in selectedNotesById) {
+      if (selectedNotesById.hasOwnProperty(noteId)) {
+        selectedNotesById[noteId] = false;
+      }
+    }
+
+    matchingNoteIds = [];
+  });
+
+  $('#invitation-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
+    var containerId = $(e.target).attr('href');
+    if (containerId !== '#venue-configuration') {
+      Webfield.ui.spinner(containerId, {inline: true});
+    }
+  });
+
+  $('#group-container').on('change', '#select-all-papers', function(e) {
+    var $superCheckBox = $(this);
+    var $allPaperCheckBoxes = $('input.select-note-reviewers');
+    var $msgReviewerButton = $('.message-papers-btn');
+
+    var isSuperSelected = $superCheckBox.prop('checked');
+    if (isSuperSelected) {
+      $allPaperCheckBoxes.prop('checked', true);
+      $msgReviewerButton.attr('disabled', false);
+    } else {
+      $allPaperCheckBoxes.prop('checked', false);
+      $msgReviewerButton.attr('disabled', true);
+    }
+
+    for (var noteId in selectedNotesById) {
+      if (selectedNotesById.hasOwnProperty(noteId)) {
+        if (isSuperSelected) {
+          selectedNotesById[noteId] = !matchingNoteIds.length || _.includes(matchingNoteIds, noteId);
+        } else {
+          selectedNotesById[noteId] = isSuperSelected;
+        }
+      }
+    }
+  });
+
+  $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
+    var $superCheckBox = $('#select-all-papers');
+    var $msgReviewerButton = $('.message-papers-btn');
+
+    var noteId = $(this).data('noteId');
+    var isSelected = $(this).prop('checked');
+    selectedNotesById[noteId] = isSelected;
+
+    var totalNumSelected = Object.values(selectedNotesById).reduce(function(numSelected, val) {
+      return numSelected + (val ? 1 : 0);
+    }, 0)
+    if (totalNumSelected) {
+      $msgReviewerButton.attr('disabled', false);
+      var totalNumNotes = Object.keys(selectedNotesById).length;
+      if (totalNumSelected === totalNumNotes) {
+        $superCheckBox.prop('checked', true);
+      } else {
+        $superCheckBox.prop('checked', false);
+      }
+    } else {
+      $msgReviewerButton.attr('disabled', true);
+      $superCheckBox.prop('checked', false);
+    }
+  });
 };
 
 
