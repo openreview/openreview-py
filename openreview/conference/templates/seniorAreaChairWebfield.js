@@ -168,7 +168,7 @@ var getInvitationId = function(name, number) {
 
 var findProfile = function(id) {
   if (conferenceStatusData.profiles[id]) {
-    return profiles[id];
+    return conferenceStatusData.profiles[id];
   }
   var profile = _.find(conferenceStatusData.profiles, function(p) {
     return _.includes(p.allNames, id) || _.includes(p.allEmails, id);
@@ -348,6 +348,7 @@ var formatData = function(groups, assignmentEdges, submissions, invitations) {
   return getUserProfiles(allProfileIds)
   .then(function(profiles) {
     submissions.forEach(function(submission) {
+      selectedNotesById[submission.id] = false;
       submission.details.reviews = getOfficialReviews(_.filter(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, submission.number)]));
       submission.details.metaReview = _.find(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, submission.number)]);
       submission.details.decision = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]);
@@ -380,7 +381,7 @@ var renderTasks = function(invitations) {
   $('.tabs-container a[href="#senior-areachair-tasks"]').parent().show();
 }
 
-var renderTableAndTasks = function(conferenceStatusData) {
+var renderTableAndTasks = function() {
 
   displayPaperStatusTable();
 
@@ -532,7 +533,7 @@ var postReviewerEmails = function(postData) {
   });
 };
 
-var buildSPCTableRow = function(index, areaChair, papers) {
+var buildSPCTableRow = function(areaChair, papers) {
 
   var acTableeferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#areachair-status)');
 
@@ -554,9 +555,9 @@ var buildSPCTableRow = function(index, areaChair, papers) {
     var ratings = [];
     var numOfReviewers = 0;
 
-    for (var reviewerNum in paper.reviewers) {
-      if (reviewerNum in paper.reviews) {
-        ratings.push(paper.reviews[reviewerNum].rating);
+    for (var reviewerNum in paper.details.reviewers) {
+      if (reviewerNum in paper.details.reviews) {
+        ratings.push(paper.details.reviews[reviewerNum].rating);
       }
       numOfReviewers++;
     }
@@ -574,18 +575,18 @@ var buildSPCTableRow = function(index, areaChair, papers) {
       }
     }
 
-    if (paper.metaReview) {
+    if (paper.details.metaReview) {
       numCompletedMetaReviews++;
     }
 
     return {
-      note: paper.note,
+      note: paper,
       averageRating: averageRating,
       maxRating: maxRating,
       minRating: minRating,
       numOfReviews: ratings.length,
       numOfReviewers: numOfReviewers,
-      metaReview: paper.metaReview
+      metaReview: paper.details.metaReview
     }
   });
 
@@ -608,7 +609,7 @@ var buildSPCTableRow = function(index, areaChair, papers) {
 var displayAreaChairsStatusTable = function() {
   var container = '#areachair-status';
   var notes = conferenceStatusData.submissions;
-  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  // var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
   var areachairIds = conferenceStatusData.areaChairGroups.byAreaChairs;
 
   var rowData = [];
@@ -621,19 +622,11 @@ var displayAreaChairsStatusTable = function() {
         return;
       }
 
-      var reviewers = reviewerIds[number];
-      var reviews = getOfficialReviews(_.filter(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, number)]));
-      var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, number)]);
-      papers.push({
-        note: note,
-        reviewers: reviewers,
-        reviews: reviews,
-        metaReview: metaReview
-      });
+      papers.push(note);
     });
 
-    //var areaChairProfile = findProfile(conferenceStatusData.profiles, areaChair);
-    rowData.push(buildSPCTableRow(index + 1, { id: areaChair, name: areaChair, email: areaChair }, papers));
+    var areaChairProfile = findProfile(areaChair);
+    rowData.push(buildSPCTableRow(areaChairProfile, papers));
   });
 
   var order = 'asc';
@@ -1133,7 +1126,7 @@ var displayPaperStatusTable = function() {
         defaultBody = 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n'
       }
       defaultBody += 'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
-      '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair';
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Senior Area Chair';
 
       var modalHtml = Handlebars.templates.messageReviewersModalFewerOptions({
         filter: filter,
@@ -1239,7 +1232,7 @@ var registerEventHandlers = function() {
       defaultSubject: SHORT_PHRASE + ' Reminder',
       defaultBody: 'This is a reminder to please submit your review for ' + SHORT_PHRASE + '. ' +
         'Click on the link below to go to the review page:\n\n[[SUBMIT_REVIEW_LINK]]' +
-        '\n\nThank you,\n' + SHORT_PHRASE + ' Program Chair',
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Senior Area Chair',
     });
     $('#message-reviewers-modal').remove();
     $('body').append(modalHtml);

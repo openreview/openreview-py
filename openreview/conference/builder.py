@@ -620,6 +620,15 @@ class Conference(object):
         readers.append(self.get_reviewers_id(number))
         return readers
 
+    def get_reviewer_paper_group_writers(self, number):
+        readers=[self.id]
+        if self.use_senior_area_chairs:
+            readers.append(self.get_senior_area_chairs_id(number))
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id(number))
+        return readers
+
+
     def get_area_chair_paper_group_readers(self, number):
         readers=[self.id]
         if self.use_senior_area_chairs:
@@ -687,7 +696,7 @@ class Conference(object):
                             readers=self.get_reviewer_paper_group_readers(n.number),
                             nonreaders=[self.get_authors_id(n.number)],
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
-                            writers=[self.id, self.get_area_chairs_id(n.number)],
+                            writers=self.get_reviewer_paper_group_writers(n.number),
                             signatures=[self.id],
                             signatories=[self.id],
                             anonids=True,
