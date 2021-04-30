@@ -1609,36 +1609,41 @@ class InvitationBuilder(object):
         invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.py')) as f:
-            content = f.read()
-            content = content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
-            content = content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.get_id() + "'")
-            content = content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "'")
-            content = content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "'")
-            content = content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
-            content = content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "'")
-            if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
-                content = content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
-                content = content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
-            elif options.get('reviewers_name') == 'Area_Chairs':
-                content = content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
-                content = content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
-            content = content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
-            if conference.reduced_load_on_decline and options.get('reviewers_name', '') == 'Reviewers':
-                content = content.replace("REDUCED_LOAD_INVITATION_NAME = ''", "REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load'")
-            invitation = openreview.Invitation(id = invitation_id,
-                duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
-                readers = ['everyone'],
-                nonreaders = [],
-                invitees = ['everyone'],
-                noninvitees = [],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                reply = reply,
-                process_string = content,
-                web_string = current_invitation.web if current_invitation else None)
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersPreProcess.py')) as pre:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.py')) as post:
+                pre_content = pre.read()
+                post_content = post.read()
+                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+                post_content = post_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.get_id() + "'")
+                post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "'")
+                post_content = post_content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "'")
+                pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
+                post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
+                post_content = post_content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "'")
+                if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
+                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
+                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
+                elif options.get('reviewers_name') == 'Area_Chairs':
+                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
+                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
+                pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
+                post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
+                if conference.reduced_load_on_decline and options.get('reviewers_name', '') == 'Reviewers':
+                    post_content = post_content.replace("REDUCED_LOAD_INVITATION_NAME = ''", "REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load'")
+                invitation = openreview.Invitation(id = invitation_id,
+                    duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
+                    readers = ['everyone'],
+                    nonreaders = [],
+                    invitees = ['everyone'],
+                    noninvitees = [],
+                    writers = [conference.get_id()],
+                    signatures = [conference.get_id()],
+                    reply = reply,
+                    process_string = post_content,
+                    preprocess= pre_content,
+                    web_string = current_invitation.web if current_invitation else None)
 
-            return self.client.post_invitation(invitation)
+                return self.client.post_invitation(invitation)
 
     def set_recommendation_invitation(self, conference, start_date, due_date, total_recommendations):
 
