@@ -819,8 +819,9 @@ class Conference(object):
                 self.invitation_builder.set_submission_invitation(conference=self, under_submission=True, submission_readers=submission_readers)
                 submissions = self.get_submissions()
                 for s in submissions:
-                    s.readers = s.readers + submission_readers
-                    self.client.post_note(s)
+                    if not set(submission_readers).issubset(set(s.readers)):
+                        s.readers = s.readers + submission_readers
+                        self.client.post_note(s)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
@@ -853,8 +854,10 @@ class Conference(object):
         if not self.submission_stage.double_blind and not self.submission_stage.papers_released and not self.submission_stage.create_groups:
             self.invitation_builder.set_submission_invitation(self, under_submission=False)
             for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='set_final_readers'):
-                note.readers = self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
-                self.client.post_note(note)
+                final_readers =  self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
+                if note.readers != final_readers:
+                    note.readers = final_readers
+                    self.client.post_note(note)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
@@ -1146,7 +1149,8 @@ class Conference(object):
         recruitment_status = {
             'invited': [],
             'reminded': [],
-            'already_invited': {}
+            'already_invited': {},
+            'errors': []
         }
 
         options = {
@@ -1258,18 +1262,18 @@ class Conference(object):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-                tools.recruit_reviewer(self.client, email, name,
-                    hash_seed,
-                    invitation.id,
-                    recruit_message,
-                    recruit_message_subj,
-                    reviewers_invited_id,
-                    verbose = False)
-                recruitment_status['invited'].append(email)
-
+                try:
+                    tools.recruit_reviewer(self.client, email, name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
+                    recruitment_status['invited'].append(email)
+                except openreview.OpenReviewException as e:
+                    recruitment_status['errors'].append(e)
         return recruitment_status
-
-
 
     ## temporary function, move to somewhere else
     def remind_registration_stage(self, subject, message, committee_id):
