@@ -666,11 +666,8 @@ class TestDoubleBlindConference():
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('ac%40mail.com', 'test%40mail.com')
         request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue()
-
-        logs = client.get_process_logs()
-        assert logs
-        assert logs[0]['status'] == 'ok'
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
         assert group

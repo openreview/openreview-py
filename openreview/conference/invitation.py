@@ -1609,8 +1609,8 @@ class InvitationBuilder(object):
         invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersPreProcess.py')) as pre:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReviewersProcess.py')) as post:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
                 pre_content = pre.read()
                 post_content = post.read()
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
