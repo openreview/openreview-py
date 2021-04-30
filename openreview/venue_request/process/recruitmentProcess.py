@@ -65,4 +65,11 @@ Please check the invitee group to see more details: https://openreview.net/group
             '''
         }
     )
+    if recruitment_status['errors']:
+        error_status=f'''{len(recruitment_status.get('errors'))} error(s) in the recruitment process:
+
+{recruitment_status.get('errors')}'''
+        comment_note.content['comment'] += f'''
+Error: {error_status}'''
+
     client.post_note(comment_note)
