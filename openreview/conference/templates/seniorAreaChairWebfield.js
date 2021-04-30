@@ -166,11 +166,11 @@ var getInvitationId = function(name, number) {
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
 };
 
-var findProfile = function(profiles, id) {
-  if (profiles[id]) {
+var findProfile = function(id) {
+  if (conferenceStatusData.profiles[id]) {
     return profiles[id];
   }
-  var profile = _.find(profiles, function(p) {
+  var profile = _.find(conferenceStatusData.profiles, function(p) {
     return _.includes(p.allNames, id) || _.includes(p.allEmails, id);
   });
   return profile || {
@@ -193,6 +193,7 @@ var buildNoteMap = function(noteNumbers) {
 var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerGroups) {
   var noteMap = buildNoteMap(noteNumbers);
   var reviewerMap = {};
+  var profileIds = [];
 
   reviewerGroups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
@@ -209,6 +210,7 @@ var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerG
             reviewerMap[member] = [];
           }
           reviewerMap[member].push(num);
+          profileIds.push(member);
         }
       })
     }
@@ -216,13 +218,15 @@ var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerG
 
   return {
     byNotes: noteMap,
-    byReviewers: reviewerMap
+    byReviewers: reviewerMap,
+    profileIds: profileIds
   };
 };
 
 var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaChairGroups) {
   var noteMap = buildNoteMap(noteNumbers);
   var areaChairMap = {};
+  var profileIds = [];
 
   areaChairGroups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
@@ -238,6 +242,7 @@ var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaCha
             areaChairMap[member] = [];
           }
           areaChairMap[member].push(num);
+          profileIds.push(member);
         }
       })
     }
@@ -245,7 +250,8 @@ var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaCha
 
   return {
     byNotes: noteMap,
-    byAreaChairs: areaChairMap
+    byAreaChairs: areaChairMap,
+    profileIds: profileIds
   };
 };
 
@@ -290,6 +296,44 @@ var getOfficialReviews = function(notes) {
   return reviewByAnonId;
 };
 
+
+var getUserProfiles = function(userIds) {
+  var ids = _.filter(userIds, function(id) { return _.startsWith(id, '~');});
+  var emails = _.filter(userIds, function(id) { return id.match(/.+@.+/);});
+
+  var profileSearch = [];
+  if (ids.length) {
+    profileSearch.push(Webfield.post('/profiles/search', {ids: ids}),);
+  }
+  if (emails.length) {
+    profileSearch.push(Webfield.post('/profiles/search', {emails: emails}));
+  }
+
+  return $.when.apply($, profileSearch)
+  .then(function() {
+    var searchResults = _.toArray(arguments);
+    var profileMap = {};
+    if (!searchResults) {
+      return profileMap;
+    }
+    var addProfileToMap = function(profile) {
+      var name = _.find(profile.content.names, ['preferred', true]) || _.first(profile.content.names);
+      profile.name = _.isEmpty(name) ? view.prettyId(profile.id) : name.first + ' ' + name.last;
+      profile.email = profile.content.preferredEmail || profile.content.emails[0];
+      profile.allEmails = profile.content.emailsConfirmed;
+      profileMap[profile.id] = profile;
+    };
+    _.forEach(searchResults, function(result) {
+      _.forEach(result.profiles, addProfileToMap);
+    });
+    return profileMap;
+  })
+  .fail(function(error) {
+    displayError();
+    return null;
+  });
+};
+
 var formatData = function(groups, assignmentEdges, submissions, invitations) {
 
   var noteNumbers = submissions.map(function(s) { return s.number; });
@@ -299,16 +343,28 @@ var formatData = function(groups, assignmentEdges, submissions, invitations) {
 
   var areaChairs = assignmentEdges.map(function(edge) { return edge.head; });
 
-  conferenceStatusData = {
-    areaChairs: areaChairs,
-    areaChairGroups: areaChairGroupMaps,
-    reviewerGroups: reviewerGroupMaps,
-    assignmentEdges: assignmentEdges,
-    submissions: submissions,
-    invitations: invitations
-  };
+  var allProfileIds = _.uniq(areaChairs.concat(reviewerGroupMaps.profileIds).concat(areaChairGroupMaps.profileIds));
 
-  return $.Deferred().resolve(conferenceStatusData);
+  return getUserProfiles(allProfileIds)
+  .then(function(profiles) {
+    submissions.forEach(function(submission) {
+      submission.details.reviews = getOfficialReviews(_.filter(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, submission.number)]));
+      submission.details.metaReview = _.find(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, submission.number)]);
+      submission.details.decision = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]);
+      submission.details.reviewers = reviewerGroupMaps.byNotes[submission.number];
+      submission.details.areaChairs = areaChairGroupMaps.byNotes[submission.number];
+    })
+
+    conferenceStatusData = {
+      profiles: profiles,
+      areaChairs: areaChairs,
+      areaChairGroups: areaChairGroupMaps,
+      reviewerGroups: reviewerGroupMaps,
+      assignmentEdges: assignmentEdges,
+      submissions: submissions,
+      invitations: invitations
+    };
+  })
 };
 
 var renderTasks = function(invitations) {
@@ -737,9 +793,20 @@ var displayAreaChairsStatusTable = function() {
   renderTable(container, rowData);
 };
 
-var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaReview, areachairProfile, decision) {
+var buildPaperTableRow = function(note) {
 
   var paperTableReferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#paper-status)');
+
+  var reviewerIds = note.details.reviewers;
+  var areachairIds = note.details.areachairs;
+  var completedReviews = note.details.reviews;
+  var metaReview = note.details.metaReview;
+  var decision = note.details.decision;
+  var areachairProfile = [];
+
+  for(var areaChairNum in areachairIds) {
+    areachairProfile.push(findProfile(areachairIds[areaChairNum]))
+  }
 
   // Checkbox for selecting each row
   var cellCheck = { selected: false, noteId: note.id };
@@ -754,7 +821,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   var ratings = [];
   var confidences = [];
   for (var reviewerNum in reviewerIds) {
-    var reviewer = reviewerIds[reviewerNum];
+    var reviewer = findProfile(reviewerIds[reviewerNum]);
     if (reviewerNum in completedReviews || reviewer.id in completedReviews) {
       reviewObj = completedReviews[reviewerNum] || completedReviews[reviewer.id];
       combinedObj[reviewerNum] = _.assign({}, reviewer, {
@@ -858,21 +925,21 @@ var displayPaperStatusTable = function() {
 
   var container = '#paper-status';
   //var profiles = conferenceStatusData.profiles;
-  var notes = conferenceStatusData.submissions;
-  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
-  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
+  //var notes = conferenceStatusData.submissions;
+  //var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
+  //var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
 
-  var rowData = _.map(notes, function(note) {
-    var revIds = reviewerIds[note.number];
-    var acIds = areachairIds[note.number];
-    var acProfiles = Object.keys(acIds).map(function(areachairId) {
-      return { id: acIds[areachairId], name: acIds[areachairId], email: acIds[areachairId] };
-    });
+  var rowData = _.map(conferenceStatusData.submissions, function(submission) {
+    // var revIds = reviewerIds[note.number];
+    // var acIds = areachairIds[note.number];
+    // var acProfiles = Object.keys(acIds).map(function(areachairId) {
+    //   return { id: acIds[areachairId], name: acIds[areachairId], email: acIds[areachairId] };
+    // });
 
-    var reviews = getOfficialReviews(_.filter(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]));
-    var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var decision = _.find(note.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
-    return buildPaperTableRow(note, revIds, reviews, metaReview, acProfiles, decision);
+    // var reviews = getOfficialReviews(_.filter(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]));
+    // var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
+    // var decision = _.find(note.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
+    return buildPaperTableRow(submission);
   });
 
   var toNumber = function(value) {
