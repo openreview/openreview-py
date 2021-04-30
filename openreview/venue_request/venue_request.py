@@ -539,6 +539,7 @@ class VenueRequest():
                 self.support_group = client.post_group(support_group)
 
         self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
+        self.support_pre_process = os.path.join(os.path.dirname(__file__), 'process/request_form_pre_process.py')
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
@@ -788,37 +789,40 @@ class VenueRequest():
             }
         }
 
-        with open(self.support_process, 'r') as f:
-            file_content = f.read()
-            file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
-            self.request_invitation = self.client.post_invitation(openreview.Invitation(
-                id=self.support_group.id + '/-/Request_Form',
-                readers=['everyone'],
-                writers=[],
-                signatures=[self.super_user],
-                invitees=['everyone'],
-                process_string=file_content,
-                reply={
-                    'readers': {
-                        'values-copied': [
-                            self.support_group.id,
-                            '{signatures}',
-                            '{content["program_chair_emails"]}'
-                        ]
-                    },
-                    'writers': {
-                        'values-copied': [
-                            self.support_group.id,
-                            '{signatures}',
-                            '{content["program_chair_emails"]}'
-                        ]
-                    },
-                    'signatures': {
-                        'values-regex': '~.*|' + self.support_group.id
-                    },
-                    'content': self.request_content
-                }
-            ))
+        with open(self.support_pre_process, 'r') as pre:
+            with open(self.support_process, 'r') as f:
+                pre_process_file_content = pre.read()
+                file_content = f.read()
+                file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
+                self.request_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Request_Form',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.super_user],
+                    invitees=['everyone'],
+                    process_string=file_content,
+                    preprocess=pre_process_file_content,
+                    reply={
+                        'readers': {
+                            'values-copied': [
+                                self.support_group.id,
+                                '{signatures}',
+                                '{content["program_chair_emails"]}'
+                            ]
+                        },
+                        'writers': {
+                            'values-copied': [
+                                self.support_group.id,
+                                '{signatures}',
+                                '{content["program_chair_emails"]}'
+                            ]
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|' + self.support_group.id
+                        },
+                        'content': self.request_content
+                    }
+                ))
 
     def setup_venue_comments(self):
 
