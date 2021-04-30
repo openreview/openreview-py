@@ -670,6 +670,7 @@ class TestDoubleBlindConference():
 
         logs = client.get_process_logs()
         assert logs
+
         assert logs[0]['status'] == 'ok'
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
