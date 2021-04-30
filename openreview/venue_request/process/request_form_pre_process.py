@@ -8,4 +8,5 @@ def process(client, note, invitation):
             raise openreview.OpenReviewException('Author identities of desk-rejected submissions can only be anonymized for double-blind submissions')
 
     if 'Double-blind' in note.content['Author and Reviewer Anonymity'] or 'Submissions and reviews should both be private.' in note.content['Open Reviewing Policy']:
-        raise openreview.OpenReviewException('Submissions can only be immediately released to the public for non double-blind, public venues')
+        if 'Yes' in note.content['submissions_visibility']:
+            raise openreview.OpenReviewException('Submissions can only be immediately released to the public for non double-blind, public venues')
