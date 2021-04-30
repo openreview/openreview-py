@@ -806,6 +806,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
@@ -815,6 +816,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
@@ -824,6 +826,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
@@ -833,6 +836,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[3].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[3].id,
@@ -842,6 +846,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[4].id,
