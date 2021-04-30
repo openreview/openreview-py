@@ -13,6 +13,7 @@ var DECISION_NAME = '';
 var HEADER = {};
 var SENIOR_AREA_CHAIR_NAME = '';
 var AREA_CHAIRS_ID = '';
+var REVIEWERS_ID = '';
 var ASSIGNMENT_INVITATION = 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment';
 var ASSIGNMENT_LABEL = null;
 var EMAIL_SENDER = null;
@@ -393,18 +394,18 @@ var renderTableAndTasks = function() {
 var buildEdgeBrowserUrl = function(startQuery, invGroup, invName) {
   var invitationId = invGroup + '/-/' + invName;
   var referrerUrl = '/group' + location.search + location.hash;
-  var conflictInvitation = conferenceStatusData.invitationMap[invGroup + '/-/Conflict'];
-  var scoresInvitation = conferenceStatusData.invitationMap[invGroup + '/-/' + SCORES_NAME];
 
-  // Right now this is only showing bids, affinity scores, and conflicts as the
-  // other scores invitations + labels are not available in the PC console
   return '/edges/browse' +
-    (startQuery ? '?start=' + invitationId + ',' + startQuery + '&' : '?') +
+    (startQuery ? '?start=' + AREA_CHAIRS_ID + '/-/' + invName + ',' + startQuery + '&' : '?') +
     'traverse=' + invitationId +
+    '&edit=' + invitationId + ';' + invGroup + '/-/Invite_Assignment' +
     '&browse=' + invitationId +
-    (scoresInvitation ? ';' + scoresInvitation.id : '') +
-    (conflictInvitation ? ';' + conflictInvitation.id : '') +
-    '&referrer=' + encodeURIComponent('[PC Console](' + referrerUrl + ')');
+    ';' + invGroup + '/-/Affinity_Score' +
+    ';' + invGroup + '/-/Bid' +
+    ';' + invGroup + '/-/Custom_Max_Papers,head:ignore' +
+    '&hide=' + invGroup + '/-/Conflict' +
+    '&maxColumns=2' +
+    '&referrer=' + encodeURIComponent('[Senior Area Chair Console](' + referrerUrl + ')');
 };
 
 var displaySortPanel = function(container, sortOptions, sortResults, searchResults) {
@@ -543,7 +544,7 @@ var buildSPCTableRow = function(areaChair, papers) {
     email: areaChair.email,
     showBids: !!conferenceStatusData.bidEnabled,
     completedBids: areaChair.bidCount || 0,
-    //edgeBrowserBidsUrl: buildEdgeBrowserUrl('tail:' + areaChair.id, AREA_CHAIRS_ID, BID_NAME),
+    edgeBrowserAssignmentUrl: buildEdgeBrowserUrl('tail:' + areaChair.id, REVIEWERS_ID, 'Assignment'),
     showRecommendations: !!conferenceStatusData.recommendationEnabled,
     completedRecs: areaChair.acRecommendationCount || 0,
     //edgeBrowserRecsUrl: buildEdgeBrowserUrl('signatory:' + areaChair.id, REVIEWERS_ID, RECOMMENDATION_NAME)

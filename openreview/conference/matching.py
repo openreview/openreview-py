@@ -86,6 +86,7 @@ class Matching(object):
         self.conference = conference
         self.client = conference.client
         self.match_group = match_group
+        self.is_reviewer = conference.get_reviewers_id() == match_group.id
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
         self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
         self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.has_area_chairs
@@ -121,19 +122,37 @@ class Matching(object):
         edge_nonreaders = {
             'values-regex': self.conference.get_authors_id(number='.*')
         }
-        if self.should_read_by_area_chair:
+        if self.is_reviewer:
             if self.conference.use_senior_area_chairs:
                 edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
-            ## Area Chairs should read the edges of the reviewer invitations.
-            edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
+            if self.conference.use_area_chairs:
+                edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
+
             if is_assignment_invitation:
                 if self.conference.use_senior_area_chairs:
                     edge_invitees.append(self.conference.get_senior_area_chairs_id())
                     edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
                     edge_signatures.append(self.conference.get_senior_area_chairs_id(number=paper_number))
-                edge_invitees.append(self.conference.get_area_chairs_id())
-                edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
-                edge_signatures.append(self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'))
+
+                if self.conference.use_area_chairs:
+                    edge_invitees.append(self.conference.get_area_chairs_id())
+                    edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
+                    edge_signatures.append(self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'))
+
+                edge_nonreaders = {
+                    'values': [self.conference.get_authors_id(number=paper_number)]
+                }
+
+        if self.is_area_chair:
+            if self.conference.use_senior_area_chairs:
+                edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+
+            if is_assignment_invitation:
+                if self.conference.use_senior_area_chairs:
+                    edge_invitees.append(self.conference.get_senior_area_chairs_id())
+                    edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+                    edge_signatures.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+
                 edge_nonreaders = {
                     'values': [self.conference.get_authors_id(number=paper_number)]
                 }

@@ -793,8 +793,9 @@ class TestNeurIPSConference():
         ## AC assignments
         client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~Area_IBMChair1'],
-            writers = [conference.id],
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[0].number}/Senior_Area_Chairs', '~Area_IBMChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[0].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[0].number}/Authors'],
             signatures = [conference.id],
             head = submissions[0].id,
             tail = '~Area_IBMChair1',
@@ -803,8 +804,9 @@ class TestNeurIPSConference():
         ))
         client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~Area_IBMChair1'],
-            writers = [conference.id],
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[1].number}/Senior_Area_Chairs', '~Area_IBMChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[1].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[1].number}/Authors'],
             signatures = [conference.id],
             head = submissions[1].id,
             tail = '~Area_IBMChair1',
@@ -813,8 +815,9 @@ class TestNeurIPSConference():
         ))
         client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~Area_UMassChair1'],
-            writers = [conference.id],
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[2].number}/Senior_Area_Chairs', '~Area_UMassChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[2].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[2].number}/Authors'],
             signatures = [conference.id],
             head = submissions[2].id,
             tail = '~Area_UMassChair1',
@@ -823,8 +826,9 @@ class TestNeurIPSConference():
         ))
         client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~Area_GoogleChair1'],
-            writers = [conference.id],
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[3].number}/Senior_Area_Chairs', '~Area_GoogleChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[3].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[3].number}/Authors'],
             signatures = [conference.id],
             head = submissions[3].id,
             tail = '~Area_GoogleChair1',
@@ -833,8 +837,9 @@ class TestNeurIPSConference():
         ))
         client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~Area_GoogleChair1'],
-            writers = [conference.id],
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[4].number}/Senior_Area_Chairs', '~Area_GoogleChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[4].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[4].number}/Authors'],
             signatures = [conference.id],
             head = submissions[4].id,
             tail = '~Area_GoogleChair1',
