@@ -37,6 +37,30 @@ var SENIOR_AREA_CHAIRS_INVITED_ID = SENIOR_AREA_CHAIRS_ID ? SENIOR_AREA_CHAIRS_I
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAPER_REVIEWS_COMPLETE_THRESHOLD = 3;
 var PAGE_SIZE = 25;
+var filterOperators = ['!=','>=','<=','>','<','=']; // sequence matters
+var propertiesAllowed ={
+    number:['note.number'],
+    id:['note.id','summary.id'],// multi tab same prop
+    title:['note.content.title'],
+    author:['note.content.authors','note.content.authorids'], // multi props
+    subject:['note.content.subject'],
+    reviewer:[],
+    numReviewersAssigned:[],
+    numReviewersDone:[],
+    percentReviewersDone:[],
+    metaReviewer:[],
+    numMetaReviewersAssigned:[],
+    numMetaReviewersDone:[],
+    percentMetaReviewersDone:[],
+    numReviewerRatingsDone:[],
+    percentReviewerRatingsDone:[],
+    reviewRating:['review.rating'],
+    reviewConfidence:['review.confidence'],
+    reviewAvg:[],
+    reviewMax:[],
+    reviewMin:[],
+    replyCount:[]
+}
 
 // Page State
 var reviewerSummaryMap = {};
@@ -1044,7 +1068,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   $('#venue-configuration').html(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, searchResults) {
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery = false) {
   var searchType = container.substring(1).split('-')[0] + 's';
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
@@ -1057,7 +1081,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
   var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
     '<strong style="vertical-align: middle;">Sort By:</strong> ' +
     '<select class="form-sort form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
-    '<button class="form-order btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
+    '<button class="form-order btn btn-icon" type="button"><span class="glyphicon glyphicon-sort"></span></button>' :
     '';
 
   $(container).html(
@@ -1077,10 +1101,21 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     sortResults($(container).find('.form-sort').val(), true);
     return false;
   });
-  $(container + ' .form-search').on('keyup', _.debounce(function() {
-    var searchText = $(container + ' .form-search').val().toLowerCase().trim();
-    searchResults(searchText);
-  }, 300));
+  $(container + ' .form-search').on('keyup', (e) => {
+    var searchText = $(container + ' .form-search').val().trim();
+    var searchLabel = $(container + ' .form-search').prev('strong').text()
+    if (enableQuery && searchText.startsWith('+')) { // filter query mode
+      if(searchLabel==='Search:') $(container + ' .form-search').prev('strong').text('Query:')
+      if(e.key==='Enter'){
+        searchResults(searchText, true);
+      }
+    } else {
+      if(enableQuery && searchLabel!=='Search:') $(container + ' .form-search').prev('strong').text('Search:')
+      _.debounce(function () {
+        searchResults(searchText.toLowerCase());
+      }, 300)()
+    }
+  });
   $(container + ' form.search-form').on('submit', function() {
     return false;
   });
@@ -1212,7 +1247,7 @@ var displayPaperStatusTable = function() {
     renderTable(container, rowData);
   };
 
-  var searchResults = function(searchText) {
+  var searchResults = function(searchText, isQueryMode = false) {
     $(container).data('lastPageNum', 1);
     $(container + ' .form-sort').val('Paper_Number');
 
@@ -1226,8 +1261,13 @@ var displayPaperStatusTable = function() {
 
     var filteredRows;
     if (searchText) {
-      filteredRows = _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc');
-      matchingNoteIds = filteredRows.map(function(row) { return row.note.id; });
+      if(isQueryMode){
+        filteredRows = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id')
+      } else {
+        filteredRows = _.filter(rowData, filterFunc)
+      }
+      filteredRows = _.orderBy(filteredRows, sortOptions['Paper_Number'], 'asc');
+      matchingNoteIds = filteredRows.map(function (row) { return row.note.id; });
     } else {
       filteredRows = rowData;
       matchingNoteIds = [];
@@ -1426,7 +1466,7 @@ var displayPaperStatusTable = function() {
   };
 
   if (rowData.length) {
-    displaySortPanel(container, sortOptions, sortResults, searchResults);
+    displaySortPanel(container, sortOptions, sortResults, searchResults, true);
     $(container).find('form.search-form .pull-left').html('<div class="btn-group message-papers-container" role="group">' +
       '<button type="button" class="message-papers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
         '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
@@ -1438,7 +1478,7 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
-    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
+    '<div class="btn-group"><button class="btn btn-export-data" type="button">Export</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -1554,7 +1594,7 @@ var displayAreaChairsStatusTable = function() {
     renderTable(container, rowData);
   }
 
-  var searchResults = function(searchText) {
+  var searchResults = function(searchText, isQueryMode=false) {
     $(container).data('lastPageNum', 1);
     $(container + ' .form-sort').val('Area_Chair');
 
@@ -1562,9 +1602,16 @@ var displayAreaChairsStatusTable = function() {
     var filterFunc = function(row) {
       return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
     };
-    var filteredRows = searchText
-      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Area_Chair'], 'asc')
-      : rowData;
+    if (searchText) {
+      if(isQueryMode){
+        filteredRows = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+      } else {
+        filteredRows = _.filter(rowData, filterFunc)
+      }
+      filteredRows = _.orderBy(filteredRows, sortOptions['Area_Chair'], 'asc');
+    } else {
+      filteredRows = rowData;
+    }
     renderTable(container, filteredRows);
   };
 
@@ -1778,17 +1825,24 @@ var displayReviewerStatusTable = function() {
     renderTable(container, rowData);
   };
 
-  var searchResults = function(searchText) {
+  var searchResults = function(searchText, isQueryMode = false) {
     $(container).data('lastPageNum', 1);
-    $(container + ' .form-sort').val('Reviewer');
+    $(container + ' .form-sort').val('Reviewer_Name');
 
     // Currently only searching on reviewer name
     var filterFunc = function(row) {
       return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
     };
-    var filteredRows = searchText
-      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Reviewer'], 'asc')
-      : rowData;
+    if (searchText) {
+      if(isQueryMode){
+        filteredRows = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+      } else {
+        filteredRows = _.filter(rowData, filterFunc)
+      }
+      filteredRows = _.orderBy(filteredRows, sortOptions['Reviewer_Name'], 'asc');
+    } else {
+      filteredRows = rowData;
+    }
     renderTable(container, filteredRows);
   };
 
@@ -1897,7 +1951,7 @@ var displayReviewerStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>'+
-    '<div class="btn-group"><button class="btn btn-export-reviewers">Export</button></div>'
+    '<div class="btn-group"><button class="btn btn-export-reviewers" type="button">Export</button></div>'
   );
   renderTable(container, rowData);
 };
