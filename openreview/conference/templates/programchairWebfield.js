@@ -43,7 +43,7 @@ var propertiesAllowed ={
     id:['note.id','summary.id'],// multi tab same prop
     title:['note.content.title'],
     author:['note.content.authors','note.content.authorids'], // multi props
-    subject:['note.content.subject'],
+    keywords:['note.content.keywords'],
     reviewer:['reviewProgressData.reviewers'],
     numReviewersAssigned:['reviewProgressData.numReviewers'],
     numReviewersDone:['reviewProgressData.numSubmittedReviewers'],
