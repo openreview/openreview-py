@@ -1107,14 +1107,29 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
   });
   $(container + ' .form-search').on('keyup', (e) => {
     var searchText = $(container + ' .form-search').val().trim();
-    var searchLabel = $(container + ' .form-search').prev('strong').text()
+    var searchLabel = $(container + ' .form-search').prevAll('strong:first').text()
+    $(container + ' .form-search').removeClass('invalid-value')
     if (enableQuery && searchText.startsWith('+')) { // filter query mode
-      if(searchLabel==='Search:') $(container + ' .form-search').prev('strong').text('Query:')
+      if (searchLabel === 'Search:') {
+        $(container + ' .form-search').prevAll('strong:first').text('Query:')
+        $(container + ' .form-search').prevAll('strong:first').after($('<span/>', { class: 'glyphicon glyphicon-info-sign' })
+            .hover((e) => { $(e.target).tooltip({ 
+                title: `query format is {filter}=value<br/>
+                and can be combined with AND/OR<br/>
+                eg. +number<50 AND reviewers="first last"<br/>
+                available filters:${Object.keys(propertiesAllowed).join('<br/>')}`,
+                html:true,
+                placement:'bottom'
+            }) }))
+    }
       if(e.key==='Enter'){
         searchResults(searchText, true);
       }
     } else {
-      if(enableQuery && searchLabel!=='Search:') $(container + ' .form-search').prev('strong').text('Search:')
+      if(enableQuery && searchLabel!=='Search:') {
+        $(container + ' .form-search').prev().remove() // remove info icon
+          $(container + ' .form-search').prev().text('Search:')
+      }
       _.debounce(function () {
         searchResults(searchText.toLowerCase());
       }, 300)()
@@ -1266,7 +1281,8 @@ var displayPaperStatusTable = function() {
     var filteredRows;
     if (searchText) {
       if(isQueryMode){
-        filteredRows = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id')
+        ({ filteredRows, queryIsInvalid } = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id'))
+        if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
       } else {
         filteredRows = _.filter(rowData, filterFunc)
       }
@@ -1608,7 +1624,8 @@ var displayAreaChairsStatusTable = function() {
     };
     if (searchText) {
       if(isQueryMode){
-        filteredRows = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+        ({ filteredRows, queryIsInvalid } = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id'))
+        if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
       } else {
         filteredRows = _.filter(rowData, filterFunc)
       }
@@ -1839,7 +1856,8 @@ var displayReviewerStatusTable = function() {
     };
     if (searchText) {
       if(isQueryMode){
-        filteredRows = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+        ({ filteredRows, queryIsInvalid } = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id'))
+        if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
       } else {
         filteredRows = _.filter(rowData, filterFunc)
       }
