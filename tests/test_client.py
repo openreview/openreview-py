@@ -115,8 +115,9 @@ class TestClient():
         assert profiles, "Could not get the profile by id"
         assert isinstance(profiles, list)
         assert len(profiles) == 2
-        assert '~Melisa_Bok1' in profiles[1].id
-        assert '~Andrew_McCallum1' in profiles[0].id
+        ids = [profile.id for profile in profiles]
+        assert '~Melisa_Bok1' in ids
+        assert '~Andrew_McCallum1' in ids
 
         profiles = client.search_profiles(emails=[])
         assert len(profiles) == 0
