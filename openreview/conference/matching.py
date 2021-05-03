@@ -1020,7 +1020,7 @@ class Matching(object):
         self.deploy_assignments(assignment_title, overwrite)
 
         ## Add sync process function
-        self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id, with_process_function=True)
+        self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)
         self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
 
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
