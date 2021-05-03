@@ -44,22 +44,26 @@ var propertiesAllowed ={
     title:['note.content.title'],
     author:['note.content.authors','note.content.authorids'], // multi props
     subject:['note.content.subject'],
-    reviewer:[],
-    numReviewersAssigned:[],
-    numReviewersDone:[],
+    reviewer:['reviewProgressData.reviewers'],
+    numReviewersAssigned:['reviewProgressData.numReviewers'],
+    numReviewersDone:['reviewProgressData.numSubmittedReviewers'],
     percentReviewersDone:[],
-    metaReviewer:[],
+    metaReviewer:['areachairProgressData.areachair.name'],
     numMetaReviewersAssigned:[],
     numMetaReviewersDone:[],
     percentMetaReviewersDone:[],
     numReviewerRatingsDone:[],
     percentReviewerRatingsDone:[],
-    reviewRating:['review.rating'],
-    reviewConfidence:['review.confidence'],
-    reviewAvg:[],
-    reviewMax:[],
-    reviewMin:[],
-    replyCount:[]
+    ratingAvg:['reviewProgressData.averageRating'],
+    ratingMax:['reviewProgressData.maxRating'],
+    ratingMin:['reviewProgressData.minRating'],
+    confidenceAvg:['reviewProgressData.averageConfidence'],
+    confidenceMax:['reviewProgressData.maxConfidence'],
+    confidenceMin:['reviewProgressData.minConfidence'],
+    reviewAvg:['reviewProgressData.averageRating'],
+    reviewMax:['reviewProgressData.maxRating'],
+    reviewMin:['reviewProgressData.minRating'],
+    replyCount:['reviewProgressData.forumReplyCount']
 }
 
 // Page State
