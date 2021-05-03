@@ -356,7 +356,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         ## Reduce the load of Mohit
         notes = client.get_notes(invitation='thecvf.com/ECCV/2020/Conference/-/Recruit_Reviewers', content={'user': 'mohit+1@mail.com'})
         assert notes
-        assert len(notes) == 3
+        assert len(notes) == 1
 
         client.post_note(openreview.Note(
             invitation='thecvf.com/ECCV/2020/Conference/-/Reduced_Load',
