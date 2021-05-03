@@ -385,6 +385,7 @@ var renderTasks = function(invitations) {
 var renderTableAndTasks = function() {
 
   displayPaperStatusTable();
+  displayAreaChairsStatusTable();
 
   registerEventHandlers();
 
