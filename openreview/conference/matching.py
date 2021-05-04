@@ -948,7 +948,8 @@ class Matching(object):
         if overwrite:
             if reviews:
                 raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
-            self.client.delete_edges(invitation=assginment_invitation_id, wait_to_finish=True)
+            ## Don't delete the edges for now until we have a soft deletion
+            ##self.client.delete_edges(invitation=assginment_invitation_id, wait_to_finish=True)
 
         for paper in tqdm(papers, total=len(papers)):
 
