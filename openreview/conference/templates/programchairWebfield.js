@@ -1099,6 +1099,10 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
   $(container + ' .form-search').on('keyup', function (e) {
     var searchText = $(container + ' .form-search').val().trim();
     var searchLabel = $(container + ' .form-search').prevAll('strong:first').text();
+    if (enableQuery){
+      $('#group-container').find('button.btn.btn-export-data').text('Export')
+      conferenceStatusData.filteredNotes = null
+    }
     $(container + ' .form-search').removeClass('invalid-value');
   
     if (enableQuery && searchText.startsWith('+')) {
@@ -1292,6 +1296,12 @@ var displayPaperStatusTable = function() {
     } else {
       filteredRows = rowData;
       matchingNoteIds = [];
+    }
+    if (rowData.length !== filteredRows.length) {
+      $('#group-container').find('button.btn.btn-export-data').text('Export Filtered')
+      conferenceStatusData.filteredNotes = filteredRows.map(function (p) {
+        return p.note;
+      });
     }
     renderTable(container, filteredRows);
   };
@@ -2666,7 +2676,7 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
 
 var buildCSV = function(){
   var profiles = conferenceStatusData.profiles;
-  var notes = conferenceStatusData.blindedNotes;
+  var notes = conferenceStatusData.filteredNotes ? conferenceStatusData.filteredNotes : conferenceStatusData.blindedNotes;
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
