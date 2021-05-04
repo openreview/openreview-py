@@ -54,9 +54,6 @@ var propertiesAllowed ={
     confidenceAvg:['reviewProgressData.averageConfidence'],
     confidenceMax:['reviewProgressData.maxConfidence'],
     confidenceMin:['reviewProgressData.minConfidence'],
-    reviewAvg:['reviewProgressData.averageRating'],
-    reviewMax:['reviewProgressData.maxRating'],
-    reviewMin:['reviewProgressData.minRating'],
     replyCount:['reviewProgressData.forumReplyCount']
 }
 
@@ -1066,7 +1063,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   $('#venue-configuration').html(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery = false) {
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery) {
   var searchType = container.substring(1).split('-')[0] + 's';
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
@@ -1099,34 +1096,39 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     sortResults($(container).find('.form-sort').val(), true);
     return false;
   });
-  $(container + ' .form-search').on('keyup', (e) => {
+  $(container + ' .form-search').on('keyup', function (e) {
     var searchText = $(container + ' .form-search').val().trim();
-    var searchLabel = $(container + ' .form-search').prevAll('strong:first').text()
-    $(container + ' .form-search').removeClass('invalid-value')
-    if (enableQuery && searchText.startsWith('+')) { // filter query mode
+    var searchLabel = $(container + ' .form-search').prevAll('strong:first').text();
+    $(container + ' .form-search').removeClass('invalid-value');
+  
+    if (enableQuery && searchText.startsWith('+')) {
+      // filter query mode
       if (searchLabel === 'Search:') {
-        $(container + ' .form-search').prevAll('strong:first').text('Query:')
-        $(container + ' .form-search').prevAll('strong:first').after($('<span/>', { class: 'glyphicon glyphicon-info-sign' })
-            .hover((e) => { $(e.target).tooltip({ 
-                title: `query format is {filter}=value<br/>
-                and can be combined with AND/OR<br/>
-                eg. +number<50 AND reviewers="first last"<br/>
-                available filters:${Object.keys(propertiesAllowed).join('<br/>')}`,
-                html:true,
-                placement:'bottom'
-            }) }))
-    }
-      if(e.key==='Enter'){
+        $(container + ' .form-search').prevAll('strong:first').text('Query:');
+        $(container + ' .form-search').prevAll('strong:first').after($('<span/>', {
+          class: 'glyphicon glyphicon-info-sign'
+        }).hover(function (e) {
+          $(e.target).tooltip({
+            title: "query format is {filter}=value<br/>\nand can be combined with AND/OR<br/>\neg. +number<50 AND reviewers=\"first last\"<br/>\navailable filters:".concat(Object.keys(propertiesAllowed).join('<br/>')),
+            html: true,
+            placement: 'bottom'
+          });
+        }));
+      }
+  
+      if (e.key === 'Enter') {
         searchResults(searchText, true);
       }
     } else {
-      if(enableQuery && searchLabel!=='Search:') {
-        $(container + ' .form-search').prev().remove() // remove info icon
-          $(container + ' .form-search').prev().text('Search:')
+      if (enableQuery && searchLabel !== 'Search:') {
+        $(container + ' .form-search').prev().remove(); // remove info icon
+  
+        $(container + ' .form-search').prev().text('Search:');
       }
+  
       _.debounce(function () {
-        searchResults(searchText.toLowerCase());
-      }, 300)()
+        searchResults(searchText.toLowerCase(), false);
+      }, 300)();
     }
   });
   $(container + ' form.search-form').on('submit', function() {
@@ -1260,7 +1262,7 @@ var displayPaperStatusTable = function() {
     renderTable(container, rowData);
   };
 
-  var searchResults = function(searchText, isQueryMode = false) {
+  var searchResults = function(searchText, isQueryMode) {
     $(container).data('lastPageNum', 1);
     $(container + ' .form-sort').val('Paper_Number');
 
@@ -1274,14 +1276,19 @@ var displayPaperStatusTable = function() {
 
     var filteredRows;
     if (searchText) {
-      if(isQueryMode){
-        ({ filteredRows, queryIsInvalid } = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id'))
-        if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
+      if (isQueryMode) {
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id');
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
+        if (queryIsInvalid) $(container + ' .form-search').addClass('invalid-value');
       } else {
-        filteredRows = _.filter(rowData, filterFunc)
+        filteredRows = _.filter(rowData, filterFunc);
       }
+    
       filteredRows = _.orderBy(filteredRows, sortOptions['Paper_Number'], 'asc');
-      matchingNoteIds = filteredRows.map(function (row) { return row.note.id; });
+      matchingNoteIds = filteredRows.map(function (row) {
+        return row.note.id;
+      });
     } else {
       filteredRows = rowData;
       matchingNoteIds = [];
@@ -1608,7 +1615,7 @@ var displayAreaChairsStatusTable = function() {
     renderTable(container, rowData);
   }
 
-  var searchResults = function(searchText, isQueryMode=false) {
+  var searchResults = function(searchText, isQueryMode) {
     $(container).data('lastPageNum', 1);
     $(container + ' .form-sort').val('Area_Chair');
 
@@ -1618,7 +1625,9 @@ var displayAreaChairsStatusTable = function() {
     };
     if (searchText) {
       if(isQueryMode){
-        ({ filteredRows, queryIsInvalid } = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id'))
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
         if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
       } else {
         filteredRows = _.filter(rowData, filterFunc)
@@ -1732,7 +1741,7 @@ var displayAreaChairsStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-acs-container" role="group">' +
       '<button type="button" class="message-acs-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -1840,7 +1849,7 @@ var displayReviewerStatusTable = function() {
     renderTable(container, rowData);
   };
 
-  var searchResults = function(searchText, isQueryMode = false) {
+  var searchResults = function(searchText, isQueryMode) {
     $(container).data('lastPageNum', 1);
     $(container + ' .form-sort').val('Reviewer_Name');
 
@@ -1850,7 +1859,9 @@ var displayReviewerStatusTable = function() {
     };
     if (searchText) {
       if(isQueryMode){
-        ({ filteredRows, queryIsInvalid } = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id'))
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
         if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
       } else {
         filteredRows = _.filter(rowData, filterFunc)
@@ -1955,7 +1966,7 @@ var displayReviewerStatusTable = function() {
     });
   };
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-reviewers-container" role="group">' +
       '<button type="button" class="message-reviewers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -2815,10 +2826,10 @@ var buildReviewersCSV = function(){
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv'});
-  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv',);
+  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv');
 });
 
 $('#group-container').on('click', 'button.btn.btn-export-reviewers', function(e) {
   var blob = new Blob(buildReviewersCSV(), {type: 'text/csv'});
-  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_reviewer_status.csv',);
+  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_reviewer_status.csv');
 });
