@@ -129,7 +129,7 @@ function renderContent(authorNotes, invitations) {
   var tasksOptions = {
     container: '#author-tasks',
     emptyMessage: 'No outstanding tasks for this conference',
-    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)')
+    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)') + '&t=' + Date.now()
   };
   $(tasksOptions.container).empty();
 

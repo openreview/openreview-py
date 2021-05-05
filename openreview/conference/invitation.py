@@ -1705,12 +1705,12 @@ class InvitationBuilder(object):
 
         readers = {
             'description': 'The users who will be allowed to read the above content.',
-            'values-copied': [conference.get_id(), '{signatures}']
+            'values-copied': ['{signatures}']
         }
-
         signatures_regex = '~.*'
 
         if group_id in [conference.get_area_chairs_id(), conference.get_reviewers_id()]:
+            readers['values-copied'] = [conference.id, '{signatures}']
             signatures_regex = conference.get_anon_area_chair_id(number='.*', anon_id='.*')
 
             if group_id == conference.get_reviewers_id() and conference.use_area_chairs:
