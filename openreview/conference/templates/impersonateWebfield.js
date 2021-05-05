@@ -57,7 +57,7 @@ $('#group-container').on('click', 'button.btn', function(e) {
   var userId = $('#groupId').val();
   if (!userId) return false;
 
-  Webfield.get('/impersonate', { groupId: userId })
+  Webfield.post('/impersonate', { groupId: userId })
   .then(function(result) {
     location.href = '/profile';
     return;
