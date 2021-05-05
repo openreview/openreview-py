@@ -14,43 +14,39 @@ function main() {
   } else if (PARENT_GROUP_ID.length){
     OpenBanner.venueHomepageLink(PARENT_GROUP_ID);
   }
+
   Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
   renderHeader();
 
-  renderContent()
+  renderContent();
 
   Webfield.ui.done();
 }
 
 function renderHeader() {
   Webfield.ui.venueHeader(HEADER);
+  $('#header .description').append(
+    '<p class="dark">Enter the email address or username of the user you would like to impersonate below:</p>'
+  );
 }
 
 function renderContent() {
-
   $('#notes').html([
     '<div class="row">',
-      '<div class="col-xs-12">',
-        '<div class="row">',
-          '<div class="col-sm-12 col-md-8 col-lg-6 col-md-offset-2 col-lg-offset-3">',
-            '<h1>Impersonate User</h1>',
-            '<p class="text-muted mb-4">Enter the user\'s email address or username below.</p>',
-            '<form class="form-inline mb-4">',
-              '<div class="input-group mr-2" style="width:calc(100% - 128px)">',
-                '<div class="input-group-addon" style="width:34px">',
-                  '<span class="glyphicon glyphicon-user " aria-hidden="true"></span>',
-                '</div>',
-                '<input id="groupId" type="text" class="form-control " placeholder="john@example.com, ~Jane_Doe1" value="">',
-              '</div>',
-              '<button type="submit" class="btn" style="width:120px">Impersonate</button>',
-            '</form>',
+      '<div class="col-sm-12 col-md-8 col-lg-6 col-md-offset-2 col-lg-offset-3">',
+        '<form class="form-inline mb-4 mt-3">',
+          '<div class="input-group mr-2" style="width: calc(100% - 128px)">',
+            '<div class="input-group-addon" style="width: 34px">',
+              '<span class="glyphicon glyphicon-user " aria-hidden="true"></span>',
+            '</div>',
+            '<input id="groupId" type="text" class="form-control " placeholder="john@example.com, ~Jane_Doe1" value="">',
           '</div>',
-        '</div>',
+          '<button type="submit" class="btn" style="width: 120px">Impersonate</button>',
+        '</form>',
       '</div>',
-    '</div>'
-  ].join('\n'));
-
+    '</div>',
+  ].join(''));
 }
 
 // Go!
@@ -58,7 +54,10 @@ main();
 
 // Event handlers
 $('#group-container').on('click', 'button.btn', function(e) {
-  Webfield.get('/impersonate', { groupId: $('#groupId').val() })
+  var userId = $('#groupId').val();
+  if (!userId) return false;
+
+  Webfield.get('/impersonate', { groupId: userId })
   .then(function(result) {
     location.href = '/profile';
     return;
