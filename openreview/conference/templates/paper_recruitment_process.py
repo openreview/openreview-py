@@ -36,7 +36,7 @@ def process(client, note, invitation):
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
     assignment_edges = client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=submission.id, tail=edge.tail, label=ASSIGNMENT_LABEL)
 
-    if (note.content['response'] == 'Yes') and edge.label != 'Accepted':
+    if (note.content['response'] == 'Yes'):
 
         print('Invitation accepted', edge.tail, submission.number)
 
@@ -64,6 +64,7 @@ OpenReview Team'''
         client.post_edge(edge)
 
         if not assignment_edges:
+            print('post assignment edge')
             readers=[r.replace('{number}', str(submission.number)) for r in EDGE_READERS]
             writers=[r.replace('{number}', str(submission.number)) for r in EDGE_WRITERS]
             client.post_edge(openreview.Edge(
@@ -86,6 +87,7 @@ OpenReview Team'''
                 client.add_members_to_group(REVIEWERS_ID, edge.tail)
                 instructions=f'Please go to the {SHORT_PHRASE} Reviewers Console and check your pending tasks: https://openreview.net/group?id={REVIEWERS_ID}'
 
+            print('send confirmation email')
             ## Send email to reviewer
             subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation accepted for paper {submission.number}'
             message =f'''Hi {preferred_name},
@@ -101,7 +103,7 @@ OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message)
 
 
-    elif (note.content['response'] == 'No') and edge.label != 'Declined':
+    elif (note.content['response'] == 'No'):
 
         print('Invitation declined', edge.tail, submission.number)
         if assignment_edges:
@@ -129,4 +131,4 @@ OpenReview Team'''
         response = client.post_message(subject, [edge.tail], message)
 
     else:
-        raise openreview.OpenReviewException('Invalid response')
+        raise openreview.OpenReviewException(f"Invalid response: {note.content['response']}")

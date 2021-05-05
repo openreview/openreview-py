@@ -1131,6 +1131,7 @@ class TestMatching():
         #AC assignments
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac1@cmu.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
@@ -1141,6 +1142,7 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
@@ -1151,6 +1153,7 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
@@ -1179,6 +1182,7 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac1@cmu.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
@@ -1189,6 +1193,7 @@ class TestMatching():
 
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
