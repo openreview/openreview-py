@@ -943,13 +943,14 @@ class Matching(object):
             label=assignment_title, groupby='head', select=None)}
         print('proposed_assignment_edges', proposed_assignment_edges)
         assignment_edges = []
-        assginment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
+        assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
+        current_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
         if overwrite:
             if reviews:
                 raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
-            ## Don't delete the edges for now until we have a soft deletion
-            ##self.client.delete_edges(invitation=assginment_invitation_id, wait_to_finish=True)
+            ## Delete current assignment edges with a ddate in case we need to do rollback
+            self.client.delete_edges(invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
 
         for paper in tqdm(papers, total=len(papers)):
 
@@ -963,7 +964,7 @@ class Matching(object):
                     print('proposed_edge', proposed_edge)
                     paper_group.members.append(proposed_edge['tail'])
                     assignment_edges.append(openreview.Edge(
-                        invitation=assginment_invitation_id,
+                        invitation=assignment_invitation_id,
                         head=paper.id,
                         tail=proposed_edge['tail'],
                         readers=proposed_edge['readers'],
