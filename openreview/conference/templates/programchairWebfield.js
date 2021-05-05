@@ -2701,8 +2701,10 @@ var buildCSV = function(){
   'average confidence',
   'ac recommendation',
   'ac1 profile id',
+  'ac1 name',
   'ac1 email',
   'ac2 profile id',
+  'ac2 name',
   'ac2 email',
   'ac ranking',
   'decision'].join(',') + '\n');
@@ -2714,7 +2716,8 @@ var buildCSV = function(){
     if (areachairId) {
       areachairProfileOne = findProfile(profiles, areachairId);
     } else {
-      areachairProfileOne.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.name = '-';
       areachairProfileOne.email = '-';
     }
     areachairId = areachairIds[note.number][1];
@@ -2723,6 +2726,7 @@ var buildCSV = function(){
       areachairProfileTwo = findProfile(profiles, areachairId);
     } else {
       areachairProfileTwo.id = '';
+      areachairProfileOne.name = '-';
       areachairProfileTwo.email = '';
     }
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
@@ -2758,8 +2762,10 @@ var buildCSV = function(){
     paperTableRow.reviewProgressData.averageConfidence,
     paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
     areachairProfileOne.id,
+    areachairProfileOne.name,
     areachairProfileOne.email,
     areachairProfileTwo.id,
+    areachairProfileTwo.name,
     areachairProfileTwo.email,
     acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag,
     paperTableRow.decision && paperTableRow.decision.content.decision
