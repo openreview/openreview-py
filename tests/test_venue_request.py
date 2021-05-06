@@ -8,7 +8,7 @@ from openreview import VenueRequest
 class TestVenueRequest():
 
     @pytest.fixture(scope='class')
-    def venue(self, client, support_client, test_client, helpers):
+    def venue(self, client, test_client, helpers):
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
@@ -95,7 +95,7 @@ class TestVenueRequest():
         assert venue.recruitment_super_invitation
         assert venue.venue_revision_invitation
 
-    def test_venue_deployment(self, client, selenium, request_page, helpers, support_client):
+    def test_venue_deployment(self, client, selenium, request_page, helpers):
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
@@ -165,7 +165,7 @@ class TestVenueRequest():
         assert messages[0]['content']['text'] == 'Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum when the venue is deployed. You can access the request forum here: https://openreview.net/forum?id=' + request_form_note.forum
 
         messages = client.get_messages(
-            to='support_user@mail.com',
+            to='support@openreview.net',
             subject='A request for service has been submitted'
         )
         assert messages and len(messages) == 1
