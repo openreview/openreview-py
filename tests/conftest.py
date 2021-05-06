@@ -92,11 +92,6 @@ def peter_client():
     client = Helpers.create_user('peter@mail.com', 'Peter', 'Test')
     yield client
 
-@pytest.fixture(scope="session")
-def support_client():
-    client = Helpers.create_user('support_user@mail.com', 'Support', 'User')
-    yield client
-
 @pytest.fixture
 def firefox_options(firefox_options):
     firefox_options.add_argument('--headless')

@@ -1842,6 +1842,20 @@ OpenReview Team'''
         ))
         assert review_rating_note
 
+    def test_add_impersonator(self, client, request_page, selenium):
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        conference.set_impersonators(emails='pc@neurips.cc')
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Impersonate", pc_client.token)
+        assert "NeurIPS 2021 Conference Impersonate | OpenReview" in selenium.title
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+
     # def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
     #     submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
