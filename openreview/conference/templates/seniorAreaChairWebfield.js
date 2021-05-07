@@ -126,24 +126,11 @@ var loadData = function() {
     sort: 'number:asc'
   });
 
-  var invitationsP = Webfield.getAll('/invitations', {
-    regex: WILDCARD_INVITATION,
-    invitee: true,
-    duedate: true,
-    type: 'all',
-    details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
-  })
-  .then(function(invitations) {
-    return _.filter(invitations, function(inv) {
-      return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
-    });
-  });
-
   return $.when(
     getGroups(),
     assignmentsP,
     submissionsP,
-    invitationsP
+    getAllInvitations()
   );
 };
 
@@ -332,6 +319,47 @@ var getUserProfiles = function(userIds) {
   .fail(function(error) {
     displayError();
     return null;
+  });
+};
+
+var getAllInvitations = function() {
+
+  var invitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  });
+
+  var edgeInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges',
+    details: 'repliedEdges'
+  });
+
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  });
+
+  var filterInvitee = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(SENIOR_AREA_CHAIR_NAME) !== -1; });
+  };
+
+  return $.when(
+    invitationsP,
+    edgeInvitationsP,
+    tagInvitationsP
+  ).then(function(noteInvitations, edgeInvitations, tagInvitations) {
+    var invitations = noteInvitations.concat(edgeInvitations).concat(tagInvitations);
+    return _.filter(invitations, filterInvitee);
   });
 };
 

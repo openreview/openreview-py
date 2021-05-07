@@ -147,8 +147,7 @@ var getOfficialReviews = function(noteNumbers) {
   var promises = _.map(noteNumbers, function(noteNumber) {
     return Webfield.get('/notes', {
       invitation: getInvitationId(OFFICIAL_REVIEW_NAME, noteNumber),
-      tauthor: true,
-      select: 'id,invitation,forum,content.review,content.' + REVIEW_RATING_NAME
+      tauthor: true
     }).then(function(result) {
       return result.notes || [];
     });
@@ -161,22 +160,42 @@ var getOfficialReviews = function(noteNumbers) {
 
 var getAllInvitations = function() {
 
+  var invitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  });
+
+  var edgeInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges',
+    details: 'repliedEdges'
+  });
+
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  });
+
   var filterInvitee = function(inv) {
     return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) !== -1; });
   };
 
-  var filterReply = function(inv) {
-    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
-  }
-
-  return Webfield.getAll('/invitations', {
-    regex: WILDCARD_INVITATION,
-    invitee: true,
-    duedate: true,
-    type: 'all',
-    details: 'repliedTags,repliedEdges,replytoNote,repliedNotes'
-  }).then(function(invitations) {
-    return _.filter(_.filter(invitations, filterInvitee), filterReply);
+  return $.when(
+    invitationsP,
+    edgeInvitationsP,
+    tagInvitationsP
+  ).then(function(noteInvitations, edgeInvitations, tagInvitations) {
+    var invitations = noteInvitations.concat(edgeInvitations).concat(tagInvitations);
+    return _.filter(invitations, filterInvitee);
   });
 };
 
