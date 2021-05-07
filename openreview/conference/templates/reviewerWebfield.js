@@ -147,8 +147,7 @@ var getOfficialReviews = function(noteNumbers) {
   var promises = _.map(noteNumbers, function(noteNumber) {
     return Webfield.get('/notes', {
       invitation: getInvitationId(OFFICIAL_REVIEW_NAME, noteNumber),
-      tauthor: true,
-      select: 'id,invitation,forum,content.review,content.' + REVIEW_RATING_NAME
+      tauthor: true
     }).then(function(result) {
       return result.notes || [];
     });
