@@ -89,7 +89,7 @@ class Matching(object):
         self.is_reviewer = conference.get_reviewers_id() == match_group.id
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
         self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
-        self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.has_area_chairs
+        self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.use_area_chairs
 
 
     def _get_edge_invitation_id(self, edge_name):
