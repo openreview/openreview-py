@@ -180,24 +180,6 @@ var loadData = function(paperNums) {
     blindedNotesP = $.Deferred().resolve([]);
   }
 
-  var filterInvitee = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
-  };
-
-  var filterReply = function(inv) {
-    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
-  }
-
-  var invitationsP = Webfield.getAll('/invitations', {
-    regex: WILDCARD_INVITATION,
-    invitee: true,
-    duedate: true,
-    type: 'all',
-    details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
-  }).then(function(invitations) {
-    return _.filter(_.filter(invitations, filterInvitee), filterReply);
-  });
-
   if (ENABLE_REVIEWER_REASSIGNMENT) {
     allReviewersP = Webfield.get('/groups', { id: REVIEWER_GROUP, select: 'members' })
     .then(function(result) {
@@ -227,7 +209,7 @@ var loadData = function(paperNums) {
   return $.when(
     blindedNotesP,
     getReviewerGroups(noteNumbers),
-    invitationsP,
+    getAllInvitations(),
     allReviewersP,
     acPaperRankingsP,
     reviewerPaperRankingsP,
@@ -283,6 +265,47 @@ var getReviewerGroups = function(noteNumbers) {
     });
 
     return noteMap;
+  });
+};
+
+var getAllInvitations = function() {
+
+  var invitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  });
+
+  var edgeInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges',
+    details: 'repliedEdges'
+  });
+
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  });
+
+  var filterInvitee = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
+  };
+
+  return $.when(
+    invitationsP,
+    edgeInvitationsP,
+    tagInvitationsP
+  ).then(function(noteInvitations, edgeInvitations, tagInvitations) {
+    var invitations = noteInvitations.concat(edgeInvitations).concat(tagInvitations);
+    return _.filter(invitations, filterInvitee);
   });
 };
 
