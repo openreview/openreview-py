@@ -107,13 +107,13 @@ var getReviewerNoteNumbers = function() {
     member: user.id
   }).then(function(groups) {
 
-    var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
     var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
 
     var groupByNumber = {};
     _.forEach(reviewerGroups, function(reviewerGroup) {
       var num = getNumberFromGroup(reviewerGroup.id, 'Paper');
-      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num); });
+      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_'); });
       if (anonGroup) {
         groupByNumber[num] = anonGroup.id;
       }
