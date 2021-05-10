@@ -269,7 +269,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         year = datetime.datetime.now().year
         conference.setup_final_deadline_stage(force=True)
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='number:desc')
         assert len(submissions) == 3
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
