@@ -1065,10 +1065,12 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
 var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery) {
   var searchType = container.substring(1).split('-')[0] + 's';
+  var placeHolder = enableQuery ? 'Enter search term or type + to start a query and press enter' : 'Search all ' + searchType + '...'
+  var searchBarWidth = enableQuery ? '450px' : '300px'
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
-    '<input type="text" class="form-search form-control" class="form-control" placeholder="Search all ' + searchType + '..." ' +
-      'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
+    '<input type="text" class="form-search form-control" class="form-control" placeholder="' + placeHolder + '" ' +
+    'style="width: ' + searchBarWidth + '; margin-right: 1.5rem; line-height: 34px;">' :
     '';
   var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
     return '<option class="' + option.replace(/_/g, '-') + '-' + container.substring(1) + '" value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
@@ -1100,9 +1102,9 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     var searchText = $(container + ' .form-search').val().trim();
     var searchLabel = $(container + ' .form-search').prevAll('strong:first').text();
     if (enableQuery){
-      $('#group-container').find('button.btn.btn-export-data').text('Export')
       conferenceStatusData.filteredNotes = null
     }
+    if (!searchText) $('#group-container').find('button.btn.btn-export-data').text('Export')
     $(container + ' .form-search').removeClass('invalid-value');
   
     if (enableQuery && searchText.startsWith('+')) {
@@ -1500,7 +1502,7 @@ var displayPaperStatusTable = function() {
     displaySortPanel(container, sortOptions, sortResults, searchResults, true);
     $(container).find('form.search-form .pull-left').html('<div class="btn-group message-papers-container" role="group">' +
       '<button type="button" class="message-papers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
-        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="glyphicon glyphicon-envelope">&nbsp;</span>'+
         '<span class="caret"></span>' +
       '</button>' +
       '<ul class="dropdown-menu">' +
