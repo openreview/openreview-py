@@ -468,8 +468,16 @@ class WebfieldBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), f'templates/seniorAreaChairWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            content = content.replace("var AREA_CHAIR_NAME = '';", "var AREA_CHAIR_NAME = '" + conference.area_chairs_name + "';")
+            content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + conference.reviewers_name + "';")
             content = content.replace("var SENIOR_AREA_CHAIR_NAME = '';", "var SENIOR_AREA_CHAIR_NAME = '" + conference.senior_area_chairs_name + "';")
+            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+            content = content.replace("var OFFICIAL_META_REVIEW_NAME = '';", "var OFFICIAL_META_REVIEW_NAME = '" + conference.meta_review_stage.name + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + conference.get_reviewers_id() + "';")
+            content = content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
             return self.__update_group(group, content)
 
     def set_program_chair_page(self, conference, group):
@@ -519,6 +527,24 @@ class WebfieldBuilder(object):
             content = content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
             if conference.request_form_id:
                 content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
+            return self.__update_group(group, content)
+
+    def set_impersonate_page(self, conference, group):
+
+        program_chairs_name = conference.program_chairs_name
+
+        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated when the venue is active.
+        No modification actions are allowed during the impersonation.</p>'''
+
+        header = {
+            'title': f'Impersonate {conference.short_name} users',
+            'instructions': instruction_str
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/impersonateWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             return self.__update_group(group, content)
 
 

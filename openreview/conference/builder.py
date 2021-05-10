@@ -620,6 +620,15 @@ class Conference(object):
         readers.append(self.get_reviewers_id(number))
         return readers
 
+    def get_reviewer_paper_group_writers(self, number):
+        readers=[self.id]
+        if self.use_senior_area_chairs:
+            readers.append(self.get_senior_area_chairs_id(number))
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id(number))
+        return readers
+
+
     def get_area_chair_paper_group_readers(self, number):
         readers=[self.id]
         if self.use_senior_area_chairs:
@@ -687,7 +696,7 @@ class Conference(object):
                             readers=self.get_reviewer_paper_group_readers(n.number),
                             nonreaders=[self.get_authors_id(n.number)],
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
-                            writers=[self.id, self.get_area_chairs_id(n.number)],
+                            writers=self.get_reviewer_paper_group_writers(n.number),
                             signatures=[self.id],
                             signatories=[self.id],
                             anonids=True,
@@ -810,8 +819,9 @@ class Conference(object):
                 self.invitation_builder.set_submission_invitation(conference=self, under_submission=True, submission_readers=submission_readers)
                 submissions = self.get_submissions()
                 for s in submissions:
-                    s.readers = s.readers + submission_readers
-                    self.client.post_note(s)
+                    if not set(submission_readers).issubset(set(s.readers)):
+                        s.readers = s.readers + submission_readers
+                        self.client.post_note(s)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
@@ -844,8 +854,10 @@ class Conference(object):
         if not self.submission_stage.double_blind and not self.submission_stage.papers_released and not self.submission_stage.create_groups:
             self.invitation_builder.set_submission_invitation(self, under_submission=False)
             for note in tqdm(list(tools.iterget_notes(self.client, invitation=self.get_submission_id(), sort='number:asc')), desc='set_final_readers'):
-                note.readers = self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
-                self.client.post_note(note)
+                final_readers =  self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
+                if note.readers != final_readers:
+                    note.readers = final_readers
+                    self.client.post_note(note)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
@@ -1053,6 +1065,25 @@ class Conference(object):
 
         return self.webfield_builder.set_author_page(self, authors_group)
 
+    def set_impersonators(self, emails = []):
+        # Only super user can call this
+        impersonate_group_id=f'{self.id}/Impersonate'
+        group=tools.get_group(self.client, impersonate_group_id)
+
+        if not group:
+            group=self.client.post_group(openreview.Group(
+                id=impersonate_group_id,
+                readers=[self.id],
+                writers=[],
+                signatures=[],
+                signatories=[self.id],
+                members=[]
+            ))
+
+        group=self.client.add_members_to_group(group, emails)
+
+        return self.webfield_builder.set_impersonate_page(self, group)
+
     def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
@@ -1132,11 +1163,13 @@ class Conference(object):
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
-        committee_roles = self.get_committee_names()
+        official_committee_roles=self.get_committee_names()
+        committee_roles = official_committee_roles if reviewers_name in official_committee_roles else [reviewers_name]
         recruitment_status = {
             'invited': [],
             'reminded': [],
-            'already_invited': {}
+            'already_invited': {},
+            'errors': []
         }
 
         options = {
@@ -1248,18 +1281,18 @@ class Conference(object):
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
                     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
-                tools.recruit_reviewer(self.client, email, name,
-                    hash_seed,
-                    invitation.id,
-                    recruit_message,
-                    recruit_message_subj,
-                    reviewers_invited_id,
-                    verbose = False)
-                recruitment_status['invited'].append(email)
-
+                try:
+                    tools.recruit_reviewer(self.client, email, name,
+                        hash_seed,
+                        invitation.id,
+                        recruit_message,
+                        recruit_message_subj,
+                        reviewers_invited_id,
+                        verbose = False)
+                    recruitment_status['invited'].append(email)
+                except openreview.OpenReviewException as e:
+                    recruitment_status['errors'].append(e)
         return recruitment_status
-
-
 
     ## temporary function, move to somewhere else
     def remind_registration_stage(self, subject, message, committee_id):

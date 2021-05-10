@@ -15,6 +15,8 @@ var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var HEADER = {};
 var AUTHOR_NAME = 'Authors';
+var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AUTHOR_NAME + '/-/Paper_Ranking';
+var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 
 function main() {
   // In the future this should not be necessary as the group's readers
@@ -75,26 +77,49 @@ function load() {
     }
   });
 
+  return $.when(notesP, getAllInvitations());
+}
+
+var getAllInvitations = function() {
+
+  var invitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  });
+
+  var edgeInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges',
+    details: 'repliedEdges'
+  });
+
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  });
+
   var filterInvitee = function(inv) {
     return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
   };
 
-  var filterReply = function(inv) {
-    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
-  }
-
-  var invitationsP = Webfield.getAll('/invitations', {
-    regex: CONFERENCE_ID + '.*',
-    invitee: true,
-    duedate: true,
-    type: 'all',
-    details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
-  }).then(function(invitations) {
-    return _.filter(_.filter(invitations, filterInvitee), filterReply);
+  return $.when(
+    invitationsP,
+    edgeInvitationsP,
+    tagInvitationsP
+  ).then(function(noteInvitations, edgeInvitations, tagInvitations) {
+    var invitations = noteInvitations.concat(edgeInvitations).concat(tagInvitations);
+    return _.filter(invitations, filterInvitee);
   });
-
-  return $.when(notesP, invitationsP);
-}
+};
 
 
 // Render functions
@@ -128,14 +153,30 @@ function renderContent(authorNotes, invitations) {
   var tasksOptions = {
     container: '#author-tasks',
     emptyMessage: 'No outstanding tasks for this conference',
-    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)')
+    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)') + '&t=' + Date.now()
   };
   $(tasksOptions.container).empty();
 
-  Webfield.ui.newTaskList(invitations, [], tasksOptions);
-
   // Render table like AC console
   renderStatusTable(authorNotes);
+
+  // Add paper ranking tag widgets to the table of submissions
+  // If tag invitation does not exist, get existing tags and display read-only
+  var paperRankingInvitation = _.find(invitations, ['id', PAPER_RANKING_ID]);
+  if (paperRankingInvitation) {
+    var paperRankingTags = paperRankingInvitation.details.repliedTags || [];
+    displayPaperRanking(authorNotes, paperRankingInvitation, paperRankingTags);
+  } else {
+    Webfield.get('/tags', { invitation: PAPER_RANKING_ID })
+      .then(function(result) {
+        if (!result.tags || !result.tags.length) {
+          return;
+        }
+        displayPaperRanking(authorNotes, null, result.tags);
+      });
+  }
+
+  Webfield.ui.newTaskList(invitations, [], tasksOptions);
 
   // Remove spinner and show content
   $('#notes .spinner-container').remove();
@@ -282,6 +323,77 @@ function renderReviewSummary(data) {
     '</div>' +
     '</div>';
 }
+
+var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTags) {
+  var invitation = paperRankingInvitation ? _.cloneDeep(paperRankingInvitation) : null;
+  var availableOptions = ['No Ranking'];
+  var validTags = [];
+  notes.forEach(function(note, index) {
+    availableOptions.push((index + 1) + ' of ' + notes.length );
+    noteTags = paperRankingTags.filter(function(tag) { return tag.forum === note.forum; })
+    if (noteTags.length) {
+      validTags.push(noteTags[0]);
+    }
+  })
+  var currentRankings = validTags.map(function(tag) {
+    if (!tag.tag || tag.tag === 'No Ranking') {
+      return null;
+    }
+    return tag.tag;
+  });
+  if (invitation) {
+    invitation.reply.content.tag['value-dropdown'] = _.difference(availableOptions, currentRankings);
+  }
+  var invitationId = invitation ? invitation.id : PAPER_RANKING_ID;
+
+  notes.forEach(function(note, i) {
+    $reviewStatusContainer = $('#notes .console-table tbody > tr:nth-child('+ (i + 1) +') > td:nth-child(2)');
+    if (!$reviewStatusContainer.length) {
+      return;
+    }
+
+    var index = _.findIndex(validTags, ['forum', note.forum]);
+    var $tagWidget = view.mkTagInput(
+      'tag',
+      invitation && invitation.reply.content.tag,
+      index !== -1 ? [validTags[index]] : [],
+      {
+        forum: note.id,
+        placeholder: (invitation && invitation.reply.content.tag.description) || view.prettyInvitationId(invitationId),
+        label: view.prettyInvitationId(invitationId),
+        readOnly: false,
+        onChange: function(id, value, deleted, done) {
+          var body = {
+            id: id,
+            tag: value,
+            signatures: [user.profile.id],
+            readers: [CONFERENCE_ID, user.profile.id],
+            forum: note.id,
+            invitation: invitationId,
+            ddate: deleted ? Date.now() : null
+          };
+          $('.tag-widget button').attr('disabled', true);
+          Webfield.post('/tags', body)
+            .then(function(result) {
+              if (index !== -1) {
+                validTags.splice(index, 1, result);
+              } else {
+                validTags.push(result);
+              }
+              displayPaperRanking(notes, paperRankingInvitation, validTags);
+              done(result);
+            })
+            .fail(function(error) {
+              promptError(error ? error : 'The specified tag could not be updated');
+            });
+        }
+      }
+    );
+    $reviewStatusContainer.find('.tag-widget').remove();
+    $reviewStatusContainer.append($tagWidget);
+  });
+};
+
 
 // Go!
 main();

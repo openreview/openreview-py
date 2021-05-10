@@ -86,9 +86,10 @@ class Matching(object):
         self.conference = conference
         self.client = conference.client
         self.match_group = match_group
+        self.is_reviewer = conference.get_reviewers_id() == match_group.id
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
         self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
-        self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.has_area_chairs
+        self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.use_area_chairs
 
 
     def _get_edge_invitation_id(self, edge_name):
@@ -121,19 +122,37 @@ class Matching(object):
         edge_nonreaders = {
             'values-regex': self.conference.get_authors_id(number='.*')
         }
-        if self.should_read_by_area_chair:
+        if self.is_reviewer:
             if self.conference.use_senior_area_chairs:
                 edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
-            ## Area Chairs should read the edges of the reviewer invitations.
-            edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
+            if self.conference.use_area_chairs:
+                edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
+
             if is_assignment_invitation:
                 if self.conference.use_senior_area_chairs:
                     edge_invitees.append(self.conference.get_senior_area_chairs_id())
                     edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
                     edge_signatures.append(self.conference.get_senior_area_chairs_id(number=paper_number))
-                edge_invitees.append(self.conference.get_area_chairs_id())
-                edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
-                edge_signatures.append(self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'))
+
+                if self.conference.use_area_chairs:
+                    edge_invitees.append(self.conference.get_area_chairs_id())
+                    edge_writers.append(self.conference.get_area_chairs_id(number=paper_number))
+                    edge_signatures.append(self.conference.get_anon_area_chair_id(number=paper_number, anon_id='.*'))
+
+                edge_nonreaders = {
+                    'values': [self.conference.get_authors_id(number=paper_number)]
+                }
+
+        if self.is_area_chair:
+            if self.conference.use_senior_area_chairs:
+                edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+
+            if is_assignment_invitation:
+                if self.conference.use_senior_area_chairs:
+                    edge_invitees.append(self.conference.get_senior_area_chairs_id())
+                    edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+                    edge_signatures.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+
                 edge_nonreaders = {
                     'values': [self.conference.get_authors_id(number=paper_number)]
                 }
@@ -924,12 +943,14 @@ class Matching(object):
             label=assignment_title, groupby='head', select=None)}
         print('proposed_assignment_edges', proposed_assignment_edges)
         assignment_edges = []
-        assginment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
+        assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
+        current_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
         if overwrite:
             if reviews:
                 raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
-            self.client.delete_edges(invitation=assginment_invitation_id, wait_to_finish=True)
+            ## Delete current assignment edges with a ddate in case we need to do rollback
+            self.client.delete_edges(invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
 
         for paper in tqdm(papers, total=len(papers)):
 
@@ -943,7 +964,7 @@ class Matching(object):
                     print('proposed_edge', proposed_edge)
                     paper_group.members.append(proposed_edge['tail'])
                     assignment_edges.append(openreview.Edge(
-                        invitation=assginment_invitation_id,
+                        invitation=assignment_invitation_id,
                         head=paper.id,
                         tail=proposed_edge['tail'],
                         readers=proposed_edge['readers'],
@@ -979,23 +1000,25 @@ class Matching(object):
 
             ac_group_id=self.conference.get_area_chairs_id(paper.number)
 
-            ac_group=ac_groups[ac_group_id]
+            ac_group=ac_groups.get(ac_group_id)
 
-            if len(ac_group.members) == 0:
-                raise openreview.OpenReviewException('AC assignments must be deployed first')
+            if ac_group:
+                if len(ac_group.members) == 0:
+                    raise openreview.OpenReviewException('AC assignments must be deployed first')
 
-            for ac in ac_group.members:
-                sac_assignments = assignment_edges.get(ac)
-                for sac_assignment in sac_assignments:
-                    sac=sac_assignment['tail']
-                    print('sac assignment', sac, ac_group.id)
-                    sac_group_id=ac_group.id.replace(self.conference.area_chairs_name, self.conference.senior_area_chairs_name)
-                    print(sac_group_id)
-                    sac_group=self.client.get_group(sac_group_id)
-                    if overwrite:
-                        sac_group.members=[]
-                    sac_group.members.append(sac)
-                    self.client.post_group(sac_group)
+                for ac in ac_group.members:
+                    sac_assignments = assignment_edges.get(ac, [])
+
+                    for sac_assignment in sac_assignments:
+                        sac=sac_assignment['tail']
+                        print('sac assignment', sac, ac_group.id)
+                        sac_group_id=ac_group.id.replace(self.conference.area_chairs_name, self.conference.senior_area_chairs_name)
+                        print(sac_group_id)
+                        sac_group=self.client.get_group(sac_group_id)
+                        if overwrite:
+                            sac_group.members=[]
+                        sac_group.members.append(sac)
+                        self.client.post_group(sac_group)
 
 
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):

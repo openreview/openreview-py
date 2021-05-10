@@ -578,7 +578,7 @@ var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaCha
     if (num in noteMap) {
       g.members.forEach(function(member, index) {
         var anonGroup = anonAreaChairGroups.find(function(grp) {
-          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num) && grp.members.length && grp.members[0] == member;
+          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && grp.members.length && grp.members[0] == member;
         });
         if (!anonGroup) return;
 
@@ -649,7 +649,7 @@ var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerG
     if(num in noteMap) {
       g.members.forEach(function(member, index) {
         var anonGroup = anonReviewerGroups.find(function(grp) {
-          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num) && grp.members.length && grp.members[0] == member;
+          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_') && grp.members.length && grp.members[0] == member;
         });
         if (!anonGroup) return;
 

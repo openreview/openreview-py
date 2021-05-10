@@ -62,7 +62,7 @@ var getRootGroups = function() {
   }
 
   var filterAnonAreaChairGroups = function(group) {
-    return _.includes(group.id, 'Area_Chair_');
+    return _.includes(group.id, '/Area_Chair_');
   }
 
   var filterSecondaryAreaChairGroups = function(group) {
@@ -86,7 +86,7 @@ var getRootGroups = function() {
       var num = getNumberfromGroup(areaChairGroup.id, 'Paper');
       // Filter out secondary area chairs
       if (!_.includes(secondaryAreaChairPaperNums, num)) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num); });
+        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_'); });
         if (anonGroup) {
           anonids[num] = anonGroup.id;
           areaChairPaperNums.push(parseInt(num));
@@ -180,24 +180,6 @@ var loadData = function(paperNums) {
     blindedNotesP = $.Deferred().resolve([]);
   }
 
-  var filterInvitee = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
-  };
-
-  var filterReply = function(inv) {
-    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
-  }
-
-  var invitationsP = Webfield.getAll('/invitations', {
-    regex: WILDCARD_INVITATION,
-    invitee: true,
-    duedate: true,
-    type: 'all',
-    details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
-  }).then(function(invitations) {
-    return _.filter(_.filter(invitations, filterInvitee), filterReply);
-  });
-
   if (ENABLE_REVIEWER_REASSIGNMENT) {
     allReviewersP = Webfield.get('/groups', { id: REVIEWER_GROUP, select: 'members' })
     .then(function(result) {
@@ -227,7 +209,7 @@ var loadData = function(paperNums) {
   return $.when(
     blindedNotesP,
     getReviewerGroups(noteNumbers),
-    invitationsP,
+    getAllInvitations(),
     allReviewersP,
     acPaperRankingsP,
     reviewerPaperRankingsP,
@@ -266,14 +248,14 @@ var getReviewerGroups = function(noteNumbers) {
     select: 'id,members'
   })
   .then(function(groups) {
-    var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
     var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
 
     _.forEach(reviewerGroups, function(g) {
       var num = getNumberfromGroup(g.id, 'Paper');
       if (num in noteMap) {
           g.members.forEach(function(member, index) {
-            var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+            var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_') && g.members[0] == member; });
             if (anonGroup) {
               var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
               noteMap[num][anonId] = member;
@@ -283,6 +265,47 @@ var getReviewerGroups = function(noteNumbers) {
     });
 
     return noteMap;
+  });
+};
+
+var getAllInvitations = function() {
+
+  var invitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  });
+
+  var edgeInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges',
+    details: 'repliedEdges'
+  });
+
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  });
+
+  var filterInvitee = function(inv) {
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AREA_CHAIR_NAME) !== -1; });
+  };
+
+  return $.when(
+    invitationsP,
+    edgeInvitationsP,
+    tagInvitationsP
+  ).then(function(noteInvitations, edgeInvitations, tagInvitations) {
+    var invitations = noteInvitations.concat(edgeInvitations).concat(tagInvitations);
+    return _.filter(invitations, filterInvitee);
   });
 };
 

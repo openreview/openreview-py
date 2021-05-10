@@ -14,6 +14,9 @@ def process_update(client, group, invitation, existing_group):
         new_members=list(set(group.members) - set(existing_group.members))
         deleted_members=list(set(existing_group.members) - set(group.members))
 
+    print(f'new members {new_members}')
+    print(f'deleted members {deleted_members}')
+
     paper_number=group.id.replace(VENUE_ID + '/Paper', '').split('/')[0]
     notes=client.get_notes(invitation=SUBMISSION_INVITATION_ID, number=paper_number)
     if not notes:
