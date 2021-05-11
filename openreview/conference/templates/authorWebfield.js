@@ -16,6 +16,7 @@ var REVIEW_CONFIDENCE_NAME = 'confidence';
 var HEADER = {};
 var AUTHOR_NAME = 'Authors';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AUTHOR_NAME + '/-/Paper_Ranking';
+var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 
 function main() {
   // In the future this should not be necessary as the group's readers
@@ -76,26 +77,49 @@ function load() {
     }
   });
 
+  return $.when(notesP, getAllInvitations());
+}
+
+var getAllInvitations = function() {
+
+  var invitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    replyto: true,
+    type: 'notes',
+    details: 'replytoNote,repliedNotes'
+  });
+
+  var edgeInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'edges',
+    details: 'repliedEdges'
+  });
+
+  var tagInvitationsP = Webfield.getAll('/invitations', {
+    regex: WILDCARD_INVITATION,
+    invitee: true,
+    duedate: true,
+    type: 'tags',
+    details: 'repliedTags'
+  });
+
   var filterInvitee = function(inv) {
     return _.some(inv.invitees, function(invitee) { return invitee.indexOf(AUTHOR_NAME) !== -1; });
   };
 
-  var filterReply = function(inv) {
-    return _.get(inv, 'reply.replyto') || _.get(inv, 'reply.referent') || _.has(inv, 'reply.content.head') || _.has(inv, 'reply.content.tag');
-  }
-
-  var invitationsP = Webfield.getAll('/invitations', {
-    regex: CONFERENCE_ID + '.*',
-    invitee: true,
-    duedate: true,
-    type: 'all',
-    details: 'replytoNote,repliedNotes,repliedTags,repliedEdges'
-  }).then(function(invitations) {
-    return _.filter(_.filter(invitations, filterInvitee), filterReply);
+  return $.when(
+    invitationsP,
+    edgeInvitationsP,
+    tagInvitationsP
+  ).then(function(noteInvitations, edgeInvitations, tagInvitations) {
+    var invitations = noteInvitations.concat(edgeInvitations).concat(tagInvitations);
+    return _.filter(invitations, filterInvitee);
   });
-
-  return $.when(notesP, invitationsP);
-}
+};
 
 
 // Render functions
@@ -129,7 +153,7 @@ function renderContent(authorNotes, invitations) {
   var tasksOptions = {
     container: '#author-tasks',
     emptyMessage: 'No outstanding tasks for this conference',
-    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)')
+    referrer: encodeURIComponent('[Author Console](/group?id=' + CONFERENCE_ID + '/' + AUTHOR_NAME + '#author-tasks)') + '&t=' + Date.now()
   };
   $(tasksOptions.container).empty();
 

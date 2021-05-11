@@ -620,6 +620,15 @@ class Conference(object):
         readers.append(self.get_reviewers_id(number))
         return readers
 
+    def get_reviewer_paper_group_writers(self, number):
+        readers=[self.id]
+        if self.use_senior_area_chairs:
+            readers.append(self.get_senior_area_chairs_id(number))
+        if self.use_area_chairs:
+            readers.append(self.get_area_chairs_id(number))
+        return readers
+
+
     def get_area_chair_paper_group_readers(self, number):
         readers=[self.id]
         if self.use_senior_area_chairs:
@@ -687,7 +696,7 @@ class Conference(object):
                             readers=self.get_reviewer_paper_group_readers(n.number),
                             nonreaders=[self.get_authors_id(n.number)],
                             deanonymizers=self.get_reviewer_identity_readers(n.number),
-                            writers=[self.id, self.get_area_chairs_id(n.number)],
+                            writers=self.get_reviewer_paper_group_writers(n.number),
                             signatures=[self.id],
                             signatories=[self.id],
                             anonids=True,
@@ -1055,6 +1064,25 @@ class Conference(object):
         self.__create_group(self.get_accepted_authors_id(), self.id)
 
         return self.webfield_builder.set_author_page(self, authors_group)
+
+    def set_impersonators(self, emails = []):
+        # Only super user can call this
+        impersonate_group_id=f'{self.id}/Impersonate'
+        group=tools.get_group(self.client, impersonate_group_id)
+
+        if not group:
+            group=self.client.post_group(openreview.Group(
+                id=impersonate_group_id,
+                readers=[self.id],
+                writers=[],
+                signatures=[],
+                signatories=[self.id],
+                members=[]
+            ))
+
+        group=self.client.add_members_to_group(group, emails)
+
+        return self.webfield_builder.set_impersonate_page(self, group)
 
     def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
         if committee_id is None:
