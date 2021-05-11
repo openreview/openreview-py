@@ -46,8 +46,8 @@ var propertiesAllowed ={
     keywords:['note.content.keywords'],
     reviewer:['reviewProgressData.reviewers'],
     numReviewersAssigned:['reviewProgressData.numReviewers'],
-    numReviewersDone:['reviewProgressData.numSubmittedReviewers'],
-    metaReviewer:['areachairProgressData.areachair.name'],
+    numReviewsDone:['reviewProgressData.numSubmittedReviews'],
+    areaChair:['areachairProgressData.areachair.name'],
     ratingAvg:['reviewProgressData.averageRating'],
     ratingMax:['reviewProgressData.maxRating'],
     ratingMin:['reviewProgressData.minRating'],
@@ -1066,7 +1066,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery) {
   var searchType = container.substring(1).split('-')[0] + 's';
   var placeHolder = enableQuery ? 'Enter search term or type + to start a query and press enter' : 'Search all ' + searchType + '...'
-  var searchBarWidth = enableQuery ? '450px' : '300px'
+  var searchBarWidth = enableQuery ? '440px' : '300px'
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
     '<input type="text" class="form-search form-control" class="form-control" placeholder="' + placeHolder + '" ' +
