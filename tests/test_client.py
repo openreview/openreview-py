@@ -88,17 +88,18 @@ class TestClient():
         response = guest.login_user(username = "openreview.net", password = "1234", expiresIn=4000)
         assert response
 
-    def test_login_expiration(self):
-        client = openreview.Client(username = "openreview.net", password = "1234", tokenExpiresIn=3)
-        group = client.get_group("openreview.net")
-        assert group
-        assert group.members == ['~Super_User1']
-        time.sleep(4)
-        try:
-            group = client.get_group("openreview.net")
-        except openreview.OpenReviewException as e:
-            error = e.args[0]
-            assert e.args[0]['name'] == 'TokenExpiredError'
+    # Uncomment once TokenExpiredError is enabled in the backend
+    # def test_login_expiration(self):
+    #     client = openreview.Client(username = "openreview.net", password = "1234", tokenExpiresIn=3)
+    #     group = client.get_group("openreview.net")
+    #     assert group
+    #     assert group.members == ['~Super_User1']
+    #     time.sleep(4)
+    #     try:
+    #         group = client.get_group("openreview.net")
+    #     except openreview.OpenReviewException as e:
+    #         error = e.args[0]
+    #         assert e.args[0]['name'] == 'TokenExpiredError'
 
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
