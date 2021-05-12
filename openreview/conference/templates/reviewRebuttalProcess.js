@@ -19,7 +19,6 @@ function(){
       //TODO: use the variable instead, when we have anonymous groups integrated
       var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Reviewers';
       var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Area_Chairs';
-      var AREA_CHAIR_1_ID = CONFERENCE_ID + '/Paper' + forum.number + '/Area_Chair1';
       var ignoreGroups = note.nonreaders || [];
       ignoreGroups.push(note.tauthor);
 
@@ -44,7 +43,7 @@ function(){
 
       if (USE_AREA_CHAIRS && (note.readers.includes('everyone') || note.readers.includes(AREA_CHAIRS_ID))) {
         var areachair_mail = {
-          groups: [AREA_CHAIR_1_ID],
+          groups: [AREA_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
           subject : '[' + SHORT_PHRASE + '] Rebuttal posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'A submission to ' + SHORT_PHRASE + ', for which you are an official area chair, has received a rebuttal. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content

@@ -39,8 +39,8 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
         if notes:
             bibtex_note=notes[0]
             bibtex_note.content = {
-                'venue': bibtex_note.content['venue'],
-                'venueid': bibtex_note.content['venueid']
+                'venue': bibtex_note.content.get('venue'),
+                'venueid': bibtex_note.content.get('venueid')
             }
         bibtex_note.content['_bibtex'] = openreview.tools.get_bibtex(
             note,
