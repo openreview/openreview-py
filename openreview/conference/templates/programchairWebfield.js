@@ -508,13 +508,13 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
   var noteMap = buildNoteMap(noteNumbers);
   var areaChairMap = {};
 
-  var anonGroups = _.filter(groups, function(g) { return g.id.includes('Area_Chair_'); });
+  var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Area_Chair_'); });
   var acGroups = _.filter(groups, function(g) { return g.id.endsWith('/Area_Chairs'); });
 
   _.forEach(acGroups, function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && g.members[0] == member; });
         var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
         if (num in noteMap) {
           noteMap[num][anonId] = member;
@@ -568,13 +568,13 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
   var noteMap = buildNoteMap(noteNumbers);
   var reviewerMap = {};
 
-  var anonGroups = _.filter(groups, function(g) { return g.id.includes('Reviewer_'); });
+  var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
   var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
 
   _.forEach(reviewerGroups, function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num) && g.members[0] == member; });
+        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_') && g.members[0] == member; });
         var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
         if (num in noteMap) {
           noteMap[num][anonId] = member;
@@ -965,8 +965,9 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
   if (SENIOR_AREA_CHAIRS_ID) {
+    html += renderInvitation(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding')
     if (invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senioe Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senior Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
     }
   }
   if (AREA_CHAIRS_ID) {
@@ -991,22 +992,22 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<div class="row" style="margin-top: .5rem;">';
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
-    '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
+    '<li><a href="/group/edit?id=' + PROGRAM_CHAIRS_ID + '">Program Chairs</a></li>';
   if (SENIOR_AREA_CHAIRS_ID) {
-      html += '<li><a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '&mode=edit">Senior Area Chairs</a> (' +
-        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
-        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
+      html += '<li><a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '">Senior Area Chairs</a> (' +
+        '<a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '/Invited">Invited</a>, ' +
+        '<a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '/Declined">Declined</a>)</li>';
   }
   if (AREA_CHAIRS_ID) {
-    html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
-      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
+    html += '<li><a href="/group/edit?id=' + AREA_CHAIRS_ID + '">Area Chairs</a> (' +
+      '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Invited">Invited</a>, ' +
+      '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Declined">Declined</a>)</li>';
   }
-  html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
-    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
-    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a> (' +
-    '<a href="/group?id=' + AUTHORS_ID + '/Accepted&mode=edit">Accepted</a>)</li></ul>';
+  html += '<li><a href="/group/edit?id=' + REVIEWERS_ID + '">Reviewers</a> (' +
+    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Invited">Invited</a>, ' +
+    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Declined">Declined</a>)</li>' +
+    '<li><a href="/group/edit?id=' + AUTHORS_ID + '">Authors</a> (' +
+    '<a href="/group/edit?id=' + AUTHORS_ID + '/Accepted">Accepted</a>)</li></ul>';
   html += '</div>';
 
   // Registration Forms

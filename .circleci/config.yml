@@ -7,7 +7,7 @@ jobs:
     docker:
       - image: circleci/python:3.7-node
       - image: circleci/redis:6.0.0
-      - image: circleci/mongo:3.6.4
+      - image: circleci/mongo:4.4.5
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
