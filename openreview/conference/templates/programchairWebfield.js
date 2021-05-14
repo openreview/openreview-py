@@ -1104,7 +1104,6 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     if (enableQuery){
       conferenceStatusData.filteredNotes = null
     }
-    if (!searchText) $('#group-container').find('button.btn.btn-export-data').text('Export')
     $(container + ' .form-search').removeClass('invalid-value');
   
     if (enableQuery && searchText.startsWith('+')) {
@@ -1300,7 +1299,6 @@ var displayPaperStatusTable = function() {
       matchingNoteIds = [];
     }
     if (rowData.length !== filteredRows.length) {
-      $('#group-container').find('button.btn.btn-export-data').text('Export Filtered')
       conferenceStatusData.filteredNotes = filteredRows.map(function (p) {
         return p.note;
       });
@@ -1502,7 +1500,7 @@ var displayPaperStatusTable = function() {
     displaySortPanel(container, sortOptions, sortResults, searchResults, true);
     $(container).find('form.search-form .pull-left').html('<div class="btn-group message-papers-container" role="group">' +
       '<button type="button" class="message-papers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
-        '<span class="glyphicon glyphicon-envelope">&nbsp;</span>'+
+      '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message' +
         '<span class="caret"></span>' +
       '</button>' +
       '<ul class="dropdown-menu">' +
@@ -2844,7 +2842,8 @@ var buildReviewersCSV = function(){
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv'});
-  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv');
+  var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
+  saveAs(blob, fileName);
 });
 
 $('#group-container').on('click', 'button.btn.btn-export-reviewers', function(e) {
