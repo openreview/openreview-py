@@ -2168,6 +2168,7 @@ var buildPaperTableRow = function(note) {
 
   // Build Note Summary Cell
   var cell1 = note;
+  cell1.content.authors = note.details.original ? note.details.original.content.authors : note.content.authors;
   cell1.referrer = paperTableReferrerUrl;
 
   // Build Review Progress Cell
