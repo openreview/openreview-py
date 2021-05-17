@@ -32,6 +32,8 @@ var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var SENIOR_AREA_CHAIRS_INVITED_ID = SENIOR_AREA_CHAIRS_ID ? SENIOR_AREA_CHAIRS_ID + '/Invited' : '';
+var ANON_REVIEWER_NAME = 'Reviewer_';
+var ANON_AREA_CHAIR_NAME = 'Area_Chair_';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAPER_REVIEWS_COMPLETE_THRESHOLD = 3;
 var PAGE_SIZE = 25;
@@ -256,13 +258,43 @@ var getRegistrationForms = function() {
 };
 
 var getInvitationMap = function() {
-  return Webfield.getAll('/invitations', {
-    regex: WILDCARD_INVITATION,
+  //Get the invitations by role
+  var conferenceInvitationsP = Webfield.getAll('/invitations', {
+    regex: CONFERENCE_ID + '/-/.*',
     expired: true,
     type: 'all'
-  })
-  .then(function(wildcardInvitations) {
-    return _.keyBy(wildcardInvitations, 'id');
+  });
+
+  var reviewerInvitationsP = Webfield.getAll('/invitations', {
+    regex: REVIEWERS_ID + '/-/.*',
+    expired: true,
+    type: 'all'
+  });
+
+  var acInvitationsP = $.Deferred().resolve([]);
+
+  if (AREA_CHAIRS_ID) {
+    var acInvitations = Webfield.getAll('/invitations', {
+      regex: AREA_CHAIRS_ID + '/-/.*',
+      expired: true,
+      type: 'all'
+    });
+  }
+
+  var sacInvitationsP = $.Deferred().resolve([]);
+
+  if (SENIOR_AREA_CHAIRS_ID) {
+    var sacInvitations = Webfield.getAll('/invitations', {
+      regex: SENIOR_AREA_CHAIRS_ID + '/-/.*',
+      expired: true,
+      type: 'all'
+    });
+  }
+
+  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP)
+  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations) {
+    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations);
+    return _.keyBy(allInvitations, 'id');
   });
 };
 
@@ -371,11 +403,11 @@ var getGroups = function() {
       var group = groups[groupIdx];
       if (group.id.endsWith('/Reviewers')) {
         reviewerGroups.push(group);
-      } else if (_.includes(group.id, 'Reviewer_')) {
+      } else if (_.includes(group.id, ANON_REVIEWER_NAME)) {
         anonReviewerGroups.push(group);
       } else if (group.id.endsWith('/Area_Chairs')) {
         areaChairGroups.push(group);
-      } else if (_.includes(group.id, 'Area_Chair_')) {
+      } else if (_.includes(group.id, ANON_AREA_CHAIR_NAME)) {
         anonAreaChairGroups.push(group);
       } else if (group.id.endsWith('Senior_Area_Chairs')) {
         seniorAreaChairGroups.push(group);
@@ -572,11 +604,11 @@ var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaCha
     if (num in noteMap) {
       g.members.forEach(function(member, index) {
         var anonGroup = anonAreaChairGroups.find(function(grp) {
-          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && grp.members.length && grp.members[0] == member;
+          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/' + ANON_AREA_CHAIR_NAME) && grp.members.length && grp.members[0] == member;
         });
         if (!anonGroup) return;
 
-        var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
+        var anonId = getNumberfromGroup(anonGroup.id, ANON_AREA_CHAIR_NAME)
         noteMap[num][anonId] = member;
         if (!(member in areaChairMap)) {
           areaChairMap[member] = [];
@@ -621,7 +653,7 @@ var getOfficialReviews = function(notes) {
   var reviewByAnonId = {};
 
   _.forEach(notes, function(n) {
-    var anonId = getNumberfromGroup(n.signatures[0], 'Reviewer_');
+    var anonId = getNumberfromGroup(n.signatures[0], ANON_REVIEWER_NAME);
     // Need to parse rating and confidence strings into ints
     ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
     n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
@@ -643,11 +675,11 @@ var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerG
     if(num in noteMap) {
       g.members.forEach(function(member, index) {
         var anonGroup = anonReviewerGroups.find(function(grp) {
-          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_') && grp.members.length && grp.members[0] == member;
+          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/' + ANON_REVIEWER_NAME) && grp.members.length && grp.members[0] == member;
         });
         if (!anonGroup) return;
 
-        var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
+        var anonId = getNumberfromGroup(anonGroup.id, ANON_REVIEWER_NAME)
         noteMap[num][anonId] = member;
         if (!(member in reviewerMap)) {
           reviewerMap[member] = [];
@@ -2535,7 +2567,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     })
   })
   .then(function(result) {
-    var nextAnonNumber = getNumberfromGroup(result.groups[0].id, 'Reviewer_');
+    var nextAnonNumber = getNumberfromGroup(result.groups[0].id, ANON_REVIEWER_NAME);
     var forumUrl = 'https://openreview.net/forum?' + $.param({
       id: paperForum,
       invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
