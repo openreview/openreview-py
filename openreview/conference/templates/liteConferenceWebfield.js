@@ -130,11 +130,6 @@ function renderConferenceTabs() {
       heading: 'All Submissions',
       id: 'all-submissions',
     });
-  } else {
-    sections.push({
-      heading: 'Your Submissions',
-      id: 'user-submissions',
-    });
   }
 
   Webfield.ui.tabPanel(sections, {
@@ -226,19 +221,6 @@ function renderContent(notesResponse, userGroups, authorNotes) {
     });
   } else {
     $('.tabs-container a[href="#all-submissions"]').parent().hide();
-  }
-
-  // User Submissions tab
-  if (authorNotes && authorNotes.length) {
-    Webfield.ui.searchResults(authorNotes, {
-      container: '#user-submissions',
-      emptyContainer: true,
-      openInNewTab: true,
-      showTags: false,
-      emptyMessage: 'You don\'t have any submissions to ' + view.prettyId(CONFERENCE_ID) + ' yet.'
-    });
-  } else {
-    $('.tabs-container a[href="#user-submissions"]').parent().hide();
   }
 
   $('#notes .spinner-container').remove();
