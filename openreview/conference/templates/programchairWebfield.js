@@ -395,20 +395,32 @@ var getGroups = function() {
     select: 'id,members'
   }).then(function(groups) {
     var reviewerGroups = [];
-    var anonReviewerGroups = [];
+    var anonReviewerGroups = {};
     var areaChairGroups = [];
-    var anonAreaChairGroups = [];
+    var anonAreaChairGroups = {};
     var seniorAreaChairGroups = [];
     for (var groupIdx = 0; groupIdx < groups.length; groupIdx++) {
       var group = groups[groupIdx];
       if (group.id.endsWith('/Reviewers')) {
         reviewerGroups.push(group);
       } else if (_.includes(group.id, ANON_REVIEWER_NAME)) {
-        anonReviewerGroups.push(group);
+        var number = getNumberfromGroup(group.id, 'Paper');
+        if (!(number in anonReviewerGroups)) {
+          anonReviewerGroups[number] = {};
+        }
+        if (group.members.length) {
+          anonReviewerGroups[number][group.members[0]] = group.id;
+        }
       } else if (group.id.endsWith('/Area_Chairs')) {
         areaChairGroups.push(group);
       } else if (_.includes(group.id, ANON_AREA_CHAIR_NAME)) {
-        anonAreaChairGroups.push(group);
+        var number = getNumberfromGroup(group.id, 'Paper');
+        if (!(number in anonAreaChairGroups)) {
+          anonAreaChairGroups[number] = {};
+        }
+        if (group.members.length) {
+          anonAreaChairGroups[number][group.members[0]] = group.id;
+        }
       } else if (group.id.endsWith('Senior_Area_Chairs')) {
         seniorAreaChairGroups.push(group);
       }
@@ -603,12 +615,11 @@ var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaCha
     var num = getNumberfromGroup(g.id, 'Paper');
     if (num in noteMap) {
       g.members.forEach(function(member, index) {
-        var anonGroup = anonAreaChairGroups.find(function(grp) {
-          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/' + ANON_AREA_CHAIR_NAME) && grp.members.length && grp.members[0] == member;
-        });
-        if (!anonGroup) return;
+        var anonPaperGroups = anonAreaChairGroups[num] || [];
+        var anonGroupId = anonPaperGroups[member];
+        if (!anonGroupId) return;
 
-        var anonId = getNumberfromGroup(anonGroup.id, ANON_AREA_CHAIR_NAME)
+        var anonId = getNumberfromGroup(anonGroupId, ANON_AREA_CHAIR_NAME)
         noteMap[num][anonId] = member;
         if (!(member in areaChairMap)) {
           areaChairMap[member] = [];
@@ -674,12 +685,11 @@ var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerG
 
     if(num in noteMap) {
       g.members.forEach(function(member, index) {
-        var anonGroup = anonReviewerGroups.find(function(grp) {
-          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/' + ANON_REVIEWER_NAME) && grp.members.length && grp.members[0] == member;
-        });
-        if (!anonGroup) return;
+        var anonPaperGroups = anonReviewerGroups[num] || [];
+        var anonGroupId = anonPaperGroups[member];
+        if (!anonGroupId) return;
 
-        var anonId = getNumberfromGroup(anonGroup.id, ANON_REVIEWER_NAME)
+        var anonId = getNumberfromGroup(anonGroupId, ANON_REVIEWER_NAME)
         noteMap[num][anonId] = member;
         if (!(member in reviewerMap)) {
           reviewerMap[member] = [];
