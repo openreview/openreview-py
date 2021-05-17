@@ -759,7 +759,7 @@ var calcDecisions = function(blindedNotes) {
   var finalDecisions = [];
   blindedNotes.forEach(function(note) {
     if (note.details.decision) {
-      finalDecisions.push(decision);
+      finalDecisions.push(note.details.decision);
     }
   })
   return finalDecisions;
@@ -1601,7 +1601,7 @@ var displayAreaChairsStatusTable = function() {
     });
 
     var seniorAreaChairProfile;
-    if (numbers && numbers.length) {
+    if (SENIOR_AREA_CHAIRS_ID && numbers && numbers.length) {
       var seniorAreaChair = seniorAreaChairsByNoteNumber[numbers[0]];
       seniorAreaChairProfile = findProfile(seniorAreaChair);
     }
@@ -1705,7 +1705,11 @@ var displayAreaChairsStatusTable = function() {
       var seniorSummaryHtml = Handlebars.templates.committeeSummary(d.seniorSummary);
       var progressHtml = Handlebars.templates.notesAreaChairProgress(d.reviewProgressData);
       var statusHtml = Handlebars.templates.notesAreaChairStatus(d.reviewProgressData);
-      return [number, summaryHtml, seniorSummaryHtml, progressHtml, statusHtml];
+      if (SENIOR_AREA_CHAIRS_ID) {
+        return [number, summaryHtml, seniorSummaryHtml, progressHtml, statusHtml];;
+      } else {
+        return [number, summaryHtml, progressHtml, statusHtml];
+      }
     });
 
     var headings;
@@ -2028,8 +2032,8 @@ var displayReviewerStatusTable = function() {
     var rowData = data.map(function(d, index) {
       var number = '<strong class="note-number">' + (index + 1) + '</strong>';
       var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
-      var progressHtml = Handlebars.templates.notesReviewerProgress(d.reviewProgressData);
-      var statusHtml = Handlebars.templates.notesReviewerStatus(d.reviewStatusData);
+      var progressHtml = Handlebars.templates.notesReviewerProgress(d.reviewerProgressData);
+      var statusHtml = Handlebars.templates.notesReviewerStatus(d.reviewerStatusData);
       return [number, summaryHtml, progressHtml, statusHtml];
     });
 
@@ -2368,32 +2372,28 @@ var buildPCTableRow = function(reviewer, papers) {
     edgeBrowserBidsUrl: buildEdgeBrowserUrl('tail:' + reviewer.id, REVIEWERS_ID, BID_NAME)
   }
 
-  var reviewProgressData = {
-    numCompletedMetaReviews: _.filter(papers, function(p) { return p.details.metareview; }).length,
-    numCompletedReviews: _.filter(papers, function(p) {
-      var reviewerNum;
-      for (var revNumber in p.details.reviewers) {
-        var profile = p.details.reviewers[revNumber];
-        if (_.includes(profile.allNames, reviewer.id) || _.includes(profile.allEmails, reviewer.id)) {
-          reviewerNum = revNumber;
-          break;
-        }
-      }
-      return p.details.reviews[reviewerNum];
-    }).length,
-    numPapers: papers.length,
-    papers: _.sortBy(papers, [function(p) { return p.number; }]),
-    referrer: pcTableReferrerUrl
-  }
-
   var numCompletedReviews = 0;
-  var paperProgressData = _.map(papers, function(paper) {
+  var numCompletedMetaReviews = 0;
+  var numEnteredReviews = 0;
+  var paperProgressData = []
+  var paperReviewerData = []
+  _.forEach(_.sortBy(papers, [function(p) { return p.number; }]), function(paper) {
     var ratings = [];
     var numOfReviewers = 0;
+    var review;
+
+    if (paper.details.metareview) {
+      numCompletedMetaReviews += 1;
+    }
 
     for (var reviewerNum in paper.details.reviewers) {
       if (reviewerNum in paper.details.reviews) {
         ratings.push(paper.details.reviews[reviewerNum].rating);
+        var profile = paper.details.reviewers[reviewerNum];
+        if (_.includes(profile.allNames, reviewer.id) || _.includes(profile.allEmails, reviewer.id)) {
+          review = paper.details.reviews[reviewerNum];
+          numEnteredReviews += 1;
+        }
       }
       numOfReviewers++;
     }
@@ -2411,7 +2411,12 @@ var buildPCTableRow = function(reviewer, papers) {
       numCompletedReviews++;
     }
 
-    return {
+    paperReviewerData.push({
+      note: paper,
+      review: review
+    });
+
+    paperProgressData.push({
       note: paper,
       averageRating: averageRating,
       maxRating: maxRating,
@@ -2419,20 +2424,28 @@ var buildPCTableRow = function(reviewer, papers) {
       numOfReviews: ratings.length,
       numOfReviewers: numOfReviewers,
       metaReview: paper.details.metareview
-    }
+    });
   });
 
-  var reviewStatusData = {
+  var reviewerProgressData = {
+    numCompletedMetaReviews: numCompletedMetaReviews,
+    numCompletedReviews: numEnteredReviews,
+    numPapers: papers.length,
+    papers: paperReviewerData,
+    referrer: pcTableReferrerUrl
+  }
+
+  var reviewerStatusData = {
     numCompletedReviews: numCompletedReviews,
     numPapers: papers.length,
-    papers: _.sortBy(paperProgressData, [function(p) { return p.note.number; }]),
+    papers: paperProgressData,
     referrer: pcTableReferrerUrl
   }
 
   return {
     summary: summary,
-    reviewProgressData: reviewProgressData,
-    reviewStatusData: reviewStatusData
+    reviewerProgressData: reviewerProgressData,
+    reviewerStatusData: reviewerStatusData
   }
 };
 
