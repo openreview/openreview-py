@@ -1229,24 +1229,9 @@ var sendReviewerReminderEmailsStep2 = function(e) {
 var displayPaperStatusTable = function() {
 
   var container = '#paper-status';
-  // var profiles = conferenceStatusData.profiles;
-  // var notes = conferenceStatusData.blindedNotes;
-  // //var completedReviews = conferenceStatusData.officialReviews;
-  // //var metaReviews = conferenceStatusData.metaReviews;
-  // var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
-  // var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
-  // //var decisions = conferenceStatusData.decisions;
   var pcAssignmentTagInvitations = conferenceStatusData.pcAssignmentTagInvitations;
 
   var rowData = _.map(conferenceStatusData.blindedNotes, function(note) {
-    // var revIds = reviewerIds[note.number];
-    // var acIds = areachairIds[note.number];
-    // var acProfiles = Object.keys(acIds).map(function(areachairId) {
-    //   return findProfile(profiles, acIds[areachairId]);
-    // });
-    // var completedReviews = getOfficialReviews(note.details.directReplies.filter(function(reply) { return reply.invitation === getInvitationId(OFFICIAL_REVIEW_NAME, note.number); }));
-    // var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    // var decision = _.find(note.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note);
   });
 
@@ -1913,8 +1898,6 @@ var getReviewerNoteNumbers = function(reviewerProfile, reviewerById) {
 var displayReviewerStatusTable = function() {
   var container = '#reviewer-status';
   var notes = conferenceStatusData.blindedNotes;
-  //var completedReviews = conferenceStatusData.officialReviews;
-  //var metaReviews = conferenceStatusData.metaReviews;
   var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes;
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
 
@@ -1929,20 +1912,6 @@ var displayReviewerStatusTable = function() {
       if (!note) {
         return;
       }
-
-      // var reviewerNum = 0;
-      // var reviewers = reviewerByNote[number];
-      // for (var revNumber in reviewers) {
-      //   var profile = reviewers[revNumber];
-      //   if (_.includes(profile.allNames, reviewer) || _.includes(profile.allEmails, reviewer)) {
-      //     reviewerNum = revNumber;
-      //     break;
-      //   }
-      // }
-
-      // var reviews = note.details.reviews;
-      // var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
-      // var metaReview = note.details.metareview;
 
       papers.push(note);
     });
