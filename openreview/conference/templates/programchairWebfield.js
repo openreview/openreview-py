@@ -1114,7 +1114,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
           class: 'glyphicon glyphicon-info-sign'
         }).hover(function (e) {
           $(e.target).tooltip({
-            title: "query format is {filter}=value<br/>\nand can be combined with AND/OR<br/>\neg. +number<50 AND reviewers=\"first last\"<br/>\navailable filters:".concat(Object.keys(propertiesAllowed).join('<br/>')),
+            title: "<strong class='tooltip-title'>Query Mode Help</strong>\n<p>In Query mode, you can enter an expression and hit ENTER to search.<br/> The expression consists of property of a paper and a value you would like to search.</p><p>e.g. +number=5 will return the paper 5</p><p>Expressions may also be combined with AND/OR.<br>e.g. +number=5 OR number=6 OR number=7 will return paper 5,6 and 7.<br>If the value has multiple words, it should be enclosed in double quotes.<br>e.g. +title=\"some title to search\"</p><p>Braces can be used to organize expressions.<br>e.g. +number=1 OR ((number=5 AND number=7) OR number=8) will return paper 1 and 8.</p><p>Operators available:".concat(filterOperators.join(', '), "</p><p>Properties available:").concat(Object.keys(propertiesAllowed).join(', '), "</p>"),
             html: true,
             placement: 'bottom'
           });
