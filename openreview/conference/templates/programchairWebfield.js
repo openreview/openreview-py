@@ -1258,8 +1258,6 @@ var displayPaperStatusTable = function() {
   }
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' .form-search').val('');
-
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
@@ -1579,6 +1577,7 @@ var displayAreaChairsStatusTable = function() {
   var areachairIds = conferenceStatusData.areaChairGroups.byAreaChairs;
 
   var rowData = [];
+  var filteredRows = null;
   _.forEach(conferenceStatusData.areaChairs, function(areaChair, index) {
     var numbers = areachairIds[areaChair];
     var papers = [];
@@ -1616,13 +1615,11 @@ var displayAreaChairsStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' .form-search').val('');
-
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    rowData = _.orderBy(rowData, sortOptions[newOption], order);
-    renderTable(container, rowData);
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    renderTable(container, rowDataToRender);
   }
 
   var searchResults = function(searchText, isQueryMode) {
@@ -1643,6 +1640,7 @@ var displayAreaChairsStatusTable = function() {
         filteredRows = _.filter(rowData, filterFunc)
       }
       filteredRows = _.orderBy(filteredRows, sortOptions['Area_Chair'], 'asc');
+      order = 'asc';
     } else {
       filteredRows = rowData;
     }
@@ -1801,6 +1799,7 @@ var displayReviewerStatusTable = function() {
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
 
   var rowData = [];
+  var filteredRows = null;
   _.forEach(conferenceStatusData.reviewers, function(reviewer, index) {
     var reviewerProfile = findProfile(conferenceStatusData.profiles, reviewer);
     var numbers = getReviewerNoteNumbers(reviewerProfile, reviewerById);
@@ -1850,13 +1849,11 @@ var displayReviewerStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' .form-search').val('');
-
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    rowData = _.orderBy(rowData, sortOptions[newOption], order);
-    renderTable(container, rowData);
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    renderTable(container, rowDataToRender);
   };
 
   var searchResults = function(searchText, isQueryMode) {
@@ -1877,6 +1874,7 @@ var displayReviewerStatusTable = function() {
         filteredRows = _.filter(rowData, filterFunc)
       }
       filteredRows = _.orderBy(filteredRows, sortOptions['Reviewer_Name'], 'asc');
+      order = 'asc';
     } else {
       filteredRows = rowData;
     }
