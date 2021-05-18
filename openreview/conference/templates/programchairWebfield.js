@@ -1227,7 +1227,7 @@ var displayPaperStatusTable = function() {
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, acProfiles, decision);
   });
-
+  var filteredRows = null;
   var toNumber = function(value) {
     return value === 'N/A' ? 0 : value;
   }
@@ -1263,8 +1263,8 @@ var displayPaperStatusTable = function() {
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    rowData = _.orderBy(rowData, sortOptions[newOption], order);
-    renderTable(container, rowData);
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    renderTable(container, rowDataToRender);
   };
 
   var searchResults = function(searchText, isQueryMode) {
@@ -1279,7 +1279,6 @@ var displayPaperStatusTable = function() {
       );
     };
 
-    var filteredRows;
     if (searchText) {
       if (isQueryMode) {
         var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id');
@@ -1294,6 +1293,7 @@ var displayPaperStatusTable = function() {
       matchingNoteIds = filteredRows.map(function (row) {
         return row.note.id;
       });
+      order = 'asc'
     } else {
       filteredRows = rowData;
       matchingNoteIds = [];
