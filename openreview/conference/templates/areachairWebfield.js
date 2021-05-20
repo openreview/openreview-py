@@ -23,6 +23,27 @@ var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
 var REVIEWER_PAPER_RANKING_ID = REVIEWER_GROUP + '/-/Paper_Ranking';
 
+var filterOperators = ['!=','>=','<=','>','<','=']; // sequence matters
+var propertiesAllowed ={
+    number:['note.number'],
+    id:['note.id'],
+    title:['note.content.title'],
+    author:['note.content.authors','note.content.authorids'], // multi props
+    keywords:['note.content.keywords'],
+    reviewer:['reviewProgressData.reviewers'],
+    numReviewersAssigned:['reviewProgressData.numReviewers'],
+    numReviewsDone:['reviewProgressData.numSubmittedReviews'],
+    ratingAvg:['reviewProgressData.averageRating'],
+    ratingMax:['reviewProgressData.maxRating'],
+    ratingMin:['reviewProgressData.minRating'],
+    confidenceAvg:['reviewProgressData.averageConfidence'],
+    confidenceMax:['reviewProgressData.maxConfidence'],
+    confidenceMin:['reviewProgressData.minConfidence'],
+    replyCount:['reviewProgressData.forumReplyCount'],
+    recommendation:['metaReviewData.recommendation'],
+    ranking:['metaReviewData.ranking']
+}
+
 var reviewerSummaryMap = {};
 var conferenceStatusData = {};
 var reviewerOptions = [];
@@ -442,21 +463,24 @@ var renderStatusTable = function(conferenceStatusData, container) {
     return buildTableRow(note, reviewersById, noteCompletedReviews, metaReview, metaReviewInvitation, conferenceStatusData.acRankingByPaper[note.forum], conferenceStatusData.reviewerRankingByPaper[note.forum] || {});
   });
 
+  var filteredRows = null;
+
   // Sort form handler
   var order = 'desc';
+
   var sortOptions = {
-    Paper_Number: function(row) { return row[1].number; },
-    Paper_Title: function(row) { return _.toLower(_.trim(row[2].content.title)); },
-    Number_of_Forum_Replies: function(row) { return row[3].forumReplyCount; },
-    Number_of_Reviews_Submitted: function(row) { return row[3].numSubmittedReviews; },
-    Number_of_Reviews_Missing: function(row) { return row[3].numReviewers - row[3].numSubmittedReviews; },
-    Average_Rating: function(row) { return row[3].averageRating === 'N/A' ? 0 : row[3].averageRating; },
-    Max_Rating: function(row) { return row[3].maxRating === 'N/A' ? 0 : row[3].maxRating; },
-    Min_Rating: function(row) { return row[3].minRating === 'N/A' ? 0 : row[3].minRating; },
-    Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
-    Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
-    Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
-    Meta_Review_Recommendation: function(row) { return row[4].recommendation; }
+    Paper_Number: function(row) { return row.paperNumber.number; },
+    Paper_Title: function(row) { return _.toLower(_.trim(row.note.content.title)); },
+    Number_of_Forum_Replies: function(row) { return row.reviewProgressData.forumReplyCount; },
+    Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
+    Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+    Average_Rating: function(row) { return row.reviewProgressData.averageRating === 'N/A' ? 0 : row.reviewProgressData.averageRating; },
+    Max_Rating: function(row) { return row.reviewProgressData.maxRating === 'N/A' ? 0 : row.reviewProgressData.maxRating; },
+    Min_Rating: function(row) { return row.reviewProgressData.minRating === 'N/A' ? 0 : row.reviewProgressData.minRating; },
+    Average_Confidence: function(row) { return row.reviewProgressData.averageConfidence === 'N/A' ? 0 : row.reviewProgressData.averageConfidence; },
+    Max_Confidence: function(row) { return row.reviewProgressData.maxConfidence === 'N/A' ? 0 : row.reviewProgressData.maxConfidence; },
+    Min_Confidence: function(row) { return row.reviewProgressData.minConfidence === 'N/A' ? 0 : row.reviewProgressData.minConfidence; },
+    Meta_Review_Recommendation: function(row) { return row.metaReviewData.recommendation; }
   };
 
   if (showRankings) {
@@ -467,8 +491,41 @@ var renderStatusTable = function(conferenceStatusData, container) {
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    renderTable(_.orderBy(rows, sortOptions[newOption], order), container);
+    renderTable(_.orderBy(filteredRows === null ? rows : filteredRows, sortOptions[newOption], order), container);
   }
+
+  var searchResults = function(searchText,isQueryMode) {
+    $(container + ' #form-sort').val('Paper_Number');
+
+    // Currently only searching on note number and note title
+    var filterFunc = function(row) {
+      return (
+        (row.note.number + '').indexOf(searchText) === 0 ||
+        row.note.content.title.toLowerCase().indexOf(searchText) !== -1
+      );
+    };
+    
+    if (searchText) {
+      if (isQueryMode) {
+        var filterResult = Webfield.filterCollections(rows, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id')
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
+        if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
+      } else {
+        filteredRows = _.filter(rows, filterFunc)
+      }
+      filteredRows = _.orderBy(filteredRows, sortOptions['Paper_Number'], 'asc');
+      order = 'asc'
+    } else {
+      filteredRows = rows;
+    }
+    if (rows.length !== filteredRows.length) {
+      conferenceStatusData.filteredNotes = filteredRows.map(function (p) {
+        return p.note;
+      });
+    }
+    renderTable(filteredRows, container);
+  };
 
   // Message modal handler
   var sendReviewerReminderEmailsStep1 = function(e) {
@@ -567,10 +624,11 @@ var renderStatusTable = function(conferenceStatusData, container) {
     return '<option value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
   }).join('\n');
 
+  //#region sortBarHtml
   var sortBarHtml = '<form class="form-inline search-form clearfix" role="search">' +
     '<div id="div-msg-reviewers" class="btn-group" role="group">' +
       '<button id="message-reviewers-btn" type="button" class="btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
-        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message ' +
         '<span class="caret"></span>' +
       '</button>' +
       '<ul class="dropdown-menu" aria-labelledby="grp-msg-reviewers-btn">' +
@@ -579,13 +637,17 @@ var renderStatusTable = function(conferenceStatusData, container) {
         '<li><a id="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
-    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>' +
+    '<div class="btn-group"><button class="btn btn-export-data" type="button">Export</button></div>' +
     '<div class="pull-right">' +
+      '<strong style="vertical-align: middle;">Search:</strong>' +
+      '<input type="text" class="form-search form-control" class="form-control" placeholder="Enter search term or type + to start a query and press enter" style="width:440px; margin-right: 1.5rem; line-height: 34px;">' +
       '<strong>Sort By:</strong> ' +
-      '<select id="form-sort" class="form-control">' + sortOptionHtml + '</select>' +
-      '<button id="form-order" class="btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' +
+      '<select id="form-sort" class="form-control" style="width: 250px; line-height: 1rem;">' + sortOptionHtml + '</select>' +
+      '<button id="form-order" class="btn btn-icon" type="button"><span class="glyphicon glyphicon-sort"></span></button>' +
     '</div>' +
   '</form>';
+  //#endregion
+  
   if (rows.length) {
     $(container).empty().append(sortBarHtml);
   }
@@ -630,6 +692,47 @@ var renderStatusTable = function(conferenceStatusData, container) {
     return false;
   });
 
+  $(container + ' .form-search').on('keyup', function (e) {
+    var searchText = $(container + ' .form-search').val().trim();
+    var searchLabel = $(container + ' .form-search').prevAll('strong:first').text();
+    conferenceStatusData.filteredNotes = null
+    $(container + ' .form-search').removeClass('invalid-value');
+  
+    if (searchText.startsWith('+')) {
+      // filter query mode
+      if (searchLabel === 'Search:') {
+        $(container + ' .form-search').prevAll('strong:first').text('Query:');
+        $(container + ' .form-search').prevAll('strong:first').after($('<span/>', {
+          class: 'glyphicon glyphicon-info-sign'
+        }).hover(function (e) {
+          $(e.target).tooltip({
+            title: "<strong class='tooltip-title'>Query Mode Help</strong>\n<p>In Query mode, you can enter an expression and hit ENTER to search.<br/> The expression consists of property of a paper and a value you would like to search.</p><p>e.g. +number=5 will return the paper 5</p><p>Expressions may also be combined with AND/OR.<br>e.g. +number=5 OR number=6 OR number=7 will return paper 5,6 and 7.<br>If the value has multiple words, it should be enclosed in double quotes.<br>e.g. +title=\"some title to search\"</p><p>Braces can be used to organize expressions.<br>e.g. +number=1 OR ((number=5 AND number=7) OR number=8) will return paper 1 and 8.</p><p>Operators available:".concat(filterOperators.join(', '), "</p><p>Properties available:").concat(Object.keys(propertiesAllowed).join(', '), "</p>"),
+            html: true,
+            placement: 'bottom'
+          });
+        }));
+      }
+  
+      if (e.key === 'Enter') {
+        searchResults(searchText, true);
+      }
+    } else {
+      if (searchLabel !== 'Search:') {
+        $(container + ' .form-search').prev().remove(); // remove info icon
+  
+        $(container + ' .form-search').prev().text('Search:');
+      }
+  
+      _.debounce(function () {
+        searchResults(searchText.toLowerCase(),false);
+      }, 300)();
+    }
+  });
+
+  $(container + ' form.search-form').on('submit', function() {
+    return false;
+  });
+
   if (rows.length) {
     renderTable(rows, container);
   } else {
@@ -648,20 +751,23 @@ var renderSecondaryStatusTable = function(conferenceStatusData, container) {
     return buildTableRow(note, revIds, noteCompletedReviews, metaReview, undefined, conferenceStatusData.acRankingByPaper[note.forum], conferenceStatusData.reviewerRankingByPaper[note.forum] || {}, 'secondary');
   });
 
+  rows = Object.values(rows)
+
   var order = 'desc';
+
   var sortOptions = {
-    Paper_Number: function(row) { return row[1].number; },
-    Paper_Title: function(row) { return _.toLower(_.trim(row[2].content.title)); },
-    Number_of_Forum_Replies: function(row) { return row[3].forumReplyCount; },
-    Number_of_Reviews_Submitted: function(row) { return row[3].numSubmittedReviews; },
-    Number_of_Reviews_Missing: function(row) { return row[3].numReviewers - row[3].numSubmittedReviews; },
-    Average_Rating: function(row) { return row[3].averageRating === 'N/A' ? 0 : row[3].averageRating; },
-    Max_Rating: function(row) { return row[3].maxRating === 'N/A' ? 0 : row[3].maxRating; },
-    Min_Rating: function(row) { return row[3].minRating === 'N/A' ? 0 : row[3].minRating; },
-    Average_Confidence: function(row) { return row[3].averageConfidence === 'N/A' ? 0 : row[3].averageConfidence; },
-    Max_Confidence: function(row) { return row[3].maxConfidence === 'N/A' ? 0 : row[3].maxConfidence; },
-    Min_Confidence: function(row) { return row[3].minConfidence === 'N/A' ? 0 : row[3].minConfidence; },
-    Meta_Review_Recommendation: function(row) { return row[4].recommendation; }
+    Paper_Number: function(row) { return row.paperNumber.number; },
+    Paper_Title: function(row) { return _.toLower(_.trim(row.note.content.title)); },
+    Number_of_Forum_Replies: function(row) { return row.reviewProgressData.forumReplyCount; },
+    Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
+    Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+    Average_Rating: function(row) { return row.reviewProgressData.averageRating === 'N/A' ? 0 : row.reviewProgressData.averageRating; },
+    Max_Rating: function(row) { return row.reviewProgressData.maxRating === 'N/A' ? 0 : row.reviewProgressData.maxRating; },
+    Min_Rating: function(row) { return row.reviewProgressData.minRating === 'N/A' ? 0 : row.reviewProgressData.minRating; },
+    Average_Confidence: function(row) { return row.reviewProgressData.averageConfidence === 'N/A' ? 0 : row.reviewProgressData.averageConfidence; },
+    Max_Confidence: function(row) { return row.reviewProgressData.maxConfidence === 'N/A' ? 0 : row.reviewProgressData.maxConfidence; },
+    Min_Confidence: function(row) { return row.reviewProgressData.minConfidence === 'N/A' ? 0 : row.reviewProgressData.minConfidence; },
+    Meta_Review_Recommendation: function(row) { return row.metaReviewData.recommendation; }
   };
 
   var sortResults = function(newOption, switchOrder) {
@@ -774,9 +880,8 @@ var renderTableRows = function(rows, container, secondary_meta) {
     Handlebars.templates.noteReviewers,
     Handlebars.templates.noteMetaReviewStatus
   ];
-
   var rowsHtml = rows.map(function(row) {
-    return row.map(function(cell, i) {
+    return Object.values(row).map(function(cell, i) {
       return templateFuncs[i](cell);
     });
   });
@@ -1018,7 +1123,13 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     cell3.invitationUrl = '/forum?' + $.param(invitationUrlParams);;
   }
 
-  return [cellCheck, cell0, cell1, cell2, cell3];
+  return {
+    cellCheck: cellCheck,
+    paperNumber: cell0,
+    note: cell1,
+    reviewProgressData: cell2,
+    metaReviewData: cell3,
+  }
 };
 
 // Event Handlers
@@ -1307,7 +1418,7 @@ var registerEventHandlers = function() {
 
   var buildCSV = function(){
     var profiles = conferenceStatusData.profiles;
-    var notes = conferenceStatusData.blindedNotes;
+    var notes = conferenceStatusData.filteredNotes ? conferenceStatusData.filteredNotes : conferenceStatusData.blindedNotes;
     var reviewerIds = conferenceStatusData.noteToReviewerIds;
     var reviewerRankingByPaper = conferenceStatusData.reviewerRankingByPaper;
     var acRankingByPaper = conferenceStatusData.acRankingByPaper;
@@ -1332,7 +1443,7 @@ var registerEventHandlers = function() {
       var revIds = reviewerIds[note.number] || Object.create(null);
       var metaReview = _.find(note.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
       var noteCompletedReviews = getOfficialReviews((note.details.directReplies || []).filter(function(reply) { return reply.invitation === getInvitationId(OFFICIAL_REVIEW_NAME, note.number); }));
-      var paperTableRow = buildTableRow(note, revIds, noteCompletedReviews, metaReview, null, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {});
+      var paperTableRow = Object.values(buildTableRow(note, revIds, noteCompletedReviews, metaReview, null, acRankingByPaper[note.forum], reviewerRankingByPaper[note.forum] || {}));
 
       var title = paperTableRow[2]['content']['title'].replace(/"/g, '""');
       var abstract = paperTableRow[2]['content']['abstract'].replace(/"/g, '""');
@@ -1367,7 +1478,7 @@ var registerEventHandlers = function() {
 
   $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
     var blob = new Blob(buildCSV(), {type: 'text/csv'});
-    saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_AC_paper_status.csv',);
+    saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_').concat(conferenceStatusData.filteredNotes ? '_AC_paper_status(Filtered).csv' : '_AC_paper_status.csv'));
     return false;
   });
 };
