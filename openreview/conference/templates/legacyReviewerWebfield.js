@@ -11,12 +11,12 @@ var AREACHAIR_NAME = '';
 var OFFICIAL_REVIEW_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var LEGACY_INVITATION_ID = false;
-var REVIEW_LOAD = '';
+var REVIEW_LOAD = 0;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
+var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
 var CUSTOM_LOAD_INVITATION = CONFERENCE_ID + '/-/Reduced_Load';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Paper_Ranking';
-var CUSTOM_MAX_PAPERS_ID = CONFERENCE_ID + '/' + REVIEWER_NAME + '/-/Custom_Max_Papers';
 
 var main = function() {
   // In the future this should not be necessary as the group's readers
@@ -40,9 +40,9 @@ var main = function() {
 
   loadReviewerData()
     .then(function(
-      blindedNotes, officialReviews, invitations, customLoad, groupByNumber
+      blindedNotes, officialReviews, invitations, edgeInvitations, tagInvitations, customLoad, groupByNumber
     ) {
-      if (customLoad) {
+      if (customLoad > 0) {
         $('#header .description').append(
           '<p class="dark">You have agreed to review up to <strong>' + customLoad + ' papers</strong>.</p>'
         );
@@ -52,7 +52,7 @@ var main = function() {
 
       // Add paper ranking tag widgets to the table of submissions
       // If tag invitation does not exist, get existing tags and display read-only
-      var paperRankingInvitation = _.find(invitations, ['id', PAPER_RANKING_ID]);
+      var paperRankingInvitation = _.find(tagInvitations, ['id', PAPER_RANKING_ID]);
       if (paperRankingInvitation) {
         var paperRankingTags = paperRankingInvitation.details.repliedTags || [];
         displayPaperRanking(blindedNotes, paperRankingInvitation, paperRankingTags, groupByNumber);
@@ -66,7 +66,7 @@ var main = function() {
           });
       }
 
-      displayTasks(invitations);
+      displayTasks(invitations, edgeInvitations, tagInvitations);
       Webfield.ui.done();
     })
     .fail(function(error) {
@@ -102,25 +102,20 @@ var buildNoteMap = function(noteNumbers) {
 
 // AJAX functions
 var getReviewerNoteNumbers = function() {
-  return Webfield.getAll('/groups', {
-    regex: WILDCARD_INVITATION,
+  return Webfield.get('/groups', {
+    regex: ANONREVIEWER_WILDCARD,
     member: user.id
-  }).then(function(groups) {
-
-    var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
-    var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
-
-    var groupByNumber = {};
-    _.forEach(reviewerGroups, function(reviewerGroup) {
-      var num = getNumberFromGroup(reviewerGroup.id, 'Paper');
-      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_'); });
-      if (anonGroup) {
-        groupByNumber[num] = anonGroup.id;
+  }).then(function(result) {
+    if (!result.groups) {
+      return [];
+    }
+    return result.groups.reduce(function(groupByNumber, group) {
+      var number = getNumberFromGroup(group.id, 'Paper');
+      if (number) {
+        groupByNumber[number] = group.id;
       }
-    });
-
-    return groupByNumber;
-
+      return groupByNumber;
+    }, {});
   });
 };
 
@@ -132,7 +127,6 @@ var getBlindedNotes = function(noteNumbers) {
   return Webfield.get('/notes', {
     invitation: BLIND_SUBMISSION_ID,
     number: noteNumbers.join(','),
-    select: 'id,number,forum,content.title,content.authors,content.authorDomains,content.pdf',
     details: 'invitation'
   }).then(function(result) {
     return result.notes || [];
@@ -144,84 +138,70 @@ var getOfficialReviews = function(noteNumbers) {
     return $.Deferred().resolve([]);
   }
 
-  var promises = _.map(noteNumbers, function(noteNumber) {
-    return Webfield.get('/notes', {
-      invitation: getInvitationId(OFFICIAL_REVIEW_NAME, noteNumber),
-      tauthor: true
-    }).then(function(result) {
-      return result.notes || [];
-    });
-  });
-
-  return $.when.apply($, promises).then(function() {
-    return _.flatten(_.values(arguments));
+  return Webfield.get('/notes', {
+    invitation: getInvitationId(OFFICIAL_REVIEW_NAME, '.*'), tauthor: true
+  }).then(function(result) {
+    return result.notes || [];
   });
 };
 
-var getAllInvitations = function() {
-
-  var invitationsP = Webfield.getAll('/invitations', {
+var getNoteInvitations = function() {
+  return Webfield.get('/invitations', {
     regex: WILDCARD_INVITATION,
     invitee: true,
     duedate: true,
     replyto: true,
     type: 'notes',
     details: 'replytoNote,repliedNotes'
+  }).then(function(result) {
+    return result.invitations || [];
   });
+};
 
-  var edgeInvitationsP = Webfield.getAll('/invitations', {
+var getEdgeInvitations = function() {
+  return Webfield.get('/invitations', {
     regex: WILDCARD_INVITATION,
     invitee: true,
     duedate: true,
     type: 'edges',
     details: 'repliedEdges'
+  }).then(function(result) {
+    return result.invitations || [];
   });
+};
 
-  var tagInvitationsP = Webfield.getAll('/invitations', {
+var getTagInvitations = function() {
+  return Webfield.get('/invitations', {
     regex: WILDCARD_INVITATION,
     invitee: true,
     duedate: true,
     type: 'tags',
     details: 'repliedTags'
-  });
-
-  var filterInvitee = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(REVIEWER_NAME) !== -1; });
-  };
-
-  return $.when(
-    invitationsP,
-    edgeInvitationsP,
-    tagInvitationsP
-  ).then(function(noteInvitations, edgeInvitations, tagInvitations) {
-    var invitations = noteInvitations.concat(edgeInvitations).concat(tagInvitations);
-    return _.filter(invitations, filterInvitee);
+  }).then(function(result) {
+    return result.invitations || [];
   });
 };
 
 var getCustomLoad = function(userIds) {
-  return Webfield.get('/edges', { invitation: CUSTOM_MAX_PAPERS_ID, tail: user.id })
-    .then(function(result) {
-      if (result.edges && result.edges.length) {
-        return result.edges[0].weight;
-      }
-      return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user' })
-      .then(function(result) {
-        if (!result.notes || !result.notes.length) {
-          return REVIEW_LOAD;
-        }
-        if (result.notes.length === 1) {
-          return result.notes[0].content.reviewer_load;
-        } else {
-          // If there is more than one there might be a Program Chair
-          var loads = result.notes.filter(function(note) {
-            return userIds.indexOf(note.content.user) > -1;
-          });
-          return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
-        }
-      });
-    })
+  if (REVIEW_LOAD <= 0) {
+    return $.Deferred().resolve(0);
+  }
 
+  return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION })
+    .then(function(result) {
+      if (!result.notes || !result.notes.length) {
+        return REVIEW_LOAD;
+      }
+      if (result.notes.length === 1) {
+        return result.notes[0].content.reviewer_load;
+      } else {
+        // If there is more than one there might be a Program Chair
+        var loads = result.notes.filter(function(note) {
+          return userIds.indexOf(note.content.user) > -1;
+        });
+        return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
+      }
+    });
 };
 
 var loadReviewerData = function() {
@@ -233,7 +213,9 @@ var loadReviewerData = function() {
       return $.when(
         getBlindedNotes(noteNumbers),
         getOfficialReviews(noteNumbers),
-        getAllInvitations(),
+        getNoteInvitations(),
+        getEdgeInvitations(),
+        getTagInvitations(),
         getCustomLoad(userIds),
         groupByNumber
       );
@@ -383,7 +365,7 @@ var displayPaperRanking = function(notes, paperRankingInvitation, paperRankingTa
   });
 };
 
-var displayTasks = function(invitations) {
+var displayTasks = function(invitations, edgeInvitations, tagInvitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#reviewer-tasks',
@@ -392,7 +374,7 @@ var displayTasks = function(invitations) {
   }
   $(tasksOptions.container).empty();
 
-  Webfield.ui.newTaskList(invitations, [], tasksOptions)
+  Webfield.ui.newTaskList(invitations, edgeInvitations.concat(tagInvitations), tasksOptions)
   $('.tabs-container a[href="#reviewer-tasks"]').parent().show();
 };
 

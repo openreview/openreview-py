@@ -152,7 +152,7 @@ class TestSingleBlindConference():
             due_date = now + datetime.timedelta(minutes = 40),
             public=True,
             email_pcs=True,
-            create_groups=True,
+            create_groups=False,
             withdrawn_submission_public=True,
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
@@ -383,6 +383,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
@@ -506,6 +507,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
@@ -756,3 +758,6 @@ url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + notes[0].forum + '''}
 }'''
+
+        assert notes[0].content['_bibtex'] == valid_bibtex
+        assert ['everyone'] == notes[0].readers

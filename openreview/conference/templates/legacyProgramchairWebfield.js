@@ -27,9 +27,9 @@ var PROGRAM_CHAIRS_ID = '';
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/(Senior_)?Area_Chairs|/Program_Chairs)?/-/.*';
-var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/Reviewer';
-var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair';
+var WILDCARD_INVITATION = CONFERENCE_ID + '(/Reviewers|/(Senior_)+Area_Chairs|/Program_Chairs)?/-/.*';
+var ANONREVIEWER_WILDCARD = CONFERENCE_ID + '/Paper.*/AnonReviewer.*';
+var AREACHAIR_WILDCARD = CONFERENCE_ID + '/Paper.*/Area_Chair[0-9]';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
@@ -72,7 +72,6 @@ var main = function() {
     getPcAssignmentTags(),
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
-    getBidCounts(SENIOR_AREA_CHAIRS_ID),
     getAreaChairRecommendationCounts(),
     getGroupMembersCount(REVIEWERS_INVITED_ID),
     getGroupMembersCount(AREA_CHAIRS_INVITED_ID),
@@ -95,7 +94,6 @@ var main = function() {
     pcAssignmentTags,
     reviewerBidCounts,
     areaChairBidCounts,
-    seniorAreaChairBidCounts,
     areaChairRecommendationCounts,
     reviewersInvitedCount,
     areaChairsInvitedCount,
@@ -141,7 +139,7 @@ var main = function() {
       decisions: decisions,
       pcAssignmentTagInvitations: invitationMap[PC_PAPER_TAG_INVITATION],
       acRankingByPaper: acRankingByPaper,
-      bidEnabled: invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME] || invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME] || invitationMap[REVIEWERS_ID + '/-/' + BID_NAME],
+      bidEnabled: invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME] || invitationMap[REVIEWERS_ID + '/-/' + BID_NAME],
       recommendationEnabled: invitationMap[REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME],
       requestForm: requestForm,
       registrationForms: registrationForms,
@@ -159,10 +157,6 @@ var main = function() {
       reviewersCount: reviewers.length,
       areaChairsCount: areaChairs.length,
       seniorAreaChairsCount: seniorAreaChairs.length,
-      sacBidsComplete: calcBidsComplete(
-        seniorAreaChairBidCounts,
-        invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME]
-      ),
       acBidsComplete: calcBidsComplete(
         areaChairBidCounts,
         invitationMap[AREA_CHAIRS_ID + '/-/' + BID_NAME]
@@ -464,13 +458,13 @@ var getNumberfromGroup = function(groupId, name) {
     return _.startsWith(token, name);
   });
 
-  return paper ? paper.replace(name, '') : null;
+  return paper ? parseInt(paper.replace(name, ''), 10) : null;
 };
 
 var getPaperNumbersfromGroups = function(groups) {
-  return _.map(groups, function(group) {
-    return parseInt(getNumberfromGroup(group.id, 'Paper'));
-  });
+  return _.filter(_.map(groups, function(group) {
+    return getNumberfromGroup(group.id, 'Paper');
+  }), _.isInteger);
 };
 
 var getInvitationId = function(name, number) {
@@ -478,6 +472,16 @@ var getInvitationId = function(name, number) {
     return CONFERENCE_ID + '/-/Paper' + number + '/' + name;
   }
   return CONFERENCE_ID + '/Paper' + number + '/-/' + name;
+};
+
+var findNextAnonGroupNumber = function(paperNumber) {
+  var paperReviewerNums = Object.keys(reviewerSummaryMap[paperNumber].reviewers).sort(function(a, b) { return parseInt(a) - parseInt(b);});
+  for (var i = 1; i < paperReviewerNums.length + 1; i++) {
+    if (i.toString() !== paperReviewerNums[i - 1]) {
+      return i;
+    }
+  }
+  return paperReviewerNums.length + 1;
 };
 
 var findProfile = function(profiles, id) {
@@ -508,22 +512,27 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
   var noteMap = buildNoteMap(noteNumbers);
   var areaChairMap = {};
 
-  var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Area_Chair_'); });
-  var acGroups = _.filter(groups, function(g) { return g.id.endsWith('/Area_Chairs'); });
-
-  _.forEach(acGroups, function(g) {
+  groups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
-    g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && g.members[0] == member; });
-        var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
-        if (num in noteMap) {
-          noteMap[num][anonId] = member;
-          if (!(member in areaChairMap)) {
-            areaChairMap[member] = [];
-          }
-          areaChairMap[member].push(num);
-        }
-    })
+    if (!(num && num in noteMap)) {
+      return;
+    }
+    var index = parseInt(_.last(g.id)) - 1;
+
+    var areaChair = _.find(g.members, function(member) {
+      return member.indexOf('~') > -1 || member.indexOf('@') > -1;
+    });
+    if (!areaChair) {
+      return;
+    }
+
+    if (num in noteMap) {
+      noteMap[num][index] = areaChair;
+    }
+    if (!(areaChair in areaChairMap)) {
+      areaChairMap[areaChair] = [];
+    }
+    areaChairMap[areaChair].push(num);
   });
 
   return {
@@ -549,7 +558,7 @@ var buildOfficialReviewMap = function(noteNumbers, notes) {
       var index = n.signatures[0];
     } else {
       var num = getNumberfromGroup(n.signatures[0], 'Paper');
-      var index = getNumberfromGroup(n.signatures[0], 'Reviewer_');
+      var index = getNumberfromGroup(n.signatures[0], 'AnonReviewer');
     }
 
     if (num && num in noteMap) {
@@ -568,22 +577,21 @@ var buildReviewerGroupMaps = function(noteNumbers, groups) {
   var noteMap = buildNoteMap(noteNumbers);
   var reviewerMap = {};
 
-  var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
-  var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
-
-  _.forEach(reviewerGroups, function(g) {
+  _.forEach(groups, function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
-    g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_') && g.members[0] == member; });
-        var anonId = getNumberfromGroup(anonGroup.id, 'Reviewer_')
-        if (num in noteMap) {
-          noteMap[num][anonId] = member;
-          if (!(member in reviewerMap)) {
-            reviewerMap[member] = [];
+    var index = getNumberfromGroup(g.id, 'AnonReviewer');
+    if (num) {
+      if (g.members.length) {
+        var reviewer = g.members[0];
+        if ((num in noteMap)) {
+          noteMap[num][index] = reviewer;
+          if (!(reviewer in reviewerMap)) {
+            reviewerMap[reviewer] = [];
           }
-          reviewerMap[member].push(num);
+          reviewerMap[reviewer].push(num);
         }
-    })
+      }
+    }
   });
 
   return {
@@ -643,7 +651,7 @@ var calcReviewersComplete = function(reviewerGroupMaps, officialReviews) {
       var assignedReviewers = reviewerGroupMaps.byNotes[n];
       var anonGroupNumber = _.findKey(assignedReviewers, function(v) { return v === reviewer; });
       return _.find(officialReviews, function(r) {
-        return r.signatures[0] === CONFERENCE_ID + '/Paper' + n + '/Reviewer_' + anonGroupNumber;
+        return r.signatures[0] === CONFERENCE_ID + '/Paper' + n + '/AnonReviewer' + anonGroupNumber;
       });
     });
     return allSubmitted ? numComplete + 1 : numComplete;
@@ -857,13 +865,6 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   if (bidEnabled || recommendationEnabled) {
     html += '<div class="row" style="margin-top: .5rem;">';
-    if (bidEnabled && REVIEWERS_ID) {
-      html += renderStatContainer(
-        'Reviewer Bidding Progress:',
-        renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
-        '% of Reviewers who have completed the required number of bids'
-      );
-    }
     if (bidEnabled && AREA_CHAIRS_ID) {
       html += renderStatContainer(
         'AC Bidding Progress:',
@@ -878,11 +879,11 @@ var displayStatsAndConfiguration = function(conferenceStats) {
         '% of ACs who have completed the required number of reviewer recommendations'
       );
     }
-    if (bidEnabled && SENIOR_AREA_CHAIRS_ID) {
+    if (bidEnabled && REVIEWERS_ID) {
       html += renderStatContainer(
-        'SAC Bidding Progress:',
-        renderProgressStat(conferenceStats.sacBidsComplete, conferenceStats.seniorAreaChairsCount),
-        '% of SACs who have completed the required number of bids'
+        'Reviewer Bidding Progress:',
+        renderProgressStat(conferenceStats.reviewerBidsComplete, conferenceStats.reviewersCount),
+        '% of Reviewers who have completed the required number of bids'
       );
     }
     html += '</div>';
@@ -965,9 +966,8 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
   html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
   if (SENIOR_AREA_CHAIRS_ID) {
-    html += renderInvitation(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding')
     if (invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senior Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senioe Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
     }
   }
   if (AREA_CHAIRS_ID) {
@@ -992,22 +992,22 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<div class="row" style="margin-top: .5rem;">';
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
-    '<li><a href="/group/edit?id=' + PROGRAM_CHAIRS_ID + '">Program Chairs</a></li>';
+    '<li><a href="/group?id=' + PROGRAM_CHAIRS_ID + '&mode=edit">Program Chairs</a></li>';
   if (SENIOR_AREA_CHAIRS_ID) {
-      html += '<li><a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '">Senior Area Chairs</a> (' +
-        '<a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '/Invited">Invited</a>, ' +
-        '<a href="/group/edit?id=' + SENIOR_AREA_CHAIRS_ID + '/Declined">Declined</a>)</li>';
+      html += '<li><a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '&mode=edit">Senior Area Chairs</a> (' +
+        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
+        '<a href="/group?id=' + SENIOR_AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
   }
   if (AREA_CHAIRS_ID) {
-    html += '<li><a href="/group/edit?id=' + AREA_CHAIRS_ID + '">Area Chairs</a> (' +
-      '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Invited">Invited</a>, ' +
-      '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Declined">Declined</a>)</li>';
+    html += '<li><a href="/group?id=' + AREA_CHAIRS_ID + '&mode=edit">Area Chairs</a> (' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Invited&mode=edit">Invited</a>, ' +
+      '<a href="/group?id=' + AREA_CHAIRS_ID + '/Declined&mode=edit">Declined</a>)</li>';
   }
-  html += '<li><a href="/group/edit?id=' + REVIEWERS_ID + '">Reviewers</a> (' +
-    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Invited">Invited</a>, ' +
-    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Declined">Declined</a>)</li>' +
-    '<li><a href="/group/edit?id=' + AUTHORS_ID + '">Authors</a> (' +
-    '<a href="/group/edit?id=' + AUTHORS_ID + '/Accepted">Accepted</a>)</li></ul>';
+  html += '<li><a href="/group?id=' + REVIEWERS_ID + '&mode=edit">Reviewers</a> (' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Invited&mode=edit">Invited</a>, ' +
+    '<a href="/group?id=' + REVIEWERS_ID + '/Declined&mode=edit">Declined</a>)</li>' +
+    '<li><a href="/group?id=' + AUTHORS_ID + '&mode=edit">Authors</a> (' +
+    '<a href="/group?id=' + AUTHORS_ID + '/Accepted&mode=edit">Accepted</a>)</li></ul>';
   html += '</div>';
 
   // Registration Forms
@@ -1027,9 +1027,6 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     html += '<div class="col-md-4 col-xs-6">'
     html += '<h4>Bids & Recommendations:</h4><ul style="padding-left: 15px">';
     html += '<li><a href="' + buildEdgeBrowserUrl(null, REVIEWERS_ID, BID_NAME) + '">Reviewer Bids</a></li>';
-    if (SENIOR_AREA_CHAIRS_ID) {
-      html += '<li><a href="' + buildEdgeBrowserUrl(null, SENIOR_AREA_CHAIRS_ID, BID_NAME) + '">Senior Area Chair Bids</a></li>';
-    }
     if (AREA_CHAIRS_ID) {
       html += '<li><a href="' + buildEdgeBrowserUrl(null, AREA_CHAIRS_ID, BID_NAME) + '">Area Chair Bids</a></li>';
       if (recommendationEnabled) {
@@ -1164,10 +1161,22 @@ var displayPaperStatusTable = function() {
 
   var rowData = _.map(notes, function(note) {
     var revIds = reviewerIds[note.number];
-    var acIds = areachairIds[note.number];
-    var acProfiles = Object.keys(acIds).map(function(areachairId) {
-      return findProfile(profiles, acIds[areachairId]);
-    });
+    var acProfiles = [];
+    var areachairId = areachairIds[note.number][0];
+    var areachairProfileOne = {}
+    if (areachairId) {
+      areachairProfileOne = findProfile(profiles, areachairId);
+    } else {
+      areachairProfileOne.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.email = '-';
+    }
+    acProfiles.push(areachairProfileOne);
+    areachairId = areachairIds[note.number][1];
+    var areachairProfileTwo = {}
+    if (areachairId) {
+      areachairProfileTwo = findProfile(profiles, areachairId);
+      acProfiles.push(areachairProfileTwo);
+    }
     var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, acProfiles, decision);
@@ -1512,7 +1521,7 @@ var displayAreaChairsStatusTable = function() {
     var numbers = areachairIds[areaChair];
     var papers = [];
     _.forEach(numbers, function(number) {
-      var note = _.find(notes, ['number', parseInt(number)]);
+      var note = _.find(notes, ['number', number]);
       if (!note) {
         return;
       }
@@ -1726,7 +1735,7 @@ var displayReviewerStatusTable = function() {
 
     var papers = [];
     _.forEach(numbers, function(number) {
-      var note = _.find(notes, ['number', parseInt(number)]);
+      var note = _.find(notes, ['number', number]);
       if (!note) {
         return;
       }
@@ -1999,11 +2008,7 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
         name: reviewer.name,
         email: reviewer.email,
         forum: note.forum,
-        forumUrl: '/forum?' + $.param({
-          id: note.forum,
-          noteId: note.id,
-          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, note.number)
-        }),
+        forumUrl: forumUrl,
         paperNumber: note.number,
         reviewerNumber: reviewerNum,
         lastReminderSent: lastReminderSent ?
@@ -2051,10 +2056,10 @@ var buildPaperTableRow = function(note, reviewerIds, completedReviews, metaRevie
   };
   reviewerSummaryMap[note.number] = reviewProgressData;
 
-  var areaChairNames = { name: 'No Area Chair' };
-  if (areachairProfile.length) {
-    areaChairNames.name = areachairProfile.map(function(p) { return p.name; }).join(', ');
-    areaChairNames.email = areachairProfile.map(function(p) { return p.email; }).join(', ');
+  var areaChairNames = { name: areachairProfile[0].name, email: areachairProfile[0].email }
+  if (areachairProfile.length > 1) {
+    areaChairNames.name = areaChairNames.name + ', ' + areachairProfile[1].name;
+    areaChairNames.email = areaChairNames.email + ', ' + areachairProfile[1].email;
   }
   var areachairProgressData = {
     numMetaReview: metaReview ? 'One' : 'No',
@@ -2299,6 +2304,7 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     userToAdd = userToAdd.toLowerCase();
   }
 
+  var nextAnonNumber = findNextAnonGroupNumber(paperNumber);
   var reviewerProfile = {
     email : userToAdd,
     id : userToAdd,
@@ -2319,19 +2325,27 @@ $('#group-container').on('click', 'button.btn.btn-assign-reviewer', function(e) 
     })
   })
   .then(function(result) {
+    var commonReaders = [CONFERENCE_ID, CONFERENCE_ID + '/Program_Chairs'];
+    if (AREA_CHAIRS_ID) {
+      commonReaders.push(CONFERENCE_ID + '/Paper' + paperNumber + '/Area_Chairs');
+    }
+    return Webfield.post('/groups', {
+      id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber,
+      members: [reviewerProfile.id],
+      readers: commonReaders.concat(CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber),
+      nonreaders: [CONFERENCE_ID + '/Paper' + paperNumber + '/Authors'],
+      writers: commonReaders,
+      signatures: [CONFERENCE_ID + '/Program_Chairs'],
+      signatories: [CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + nextAnonNumber]
+    })
+  })
+  .then(function(result) {
     return Webfield.put('/groups/members', {
       id: REVIEWERS_ID,
       members: [reviewerProfile.id]
     })
   })
   .then(function(result) {
-    return Webfield.get('/groups', {
-      id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewer_.*',
-      member: reviewerProfile.id
-    })
-  })
-  .then(function(result) {
-    var nextAnonNumber = getNumberfromGroup(result.groups[0].id, 'Reviewer_');
     var forumUrl = 'https://openreview.net/forum?' + $.param({
       id: paperForum,
       invitationId: CONFERENCE_ID + '/-/Paper' + paperNumber + '/Official_Review'
@@ -2408,6 +2422,12 @@ $('#group-container').on('click', 'a.unassign-reviewer-link', function(e) {
   Webfield.delete('/groups/members', {
     id: CONFERENCE_ID + '/Paper' + paperNumber + '/Reviewers',
     members: membersToDelete
+  })
+  .then(function(result) {
+    return Webfield.delete('/groups/members', {
+      id: CONFERENCE_ID + '/Paper' + paperNumber + '/AnonReviewer' + reviewerNumber,
+      members: membersToDelete
+    });
   })
   .then(function(result) {
 
@@ -2488,13 +2508,13 @@ $('#group-container').on('click', 'a.show-activity-modal', function(e) {
   );
   $('#reviewer-activity-modal').modal('show');
 
-  Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/Reviewer_' + reviewerNum })
+  Webfield.get('/notes', { signature: CONFERENCE_ID + '/Paper' + paperNum + '/AnonReviewer' + reviewerNum })
     .then(function(response) {
       $('#reviewer-activity-modal .modal-body').empty();
       Webfield.ui.searchResults(response.notes, {
         container: '#reviewer-activity-modal .modal-body',
         openInNewTab: true,
-        emptyMessage: 'Reviewer ' + reviewerNum + ' has not posted any comments or reviews yet.'
+        emptyMessage: 'AnonReviewer' + reviewerNum + ' has not posted any comments or reviews yet.'
       });
     });
 
@@ -2752,3 +2772,4 @@ $('#group-container').on('click', 'button.btn.btn-export-reviewers', function(e)
   var blob = new Blob(buildReviewersCSV(), {type: 'text/csv'});
   saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_reviewer_status.csv',);
 });
+

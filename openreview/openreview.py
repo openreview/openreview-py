@@ -7,6 +7,7 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
+from . import tools
 import requests
 import pprint
 import os
@@ -107,7 +108,7 @@ class Client(object):
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
-        response = requests.get(self.baseurl + '/impersonate', params={ 'groupId': group_id }, headers=self.headers)
+        response = requests.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -284,7 +285,7 @@ class Client(object):
         """
         Get a single Profile by id, if available
 
-        :param email_or_id: e-mail or id of the profile
+        :param email_or_id: e-mail confirmed or id of the profile
         :type email_or_id: str, optional
 
         :return: Profile object with its information
@@ -296,7 +297,7 @@ class Client(object):
             if tildematch.match(email_or_id):
                 att = 'id'
             else:
-                att = 'email'
+                att = 'confirmedEmail'
             params[att] = email_or_id
         response = requests.get(self.profiles_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -306,76 +307,12 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile not found'])
 
-    @deprecated(version='0.9.20', reason="Use search_profiles instead")
-    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
-        """
-        Gets a list of profiles
-
-        :param email_or_id_list: List of ids or emails
-        :type email_or_id_list: list, optional
-        :param id: OpenReview username id
-        :type id: str, optional
-        :param email: e-mail registered in OpenReview
-        :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-
-        :return: List of profiles
-        :rtype: list[Profile]
-        """
-
-        ## Deprecated, don't use it
-        if email_or_id_list is not None:
-            pure_tilde_ids = all(['~' in i for i in email_or_id_list])
-            pure_emails = all(['@' in i for i in email_or_id_list])
-
-            def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return [Profile.from_json(p) for p in response.json()['profiles']]
-
-            def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return { p['email'] : Profile.from_json(p['profile'])
-                    for p in response.json()['profiles'] }
-
-            if pure_tilde_ids:
-                get_response = get_ids_response
-                update_result = lambda result, response: result.extend(response)
-                result = []
-            elif pure_emails:
-                get_response = get_emails_response
-                update_result = lambda result, response: result.update(response)
-                result = {}
-            else:
-                raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
-
-            done = False
-            offset = 0
-            limit = 1000
-            while not done:
-                current_batch = email_or_id_list[offset:offset+limit]
-                offset += limit
-                response = get_response(current_batch)
-                update_result(result, response)
-                if len(current_batch) < limit:
-                    done = True
-
-            return result
-
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
-        response = self.__handle_response(response)
-        return [Profile.from_json(p) for p in response.json()['profiles']]
-
-    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
+        :param confirmedEmails: List of confirmed emails registered in OpenReview
+        :type confirmedEmails: list, optional
         :param emails: List of emails registered in OpenReview
         :type emails: list, optional
         :param ids: List of OpenReview username ids
@@ -389,7 +326,7 @@ class Client(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles
+        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
         :rtype: list[Profile]
         """
 
@@ -417,7 +354,28 @@ class Client(object):
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
-            return {p['email']: Profile.from_json(p) for p in full_response}
+            profiles_by_email = {}
+            for p in full_response:
+                if p['email'] not in profiles_by_email:
+                    profiles_by_email[p['email']] = []
+                profiles_by_email[p['email']].append(Profile.from_json(p))
+            return profiles_by_email
+
+        if confirmedEmails:
+            full_response = []
+            for email_batch in batches(confirmedEmails):
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            profiles_by_email = {}
+            for p in full_response:
+                profile = Profile.from_json(p)
+                if p['email'] in profile.content['emailsConfirmed']:
+                    profiles_by_email[p['email']] = profile
+            return profiles_by_email
+
+
 
         if ids:
             full_response = []
@@ -1090,7 +1048,7 @@ class Client(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1117,6 +1075,7 @@ class Client(object):
             delete_query['tail'] = tail
 
         delete_query['waitToFinish'] = wait_to_finish
+        delete_query['softDelete'] = soft_delete
 
         response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
@@ -1166,7 +1125,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1195,7 +1154,8 @@ class Client(object):
             'ignoreGroups': ignoreRecipients,
             'from': sender,
             'replyTo': replyTo,
-            'parentGroup': parentGroup
+            'parentGroup': parentGroup,
+            'useJob': useJob
             }, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1437,9 +1397,10 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
         # post attributes
         self.id=id
+        self.invitation=invitation
         self.cdate = cdate
         self.ddate = ddate
         self.tcdate = tcdate
@@ -1458,6 +1419,8 @@ class Group(object):
         if web_string:
             self.web = web_string
 
+        self.anonids = anonids
+        self.deanonymizers = deanonymizers
         self.details = details
 
     def __repr__(self):
@@ -1478,6 +1441,7 @@ class Group(object):
         """
         body = {
             'id': self.id,
+            'invitation': self.invitation,
             'cdate': self.cdate,
             'ddate': self.ddate,
             'signatures': self.signatures,
@@ -1486,6 +1450,8 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
+            'anonids': self.anonids,
+            'deanonymizers': self.deanonymizers,
             'web': self.web,
             'details': self.details
         }
@@ -1504,6 +1470,7 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            invitation=g.get('invitation'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),
@@ -1514,6 +1481,8 @@ class Group(object):
             nonreaders = g.get('nonreaders'),
             signatories = g.get('signatories'),
             signatures = g.get('signatures'),
+            anonids=g.get('anonids'),
+            deanonymizers=g.get('deanonymizers'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
@@ -1637,6 +1606,7 @@ class Invitation(object):
         web_string = None,
         process = None,
         process_string = None,
+        preprocess = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -1668,6 +1638,7 @@ class Invitation(object):
         self.details = details
         self.web = None
         self.process = None
+        self.preprocess = None
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1682,6 +1653,8 @@ class Invitation(object):
             self.process = process_string
         if web_string:
             self.web = web_string
+        if preprocess is not None:
+            self.preprocess=preprocess
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1726,6 +1699,8 @@ class Invitation(object):
             body['web']=self.web
         if hasattr(self,'process'):
             body['process']=self.process
+        if hasattr(self,'preprocess'):
+            body['preprocess']=self.preprocess
         return body
 
     @classmethod
@@ -1764,6 +1739,8 @@ class Invitation(object):
             invitation.process = i['process']
         if 'transform' in i:
             invitation.transform = i['transform']
+        if 'preprocess' in i:
+            invitation.preprocess = i['preprocess']
         return invitation
 
 class Note(object):
@@ -2070,7 +2047,8 @@ class Edge(object):
             head = e.get('head'),
             tail = e.get('tail'),
             weight = e.get('weight'),
-            label = e.get('label')
+            label = e.get('label'),
+            tauthor=e.get('tauthor')
         )
         return edge
 
@@ -2141,6 +2119,30 @@ class Profile(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+
+    def get_preferred_name(self, pretty=False):
+        username=self.id
+        for name in self.content['names']:
+            if 'username' in name and name.get('preferred', False):
+                username=name['username']
+        if pretty:
+            return tools.pretty_id(username)
+        return username
+
+    def get_preferred_email(self):
+        preferred_email=self.content.get('preferredEmail')
+        if preferred_email:
+            return preferred_email
+
+        if self.content['emailsConfirmed']:
+            return self.content['emailsConfirmed'][0]
+
+        if self.content['emails']:
+            return self.content['emails'][0]
+
+        return None
+
 
     def to_json(self):
         """

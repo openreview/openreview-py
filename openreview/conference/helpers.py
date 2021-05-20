@@ -114,7 +114,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     desk_rejected_submission_reveal_authors = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
-    create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
+    submission_release=(note.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
+    create_groups=(not double_blind) and public and submission_release
+    create_review_invitation = create_groups and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
 
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
@@ -128,7 +130,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
         email_pcs=False, ## Need to add this setting to the form
-        create_groups=(not double_blind),
+        create_groups=create_groups,
         create_review_invitation=create_review_invitation,
         withdrawn_submission_public=withdrawn_submission_public,
         withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
@@ -148,6 +150,21 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     ## Contact Emails is deprecated
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
     builder.set_conference_program_chairs_ids(program_chair_ids)
+    builder.use_legacy_anonids(note.content.get('reviewer_identity') is None)
+
+    readers_map = {
+        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+    }
+
+    builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])
+    builder.set_area_chair_identity_readers([readers_map[r] for r in note.content.get('area_chair_identity', [])])
+    builder.set_senior_area_chair_identity_readers([readers_map[r] for r in note.content.get('senior_area_chair_identity', [])])
 
     return builder
 
@@ -240,18 +257,21 @@ def get_meta_review_stage(client, request_forum):
     else:
         meta_review_due_date = None
 
-    additional_fields = {}
+    meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
-        additional_fields = {'recommendation': {
+        meta_review_form_additional_options['recommendation'] = {
             'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
-            'required': True}}
+            'required': True}
+
+    meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
 
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
-        additional_fields = additional_fields
+        additional_fields = meta_review_form_additional_options,
+        remove_fields = meta_review_form_remove_options
     )
 
 def get_decision_stage(client, request_forum):
