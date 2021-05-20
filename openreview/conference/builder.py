@@ -1245,6 +1245,7 @@ class Conference(object):
                             verbose = False)
                         recruitment_status['reminded'].append(reviewer_id)
                     except openreview.OpenReviewException as e:
+                        self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
                         recruitment_status['errors'].append(e)
 
         if retry_declined:
@@ -1267,6 +1268,7 @@ class Conference(object):
                             reviewers_invited_id,
                             verbose = False)
                     except openreview.OpenReviewException as e:
+                        self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
                         recruitment_status['errors'].append(e)
 
         print ('Sending recruitment invitations')
@@ -1295,6 +1297,7 @@ class Conference(object):
                         verbose = False)
                     recruitment_status['invited'].append(email)
                 except openreview.OpenReviewException as e:
+                    self.client.remove_members_from_group(reviewers_invited_group, email)
                     recruitment_status['errors'].append(e)
         return recruitment_status
 
