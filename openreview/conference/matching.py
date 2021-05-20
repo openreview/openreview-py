@@ -664,6 +664,21 @@ class Matching(object):
                         'required': False,
                         'default': 'No',
                         'order': 20
+                    },
+                    'randomized_probability_limits': {
+                        'description': 'Enter the probability limits if the selected solver is Randomized',
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*',
+                        'required': False,
+                        'default': '1',
+                        'order': 21
+                    },
+                    'randomized_fraction_of_opt': {
+                        'description': 'result of randomized assignment',
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*',
+                        'required': False,
+                        'default': '1',
+                        'order': 22,
+                        'hidden': True
                     }
                 }
             })
