@@ -448,7 +448,9 @@ var renderHeader = function() {
 var renderTable = function(rows, container, secondary_meta) {
   renderTableRows(rows, container, secondary_meta);
   if (showRankings && !secondary_meta) {
-    postRenderTable(rows);
+    postRenderTable(rows.map(function (row) {
+      return Object.values(row);
+    }));
   }
 }
 
