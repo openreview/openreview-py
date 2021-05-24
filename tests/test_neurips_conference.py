@@ -617,9 +617,9 @@ class TestNeurIPSConference():
             writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
             signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
             content = {
-                'title': 'Paper title 5 Rev' ,
-                'abstract': 'This is an abstract 5',
-                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@newdomain.com'],
+                'title': 'Paper title 5' ,
+                'abstract': 'This is an abstract 5 Rev',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
                 'authors': ['Test User', 'Peter Test', 'Andrew Mc']
             }
         )
@@ -627,14 +627,14 @@ class TestNeurIPSConference():
 
         updated_note=test_client.get_note(submissions[0].id)
         assert updated_note
-        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@newdomain.com', '~Test_User1']
-        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@newdomain.com', '~Test_User1']
+        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~Test_User1']
+        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~Test_User1']
 
         helpers.await_queue()
 
         author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
         assert author_group
-        assert author_group.members == ['test@mail.com', 'peter@mail.com', 'andrew@newdomain.com']
+        assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
 
 
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
