@@ -527,7 +527,7 @@ class TestNeurIPSConference():
         }
 
 
-    def test_submit_papers(self, test_client, client):
+    def test_submit_papers(self, test_client, client, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -607,6 +607,35 @@ class TestNeurIPSConference():
             client.post_invitation(invitation)
 
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Supplementary_Material')
+
+        ## Post a revision, add an author and check the permissions
+        submissions=test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission', sort='number:desc')
+        note = openreview.Note(referent=submissions[0].id,
+            forum = submissions[0].id,
+            invitation = 'NeurIPS.cc/2021/Conference/Paper5/-/Revision',
+            readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'Paper title 5 Rev' ,
+                'abstract': 'This is an abstract 5',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@newdomain.com'],
+                'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+            }
+        )
+        note = test_client.post_note(note)
+
+        updated_note=test_client.get_note(submissions[0].id)
+        assert updated_note
+        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@newdomain.com', '~Test_User1']
+        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@newdomain.com', '~Test_User1']
+
+        helpers.await_queue()
+
+        author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
+        assert author_group
+        assert author_group.members == ['test@mail.com', 'peter@mail.com', 'andrew@newdomain.com']
+
 
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 

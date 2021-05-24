@@ -206,6 +206,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
             signatures = [conference.get_id()],
             invitees = invitees,
             multiReply = True,
+            taskCompletionCount = 1,
             reply = {
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']

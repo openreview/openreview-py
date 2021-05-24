@@ -171,7 +171,7 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        under_submission = not self.submission_stage.due_date or datetime.datetime.utcnow() < self.submission_stage.due_date
+        under_submission = self.submission_stage.is_under_submission()
         return self.invitation_builder.set_submission_invitation(self, under_submission=under_submission)
 
     def __create_expertise_selection_stage(self):
@@ -1523,7 +1523,7 @@ class SubmissionStage(object):
         if self.create_groups:
             return {'values': ['everyone']}
 
-        if under_submission:
+        if under_submission or self.double_blind:
             readers = {
                 'values-copied': [
                     conference.get_id(),
@@ -1581,6 +1581,10 @@ class SubmissionStage(object):
             content['pdf']['required'] = False
 
         return content
+
+    def is_under_submission(self):
+        final_due_date = self.second_due_date if self.second_due_date else self.due_date
+        return not final_due_date or datetime.datetime.utcnow() < final_due_date
 
 class ExpertiseSelectionStage(object):
 
