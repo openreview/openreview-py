@@ -171,7 +171,7 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        under_submission = not self.submission_stage.due_date or datetime.datetime.utcnow() < self.submission_stage.due_date
+        under_submission = self.submission_stage.is_under_submission()
         return self.invitation_builder.set_submission_invitation(self, under_submission=under_submission)
 
     def __create_expertise_selection_stage(self):
@@ -1235,15 +1235,18 @@ class Conference(object):
                         reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
-
-                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        'Reminder: ' + recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
-                    recruitment_status['reminded'].append(reviewer_id)
+                    try:
+                        tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                            hash_seed,
+                            invitation.id,
+                            recruit_message,
+                            'Reminder: ' + recruit_message_subj,
+                            reviewers_invited_id,
+                            verbose = False)
+                        recruitment_status['reminded'].append(reviewer_id)
+                    except openreview.OpenReviewException as e:
+                        self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
+                        recruitment_status['errors'].append(e)
 
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
@@ -1256,14 +1259,17 @@ class Conference(object):
                         reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
-
-                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
+                    try:
+                        tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                            hash_seed,
+                            invitation.id,
+                            recruit_message,
+                            recruit_message_subj,
+                            reviewers_invited_id,
+                            verbose = False)
+                    except openreview.OpenReviewException as e:
+                        self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
+                        recruitment_status['errors'].append(e)
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
@@ -1291,6 +1297,7 @@ class Conference(object):
                         verbose = False)
                     recruitment_status['invited'].append(email)
                 except openreview.OpenReviewException as e:
+                    self.client.remove_members_from_group(reviewers_invited_group, email)
                     recruitment_status['errors'].append(e)
         return recruitment_status
 
@@ -1523,7 +1530,7 @@ class SubmissionStage(object):
         if self.create_groups:
             return {'values': ['everyone']}
 
-        if under_submission:
+        if under_submission or self.double_blind:
             readers = {
                 'values-copied': [
                     conference.get_id(),
@@ -1581,6 +1588,10 @@ class SubmissionStage(object):
             content['pdf']['required'] = False
 
         return content
+
+    def is_under_submission(self):
+        final_due_date = self.second_due_date if self.second_due_date else self.due_date
+        return not final_due_date or datetime.datetime.utcnow() < final_due_date
 
 class ExpertiseSelectionStage(object):
 
