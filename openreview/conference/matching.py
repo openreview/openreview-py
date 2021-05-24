@@ -676,7 +676,7 @@ class Matching(object):
                         'description': 'result of randomized assignment',
                         'value-regex': r'[-+]?[0-9]*\.?[0-9]*',
                         'required': False,
-                        'default': '1',
+                        'default': '',
                         'order': 22,
                         'hidden': True
                     }
