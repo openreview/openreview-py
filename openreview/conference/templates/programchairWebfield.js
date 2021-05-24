@@ -1102,7 +1102,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     var searchText = $(container + ' .form-search').val().trim();
     var searchLabel = $(container + ' .form-search').prevAll('strong:first').text();
     if (enableQuery){
-      conferenceStatusData.filteredNotes = null
+      conferenceStatusData.filteredRows = null
     }
     $(container + ' .form-search').removeClass('invalid-value');
   
@@ -1297,9 +1297,7 @@ var displayPaperStatusTable = function() {
       matchingNoteIds = [];
     }
     if (rowData.length !== filteredRows.length) {
-      conferenceStatusData.filteredNotes = filteredRows.map(function (p) {
-        return p.note;
-      });
+      conferenceStatusData.filteredRows = filteredRows
     }
     renderTable(container, filteredRows);
   };
@@ -2674,7 +2672,8 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
 
 var buildCSV = function(){
   var profiles = conferenceStatusData.profiles;
-  var notes = conferenceStatusData.filteredNotes ? conferenceStatusData.filteredNotes : conferenceStatusData.blindedNotes;
+  var isFiltered = conferenceStatusData.filteredRows ? true : false
+  var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
@@ -2707,18 +2706,20 @@ var buildCSV = function(){
   'ac ranking',
   'decision'].join(',') + '\n');
 
-  _.forEach(notes, function(note) {
-    var revIds = reviewerIds[note.number];
-    var areachairId = areachairIds[note.number][0];
+  _.forEach(notes, function(noteObj) {
+    var paperTableRow = null;
+    var noteNumber = isFiltered ? noteObj.note.number : noteObj.number;
+    var noteForum = isFiltered? noteObj.note.forum: noteObj.forum;
+    var areachairId = areachairIds[noteNumber][0];
     var areachairProfileOne = {}
     if (areachairId) {
       areachairProfileOne = findProfile(profiles, areachairId);
     } else {
-      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chairs');
       areachairProfileOne.name = '-';
       areachairProfileOne.email = '-';
     }
-    areachairId = areachairIds[note.number][1];
+    areachairId = areachairIds[noteNumber][1];
     var areachairProfileTwo = {}
     if (areachairId) {
       areachairProfileTwo = findProfile(profiles, areachairId);
@@ -2727,9 +2728,16 @@ var buildCSV = function(){
       areachairProfileOne.name = '-';
       areachairProfileTwo.email = '';
     }
-    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
-    var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, [areachairProfileOne, areachairProfileTwo], decision);
+
+    if(isFiltered){
+      paperTableRow = noteObj
+    } else {
+      var revIds = reviewerIds[noteNumber];
+      var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, noteNumber)]);
+      var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, noteNumber)]);
+      var paperTableRow = buildPaperTableRow(noteObj, revIds, completedReviews[noteNumber], metaReview, [areachairProfileOne, areachairProfileTwo], decision);
+    }
+    
     var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
@@ -2744,7 +2752,7 @@ var buildCSV = function(){
         missingReviewers.push(r.id);
       }
     });
-    rowData.push([paperTableRow.note.number,
+    rowData.push([noteNumber,
     '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
     '"' + title + '"',
     '"' + abstract + '"',
@@ -2765,7 +2773,7 @@ var buildCSV = function(){
     areachairProfileTwo.id,
     areachairProfileTwo.name,
     areachairProfileTwo.email,
-    acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag,
+    acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
     paperTableRow.decision && paperTableRow.decision.content.decision
     ].join(',') + '\n');
   });
