@@ -527,7 +527,7 @@ class TestNeurIPSConference():
         }
 
 
-    def test_submit_papers(self, test_client, client):
+    def test_submit_papers(self, test_client, client, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -607,6 +607,35 @@ class TestNeurIPSConference():
             client.post_invitation(invitation)
 
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Supplementary_Material')
+
+        ## Post a revision, add an author and check the permissions
+        submissions=test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission', sort='number:desc')
+        note = openreview.Note(referent=submissions[0].id,
+            forum = submissions[0].id,
+            invitation = 'NeurIPS.cc/2021/Conference/Paper5/-/Revision',
+            readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'Paper title 5' ,
+                'abstract': 'This is an abstract 5 Rev',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
+                'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+            }
+        )
+        note = test_client.post_note(note)
+
+        updated_note=test_client.get_note(submissions[0].id)
+        assert updated_note
+        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~Test_User1']
+        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~Test_User1']
+
+        helpers.await_queue()
+
+        author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
+        assert author_group
+        assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
+
 
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
@@ -1856,53 +1885,62 @@ OpenReview Team'''
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
 
-    # def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
+    def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
-    #     submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
-    #     assert len(submissions) == 5
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        assert len(submissions) == 5
 
-    #     withdrawn_note = test_client.post_note(openreview.Note(
-    #         forum=submissions[0].id,
-    #         replyto=submissions[0].id,
-    #         invitation=f'NeurIPS.cc/2021/Conference/Paper5/-/Withdraw',
-    #         readers = [
-    #             'NeurIPS.cc/2021/Conference',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Authors',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
-    #             'NeurIPS.cc/2021/Conference/Program_Chairs'],
-    #         writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
-    #         signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
-    #         content = {
-    #             'title': 'Submission Withdrawn by the Authors',
-    #             'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-    #         }
-    #     ))
-    #     helpers.await_queue()
+        withdrawn_note = test_client.post_note(openreview.Note(
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            invitation=f'NeurIPS.cc/2021/Conference/Paper5/-/Withdraw',
+            readers = [
+                'NeurIPS.cc/2021/Conference',
+                'NeurIPS.cc/2021/Conference/Paper5/Authors',
+                'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs'],
+            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
+        helpers.await_queue()
 
-    #     process_logs = client.get_process_logs(id=withdrawn_note.id)
-    #     assert len(process_logs) == 1
-    #     assert process_logs[0]['status'] == 'ok'
+        process_logs = client.get_process_logs(id=withdrawn_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-    #     pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        withdrawn_submission=client.get_note(submissions[0].id)
+        assert withdrawn_submission.invitation == 'NeurIPS.cc/2021/Conference/-/Withdrawn_Submission'
+        assert withdrawn_submission.readers == [
+                'NeurIPS.cc/2021/Conference/Paper5/Authors',
+                'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs']
 
-    #     request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token)
-    #     assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
-    #     notes_panel = selenium.find_element_by_id('notes')
-    #     assert notes_panel
-    #     tabs = notes_panel.find_element_by_class_name('tabs-container')
-    #     assert tabs
-    #     assert tabs.find_element_by_id('venue-configuration')
-    #     assert tabs.find_element_by_id('paper-status')
-    #     assert tabs.find_element_by_id('reviewer-status')
-    #     assert tabs.find_element_by_id('areachair-status')
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-    #     assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
-    #     assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
-    #     assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
-    #     assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
-    #     assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token)
+        assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('venue-configuration')
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('reviewer-status')
+        assert tabs.find_element_by_id('areachair-status')
+
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
 
 
 
