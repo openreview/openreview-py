@@ -25,7 +25,7 @@ def _jaccard_similarity(list1, list2):
     union = set1.union(set2)
     return len(intersection) / len(union)
 
-def _get_profiles(client, ids_or_emails):
+def _get_profiles(client, ids_or_emails, with_publications=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -59,6 +59,10 @@ def _get_profiles(client, ids_or_emails):
                 'emails': [email],
                 'preferredEmail': email
             })))
+
+    if with_publications:
+        for profile in profiles:
+            profile.content['publications'] = list(tools.iterget_notes(client, content={'authorids': profile.id}))
 
     return profiles
 
@@ -238,20 +242,20 @@ class Matching(object):
         invitation = self.client.post_invitation(invitation)
         return invitation
 
-    def _build_conflicts(self, submissions, user_profiles):
+    def _build_conflicts(self, submissions, user_profiles, get_profile_info):
         if self.is_senior_area_chair:
             ac_group = self.client.get_group(self.conference.get_area_chairs_id())
             ac_profiles = _get_profiles(self.client, ac_group.members)
             return self._build_profile_conflicts(ac_profiles, user_profiles)
-        return self._build_note_conflicts(submissions, user_profiles)
+        return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
 
-    def _build_note_conflicts(self, submissions, user_profiles):
+    def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
         '''
         Create conflict edges between the given Notes and Profiles
         '''
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
-        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
+        user_profiles_info = [get_profile_info(p) for p in user_profiles]
 
         edges = []
 
@@ -262,13 +266,13 @@ class Matching(object):
                 authorids = submission.details['original']['content']['authorids']
 
             # Extract domains from each profile
-            author_profiles = _get_profiles(self.client, authorids)
+            author_profiles = _get_profiles(self.client, authorids, with_publications=True)
             author_domains = set()
             author_emails = set()
             author_relations = set()
 
             for author_profile in author_profiles:
-                author_info = openreview.tools.get_profile_info(author_profile)
+                author_info = get_profile_info(author_profile)
                 author_domains.update(author_info['domains'])
                 author_emails.update(author_info['emails'])
                 author_relations.update(author_info['relations'])
@@ -684,7 +688,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -722,7 +726,7 @@ class Matching(object):
                 'WARNING: not all reviewers have been converted to profile IDs.',
                 'Members without profiles will not have metadata created.')
 
-        user_profiles = _get_profiles(self.client, self.match_group.members)
+        user_profiles = _get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
 
         invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
         if not self.is_senior_area_chair:
@@ -779,7 +783,7 @@ class Matching(object):
             }
 
         if build_conflicts:
-            self._build_conflicts(submissions, user_profiles)
+            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info)
 
         self._build_config_invitation(score_spec)
 

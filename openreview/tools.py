@@ -1537,7 +1537,9 @@ def get_profile_info(profile):
     domains = set()
     emails = set()
     relations = set()
-    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com']
+    publications = set()
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+                      'outloook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1561,8 +1563,64 @@ def get_profile_info(profile):
         'id': profile.id,
         'domains': domains,
         'emails': emails,
-        'relations': relations
+        'relations': relations,
+        'publications': publications
     }
+
+def get_neurips_profile_info(profile):
+
+    domains = set()
+    emails=set()
+    relations = set()
+    publications = set()
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+                      'outloook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+
+    ## Institution section, get history within the last three years
+    for h in profile.content.get('history', []):
+        if h.get('end') is None or int(h.get('end')) > 2017:
+            domain = h.get('institution', {}).get('domain', '')
+            domains.update(openreview.tools.subdomains(domain))
+
+    ## Relations section, get coauthor/coworker relations within the last three years + all the other relations
+    for r in profile.content.get('relations', []):
+        if r.get('relation', '') in ['Coauthor','Coworker']:
+            if r.get('end') is None or int(r.get('end')) > 2017:
+                relations.add(r['email'])
+        else:
+            relations.add(r['email'])
+
+    ## Emails section
+    for email in profile.content['emails']:
+        emails.add(email)
+    ## if institution section is empty, add email domains
+    if not domains:
+        for email in profile.content['emails']:
+            domains.update(openreview.tools.subdomains(email))
+
+    ## Publications section: get publications within last three years
+    for pub in profile.content.get('publications', []):
+        if pub.cdate:
+            year = int(datetime.datetime.fromtimestamp(pub.cdate/1000).year)
+        else:
+            year = int(datetime.datetime.fromtimestamp(pub.tcdate/1000).year)
+        if year > 2017:
+            publications.add(pub.id)
+
+    ## Filter common domains
+    for common_domain in common_domains:
+        if common_domain in domains:
+            domains.remove(common_domain)
+
+    return {
+        'id': profile.id,
+        'domains': domains,
+        'emails': emails,
+        'relations': relations,
+        'publications': publications
+    }
+
+
 
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)
