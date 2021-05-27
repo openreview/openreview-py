@@ -1546,7 +1546,7 @@ def get_profile_info(profile):
     relations = set()
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
-                      'outloook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+                      'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1581,7 +1581,7 @@ def get_neurips_profile_info(profile):
     relations = set()
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
-                      'outloook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+                      'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
 
     ## Institution section, get history within the last three years
     for h in profile.content.get('history', []):
