@@ -270,12 +270,14 @@ class Matching(object):
             author_domains = set()
             author_emails = set()
             author_relations = set()
+            author_publications = set()
 
             for author_profile in author_profiles:
                 author_info = get_profile_info(author_profile)
                 author_domains.update(author_info['domains'])
                 author_emails.update(author_info['emails'])
                 author_relations.update(author_info['relations'])
+                author_publications.update(author_info['publications'])
 
             # Compute conflicts for each user and all the paper authors
             for user_info in user_profiles_info:
@@ -284,6 +286,8 @@ class Matching(object):
                 conflicts.update(author_relations.intersection(user_info['emails']))
                 conflicts.update(author_emails.intersection(user_info['relations']))
                 conflicts.update(author_emails.intersection(user_info['emails']))
+                conflicts.update(author_publications.intersection(user_info['publications']))
+
                 if conflicts:
                     edges.append(openreview.Edge(
                         invitation=invitation.id,

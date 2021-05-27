@@ -14,7 +14,7 @@ from tqdm import tqdm
 import tld
 import urllib.parse as urlparse
 
-def get_profile(client, value):
+def get_profile(client, value, with_publications=False):
     """
     Get a single profile (a note) by id, if available
 
@@ -29,6 +29,8 @@ def get_profile(client, value):
     profile = None
     try:
         profile = client.get_profile(value)
+        if with_publications:
+            profile.content['publications'] = list(iterget_notes(client, content={'authorids': profile.id}))
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if e.args[0][0] != 'Profile not found':
@@ -1492,7 +1494,7 @@ def fill_template(template, paper):
 
     return new_template
 
-def get_conflicts(author_profiles, user_profile):
+def get_conflicts(author_profiles, user_profile, policy='default'):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1507,20 +1509,25 @@ def get_conflicts(author_profiles, user_profile):
     author_domains = set()
     author_emails = set()
     author_relations = set()
+    author_publications = set()
+    info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
 
     for profile in author_profiles:
-        author_info = get_profile_info(profile)
+        author_info = info_function(profile)
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
+        author_publications.update(author_info['publications'])
 
-    user_info = get_profile_info(user_profile)
+    user_info = info_function(user_profile)
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
     conflicts.update(author_relations.intersection(user_info['emails']))
     conflicts.update(author_emails.intersection(user_info['relations']))
     conflicts.update(author_emails.intersection(user_info['emails']))
+    conflicts.update(author_emails.intersection(user_info['emails']))
+    conflicts.update(author_publications.intersection(user_info['publications']))
 
     return list(conflicts)
 
