@@ -18,9 +18,11 @@ jobs:
       - run:
           name: Initialize Replica Set
           command: |
-            sudo apt-get install -y mongodb
+            sudo touch /etc/apt/sources.list.d/mongodb-org-4.4.list
+            echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+            sudo apt-get update
+            sudo apt-get install -y mongodb-org=4.4.5 mongodb-org-server=4.4.5 mongodb-org-shell=4.4.5 mongodb-org-mongos=4.4.5 mongodb-org-tools=4.4.5
             mongo mongodb://localhost:27017 --eval "rs.initiate()"
-      - run: sudo apt-get update
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
