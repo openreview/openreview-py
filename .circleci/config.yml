@@ -8,12 +8,16 @@ jobs:
       - image: circleci/python:3.7-node
       - image: circleci/redis:6.0.0
       - image: circleci/mongo:4.4.5
+        command: [--replSet,rs0]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
           transport.host: localhost
     steps:
       - checkout
+      - run:
+        name: Initialize Replica Set
+        command: mongo mongodb://localhost:27017 --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}] })"
       - run: sudo apt-get update
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
