@@ -16,8 +16,8 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Initialize Replica Set
-        command: mongo mongodb://localhost:27017 --eval "rs.initiate()"
+          name: Initialize Replica Set
+          command: mongo mongodb://localhost:27017 --eval "rs.initiate()"
       - run: sudo apt-get update
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
