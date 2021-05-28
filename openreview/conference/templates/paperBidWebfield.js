@@ -13,6 +13,7 @@ var BID_ID = '';
 var SUBJECT_AREAS = '';
 var CONFLICT_SCORE_ID = '';
 var SCORE_IDS = [];
+var BID_OPTIONS = [];
 
 // Bid status data
 var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
@@ -20,13 +21,10 @@ var activeTab = 0;
 var noteCount = 0;
 var conflictIds = [];
 var bidsByNote = {};
-var bidsById = {
-  'Very High': [],
-  'High': [],
-  'Neutral': [],
-  'Very Low': [],
-  'Low': []
-};
+var bidsById = BID_OPTIONS.reduce(function(bidDict, option) {
+  bidDict[option] = [];
+  return bidDict;
+}, {});
 var sections = [];
 
 var paperDisplayOptions = {
@@ -271,38 +269,18 @@ function updateNotes(notes) {
       heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
       id: 'allPapers',
       content: null
-    },
-    {
-      heading: 'Very High',
-      headingCount: bidsById['Very High'].length,
-      id: 'veryHigh',
-      content: loadingContent
-    },
-    {
-      heading: 'High',
-      headingCount: bidsById['High'].length,
-      id: 'high',
-      content: loadingContent
-    },
-    {
-      heading: 'Neutral',
-      headingCount: bidsById['Neutral'].length,
-      id: 'neutral',
-      content: loadingContent
-    },
-    {
-      heading: 'Low',
-      headingCount: bidsById['Low'].length,
-      id: 'low',
-      content: loadingContent
-    },
-    {
-      heading: 'Very Low',
-      headingCount: bidsById['Very Low'].length,
-      id: 'veryLow',
-      content: loadingContent
     }
   ];
+
+  BID_OPTIONS.forEach(function(option) {
+    sections.push({
+      heading: option,
+      headingCount: bidsById[option].length,
+      id: option.replace(' ', '').toLowerCase(),
+      content: loadingContent
+    })
+  });
+
   sections[activeTab].active = true;
 
   $('#notes .tabs-container').remove();
