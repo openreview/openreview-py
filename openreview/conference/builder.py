@@ -1602,7 +1602,7 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False):
+    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False, allow_conflicts_bids=False):
         self.committee_id=committee_id
         self.start_date=start_date
         self.due_date=due_date
@@ -1610,6 +1610,7 @@ class BidStage(object):
         self.request_count=request_count
         self.score_ids=score_ids
         self.instructions=instructions
+        self.allow_conflicts_bids=allow_conflicts_bids
 
     def get_invitation_readers(self, conference):
         readers = [conference.get_id()]
@@ -1636,6 +1637,12 @@ class BidStage(object):
                 values_copied.append(conference.get_senior_area_chairs_id())
         values_copied.append('{signatures}')
         return values_copied
+
+    def get_bid_options(self):
+        options = ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+        if self.allow_conflicts_bids:
+            options.append('Conflict')
+        return options
 
 class SubmissionRevisionStage():
 
