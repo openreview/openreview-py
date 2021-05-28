@@ -15,14 +15,14 @@ def process(client, note, invitation):
     user = urllib.parse.unquote(note.content['user'])
 
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
-    
-    if (hashkey == note.content['key'] and client.get_groups(regex=REVIEWERS_INVITED_ID, member=user)):
+
+    if (hashkey == note.content['key'] and client.get_groups(id=REVIEWERS_INVITED_ID, member=user)):
         members_to_remove=[user]
         profile=openreview.tools.get_profile(client, user)
         if profile:
             members_to_remove.append(profile.id)
         if (note.content['response'] == 'Yes'):
-            if (AREA_CHAIRS_ACCEPTED_ID and client.get_groups(regex=AREA_CHAIRS_ACCEPTED_ID, member=user)):
+            if (AREA_CHAIRS_ACCEPTED_ID and client.get_groups(id=AREA_CHAIRS_ACCEPTED_ID, member=user)):
                 client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, members_to_remove)
                 client.add_members_to_group(REVIEWERS_DECLINED_ID, user)
 
@@ -39,7 +39,7 @@ def process(client, note, invitation):
 The {venue} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.'''.format(role=REVIEWER_NAME, venue=SHORT_PHRASE)
-            
+
                 client.post_message(subject, [user], message, parentGroup=REVIEWERS_ACCEPTED_ID)
 
         elif (note.content['response'] == 'No'):
@@ -62,4 +62,4 @@ If you would like to change your decision, please click the Accept link in the p
             raise openreview.OpenReviewException('Invalid response')
 
     else:
-        raise openreview.OpenReviewException('Invalid key or user not in invited group')
+        raise openreview.OpenReviewException(f'Invalid key or user not in invited group: {user}')
