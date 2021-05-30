@@ -1084,7 +1084,7 @@ class Conference(object):
 
         return self.webfield_builder.set_impersonate_page(self, group)
 
-    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
+    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
