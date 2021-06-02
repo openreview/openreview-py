@@ -57,7 +57,9 @@ def _get_profiles(client, ids_or_emails, with_publications=False):
             id=email,
             content={
                 'emails': [email],
-                'preferredEmail': email
+                'preferredEmail': email,
+                'emailsConfirmed': [email],
+                'names': []
             })))
 
     if with_publications:
@@ -517,6 +519,7 @@ class Matching(object):
 
     def _build_custom_max_papers(self, user_profiles):
         invitation=self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
+        current_custom_max_edges={ e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail')}
 
         reduced_loads = {}
         reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load'), sort='tcdate:asc')
@@ -535,7 +538,7 @@ class Matching(object):
                 if not custom_load and (i in reduced_loads):
                     custom_load = reduced_loads[i]
 
-            if custom_load:
+            if custom_load and user_profile.id not in current_custom_max_edges:
                 review_capacity = int(custom_load.content['reviewer_load'])
 
                 edge = openreview.Edge(
@@ -549,14 +552,9 @@ class Matching(object):
                 )
                 edges.append(edge)
 
-        ## Delete previous scores
-        self.client.delete_edges(invitation.id, wait_to_finish=True)
 
         openreview.tools.post_bulk_edges(client=self.conference.client, edges=edges)
-        # Perform sanity check
-        edges_posted = self.conference.client.get_edges_count(invitation=invitation.id)
-        if edges_posted < len(edges):
-            raise openreview.OpenReviewException('Failed during bulk post of edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+
         return invitation
 
     def _build_config_invitation(self, scores_specification):
@@ -768,11 +766,11 @@ class Matching(object):
             print('Recommendation invitation not found')
 
         # The reviewers are all emails so convert to tilde ids
-        self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
-        if not all(['~' in member for member in self.match_group.members]):
-            print(
-                'WARNING: not all reviewers have been converted to profile IDs.',
-                'Members without profiles will not have metadata created.')
+        # self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
+        # if not all(['~' in member for member in self.match_group.members]):
+        #     print(
+        #         'WARNING: not all reviewers have been converted to profile IDs.',
+        #         'Members without profiles will not have metadata created.')
 
         user_profiles = _get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
 
