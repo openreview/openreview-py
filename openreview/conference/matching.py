@@ -515,6 +515,50 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
         return invitation
 
+    def _build_custom_max_papers(self, user_profiles):
+        invitation=self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
+
+        reduced_loads = {}
+        reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load'), sort='tcdate:asc')
+
+        for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
+            reduced_loads[note.content['user']] = note
+
+        print ('Reduced loads received: ', len(reduced_loads))
+
+        edges = []
+        for user_profile in tqdm(user_profiles):
+
+            custom_load = None
+            ids = user_profile.content['emailsConfirmed'] + [ n['username'] for n in user_profile.content['names'] if 'username' in n]
+            for i in ids:
+                if not custom_load and (i in reduced_loads):
+                    custom_load = reduced_loads[i]
+
+            if custom_load:
+                review_capacity = int(custom_load.content['reviewer_load'])
+
+                edge = openreview.Edge(
+                    head=self.match_group.id,
+                    tail=user_profile.id,
+                    invitation=invitation.id,
+                    readers=self._get_edge_readers(user_profile.id),
+                    writers=[self.conference.id],
+                    signatures=[self.conference.id],
+                    weight=review_capacity
+                )
+                edges.append(edge)
+
+        ## Delete previous scores
+        self.client.delete_edges(invitation.id, wait_to_finish=True)
+
+        openreview.tools.post_bulk_edges(client=self.conference.client, edges=edges)
+        # Perform sanity check
+        edges_posted = self.conference.client.get_edges_count(invitation=invitation.id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+        return invitation
+
     def _build_config_invitation(self, scores_specification):
         '''
         Builds an assignment configuration invitation that specifies the match
@@ -742,7 +786,7 @@ class Matching(object):
 
         self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, deployed=True))
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
-        self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
+        self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
         submissions = list(openreview.tools.iterget_notes(
