@@ -519,7 +519,7 @@ class Matching(object):
 
     def _build_custom_max_papers(self, user_profiles):
         invitation=self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
-        current_custom_max_edges={ e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail')}
+        current_custom_max_edges={ e['id']['tail']: openreview.Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail', select=None)}
 
         reduced_loads = {}
         reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load'), sort='tcdate:asc')
@@ -538,22 +538,31 @@ class Matching(object):
                 if not custom_load and (i in reduced_loads):
                     custom_load = reduced_loads[i]
 
-            if custom_load and user_profile.id not in current_custom_max_edges:
+            if custom_load:
+                current_edge = current_custom_max_edges.get(user_profile.id)
                 review_capacity = int(custom_load.content['reviewer_load'])
 
-                edge = openreview.Edge(
-                    head=self.match_group.id,
-                    tail=user_profile.id,
-                    invitation=invitation.id,
-                    readers=self._get_edge_readers(user_profile.id),
-                    writers=[self.conference.id],
-                    signatures=[self.conference.id],
-                    weight=review_capacity
-                )
-                edges.append(edge)
+                if current_edge:
+                    ## Update edge if the new capacity is lower
+                    if current_edge.weight > review_capacity:
+                        print(f'Update edge for {user_profile.id}')
+                        current_edge.weight=review_capacity
+                        self.client.post_edge(current_edge)
+
+                else:
+                    edge = openreview.Edge(
+                        head=self.match_group.id,
+                        tail=user_profile.id,
+                        invitation=invitation.id,
+                        readers=self._get_edge_readers(user_profile.id),
+                        writers=[self.conference.id],
+                        signatures=[self.conference.id],
+                        weight=review_capacity
+                    )
+                    edges.append(edge)
 
 
-        openreview.tools.post_bulk_edges(client=self.conference.client, edges=edges)
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
         return invitation
 
