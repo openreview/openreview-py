@@ -121,6 +121,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
 
+    email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
+
     builder.set_submission_stage(
         double_blind=double_blind,
         public=public,
@@ -129,7 +131,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
-        email_pcs=False, ## Need to add this setting to the form
+        email_pcs=email_pcs,
         create_groups=create_groups,
         create_review_invitation=create_review_invitation,
         withdrawn_submission_public=withdrawn_submission_public,

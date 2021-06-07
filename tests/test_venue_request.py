@@ -52,7 +52,8 @@ class TestVenueRequest():
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.'
             }))
         helpers.await_queue()
 
@@ -230,7 +231,8 @@ class TestVenueRequest():
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
-                'remove_submission_options': ['pdf']
+                'remove_submission_options': ['pdf'],
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -412,6 +414,13 @@ class TestVenueRequest():
         ))
 
         assert submission
+        helpers.await_queue()
+
+        messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
+        assert messages and len(messages) == 2
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'tom@mail.com' in recipients
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
