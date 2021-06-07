@@ -795,7 +795,6 @@ class Matching(object):
 
         invite_label=invitation_labels.get('Invite', 'Invite')
         invited_label=invitation_labels.get('Invited', 'Invited')
-        print('invited_label', invited_label)
         accepted_label=invitation_labels.get('Accepted', 'Accepted')
         declined_label=invitation_labels.get('Declined', 'Declined')
 
