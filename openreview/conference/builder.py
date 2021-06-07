@@ -92,10 +92,10 @@ class Conference(object):
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], exclude_self=False):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], exclude_self_reader=False):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
-            readers = [self.id, group_owner_id] if exclude_self else [self.id, group_owner_id, group_id]
+            readers = [self.id, group_owner_id] if exclude_self_reader else [self.id, group_owner_id, group_id]
             return self.client.post_group(openreview.Group(
                 id = group_id,
                 readers = ['everyone'] if 'everyone' in additional_readers else readers + additional_readers,
@@ -1001,9 +1001,9 @@ class Conference(object):
             # parent_group_accepted_group
             self.__create_group(parent_group_accepted_id, pcs_id)
             # parent_group_declined_group
-            self.__create_group(parent_group_declined_id, pcs_id, exclude_self=True)
+            self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
             # parent_group_invited_group
-            self.__create_group(parent_group_invited_id, pcs_id, exclude_self=True)
+            self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
         else:
             raise openreview.OpenReviewException('Conference "has_senior_area_chairs" setting is disabled')
 
@@ -1019,9 +1019,9 @@ class Conference(object):
             # parent_group_accepted_group
             self.__create_group(parent_group_accepted_id, pcs_id)
             # parent_group_declined_group
-            self.__create_group(parent_group_declined_id, pcs_id, exclude_self=True)
+            self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
             # parent_group_invited_group
-            self.__create_group(parent_group_invited_id, pcs_id, exclude_self=True)
+            self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
@@ -1032,15 +1032,15 @@ class Conference(object):
 
         pcs_id = self.get_program_chairs_id()
         self.__create_group(parent_group_id, self.get_area_chairs_id() if self.use_area_chairs else self.id)
-        self.__create_group(parent_group_declined_id, pcs_id, exclude_self=True)
-        self.__create_group(parent_group_invited_id, pcs_id, exclude_self=True)
+        self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
+        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
     def set_external_reviewer_recruitment_groups(self):
         parent_group_id = self.get_committee_id(name='External_Reviewers')
         parent_group_invited_id = parent_group_id + '/Invited'
 
         self.__create_group(parent_group_id, self.id)
-        self.__create_group(parent_group_invited_id, self.id, exclude_self=True)
+        self.__create_group(parent_group_invited_id, self.id, exclude_self_reader=True)
 
     def set_reviewers(self, emails = []):
         readers = []
