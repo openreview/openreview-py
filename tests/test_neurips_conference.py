@@ -962,7 +962,7 @@ class TestNeurIPSConference():
         now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching')
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching', invitation_labels={ 'Invite': 'Invitating...', 'Invited': 'Invitation Sent' })
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
@@ -986,7 +986,7 @@ class TestNeurIPSConference():
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer1@amazon.com',
-            label = 'Invite'
+            label = 'Invitating...'
         ))
 
         helpers.await_queue()
@@ -999,7 +999,7 @@ class TestNeurIPSConference():
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
         assert len(invite_edges) == 1
         assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
-        assert invite_edges[0].label == 'Invited'
+        assert invite_edges[0].label == 'Invitation Sent'
 
         assert '~External_Reviewer_Amazon1' in client.get_group('NeurIPS.cc/2021/Conference/External_Reviewers/Invited').members
 
@@ -1116,7 +1116,7 @@ OpenReview Team'''
                 signatures = [signatory_group.id],
                 head = submission.id,
                 tail = 'external_reviewer2@mit.edu',
-                label = 'Invite'
+                label = 'Invitating...'
             ))
 
         ## Invite external reviewer 3
@@ -1128,7 +1128,7 @@ OpenReview Team'''
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer3@adobe.com',
-            label = 'Invite'
+            label = 'Invitating...'
         ))
 
         helpers.await_queue()
@@ -1141,7 +1141,7 @@ OpenReview Team'''
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~External_Reviewer_Adobe1')
         assert len(invite_edges) == 1
         assert invite_edges[0].tail == '~External_Reviewer_Adobe1'
-        assert invite_edges[0].label == 'Invited'
+        assert invite_edges[0].label == 'Invitation Sent'
 
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
@@ -1180,7 +1180,7 @@ OpenReview Team'''
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer4@gmail.com',
-            label = 'Invite'
+            label = 'Invitating...'
         ))
 
         helpers.await_queue()
@@ -1193,7 +1193,7 @@ OpenReview Team'''
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
         assert len(invite_edges) == 1
         assert invite_edges[0].tail == 'external_reviewer4@gmail.com'
-        assert invite_edges[0].label == 'Invited'
+        assert invite_edges[0].label == 'Invitation Sent'
 
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
@@ -1229,7 +1229,7 @@ OpenReview Team'''
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer5@gmail.com',
-            label = 'Invite'
+            label = 'Invitating...'
         ))
 
         helpers.await_queue()
@@ -1242,7 +1242,7 @@ OpenReview Team'''
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer5@gmail.com')
         assert len(invite_edges) == 1
         assert invite_edges[0].tail == 'external_reviewer5@gmail.com'
-        assert invite_edges[0].label == 'Invited'
+        assert invite_edges[0].label == 'Invitation Sent'
 
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
@@ -1280,7 +1280,7 @@ OpenReview Team'''
                 signatures = [signatory_group.id],
                 head = submission.id,
                 tail = '~External_Melisa1',
-                label = 'Invite'
+                label = 'Invitating...'
             ))
         assert openReviewError.value.args[0].get('name') == 'Not Found'
         assert openReviewError.value.args[0].get('message') == '~External_Melisa1 was not found'
@@ -1297,6 +1297,8 @@ OpenReview Team'''
                 tail = '~Reviewer_IBM1',
                 label = 'reviewer-matching'
             ))
+
+        assert False
 
 
     def test_deployment_stage(self, conference, client, helpers):
@@ -1509,7 +1511,7 @@ OpenReview Team'''
         invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
         assert len(invite_edges) == 1
         assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
-        assert invite_edges[0].label == 'Invited'
+        assert invite_edges[0].label == 'Invited' ## figure out how to enable this in the deployment
 
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')

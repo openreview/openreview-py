@@ -6,9 +6,11 @@ def process(client, edge, invitation):
     ASSIGNMENT_LABEL = None
     HASH_SEED = ''
     REVIEWERS_INVITED_ID = ''
+    INVITED_LABEL = ''
+    INVITE_LABEL = ''
     print(edge.id)
 
-    if edge.ddate is None and edge.label == 'Invite':
+    if edge.ddate is None and edge.label == INVITE_LABEL:
 
         ## Get the submission
         notes=client.get_notes(id=edge.head, details='original')
@@ -67,8 +69,8 @@ Thanks,
         ## - Send email
         response = client.post_message(subject, [user_profile.id], message, parentGroup=REVIEWERS_INVITED_ID)
 
-        ## - Update edge to 'Invited'
-        edge.label='Invited'
+        ## - Update edge to INVITED_LABEL
+        edge.label=INVITED_LABEL
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
         client.post_edge(edge)

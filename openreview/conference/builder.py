@@ -1091,10 +1091,10 @@ class Conference(object):
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
-    def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None):
+    def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}):
 
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
-        return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date)
+        return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels)
 
 
     def set_assignment(self, user, number, is_area_chair = False):

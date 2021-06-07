@@ -1259,7 +1259,7 @@ class PaperGroupInvitation(openreview.Invitation):
 
 class PaperRecruitmentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, web):
+    def __init__(self, conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, web, invited_label, accepted_label, declined_label):
 
         content=invitations.recruitment
         content['submission_id'] = {
@@ -1277,6 +1277,9 @@ class PaperRecruitmentInvitation(openreview.Invitation):
             file_content = file_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
             file_content = file_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
             file_content = file_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+            file_content = file_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
+            file_content = file_content.replace("ACCEPTED_LABEL = ''", "ACCEPTED_LABEL = '" + accepted_label + "'")
+            file_content = file_content.replace("DECLINED_LABEL = ''", "DECLINED_LABEL = '" + declined_label + "'")
 
             ## Add to the proposed assignment or the deployed one.
             if assignment_title:
@@ -1892,10 +1895,10 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(PaperGroupInvitation(conference, committee_id, with_process_function))
 
-    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, hash_seed, assignment_title=None, due_date=None):
+    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined'):
 
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
-        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None))
+        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None, invited_label, accepted_label, declined_label))
 
     def set_assignment_invitation(self, conference, committee_id):
 

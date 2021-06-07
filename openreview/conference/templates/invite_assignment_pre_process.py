@@ -2,9 +2,10 @@ def process(client, edge, invitation):
 
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
+    INVITE_LABEL = ''
     print(edge.id)
 
-    if edge.ddate is None and edge.label == 'Invite':
+    if edge.ddate is None and edge.label == INVITE_LABEL:
 
         ## Get the submission
         notes=client.get_notes(id=edge.head, details='original')

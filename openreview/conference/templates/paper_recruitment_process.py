@@ -13,6 +13,9 @@ def process(client, note, invitation):
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
     EXTERNAL_COMMITTEE_ID = ''
+    INVITED_LABEL = ''
+    ACCEPTED_LABEL = ''
+    DECLINED_LABEL = ''
 
     user = urllib.parse.unquote(note.content['user'])
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
@@ -28,7 +31,7 @@ def process(client, note, invitation):
 
     edge=invitation_edges[0]
 
-    if edge.label not in ['Invited', 'Accepted', 'Declined']:
+    if edge.label not in [INVITED_LABEL, ACCEPTED_LABEL, DECLINED_LABEL]:
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
 
@@ -58,7 +61,7 @@ OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message)
             return
 
-        edge.label='Accepted'
+        edge.label=ACCEPTED_LABEL
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
         edge.tail=user_profile.id
         client.post_edge(edge)
@@ -113,7 +116,7 @@ OpenReview Team'''
             client.post_edge(assignment_edge)
 
 
-        edge.label='Declined'
+        edge.label=DECLINED_LABEL
         if 'comment' in note.content:
             edge.label=edge.label + ': ' + note.content['comment']
         client.post_edge(edge)

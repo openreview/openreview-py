@@ -791,11 +791,17 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
-    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None):
+    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}):
+
+        invite_label=invitation_labels.get('Invite', 'Invite')
+        invited_label=invitation_labels.get('Invited', 'Invited')
+        print('invited_label', invited_label)
+        accepted_label=invitation_labels.get('Accepted', 'Accepted')
+        declined_label=invitation_labels.get('Declined', 'Declined')
 
         recruitment_invitation_id=self.conference.get_invitation_id('Proposed_Assignment_Recruitment' if assignment_title else 'Assignment_Recruitment', prefix=self.match_group.id)
 
-        invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label='Invite')
+        invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, invite=True), any_tail=True, default_label=invite_label)
         with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_post_process.py')) as post:
                 pre_content = pre.read()
@@ -813,6 +819,9 @@ class Matching(object):
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
 
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+                post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
+                pre_content = pre_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
+                post_content = post_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
 
                 invitation.preprocess=pre_content
                 invitation.process=post_content
@@ -820,7 +829,16 @@ class Matching(object):
                 invitation.signatures=[self.conference.get_program_chairs_id()] ## Program Chairs have permission to see full profile data
                 invite_assignment_invitation=self.client.post_invitation(invitation)
 
-        invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference, recruitment_invitation_id, self.match_group.id, hash_seed, assignment_title, due_date)
+        invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference,
+            recruitment_invitation_id,
+            self.match_group.id,
+            hash_seed,
+            assignment_title,
+            due_date,
+            invited_label=invited_label,
+            accepted_label=accepted_label,
+            declined_label=declined_label
+        )
         invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)
 
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
