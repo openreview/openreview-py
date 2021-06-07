@@ -1851,12 +1851,12 @@ OpenReview Team'''
         )
 
         reviewer2_client = openreview.Client(username='reviewer2@mit.edu', password='1234')
-        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer2@mit.edu')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper1/Reviewer_', signatory='reviewer2@mit.edu')
         assert len(signatory_groups) == 1
         reviewer2_anon_id=signatory_groups[0].id
 
         reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
-            forum = blinded_notes[-1].id,
+            forum = blinded_notes[0].id,
             tag = '1 of 5',
             readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
             signatures = [reviewer2_anon_id])
@@ -1864,7 +1864,7 @@ OpenReview Team'''
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
             reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
-                forum = blinded_notes[-1].id,
+                forum = blinded_notes[0].id,
                 tag = '1 of 5',
                 readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
                 signatures = [reviewer2_anon_id])
