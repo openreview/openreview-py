@@ -310,7 +310,7 @@ var formatData = function(blindedNotes, officialReviews, metaReviews, secondaryM
     reviewerOptions = _.map(allReviewers, function(r) {
       var profile = findProfile(profiles, r);
       return {
-        id: r,
+        id: profile.id,
         description: view.prettyId(profile.name) + ' (' + profile.allEmails.join(', ') + ')'
       }
     });
