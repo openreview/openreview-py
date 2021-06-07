@@ -805,6 +805,7 @@ class Matching(object):
             with open(os.path.join(os.path.dirname(__file__), 'templates/invite_assignment_post_process.py')) as post:
                 pre_content = pre.read()
                 post_content = post.read()
+                pre_content = pre_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + self.match_group.id + "'")
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
                 post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
                 if assignment_title:

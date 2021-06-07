@@ -1,5 +1,6 @@
 def process(client, edge, invitation):
 
+    REVIEWERS_ID = ''
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
     INVITE_LABEL = ''
@@ -20,15 +21,26 @@ def process(client, edge, invitation):
 
         if user_profile:
             if user_profile.id != user:
-                ## - Check if the reviewer is already invited
+                ## - Check if the user is already invited
                 edges=client.get_edges(invitation=edge.invitation, head=edge.head, tail=user_profile.id)
                 if edges:
                     raise openreview.OpenReviewException(f'Already invited as {edges[0].tail}')
 
-            ## - Check if the reviewer is already assigned
+            ## - Check if the user is already assigned
             edges=client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=edge.head, tail=user_profile.id, label=ASSIGNMENT_LABEL)
             if edges:
                 raise openreview.OpenReviewException(f'Already assigned as {edges[0].tail}')
+
+            ## - Check if the user is an official reviewer
+            if user_profile.id.startswith('~') and client.get_groups(regex=REVIEWERS_ID, member=user_profile.id):
+
+                ## - Check if the user has a conflict
+                edges=client.get_edges(invitation=REVIEWERS_ID + '/-/Conflict', head=edge.head, tail=user_profile.id)
+                if edges:
+                    raise openreview.OpenReviewException(f'Conflict detected for {user_profile.id}')
+
+                raise openreview.OpenReviewException(f'Reviewer {user_profile.id} is an official reviewer, please use the "Assign" button to make the assignment.')
+
 
         else:
             if user.startswith('~'):

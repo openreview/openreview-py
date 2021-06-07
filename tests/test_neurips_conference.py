@@ -903,16 +903,16 @@ class TestNeurIPSConference():
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 0
 
         ## Reviewer assignments
-        # Paper 1
+        # Paper 5
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
-        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[0], '~Reviewer_Google1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.45)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_Google1', label='reviewer-matching', weight=0.33)
 
-        # Paper 2
+        # Paper 4
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[1], '~Reviewer_Facebook1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
@@ -930,7 +930,7 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
-        # Paper 4
+        # Paper 2
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
@@ -939,7 +939,7 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
-        # Paper 5
+        # Paper 1
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
@@ -962,7 +962,7 @@ class TestNeurIPSConference():
         now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching', invitation_labels={ 'Invite': 'Invitating...', 'Invited': 'Invitation Sent' })
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching', invitation_labels={ 'Invite': 'Invitation Sent', 'Invited': 'Invitation Sent' })
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
@@ -986,7 +986,7 @@ class TestNeurIPSConference():
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer1@amazon.com',
-            label = 'Invitating...'
+            label = 'Invitation Sent'
         ))
 
         helpers.await_queue()
@@ -1116,7 +1116,7 @@ OpenReview Team'''
                 signatures = [signatory_group.id],
                 head = submission.id,
                 tail = 'external_reviewer2@mit.edu',
-                label = 'Invitating...'
+                label = 'Invitation Sent'
             ))
 
         ## Invite external reviewer 3
@@ -1128,7 +1128,7 @@ OpenReview Team'''
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer3@adobe.com',
-            label = 'Invitating...'
+            label = 'Invitation Sent'
         ))
 
         helpers.await_queue()
@@ -1180,7 +1180,7 @@ OpenReview Team'''
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer4@gmail.com',
-            label = 'Invitating...'
+            label = 'Invitation Sent'
         ))
 
         helpers.await_queue()
@@ -1229,7 +1229,7 @@ OpenReview Team'''
             signatures = [signatory_group.id],
             head = submission.id,
             tail = 'external_reviewer5@gmail.com',
-            label = 'Invitating...'
+            label = 'Invitation Sent'
         ))
 
         helpers.await_queue()
@@ -1280,10 +1280,38 @@ OpenReview Team'''
                 signatures = [signatory_group.id],
                 head = submission.id,
                 tail = '~External_Melisa1',
-                label = 'Invitating...'
+                label = 'Invitation Sent'
             ))
         assert openReviewError.value.args[0].get('name') == 'Not Found'
         assert openReviewError.value.args[0].get('message') == '~External_Melisa1 was not found'
+
+        ## Invite an official reviewer and get an error
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'reviewer4@fb.com'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'reviewer4@fb.com',
+                label = 'Invitation Sent'
+            ))
+        assert openReviewError.value.args[0].get('name') == 'Error'
+        assert openReviewError.value.args[0].get('message') == 'Reviewer ~Reviewer_Facebook1 is an official reviewer, please use the "Assign" button to make the assignment.'
+
+        ## Invite an official conflicted reviewer and get a conflict error
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for ~Reviewer_MIT1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'reviewer2@mit.edu'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'reviewer2@mit.edu',
+                label = 'Invitation Sent'
+            ))
 
         ## Propose a reviewer that reached the quota
         with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for ~Reviewer_IBM1'):
@@ -1298,8 +1326,6 @@ OpenReview Team'''
                 label = 'reviewer-matching'
             ))
 
-        assert False
-
 
     def test_deployment_stage(self, conference, client, helpers):
 
@@ -1313,7 +1339,7 @@ OpenReview Team'''
         paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').members
         assert len(paper_reviewers) == 3
         assert '~Reviewer_UMass1' in paper_reviewers
-        assert '~Reviewer_MIT1' in paper_reviewers
+        assert '~Reviewer_Google1' in paper_reviewers
         assert '~External_Reviewer_Amazon1' in paper_reviewers
 
         paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers').members
