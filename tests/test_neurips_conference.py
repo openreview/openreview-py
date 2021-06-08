@@ -1027,6 +1027,7 @@ class TestNeurIPSConference():
         assert len(assignment_edges) == 3
         assert '~External_Reviewer_Amazon1' in [e.tail for e in assignment_edges]
 
+        # Confirmation email to the reviewer
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,
@@ -1037,6 +1038,15 @@ The NeurIPS 2021 program chairs will be contacting you with more information reg
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
 OpenReview Team'''
+
+        # Confirmation email to the ac
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon accepted to review paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area IBMChair,
+The Reviewer External Reviewer Amazon that you invited to review paper 5 has accepted the invitation and the reviewer is now assigned to the paper 5.
+
+OpenReview Team'''
+
 
         ## External reviewer declines the invitation, assignment rollback
         decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
@@ -1067,6 +1077,16 @@ OpenReview Team'''
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'''
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon declined to review paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area IBMChair,
+The Reviewer External Reviewer Amazon that you invited to review paper 5 has declined the invitation to review paper 5.
+Comment: No comment
+
+OpenReview Team'''
+
+
 
         ## External reviewer accepts the invitation again
         accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
@@ -1211,6 +1231,15 @@ OpenReview Team'''
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, conflict detection pending')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == 'Hi external_reviewer4@gmail.com,\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.\n\nPlease signup in OpenReview using the email address external_reviewer4@gmail.com and complete your profile.\nAfter your profile is complete, the conflict of interest detection will be computed against the submission 5 and you will be assigned if no conflicts are detected.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team'
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer external_reviewer4@gmail.com accepted to review paper 5, conflict detection pending')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area IBMChair,
+The Reviewer external_reviewer4@gmail.com that you invited to review paper 5 has accepted the invitation to review paper 5.
+The reviewer has to create a profile in OpenReview in order to check the conflicts with the paper before confirming the assignment.
+
+OpenReview Team'''
+
 
         ## Invite external reviewer 5 with no profile
         posted_edge=ac_client.post_edge(openreview.Edge(
