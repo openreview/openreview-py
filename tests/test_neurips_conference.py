@@ -1000,6 +1000,11 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
+        invalid_accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2')
+        request_page(selenium, invalid_accept_url, alert=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+
         accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")

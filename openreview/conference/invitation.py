@@ -1275,78 +1275,83 @@ class PaperRecruitmentInvitation(openreview.Invitation):
             'required':True
         }
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
-            file_content = file_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
-            file_content = file_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
-            file_content = file_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
-            file_content = file_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
-            file_content = file_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
-            file_content = file_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
-            file_content = file_content.replace("ACCEPTED_LABEL = ''", "ACCEPTED_LABEL = '" + accepted_label + "'")
-            file_content = file_content.replace("DECLINED_LABEL = ''", "DECLINED_LABEL = '" + declined_label + "'")
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as post:
+                pre_content = pre.read()
+                post_content = post.read()
+                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+                post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
+                post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
+                post_content = post_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
+                post_content = post_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
+                pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+                post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+                post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
+                post_content = post_content.replace("ACCEPTED_LABEL = ''", "ACCEPTED_LABEL = '" + accepted_label + "'")
+                post_content = post_content.replace("DECLINED_LABEL = ''", "DECLINED_LABEL = '" + declined_label + "'")
+                pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + conference.get_committee_id(name='External_Reviewers/Invited') + "'")
 
-            ## Add to the proposed assignment or the deployed one.
-            if assignment_title:
-                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
-                file_content = file_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
-                file_content = file_content.replace("EXTERNAL_COMMITTEE_ID = ''", "EXTERNAL_COMMITTEE_ID = '" + conference.get_committee_id(name='External_Reviewers') + "'")
-            else:
-                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
+                ## Add to the proposed assignment or the deployed one.
+                if assignment_title:
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
+                    post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                    post_content = post_content.replace("EXTERNAL_COMMITTEE_ID = ''", "EXTERNAL_COMMITTEE_ID = '" + conference.get_committee_id(name='External_Reviewers') + "'")
+                else:
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
 
-            edge_readers = []
-            edge_writers = []
-            #if committee_id.endswith(conference.area_chairs_name):
-                #if conference.has_senior_area_chairs :
-                    #TODO: decide what to do with area chair assignments
-                    #edge_readers.append(conference.get_senior_area_chairs_id())
-                    #edge_writers.append(conference.get_senior_area_chairs_id())
+                edge_readers = []
+                edge_writers = []
+                #if committee_id.endswith(conference.area_chairs_name):
+                    #if conference.has_senior_area_chairs :
+                        #TODO: decide what to do with area chair assignments
+                        #edge_readers.append(conference.get_senior_area_chairs_id())
+                        #edge_writers.append(conference.get_senior_area_chairs_id())
 
-            if committee_id.endswith(conference.reviewers_name):
-                if conference.has_senior_area_chairs :
-                    edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
-                    edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                if committee_id.endswith(conference.reviewers_name):
+                    if conference.has_senior_area_chairs :
+                        edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                        edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-                edge_readers.append(conference.get_area_chairs_id(number='{number}'))
-                edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+                    edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                    edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
-            file_content = file_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
-            file_content = file_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
+                post_content = post_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
+                post_content = post_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
 
-            super(PaperRecruitmentInvitation, self).__init__(id = invitation_id,
-                duedate = tools.datetime_millis(due_date),
-                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None,
-                readers = ['everyone'],
-                nonreaders = [],
-                invitees = ['everyone'],
-                noninvitees = [],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                reply = {
-                    'forum': None,
-                    'replyto': None,
-                    'readers': {
-                        'values-copied': [
-                            conference.get_id(),
-                            '{content.user}',
-                            '{content.inviter}'
-                        ]
+                super(PaperRecruitmentInvitation, self).__init__(id = invitation_id,
+                    duedate = tools.datetime_millis(due_date),
+                    expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None,
+                    readers = ['everyone'],
+                    nonreaders = [],
+                    invitees = ['everyone'],
+                    noninvitees = [],
+                    writers = [conference.get_id()],
+                    signatures = [conference.get_id()],
+                    reply = {
+                        'forum': None,
+                        'replyto': None,
+                        'readers': {
+                            'values-copied': [
+                                conference.get_id(),
+                                '{content.user}',
+                                '{content.inviter}'
+                            ]
+                        },
+                        'signatures': {
+                            'values-regex': '\\(anonymous\\)'
+                        },
+                        'writers': {
+                            'values': [
+                                conference.get_id(),
+                                '(anonymous)'
+                            ]
+                        },
+                        'content': content
                     },
-                    'signatures': {
-                        'values-regex': '\\(anonymous\\)'
-                    },
-                    'writers': {
-                        'values': [
-                            conference.get_id(),
-                            '(anonymous)'
-                        ]
-                    },
-                    'content': content
-                },
-                process_string = file_content,
-                web_string = web
-            )
+                    preprocess= pre_content,
+                    process_string = post_content,
+                    web_string = web
+                )
 
 class InvitationBuilder(object):
 
