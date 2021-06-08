@@ -63,7 +63,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} accepted to review paper {submission.number}, conflict detection pending'
             message =f'''Hi {{{{fullname}}}},
-The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation to review paper 5.
+The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation to review paper {submission.number}.
 The reviewer has to create a profile in OpenReview in order to check the conflicts with the paper before confirming the assignment.
 
 OpenReview Team'''
@@ -119,7 +119,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} accepted to review paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation and the reviewer is now assigned to the paper 5.
+The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation and the reviewer is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
@@ -157,7 +157,7 @@ OpenReview Team'''
         ## Send email to inviter
         subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} declined to review paper {submission.number}'
         message =f'''Hi {{{{fullname}}}},
-The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has declined the invitation to review paper 5.
+The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has declined the invitation to review paper {submission.number}.
 Comment: {note.content.get('comment', 'No comment')}
 
 OpenReview Team'''
