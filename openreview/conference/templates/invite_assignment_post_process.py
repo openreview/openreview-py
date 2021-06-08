@@ -43,7 +43,7 @@ def process(client, edge, invitation):
         baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
         # build the URL to send in the message
-        url = f'{baseurl}/invitation?id={RECRUITMENT_INVITATION_ID}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&response='
+        url = f'{baseurl}/invitation?id={RECRUITMENT_INVITATION_ID}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={edge.tauthor}&response='
 
         # format the message defined above
         subject=f'[{SHORT_PHRASE}] Invitation to review paper titled {submission.content["title"]}'

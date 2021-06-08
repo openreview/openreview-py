@@ -1268,6 +1268,12 @@ class PaperRecruitmentInvitation(openreview.Invitation):
             'value-regex': '.*',
             'required':True
         }
+        content['inviter'] = {
+            'description': 'inviter id',
+            'order': 7,
+            'value-regex': '.*',
+            'required':True
+        }
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as f:
             file_content = f.read()
@@ -1323,7 +1329,8 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                     'readers': {
                         'values-copied': [
                             conference.get_id(),
-                            '{content.user}'
+                            '{content.user}',
+                            '{content.inviter}'
                         ]
                     },
                     'signatures': {

@@ -1078,11 +1078,12 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'''
 
+        response_note=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment', content={ 'submission_id': submission.id, 'user': '~External_Reviewer_Amazon1', 'response': 'No'})[0]
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon declined to review paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area IBMChair,
+        assert messages[0]['content']['text'] == f'''Hi Area IBMChair,
 The Reviewer External Reviewer Amazon that you invited to review paper 5 has declined the invitation to review paper 5.
-Comment: No comment
+If you want to know more details about the invitation response, please click here: https://openreview.net/forum?id={response_note.id}
 
 OpenReview Team'''
 

@@ -158,7 +158,7 @@ OpenReview Team'''
         subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} declined to review paper {submission.number}'
         message =f'''Hi {{{{fullname}}}},
 The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has declined the invitation to review paper {submission.number}.
-Comment: {note.content.get('comment', 'No comment')}
+If you want to know more details about the invitation response, please click here: https://openreview.net/forum?id={note.id}
 
 OpenReview Team'''
 
