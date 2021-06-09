@@ -1048,7 +1048,7 @@ OpenReview Team'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon accepted to review paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area IBMChair,
-The Reviewer External Reviewer Amazon that you invited to review paper 5 has accepted the invitation and the reviewer is now assigned to the paper 5.
+The Reviewer External Reviewer Amazon that you invited to review paper 5 has accepted the invitation. The reviewer is now assigned to the paper 5.
 
 OpenReview Team'''
 
@@ -1087,7 +1087,8 @@ OpenReview Team'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon declined to review paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Area IBMChair,
-The Reviewer External Reviewer Amazon that you invited to review paper 5 has declined the invitation to review paper 5.
+The Reviewer External Reviewer Amazon that you invited to review paper 5 has declined the invitation.
+
 If you want to know more details about the invitation response, please click here: https://openreview.net/forum?id={response_note.id}
 
 OpenReview Team'''
@@ -1241,8 +1242,9 @@ OpenReview Team'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer external_reviewer4@gmail.com accepted to review paper 5, conflict detection pending')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area IBMChair,
-The Reviewer external_reviewer4@gmail.com that you invited to review paper 5 has accepted the invitation to review paper 5.
-The reviewer has to create a profile in OpenReview in order to check the conflicts with the paper before confirming the assignment.
+The Reviewer external_reviewer4@gmail.com that you invited to review paper 5 has accepted the invitation.
+
+Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
 
 OpenReview Team'''
 
