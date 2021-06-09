@@ -533,16 +533,18 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
   _.forEach(acGroups, function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && g.members[0] == member; });
-        var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
-        if (num in noteMap) {
-          noteMap[num][anonId] = member;
-          if (!(member in areaChairMap)) {
-            areaChairMap[member] = [];
-          }
-          areaChairMap[member].push(num);
+      var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && g.members[0] == member; });
+      if (!anonGroup) return;
+
+      var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
+      if (num in noteMap) {
+        noteMap[num][anonId] = member;
+        if (!(member in areaChairMap)) {
+          areaChairMap[member] = [];
         }
-    })
+        areaChairMap[member].push(num);
+      }
+    });
   });
 
   return {
@@ -1105,7 +1107,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
       conferenceStatusData.filteredRows = null
     }
     $(container + ' .form-search').removeClass('invalid-value');
-  
+
     if (enableQuery && searchText.startsWith('+')) {
       // filter query mode
       if (searchLabel === 'Search:') {
@@ -1120,17 +1122,17 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
           });
         }));
       }
-  
+
       if (e.key === 'Enter') {
         searchResults(searchText, true);
       }
     } else {
       if (enableQuery && searchLabel !== 'Search:') {
         $(container + ' .form-search').prev().remove(); // remove info icon
-  
+
         $(container + ' .form-search').prev().text('Search:');
       }
-  
+
       _.debounce(function () {
         searchResults(searchText.toLowerCase(), false);
       }, 300)();
@@ -1286,7 +1288,7 @@ var displayPaperStatusTable = function() {
       } else {
         filteredRows = _.filter(rowData, filterFunc);
       }
-    
+
       filteredRows = _.orderBy(filteredRows, sortOptions['Paper_Number'], 'asc');
       matchingNoteIds = filteredRows.map(function (row) {
         return row.note.id;
@@ -2737,7 +2739,7 @@ var buildCSV = function(){
       var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, noteNumber)]);
       var paperTableRow = buildPaperTableRow(noteObj, revIds, completedReviews[noteNumber], metaReview, [areachairProfileOne, areachairProfileTwo], decision);
     }
-    
+
     var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
