@@ -169,7 +169,7 @@ class BidInvitation(openreview.Invitation):
                         'required': True
                     },
                     'label': {
-                        'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'value-radio': bid_stage.get_bid_options(),
                         'required': True
                     }
                 }

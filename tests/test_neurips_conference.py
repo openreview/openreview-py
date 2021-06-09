@@ -750,7 +750,7 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -762,23 +762,15 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Reviewer_Google1', round(random.random(), 2)])
 
 
-        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
-        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score']))
-        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score']))
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True))
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))
+
+        assert len(client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers')) == 1
 
 
         ## Reviewer quotas
-        client.post_edge(openreview.Edge(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
-            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_UMass1'],
-            writers = [conference.id],
-            signatures = [conference.id],
-            head = 'NeurIPS.cc/2021/Conference/Reviewers',
-            tail = '~Reviewer_UMass1',
-            weight = 5
-        ))
-
         client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
             readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_MIT1'],
@@ -931,7 +923,7 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
 
         # Paper 4
-        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[3], '~Reviewer_Facebook1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=None)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
         helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
@@ -1326,7 +1318,7 @@ OpenReview Team'''
 
         paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers').members
         assert len(paper_reviewers) == 2
-        assert '~Reviewer_UMass1' in paper_reviewers
+        assert '~Reviewer_Facebook1' in paper_reviewers
         assert '~Reviewer_IBM1' in paper_reviewers
 
         paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
@@ -1338,7 +1330,7 @@ OpenReview Team'''
         assert len(assignments) == 11
 
         assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', tail='~Reviewer_UMass1')
-        assert len(assignments) == 5
+        assert len(assignments) == 4
 
         assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', tail='~Reviewer_UMass1', head=submissions[0].id)
         assert len(assignments) == 1
@@ -1809,11 +1801,11 @@ OpenReview Team'''
 
         options = tags[0].find_elements_by_tag_name("li")
         assert options
-        assert len(options) == 6
+        assert len(options) == 5
 
         options = tags[0].find_elements_by_tag_name("a")
         assert options
-        assert len(options) == 6
+        assert len(options) == 5
 
         reviewer_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
