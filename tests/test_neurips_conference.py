@@ -1048,7 +1048,7 @@ OpenReview Team'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon accepted to review paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area IBMChair,
-The Reviewer External Reviewer Amazon that you invited to review paper 5 has accepted the invitation and is now assigned to the paper.
+The Reviewer External Reviewer Amazon that you invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
 
 OpenReview Team'''
 
