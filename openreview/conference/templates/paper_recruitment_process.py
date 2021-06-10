@@ -120,7 +120,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} accepted to review paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation. The reviewer is now assigned to the paper {submission.number}.
+The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
