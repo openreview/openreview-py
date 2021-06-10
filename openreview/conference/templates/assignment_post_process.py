@@ -17,7 +17,6 @@ def process_update(client, edge, invitation, existing_edge):
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
         client.add_members_to_group(group.id, edge.tail)
-        client.add_members_to_group(GROUP_ID, edge.tail)
 
         recipients=[edge.tail]
         subject=f'[{SHORT_PHRASE}] You have been assigned as a {GROUP_NAME} for paper number {note.number}'

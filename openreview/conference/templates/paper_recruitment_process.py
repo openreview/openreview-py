@@ -95,11 +95,10 @@ OpenReview Team'''
                 signatures=[VENUE_ID]
             ))
 
+            client.add_members_to_group(EXTERNAL_COMMITTEE_ID, edge.tail)
             if ASSIGNMENT_LABEL:
                 instructions=f'The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
-                client.add_members_to_group(EXTERNAL_COMMITTEE_ID, edge.tail)
             else:
-                client.add_members_to_group(REVIEWERS_ID, edge.tail)
                 instructions=f'Please go to the {SHORT_PHRASE} Reviewers Console and check your pending tasks: https://openreview.net/group?id={REVIEWERS_ID}'
 
             print('send confirmation email')
@@ -131,6 +130,8 @@ OpenReview Team'''
     elif (note.content['response'] == 'No'):
 
         print('Invitation declined', edge.tail, submission.number)
+        ## I'm not sure if we should remove it because they could have been invite to more than one paper
+        client.remove_members_from_group(EXTERNAL_COMMITTEE_ID, edge.tail)
         if assignment_edges:
             print('Delete current assignment')
             assignment_edge=assignment_edges[0]

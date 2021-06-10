@@ -1035,8 +1035,8 @@ class Conference(object):
         self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
         self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
-    def set_external_reviewer_recruitment_groups(self):
-        parent_group_id = self.get_committee_id(name='External_Reviewers')
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers'):
+        parent_group_id = self.get_committee_id(name=name)
         parent_group_invited_id = parent_group_id + '/Invited'
 
         self.__create_group(parent_group_id, self.id)
@@ -1140,11 +1140,11 @@ class Conference(object):
         else:
             self.client.add_members_to_group(self.get_reviewers_id(number=number), user)
 
-    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
+    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False, use_emergency_group=False):
 
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
+        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment, use_emergency_group)
 
 
     def set_recruitment_reduced_load(self, reduced_load_options):

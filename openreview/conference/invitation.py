@@ -1259,7 +1259,7 @@ class PaperGroupInvitation(openreview.Invitation):
 
 class PaperRecruitmentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, web, invited_label, accepted_label, declined_label):
+    def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, invited_label, accepted_label, declined_label):
 
         content=invitations.recruitment
         content['submission_id'] = {
@@ -1289,13 +1289,13 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
                 post_content = post_content.replace("ACCEPTED_LABEL = ''", "ACCEPTED_LABEL = '" + accepted_label + "'")
                 post_content = post_content.replace("DECLINED_LABEL = ''", "DECLINED_LABEL = '" + declined_label + "'")
-                pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + conference.get_committee_id(name='External_Reviewers/Invited') + "'")
+                pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + conference.get_committee_id(name=invited_committee_name + '/Invited') + "'")
+                post_content = post_content.replace("EXTERNAL_COMMITTEE_ID = ''", "EXTERNAL_COMMITTEE_ID = '" + conference.get_committee_id(name=invited_committee_name) + "'")
 
                 ## Add to the proposed assignment or the deployed one.
                 if assignment_title:
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
                     post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
-                    post_content = post_content.replace("EXTERNAL_COMMITTEE_ID = ''", "EXTERNAL_COMMITTEE_ID = '" + conference.get_committee_id(name='External_Reviewers') + "'")
                 else:
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
 
@@ -1907,10 +1907,10 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(PaperGroupInvitation(conference, committee_id, with_process_function))
 
-    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined'):
+    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined'):
 
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
-        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None, invited_label, accepted_label, declined_label))
+        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None, invited_label, accepted_label, declined_label))
 
     def set_assignment_invitation(self, conference, committee_id):
 

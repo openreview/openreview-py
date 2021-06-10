@@ -842,7 +842,7 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
-    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}):
+    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers'):
 
         invite_label=invitation_labels.get('Invite', 'Invite')
         invited_label=invitation_labels.get('Invited', 'Invited')
@@ -859,12 +859,12 @@ class Matching(object):
                 pre_content = pre_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + self.match_group.id + "'")
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
                 post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
+                post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.conference.get_committee_id(name=invited_committee_name) + '/Invited' + "'")
                 if assignment_title:
                     pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
                     pre_content = pre_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
                     post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
-                    post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.conference.get_committee_id(name='External_Reviewers/Invited') + "'")
                 else:
                     pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
@@ -883,6 +883,7 @@ class Matching(object):
         invitation = self.conference.invitation_builder.set_paper_recruitment_invitation(self.conference,
             recruitment_invitation_id,
             self.match_group.id,
+            invited_committee_name,
             hash_seed,
             assignment_title,
             due_date,
@@ -893,13 +894,14 @@ class Matching(object):
         invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)
 
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
-        if assignment_title and self.match_group.id == self.conference.get_reviewers_id():
-            self.conference.set_external_reviewer_recruitment_groups()
-            invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
-            invitation.duedate=tools.datetime_millis(due_date)
-            invitation.expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
-            invitation=self.client.post_invitation(invitation)
-            invitation = self.conference.webfield_builder.set_reviewer_proposed_assignment_page(self.conference, invitation, assignment_title, invite_assignment_invitation)
+        if self.match_group.id == self.conference.get_reviewers_id():
+            self.conference.set_external_reviewer_recruitment_groups(name=invited_committee_name)
+            if assignment_title:
+                invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
+                invitation.duedate=tools.datetime_millis(due_date)
+                invitation.expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes= 30)) if due_date else None
+                invitation=self.client.post_invitation(invitation)
+                invitation = self.conference.webfield_builder.set_reviewer_proposed_assignment_page(self.conference, invitation, assignment_title, invite_assignment_invitation)
 
 
         return invite_assignment_invitation
@@ -1113,7 +1115,7 @@ class Matching(object):
                         self.client.post_group(sac_group)
 
 
-    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
+    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False, use_emergency_group=False):
         '''
         WARNING: This function untested
 
@@ -1138,5 +1140,5 @@ class Matching(object):
 
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
-            self.setup_invite_assignment(hash_seed=hash_seed)
+            self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name= 'Emergency_Reviewers' if use_emergency_group else self.conference.reviewers_name)
 
