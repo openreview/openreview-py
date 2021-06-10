@@ -959,31 +959,53 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   // Timeline
   var invitationMap = conferenceStatusData.invitationMap;
-
   html += '<div class="col-md-8 col-xs-12">'
   html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
-  html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
-  html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
+  var not_dated_elements = []
+  var dated_elements = []
+  var push_to_dated_arrays = function(invitationMap, id, name, dated, not_dated){
+    var curr_content = renderInvitation(invitationMap, id, name)
+    if (curr_content)
+      var curr_date = invitationMap[id].duedate
+      if (curr_date)
+        dated.push({'content': curr_content, 'date': new Date(curr_date)})
+      else
+        not_dated.push(curr_content)
+  }
+  
+  // Partition into dated and not dated information
+  push_to_dated_arrays(invitationMap, SUBMISSION_ID, 'Paper Submissions', dated_elements, not_dated_elements)
+  push_to_dated_arrays(invitationMap, REVIEWERS_ID, 'Reviewers Bidding', dated_elements, not_dated_elements)
+
   if (SENIOR_AREA_CHAIRS_ID) {
-    html += renderInvitation(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding')
+    push_to_dated_arrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding', dated_elements, not_dated_elements)
     if (invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senior Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+      not_dated_elements.push('<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senior Area Chairs Paper Assignment</a> open until Reviewing starts</li>')
     }
   }
   if (AREA_CHAIRS_ID) {
-    html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
-    html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
+    push_to_dated_arrays(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding', dated_elements, not_dated_elements)
+    push_to_dated_arrays(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation', dated_elements, not_dated_elements)
     if (invitationMap[AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+      not_dated_elements.push('<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>')
     }
   }
   if (invitationMap[REVIEWERS_ID + '/-/Assignment_Configuration']) {
-    html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
+    not_dated_elements.push('<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>')
   }
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
+  push_to_dated_arrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing', dated_elements, not_dated_elements)
+  push_to_dated_arrays(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting', dated_elements, not_dated_elements)
+  push_to_dated_arrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews', dated_elements, not_dated_elements)
+  push_to_dated_arrays(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions', dated_elements, not_dated_elements)
+
+  // Sort + append in dated order, followed by not-dated content
+  dated_elements.sort(function (a, b) {return a['date'] - b['date']})
+
+  for (var i = 0; i < dated_elements.length; i++)
+    html += dated_elements[i]['content']
+  for (var i = 0; i < not_dated_elements.length; i++)
+    html += not_dated_elements[i]
+
   html += '</ul>';
   html += '</div>';
   html += '</div>';
