@@ -969,9 +969,8 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
     var currDate = invitationMap[id].duedate;
     if (currDate) {
-      datedElements.push({ 'content': currContent, 'date': new Date(currDate) });
-    }
-    else {
+      datedElements.push({ content: currContent, date: new Date(currDate) });
+    } else {
       notDatedElements.push(currContent);
     }
   }
