@@ -169,7 +169,7 @@ class BidInvitation(openreview.Invitation):
                         'required': True
                     },
                     'label': {
-                        'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'value-radio': bid_stage.get_bid_options(),
                         'required': True
                     }
                 }
@@ -206,6 +206,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
             signatures = [conference.get_id()],
             invitees = invitees,
             multiReply = True,
+            taskCompletionCount = 1,
             reply = {
                 'readers': {
                     'values-copied': [conference.get_id(), '{signatures}']
@@ -351,6 +352,10 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'PAPER_AREA_CHAIRS_ID = \'\'',
                     'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
+            if conference.use_senior_area_chairs:
+                file_content = file_content.replace(
+                    'PAPER_SENIOR_AREA_CHAIRS_ID = \'\'',
+                    'PAPER_SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id(number=note.number) + '\'')
             file_content = file_content.replace(
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
@@ -492,6 +497,10 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'PAPER_AREA_CHAIRS_ID = \'\'',
                     'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
+            if conference.use_senior_area_chairs:
+                file_content = file_content.replace(
+                    'PAPER_SENIOR_AREA_CHAIRS_ID = \'\'',
+                    'PAPER_SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id(number=note.number) + '\'')
             file_content = file_content.replace(
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
@@ -593,14 +602,14 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
     def __init__(self, conference, note, submission_content):
 
         submission_revision_stage = conference.submission_revision_stage
-        referent = note.original if conference.submission_stage.double_blind else note.id
-        original_content = note.details['original']['content'] if conference.submission_stage.double_blind else note.content
+        referent = note.original if note.original else note.id
 
         start_date = submission_revision_stage.start_date
         due_date = submission_revision_stage.due_date
         content = None
 
         if submission_revision_stage.allow_author_reorder:
+            original_content = note.details['original']['content'] if conference.submission_stage.double_blind else note.content
 
             content = submission_content.copy()
 

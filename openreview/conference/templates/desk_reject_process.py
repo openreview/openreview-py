@@ -7,6 +7,7 @@ def process(client, note, invitation):
     PAPER_AUTHORS_ID = ''
     PAPER_REVIEWERS_ID = ''
     PAPER_AREA_CHAIRS_ID = ''
+    PAPER_SENIOR_AREA_CHAIRS_ID = ''
     PROGRAM_CHAIRS_ID = ''
     DESK_REJECTED_SUBMISSION_ID = ''
     REVEAL_AUTHORS_ON_DESK_REJECT = False
@@ -15,6 +16,8 @@ def process(client, note, invitation):
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
         committee.append(PAPER_AREA_CHAIRS_ID)
+    if PAPER_SENIOR_AREA_CHAIRS_ID:
+        committee.append(PAPER_SENIOR_AREA_CHAIRS_ID)
     committee.append(PROGRAM_CHAIRS_ID)
 
     forum_note = client.get_note(note.forum)

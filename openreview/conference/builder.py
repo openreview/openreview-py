@@ -92,12 +92,13 @@ class Conference(object):
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = []):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], exclude_self_reader=False):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
+            readers = [self.id, group_owner_id] if exclude_self_reader else [self.id, group_owner_id, group_id]
             return self.client.post_group(openreview.Group(
                 id = group_id,
-                readers = ['everyone'] if 'everyone' in additional_readers else [self.id, group_owner_id, group_id] + additional_readers,
+                readers = ['everyone'] if 'everyone' in additional_readers else readers + additional_readers,
                 writers = [self.id, group_owner_id],
                 signatures = [self.id],
                 signatories = [self.id, group_id] if is_signatory else [self.id, group_owner_id],
@@ -171,7 +172,7 @@ class Conference(object):
         return len(invitations)
 
     def __create_submission_stage(self):
-        under_submission = not self.submission_stage.due_date or datetime.datetime.utcnow() < self.submission_stage.due_date
+        under_submission = self.submission_stage.is_under_submission()
         return self.invitation_builder.set_submission_invitation(self, under_submission=under_submission)
 
     def __create_expertise_selection_stage(self):
@@ -1000,9 +1001,9 @@ class Conference(object):
             # parent_group_accepted_group
             self.__create_group(parent_group_accepted_id, pcs_id)
             # parent_group_declined_group
-            self.__create_group(parent_group_declined_id, pcs_id)
+            self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
             # parent_group_invited_group
-            self.__create_group(parent_group_invited_id, pcs_id)
+            self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
         else:
             raise openreview.OpenReviewException('Conference "has_senior_area_chairs" setting is disabled')
 
@@ -1018,9 +1019,9 @@ class Conference(object):
             # parent_group_accepted_group
             self.__create_group(parent_group_accepted_id, pcs_id)
             # parent_group_declined_group
-            self.__create_group(parent_group_declined_id, pcs_id)
+            self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
             # parent_group_invited_group
-            self.__create_group(parent_group_invited_id, pcs_id)
+            self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
@@ -1031,15 +1032,15 @@ class Conference(object):
 
         pcs_id = self.get_program_chairs_id()
         self.__create_group(parent_group_id, self.get_area_chairs_id() if self.use_area_chairs else self.id)
-        self.__create_group(parent_group_declined_id, pcs_id)
-        self.__create_group(parent_group_invited_id, pcs_id)
+        self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
+        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
     def set_external_reviewer_recruitment_groups(self):
         parent_group_id = self.get_committee_id(name='External_Reviewers')
         parent_group_invited_id = parent_group_id + '/Invited'
 
         self.__create_group(parent_group_id, self.id)
-        self.__create_group(parent_group_invited_id, self.id)
+        self.__create_group(parent_group_invited_id, self.id, exclude_self_reader=True)
 
     def set_reviewers(self, emails = []):
         readers = []
@@ -1084,7 +1085,7 @@ class Conference(object):
 
         return self.webfield_builder.set_impersonate_page(self, group)
 
-    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=False):
+    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
@@ -1235,15 +1236,18 @@ class Conference(object):
                         reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
-
-                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        'Reminder: ' + recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
-                    recruitment_status['reminded'].append(reviewer_id)
+                    try:
+                        tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                            hash_seed,
+                            invitation.id,
+                            recruit_message,
+                            'Reminder: ' + recruit_message_subj,
+                            reviewers_invited_id,
+                            verbose = False)
+                        recruitment_status['reminded'].append(reviewer_id)
+                    except openreview.OpenReviewException as e:
+                        self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
+                        recruitment_status['errors'].append(e)
 
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
@@ -1256,14 +1260,17 @@ class Conference(object):
                         reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
-
-                    tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
-                        hash_seed,
-                        invitation.id,
-                        recruit_message,
-                        recruit_message_subj,
-                        reviewers_invited_id,
-                        verbose = False)
+                    try:
+                        tools.recruit_reviewer(self.client, reviewer_id, reviewer_name,
+                            hash_seed,
+                            invitation.id,
+                            recruit_message,
+                            recruit_message_subj,
+                            reviewers_invited_id,
+                            verbose = False)
+                    except openreview.OpenReviewException as e:
+                        self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
+                        recruitment_status['errors'].append(e)
 
         print ('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
@@ -1291,6 +1298,7 @@ class Conference(object):
                         verbose = False)
                     recruitment_status['invited'].append(email)
                 except openreview.OpenReviewException as e:
+                    self.client.remove_members_from_group(reviewers_invited_group, email)
                     recruitment_status['errors'].append(e)
         return recruitment_status
 
@@ -1523,7 +1531,7 @@ class SubmissionStage(object):
         if self.create_groups:
             return {'values': ['everyone']}
 
-        if under_submission:
+        if under_submission or self.double_blind:
             readers = {
                 'values-copied': [
                     conference.get_id(),
@@ -1582,6 +1590,10 @@ class SubmissionStage(object):
 
         return content
 
+    def is_under_submission(self):
+        final_due_date = self.second_due_date if self.second_due_date else self.due_date
+        return not final_due_date or datetime.datetime.utcnow() < final_due_date
+
 class ExpertiseSelectionStage(object):
 
     def __init__(self, start_date = None, due_date = None):
@@ -1591,7 +1603,7 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False):
+    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False, allow_conflicts_bids=False):
         self.committee_id=committee_id
         self.start_date=start_date
         self.due_date=due_date
@@ -1599,6 +1611,7 @@ class BidStage(object):
         self.request_count=request_count
         self.score_ids=score_ids
         self.instructions=instructions
+        self.allow_conflicts_bids=allow_conflicts_bids
 
     def get_invitation_readers(self, conference):
         readers = [conference.get_id()]
@@ -1625,6 +1638,12 @@ class BidStage(object):
                 values_copied.append(conference.get_senior_area_chairs_id())
         values_copied.append('{signatures}')
         return values_copied
+
+    def get_bid_options(self):
+        options = ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+        if self.allow_conflicts_bids:
+            options.append('Conflict')
+        return options
 
 class SubmissionRevisionStage():
 

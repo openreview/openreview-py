@@ -1476,7 +1476,7 @@ class TestDoubleBlindConference():
         dropdown_Options_Present=EC.presence_of_element_located((By.XPATH,'//*[@id="1-add-reviewer"]/div/div'))
         WebDriverWait(selenium,5).until(dropdown_Options_Present)
         dropdown_Options=selenium.find_element_by_xpath('//*[@id="1-add-reviewer"]/div/div')
-        assert len(dropdown_Options.find_elements_by_xpath('//*[@id="1-add-reviewer"]/div/div/div'))==2
+        assert len(dropdown_Options.find_elements_by_xpath('//*[@id="1-add-reviewer"]/div/div/div'))==1
 
     def test_open_revise_submissions(self, client, test_client, helpers):
 
