@@ -37,6 +37,25 @@ var SENIOR_AREA_CHAIRS_INVITED_ID = SENIOR_AREA_CHAIRS_ID ? SENIOR_AREA_CHAIRS_I
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var PAPER_REVIEWS_COMPLETE_THRESHOLD = 3;
 var PAGE_SIZE = 25;
+var filterOperators = ['!=','>=','<=','>','<','=']; // sequence matters
+var propertiesAllowed ={
+    number:['note.number'],
+    id:['note.id','summary.id'],// multi tab same prop
+    title:['note.content.title'],
+    author:['note.content.authors','note.content.authorids'], // multi props
+    keywords:['note.content.keywords'],
+    reviewer:['reviewProgressData.reviewers'],
+    numReviewersAssigned:['reviewProgressData.numReviewers'],
+    numReviewsDone:['reviewProgressData.numSubmittedReviews'],
+    areaChair:['areachairProgressData.areachair.name'],
+    ratingAvg:['reviewProgressData.averageRating'],
+    ratingMax:['reviewProgressData.maxRating'],
+    ratingMin:['reviewProgressData.minRating'],
+    confidenceAvg:['reviewProgressData.averageConfidence'],
+    confidenceMax:['reviewProgressData.maxConfidence'],
+    confidenceMin:['reviewProgressData.minConfidence'],
+    replyCount:['reviewProgressData.forumReplyCount']
+}
 
 // Page State
 var reviewerSummaryMap = {};
@@ -514,16 +533,18 @@ var buildAreaChairGroupMaps = function(noteNumbers, groups) {
   _.forEach(acGroups, function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     g.members.forEach(function(member, index) {
-        var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && g.members[0] == member; });
-        var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
-        if (num in noteMap) {
-          noteMap[num][anonId] = member;
-          if (!(member in areaChairMap)) {
-            areaChairMap[member] = [];
-          }
-          areaChairMap[member].push(num);
+      var anonGroup = anonGroups.find(function(g) { return g.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && g.members[0] == member; });
+      if (!anonGroup) return;
+
+      var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
+      if (num in noteMap) {
+        noteMap[num][anonId] = member;
+        if (!(member in areaChairMap)) {
+          areaChairMap[member] = [];
         }
-    })
+        areaChairMap[member].push(num);
+      }
+    });
   });
 
   return {
@@ -1044,12 +1065,14 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   $('#venue-configuration').html(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, searchResults) {
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery) {
   var searchType = container.substring(1).split('-')[0] + 's';
+  var placeHolder = enableQuery ? 'Enter search term or type + to start a query and press enter' : 'Search all ' + searchType + '...'
+  var searchBarWidth = enableQuery ? '440px' : '300px'
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
-    '<input type="text" class="form-search form-control" class="form-control" placeholder="Search all ' + searchType + '..." ' +
-      'style="width: 300px; margin-right: 1.5rem; line-height: 34px;">' :
+    '<input type="text" class="form-search form-control" class="form-control" placeholder="' + placeHolder + '" ' +
+    'style="width: ' + searchBarWidth + '; margin-right: 1.5rem; line-height: 34px;">' :
     '';
   var sortOptionsHtml = _.map(_.keys(sortOptions), function(option) {
     return '<option class="' + option.replace(/_/g, '-') + '-' + container.substring(1) + '" value="' + option + '">' + option.replace(/_/g, ' ') + '</option>';
@@ -1057,7 +1080,7 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
   var sortDropdownHtml = sortOptionsHtml.length && _.isFunction(sortResults) ?
     '<strong style="vertical-align: middle;">Sort By:</strong> ' +
     '<select class="form-sort form-control" style="width: 250px; line-height: 1rem;">' + sortOptionsHtml + '</select>' +
-    '<button class="form-order btn btn-icon"><span class="glyphicon glyphicon-sort"></span></button>' :
+    '<button class="form-order btn btn-icon" type="button"><span class="glyphicon glyphicon-sort"></span></button>' :
     '';
 
   $(container).html(
@@ -1077,10 +1100,44 @@ var displaySortPanel = function(container, sortOptions, sortResults, searchResul
     sortResults($(container).find('.form-sort').val(), true);
     return false;
   });
-  $(container + ' .form-search').on('keyup', _.debounce(function() {
-    var searchText = $(container + ' .form-search').val().toLowerCase().trim();
-    searchResults(searchText);
-  }, 300));
+  $(container + ' .form-search').on('keyup', function (e) {
+    var searchText = $(container + ' .form-search').val().trim();
+    var searchLabel = $(container + ' .form-search').prevAll('strong:first').text();
+    if (enableQuery){
+      conferenceStatusData.filteredRows = null
+    }
+    $(container + ' .form-search').removeClass('invalid-value');
+
+    if (enableQuery && searchText.startsWith('+')) {
+      // filter query mode
+      if (searchLabel === 'Search:') {
+        $(container + ' .form-search').prevAll('strong:first').text('Query:');
+        $(container + ' .form-search').prevAll('strong:first').after($('<span/>', {
+          class: 'glyphicon glyphicon-info-sign'
+        }).hover(function (e) {
+          $(e.target).tooltip({
+            title: "<strong class='tooltip-title'>Query Mode Help</strong>\n<p>In Query mode, you can enter an expression and hit ENTER to search.<br/> The expression consists of property of a paper and a value you would like to search.</p><p>e.g. +number=5 will return the paper 5</p><p>Expressions may also be combined with AND/OR.<br>e.g. +number=5 OR number=6 OR number=7 will return paper 5,6 and 7.<br>If the value has multiple words, it should be enclosed in double quotes.<br>e.g. +title=\"some title to search\"</p><p>Braces can be used to organize expressions.<br>e.g. +number=1 OR ((number=5 AND number=7) OR number=8) will return paper 1 and 8.</p><p>Operators available:".concat(filterOperators.join(', '), "</p><p>Properties available:").concat(Object.keys(propertiesAllowed).join(', '), "</p>"),
+            html: true,
+            placement: 'bottom'
+          });
+        }));
+      }
+
+      if (e.key === 'Enter') {
+        searchResults(searchText, true);
+      }
+    } else {
+      if (enableQuery && searchLabel !== 'Search:') {
+        $(container + ' .form-search').prev().remove(); // remove info icon
+
+        $(container + ' .form-search').prev().text('Search:');
+      }
+
+      _.debounce(function () {
+        searchResults(searchText.toLowerCase(), false);
+      }, 300)();
+    }
+  });
   $(container + ' form.search-form').on('submit', function() {
     return false;
   });
@@ -1172,7 +1229,7 @@ var displayPaperStatusTable = function() {
     var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
     return buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, acProfiles, decision);
   });
-
+  var filteredRows = null;
   var toNumber = function(value) {
     return value === 'N/A' ? 0 : value;
   }
@@ -1203,16 +1260,14 @@ var displayPaperStatusTable = function() {
   }
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' .form-search').val('');
-
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    rowData = _.orderBy(rowData, sortOptions[newOption], order);
-    renderTable(container, rowData);
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    renderTable(container, rowDataToRender);
   };
 
-  var searchResults = function(searchText) {
+  var searchResults = function(searchText, isQueryMode) {
     $(container).data('lastPageNum', 1);
     $(container + ' .form-sort').val('Paper_Number');
 
@@ -1224,13 +1279,27 @@ var displayPaperStatusTable = function() {
       );
     };
 
-    var filteredRows;
     if (searchText) {
-      filteredRows = _.orderBy(_.filter(rowData, filterFunc), sortOptions['Paper_Number'], 'asc');
-      matchingNoteIds = filteredRows.map(function(row) { return row.note.id; });
+      if (isQueryMode) {
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id');
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
+        if (queryIsInvalid) $(container + ' .form-search').addClass('invalid-value');
+      } else {
+        filteredRows = _.filter(rowData, filterFunc);
+      }
+
+      filteredRows = _.orderBy(filteredRows, sortOptions['Paper_Number'], 'asc');
+      matchingNoteIds = filteredRows.map(function (row) {
+        return row.note.id;
+      });
+      order = 'asc'
     } else {
       filteredRows = rowData;
       matchingNoteIds = [];
+    }
+    if (rowData.length !== filteredRows.length) {
+      conferenceStatusData.filteredRows = filteredRows
     }
     renderTable(container, filteredRows);
   };
@@ -1426,10 +1495,10 @@ var displayPaperStatusTable = function() {
   };
 
   if (rowData.length) {
-    displaySortPanel(container, sortOptions, sortResults, searchResults);
+    displaySortPanel(container, sortOptions, sortResults, searchResults, true);
     $(container).find('form.search-form .pull-left').html('<div class="btn-group message-papers-container" role="group">' +
       '<button type="button" class="message-papers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Select papers to message corresponding reviewers" disabled="disabled">' +
-        '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message Reviewers ' +
+      '<span class="glyphicon glyphicon-envelope"></span> &nbsp;Message' +
         '<span class="caret"></span>' +
       '</button>' +
       '<ul class="dropdown-menu">' +
@@ -1438,7 +1507,7 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
-    '<div class="btn-group"><button class="btn btn-export-data">Export</button></div>');
+    '<div class="btn-group"><button class="btn btn-export-data" type="button">Export</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
@@ -1508,6 +1577,7 @@ var displayAreaChairsStatusTable = function() {
   var areachairIds = conferenceStatusData.areaChairGroups.byAreaChairs;
 
   var rowData = [];
+  var filteredRows = null;
   _.forEach(conferenceStatusData.areaChairs, function(areaChair, index) {
     var numbers = areachairIds[areaChair];
     var papers = [];
@@ -1545,16 +1615,14 @@ var displayAreaChairsStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' .form-search').val('');
-
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    rowData = _.orderBy(rowData, sortOptions[newOption], order);
-    renderTable(container, rowData);
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    renderTable(container, rowDataToRender);
   }
 
-  var searchResults = function(searchText) {
+  var searchResults = function(searchText, isQueryMode) {
     $(container).data('lastPageNum', 1);
     $(container + ' .form-sort').val('Area_Chair');
 
@@ -1562,9 +1630,20 @@ var displayAreaChairsStatusTable = function() {
     var filterFunc = function(row) {
       return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
     };
-    var filteredRows = searchText
-      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Area_Chair'], 'asc')
-      : rowData;
+    if (searchText) {
+      if(isQueryMode){
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
+        if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
+      } else {
+        filteredRows = _.filter(rowData, filterFunc)
+      }
+      filteredRows = _.orderBy(filteredRows, sortOptions['Area_Chair'], 'asc');
+      order = 'asc';
+    } else {
+      filteredRows = rowData;
+    }
     renderTable(container, filteredRows);
   };
 
@@ -1670,7 +1749,7 @@ var displayAreaChairsStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-acs-container" role="group">' +
       '<button type="button" class="message-acs-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -1720,6 +1799,7 @@ var displayReviewerStatusTable = function() {
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
 
   var rowData = [];
+  var filteredRows = null;
   _.forEach(conferenceStatusData.reviewers, function(reviewer, index) {
     var reviewerProfile = findProfile(conferenceStatusData.profiles, reviewer);
     var numbers = getReviewerNoteNumbers(reviewerProfile, reviewerById);
@@ -1769,26 +1849,35 @@ var displayReviewerStatusTable = function() {
   };
 
   var sortResults = function(newOption, switchOrder) {
-    $(container + ' .form-search').val('');
-
     if (switchOrder) {
       order = order === 'asc' ? 'desc' : 'asc';
     }
-    rowData = _.orderBy(rowData, sortOptions[newOption], order);
-    renderTable(container, rowData);
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    renderTable(container, rowDataToRender);
   };
 
-  var searchResults = function(searchText) {
+  var searchResults = function(searchText, isQueryMode) {
     $(container).data('lastPageNum', 1);
-    $(container + ' .form-sort').val('Reviewer');
+    $(container + ' .form-sort').val('Reviewer_Name');
 
     // Currently only searching on reviewer name
     var filterFunc = function(row) {
       return row.summary.name.toLowerCase().indexOf(searchText) !== -1;
     };
-    var filteredRows = searchText
-      ? _.orderBy(_.filter(rowData, filterFunc), sortOptions['Reviewer'], 'asc')
-      : rowData;
+    if (searchText) {
+      if(isQueryMode){
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'summary.id')
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
+        if(queryIsInvalid) $(container + ' .form-search').addClass('invalid-value')
+      } else {
+        filteredRows = _.filter(rowData, filterFunc)
+      }
+      filteredRows = _.orderBy(filteredRows, sortOptions['Reviewer_Name'], 'asc');
+      order = 'asc';
+    } else {
+      filteredRows = rowData;
+    }
     renderTable(container, filteredRows);
   };
 
@@ -1885,7 +1974,7 @@ var displayReviewerStatusTable = function() {
     });
   };
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-reviewers-container" role="group">' +
       '<button type="button" class="message-reviewers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -1897,7 +1986,7 @@ var displayReviewerStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>'+
-    '<div class="btn-group"><button class="btn btn-export-reviewers">Export</button></div>'
+    '<div class="btn-group"><button class="btn btn-export-reviewers" type="button">Export</button></div>'
   );
   renderTable(container, rowData);
 };
@@ -2585,7 +2674,8 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
 
 var buildCSV = function(){
   var profiles = conferenceStatusData.profiles;
-  var notes = conferenceStatusData.blindedNotes;
+  var isFiltered = conferenceStatusData.filteredRows ? true : false
+  var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
   var completedReviews = conferenceStatusData.officialReviews;
   var metaReviews = conferenceStatusData.metaReviews;
   var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
@@ -2610,33 +2700,46 @@ var buildCSV = function(){
   'average confidence',
   'ac recommendation',
   'ac1 profile id',
+  'ac1 name',
   'ac1 email',
   'ac2 profile id',
+  'ac2 name',
   'ac2 email',
   'ac ranking',
   'decision'].join(',') + '\n');
 
-  _.forEach(notes, function(note) {
-    var revIds = reviewerIds[note.number];
-    var areachairId = areachairIds[note.number][0];
+  _.forEach(notes, function(noteObj) {
+    var paperTableRow = null;
+    var noteNumber = isFiltered ? noteObj.note.number : noteObj.number;
+    var noteForum = isFiltered? noteObj.note.forum: noteObj.forum;
+    var areachairId = areachairIds[noteNumber][0];
     var areachairProfileOne = {}
     if (areachairId) {
       areachairProfileOne = findProfile(profiles, areachairId);
     } else {
-      areachairProfileOne.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chairs');
+      areachairProfileOne.name = '-';
       areachairProfileOne.email = '-';
     }
-    areachairId = areachairIds[note.number][1];
+    areachairId = areachairIds[noteNumber][1];
     var areachairProfileTwo = {}
     if (areachairId) {
       areachairProfileTwo = findProfile(profiles, areachairId);
     } else {
       areachairProfileTwo.id = '';
+      areachairProfileOne.name = '-';
       areachairProfileTwo.email = '';
     }
-    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
-    var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, [areachairProfileOne, areachairProfileTwo], decision);
+
+    if(isFiltered){
+      paperTableRow = noteObj
+    } else {
+      var revIds = reviewerIds[noteNumber];
+      var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, noteNumber)]);
+      var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, noteNumber)]);
+      var paperTableRow = buildPaperTableRow(noteObj, revIds, completedReviews[noteNumber], metaReview, [areachairProfileOne, areachairProfileTwo], decision);
+    }
+
     var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
@@ -2651,7 +2754,7 @@ var buildCSV = function(){
         missingReviewers.push(r.id);
       }
     });
-    rowData.push([paperTableRow.note.number,
+    rowData.push([noteNumber,
     '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
     '"' + title + '"',
     '"' + abstract + '"',
@@ -2667,10 +2770,12 @@ var buildCSV = function(){
     paperTableRow.reviewProgressData.averageConfidence,
     paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
     areachairProfileOne.id,
+    areachairProfileOne.name,
     areachairProfileOne.email,
     areachairProfileTwo.id,
+    areachairProfileTwo.name,
     areachairProfileTwo.email,
-    acRankingByPaper[note.forum] && acRankingByPaper[note.forum].tag,
+    acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
     paperTableRow.decision && paperTableRow.decision.content.decision
     ].join(',') + '\n');
   });
@@ -2745,10 +2850,11 @@ var buildReviewersCSV = function(){
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv'});
-  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv',);
+  var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
+  saveAs(blob, fileName);
 });
 
 $('#group-container').on('click', 'button.btn.btn-export-reviewers', function(e) {
   var blob = new Blob(buildReviewersCSV(), {type: 'text/csv'});
-  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_reviewer_status.csv',);
+  saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_reviewer_status.csv');
 });
