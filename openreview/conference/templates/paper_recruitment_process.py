@@ -13,6 +13,7 @@ def process(client, note, invitation):
     ASSIGNMENT_INVITATION_ID = ''
     ASSIGNMENT_LABEL = None
     EXTERNAL_COMMITTEE_ID = ''
+    EXTERNAL_PAPER_COMMITTEE_ID = ''
     INVITED_LABEL = ''
     ACCEPTED_LABEL = ''
     DECLINED_LABEL = ''
@@ -95,7 +96,13 @@ OpenReview Team'''
                 signatures=[VENUE_ID]
             ))
 
-            client.add_members_to_group(EXTERNAL_COMMITTEE_ID, edge.tail)
+            if EXTERNAL_COMMITTEE_ID:
+                client.add_members_to_group(EXTERNAL_COMMITTEE_ID, edge.tail)
+
+            if EXTERNAL_PAPER_COMMITTEE_ID:
+                external_paper_committee_id=EXTERNAL_PAPER_COMMITTEE_ID.replace('{number}', str(submission.number))
+                client.add_members_to_group(external_paper_committee_id, edge.tail)
+
             if ASSIGNMENT_LABEL:
                 instructions=f'The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.'
             else:
@@ -131,7 +138,11 @@ OpenReview Team'''
 
         print('Invitation declined', edge.tail, submission.number)
         ## I'm not sure if we should remove it because they could have been invite to more than one paper
-        client.remove_members_from_group(EXTERNAL_COMMITTEE_ID, edge.tail)
+        #client.remove_members_from_group(EXTERNAL_COMMITTEE_ID, edge.tail)
+        if EXTERNAL_PAPER_COMMITTEE_ID:
+            external_paper_committee_id=EXTERNAL_PAPER_COMMITTEE_ID.replace('{number}', str(submission.number))
+            client.remove_members_from_group(external_paper_committee_id, edge.tail)
+
         if assignment_edges:
             print('Delete current assignment')
             assignment_edge=assignment_edges[0]

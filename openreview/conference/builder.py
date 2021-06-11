@@ -1035,12 +1035,38 @@ class Conference(object):
         self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
         self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
-    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers'):
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+
+        if name == self.reviewers_name:
+            raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
+
         parent_group_id = self.get_committee_id(name=name)
         parent_group_invited_id = parent_group_id + '/Invited'
 
         self.__create_group(parent_group_id, self.id)
         self.__create_group(parent_group_invited_id, self.id, exclude_self_reader=True)
+
+        ## create groups per submissions
+        if create_paper_groups:
+            for submission in tqdm(self.get_submissions()):
+                paper_group_id = self.get_committee_id(name=name, number=submission.number)
+                self.client.post_group(openreview.Group(
+                    id=paper_group_id,
+                    readers=[self.id, paper_group_id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    members=[]
+                ))
+                paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
+                self.client.post_group(openreview.Group(
+                    id=paper_invited_group_id,
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    members=[]
+                ))
 
     def set_reviewers(self, emails = []):
         readers = []
@@ -1140,11 +1166,11 @@ class Conference(object):
         else:
             self.client.add_members_to_group(self.get_reviewers_id(number=number), user)
 
-    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False, use_emergency_group=False):
+    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
 
         match_group = self.client.get_group(committee_id)
         conference_matching = matching.Matching(self, match_group)
-        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment, use_emergency_group)
+        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
 
     def set_recruitment_reduced_load(self, reduced_load_options):

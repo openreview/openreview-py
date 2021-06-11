@@ -6,6 +6,7 @@ def process(client, edge, invitation):
     ASSIGNMENT_LABEL = None
     HASH_SEED = ''
     REVIEWERS_INVITED_ID = ''
+    PAPER_REVIEWER_INVITED_ID = ''
     INVITED_LABEL = ''
     INVITE_LABEL = ''
     print(edge.id)
@@ -63,7 +64,13 @@ Thanks,
 {inviter_id}
 {inviter_preferred_name} ({edge.tauthor})'''
 
+        if PAPER_REVIEWER_INVITED_ID:
+            paper_reviewers_invited_id=PAPER_REVIEWER_INVITED_ID.replace('{number}', str(submission.number))
+            ## Paper invited group
+            client.add_members_to_group(paper_reviewers_invited_id, [user_profile.id])
+
         if REVIEWERS_INVITED_ID:
+            ## General invited group
             client.add_members_to_group(REVIEWERS_INVITED_ID, [user_profile.id])
 
         ## - Send email

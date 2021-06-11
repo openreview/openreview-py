@@ -183,7 +183,7 @@ class Matching(object):
                 'id' : edge_id.split('/-/')[0]
             }
             edge_weight={
-                'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
                 'required': True
             }
             edge_label=None
@@ -859,12 +859,13 @@ class Matching(object):
                 pre_content = pre_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + self.match_group.id + "'")
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
                 post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
-                post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.conference.get_committee_id(name=invited_committee_name) + '/Invited' + "'")
+                post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.conference.get_committee_id(name=invited_committee_name + '/Invited')  + "'")
                 if assignment_title:
                     pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
                     pre_content = pre_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id) + "'")
                     post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                    post_content = post_content.replace("PAPER_REVIEWER_INVITED_ID = ''", "PAPER_REVIEWER_INVITED_ID = '" + self.conference.get_committee_id(name=invited_committee_name + '/Invited', number='{number}')  + "'")
                 else:
                     pre_content = pre_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + self.conference.get_paper_assignment_id(self.match_group.id, deployed=True) + "'")
@@ -895,7 +896,7 @@ class Matching(object):
 
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
         if self.match_group.id == self.conference.get_reviewers_id():
-            self.conference.set_external_reviewer_recruitment_groups(name=invited_committee_name)
+            self.conference.set_external_reviewer_recruitment_groups(name=invited_committee_name, create_paper_groups=True if assignment_title else False)
             if assignment_title:
                 invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
                 invitation.duedate=tools.datetime_millis(due_date)
@@ -1115,7 +1116,7 @@ class Matching(object):
                         self.client.post_group(sac_group)
 
 
-    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False, use_emergency_group=False):
+    def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
         '''
         WARNING: This function untested
 
@@ -1140,5 +1141,5 @@ class Matching(object):
 
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
-            self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name= 'Emergency_Reviewers' if use_emergency_group else self.conference.reviewers_name)
+            self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
 

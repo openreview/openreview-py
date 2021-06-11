@@ -1296,6 +1296,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 if assignment_title:
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
                     post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                    post_content = post_content.replace("EXTERNAL_PAPER_COMMITTEE_ID = ''", "EXTERNAL_PAPER_COMMITTEE_ID = '" + conference.get_committee_id(name=invited_committee_name, number='{number}') + "'")
                 else:
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
 
