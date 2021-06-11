@@ -1169,7 +1169,7 @@ OpenReview Team'''
         assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Amazon1')
 
         ## Invite external reviewer 2
-        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for ~External_Reviewer_MIT1'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for External Reviewer MIT'):
             posted_edge=ac_client.post_edge(openreview.Edge(
                 invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
                 readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer2@mit.edu'],
