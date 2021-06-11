@@ -1004,10 +1004,8 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   // Sort + append in dated order, followed by not-dated content
   datedElements.sort(function (a, b) {return a['date'] - b['date']});
 
-  for (var i = 0; i < datedElements.length; i++)
-    html += datedElements[i]['content'];
-  for (var i = 0; i < notDatedElements.length; i++)
-    html += notDatedElements[i];
+  html += datedElements.map(function(elem) { return elem.content; }).join('\n');
+  html += notDatedElements.join('\n');
 
   html += '</ul>';
   html += '</div>';
