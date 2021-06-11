@@ -1397,10 +1397,10 @@ OpenReview Team'''
                 label = 'Invitation Sent'
             ))
         assert openReviewError.value.args[0].get('name') == 'Error'
-        assert openReviewError.value.args[0].get('message') == 'Reviewer ~Reviewer_Facebook1 is an official reviewer, please use the "Assign" button to make the assignment.'
+        assert openReviewError.value.args[0].get('message') == 'Reviewer Reviewer Facebook is an official reviewer, please use the "Assign" button to make the assignment.'
 
         ## Invite an official conflicted reviewer and get a conflict error
-        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for ~Reviewer_MIT1'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for Reviewer MIT'):
             posted_edge=ac_client.post_edge(openreview.Edge(
                 invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
                 readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'reviewer2@mit.edu'],
@@ -1413,7 +1413,7 @@ OpenReview Team'''
             ))
 
         ## Propose a reviewer that reached the quota
-        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for ~Reviewer_IBM1'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for Reviewer IBM'):
             posted_edge=ac_client.post_edge(openreview.Edge(
                 invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment',
                 readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Reviewer_IBM1'],

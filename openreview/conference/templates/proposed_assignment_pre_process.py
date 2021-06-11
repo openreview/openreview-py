@@ -17,8 +17,10 @@ def process(client, edge, invitation):
 
     assignment_edges=client.get_edges(invitation=edge.invitation, label=edge.label, tail=edge.tail)
 
+    profile=openreview.tools.get_profile(client, edge.tail)
+
     if len(assignment_edges) >= custom_max_papers:
-        raise openreview.OpenReviewException(f'Max Papers allowed reached for {edge.tail}')
+        raise openreview.OpenReviewException(f'Max Papers allowed reached for {profile.get_preferred_name(pretty=True) if profile else edge.tail}')
 
     return edge
 

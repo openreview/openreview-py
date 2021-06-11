@@ -37,9 +37,9 @@ def process(client, edge, invitation):
                 ## - Check if the user has a conflict
                 edges=client.get_edges(invitation=REVIEWERS_ID + '/-/Conflict', head=edge.head, tail=user_profile.id)
                 if edges:
-                    raise openreview.OpenReviewException(f'Conflict detected for {user_profile.id}')
+                    raise openreview.OpenReviewException(f'Conflict detected for {user_profile.get_preferred_name(pretty=True)}')
 
-                raise openreview.OpenReviewException(f'Reviewer {user_profile.id} is an official reviewer, please use the "Assign" button to make the assignment.')
+                raise openreview.OpenReviewException(f'Reviewer {user_profile.get_preferred_name(pretty=True)} is an official reviewer, please use the "Assign" button to make the assignment.')
 
 
         else:

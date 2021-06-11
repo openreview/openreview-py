@@ -108,7 +108,7 @@ var getReviewerNoteNumbers = function() {
   }).then(function(groups) {
 
     var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
-    var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/Reviewers'); });
+    var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/' + REVIEWER_NAME); });
 
     var groupByNumber = {};
     _.forEach(reviewerGroups, function(reviewerGroup) {
