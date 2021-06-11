@@ -7,6 +7,10 @@ def process(client, edge, invitation):
     if edge.ddate:
         return
 
+    ## avoid validation during update
+    if edge.tcdate != edge.tmdate:
+        return
+
     ## Get quota
     edges=client.get_edges(invitation=CUSTOM_MAX_PAPERS_INVITATION_ID, tail=edge.tail)
 
