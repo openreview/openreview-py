@@ -1327,7 +1327,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                     invitees = ['everyone'],
                     noninvitees = [],
                     writers = [conference.get_id()],
-                    signatures = [conference.get_id()],
+                    signatures = [conference.get_program_chairs_id()],
                     reply = {
                         'forum': None,
                         'replyto': None,

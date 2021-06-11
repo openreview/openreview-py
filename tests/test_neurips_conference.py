@@ -1057,7 +1057,7 @@ OpenReview Team'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon accepted to review paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area IBMChair,
-The Reviewer External Reviewer Amazon that you invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
+The Reviewer External Reviewer Amazon(external_reviewer1@amazon.com) that you invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
 
 OpenReview Team'''
 
@@ -1096,9 +1096,9 @@ OpenReview Team'''
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon declined to review paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Area IBMChair,
-The Reviewer External Reviewer Amazon that you invited to review paper 5 has declined the invitation.
+The Reviewer External Reviewer Amazon(external_reviewer1@amazon.com) that you invited to review paper 5 has declined the invitation.
 
-If you want to know more details about the invitation response, please click here: https://openreview.net/forum?id={response_note.id}
+To read their response, please click here: https://openreview.net/forum?id={response_note.id}
 
 OpenReview Team'''
 
@@ -1278,11 +1278,11 @@ OpenReview Team'''
         assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
         assert len(assignment_edges) == 3
 
-        messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, conflict detection pending')
+        messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, assignment pending')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == 'Hi external_reviewer4@gmail.com,\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.\n\nPlease signup in OpenReview using the email address external_reviewer4@gmail.com and complete your profile.\nAfter your profile is complete, the conflict of interest detection will be computed against the submission 5 and you will be assigned if no conflicts are detected.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team'
+        assert messages[0]['content']['text'] == 'Hi external_reviewer4@gmail.com,\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.\n\nPlease signup in OpenReview using the email address external_reviewer4@gmail.com and complete your profile.\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team'
 
-        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer external_reviewer4@gmail.com accepted to review paper 5, conflict detection pending')
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer external_reviewer4@gmail.com accepted to review paper 5, assignment pending')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area IBMChair,
 The Reviewer external_reviewer4@gmail.com that you invited to review paper 5 has accepted the invitation.
@@ -1672,7 +1672,7 @@ OpenReview Team'''
 
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\nNeurIPS 2021 Conference(NeurIPS.cc/2021/Conference)'''
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\nNeurIPS 2021 Conference(NeurIPS.cc/2021/Conference/Program_Chairs)'''
 
         assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers/Invited', member='~External_Reviewer_MIT1')
 

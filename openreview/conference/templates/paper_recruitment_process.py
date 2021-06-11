@@ -36,8 +36,16 @@ def process(client, note, invitation):
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
 
-    user_profile=openreview.tools.get_profile(client, edge.tail)
+    profiles=[]
+    if '@' in edge.tail:
+        profiles=client.search_profiles(confirmedEmails=[edge.tail])
+    else:
+        profiles=client.search_profiles(ids=[edge.tail])
+
+    user_profile=profiles[0] if profiles else None
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
+    preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
+
     assignment_edges = client.get_edges(invitation=ASSIGNMENT_INVITATION_ID, head=submission.id, tail=edge.tail, label=ASSIGNMENT_LABEL)
 
     if (note.content['response'] == 'Yes'):
@@ -49,12 +57,12 @@ def process(client, note, invitation):
             client.post_edge(edge)
 
             ## Send email to reviewer
-            subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation accepted for paper {submission.number}, conflict detection pending'
+            subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation accepted for paper {submission.number}, assignment pending'
             message =f'''Hi {preferred_name},
 Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']}.
 
 Please signup in OpenReview using the email address {edge.tail} and complete your profile.
-After your profile is complete, the conflict of interest detection will be computed against the submission {submission.number} and you will be assigned if no conflicts are detected.
+Confirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
@@ -62,7 +70,7 @@ OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message)
 
             ## Send email to inviter
-            subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} accepted to review paper {submission.number}, conflict detection pending'
+            subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} accepted to review paper {submission.number}, assignment pending'
             message =f'''Hi {{{{fullname}}}},
 The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation.
 
@@ -126,7 +134,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} accepted to review paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
+The {REVIEWER_NAME} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
@@ -170,9 +178,9 @@ OpenReview Team'''
         ## Send email to inviter
         subject=f'[{SHORT_PHRASE}] {REVIEWER_NAME} {preferred_name} declined to review paper {submission.number}'
         message =f'''Hi {{{{fullname}}}},
-The {REVIEWER_NAME} {preferred_name} that you invited to review paper {submission.number} has declined the invitation.
+The {REVIEWER_NAME} {preferred_name}({preferred_email}) that you invited to review paper {submission.number} has declined the invitation.
 
-If you want to know more details about the invitation response, please click here: https://openreview.net/forum?id={note.id}
+To read their response, please click here: https://openreview.net/forum?id={note.id}
 
 OpenReview Team'''
 
