@@ -2953,9 +2953,9 @@ var buildCSV = function(){
     var paperTableRow = null;
     var noteNumber = isFiltered ? noteObj.note.number : noteObj.number;
     var noteForum = isFiltered? noteObj.note.forum: noteObj.forum;
-    var areachairId = _.values(areachairIds[note.number]);
+    var areachairId = _.values(areachairIds[noteObj.number]);
     var areachairProfileOne = {}
-    var areachairProfileTwo = {'id':'-', 'email':'-'}
+    var areachairProfileTwo = {'id':'-', 'name':'-', 'email':'-'}
 
     if (areachairId) {
       areachairProfileOne = findProfile(areachairId[0]);
@@ -2964,6 +2964,7 @@ var buildCSV = function(){
       }
     } else {
       areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.name = '-';
       areachairProfileOne.email = '-';
     }
 
