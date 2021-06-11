@@ -62,7 +62,7 @@ def process(client, edge, invitation):
         conflicts=openreview.tools.get_conflicts(author_profiles, user_profile)
         if conflicts:
             print('Conflicts detected', conflicts)
-            raise openreview.OpenReviewException(f'Conflict detected for {user_profile.id}')
+            raise openreview.OpenReviewException(f'Conflict detected for {user_profile.get_preferred_name(pretty=True)}')
 
     return edge
 

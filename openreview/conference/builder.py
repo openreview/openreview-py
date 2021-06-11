@@ -443,9 +443,7 @@ class Conference(object):
         return self.get_invitation_id(self.expertise_selection_stage.name)
 
     def get_bid_id(self, group_id):
-        if group_id in self.bid_stages:
-            return self.get_invitation_id(self.bid_stages[group_id].name, prefix=group_id)
-        raise openreview.OpenReviewException('BidStage not found for {}'.format(group_id))
+        return self.get_invitation_id('Bid', prefix=group_id)
 
     def get_recommendation_id(self, group_id=None):
         if not group_id:
