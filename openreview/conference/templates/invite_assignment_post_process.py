@@ -9,6 +9,7 @@ def process(client, edge, invitation):
     PAPER_REVIEWER_INVITED_ID = ''
     INVITED_LABEL = ''
     INVITE_LABEL = ''
+    EMAIL_TEMPLATE = ''
     print(edge.id)
 
     if edge.ddate is None and edge.label == INVITE_LABEL:
@@ -45,10 +46,23 @@ def process(client, edge, invitation):
 
         # build the URL to send in the message
         url = f'{baseurl}/invitation?id={RECRUITMENT_INVITATION_ID}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={edge.tauthor}&response='
+        accept_url = url + "Yes"
+        decline_url = url + "No"
 
         # format the message defined above
         subject=f'[{SHORT_PHRASE}] Invitation to review paper titled {submission.content["title"]}'
-        message =f'''Hi {preferred_name},
+        if EMAIL_TEMPLATE:
+            message=EMAIL_TEMPLATE.format(
+                title=submission.content['title'],
+                abstract=submission.content['abstract'],
+                accept_url=accept_url,
+                decline_url=decline_url,
+                inviter_id=inviter_id,
+                inviter_name=inviter_preferred_name,
+                inviter_email=edge.tauthor
+            )
+        else:
+            message=f'''Hi {preferred_name},
 You were invited to review the paper number: {submission.number}, title: {submission.content['title']}.
 Abstract: {submission.content['abstract']}
 

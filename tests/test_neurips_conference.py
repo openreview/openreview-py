@@ -953,8 +953,29 @@ class TestNeurIPSConference():
 
         now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        email_template='''
+As an Area Chair for NeurIPS 2021, I’d like to ask for your expert review of a submission, titled: {title}:
 
-        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching', invitation_labels={ 'Invite': 'Invitation Sent', 'Invited': 'Invitation Sent' })
+{abstract}
+
+If you accept, you will not be added to the general list of NeurIPS reviewers and will not be assigned additional submissions unless you explicitly agree to review them.
+
+To accept this request, please follow this link: {accept_url}
+
+To decline, follow this link: {decline_url}
+
+If you accept, I would need the review by Friday, July 16.
+
+If you don’t have an OpenReview account, you will be asked to create one using the email address at which you received this message.  Once you sign up, you will receive a separate email with instructions for accessing the paper within a few days.
+
+I really hope you can help out with reviewing this paper!
+
+Thank you,
+{inviter_id}
+{inviter_name}({inviter_email})
+        '''
+
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching', invitation_labels={ 'Invite': 'Invitation Sent', 'Invited': 'Invitation Sent' }, email_template=email_template)
 
         start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
         traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
