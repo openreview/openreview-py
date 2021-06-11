@@ -1965,11 +1965,11 @@ var displayReviewerStatusTable = function() {
   var sortOptions = {
     Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
     Bids_Completed: function(row) { return row.summary.completedBids },
-    Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
-    Papers_with_Reviews_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
-    Papers_with_Reviews_Submitted: function(row) { return row.reviewProgressData.numCompletedReviews; },
-    Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewStatusData.numPapers - row.reviewStatusData.numCompletedReviews; },
-    Papers_with_Completed_Reviews: function(row) { return row.reviewStatusData.numCompletedReviews; }
+    Papers_Assigned: function(row) { return row.reviewerProgressData.numPapers; },
+    Papers_with_Reviews_Missing: function(row) { return row.reviewerProgressData.numPapers - row.reviewerProgressData.numCompletedReviews; },
+    Papers_with_Reviews_Submitted: function(row) { return row.reviewerProgressData.numCompletedReviews; },
+    Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewerStatusData.numPapers - row.reviewerStatusData.numCompletedReviews; },
+    Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
   };
 
   var sortResults = function(newOption, switchOrder) {
@@ -2832,14 +2832,9 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
 });
 
 var buildCSV = function(){
-  var profiles = conferenceStatusData.profiles;
   var notes = conferenceStatusData.blindedNotes;
-  var completedReviews = conferenceStatusData.officialReviews;
-  var metaReviews = conferenceStatusData.metaReviews;
-  var reviewerIds = conferenceStatusData.reviewerGroups.byNotes;
-  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
-  var decisions = conferenceStatusData.decisions;
   var acRankingByPaper = conferenceStatusData.acRankingByPaper;
+  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
 
   var rowData = [];
   rowData.push(['number',
@@ -2865,27 +2860,22 @@ var buildCSV = function(){
   'decision'].join(',') + '\n');
 
   _.forEach(notes, function(note) {
-    var revIds = reviewerIds[note.number];
-    var areachairId = areachairIds[note.number][0];
+
+    var paperTableRow = buildPaperTableRow(note);
+    var originalNote = paperTableRow.note.details.original || paperTableRow.note;
+    var areachairId = _.values(areachairIds[note.number]);
     var areachairProfileOne = {}
+    var areachairProfileTwo = {'id':'-', 'email':'-'}
+
     if (areachairId) {
-      areachairProfileOne = findProfile(areachairId);
+      areachairProfileOne = findProfile(areachairId[0]);
+      if (areachairId.length>1) {
+        areachairProfileTwo = findProfile(areachairId[1]);
+      }
     } else {
-      areachairProfileOne.name = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
       areachairProfileOne.email = '-';
     }
-    areachairId = areachairIds[note.number][1];
-    var areachairProfileTwo = {}
-    if (areachairId) {
-      areachairProfileTwo = findProfile(areachairId);
-    } else {
-      areachairProfileTwo.id = '';
-      areachairProfileTwo.email = '';
-    }
-    var metaReview = _.find(metaReviews, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, note.number)]);
-    var decision = _.find(decisions, ['invitation', getInvitationId(DECISION_NAME, note.number)]);
-    var paperTableRow = buildPaperTableRow(note, revIds, completedReviews[note.number], metaReview, [areachairProfileOne, areachairProfileTwo], decision);
-    var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
     var title = paperTableRow.note.content.title.replace(/"/g, '""');
     var abstract = paperTableRow.note.content.abstract.replace(/"/g, '""');
@@ -2938,7 +2928,6 @@ var buildReviewersCSV = function(){
   ].join(',') + '\n');
 
   var notes = conferenceStatusData.blindedNotes;
-  var completedReviews = conferenceStatusData.officialReviews;
   var reviewerByNote = conferenceStatusData.reviewerGroups.byNotes;
   var reviewerById = conferenceStatusData.reviewerGroups.byReviewers;
   _.forEach(conferenceStatusData.reviewers, function(reviewer, index) {
@@ -2948,7 +2937,7 @@ var buildReviewersCSV = function(){
     var reviewerPapers = [];
     var reviewerReviews = [];
     _.forEach(numbers, function(number) {
-      var note = _.find(notes, ['number', number]);
+      var note = _.find(notes, ['number', parseInt(number)]);
       if (!note) {
         return;
       }
@@ -2963,7 +2952,7 @@ var buildReviewersCSV = function(){
         }
       }
 
-      var reviews = completedReviews[number];
+      var reviews = note.details.reviews;
       var review = reviews[reviewerNum] || findReview(reviews, reviewerProfile);
       if (review) {
         reviewerReviews.push(review);
