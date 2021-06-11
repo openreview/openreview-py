@@ -2953,7 +2953,7 @@ var buildCSV = function(){
     var paperTableRow = null;
     var noteNumber = isFiltered ? noteObj.note.number : noteObj.number;
     var noteForum = isFiltered? noteObj.note.forum: noteObj.forum;
-    var areachairId = _.values(areachairIds[noteObj.number]);
+    var areachairId = _.values(areachairIds[noteNumber]);
     var areachairProfileOne = {}
     var areachairProfileTwo = {'id':'-', 'name':'-', 'email':'-'}
 
