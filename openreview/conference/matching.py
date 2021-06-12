@@ -1090,7 +1090,7 @@ class Matching(object):
         if not papers:
             raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
 
-        for paper in papers:
+        for paper in tqdm(papers):
 
             ac_group_id=self.conference.get_area_chairs_id(paper.number)
 
