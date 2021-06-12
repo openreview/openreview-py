@@ -1105,9 +1105,7 @@ class Matching(object):
 
                     for sac_assignment in sac_assignments:
                         sac=sac_assignment['tail']
-                        print('sac assignment', sac, ac_group.id)
                         sac_group_id=ac_group.id.replace(self.conference.area_chairs_name, self.conference.senior_area_chairs_name)
-                        print(sac_group_id)
                         sac_group=self.client.get_group(sac_group_id)
                         if overwrite:
                             sac_group.members=[]
