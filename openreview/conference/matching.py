@@ -1035,10 +1035,8 @@ class Matching(object):
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
         reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, number='.*'), limit=1)
-        print('REviews', reviews, self.conference.get_invitation_id(review_name, number='.*'))
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
-        print('proposed_assignment_edges', proposed_assignment_edges)
         assignment_edges = []
         assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
@@ -1058,7 +1056,6 @@ class Matching(object):
             if paper.id in proposed_assignment_edges:
                 proposed_edges=proposed_assignment_edges[paper.id]
                 for proposed_edge in proposed_edges:
-                    print('proposed_edge', proposed_edge)
                     paper_group.members.append(proposed_edge['tail'])
                     assignment_edges.append(openreview.Edge(
                         invitation=assignment_invitation_id,
