@@ -32,7 +32,7 @@ def process(client, edge, invitation):
                 raise openreview.OpenReviewException(f'Already assigned as {edges[0].tail}')
 
             ## - Check if the user is an official reviewer
-            if user_profile.id.startswith('~') and client.get_groups(regex=REVIEWERS_ID, member=user_profile.id):
+            if user_profile.id.startswith('~') and client.get_groups(id=REVIEWERS_ID, member=user_profile.id):
 
                 ## - Check if the user has a conflict
                 edges=client.get_edges(invitation=REVIEWERS_ID + '/-/Conflict', head=edge.head, tail=user_profile.id)
