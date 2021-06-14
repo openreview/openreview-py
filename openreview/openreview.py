@@ -873,7 +873,7 @@ class Client(object):
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -892,6 +892,7 @@ class Client(object):
         params['label'] = label
         params['limit'] = limit
         params['offset'] = offset
+        params['sort'] = sort
 
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -1792,6 +1793,7 @@ class Note(object):
         original=None,
         number=None,
         cdate=None,
+        mdate=None,
         tcdate=None,
         tmdate=None,
         ddate=None,
@@ -1806,6 +1808,7 @@ class Note(object):
         self.original = original
         self.number = number
         self.cdate = cdate
+        self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.ddate = ddate
@@ -1842,6 +1845,7 @@ class Note(object):
             'id': self.id,
             'original': self.original,
             'cdate': self.cdate,
+            'mdate': self.mdate,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
             'ddate': self.ddate,
@@ -1877,6 +1881,7 @@ class Note(object):
         original = n.get('original'),
         number = n.get('number'),
         cdate = n.get('cdate'),
+        mdate = n.get('mdate'),
         tcdate = n.get('tcdate'),
         tmdate =n.get('tmdate'),
         ddate=n.get('ddate'),

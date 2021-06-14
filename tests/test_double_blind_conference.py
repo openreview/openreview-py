@@ -673,7 +673,7 @@ class TestDoubleBlindConference():
         request_page(selenium, accept_url, alert=True)
 
         error_message = selenium.find_element_by_class_name('important_message')
-        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
         assert group
