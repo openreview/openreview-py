@@ -1687,3 +1687,11 @@ def pretty_id(group_id):
 
 
     return ' '.join(transformed_tokens)
+
+def export_committee(client, committee_id, file_name):
+    members=client.get_group(committee_id).members
+    profiles=openreview.matching._get_profiles(client, members)
+    with open(file_name, 'w') as outfile:
+        csvwriter = csv.writer(outfile, delimiter=',')
+        for profile in tqdm(profiles):
+            s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])
