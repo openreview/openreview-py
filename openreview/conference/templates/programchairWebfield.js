@@ -291,9 +291,8 @@ var getInvitationMap = function() {
   });
 
   var acInvitationsP = $.Deferred().resolve([]);
-
   if (AREA_CHAIRS_ID) {
-    var acInvitations = Webfield.getAll('/invitations', {
+    acInvitationsP = Webfield.getAll('/invitations', {
       regex: AREA_CHAIRS_ID + '/-/.*',
       expired: true,
       type: 'all'
@@ -301,9 +300,8 @@ var getInvitationMap = function() {
   }
 
   var sacInvitationsP = $.Deferred().resolve([]);
-
   if (SENIOR_AREA_CHAIRS_ID) {
-    var sacInvitations = Webfield.getAll('/invitations', {
+    sacInvitationsP = Webfield.getAll('/invitations', {
       regex: SENIOR_AREA_CHAIRS_ID + '/-/.*',
       expired: true,
       type: 'all'
@@ -853,15 +851,6 @@ var renderHeader = function() {
     tabs.push({
       heading: 'Area Chair Status',
       id: 'areachair-status',
-      content: loadingMessage,
-      extraClasses: 'horizontal-scroll'
-    });
-  }
-
-  if (SENIOR_AREA_CHAIRS_ID) {
-    tabs.push({
-      heading: 'Senior Area Chair Status',
-      id: 'seniorareachair-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll'
     });
@@ -1806,39 +1795,22 @@ var displayAreaChairsStatusTable = function() {
     var rowData = data.map(function(d, index) {
       var number = '<strong class="note-number">' + (index + 1) + '</strong>';
       var summaryHtml = Handlebars.templates.committeeSummary(d.summary);
-      var seniorSummaryHtml = Handlebars.templates.committeeSummary(d.seniorSummary);
+      if (SENIOR_AREA_CHAIRS_ID) {
+        summaryHtml += '<h4>Senior Area Chair:</h4>' + Handlebars.templates.committeeSummary(d.seniorSummary);
+      }
       var progressHtml = Handlebars.templates.notesAreaChairProgress(d.reviewProgressData);
       var statusHtml = Handlebars.templates.notesAreaChairStatus(d.reviewProgressData);
-      if (SENIOR_AREA_CHAIRS_ID) {
-        return [number, summaryHtml, seniorSummaryHtml, progressHtml, statusHtml];;
-      } else {
-        return [number, summaryHtml, progressHtml, statusHtml];
-      }
+      return [number, summaryHtml, progressHtml, statusHtml];
     });
 
-    var headings;
-    if (SENIOR_AREA_CHAIRS_ID) {
-      headings = ['#', 'Area Chair', 'Senior Area Chair', 'Review Progress', 'Status'];
-    } else {
-      headings = ['#', 'Area Chair', 'Review Progress', 'Status'];
-    }
-
-    var $container = $(container);
     var tableData = {
-      headings: headings,
+      headings: ['#', 'Area Chair', 'Review Progress', 'Status'],
       rows: rowData,
       extraClasses: 'console-table'
     };
+    var $container = $(container);
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
-
-    if (SENIOR_AREA_CHAIRS_ID) {
-      $('.console-table th').eq(0).css('width', '4%');
-      $('.console-table th').eq(1).css('width', '20%');
-      $('.console-table th').eq(2).css('width', '20%');
-      $('.console-table th').eq(3).css('width', '28%');
-      $('.console-table th').eq(4).css('width', '28%');
-    }
 
     $container.on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
@@ -2249,7 +2221,6 @@ var updateReviewerContainer = function(paperNumber) {
 var paperTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#paper-status)');
 
 var buildPaperTableRow = function(note) {
-
   var reviewerIds = note.details.reviewers;
   var areachairIds = note.details.areachairs;
   var completedReviews = note.details.reviews;
@@ -2257,8 +2228,8 @@ var buildPaperTableRow = function(note) {
   var decision = note.details.decision;
   var areachairProfile = [];
 
-  for(var areaChairNum in areachairIds) {
-    areachairProfile.push(findProfile(areachairIds[areaChairNum]))
+  for (var areaChairNum in areachairIds) {
+    areachairProfile.push(findProfile(areachairIds[areaChairNum]));
   }
 
   // Checkbox for selecting each row
@@ -2379,7 +2350,6 @@ var buildPaperTableRow = function(note) {
 var acTableeferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#areachair-status)');
 
 var buildSPCTableRow = function(areaChair, seniorAreaChair, papers) {
-
   var summary = {
     id: areaChair.id,
     name: areaChair.name,
@@ -2455,7 +2425,6 @@ var buildSPCTableRow = function(areaChair, seniorAreaChair, papers) {
     seniorSummary: seniorSummary,
     reviewProgressData: reviewProgressData
   }
-
 };
 
 var pcTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?id=' + CONFERENCE_ID + '/Program_Chairs#reviewer-status)');
@@ -2920,7 +2889,7 @@ $('#group-container').on('change', 'input.select-note-reviewers', function(e) {
 
 var buildCSV = function(){
   var acRankingByPaper = conferenceStatusData.acRankingByPaper;
-  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;  
+  var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
   var isFiltered = conferenceStatusData.filteredRows ? true : false
   var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
 
