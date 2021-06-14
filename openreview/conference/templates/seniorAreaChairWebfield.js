@@ -886,7 +886,7 @@ var buildPaperTableRow = function(note) {
   var paperTableReferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#paper-status)');
 
   var reviewerIds = note.details.reviewers;
-  var areachairIds = note.details.areachairs;
+  var areachairIds = note.details.areaChairs;
   var completedReviews = note.details.reviews;
   var metaReview = note.details.metaReview;
   var decision = note.details.decision;
