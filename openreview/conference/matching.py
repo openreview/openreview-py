@@ -251,6 +251,12 @@ class Matching(object):
             return self._build_profile_conflicts(ac_profiles, user_profiles)
         return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
 
+    def _append_note_conflicts(self, submissions, user_profile, get_profile_info):
+        '''
+        Create conflict edges between the given Notes and a single profile
+        '''
+        pass
+
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
         '''
         Create conflict edges between the given Notes and Profiles
