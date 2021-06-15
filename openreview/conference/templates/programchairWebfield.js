@@ -980,31 +980,53 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   // Timeline
   var invitationMap = conferenceStatusData.invitationMap;
-
   html += '<div class="col-md-8 col-xs-12">'
   html += '<h4>Timeline:</h4><ul style="padding-left: 15px">';
-  html += renderInvitation(invitationMap, SUBMISSION_ID, 'Paper Submissions')
-  html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding')
+  var notDatedElements = [];
+  var datedElements = [];
+  var pushToDatedArrays = function(invitationMap, id, name) {
+    var currContent = renderInvitation(invitationMap, id, name);
+    if (!currContent) return;
+
+    var currDate = invitationMap[id].duedate;
+    if (currDate) {
+      datedElements.push({ content: currContent, date: new Date(currDate) });
+    } else {
+      notDatedElements.push(currContent);
+    }
+  }
+  
+  // Partition into dated and not dated information
+  pushToDatedArrays(invitationMap, SUBMISSION_ID, 'Paper Submissions');
+  pushToDatedArrays(invitationMap, REVIEWERS_ID, 'Reviewers Bidding');
+
   if (SENIOR_AREA_CHAIRS_ID) {
-    html += renderInvitation(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding')
+    pushToDatedArrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding');
     if (invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      html += '<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senior Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+      notDatedElements.push('<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senior Area Chairs Paper Assignment</a> open until Reviewing starts</li>');
     }
   }
   if (AREA_CHAIRS_ID) {
-    html += renderInvitation(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding')
-    html += renderInvitation(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation')
+    pushToDatedArrays(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding');
+    pushToDatedArrays(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation');
     if (invitationMap[AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      html += '<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>';
+      notDatedElements.push('<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>');
     }
   }
   if (invitationMap[REVIEWERS_ID + '/-/Assignment_Configuration']) {
-    html += '<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>';
+    notDatedElements.push('<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>');
   }
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews')
-  html += renderInvitation(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions')
+  pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing');
+  pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting');
+  pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews');
+  pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + DECISION_NAME, 'Decisions');
+
+  // Sort + append in dated order, followed by not-dated content
+  datedElements.sort(function (a, b) { return a.date - b.date; });
+
+  html += datedElements.map(function(elem) { return elem.content; }).join('\n');
+  html += notDatedElements.join('\n');
+
   html += '</ul>';
   html += '</div>';
   html += '</div>';
