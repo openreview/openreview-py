@@ -24,7 +24,7 @@ def process(client, note, invitation):
     if hashkey != note.content['key']:
         raise openreview.OpenReviewException('Invalid key or user for {user}')
 
-    submission = client.get_note(note.content['submission_id'])
+    submission = client.get_notes(note.content['submission_id'], details='original')[0]
     invitation_edges = client.get_edges(invitation=INVITE_ASSIGNMENT_INVITATION_ID, head=submission.id, tail=user)
 
     if not invitation_edges:
@@ -35,14 +35,15 @@ def process(client, note, invitation):
     if edge.label not in [INVITED_LABEL, ACCEPTED_LABEL, DECLINED_LABEL, 'Pending Sign Up']:
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
-
-    profiles=[]
+    user_profile=None
     if '@' in edge.tail:
         profiles=client.search_profiles(confirmedEmails=[edge.tail])
+        user_profile=profiles.get(edge.tail)
     else:
         profiles=client.search_profiles(ids=[edge.tail])
+        if profiles:
+            user_profile=profiles[0]
 
-    user_profile=profiles[0] if profiles else None
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
     preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
 
@@ -81,6 +82,50 @@ OpenReview Team'''
             ## - Send email
             response = client.post_message(subject, edge.signatures, message)
             return
+
+        ## Check if there is already an accepted edge for that profile id
+        accepted_edges = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', label='Accepted', head=submission.id, tail=user_profile.id)
+        if accepted_edges:
+            print("User already accepted with another invitation edge", submission.id, user_profile.id)
+            return
+
+        ## - Check conflicts
+        authorids = submission.content['authorids']
+        if submission.details and submission.details.get('original'):
+            authorids = submission.details['original']['content']['authorids']
+        author_profiles = openreview.conference.matching._get_profiles(client, authorids, with_publications=True)
+        profiles=openreview.conference.matching._get_profiles(client, [edge.tail], with_publications=True)
+        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy='neurips')
+        if conflicts:
+            print('Conflicts detected', conflicts)
+            edge.label='Conflict Detected'
+            edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
+            edge.tail=user_profile.id
+            client.post_edge(edge)
+
+            ## Send email to reviewer
+            subject=f'[{SHORT_PHRASE}] Conflict detected for paper {submission.number}'
+            message =f'''Hi {{{{fullname}}}},
+You have accepted the invitation to review the paper number: {submission.number}, title: {submission.content['title']}.
+
+A conflict was detected between you and the submission authors and the assignment can not be done.
+
+If you have any questions, please contact us as neurips@openreview.net.
+
+OpenReview Team'''
+            response = client.post_message(subject, [edge.tail], message)
+
+            ## Send email to inviter
+            subject=f'[{SHORT_PHRASE}] Conflict detected between {REVIEWER_NAME} {preferred_name} and paper {submission.number}'
+            message =f'''Hi {{{{fullname}}}},
+A conflict was detected between {preferred_name}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
+
+If you have any questions, please contact us as neurips@openreview.net.
+
+OpenReview Team'''
+
+            ## - Send email
+            response = client.post_message(subject, edge.signatures, message)
 
         edge.label=ACCEPTED_LABEL
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
