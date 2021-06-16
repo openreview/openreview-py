@@ -996,7 +996,7 @@ var renderTableAndTasks = function(fetchedData) {
 
   if (fetchedData.sacProfile.id) {
     $('#header .description').append(
-      '<p class="dark">Your assigned Senior Area Chair is <strong>' + view.prettyId(fetchedData.sacProfile.id) + ' </strong> (' + fetchedData.sacProfile.email + ').</p>'
+      '<p class="dark">Your assigned Senior Area Chair is <a href="https://openreview.net/profile?id=' + fetchedData.sacProfile.id + '" target="_blank">' + view.prettyId(fetchedData.sacProfile.id) + ' </a> (' + fetchedData.sacProfile.email + ').</p>'
     );
   }
 
