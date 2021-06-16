@@ -14,6 +14,8 @@ var OFFICIAL_REVIEW_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
+var SENIOR_AREA_CHAIRS_ID = '';
+var ASSIGNMENT_LABEL = '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
 
@@ -184,6 +186,7 @@ var loadData = function(paperNums) {
   var noteNumbers = _.uniq(_.concat(acPapers, secondaryAcPapers));
   var blindedNotesP;
   var allReviewersP;
+  var assignedSACP = $.Deferred().resolve();
 
   if (noteNumbers.length) {
     var noteNumbersStr = noteNumbers.join(',');
@@ -227,6 +230,16 @@ var loadData = function(paperNums) {
     }, {});
   });
 
+  if (SENIOR_AREA_CHAIRS_ID) {
+    assignedSACP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Proposed_Assignment', label: ASSIGNMENT_LABEL, head: user.profile.id })
+    .then(function(result) {
+      if (result && result.edges.length) {
+        return result.edges[0].tail;
+      }
+    })
+
+  }
+
   return $.when(
     blindedNotesP,
     getReviewerGroups(noteNumbers),
@@ -235,7 +248,8 @@ var loadData = function(paperNums) {
     acPaperRankingsP,
     reviewerPaperRankingsP,
     acPapers,
-    secondaryAcPapers
+    secondaryAcPapers,
+    assignedSACP
   );
 };
 
@@ -330,11 +344,15 @@ var getAllInvitations = function() {
   });
 };
 
-var formatData = function(blindedNotes, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers) {
+var formatData = function(blindedNotes, noteToReviewerIds, invitations, allReviewers, acRankingByPaper, reviewerRankingByPaper, acPapers, secondaryAcPapers, assignedSAC) {
 
   var uniqueIds = _.uniq(_.concat(_.reduce(noteToReviewerIds, function(result, idsObj, noteNum) {
     return result.concat(_.values(idsObj));
   }, []), allReviewers));
+
+  if (assignedSAC) {
+    uniqueIds.push(assignedSAC);
+  }
 
   return getUserProfiles(uniqueIds)
   .then(function(profiles) {
@@ -356,6 +374,7 @@ var formatData = function(blindedNotes, noteToReviewerIds, invitations, allRevie
       reviewerRankingByPaper: reviewerRankingByPaper,
       acPapers: acPapers,
       secondaryAcPapers: secondaryAcPapers,
+      sacProfile: findProfile(profiles, assignedSAC)
     };
     return conferenceStatusData;
   });
@@ -506,7 +525,7 @@ var renderStatusTable = function(conferenceStatusData, container) {
         row.note.content.title.toLowerCase().indexOf(searchText) !== -1
       );
     };
-    
+
     if (searchText) {
       if (isQueryMode) {
         var filterResult = Webfield.filterCollections(rows, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id')
@@ -649,7 +668,7 @@ var renderStatusTable = function(conferenceStatusData, container) {
     '</div>' +
   '</form>';
   //#endregion
-  
+
   if (rows.length) {
     $(container).empty().append(sortBarHtml);
   }
@@ -699,7 +718,7 @@ var renderStatusTable = function(conferenceStatusData, container) {
     var searchLabel = $(container + ' .form-search').prevAll('strong:first').text();
     conferenceStatusData.filteredNotes = null
     $(container + ' .form-search').removeClass('invalid-value');
-  
+
     if (searchText.startsWith('+')) {
       // filter query mode
       if (searchLabel === 'Search:') {
@@ -714,17 +733,17 @@ var renderStatusTable = function(conferenceStatusData, container) {
           });
         }));
       }
-  
+
       if (e.key === 'Enter') {
         searchResults(searchText, true);
       }
     } else {
       if (searchLabel !== 'Search:') {
         $(container + ' .form-search').prev().remove(); // remove info icon
-  
+
         $(container + ' .form-search').prev().text('Search:');
       }
-  
+
       _.debounce(function () {
         searchResults(searchText.toLowerCase(),false);
       }, 300)();
@@ -974,6 +993,14 @@ var renderTasks = function(invitations) {
 }
 
 var renderTableAndTasks = function(fetchedData) {
+
+  if (fetchedData.sacProfile.id) {
+    $('#header .description').append(
+      '<p class="dark">Your assigned Senior Area Chair is <strong>' + view.prettyId(fetchedData.sacProfile.id) + ' </strong> (' + fetchedData.sacProfile.email + ').</p>'
+    );
+  }
+
+
   renderTasks(fetchedData.invitations);
 
   paperRankingInvitation = _.find(fetchedData.invitations, ['id', PAPER_RANKING_ID]);

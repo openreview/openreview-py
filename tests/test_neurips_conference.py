@@ -324,7 +324,7 @@ class TestNeurIPSConference():
         ## SAC assignments
         pc_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            readers = [conference.id, '~SeniorArea_GoogleChair1', '~Area_IBMChair1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = '~Area_IBMChair1',
@@ -334,7 +334,7 @@ class TestNeurIPSConference():
         ))
         pc_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1', '~Area_GoogleChair1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = '~Area_GoogleChair1',
@@ -344,7 +344,7 @@ class TestNeurIPSConference():
         ))
         pc_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            readers = [conference.id, '~SeniorArea_GoogleChair1', '~Area_UMassChair1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = '~Area_UMassChair1',
