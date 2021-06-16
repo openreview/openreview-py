@@ -871,8 +871,8 @@ class VenueRequest():
                         },
                         'comment': {
                             'order': 2,
-                            'value-regex': '[\\S\\s]{1,5000}',
-                            'description': 'Your comment or reply (max 5000 characters).',
+                            'value-regex': '[\\S\\s]{1,200000}',
+                            'description': 'Your comment or reply (max 200000 characters).',
                             'required': True,
                             'markdown': True
                         }
