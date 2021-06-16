@@ -1486,13 +1486,33 @@ OpenReview Team'''
 
     def test_review_stage(self, conference, helpers, test_client, client):
 
-
         ## make submissions visible to assigned commmittee
         invitation = client.get_invitation('NeurIPS.cc/2021/Conference/-/Submission')
         invitation.reply['readers'] = {
             'values-regex': '.*'
         }
         client.post_invitation(invitation)
+
+        invitation2 = client.get_invitation('NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        invitation2.replyForumViews = '''[
+            {
+                "id": "authors",
+                "label": "Author Discussion",
+                "filter": "readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "committee",
+                "label": "Committee Discussion",
+                "filter": "-readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "all",
+                "label": "All",
+                "filter": ""
+            }
+        ]'''
+        client.post_invitation(invitation2)
+
         original_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
         for note in original_notes:
             note.readers = note.readers + [f'NeurIPS.cc/2021/Conference/Paper{note.number}/Senior_Area_Chairs']
