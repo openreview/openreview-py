@@ -76,18 +76,28 @@ class BlindSubmissionsInvitation(openreview.Invitation):
 
     def __init__(self, conference, hide_fields):
 
-        content = {
-            'authors': {
-                'values': ['Anonymous']
-            },
-            'authorids': {
-                'values-regex': '.*'
-            }
-        }
+        submission_stage = conference.submission_stage
+        original_content = submission_stage.get_content()
+
+        content = {}
+
+        for key in original_content:
+            if key == 'authors':
+                content[key] = {
+                    'values': ['Anonymous'],
+                    'order': original_content[key]['order']
+                    }
+            else:
+                content[key] = {
+                    'value-regex': '.*',
+                    'order': original_content[key]['order']
+                }
+
         for field in hide_fields:
-            content[field] = {
-                'value-regex': '.*'
-            }
+            if field not in content:
+                content[field] = {
+                    'value-regex': '.*'
+                }
 
         super(BlindSubmissionsInvitation, self).__init__(id = conference.get_blind_submission_id(),
             readers = ['everyone'],
