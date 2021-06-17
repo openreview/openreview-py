@@ -262,7 +262,6 @@ class Matching(object):
             invitation=self.conference.get_blind_submission_id(),
             details='original'))
         get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info
-        self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
         if not all(['~' in member for member in self.match_group.members]):
             print(
                 'WARNING: not all reviewers have been converted to profile IDs.',
