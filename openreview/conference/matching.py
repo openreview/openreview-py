@@ -251,7 +251,7 @@ class Matching(object):
             return self._build_profile_conflicts(ac_profiles, user_profiles)
         return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
 
-    def append_note_conflicts(self, user_profile, build_conflicts=None):
+    def append_note_conflicts(self, profile_id, build_conflicts=None):
         '''
         Create conflict edges between the given Notes and a single profile
         '''
@@ -1225,4 +1225,3 @@ class Matching(object):
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
-
