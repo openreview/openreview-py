@@ -505,6 +505,8 @@ class TestDoubleBlindConference():
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
+        helpers.await_queue()
+
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
         assert len(group.members) == 1
@@ -537,6 +539,8 @@ class TestDoubleBlindConference():
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, reject_url, alert=True)
 
+        helpers.await_queue()
+
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
         assert len(group.members) == 0
@@ -566,6 +570,8 @@ class TestDoubleBlindConference():
 
         encoded_url = accept_url.split('%40')[0] + '%2540' + accept_url.split('%40')[1]
         request_page(selenium, encoded_url, alert=True)
+
+        helpers.await_queue()
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
@@ -667,7 +673,7 @@ class TestDoubleBlindConference():
         request_page(selenium, accept_url, alert=True)
 
         error_message = selenium.find_element_by_class_name('important_message')
-        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
         assert group
@@ -1060,8 +1066,8 @@ class TestDoubleBlindConference():
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[2]
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='numbers:asc')
+        submission = notes[0]
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)

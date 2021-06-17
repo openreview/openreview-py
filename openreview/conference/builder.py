@@ -443,9 +443,7 @@ class Conference(object):
         return self.get_invitation_id(self.expertise_selection_stage.name)
 
     def get_bid_id(self, group_id):
-        if group_id in self.bid_stages:
-            return self.get_invitation_id(self.bid_stages[group_id].name, prefix=group_id)
-        raise openreview.OpenReviewException('BidStage not found for {}'.format(group_id))
+        return self.get_invitation_id('Bid', prefix=group_id)
 
     def get_recommendation_id(self, group_id=None):
         if not group_id:
@@ -1035,12 +1033,38 @@ class Conference(object):
         self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
         self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
-    def set_external_reviewer_recruitment_groups(self):
-        parent_group_id = self.get_committee_id(name='External_Reviewers')
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+
+        if name == self.reviewers_name:
+            raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
+
+        parent_group_id = self.get_committee_id(name=name)
         parent_group_invited_id = parent_group_id + '/Invited'
 
         self.__create_group(parent_group_id, self.id)
         self.__create_group(parent_group_invited_id, self.id, exclude_self_reader=True)
+
+        ## create groups per submissions
+        if create_paper_groups:
+            for submission in tqdm(self.get_submissions()):
+                paper_group_id = self.get_committee_id(name=name, number=submission.number)
+                self.client.post_group(openreview.Group(
+                    id=paper_group_id,
+                    readers=[self.id, paper_group_id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    members=[]
+                ))
+                paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
+                self.client.post_group(openreview.Group(
+                    id=paper_invited_group_id,
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    members=[]
+                ))
 
     def set_reviewers(self, emails = []):
         readers = []
@@ -1092,10 +1116,10 @@ class Conference(object):
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
-    def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None):
+    def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
 
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
-        return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date)
+        return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
 
 
     def set_assignment(self, user, number, is_area_chair = False):
