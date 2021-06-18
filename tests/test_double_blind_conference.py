@@ -778,7 +778,7 @@ class TestDoubleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
-    def test_create_blind_submissions(self, client):
+    def test_create_blind_submissions(self, client, test_client):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -838,9 +838,9 @@ class TestDoubleBlindConference():
                 ]
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -866,9 +866,9 @@ class TestDoubleBlindConference():
                 ]
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
