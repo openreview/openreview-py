@@ -24,25 +24,29 @@ def process(client, note, invitation):
     if hashkey != note.content['key']:
         raise openreview.OpenReviewException('Invalid key or user for {user}')
 
+    user_profile=None
+    if '@' in user:
+        profiles=client.search_profiles(confirmedEmails=[user])
+        user_profile=profiles.get(user)
+    else:
+        profiles=client.search_profiles(ids=[user])
+        if profiles:
+            user_profile=profiles[0]
+
     submission = client.get_notes(note.content['submission_id'], details='original')[0]
     invitation_edges = client.get_edges(invitation=INVITE_ASSIGNMENT_INVITATION_ID, head=submission.id, tail=user)
 
     if not invitation_edges:
-        raise openreview.OpenReviewException(f'user {user} not invited')
+        ## Check edge with the profile id instead
+        if '@' in user and user_profile:
+            invitation_edges = client.get_edges(invitation=INVITE_ASSIGNMENT_INVITATION_ID, head=submission.id, tail=user_profile.id)
+            if not invitation_edges:
+                raise openreview.OpenReviewException(f'user {user} not invited')
 
     edge=invitation_edges[0]
 
     if edge.label not in [INVITED_LABEL, ACCEPTED_LABEL, DECLINED_LABEL, 'Pending Sign Up']:
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
-
-    user_profile=None
-    if '@' in edge.tail:
-        profiles=client.search_profiles(confirmedEmails=[edge.tail])
-        user_profile=profiles.get(edge.tail)
-    else:
-        profiles=client.search_profiles(ids=[edge.tail])
-        if profiles:
-            user_profile=profiles[0]
 
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
     preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
@@ -53,7 +57,7 @@ def process(client, note, invitation):
 
         print('Invitation accepted', edge.tail, submission.number)
 
-        if not user_profile:
+        if not user_profile or user_profile.active == False:
             edge.label='Pending Sign Up'
             client.post_edge(edge)
 
