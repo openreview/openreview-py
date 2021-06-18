@@ -324,7 +324,7 @@ class TestNeurIPSConference():
         ## SAC assignments
         pc_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            readers = [conference.id, '~SeniorArea_GoogleChair1', '~Area_IBMChair1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = '~Area_IBMChair1',
@@ -334,7 +334,7 @@ class TestNeurIPSConference():
         ))
         pc_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1', '~Area_GoogleChair1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = '~Area_GoogleChair1',
@@ -344,7 +344,7 @@ class TestNeurIPSConference():
         ))
         pc_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            readers = [conference.id, '~SeniorArea_GoogleChair1', '~Area_UMassChair1'],
             writers = [conference.id],
             signatures = [conference.id],
             head = '~Area_UMassChair1',
@@ -1282,6 +1282,7 @@ OpenReview Team'''
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
         accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('https://.*response=No', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -1318,6 +1319,34 @@ OpenReview Team'''
         assert not client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='external_reviewer4@gmail.com')
         assert not client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='external_reviewer4@gmail.com')
         assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='external_reviewer4@gmail.com')
+
+        ## External reviewer creates a profile and accepts the invitation again
+        external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
+
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
+        assert len(invite_edges) == 0
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_External1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        request_page(selenium, decline_url, alert=True)
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
+        assert len(invite_edges) == 0
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_External1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined'
 
         ## Invite external reviewer 5 with no profile
         posted_edge=ac_client.post_edge(openreview.Edge(
