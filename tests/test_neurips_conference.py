@@ -1523,7 +1523,7 @@ OpenReview Team'''
         client.post_invitation(invitation)
 
         invitation2 = client.get_invitation('NeurIPS.cc/2021/Conference/-/Blind_Submission')
-        invitation2.replyForumViews = '''[
+        invitation2.reply_forum_views = [
             {
                 "id": "authors",
                 "label": "Author Discussion",
@@ -1539,7 +1539,7 @@ OpenReview Team'''
                 "label": "All",
                 "filter": ""
             }
-        ]'''
+        ]
         client.post_invitation(invitation2)
 
         original_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
