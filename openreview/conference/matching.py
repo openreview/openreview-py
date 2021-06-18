@@ -262,21 +262,19 @@ class Matching(object):
             invitation=self.conference.get_blind_submission_id(),
             details='original'))
         get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info
-        if not all(['~' in member for member in self.match_group.members]):
-            print(
-                'WARNING: not all reviewers have been converted to profile IDs.',
-                'Members without profiles will not have metadata created.')
         
         # Adapt single profile to multi-profile code
-        user_profiles = [user_profile]
+        user_profiles = [profile_id]
         user_profiles = _get_profiles(self.client, user_profiles, with_publications=build_conflicts)
+        # Check for existing OpenReview profile
+        
         user_profiles_info = [get_profile_info(p) for p in user_profiles]
 
         # Fetch conflict invitation
         try:
             invitation = self.client.get_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         except:
-            print('Conflict invitation not found')
+            raise openreview.OpenReviewException('Failed to retrieve conflict invitation')
 
         edges = []
         
