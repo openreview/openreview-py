@@ -4,7 +4,7 @@ import time
 
 class TestEdges:
 
-    def test_save_bulk (self, client):
+    def test_save_bulk (self, client, test_client):
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
 
@@ -44,7 +44,7 @@ class TestEdges:
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = [conference.id],
             writers = [conference.id],
-            signatures = ['~Super_User1'],
+            signatures = ['~Test_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
@@ -53,7 +53,7 @@ class TestEdges:
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
-        note = client.post_note(note)
+        note = test_client.post_note(note)
 
         # Edges
         edges = []

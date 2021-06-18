@@ -100,9 +100,9 @@ class TestBuilder():
                 'authors': ['Test Author', 'Drew Barrymore']
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = author_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        author_client.post_note(note)
 
         original_notes = client.get_notes(invitation = conference.get_submission_id())
         assert original_notes
@@ -191,6 +191,8 @@ class TestBuilder():
         conference = builder.get_result()
         conference.set_program_chairs(emails=['pc_testconsole1@mail.com'])
 
+        author_client = openreview.Client(username='author_test1@mail.com', password='1234')
+
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~Test_Author1', 'drew@mail.com', 'sortTest.org/2019/Conference'],
             writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
@@ -202,9 +204,9 @@ class TestBuilder():
                 'authors': ['Test Author', 'Drew Barrymore']
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = author_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        author_client.post_note(note)
 
         builder.set_submission_stage(double_blind = True, public = False, due_date = now)
         conference = builder.get_result()
