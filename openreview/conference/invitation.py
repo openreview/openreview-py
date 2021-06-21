@@ -281,7 +281,7 @@ class CommentInvitation(openreview.Invitation):
                         'content': content
                     },
                     process_string = post_content,
-                    preprocess=pre_content if conference.comment_stage.reader_selection else None
+                    preprocess=pre_content if conference.comment_stage.check_mandatory_readers and conference.comment_stage.reader_selection else None
                 )
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
