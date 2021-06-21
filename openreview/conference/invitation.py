@@ -1933,6 +1933,7 @@ class InvitationBuilder(object):
             pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + (conference.get_anon_area_chair_id('{number}', '.*') if is_area_chair else conference.get_anon_reviewer_id('{number}', '.*')) + "'")
             with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_post_process.py')) as post:
                 post_content = post.read()
+                post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + (conference.get_area_chairs_id(number='{number}') if is_area_chair else conference.get_reviewers_id(number='{number}')) + "'")
                 post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + (conference.get_area_chairs_name(pretty=True) if is_area_chair else conference.get_reviewers_name(pretty=True)) + "'")
