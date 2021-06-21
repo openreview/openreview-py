@@ -48,16 +48,16 @@ var main = function() {
         );
       }
 
-      displayStatusTable(blindedNotes, officialReviews);
+      displayStatusTable(blindedNotes, officialReviews, invitations);
 
       // Add AC information to table
-      if (areaChairMap) {
+      if (!_.isEmpty(areaChairMap)) {
         $('.console-table div.note').each(function() {
-          var noteId = $(this).data('id');
-          $(this).find('.note-content').before(
+          var num = $(this).attr('id').split('-').pop();
+          $(this).append(
             '<div class="note-area-chairs">' +
-              '<h4>Assigned Area Chair:</h4>' +
-              '<p><a href="https://openreview.net/profile?id=' + areaChairMap[noteId] + '" target="_blank">' + view.prettyId(areaChairMap[noteId]) + ' </a></p>' +
+              '<p><strong>Area Chair:</strong> ' +
+              '<a href="https://openreview.net/profile?id=' + areaChairMap[num] + '" target="_blank">' + view.prettyId(areaChairMap[num]) + ' </a></p>' +
             '</div>'
           );
         });
@@ -138,7 +138,6 @@ var getReviewerNoteNumbers = function() {
 };
 
 var getAreaChairGroups = function() {
-
   var allAreaChairGroupsP = Webfield.getAll('/groups', {
     regex: CONFERENCE_ID + '/Paper.*/Area_Chairs',
     select: 'id,members'
@@ -297,7 +296,7 @@ var displayHeader = function() {
   });
 };
 
-var displayStatusTable = function(notes, officialReviews) {
+var displayStatusTable = function(notes, officialReviews, invitations) {
   var $container = $('#assigned-papers');
 
   if (notes.length === 0) {
@@ -308,8 +307,10 @@ var displayStatusTable = function(notes, officialReviews) {
   }
 
   var rowData = notes.map(function(note) {
-    var officialReview = _.find(officialReviews, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, note.number)]);
-    return buildTableRow(note, officialReview);
+    var invId = getInvitationId(OFFICIAL_REVIEW_NAME, note.number);
+    var officialReview = _.find(officialReviews, ['invitation', invId]);
+    var officialReviewInvitation = _.find(invitations, ['id', invId]);
+    return buildTableRow(note, officialReview, officialReviewInvitation);
   });
 
   var tableHTML = Handlebars.templates['components/table']({
@@ -321,7 +322,7 @@ var displayStatusTable = function(notes, officialReviews) {
   $container.empty().append(tableHTML);
 };
 
-var buildTableRow = function(note, officialReview) {
+var buildTableRow = function(note, officialReview, officialReviewInvitation) {
   var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#assigned-papers)');
   var number = '<strong class="note-number">' + note.number + '</strong>';
 
@@ -332,11 +333,10 @@ var buildTableRow = function(note, officialReview) {
   var summaryHtml = Handlebars.templates.noteSummary(cell1);
 
   // Status Cell
-  var invitationId = getInvitationId(OFFICIAL_REVIEW_NAME, note.number);
-  var reviewStatus = {
-    invitationUrl: '/forum?id=' + note.forum + '&noteId=' + note.forum + '&invitationId=' + invitationId + '&referrer=' + referrerUrl,
+  var reviewStatus = officialReviewInvitation ? {
+    invitationUrl: '/forum?id=' + note.forum + '&noteId=' + note.forum + '&invitationId=' + officialReviewInvitation.id + '&referrer=' + referrerUrl,
     invitationName: 'Official Review'
-  };
+  } : {};
   if (officialReview) {
     reviewStatus.paperRating = officialReview.content[REVIEW_RATING_NAME];
     reviewStatus.review = officialReview.content.review;
