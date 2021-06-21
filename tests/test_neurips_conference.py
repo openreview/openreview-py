@@ -682,8 +682,10 @@ class TestNeurIPSConference():
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').nonreaders == ['NeurIPS.cc/2021/Conference/Paper5/Authors']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs']
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').deanonymizers == ['NeurIPS.cc/2021/Conference',
             'NeurIPS.cc/2021/Conference/Program_Chairs',

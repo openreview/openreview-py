@@ -717,7 +717,7 @@ class Conference(object):
                     group = tools.get_group(self.client, id = area_chairs_id)
                     self.client.post_group(openreview.Group(id=area_chairs_id,
                         invitation=paper_area_chair_group_invitation.id,
-                        readers=self.get_area_chair_paper_group_readers(n.number),
+                        readers=self.get_area_chair_identity_readers(n.number),
                         nonreaders=[self.get_authors_id(n.number)],
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],

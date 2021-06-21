@@ -57,7 +57,7 @@ var main = function() {
           $(this).find('.note-content').before(
             '<div class="note-area-chairs">' +
               '<h4>Assigned Area Chair:</h4>' +
-              '<p>' + areaChairMap[noteId].name + ' <span class="text-muted">(' + areaChairMap[noteId].email + ')</span></p>' +
+              '<p><a href="https://openreview.net/profile?id=' + areaChairMap[noteId] + '" target="_blank">' + view.prettyId(areaChairMap[noteId]) + ' </a></p>' +
             '</div>'
           );
         });
@@ -135,6 +135,26 @@ var getReviewerNoteNumbers = function() {
     return groupByNumber;
 
   });
+};
+
+var getAreaChairGroups = function() {
+
+  var allAreaChairGroupsP = Webfield.getAll('/groups', {
+    regex: CONFERENCE_ID + '/Paper.*/Area_Chairs',
+    select: 'id,members'
+  })
+  .then(function(groups) {
+
+    var groupByNumber = {};
+    _.forEach(groups, function(group) {
+      var num = getNumberFromGroup(group.id, 'Paper');
+      groupByNumber[num] = group.members[0];
+    });
+
+    return groupByNumber;
+  });
+
+  return $.when(allAreaChairGroupsP);
 };
 
 var getBlindedNotes = function(noteNumbers) {
@@ -248,7 +268,8 @@ var loadReviewerData = function() {
         getOfficialReviews(noteNumbers),
         getAllInvitations(),
         getCustomLoad(userIds),
-        groupByNumber
+        groupByNumber,
+        getAreaChairGroups()
       );
     });
 };
