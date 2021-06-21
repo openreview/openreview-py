@@ -847,8 +847,8 @@ class Matching(object):
 
     def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None):
 
-        invite_label=invitation_labels.get('Invite', 'Invite')
-        invited_label=invitation_labels.get('Invited', 'Invited')
+        invite_label=invitation_labels.get('Invite', 'Invitation Sent')
+        invited_label=invitation_labels.get('Invited', 'Invitation Sent')
         accepted_label=invitation_labels.get('Accepted', 'Accepted')
         declined_label=invitation_labels.get('Declined', 'Declined')
 
