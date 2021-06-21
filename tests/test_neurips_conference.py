@@ -546,6 +546,12 @@ class TestNeurIPSConference():
                     'authors': ['Test User', 'Peter Test', 'Andrew Mc']
                 }
             )
+            if i == 1:
+                note.readers = note.readers[:-1] + ['~SeniorArea_GoogleChair1', '~Test_User1']
+                note.writers = note.writers[:-1] + ['~SeniorArea_GoogleChair1', '~Test_User1']
+                note.content['authors'].append('SeniorArea GoogleChair')
+                note.content['authorids'].append('~SeniorArea_GoogleChair1')
+                print(note)
             note = test_client.post_note(note)
 
         conference.setup_first_deadline_stage(force=True)
