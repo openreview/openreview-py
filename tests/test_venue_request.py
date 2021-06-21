@@ -764,7 +764,7 @@ class TestVenueRequest():
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_revision_remove_options': ['keywords', 'pdf']
+                'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -903,7 +903,7 @@ class TestVenueRequest():
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_revision_remove_options': ['keywords', 'pdf']
+                'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),

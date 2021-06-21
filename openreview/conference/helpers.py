@@ -316,6 +316,11 @@ def get_decision_stage(client, request_forum):
             email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
 
 def get_submission_revision_stage(client, request_forum):
+    revision_name = request_forum.content.get('submission_revision_name', '').strip()
+    if revision_name:
+        revision_name = '_'.join(revision_name.title().split(' '))
+    else:
+        revision_name='Revision'
     submission_revision_start_date = request_forum.content.get('submission_revision_start_date', '').strip()
     if submission_revision_start_date:
         try:
@@ -345,6 +350,7 @@ def get_submission_revision_stage(client, request_forum):
         only_accepted = True
 
     return openreview.SubmissionRevisionStage(
+        name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
         additional_fields=submission_revision_additional_options,
