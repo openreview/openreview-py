@@ -40,7 +40,7 @@ var main = function() {
 
   loadReviewerData()
     .then(function(
-      blindedNotes, officialReviews, invitations, customLoad, groupByNumber
+      blindedNotes, officialReviews, invitations, customLoad, groupByNumber, areaChairMap
     ) {
       if (customLoad) {
         $('#header .description').append(
@@ -49,6 +49,19 @@ var main = function() {
       }
 
       displayStatusTable(blindedNotes, officialReviews);
+
+      // Add AC information to table
+      if (areaChairMap) {
+        $('.console-table div.note').each(function() {
+          var noteId = $(this).data('id');
+          $(this).find('.note-content').before(
+            '<div class="note-area-chairs">' +
+              '<h4>Assigned Area Chair:</h4>' +
+              '<p><a href="https://openreview.net/profile?id=' + areaChairMap[noteId] + '" target="_blank">' + view.prettyId(areaChairMap[noteId]) + ' </a></p>' +
+            '</div>'
+          );
+        });
+      }
 
       // Add paper ranking tag widgets to the table of submissions
       // If tag invitation does not exist, get existing tags and display read-only
@@ -122,6 +135,26 @@ var getReviewerNoteNumbers = function() {
     return groupByNumber;
 
   });
+};
+
+var getAreaChairGroups = function() {
+
+  var allAreaChairGroupsP = Webfield.getAll('/groups', {
+    regex: CONFERENCE_ID + '/Paper.*/Area_Chairs',
+    select: 'id,members'
+  })
+  .then(function(groups) {
+
+    var groupByNumber = {};
+    _.forEach(groups, function(group) {
+      var num = getNumberFromGroup(group.id, 'Paper');
+      groupByNumber[num] = group.members[0];
+    });
+
+    return groupByNumber;
+  });
+
+  return $.when(allAreaChairGroupsP);
 };
 
 var getBlindedNotes = function(noteNumbers) {
@@ -235,7 +268,8 @@ var loadReviewerData = function() {
         getOfficialReviews(noteNumbers),
         getAllInvitations(),
         getCustomLoad(userIds),
-        groupByNumber
+        groupByNumber,
+        getAreaChairGroups()
       );
     });
 };
@@ -291,13 +325,13 @@ var buildTableRow = function(note, officialReview) {
   var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + CONFERENCE_ID + '/' + REVIEWER_NAME + '#assigned-papers)');
   var number = '<strong class="note-number">' + note.number + '</strong>';
 
-  // Build Note Summary Cell
+  // Note Summary Cell
   var cell1 = note;
   cell1.content.authors = null;  // Don't display 'Blinded Authors'
   cell1.referrer = referrerUrl;
   var summaryHtml = Handlebars.templates.noteSummary(cell1);
 
-  // Build Status Cell
+  // Status Cell
   var invitationId = getInvitationId(OFFICIAL_REVIEW_NAME, note.number);
   var reviewStatus = {
     invitationUrl: '/forum?id=' + note.forum + '&noteId=' + note.forum + '&invitationId=' + invitationId + '&referrer=' + referrerUrl,
