@@ -111,11 +111,11 @@ var getGroups = function() {
         reviewerGroups.push(group);
       } else if (_.includes(group.id, 'Reviewer_')) {
         anonReviewerGroups.push(group);
-      } else if (group.id.endsWith('Area_Chairs')) {
+      } else if (group.id.endsWith('/Area_Chairs')) {
         areaChairGroups.push(group);
       } else if (_.includes(group.id, 'Area_Chair_')) {
         anonAreaChairGroups.push(group);
-      } else if (group.id.endsWith('Senior_Area_Chairs')) {
+      } else if (group.id.endsWith('/Senior_Area_Chairs')) {
         seniorAreaChairGroups.push(group);
       }
     }
@@ -385,8 +385,8 @@ var getAllInvitations = function() {
 
 var formatData = function(groups, assignmentEdges, submissions, invitations) {
 
-  var noteNumbers = submissions.map(function(s) { return s.number; });
-  var seniorAreaChairGroupMaps = buildSeniorAreaChairGroupMaps(noteNumbers, groups.seniorAreaChairGroups);
+  var noteNumbers = getPaperNumbersfromGroups(groups.seniorAreaChairGroups);
+  submissions = submissions.filter(function(s) { return noteNumbers.indexOf(s.number) >= 0; });
   var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, groups.areaChairGroups, groups.anonAreaChairGroups);
   var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, groups.reviewerGroups, groups.anonReviewerGroups);
 
@@ -794,7 +794,7 @@ var displayAreaChairsStatusTable = function() {
       groups: _.map(usersToMessage, 'id'),
       subject: subject,
       message: message,
-      parentGroup: AREA_CHAIRS_ID
+      //parentGroup: AREA_CHAIRS_ID
     }]));
     localStorage.setItem('messageCount', usersToMessage.length);
 
