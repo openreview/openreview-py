@@ -682,6 +682,8 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert r5_client.get_edges_count() == 0
         conference.set_matching_conflicts(r5_client.profile.id)
         assert r5_client.get_edges_count() > 0
+        with pytest.raises(openreview.OpenReviewException):
+            conference.set_matching_conflicts('doesnotexist@mail.com')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
