@@ -1281,6 +1281,7 @@ def recruit_reviewer(client, user, first,
     recruit_message,
     recruit_message_subj,
     reviewers_invited_id,
+    contact_info,
     verbose=True):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
@@ -1300,6 +1301,8 @@ def recruit_reviewer(client, user, first,
     :type recruit_message_subj: str
     :param reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed. str
     :type reviewers_invited_id: str
+    :param contact_info: The information used to contact support for questions
+    :type contact_info: str
     :param verbose: Shows response of :meth:`openreview.Client.post_message` and shows the body of the message sent
     :type verbose: bool, optional
     :param baseurl: Use this baseUrl instead of client.baseurl to create recruitment links

@@ -40,7 +40,8 @@ def process(client, note, invitation):
         invitee_names = invitee_names,
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
-        message = note.content['invitation_email_content'].strip()
+        message = note.content['invitation_email_content'].strip(),
+        contact_infor = contact_info
     )
 
     non_invited_status=f'''No recruitment invitation was sent to the following users because they have already been invited:
