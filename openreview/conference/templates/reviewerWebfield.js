@@ -63,6 +63,19 @@ var main = function() {
         });
       }
 
+      // Add AC information to table
+      if (areaChairMap) {
+        $('.console-table div.note').each(function() {
+          var noteId = $(this).data('id');
+          $(this).find('.note-content').before(
+            '<div class="note-area-chairs">' +
+              '<h4>Assigned Area Chair:</h4>' +
+              '<p><a href="https://openreview.net/profile?id=' + areaChairMap[noteId] + '" target="_blank">' + view.prettyId(areaChairMap[noteId]) + ' </a></p>' +
+            '</div>'
+          );
+        });
+      }
+
       // Add paper ranking tag widgets to the table of submissions
       // If tag invitation does not exist, get existing tags and display read-only
       var paperRankingInvitation = _.find(invitations, ['id', PAPER_RANKING_ID]);

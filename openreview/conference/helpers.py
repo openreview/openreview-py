@@ -388,5 +388,6 @@ def get_comment_stage(client, request_forum):
         unsubmitted_reviewers=unsubmitted_reviewers,
         reader_selection=True,
         email_pcs=email_pcs,
-        authors=authors_invited
+        authors=authors_invited,
+        check_mandatory_readers=True
     )
