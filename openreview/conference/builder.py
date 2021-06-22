@@ -1212,14 +1212,6 @@ class Conference(object):
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reviewers_name'])
 
-        contact_email = 'info@openreview.net'
-        try:
-            request_form = self.client.get_note(self.request_form_id)
-            if 'contact_email' in request_form.content.keys():
-                contact_email = request_form.content['contact_email']
-        except:
-            raise openreview.OpenReviewException('Error in retrieving request form note')
-
         role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
         recruit_message = '''Dear {name},
 
@@ -1241,7 +1233,7 @@ class Conference(object):
 
         If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact ''' + contact_email + '''.
+        If you have any questions, please contact {contact_info}.
 
         Cheers!
 
