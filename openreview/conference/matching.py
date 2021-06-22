@@ -266,8 +266,10 @@ class Matching(object):
         # Adapt single profile to multi-profile code
         user_profiles = [profile_id]
         user_profiles = _get_profiles(self.client, user_profiles, with_publications=build_conflicts)
-        # Check for existing OpenReview profile
-        
+        # Check for existing OpenReview profile - perform dummy check
+        if user_profiles[0].active == None:
+            raise openreview.OpenReviewException('No profile exists')    
+
         user_profiles_info = [get_profile_info(p) for p in user_profiles]
 
         # Fetch conflict invitation
