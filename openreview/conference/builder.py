@@ -1292,6 +1292,7 @@ class Conference(object):
                             recruit_message,
                             recruit_message_subj,
                             reviewers_invited_id,
+                            contact_info,
                             verbose = False)
                     except openreview.OpenReviewException as e:
                         self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
@@ -1320,6 +1321,7 @@ class Conference(object):
                         recruit_message,
                         recruit_message_subj,
                         reviewers_invited_id,
+                        contact_info,
                         verbose = False)
                     recruitment_status['invited'].append(email)
                 except openreview.OpenReviewException as e:
