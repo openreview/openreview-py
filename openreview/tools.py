@@ -1281,7 +1281,7 @@ def recruit_reviewer(client, user, first,
     recruit_message,
     recruit_message_subj,
     reviewers_invited_id,
-    contact_info,
+    contact_info='info@openreview.net',
     verbose=True):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
