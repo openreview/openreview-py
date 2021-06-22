@@ -256,21 +256,20 @@ class Matching(object):
         Create conflict edges between the given Notes and a single profile
         '''
 
-        # Re-setup information that would have been initialized in setup()
-        submissions = list(openreview.tools.iterget_notes(
-            self.conference.client,
-            invitation=self.conference.get_blind_submission_id(),
-            details='original'))
-        get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info
-        
         # Adapt single profile to multi-profile code
         user_profiles = [profile_id]
         user_profiles = _get_profiles(self.client, user_profiles, with_publications=build_conflicts)
         # Check for existing OpenReview profile - perform dummy check
         if user_profiles[0].active == None:
-            raise openreview.OpenReviewException('No profile exists')    
-
+            raise openreview.OpenReviewException('No profile exists')
+        get_profile_info = openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info
         user_profiles_info = [get_profile_info(p) for p in user_profiles]
+
+        # Re-setup information that would have been initialized in setup()
+        submissions = list(openreview.tools.iterget_notes(
+            self.conference.client,
+            invitation=self.conference.get_blind_submission_id(),
+            details='original'))
 
         # Fetch conflict invitation
         try:
