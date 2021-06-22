@@ -331,9 +331,10 @@ class VenueStages():
 
         submission_revision_stage_content = {
             'submission_revision_name': {
-                'description': 'What should be the name of the submission revision button (e.g. Revision, Supplementary Material, Post-Decision Revision)? Leave empty for default option - Revision',
+                'description': 'What should be the name of the submission revision button (e.g. Revision, Supplementary Material, Post-Decision Revision)? Default name: Revision',
                 'value-regex': '.*',
-                'order': 35
+                'order': 35,
+                'default':'Revision'
             },
             'submission_revision_start_date': {
                 'description': 'When should the authors start revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
@@ -363,7 +364,7 @@ class VenueStages():
             },
             'submission_revision_remove_options': {
                 'order': 40,
-                'values-dropdown': ['title','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
+                'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
                 'description': 'Fields that should not be available during revision.'
             }
         }
