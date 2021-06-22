@@ -64,6 +64,14 @@ The OpenReview Team
         signatures = ['~Super_User1']
     ))
 
+    contact_email = 'info@openreview.net'
+    try:
+        request_form = client.get_note(conference.request_form_id)
+        if 'contact_email' in request_form.content.keys():
+            contact_email = request_form.content['contact_email']
+    except:
+        raise OpenReviewException('Error in retrieving request form note')
+
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
     recruitment_email_body = '''Dear {name},
 
@@ -85,7 +93,7 @@ Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact info@openreview.net.
+If you have any questions, please contact ''' + contact_email + '''.
 
 Cheers!
 
