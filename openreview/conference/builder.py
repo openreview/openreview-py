@@ -1267,6 +1267,7 @@ class Conference(object):
                             recruit_message,
                             'Reminder: ' + recruit_message_subj,
                             reviewers_invited_id,
+                            contact_info,
                             verbose = False)
                         recruitment_status['reminded'].append(reviewer_id)
                     except openreview.OpenReviewException as e:

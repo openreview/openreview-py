@@ -1328,7 +1328,8 @@ def recruit_reviewer(client, user, first,
     personalized_message = recruit_message.format(
         name = first,
         accept_url = url + "Yes",
-        decline_url = url + "No"
+        decline_url = url + "No",
+        contact_info = contact_info
     )
 
     client.add_members_to_group(reviewers_invited_id, [user])
