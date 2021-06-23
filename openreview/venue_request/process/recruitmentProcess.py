@@ -36,10 +36,9 @@ def process(client, note, invitation):
     }
 
     # Fetch contact info
-    if conference.request_form_id:
-        contact_info = client.get_note(conference.request_form_id).content.get('contact_email', None)
+    contact_info = request_form.content.get('contact_email', None)
 
-    if not conference.request_form_id or not contact_info:
+    if not contact_info:
         raise openreview.OpenReviewException(f'Unable to retrieve field contact_email from the request form')
 
     role_name=roles[note.content['invitee_role'].strip()]
