@@ -567,7 +567,7 @@ var renderStatusTable = function(conferenceStatusData, container) {
     });
 
     selectedRows.forEach(function(row) {
-      var users = _.values(row[3].reviewers);
+      var users = _.values(row.reviewProgressData.reviewers);
       if (filter === 'msg-submitted-reviewers') {
         users = users.filter(function(u) {
           return u.completedReview;
