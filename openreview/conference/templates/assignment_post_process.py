@@ -1,5 +1,6 @@
 def process_update(client, edge, invitation, existing_edge):
 
+    CONFERENCE_ID = ''
     SHORT_PHRASE = ''
     GROUP_ID = ''
     GROUP_NAME = ''
@@ -19,6 +20,11 @@ def process_update(client, edge, invitation, existing_edge):
         client.add_members_to_group(group.id, edge.tail)
         client.add_members_to_group(GROUP_ID, edge.tail)
 
+        signature=f'{openreview.tools.pretty_id(edge.signatures[0])}({edge.tauthor})'
+
+        if CONFERENCE_ID in edge.signatures or CONFERENCE_ID + '/Program_Chairs' in edge.signatures:
+            signature=f'{openreview.tools.pretty_id(CONFERENCE_ID + "/Program_Chairs")}'
+
         recipients=[edge.tail]
         subject=f'[{SHORT_PHRASE}] You have been assigned as a {GROUP_NAME} for paper number {note.number}'
         message=f'''This is to inform you that you have been assigned as a {GROUP_NAME} for paper number {note.number} for {SHORT_PHRASE}.
@@ -29,6 +35,6 @@ To check all of your assigned papers, go to https://openreview.net/group?id={GRO
 
 Thank you,
 
-{openreview.tools.pretty_id(edge.signatures[0])}({edge.tauthor})'''
+{signature}'''
 
         client.post_message(subject, recipients, message, parentGroup=group.id)
