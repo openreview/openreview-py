@@ -1562,7 +1562,7 @@ OpenReview Team'''
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
                 'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
-                'remove_review_form_options': 'title,review',
+                'remove_review_form_options': 'title',
                 'additional_review_form_options': {
                     "summary_and_contributions": {
                         "order": 1,
@@ -1570,19 +1570,21 @@ OpenReview Team'''
                         "description": "Briefly summarize the paper and its contributions.",
                         "required": True
                     },
-                    "please_provide_a_thorough_review_of_the_submission,_including_its_originality,_quality,_clarity,_and_significance": {
+                    "review": {
                         "order": 2,
                         "value-regex": "[\\S\\s]{1,200000}",
-                        "description": "See https://neurips.cc/Conferences/2021/Review-Form for guidance on questions to address in your review, and https://openreview.net/faq for how to incorporate Markdown and LaTeX into your review.",
+                        "description": "Please provide a thorough review of the submission, including its originality, quality, clarity, and significance. See https://neurips.cc/Conferences/2021/Review-Form for guidance on questions to address in your review, and https://openreview.net/faq for how to incorporate Markdown and LaTeX into your review.",
                         "required": True,
                         "markdown": True
                     },
-                    "have_the_authors_adequately_addressed_the_limitations_and_potential_negative_societal_impact_of_their_work?_(If_not,_please_include_constructive_suggestions_for_improvement)": {
+                    "societal_impact": {
+                        "description": "Have the authors adequately addressed the limitations and potential negative societal impact of their work? (If not, please include constructive suggestions for improvement)",
                         "order": 3,
                         "value-regex": "[\\S\\s]{1,200000}",
                         "required": True
                     },
-                    "would_the_paper_benefit_from_further_ethical_review?": {
+                    "needs_ethical_review": {
+                        "description": "Would the paper benefit from further ethical review?",
                         "order": 4,
                         "value-radio": [
                             "Yes",
@@ -1590,12 +1592,13 @@ OpenReview Team'''
                         ],
                         "required": True
                     },
-                    "please_elaborate_on_the_ethical_issues_raised_by_this_paper_and_the_extent_to_which_the_issues_have_been_acknowledged_or_addressed": {
+                    "ethical_issues": {
+                        "description": "Please elaborate on the ethical issues raised by this paper and the extent to which the issues have been acknowledged or addressed.",
                         "order": 5,
                         "value-regex": "[\\S\\s]{1,200000}",
                         "required": False
                     },
-                    "what_kind_of_expertise_do_you_think_is_required_to_review_this_paper_for_the_ethical_concerns_raised?": {
+                    "ethical_expertise": {
                         "order": 6,
                         "values-checkbox": [
                             "Discrimination / Bias / Fairness Concerns",
@@ -1607,21 +1610,23 @@ OpenReview Team'''
                             "Responsible Research Practice (e.g., IRB, documentation, research ethics)",
                             "I don’t know"
                         ],
-                        "description": "Please click all that apply.",
+                        "description": "What kind of expertise do you think is required to review this paper for the ethical concerns raised?. Please click all that apply.",
                         "required": False
                     },
-                    "have_you_previously_reviewed_or_area_chaired_(a_version_of)_this_work_for_another_archival_venue?": {
+                    "previously_reviewed": {
                         "order": 7,
                         "value-radio": [
                             "Yes",
                             "No"
                         ],
-                        "required": True
+                        "required": True,
+                        "description": "Have you previously reviewed or area chaired (a version of) this work for another archival venue?",
                     },
-                    "how_much_time_did_you_spend_reviewing_this_paper_(in_hours)?": {
+                    "reviewing_time": {
                         "order": 8,
                         "value-regex": ".{1,500}",
-                        "required": True
+                        "required": True,
+                        "description": "How much time did you spend reviewing this paper (in_hours)?"
                     },
                     "rating": {
                         "order": 9,
@@ -1714,11 +1719,11 @@ OpenReview Team'''
             signatures=[signatory_groups[0].id],
             content={
                 'summary_and_contributions': 'TEst data',
-                'please_provide_a_thorough_review_of_the_submission,_including_its_originality,_quality,_clarity,_and_significance': 'Paper is very good!',
-                'have_the_authors_adequately_addressed_the_limitations_and_potential_negative_societal_impact_of_their_work?_(If_not,_please_include_constructive_suggestions_for_improvement)': 'TESSSTTTTT',
-                'would_the_paper_benefit_from_further_ethical_review?': 'No',
-                'have_you_previously_reviewed_or_area_chaired_(a_version_of)_this_work_for_another_archival_venue?': 'No',
-                'how_much_time_did_you_spend_reviewing_this_paper_(in_hours)?': '3',
+                'review': 'Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!',
+                'societal_impact': 'TESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTT',
+                'needs_ethical_review': 'No',
+                'previously_reviewed': 'No',
+                'reviewing_time': '3',
                 'rating': '10: Top 5% of accepted NeurIPS papers, seminal paper',
                 'confidence': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.',
                 'code_of_conduct': 'While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the NeurIPS code of conduct (https://neurips.cc/public/CodeOfConduct).'

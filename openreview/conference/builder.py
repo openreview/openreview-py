@@ -633,7 +633,7 @@ class Conference(object):
         if self.use_senior_area_chairs:
             readers.append(self.get_senior_area_chairs_id(number))
         readers.append(self.get_area_chairs_id(number))
-        if self.REVIEWERS_ASSIGNED in self.area_chair_identity_readers:
+        if self.IdentityReaders.REVIEWERS_ASSIGNED in self.area_chair_identity_readers:
             readers.append(self.get_reviewers_id(number))
         return readers
 
