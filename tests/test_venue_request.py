@@ -53,7 +53,10 @@ class TestVenueRequest():
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.'
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'reviewer_identity': ['Program Chairs', 'Assigned Area Chair'],
+                'area_chair_identity': ['Program Chairs'],
+                'senior_area_chair_identity': ['Program Chairs']
             }))
         helpers.await_queue()
 
@@ -476,6 +479,15 @@ class TestVenueRequest():
         assert review_invitations and len(review_invitations) == 1
         assert 'title' not in review_invitations[0].reply['content']
 
+        reviewer_groups = client.get_groups('{}/Paper.*/Reviewers'.format(venue['venue_id']))
+        assert len(reviewer_groups) == 2
+
+        ac_groups = client.get_groups('{}/Paper.*/Area_Chairs'.format(venue['venue_id']))
+        assert len(ac_groups) == 1
+        assert ac_groups[0].id in ac_groups[0].readers
+
+
+
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         author_client = helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
@@ -632,7 +644,7 @@ class TestVenueRequest():
                 conference.get_program_chairs_id(),
                 conference.get_area_chairs_id(number=1),
                 conference.get_id() + '/Paper1/Authors',
-                conference.get_id() + '/Paper1/AnonReviewer1'
+                conference.get_id() + '/Paper1/Reviewers'
             ],
             writers=[
                 conference.get_id() + '/Paper1/Authors',
