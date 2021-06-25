@@ -183,7 +183,7 @@ class TestNeurIPSConference():
 
         conference=openreview.helpers.get_conference(client, request_form.id)
 
-        result = conference.recruit_reviewers(['ac1@mit.edu'], reviewers_name='Area_Chairs')
+        result = conference.recruit_reviewers(['ac1@mit.edu'], reviewers_name='Area_Chairs', reduced_load_on_decline=['2', '3', '4'])
         assert result
         assert len(result['invited']) == 1
         assert len(result['reminded']) == 0
@@ -212,6 +212,12 @@ class TestNeurIPSConference():
         assert len(rejected_group.members) == 0
 
         request_page(selenium, reject_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 1
         assert 'ac1@mit.edu' in rejected_group.members
