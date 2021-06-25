@@ -2213,6 +2213,13 @@ class ConferenceBuilder(object):
 
     def get_result(self):
 
+        if self.conference.reviewer_identity_readers:
+            if self.conference.use_area_chairs and self.conference.IdentityReaders.AREA_CHAIRS_ASSIGNED not in self.conference.reviewer_identity_readers and self.conference.IdentityReaders.AREA_CHAIRS not in self.conference.reviewer_identity_readers:
+                raise openreview.OpenReviewException('Assigned area chairs must see the reviewer identity')
+
+            if self.conference.use_senior_area_chairs and self.conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED not in self.conference.reviewer_identity_readers and self.conference.IdentityReaders.SENIOR_AREA_CHAIRS not in self.conference.reviewer_identity_readers:
+                raise openreview.OpenReviewException('Assigned senior area chairs must see the reviewer identity')
+
         id = self.conference.get_id()
         groups = self.__build_groups(id)
         for i, g in enumerate(groups[:-1]):
