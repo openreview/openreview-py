@@ -1172,6 +1172,9 @@ class Conference(object):
     # Depreciated
     def set_recruitment_reduced_load(self, reduced_load_options):
         raise openreview.OpenReviewException('Depreciated function')
+    
+    def set_default_load(self, default_load, reviewers_name = 'Reviewers'):
+        self.default_reviewer_load[reviewers_name] = default_load
 
     def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, reduced_load_on_decline=None, default_load=0):
 
@@ -1182,7 +1185,7 @@ class Conference(object):
         reviewers_accepted_id = reviewers_id
         hash_seed = '1234'
         invitees = [e.lower() if '@' in e else e for e in invitees]
-        self.default_reviewer_load[reviewers_name] = default_load
+        self.set_default_load(default_load, reviewers_name)
 
         reviewers_accepted_group = self.__create_group(reviewers_accepted_id, pcs_id)
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
@@ -2190,6 +2193,10 @@ class ConferenceBuilder(object):
     # Depreciated
     def set_recruitment_reduced_load(self, reduced_load_options, default_reviewer_load):
         raise openreview.OpenReviewException('Depreciated Function')
+
+    def set_default_reviewers_load(self, default_load):
+        # Required to render a default load in the WebField template
+        self.conference.set_default_load(default_load, self.conference.reviewers_name)
 
     def set_reviewer_identity_readers(self, readers):
         self.conference.reviewer_identity_readers = readers

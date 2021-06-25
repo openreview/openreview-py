@@ -26,6 +26,7 @@ class TestECCVConference():
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.set_conference_short_name('ECCV 2020')
+        builder.set_default_reviewers_load(7)
         builder.has_area_chairs(True)
         builder.set_homepage_header({
             'title': '2020 European Conference on Computer Vision',
