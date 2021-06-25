@@ -530,7 +530,7 @@ class Matching(object):
         total_prefix = conf_id + '/' + role + '/-/'
 
         reduced_loads = {}
-        reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load', total_prefix), sort='tcdate:asc')
+        reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load', prefix = total_prefix), sort='tcdate:asc')
 
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             reduced_loads[note.content['user']] = note
