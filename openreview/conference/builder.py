@@ -86,7 +86,6 @@ class Conference(object):
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
-        self.reduced_load_on_decline = []
         self.default_reviewer_load = 0
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
@@ -1170,11 +1169,11 @@ class Conference(object):
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
-
+    # Depreciated
     def set_recruitment_reduced_load(self, reduced_load_options):
-        self.reduced_load_on_decline = reduced_load_options
+        raise openreview.OpenReviewException('Depreciated function')
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, reduced_load_on_decline=[]):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -2187,9 +2186,9 @@ class ConferenceBuilder(object):
     def set_request_form_id(self, id):
         self.conference.request_form_id = id
 
+    # Depreciated
     def set_recruitment_reduced_load(self, reduced_load_options, default_reviewer_load):
-        self.conference.reduced_load_on_decline = reduced_load_options
-        self.conference.default_reviewer_load = default_reviewer_load
+        raise openreview.OpenReviewException('Depreciated Function')
 
     def set_reviewer_identity_readers(self, readers):
         self.conference.reviewer_identity_readers = readers
