@@ -1655,6 +1655,8 @@ class InvitationBuilder(object):
         invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
+        reduced_load = options.get('reduced_load_on_decline', None)
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
                 pre_content = pre.read()
@@ -1674,7 +1676,7 @@ class InvitationBuilder(object):
                     post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
                 pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
-                if conference.reduced_load_on_decline and options.get('reviewers_name', '') == 'Reviewers':
+                if reduced_load:
                     post_content = post_content.replace("REDUCED_LOAD_INVITATION_NAME = ''", "REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load'")
                 invitation = openreview.Invitation(id = invitation_id,
                     duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
