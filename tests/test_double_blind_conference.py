@@ -505,6 +505,8 @@ class TestDoubleBlindConference():
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
 
+        helpers.await_queue()
+
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
         assert len(group.members) == 1
@@ -537,6 +539,8 @@ class TestDoubleBlindConference():
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, reject_url, alert=True)
 
+        helpers.await_queue()
+
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
         assert len(group.members) == 0
@@ -566,6 +570,8 @@ class TestDoubleBlindConference():
 
         encoded_url = accept_url.split('%40')[0] + '%2540' + accept_url.split('%40')[1]
         request_page(selenium, encoded_url, alert=True)
+
+        helpers.await_queue()
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
@@ -778,7 +784,7 @@ class TestDoubleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
-    def test_create_blind_submissions(self, client):
+    def test_create_blind_submissions(self, client, test_client):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -838,9 +844,9 @@ class TestDoubleBlindConference():
                 ]
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -866,9 +872,9 @@ class TestDoubleBlindConference():
                 ]
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -1060,8 +1066,8 @@ class TestDoubleBlindConference():
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[2]
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='numbers:asc')
+        submission = notes[0]
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)

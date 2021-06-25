@@ -59,6 +59,9 @@ class Helpers:
 
             time.sleep(0.5)
 
+        assert not super_client.get_process_logs(status='error')
+
+
     @staticmethod
     def create_reviewer_edge(client, conference, name, note, reviewer, label=None, weight=None):
         conference_id=conference.id

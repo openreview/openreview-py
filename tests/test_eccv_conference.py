@@ -510,7 +510,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert 'test@mail.com' in recipients
 
         note.content['title'] = 'I have been updated'
-        client.post_note(note)
+        test_client.post_note(note)
 
         helpers.await_queue()
         note = client.get_note(note.id)
@@ -1688,7 +1688,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         ac_client = openreview.Client(username='openreview.net', password='1234')
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Program_Chairs'
         request_page(selenium, ac_url, ac_client.token)
-        
+
         # Get the timeline text - order of elements retrieved is order of elements on page top -> bottom
         list_elements = selenium.find_elements_by_tag_name('li')
         retrieved_dates = []

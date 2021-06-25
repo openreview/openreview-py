@@ -192,6 +192,9 @@ class Matching(object):
             edge_head_query = {
                 'group' : self.conference.get_area_chairs_id()
             }
+            readers = {
+                'values-copied': edge_readers + ['{tail}', '{head}']
+            }
 
         edge_tail={
             'type': 'Profile',
@@ -928,8 +931,8 @@ class Matching(object):
 
     def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None):
 
-        invite_label=invitation_labels.get('Invite', 'Invite')
-        invited_label=invitation_labels.get('Invited', 'Invited')
+        invite_label=invitation_labels.get('Invite', 'Invitation Sent')
+        invited_label=invitation_labels.get('Invited', 'Invitation Sent')
         accepted_label=invitation_labels.get('Accepted', 'Accepted')
         declined_label=invitation_labels.get('Declined', 'Declined')
 
@@ -1195,6 +1198,9 @@ class Matching(object):
                             sac_group.members=[]
                         sac_group.members.append(sac)
                         self.client.post_group(sac_group)
+
+        ac_group=self.client.get_group(self.conference.get_area_chairs_id())
+        self.conference.webfield_builder.edit_web_value(ac_group, 'ASSIGNMENT_LABEL', assignment_title)
 
 
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):

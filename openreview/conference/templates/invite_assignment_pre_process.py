@@ -39,7 +39,9 @@ def process(client, edge, invitation):
                 if edges:
                     raise openreview.OpenReviewException(f'Conflict detected for {user_profile.get_preferred_name(pretty=True)}')
 
-                raise openreview.OpenReviewException(f'Reviewer {user_profile.get_preferred_name(pretty=True)} is an official reviewer, please use the "Assign" button to make the assignment.')
+                ## Only check this when there are proposed assignments
+                if ASSIGNMENT_LABEL:
+                    raise openreview.OpenReviewException(f'Reviewer {user_profile.get_preferred_name(pretty=True)} is an official reviewer, please use the "Assign" button to make the assignment.')
 
 
         else:

@@ -717,7 +717,7 @@ class Conference(object):
                     group = tools.get_group(self.client, id = area_chairs_id)
                     self.client.post_group(openreview.Group(id=area_chairs_id,
                         invitation=paper_area_chair_group_invitation.id,
-                        readers=self.get_area_chair_paper_group_readers(n.number),
+                        readers=self.get_area_chair_identity_readers(n.number),
                         nonreaders=[self.get_authors_id(n.number)],
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],
@@ -1846,7 +1846,8 @@ class CommentStage(object):
     reader_selection=False,
     email_pcs=False,
     authors=False,
-    only_accepted=False):
+    only_accepted=False,
+    check_mandatory_readers=False):
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
         self.start_date = start_date
@@ -1858,6 +1859,7 @@ class CommentStage(object):
         self.email_pcs = email_pcs
         self.authors = authors
         self.only_accepted=only_accepted
+        self.check_mandatory_readers=check_mandatory_readers
 
     def get_readers(self, conference, number):
         readers = []

@@ -159,7 +159,7 @@ class TestWorkshop():
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
-    def test_create_blind_submissions(self, client, conference):
+    def test_create_blind_submissions(self, client, test_client, conference):
 
         group = client.get_group(id = conference.get_authors_id())
         assert group
@@ -185,9 +185,9 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -210,9 +210,9 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
