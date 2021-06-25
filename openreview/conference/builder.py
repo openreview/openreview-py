@@ -86,7 +86,7 @@ class Conference(object):
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
-        self.default_reviewer_load = 0
+        self.default_reviewer_load = {}
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
@@ -1173,7 +1173,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         raise openreview.OpenReviewException('Depreciated function')
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, reduced_load_on_decline=None):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, reduced_load_on_decline=None, default_load=0):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1182,6 +1182,7 @@ class Conference(object):
         reviewers_accepted_id = reviewers_id
         hash_seed = '1234'
         invitees = [e.lower() if '@' in e else e for e in invitees]
+        self.default_reviewer_load[reviewers_name] = default_load
 
         reviewers_accepted_group = self.__create_group(reviewers_accepted_id, pcs_id)
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
