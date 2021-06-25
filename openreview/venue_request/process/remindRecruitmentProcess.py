@@ -6,8 +6,6 @@ def process(client, note, invitation):
     print('Conference: ', conference.get_id())
 
     reduced_load=note.content.get('invitee_reduced_load')
-    if reduced_load:
-        conference.reduced_load_on_decline=reduced_load
 
     note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
     note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
@@ -22,7 +20,8 @@ def process(client, note, invitation):
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip(),
-        remind=True
+        remind=True,
+        reduced_load_on_decline = reduced_load
     )
 
     comment_note = openreview.Note(

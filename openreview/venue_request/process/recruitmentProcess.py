@@ -6,8 +6,6 @@ def process(client, note, invitation):
     print('Conference: ', conference.get_id())
 
     reduced_load=note.content.get('invitee_reduced_load')
-    if reduced_load:
-        conference.reduced_load_on_decline=reduced_load
 
     note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
     note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
@@ -40,7 +38,8 @@ def process(client, note, invitation):
         invitee_names = invitee_names,
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
-        message = note.content['invitation_email_content'].strip()
+        message = note.content['invitation_email_content'].strip(),
+        reduced_load_on_decline = reduced_load
     )
 
     non_invited_status=f'''No recruitment invitation was sent to the following users because they have already been invited:
