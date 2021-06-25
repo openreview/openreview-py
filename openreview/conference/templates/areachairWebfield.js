@@ -563,11 +563,11 @@ var renderStatusTable = function(conferenceStatusData, container) {
       function(checkbox) { return $(checkbox).data('noteId'); }
     );
     selectedRows = rows.filter(function(row) {
-      return _.includes(selectedIds, row[2].forum);
+      return _.includes(selectedIds, row.note.forum);
     });
 
     selectedRows.forEach(function(row) {
-      var users = _.values(row[3].reviewers);
+      var users = _.values(row.reviewProgressData.reviewers);
       if (filter === 'msg-submitted-reviewers') {
         users = users.filter(function(u) {
           return u.completedReview;
@@ -580,9 +580,9 @@ var renderStatusTable = function(conferenceStatusData, container) {
 
       if (users.length) {
         var forumUrl = 'https://openreview.net/forum?' + $.param({
-          id: row[2].forum,
-          noteId: row[2].id,
-          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row[2].number)
+          id: row.note.forum,
+          noteId: row.note.id,
+          invitationId: getInvitationId(OFFICIAL_REVIEW_NAME, row.note.number)
         });
         reviewerMessages.push({
           groups: _.map(users, 'id'),
