@@ -1524,13 +1524,33 @@ OpenReview Team'''
 
     def test_review_stage(self, conference, helpers, test_client, client):
 
-
         ## make submissions visible to assigned commmittee
         invitation = client.get_invitation('NeurIPS.cc/2021/Conference/-/Submission')
         invitation.reply['readers'] = {
             'values-regex': '.*'
         }
         client.post_invitation(invitation)
+
+        invitation2 = client.get_invitation('NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        invitation2.reply_forum_views = [
+            {
+                "id": "authors",
+                "label": "Author Discussion",
+                "filter": "readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "committee",
+                "label": "Committee Discussion",
+                "filter": "-readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "all",
+                "label": "All",
+                "filter": ""
+            }
+        ]
+        client.post_invitation(invitation2)
+
         original_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
         for note in original_notes:
             note.readers = note.readers + [f'NeurIPS.cc/2021/Conference/Paper{note.number}/Senior_Area_Chairs']
@@ -1936,6 +1956,72 @@ OpenReview Team'''
 
         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
+
+    def test_rebuttal_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        stage_note=client.post_note(openreview.Note(
+            content={
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 1
+        reviews[0].readers = [
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers/Submitted',
+            'NeurIPS.cc/2021/Conference/Paper5/Authors'
+        ]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=False, authors=True))
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        rebuttal_note=test_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=reviews[0].id,
+            readers=[
+                'NeurIPS.cc/2021/Conference/Program_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Reviewers/Submitted',
+                'NeurIPS.cc/2021/Conference/Paper5/Authors'
+            ],
+            #nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content={
+                'title': 'Thanks for your review',
+                'comment': 'Thanks for the detailed review!'
+            }
+        ))
+
+        helpers.await_queue()
+
 
     def test_meta_review_stage(self, conference, helpers, test_client, client):
 

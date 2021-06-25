@@ -656,7 +656,6 @@ class TestVenueRequest():
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
         assert public_comment_invitation is None
 
-
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
 
         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
@@ -764,7 +763,7 @@ class TestVenueRequest():
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_revision_remove_options': ['keywords', 'pdf']
+                'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -903,7 +902,7 @@ class TestVenueRequest():
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_revision_remove_options': ['keywords', 'pdf']
+                'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1008,4 +1007,55 @@ class TestVenueRequest():
         process_logs = client.get_process_logs(id = review_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+    def test_supplementary_material_revision(self, client, test_client, selenium, request_page, helpers, venue):
+
+        # Post another revision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=5)
+        revision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name':'Supplementary Material',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TL;DR'],
+                'submission_revision_additional_options': {
+                    'supplementary_material': {
+                        'description': 'Supplementary material (e.g. code or video). All supplementary material must be self-contained and zipped into a single file.',
+                        'order': 10,
+                        'value-file': {
+                            'fileTypes': [
+                                'zip'
+                            ],
+                            'size': 50
+                        },
+                        'required': False
+                    }
+                }
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=revision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert blind_submissions and len(blind_submissions) == 3
+
+        revision_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Supplementary_Material$'.format(venue['venue_id']))
+        assert revision_invitations and len(revision_invitations) == 3
+        assert len(revision_invitations[0].reply['content'].keys())==1
+        assert 'supplementary_material' in revision_invitations[0].reply['content']
+        assert all(x not in revision_invitations[0].reply['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TL;DR'])
 
