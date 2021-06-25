@@ -382,7 +382,7 @@ class TestNeurIPSConference():
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nIf you have any questions, please contact {contact_info}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -408,6 +408,7 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer UMass,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+        assert 'pc@neurips.cc' in messages[0]['content']['text']
         reject_url = re.search('https://.*response=No', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
@@ -1523,13 +1524,33 @@ OpenReview Team'''
 
     def test_review_stage(self, conference, helpers, test_client, client):
 
-
         ## make submissions visible to assigned commmittee
         invitation = client.get_invitation('NeurIPS.cc/2021/Conference/-/Submission')
         invitation.reply['readers'] = {
             'values-regex': '.*'
         }
         client.post_invitation(invitation)
+
+        invitation2 = client.get_invitation('NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        invitation2.reply_forum_views = [
+            {
+                "id": "authors",
+                "label": "Author Discussion",
+                "filter": "readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "committee",
+                "label": "Committee Discussion",
+                "filter": "-readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "all",
+                "label": "All",
+                "filter": ""
+            }
+        ]
+        client.post_invitation(invitation2)
+
         original_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
         for note in original_notes:
             note.readers = note.readers + [f'NeurIPS.cc/2021/Conference/Paper{note.number}/Senior_Area_Chairs']
@@ -1561,7 +1582,108 @@ OpenReview Team'''
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
-                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                'remove_review_form_options': 'title',
+                'additional_review_form_options': {
+                    "summary_and_contributions": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the paper and its contributions.",
+                        "required": True
+                    },
+                    "review": {
+                        "order": 2,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Please provide a thorough review of the submission, including its originality, quality, clarity, and significance. See https://neurips.cc/Conferences/2021/Review-Form for guidance on questions to address in your review, and https://openreview.net/faq for how to incorporate Markdown and LaTeX into your review.",
+                        "required": True,
+                        "markdown": True
+                    },
+                    "societal_impact": {
+                        "description": "Have the authors adequately addressed the limitations and potential negative societal impact of their work? (If not, please include constructive suggestions for improvement)",
+                        "order": 3,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "required": True
+                    },
+                    "needs_ethical_review": {
+                        "description": "Would the paper benefit from further ethical review?",
+                        "order": 4,
+                        "value-radio": [
+                            "Yes",
+                            "No"
+                        ],
+                        "required": True
+                    },
+                    "ethical_issues": {
+                        "description": "Please elaborate on the ethical issues raised by this paper and the extent to which the issues have been acknowledged or addressed.",
+                        "order": 5,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "required": False
+                    },
+                    "ethical_expertise": {
+                        "order": 6,
+                        "values-checkbox": [
+                            "Discrimination / Bias / Fairness Concerns",
+                            "Inadequate Data and Algorithm Evaluation",
+                            "Inappropriate Potential Applications & Impact  (e.g., human rights concerns)",
+                            "Privacy and Security (e.g., consent)",
+                            "Legal Compliance (e.g., GDPR, copyright, terms of use)",
+                            "Research Integrity Issues (e.g., plagiarism)",
+                            "Responsible Research Practice (e.g., IRB, documentation, research ethics)",
+                            "I don’t know"
+                        ],
+                        "description": "What kind of expertise do you think is required to review this paper for the ethical concerns raised?. Please click all that apply.",
+                        "required": False
+                    },
+                    "previously_reviewed": {
+                        "order": 7,
+                        "value-radio": [
+                            "Yes",
+                            "No"
+                        ],
+                        "required": True,
+                        "description": "Have you previously reviewed or area chaired (a version of) this work for another archival venue?",
+                    },
+                    "reviewing_time": {
+                        "order": 8,
+                        "value-regex": ".{1,500}",
+                        "required": True,
+                        "description": "How much time did you spend reviewing this paper (in_hours)?"
+                    },
+                    "rating": {
+                        "order": 9,
+                        "value-radio": [
+                            "10: Top 5% of accepted NeurIPS papers, seminal paper",
+                            "9: Top 15% of accepted NeurIPS papers, strong accept",
+                            "8: Top 50% of accepted NeurIPS papers, clear accept",
+                            "7: Good paper, accept",
+                            "6: Marginally above the acceptance threshold",
+                            "5: Marginally below the acceptance threshold",
+                            "4: An okay paper, but not good enough; rejection",
+                            "3: Clear rejection",
+                            "2: Strong rejection",
+                            "1: Trivial or wrong"
+                        ],
+                        "description": "Please provide an \"overall score\" for this submission.",
+                        "required": True
+                    },
+                    "confidence": {
+                        "order": 10,
+                        "value-radio": [
+                            "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
+                            "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
+                            "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                            "2: You are willing to defend your assessment, but it is quite likely that you did not understand central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                            "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                        ],
+                        "description": "Please provide a \"confidence score\" for your assessment of this submission.",
+                        "required": True
+                    },
+                    "code_of_conduct": {
+                        "order": 11,
+                        "value-checkbox": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the NeurIPS code of conduct (https://neurips.cc/public/CodeOfConduct).",
+                        "required": True
+                    }
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
@@ -1617,10 +1739,15 @@ OpenReview Team'''
             writers=[signatory_groups[0].id],
             signatures=[signatory_groups[0].id],
             content={
-                'title': 'Review title',
-                'review': 'Paper is very good!',
-                'rating': '9: Top 15% of accepted papers, strong accept',
-                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+                'summary_and_contributions': 'TEst data',
+                'review': 'Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!',
+                'societal_impact': 'TESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTT',
+                'needs_ethical_review': 'No',
+                'previously_reviewed': 'No',
+                'reviewing_time': '3',
+                'rating': '10: Top 5% of accepted NeurIPS papers, seminal paper',
+                'confidence': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.',
+                'code_of_conduct': 'While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the NeurIPS code of conduct (https://neurips.cc/public/CodeOfConduct).'
             }
         ))
 
@@ -1935,6 +2062,72 @@ OpenReview Team'''
 
         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
+
+    def test_rebuttal_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        stage_note=client.post_note(openreview.Note(
+            content={
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 1
+        reviews[0].readers = [
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers/Submitted',
+            'NeurIPS.cc/2021/Conference/Paper5/Authors'
+        ]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=False, authors=True))
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        rebuttal_note=test_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=reviews[0].id,
+            readers=[
+                'NeurIPS.cc/2021/Conference/Program_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Reviewers/Submitted',
+                'NeurIPS.cc/2021/Conference/Paper5/Authors'
+            ],
+            #nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content={
+                'title': 'Thanks for your review',
+                'comment': 'Thanks for the detailed review!'
+            }
+        ))
+
+        helpers.await_queue()
+
 
     def test_meta_review_stage(self, conference, helpers, test_client, client):
 

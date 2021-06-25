@@ -330,16 +330,22 @@ class VenueStages():
     def setup_submission_revision_stage(self):
 
         submission_revision_stage_content = {
+            'submission_revision_name': {
+                'description': 'What should be the name of the submission revision button (e.g. Revision, Supplementary Material, Post-Decision Revision)? Default name: Revision',
+                'value-regex': '.*',
+                'order': 35,
+                'default':'Revision'
+            },
             'submission_revision_start_date': {
                 'description': 'When should the authors start revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 35
+                'order': 36
             },
             'submission_revision_deadline': {
                 'description': 'By when should the authors finish revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
-                'order': 36
+                'order': 37
             },
             'accepted_submissions_only': {
                 'description': 'Choose option for enabling submission revisions',
@@ -349,17 +355,17 @@ class VenueStages():
                 ],
                 'default': 'Enable revision for all submissions',
                 'required': True,
-                'order': 37
+                'order': 38
             },
             'submission_revision_additional_options': {
-                'order': 38,
+                'order': 39,
                 'value-dict': {},
                 'description': 'Configure additional options in the revision. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
-                'order': 39,
-                'values-dropdown': ['keywords', 'pdf', 'TL;DR'],
-                'description': 'Fields that should not be available during revision: keywords, pdf, TL;DR'
+                'order': 40,
+                'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
+                'description': 'Fields that should not be available during revision.'
             }
         }
 

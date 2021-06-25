@@ -374,7 +374,7 @@ var formatData = function(blindedNotes, noteToReviewerIds, invitations, allRevie
       reviewerRankingByPaper: reviewerRankingByPaper,
       acPapers: acPapers,
       secondaryAcPapers: secondaryAcPapers,
-      sacProfile: findProfile(profiles, assignedSAC)
+      sacProfile: assignedSAC && findProfile(profiles, assignedSAC)
     };
     return conferenceStatusData;
   });
@@ -994,7 +994,7 @@ var renderTasks = function(invitations) {
 
 var renderTableAndTasks = function(fetchedData) {
 
-  if (fetchedData.sacProfile.id) {
+  if (fetchedData.sacProfile && fetchedData.sacProfile.id) {
     $('#header .description').append(
       '<p class="dark">Your assigned Senior Area Chair is <a href="https://openreview.net/profile?id=' + fetchedData.sacProfile.id + '" target="_blank">' + view.prettyId(fetchedData.sacProfile.id) + ' </a> (' + fetchedData.sacProfile.email + ').</p>'
     );
