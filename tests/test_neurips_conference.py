@@ -1582,7 +1582,108 @@ OpenReview Team'''
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
-                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                'remove_review_form_options': 'title',
+                'additional_review_form_options': {
+                    "summary_and_contributions": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the paper and its contributions.",
+                        "required": True
+                    },
+                    "review": {
+                        "order": 2,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Please provide a thorough review of the submission, including its originality, quality, clarity, and significance. See https://neurips.cc/Conferences/2021/Review-Form for guidance on questions to address in your review, and https://openreview.net/faq for how to incorporate Markdown and LaTeX into your review.",
+                        "required": True,
+                        "markdown": True
+                    },
+                    "societal_impact": {
+                        "description": "Have the authors adequately addressed the limitations and potential negative societal impact of their work? (If not, please include constructive suggestions for improvement)",
+                        "order": 3,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "required": True
+                    },
+                    "needs_ethical_review": {
+                        "description": "Would the paper benefit from further ethical review?",
+                        "order": 4,
+                        "value-radio": [
+                            "Yes",
+                            "No"
+                        ],
+                        "required": True
+                    },
+                    "ethical_issues": {
+                        "description": "Please elaborate on the ethical issues raised by this paper and the extent to which the issues have been acknowledged or addressed.",
+                        "order": 5,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "required": False
+                    },
+                    "ethical_expertise": {
+                        "order": 6,
+                        "values-checkbox": [
+                            "Discrimination / Bias / Fairness Concerns",
+                            "Inadequate Data and Algorithm Evaluation",
+                            "Inappropriate Potential Applications & Impact  (e.g., human rights concerns)",
+                            "Privacy and Security (e.g., consent)",
+                            "Legal Compliance (e.g., GDPR, copyright, terms of use)",
+                            "Research Integrity Issues (e.g., plagiarism)",
+                            "Responsible Research Practice (e.g., IRB, documentation, research ethics)",
+                            "I don’t know"
+                        ],
+                        "description": "What kind of expertise do you think is required to review this paper for the ethical concerns raised?. Please click all that apply.",
+                        "required": False
+                    },
+                    "previously_reviewed": {
+                        "order": 7,
+                        "value-radio": [
+                            "Yes",
+                            "No"
+                        ],
+                        "required": True,
+                        "description": "Have you previously reviewed or area chaired (a version of) this work for another archival venue?",
+                    },
+                    "reviewing_time": {
+                        "order": 8,
+                        "value-regex": ".{1,500}",
+                        "required": True,
+                        "description": "How much time did you spend reviewing this paper (in_hours)?"
+                    },
+                    "rating": {
+                        "order": 9,
+                        "value-radio": [
+                            "10: Top 5% of accepted NeurIPS papers, seminal paper",
+                            "9: Top 15% of accepted NeurIPS papers, strong accept",
+                            "8: Top 50% of accepted NeurIPS papers, clear accept",
+                            "7: Good paper, accept",
+                            "6: Marginally above the acceptance threshold",
+                            "5: Marginally below the acceptance threshold",
+                            "4: An okay paper, but not good enough; rejection",
+                            "3: Clear rejection",
+                            "2: Strong rejection",
+                            "1: Trivial or wrong"
+                        ],
+                        "description": "Please provide an \"overall score\" for this submission.",
+                        "required": True
+                    },
+                    "confidence": {
+                        "order": 10,
+                        "value-radio": [
+                            "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
+                            "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
+                            "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                            "2: You are willing to defend your assessment, but it is quite likely that you did not understand central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                            "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                        ],
+                        "description": "Please provide a \"confidence score\" for your assessment of this submission.",
+                        "required": True
+                    },
+                    "code_of_conduct": {
+                        "order": 11,
+                        "value-checkbox": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the NeurIPS code of conduct (https://neurips.cc/public/CodeOfConduct).",
+                        "required": True
+                    }
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
@@ -1638,10 +1739,15 @@ OpenReview Team'''
             writers=[signatory_groups[0].id],
             signatures=[signatory_groups[0].id],
             content={
-                'title': 'Review title',
-                'review': 'Paper is very good!',
-                'rating': '9: Top 15% of accepted papers, strong accept',
-                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+                'summary_and_contributions': 'TEst data',
+                'review': 'Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!',
+                'societal_impact': 'TESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTT',
+                'needs_ethical_review': 'No',
+                'previously_reviewed': 'No',
+                'reviewing_time': '3',
+                'rating': '10: Top 5% of accepted NeurIPS papers, seminal paper',
+                'confidence': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.',
+                'code_of_conduct': 'While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the NeurIPS code of conduct (https://neurips.cc/public/CodeOfConduct).'
             }
         ))
 
