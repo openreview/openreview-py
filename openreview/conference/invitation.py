@@ -1600,7 +1600,7 @@ class InvitationBuilder(object):
             }
         }
 
-        role = options.get('reviewers_name', 'Reviewers').replace('_', ' ')
+        role = options.get('reviewers_name', 'Reviewers')
         conf_id = conference.get_id()
         total_prefix = conf_id + '/' + role + '/-/'
         invitation_id=conference.get_invitation_id('Reduced_Load', prefix = total_prefix)

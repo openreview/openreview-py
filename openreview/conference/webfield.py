@@ -342,8 +342,7 @@ class WebfieldBuilder(object):
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             if reduced_load:
-                role = reviewers_name.replace('_', ' ')
-                reduced_load_id = conference_id + '/' + role
+                reduced_load_id = conference_id + '/' + reviewers_name
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + '/-/Reduced_Load' + "';")
             else:
                 ## Reduce load is disabled, so we should set an invalid invitation
