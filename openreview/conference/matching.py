@@ -527,7 +527,7 @@ class Matching(object):
         # Fetch reviewers name - last element
         role = self.match_group.id.split('/')[-1]
         conf_id = self.conference.get_id()
-        total_prefix = conf_id + '/' + role + '/-/'
+        total_prefix = conf_id + '/' + role
 
         reduced_loads = {}
         reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load', prefix = total_prefix), sort='tcdate:asc')

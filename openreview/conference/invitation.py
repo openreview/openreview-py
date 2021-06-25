@@ -1602,7 +1602,7 @@ class InvitationBuilder(object):
 
         role = options.get('reviewers_name', 'Reviewers')
         conf_id = conference.get_id()
-        total_prefix = conf_id + '/' + role + '/-/'
+        total_prefix = conf_id + '/' + role
         invitation_id=conference.get_invitation_id('Reduced_Load', prefix = total_prefix)
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
