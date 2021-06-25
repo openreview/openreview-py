@@ -525,7 +525,7 @@ class Matching(object):
         current_custom_max_edges={ e['id']['tail']: openreview.Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail', select=None)}
 
         # Fetch reviewers name - last element
-        role = self.match_group.split('/')[-1]
+        role = self.match_group.id.split('/')[-1]
         conf_id = self.conference.get_id()
         total_prefix = conf_id + '/' + role + '/-/'
 
