@@ -1180,7 +1180,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         self.reduced_load_on_decline = reduced_load_options
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, contact_info = 'info@openreview.net'):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1239,7 +1239,7 @@ class Conference(object):
 
         If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact info@openreview.net.
+        If you have any questions, please contact {contact_info}.
 
         Cheers!
 
@@ -1273,6 +1273,7 @@ class Conference(object):
                             recruit_message,
                             'Reminder: ' + recruit_message_subj,
                             reviewers_invited_id,
+                            contact_info = contact_info,
                             verbose = False)
                         recruitment_status['reminded'].append(reviewer_id)
                     except openreview.OpenReviewException as e:
@@ -1297,6 +1298,7 @@ class Conference(object):
                             recruit_message,
                             recruit_message_subj,
                             reviewers_invited_id,
+                            contact_info = contact_info,
                             verbose = False)
                     except openreview.OpenReviewException as e:
                         self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
@@ -1325,6 +1327,7 @@ class Conference(object):
                         recruit_message,
                         recruit_message_subj,
                         reviewers_invited_id,
+                        contact_info = contact_info,
                         verbose = False)
                     recruitment_status['invited'].append(email)
                 except openreview.OpenReviewException as e:
