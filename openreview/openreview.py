@@ -1617,6 +1617,7 @@ class Invitation(object):
         multiReply = None,
         taskCompletionCount = None,
         transform = None,
+        reply_forum_views = [],
         details = None):
 
         self.id = id
@@ -1637,6 +1638,7 @@ class Invitation(object):
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.details = details
+        self.reply_forum_views = reply_forum_views
         self.web = None
         self.process = None
         self.preprocess = None
@@ -1693,7 +1695,8 @@ class Invitation(object):
             'process': self.process,
             'web': self.web,
             'transform': self.transform,
-            'details': self.details
+            'details': self.details,
+            'replyForumViews': self.reply_forum_views
         }
 
         if hasattr(self,'web'):
@@ -1732,7 +1735,8 @@ class Invitation(object):
             multiReply = i.get('multiReply'),
             taskCompletionCount = i.get('taskCompletionCount'),
             reply = i.get('reply'),
-            details = i.get('details')
+            details = i.get('details'),
+            reply_forum_views = i.get('replyForumViews')
             )
         if 'web' in i:
             invitation.web = i['web']
