@@ -434,7 +434,7 @@ class TestNeurIPSConference():
         assert len(notes) == 1
 
         client.post_note(openreview.Note(
-            invitation='NeurIPS.cc/2021/Conference/-/Reduced_Load',
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Reduced_Load',
             readers=['NeurIPS.cc/2021/Conference', 'reviewer1@umass.edu'],
             writers=['NeurIPS.cc/2021/Conference'],
             signatures=['(anonymous)'],

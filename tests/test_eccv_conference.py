@@ -361,7 +361,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(notes) == 1
 
         client.post_note(openreview.Note(
-            invitation='thecvf.com/ECCV/2020/Conference/-/Reduced_Load',
+            invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Reduced_Load',
             readers=['thecvf.com/ECCV/2020/Conference', 'mohit+1@mail.com'],
             writers=['thecvf.com/ECCV/2020/Conference'],
             signatures=['(anonymous)'],
