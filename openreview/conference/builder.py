@@ -1173,7 +1173,7 @@ class Conference(object):
     def set_recruitment_reduced_load(self, reduced_load_options):
         raise openreview.OpenReviewException('Depreciated function')
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, reduced_load_on_decline=[]):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, reduced_load_on_decline=None):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1203,8 +1203,8 @@ class Conference(object):
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed
         }
-        if options['reviewers_name'] == 'Reviewers' and self.reduced_load_on_decline:
-            options['reduced_load_on_decline'] = self.reduced_load_on_decline
+        if reduced_load_on_decline:
+            options['reduced_load_on_decline'] = reduced_load_on_decline
             invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
