@@ -524,8 +524,13 @@ class Matching(object):
         invitation=self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
         current_custom_max_edges={ e['id']['tail']: openreview.Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail', select=None)}
 
+        # Fetch reviewers name - last element
+        role = self.match_group.split('/')[-1]
+        conf_id = self.conference.get_id()
+        total_prefix = conf_id + '/' + role + '/-/'
+
         reduced_loads = {}
-        reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load'), sort='tcdate:asc')
+        reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load', total_prefix), sort='tcdate:asc')
 
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             reduced_loads[note.content['user']] = note
