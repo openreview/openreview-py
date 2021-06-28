@@ -1169,10 +1169,6 @@ class Conference(object):
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
-    # Depreciated
-    def set_recruitment_reduced_load(self, reduced_load_options):
-        raise openreview.OpenReviewException('Depreciated function')
-    
     def set_default_load(self, default_load, reviewers_name = 'Reviewers'):
         self.default_reviewer_load[reviewers_name] = default_load
 
@@ -2189,10 +2185,6 @@ class ConferenceBuilder(object):
 
     def set_request_form_id(self, id):
         self.conference.request_form_id = id
-
-    # Depreciated
-    def set_recruitment_reduced_load(self, reduced_load_options, default_reviewer_load):
-        raise openreview.OpenReviewException('Depreciated Function')
 
     def set_default_reviewers_load(self, default_load):
         # Required to render a default load in the WebField template
