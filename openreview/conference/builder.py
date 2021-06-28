@@ -1209,15 +1209,17 @@ class Conference(object):
             'reviewers_accepted_id': reviewers_accepted_id,
             'reviewers_invited_id': reviewers_invited_id,
             'reviewers_declined_id': reviewers_declined_id,
-            'hash_seed': hash_seed
+            'hash_seed': hash_seed,
+            'reduced_load_id': None
         }
         if reduced_load_on_decline:
             options['reduced_load_on_decline'] = reduced_load_on_decline
+            options['reduced_load_id'] = self.get_invitation_id('Reduced_Load', prefix = reviewers_id)
             invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
-        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reviewers_name'], reduced_load_on_decline)
+        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reduced_load_id'])
 
         role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
         recruit_message = '''Dear {name},

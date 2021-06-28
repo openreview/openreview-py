@@ -323,7 +323,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             return self.__update_invitation(invitation, content)
 
-    def set_recruit_page(self, conference_id, invitation, options = {}, reviewers_name='Reviewers', reduced_load=None):
+    def set_recruit_page(self, conference_id, invitation, options = {}, reduced_load_id=None):
 
         default_header = {
             'title': conference_id,
@@ -341,9 +341,8 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            if reduced_load:
-                reduced_load_id = conference_id + '/' + reviewers_name
-                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + '/-/Reduced_Load' + "';")
+            if reduced_load_id:
+                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + "';")
             else:
                 ## Reduce load is disabled, so we should set an invalid invitation
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/no_name' + "';")
