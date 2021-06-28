@@ -23,7 +23,7 @@ class TestVenueRequest():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        request_form_note = test_client.post_note(openreview.Note(
+        request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~Test_User1'],
             readers=[
@@ -54,10 +54,17 @@ class TestVenueRequest():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
-                'reviewer_identity': ['Program Chairs', 'Assigned Area Chair'],
+                'reviewer_identity': ['Program Chairs'],
                 'area_chair_identity': ['Program Chairs'],
                 'senior_area_chair_identity': ['Program Chairs']
-            }))
+            })
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
+            request_form_note=test_client.post_note(request_form_note)
+
+        request_form_note.content['reviewer_identity'] = ['Program Chairs', 'Assigned Area Chair']
+        request_form_note=test_client.post_note(request_form_note)
+
         helpers.await_queue()
 
         # Post a deploy note
@@ -479,13 +486,25 @@ class TestVenueRequest():
         assert review_invitations and len(review_invitations) == 1
         assert 'title' not in review_invitations[0].reply['content']
 
-        reviewer_groups = client.get_groups('{}/Paper.*/Reviewers'.format(venue['venue_id']))
-        assert len(reviewer_groups) == 2
+        reviewer_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Reviewers$')
+        assert len(reviewer_groups) == 1
+        assert 'TEST.cc/2030/Conference' in reviewer_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' in reviewer_groups[0].readers
 
-        ac_groups = client.get_groups('{}/Paper.*/Area_Chairs'.format(venue['venue_id']))
+        assert 'TEST.cc/2030/Conference' in reviewer_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
+
+        ac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Area_Chairs$')
         assert len(ac_groups) == 1
-        assert ac_groups[0].id in ac_groups[0].readers
+        assert 'TEST.cc/2030/Conference' in ac_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
 
+        assert 'TEST.cc/2030/Conference' in ac_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
 
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
