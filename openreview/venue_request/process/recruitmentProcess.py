@@ -32,6 +32,13 @@ def process(client, note, invitation):
         'area chair': 'Area_Chairs',
         'senior area chair': 'Senior_Area_Chairs'
     }
+
+    # Fetch contact info
+    contact_info = request_form.content.get('contact_email', None)
+
+    if not contact_info:
+        raise openreview.OpenReviewException(f'Unable to retrieve field contact_email from the request form')
+
     role_name=roles[note.content['invitee_role'].strip()]
     recruitment_status=conference.recruit_reviewers(
         invitees = invitee_emails,
@@ -39,7 +46,8 @@ def process(client, note, invitation):
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip(),
-        reduced_load_on_decline = reduced_load
+        reduced_load_on_decline = reduced_load,
+        contact_info = contact_info
     )
 
     non_invited_status=f'''No recruitment invitation was sent to the following users because they have already been invited:

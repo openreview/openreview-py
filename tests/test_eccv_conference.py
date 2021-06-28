@@ -678,6 +678,14 @@ Please contact info@openreview.net with any questions or concerns about this int
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
         )
 
+        # Test adding reviewer after conflicts are built
+        r5_client = helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
+        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1', '~Reviewer_ECCV_Five1'])
+        assert r5_client.get_edges_count() == 0
+        conference.set_matching_conflicts(r5_client.profile.id)
+        assert r5_client.get_edges_count() > 0
+        with pytest.raises(openreview.OpenReviewException):
+            conference.set_matching_conflicts('doesnotexist@mail.com')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)

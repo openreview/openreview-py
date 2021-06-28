@@ -628,10 +628,12 @@ class Conference(object):
 
 
     def get_area_chair_paper_group_readers(self, number):
-        readers=[self.id]
+        readers=[self.id, self.get_program_chairs_id()]
         if self.use_senior_area_chairs:
             readers.append(self.get_senior_area_chairs_id(number))
         readers.append(self.get_area_chairs_id(number))
+        if self.IdentityReaders.REVIEWERS_ASSIGNED in self.area_chair_identity_readers:
+            readers.append(self.get_reviewers_id(number))
         return readers
 
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
@@ -716,7 +718,7 @@ class Conference(object):
                     group = tools.get_group(self.client, id = area_chairs_id)
                     self.client.post_group(openreview.Group(id=area_chairs_id,
                         invitation=paper_area_chair_group_invitation.id,
-                        readers=self.get_area_chair_identity_readers(n.number),
+                        readers=self.get_area_chair_paper_group_readers(n.number),
                         nonreaders=[self.get_authors_id(n.number)],
                         deanonymizers=self.get_area_chair_identity_readers(n.number),
                         writers=[self.id],
@@ -1115,6 +1117,12 @@ class Conference(object):
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 
+    def set_matching_conflicts(self, profile_id, build_conflicts=True):
+        # Re-generates conflicts for a single reviewer
+        committee_id=self.get_reviewers_id()
+        conference_matching = matching.Matching(self, self.client.get_group(committee_id))
+        return conference_matching.append_note_conflicts(profile_id, build_conflicts)
+
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
 
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
@@ -1172,7 +1180,7 @@ class Conference(object):
     def set_default_load(self, default_load, reviewers_name = 'Reviewers'):
         self.default_reviewer_load[reviewers_name] = default_load
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, reduced_load_on_decline=None, default_load=0):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, contact_info = 'info@openreview.net', reduced_load_on_decline=None, default_load=0):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1232,7 +1240,7 @@ class Conference(object):
 
         If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact info@openreview.net.
+        If you have any questions, please contact {contact_info}.
 
         Cheers!
 
@@ -1266,6 +1274,7 @@ class Conference(object):
                             recruit_message,
                             'Reminder: ' + recruit_message_subj,
                             reviewers_invited_id,
+                            contact_info = contact_info,
                             verbose = False)
                         recruitment_status['reminded'].append(reviewer_id)
                     except openreview.OpenReviewException as e:
@@ -1290,6 +1299,7 @@ class Conference(object):
                             recruit_message,
                             recruit_message_subj,
                             reviewers_invited_id,
+                            contact_info = contact_info,
                             verbose = False)
                     except openreview.OpenReviewException as e:
                         self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
@@ -1318,6 +1328,7 @@ class Conference(object):
                         recruit_message,
                         recruit_message_subj,
                         reviewers_invited_id,
+                        contact_info = contact_info,
                         verbose = False)
                     recruitment_status['invited'].append(email)
                 except openreview.OpenReviewException as e:
