@@ -225,6 +225,29 @@ class TestNeurIPSConference():
         accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(accepted_group.members) == 0
 
+        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Area_Chairs', content={'user': 'ac1@mit.edu', 'response': 'No'})
+        assert notes
+        assert len(notes) == 1
+
+        client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Reduced_Load',
+            readers=['NeurIPS.cc/2021/Conference', 'ac1@mit.edu'],
+            writers=['NeurIPS.cc/2021/Conference'],
+            signatures=['(anonymous)'],
+            content={
+                'user': 'ac1@mit.edu',
+                'key': notes[0].content['key'],
+                'response': 'Yes',
+                'reviewer_load': '3'
+            }
+        ))
+        
+        helpers.await_queue()
+        
+        area_chairs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(area_chairs.members) == 1
+        assert 'ac1@mit.edu' in area_chairs.members
+
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
 
     def test_sac_bidding(self, conference, helpers, request_page, selenium):
