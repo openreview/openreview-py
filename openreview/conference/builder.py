@@ -1096,11 +1096,15 @@ class Conference(object):
 
     def set_impersonators(self, emails = []):
         # Only super user can call this
-        impersonate_group_id=f'{self.id}/Impersonate'
-        group=tools.get_group(self.client, impersonate_group_id)
+        conference_group = tools.get_group(self.client, self.id)
+        conference_group.impersonators = emails
+        self.client.post_group(conference_group)
 
-        if not group:
-            group=self.client.post_group(openreview.Group(
+        impersonate_group_id=f'{self.id}/Impersonate'
+        impersonate_group = tools.get_group(self.client, impersonate_group_id)
+
+        if not impersonate_group:
+            impersonate_group = self.client.post_group(openreview.Group(
                 id=impersonate_group_id,
                 readers=[self.id],
                 writers=[],
@@ -1109,9 +1113,9 @@ class Conference(object):
                 members=[]
             ))
 
-        group=self.client.add_members_to_group(group, emails)
+        # group=self.client.add_members_to_group(group, emails)
 
-        return self.webfield_builder.set_impersonate_page(self, group)
+        return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
     def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
         if committee_id is None:
