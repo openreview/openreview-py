@@ -1113,8 +1113,6 @@ class Conference(object):
                 members=[]
             ))
 
-        # group=self.client.add_members_to_group(group, emails)
-
         return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
     def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
