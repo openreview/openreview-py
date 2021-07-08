@@ -1398,7 +1398,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -1413,6 +1413,7 @@ class Group(object):
         self.signatures = signatures
         self.signatories = signatories
         self.web=None
+        self.impersonators = impersonators
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1451,6 +1452,7 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
+            'impersonators': self.impersonators,
             'anonids': self.anonids,
             'deanonymizers': self.deanonymizers,
             'web': self.web,
@@ -1484,6 +1486,7 @@ class Group(object):
             signatures = g.get('signatures'),
             anonids=g.get('anonids'),
             deanonymizers=g.get('deanonymizers'),
+            impersonators=g.get('impersonators'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
