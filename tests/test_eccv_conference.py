@@ -3,6 +3,7 @@ import openreview
 import pytest
 import requests
 import datetime
+import calendar
 import time
 import os
 import re
@@ -509,7 +510,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert 'test@mail.com' in recipients
 
         note.content['title'] = 'I have been updated'
-        client.post_note(note)
+        test_client.post_note(note)
 
         helpers.await_queue()
         note = client.get_note(note.id)
@@ -675,6 +676,14 @@ Please contact info@openreview.net with any questions or concerns about this int
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
         )
 
+        # Test adding reviewer after conflicts are built
+        r5_client = helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
+        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1', '~Reviewer_ECCV_Five1'])
+        assert r5_client.get_edges_count() == 0
+        conference.set_matching_conflicts(r5_client.profile.id)
+        assert r5_client.get_edges_count() > 0
+        with pytest.raises(openreview.OpenReviewException):
+            conference.set_matching_conflicts('doesnotexist@mail.com')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -1655,3 +1664,41 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         secondary_assignments_div = selenium.find_element_by_id('secondary-papers')
         for i in range(1,3):
             assert secondary_assignments_div.find_elements_by_id('note-summary-{}'.format(i))
+
+    def test_chronological_pc_timeline(self, conference, selenium, request_page):
+        # Assumptions: 1) Items are in list elements
+        #              2) Dates are stated in plain English
+        def convert_text_to_datetime(text):
+            mnt_to_idx = {month.lower(): index for index, month in enumerate(calendar.month_abbr) if month}
+            tokens = text.split(' ')
+            start_idx, end_idx = tokens.index('until'), tokens.index('and')
+            # Extracted format: DD Month YYYY, HH:MM Timezone
+            due_date_list = tokens[start_idx + 1: end_idx]
+            # Clean up text - strip comma + remove timezone
+            due_date_list[2] = due_date_list[2][:-1]
+            due_date_list.pop()
+            date_obj = datetime.datetime(year=int(due_date_list[2]),
+                                         month=mnt_to_idx[due_date_list[1]],
+                                         day=int(due_date_list[0]),
+                                         hour=int(due_date_list[3].split(':')[0]),
+                                         minute=int(due_date_list[3].split(':')[1]))
+
+            return date_obj
+
+        ac_client = openreview.Client(username='openreview.net', password='1234')
+        ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Program_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        # Get the timeline text - order of elements retrieved is order of elements on page top -> bottom
+        list_elements = selenium.find_elements_by_tag_name('li')
+        retrieved_dates = []
+        for element in list_elements:
+            element_text = element.text.lower()
+            if 'expires' in element_text:
+                retrieved_dates.append(convert_text_to_datetime(element_text))
+
+        # Assert correct order of dates
+        for date_idx in range(1, len(retrieved_dates)):
+            curr_date = retrieved_dates[date_idx]
+            prev_date = retrieved_dates[date_idx - 1]
+            assert curr_date > prev_date

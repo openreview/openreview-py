@@ -221,6 +221,7 @@ class WebfieldBuilder(object):
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + invitation.id + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
             content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(stage.committee_id) + "';")
+            content = content.replace("var BID_OPTIONS = [];", "var BID_OPTIONS = " + json.dumps(stage.get_bid_options()) + ";")
 
             if stage.score_ids:
                 content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
@@ -445,6 +446,8 @@ class WebfieldBuilder(object):
             if conference.use_secondary_area_chairs:
                 content = content.replace("var SECONDARY_AREA_CHAIR_NAME = '';", "var SECONDARY_AREA_CHAIR_NAME = '" + conference.secondary_area_chairs_name + "';")
                 content = content.replace("var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';", "var OFFICIAL_SECONDARY_META_REVIEW_NAME = 'Secondary_Meta_Review';")
+            if conference.use_senior_area_chairs:
+                content = content.replace("var SENIOR_AREA_CHAIRS_ID = '';", "var SENIOR_AREA_CHAIRS_ID = '" + conference.get_senior_area_chairs_id() + "';")
             return self.__update_group(group, content)
 
 
@@ -533,7 +536,7 @@ class WebfieldBuilder(object):
 
         program_chairs_name = conference.program_chairs_name
 
-        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated when the venue is active.
+        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated.
         No modification actions are allowed during the impersonation.</p>'''
 
         header = {

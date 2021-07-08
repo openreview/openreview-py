@@ -196,7 +196,7 @@ class TestClient():
         invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
         assert len(invitations) == 0
 
-    def test_get_notes_by_content(self, client):
+    def test_get_notes_by_content(self, client, test_client):
 
         now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client)
@@ -208,10 +208,11 @@ class TestClient():
         conference = builder.get_result()
         assert conference, 'conference is None'
 
+        author_client = openreview.Client(username='mbok@mail.com', password='1234')
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['mbok@mail.com', 'andrew@mail.com'],
             writers = ['mbok@mail.com', 'andrew@mail.com'],
-            signatures = ['~Super_User1'],
+            signatures = ['~Melisa_Bok1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
@@ -220,7 +221,7 @@ class TestClient():
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
-        note = client.post_note(note)
+        note = author_client.post_note(note)
         assert note
 
         notes = client.get_notes(content = { 'title': 'Paper title'})
