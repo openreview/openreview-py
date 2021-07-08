@@ -775,7 +775,7 @@ var calcReviewersComplete = function(reviewerGroupMaps, officialReviews) {
     var allSubmitted = _.every(noteNumbers, function(n) {
       var assignedReviewers = reviewerGroupMaps.byNotes[n];
       var anonGroupNumber = _.findKey(assignedReviewers, function(v) { return v === reviewer; });
-      return reviewsBySignature[CONFERENCE_ID + '/Paper' + n + '/AnonReviewer' + anonGroupNumber];
+      return reviewsBySignature[CONFERENCE_ID + '/Paper' + n + '/Reviewer_' + anonGroupNumber];
     });
     return allSubmitted ? numComplete + 1 : numComplete;
   }, 0);
