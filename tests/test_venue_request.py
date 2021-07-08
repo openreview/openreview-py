@@ -1089,4 +1089,5 @@ class TestVenueRequest():
         assert len(revision_invitations[0].reply['content'].keys())==1
         assert 'supplementary_material' in revision_invitations[0].reply['content']
         assert all(x not in revision_invitations[0].reply['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TL;DR'])
-
+        assert revision_invitations[0].duedate
+        assert revision_invitations[0].expdate
