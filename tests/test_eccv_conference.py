@@ -26,8 +26,8 @@ class TestECCVConference():
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.set_conference_short_name('ECCV 2020')
+        builder.set_default_reviewers_load(7)
         builder.has_area_chairs(True)
-        builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
         builder.set_homepage_header({
             'title': '2020 European Conference on Computer Vision',
             'subtitle': 'ECCV 2020',
@@ -301,7 +301,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'])
+        result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'],
+                                              reduced_load_on_decline = ['4','5','6','7'],
+                                              default_load = 7)
         assert result
         assert len(result['invited']) == 2
         assert 'test_reviewer_eccv@mail.com' in result['invited']
@@ -360,7 +362,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(notes) == 1
 
         client.post_note(openreview.Note(
-            invitation='thecvf.com/ECCV/2020/Conference/-/Reduced_Load',
+            invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Reduced_Load',
             readers=['thecvf.com/ECCV/2020/Conference', 'mohit+1@mail.com'],
             writers=['thecvf.com/ECCV/2020/Conference'],
             signatures=['(anonymous)'],

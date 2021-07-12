@@ -183,7 +183,7 @@ class TestNeurIPSConference():
 
         conference=openreview.helpers.get_conference(client, request_form.id)
 
-        result = conference.recruit_reviewers(['ac1@mit.edu'], reviewers_name='Area_Chairs')
+        result = conference.recruit_reviewers(['ac1@mit.edu'], reviewers_name='Area_Chairs', reduced_load_on_decline=['2', '3', '4'])
         assert result
         assert len(result['invited']) == 1
         assert len(result['reminded']) == 0
@@ -212,12 +212,41 @@ class TestNeurIPSConference():
         assert len(rejected_group.members) == 0
 
         request_page(selenium, reject_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 1
         assert 'ac1@mit.edu' in rejected_group.members
 
         accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(accepted_group.members) == 0
+
+        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Area_Chairs', content={'user': 'ac1@mit.edu', 'response': 'No'})
+        assert notes
+        assert len(notes) == 1
+
+        client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Reduced_Load',
+            readers=['NeurIPS.cc/2021/Conference', 'ac1@mit.edu'],
+            writers=['NeurIPS.cc/2021/Conference'],
+            signatures=['(anonymous)'],
+            content={
+                'user': 'ac1@mit.edu',
+                'key': notes[0].content['key'],
+                'response': 'Yes',
+                'reviewer_load': '3'
+            }
+        ))
+
+        helpers.await_queue()
+
+        area_chairs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(area_chairs.members) == 1
+        assert 'ac1@mit.edu' in area_chairs.members
 
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
 
@@ -435,7 +464,7 @@ class TestNeurIPSConference():
         assert len(notes) == 1
 
         client.post_note(openreview.Note(
-            invitation='NeurIPS.cc/2021/Conference/-/Reduced_Load',
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Reduced_Load',
             readers=['NeurIPS.cc/2021/Conference', 'reviewer1@umass.edu'],
             writers=['NeurIPS.cc/2021/Conference'],
             signatures=['(anonymous)'],
@@ -777,6 +806,11 @@ class TestNeurIPSConference():
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))
 
         assert len(client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers')) == 1
+        ac_quotas=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Custom_Max_Papers')
+        assert len(ac_quotas) == 1
+        assert ac_quotas[0].weight == 3
+        assert ac_quotas[0].head == 'NeurIPS.cc/2021/Conference/Area_Chairs'
+        assert ac_quotas[0].tail == '~Area_IBMChair1'
 
 
         ## Reviewer quotas

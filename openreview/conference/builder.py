@@ -86,8 +86,7 @@ class Conference(object):
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
         self.enable_reviewer_reassignment = False
-        self.reduced_load_on_decline = []
-        self.default_reviewer_load = 0
+        self.default_reviewer_load = {}
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
@@ -1182,11 +1181,10 @@ class Conference(object):
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
+    def set_default_load(self, default_load, reviewers_name = 'Reviewers'):
+        self.default_reviewer_load[reviewers_name] = default_load
 
-    def set_recruitment_reduced_load(self, reduced_load_options):
-        self.reduced_load_on_decline = reduced_load_options
-
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, contact_info = 'info@openreview.net'):
+    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, contact_info = 'info@openreview.net', reduced_load_on_decline=None, default_load=0):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1195,6 +1193,7 @@ class Conference(object):
         reviewers_accepted_id = reviewers_id
         hash_seed = '1234'
         invitees = [e.lower() if '@' in e else e for e in invitees]
+        self.set_default_load(default_load, reviewers_name)
 
         reviewers_accepted_group = self.__create_group(reviewers_accepted_id, pcs_id)
         reviewers_declined_group = self.__create_group(reviewers_declined_id, pcs_id)
@@ -1214,15 +1213,17 @@ class Conference(object):
             'reviewers_accepted_id': reviewers_accepted_id,
             'reviewers_invited_id': reviewers_invited_id,
             'reviewers_declined_id': reviewers_declined_id,
-            'hash_seed': hash_seed
+            'hash_seed': hash_seed,
+            'reduced_load_id': None
         }
-        if options['reviewers_name'] == 'Reviewers' and self.reduced_load_on_decline:
-            options['reduced_load_on_decline'] = self.reduced_load_on_decline
+        if reduced_load_on_decline:
+            options['reduced_load_on_decline'] = reduced_load_on_decline
+            options['reduced_load_id'] = self.get_invitation_id('Reduced_Load', prefix = reviewers_id)
             invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
-        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reviewers_name'])
+        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reduced_load_id'])
 
         role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
         recruit_message = '''Dear {name},
@@ -2202,9 +2203,9 @@ class ConferenceBuilder(object):
     def set_request_form_id(self, id):
         self.conference.request_form_id = id
 
-    def set_recruitment_reduced_load(self, reduced_load_options, default_reviewer_load):
-        self.conference.reduced_load_on_decline = reduced_load_options
-        self.conference.default_reviewer_load = default_reviewer_load
+    def set_default_reviewers_load(self, default_load):
+        # Required to render a default load in the WebField template
+        self.conference.set_default_load(default_load, self.conference.reviewers_name)
 
     def set_reviewer_identity_readers(self, readers):
         self.conference.reviewer_identity_readers = readers
