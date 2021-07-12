@@ -330,16 +330,22 @@ class VenueStages():
     def setup_submission_revision_stage(self):
 
         submission_revision_stage_content = {
+            'submission_revision_name': {
+                'description': 'What should be the name of the submission revision button (e.g. Revision, Supplementary Material, Post-Decision Revision)? Default name: Revision',
+                'value-regex': '.*',
+                'order': 35,
+                'default':'Revision'
+            },
             'submission_revision_start_date': {
                 'description': 'When should the authors start revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 35
+                'order': 36
             },
             'submission_revision_deadline': {
                 'description': 'By when should the authors finish revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
-                'order': 36
+                'order': 37
             },
             'accepted_submissions_only': {
                 'description': 'Choose option for enabling submission revisions',
@@ -349,17 +355,17 @@ class VenueStages():
                 ],
                 'default': 'Enable revision for all submissions',
                 'required': True,
-                'order': 37
+                'order': 38
             },
             'submission_revision_additional_options': {
-                'order': 38,
+                'order': 39,
                 'value-dict': {},
                 'description': 'Configure additional options in the revision. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
-                'order': 39,
-                'values-dropdown': ['keywords', 'pdf', 'TL;DR'],
-                'description': 'Fields that should not be available during revision: keywords, pdf, TL;DR'
+                'order': 40,
+                'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
+                'description': 'Fields that should not be available during revision.'
             }
         }
 
@@ -745,15 +751,24 @@ class VenueRequest():
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
                 'order': 27
             },
+            'email_pcs_for_new_submissions': {
+                'description': 'Do you want email notifications to PCs when there is a new submission?',
+                'value-radio': [
+                    'Yes, email PCs for every new submission.',
+                    'No, do not email PCs.'
+                ],
+                'default': 'No, do not email PCs.',
+                'order': 28
+            },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 28
+                'order': 29
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 29
+                'order': 30
             },
             'area_chair_identity': {
                 'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the area chair\' real identities.',
@@ -767,7 +782,7 @@ class VenueRequest():
                     'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs'],
-                'order': 30,
+                'order': 31,
                 'required': False,
                 'hidden': True
             },
@@ -862,8 +877,8 @@ class VenueRequest():
                         },
                         'comment': {
                             'order': 2,
-                            'value-regex': '[\\S\\s]{1,5000}',
-                            'description': 'Your comment or reply (max 5000 characters).',
+                            'value-regex': '[\\S\\s]{1,200000}',
+                            'description': 'Your comment or reply (max 200000 characters).',
                             'required': True,
                             'markdown': True
                         }
@@ -963,7 +978,7 @@ class VenueRequest():
                 'order': 2
             },
             'invitee_reduced_load': {
-                'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. (For reviewer role only)',
+                'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                 'values-regex': '[0-9]+',
                 'default': ['1', '2', '3'],
                 'required': False,

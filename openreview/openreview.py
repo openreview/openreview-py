@@ -873,7 +873,7 @@ class Client(object):
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -892,6 +892,7 @@ class Client(object):
         params['label'] = label
         params['limit'] = limit
         params['offset'] = offset
+        params['sort'] = sort
 
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -1335,7 +1336,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['messages']
 
-    def get_process_logs(self, id = None, invitation = None):
+    def get_process_logs(self, id = None, invitation = None, status = None):
         """
         **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
 
@@ -1348,7 +1349,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
+        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
 
@@ -1397,7 +1398,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -1412,6 +1413,7 @@ class Group(object):
         self.signatures = signatures
         self.signatories = signatories
         self.web=None
+        self.impersonators = impersonators
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1450,6 +1452,7 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
+            'impersonators': self.impersonators,
             'anonids': self.anonids,
             'deanonymizers': self.deanonymizers,
             'web': self.web,
@@ -1483,6 +1486,7 @@ class Group(object):
             signatures = g.get('signatures'),
             anonids=g.get('anonids'),
             deanonymizers=g.get('deanonymizers'),
+            impersonators=g.get('impersonators'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
@@ -1616,6 +1620,7 @@ class Invitation(object):
         multiReply = None,
         taskCompletionCount = None,
         transform = None,
+        reply_forum_views = [],
         details = None):
 
         self.id = id
@@ -1636,6 +1641,7 @@ class Invitation(object):
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.details = details
+        self.reply_forum_views = reply_forum_views
         self.web = None
         self.process = None
         self.preprocess = None
@@ -1692,7 +1698,8 @@ class Invitation(object):
             'process': self.process,
             'web': self.web,
             'transform': self.transform,
-            'details': self.details
+            'details': self.details,
+            'replyForumViews': self.reply_forum_views
         }
 
         if hasattr(self,'web'):
@@ -1731,7 +1738,8 @@ class Invitation(object):
             multiReply = i.get('multiReply'),
             taskCompletionCount = i.get('taskCompletionCount'),
             reply = i.get('reply'),
-            details = i.get('details')
+            details = i.get('details'),
+            reply_forum_views = i.get('replyForumViews')
             )
         if 'web' in i:
             invitation.web = i['web']
@@ -1792,6 +1800,7 @@ class Note(object):
         original=None,
         number=None,
         cdate=None,
+        mdate=None,
         tcdate=None,
         tmdate=None,
         ddate=None,
@@ -1806,6 +1815,7 @@ class Note(object):
         self.original = original
         self.number = number
         self.cdate = cdate
+        self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.ddate = ddate
@@ -1842,6 +1852,7 @@ class Note(object):
             'id': self.id,
             'original': self.original,
             'cdate': self.cdate,
+            'mdate': self.mdate,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
             'ddate': self.ddate,
@@ -1877,6 +1888,7 @@ class Note(object):
         original = n.get('original'),
         number = n.get('number'),
         cdate = n.get('cdate'),
+        mdate = n.get('mdate'),
         tcdate = n.get('tcdate'),
         tmdate =n.get('tmdate'),
         ddate=n.get('ddate'),

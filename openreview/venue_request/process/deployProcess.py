@@ -64,6 +64,7 @@ The OpenReview Team
         signatures = ['~Super_User1']
     ))
 
+
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
     recruitment_email_body = '''Dear {name},
 
@@ -85,7 +86,7 @@ Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact info@openreview.net.
+If you have any questions, please contact {contact_info}.
 
 Cheers!
 
@@ -119,7 +120,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'order': 2
                 },
                 'invitee_reduced_load': {
-                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. (For reviewer role only)',
+                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,
@@ -175,7 +176,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'order': 2
                 },
                 'invitee_reduced_load': {
-                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list. (For reviewer role only)',
+                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,

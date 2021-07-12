@@ -76,18 +76,28 @@ class BlindSubmissionsInvitation(openreview.Invitation):
 
     def __init__(self, conference, hide_fields):
 
-        content = {
-            'authors': {
-                'values': ['Anonymous']
-            },
-            'authorids': {
-                'values-regex': '.*'
-            }
-        }
+        submission_stage = conference.submission_stage
+        original_content = submission_stage.get_content()
+
+        content = {}
+
+        for key in original_content:
+            if key == 'authors':
+                content[key] = {
+                    'values': ['Anonymous'],
+                    'order': original_content[key]['order']
+                    }
+            else:
+                content[key] = {
+                    'value-regex': '.*',
+                    'order': original_content[key]['order']
+                }
+
         for field in hide_fields:
-            content[field] = {
-                'value-regex': '.*'
-            }
+            if field not in content:
+                content[field] = {
+                    'value-regex': '.*'
+                }
 
         super(BlindSubmissionsInvitation, self).__init__(id = conference.get_blind_submission_id(),
             readers = ['everyone'],
@@ -169,7 +179,7 @@ class BidInvitation(openreview.Invitation):
                         'required': True
                     },
                     'label': {
-                        'value-radio': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                        'value-radio': bid_stage.get_bid_options(),
                         'required': True
                     }
                 }
@@ -240,31 +250,39 @@ class CommentInvitation(openreview.Invitation):
         content = invitations.comment.copy()
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
-            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+            with open(os.path.join(os.path.dirname(__file__), 'templates/comment_pre_process.py')) as g:
+                post_content = f.read()
+                pre_content = g.read()
+                mandatory_readers = [conference.get_program_chairs_id()]
+                if conference.use_senior_area_chairs:
+                    mandatory_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-            if conference.use_area_chairs:
-                file_content = file_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
+                pre_content = pre_content.replace("MANDATORY_READERS = []", "MANDATORY_READERS = " + json.dumps(mandatory_readers))
+                post_content = post_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+                post_content = post_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+                post_content = post_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+                post_content = post_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+                post_content = post_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
 
-            if conference.comment_stage.email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+                if conference.use_area_chairs:
+                    post_content = post_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
 
-            super(CommentInvitation, self).__init__(
-                id = conference.get_invitation_id('Comment'),
-                cdate = tools.datetime_millis(conference.comment_stage.start_date),
-                expdate = tools.datetime_millis(conference.comment_stage.end_date) if conference.comment_stage.end_date else None,
-                readers = ['everyone'],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                reply = {
-                    'content': content
-                },
-                process_string = file_content
-            )
+                if conference.comment_stage.email_pcs:
+                    post_content = post_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+
+                super(CommentInvitation, self).__init__(
+                    id = conference.get_invitation_id('Comment'),
+                    cdate = tools.datetime_millis(conference.comment_stage.start_date),
+                    expdate = tools.datetime_millis(conference.comment_stage.end_date) if conference.comment_stage.end_date else None,
+                    readers = ['everyone'],
+                    writers = [conference.get_id()],
+                    signatures = [conference.get_id()],
+                    reply = {
+                        'content': content
+                    },
+                    process_string = post_content,
+                    preprocess=pre_content if conference.comment_stage.check_mandatory_readers and conference.comment_stage.reader_selection else None
+                )
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
@@ -722,8 +740,8 @@ class OfficialCommentInvitation(openreview.Invitation):
         if comment_stage.reader_selection:
             reply_readers = {
                 'description': 'Who your comment will be visible to. If replying to a specific person make sure to add the group they are a member of so that they are able to see your response',
-                'values-dropdown': readers,
-                'default': None if comment_stage.allow_public_comments else [conference.get_program_chairs_id()]
+                'values-dropdown': readers#,
+                ##'default': None if comment_stage.allow_public_comments else [conference.get_program_chairs_id()]
             }
         else:
             reply_readers = {
@@ -1259,7 +1277,7 @@ class PaperGroupInvitation(openreview.Invitation):
 
 class PaperRecruitmentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, web):
+    def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, invited_label, accepted_label, declined_label):
 
         content=invitations.recruitment
         content['submission_id'] = {
@@ -1268,75 +1286,91 @@ class PaperRecruitmentInvitation(openreview.Invitation):
             'value-regex': '.*',
             'required':True
         }
+        content['inviter'] = {
+            'description': 'inviter id',
+            'order': 7,
+            'value-regex': '.*',
+            'required':True
+        }
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as f:
-            file_content = f.read()
-            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
-            file_content = file_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
-            file_content = file_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
-            file_content = file_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
-            file_content = file_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
-            file_content = file_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+        with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as post:
+                pre_content = pre.read()
+                post_content = post.read()
+                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+                post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
+                post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
+                post_content = post_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
+                post_content = post_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
+                pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+                post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
+                post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
+                post_content = post_content.replace("ACCEPTED_LABEL = ''", "ACCEPTED_LABEL = '" + accepted_label + "'")
+                post_content = post_content.replace("DECLINED_LABEL = ''", "DECLINED_LABEL = '" + declined_label + "'")
+                pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + conference.get_committee_id(name=invited_committee_name + '/Invited') + "'")
+                post_content = post_content.replace("EXTERNAL_COMMITTEE_ID = ''", "EXTERNAL_COMMITTEE_ID = '" + conference.get_committee_id(name=invited_committee_name) + "'")
 
-            ## Add to the proposed assignment or the deployed one.
-            if assignment_title:
-                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
-                file_content = file_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
-                file_content = file_content.replace("EXTERNAL_COMMITTEE_ID = ''", "EXTERNAL_COMMITTEE_ID = '" + conference.get_committee_id(name='External_Reviewers') + "'")
-            else:
-                file_content = file_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
+                ## Add to the proposed assignment or the deployed one.
+                if assignment_title:
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id) + "'")
+                    post_content = post_content.replace("ASSIGNMENT_LABEL = None", "ASSIGNMENT_LABEL = '" + assignment_title + "'")
+                    post_content = post_content.replace("EXTERNAL_PAPER_COMMITTEE_ID = ''", "EXTERNAL_PAPER_COMMITTEE_ID = '" + conference.get_committee_id(name=invited_committee_name, number='{number}') + "'")
+                else:
+                    post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
 
-            edge_readers = []
-            edge_writers = []
-            #if committee_id.endswith(conference.area_chairs_name):
-                #if conference.has_senior_area_chairs :
-                    #TODO: decide what to do with area chair assignments
-                    #edge_readers.append(conference.get_senior_area_chairs_id())
-                    #edge_writers.append(conference.get_senior_area_chairs_id())
+                edge_readers = []
+                edge_writers = []
+                #if committee_id.endswith(conference.area_chairs_name):
+                    #if conference.has_senior_area_chairs :
+                        #TODO: decide what to do with area chair assignments
+                        #edge_readers.append(conference.get_senior_area_chairs_id())
+                        #edge_writers.append(conference.get_senior_area_chairs_id())
 
-            if committee_id.endswith(conference.reviewers_name):
-                if conference.has_senior_area_chairs :
-                    edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
-                    edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                if committee_id.endswith(conference.reviewers_name):
+                    if conference.has_senior_area_chairs :
+                        edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                        edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-                edge_readers.append(conference.get_area_chairs_id(number='{number}'))
-                edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+                    edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                    edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
-            file_content = file_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
-            file_content = file_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
+                post_content = post_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
+                post_content = post_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
 
-            super(PaperRecruitmentInvitation, self).__init__(id = invitation_id,
-                duedate = tools.datetime_millis(due_date),
-                expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None,
-                readers = ['everyone'],
-                nonreaders = [],
-                invitees = ['everyone'],
-                noninvitees = [],
-                writers = [conference.get_id()],
-                signatures = [conference.get_id()],
-                reply = {
-                    'forum': None,
-                    'replyto': None,
-                    'readers': {
-                        'values-copied': [
-                            conference.get_id(),
-                            '{content.user}'
-                        ]
+                super(PaperRecruitmentInvitation, self).__init__(id = invitation_id,
+                    duedate = tools.datetime_millis(due_date),
+                    expdate = tools.datetime_millis(due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None,
+                    readers = ['everyone'],
+                    nonreaders = [],
+                    invitees = ['everyone'],
+                    noninvitees = [],
+                    writers = [conference.get_id()],
+                    signatures = [conference.get_program_chairs_id()],
+                    reply = {
+                        'forum': None,
+                        'replyto': None,
+                        'readers': {
+                            'values-copied': [
+                                conference.get_id(),
+                                '{content.user}',
+                                '{content.inviter}'
+                            ]
+                        },
+                        'signatures': {
+                            'values-regex': '\\(anonymous\\)'
+                        },
+                        'writers': {
+                            'values': [
+                                conference.get_id(),
+                                '(anonymous)'
+                            ]
+                        },
+                        'content': content
                     },
-                    'signatures': {
-                        'values-regex': '\\(anonymous\\)'
-                    },
-                    'writers': {
-                        'values': [
-                            conference.get_id(),
-                            '(anonymous)'
-                        ]
-                    },
-                    'content': content
-                },
-                process_string = file_content,
-                web_string = web
-            )
+                    preprocess= pre_content,
+                    process_string = post_content,
+                    web_string = web
+                )
 
 class InvitationBuilder(object):
 
@@ -1566,7 +1600,10 @@ class InvitationBuilder(object):
             }
         }
 
-        invitation_id=conference.get_invitation_id('Reduced_Load')
+        role = options.get('reviewers_name', 'Reviewers')
+        conf_id = conference.get_id()
+        total_prefix = conf_id + '/' + role
+        invitation_id=conference.get_invitation_id('Reduced_Load', prefix = total_prefix)
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadProcess.js')) as f:
@@ -1618,6 +1655,8 @@ class InvitationBuilder(object):
         invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
+        reduced_load = options.get('reduced_load_on_decline', None)
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
                 pre_content = pre.read()
@@ -1637,7 +1676,7 @@ class InvitationBuilder(object):
                     post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
                 pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
-                if conference.reduced_load_on_decline and options.get('reviewers_name', '') == 'Reviewers':
+                if reduced_load:
                     post_content = post_content.replace("REDUCED_LOAD_INVITATION_NAME = ''", "REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load'")
                 invitation = openreview.Invitation(id = invitation_id,
                     duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
@@ -1892,10 +1931,10 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(PaperGroupInvitation(conference, committee_id, with_process_function))
 
-    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, hash_seed, assignment_title=None, due_date=None):
+    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined'):
 
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
-        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None))
+        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None, invited_label, accepted_label, declined_label))
 
     def set_assignment_invitation(self, conference, committee_id):
 
@@ -1907,6 +1946,7 @@ class InvitationBuilder(object):
             pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + (conference.get_anon_area_chair_id('{number}', '.*') if is_area_chair else conference.get_anon_reviewer_id('{number}', '.*')) + "'")
             with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_post_process.py')) as post:
                 post_content = post.read()
+                post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + (conference.get_area_chairs_id(number='{number}') if is_area_chair else conference.get_reviewers_id(number='{number}')) + "'")
                 post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + (conference.get_area_chairs_name(pretty=True) if is_area_chair else conference.get_reviewers_name(pretty=True)) + "'")

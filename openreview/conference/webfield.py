@@ -221,6 +221,7 @@ class WebfieldBuilder(object):
             content = content.replace("var BID_ID = '';", "var BID_ID = '" + invitation.id + "';")
             content = content.replace("var SUBJECT_AREAS = '';", "var SUBJECT_AREAS = " + str(conference.submission_stage.subject_areas) + ";")
             content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(stage.committee_id) + "';")
+            content = content.replace("var BID_OPTIONS = [];", "var BID_OPTIONS = " + json.dumps(stage.get_bid_options()) + ";")
 
             if stage.score_ids:
                 content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
@@ -322,7 +323,7 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             return self.__update_invitation(invitation, content)
 
-    def set_recruit_page(self, conference_id, invitation, options = {}, reviewers_name='Reviewers'):
+    def set_recruit_page(self, conference_id, invitation, options = {}, reduced_load_id=None):
 
         default_header = {
             'title': conference_id,
@@ -340,8 +341,8 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            if reviewers_name == 'Reviewers':
-                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/Reduced_Load' + "';")
+            if reduced_load_id:
+                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + "';")
             else:
                 ## Reduce load is disabled, so we should set an invalid invitation
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/no_name' + "';")
@@ -393,6 +394,10 @@ class WebfieldBuilder(object):
 
         template_file = 'legacyReviewerWebfield' if conference.legacy_anonids else 'reviewerWebfield'
 
+        # Build reduced load invitation ID
+        conf_id = conference.get_id()
+        reduced_load_id = conf_id + '/' + reviewers_name + '/-/Reduced_Load'
+
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
@@ -402,11 +407,12 @@ class WebfieldBuilder(object):
             content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + conference.reviewers_name + "';")
             content = content.replace("var AREACHAIR_NAME = '';", "var AREACHAIR_NAME = '" + conference.area_chairs_name + "';")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+            content = content.replace("var CUSTOM_LOAD_INVITATION = '';", "var CUSTOM_LOAD_INVITATION = '" + reduced_load_id + "';")
             content = content.replace("var LEGACY_INVITATION_ID = false;", "var LEGACY_INVITATION_ID = true;" if conference.legacy_invitation_id else "var LEGACY_INVITATION_ID = false;")
             if conference.legacy_anonids:
-                content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load) + ";")
-            elif conference.default_reviewer_load:
-                content = content.replace("var REVIEW_LOAD = '';", "var REVIEW_LOAD = '" + str(conference.default_reviewer_load) + "';")
+                content = content.replace("var REVIEW_LOAD = 0;", "var REVIEW_LOAD = " + str(conference.default_reviewer_load.get(reviewers_name, 0)) + ";")
+            elif conference.default_reviewer_load.get(reviewers_name, 0):
+                content = content.replace("var REVIEW_LOAD = '';", "var REVIEW_LOAD = '" + str(conference.default_reviewer_load[reviewers_name]) + "';")
             return self.__update_group(group, content)
 
 
@@ -445,6 +451,8 @@ class WebfieldBuilder(object):
             if conference.use_secondary_area_chairs:
                 content = content.replace("var SECONDARY_AREA_CHAIR_NAME = '';", "var SECONDARY_AREA_CHAIR_NAME = '" + conference.secondary_area_chairs_name + "';")
                 content = content.replace("var OFFICIAL_SECONDARY_META_REVIEW_NAME = '';", "var OFFICIAL_SECONDARY_META_REVIEW_NAME = 'Secondary_Meta_Review';")
+            if conference.use_senior_area_chairs:
+                content = content.replace("var SENIOR_AREA_CHAIRS_ID = '';", "var SENIOR_AREA_CHAIRS_ID = '" + conference.get_senior_area_chairs_id() + "';")
             return self.__update_group(group, content)
 
 
@@ -533,7 +541,7 @@ class WebfieldBuilder(object):
 
         program_chairs_name = conference.program_chairs_name
 
-        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated when the venue is active.
+        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated.
         No modification actions are allowed during the impersonation.</p>'''
 
         header = {

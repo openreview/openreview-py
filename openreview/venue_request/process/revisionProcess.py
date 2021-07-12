@@ -94,4 +94,11 @@ def process(client, note, invitation):
             release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted submission to the public'
         conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, decision_heading_map=forum_note.content.get('home_page_tab_names'))
 
+    submission_content = conference.submission_stage.get_content()
+    submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
+
+    remove_options = [key for key in submission_content]
+    submission_revision_invitation.reply['content']['submission_revision_remove_options']['values-dropdown'] = remove_options
+    client.post_invitation(submission_revision_invitation)
+
     print('Conference: ', conference.get_id())

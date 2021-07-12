@@ -121,6 +121,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
 
+    email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
+
     builder.set_submission_stage(
         double_blind=double_blind,
         public=public,
@@ -129,7 +131,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
-        email_pcs=False, ## Need to add this setting to the form
+        email_pcs=email_pcs,
         create_groups=create_groups,
         create_review_invitation=create_review_invitation,
         withdrawn_submission_public=withdrawn_submission_public,
@@ -314,6 +316,11 @@ def get_decision_stage(client, request_forum):
             email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
 
 def get_submission_revision_stage(client, request_forum):
+    revision_name = request_forum.content.get('submission_revision_name', '').strip()
+    if revision_name:
+        revision_name = '_'.join(revision_name.title().split(' '))
+    else:
+        revision_name='Revision'
     submission_revision_start_date = request_forum.content.get('submission_revision_start_date', '').strip()
     if submission_revision_start_date:
         try:
@@ -323,7 +330,7 @@ def get_submission_revision_stage(client, request_forum):
     else:
         submission_revision_start_date = None
 
-    submission_revision_due_date = request_forum.content.get('submission_revision_due_date', '').strip()
+    submission_revision_due_date = request_forum.content.get('submission_revision_deadline', '').strip()
     if submission_revision_due_date:
         try:
             submission_revision_due_date = datetime.datetime.strptime(submission_revision_due_date, '%Y/%m/%d %H:%M')
@@ -343,6 +350,7 @@ def get_submission_revision_stage(client, request_forum):
         only_accepted = True
 
     return openreview.SubmissionRevisionStage(
+        name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
         additional_fields=submission_revision_additional_options,
@@ -386,5 +394,6 @@ def get_comment_stage(client, request_forum):
         unsubmitted_reviewers=unsubmitted_reviewers,
         reader_selection=True,
         email_pcs=email_pcs,
-        authors=authors_invited
+        authors=authors_invited,
+        check_mandatory_readers=True
     )
