@@ -241,9 +241,9 @@ class TestNeurIPSConference():
                 'reviewer_load': '3'
             }
         ))
-        
+
         helpers.await_queue()
-        
+
         area_chairs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(area_chairs.members) == 1
         assert 'ac1@mit.edu' in area_chairs.members
@@ -806,6 +806,11 @@ class TestNeurIPSConference():
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))
 
         assert len(client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers')) == 1
+        ac_quotas=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Custom_Max_Papers')
+        assert len(ac_quotas) == 1
+        assert ac_quotas[0].weight == 3
+        assert ac_quotas[0].head == 'NeurIPS.cc/2021/Conference/Area_Chairs'
+        assert ac_quotas[0].tail == '~Area_IBMChair1'
 
 
         ## Reviewer quotas
