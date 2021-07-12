@@ -541,7 +541,7 @@ class WebfieldBuilder(object):
 
         program_chairs_name = conference.program_chairs_name
 
-        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated when the venue is active.
+        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated.
         No modification actions are allowed during the impersonation.</p>'''
 
         header = {

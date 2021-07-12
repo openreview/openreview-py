@@ -330,7 +330,7 @@ def get_submission_revision_stage(client, request_forum):
     else:
         submission_revision_start_date = None
 
-    submission_revision_due_date = request_forum.content.get('submission_revision_due_date', '').strip()
+    submission_revision_due_date = request_forum.content.get('submission_revision_deadline', '').strip()
     if submission_revision_due_date:
         try:
             submission_revision_due_date = datetime.datetime.strptime(submission_revision_due_date, '%Y/%m/%d %H:%M')

@@ -2317,7 +2317,7 @@ OpenReview Team'''
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
-        conference.set_impersonators(emails='pc@neurips.cc')
+        conference.set_impersonators(emails=['pc@neurips.cc'])
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
