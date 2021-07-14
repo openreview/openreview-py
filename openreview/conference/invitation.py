@@ -263,12 +263,16 @@ class CommentInvitation(openreview.Invitation):
                 post_content = post_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
                 post_content = post_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
                 post_content = post_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+                post_content = post_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
 
                 if conference.use_area_chairs:
                     post_content = post_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
 
+                if conference.use_senior_area_chairs:
+                    post_content = post_content.replace("var SENIOR_AREA_CHAIRS_NAME = '';", "var SENIOR_AREA_CHAIRS_NAME = '" + conference.senior_area_chairs_name + "';")
+
                 if conference.comment_stage.email_pcs:
-                    post_content = post_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+                    post_content = post_content.replace("var EMAIL_PCs = false;", "var EMAIL_PCs = true;")
 
                 super(CommentInvitation, self).__init__(
                     id = conference.get_invitation_id('Comment'),
