@@ -435,12 +435,12 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'forum': note.id,
                 'signatures': { 'values-regex': f'{paper_group.id}/AEs|{venue_id}$' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
                 'note': {
                     'id': { 'value-invitation': public_comment_invitation_id },
+                    'forum': { 'value': note.id },
                     'readers': {
                         'values': ['everyone']
                     },

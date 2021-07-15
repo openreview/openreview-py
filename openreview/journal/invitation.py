@@ -2,6 +2,7 @@ import os
 import json
 import datetime
 import openreview
+from openreview import Invitation
 from tqdm import tqdm
 from .. import tools
 
@@ -34,7 +35,7 @@ class InvitationBuilder(object):
                 invitation=self.client.post_invitation_edit(readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
-                    invitation=openreview.Invitation(id=f'{action_editors_id}/-/Recruitment',
+                    invitation=Invitation(id=f'{action_editors_id}/-/Recruitment',
                         invitees = ['everyone'],
                         readers = ['everyone'],
                         writers = [venue_id],
@@ -114,7 +115,7 @@ class InvitationBuilder(object):
                 invitation=self.client.post_invitation_edit(readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
-                    invitation=openreview.Invitation(id=f'{reviewers_id}/-/Recruitment',
+                    invitation=Invitation(id=f'{reviewers_id}/-/Recruitment',
                         invitees = ['everyone'],
                         readers = ['everyone'],
                         writers = [venue_id],
@@ -190,7 +191,7 @@ class InvitationBuilder(object):
         invitation=self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=submission_invitation_id,
+            invitation=Invitation(id=submission_invitation_id,
                 invitees=['~'],
                 readers=['everyone'],
                 writers=[venue_id],
@@ -294,7 +295,7 @@ class InvitationBuilder(object):
         invitation = self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=under_review_invitation_id,
+            invitation=Invitation(id=under_review_invitation_id,
                 invitees=[action_editors_id, venue_id],
                 readers=['everyone'],
                 writers=[venue_id],
@@ -334,7 +335,7 @@ class InvitationBuilder(object):
         invitation = self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=desk_reject_invitation_id,
+            invitation=Invitation(id=desk_reject_invitation_id,
                 invitees=[action_editors_id, venue_id],
                 readers=['everyone'],
                 writers=[venue_id],
@@ -368,7 +369,7 @@ class InvitationBuilder(object):
         invitation = self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=acceptance_invitation_id,
+            invitation=Invitation(id=acceptance_invitation_id,
                 invitees=[venue_id],
                 readers=['everyone'],
                 writers=[venue_id],
@@ -425,7 +426,7 @@ class InvitationBuilder(object):
         invitation = self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=reject_invitation_id,
+            invitation=Invitation(id=reject_invitation_id,
                 invitees=[venue_id],
                 readers=['everyone'],
                 writers=[venue_id],
@@ -659,7 +660,7 @@ class InvitationBuilder(object):
             self.client.post_invitation(invitation)
 
         assign_ae_invitation_id=f'{paper_action_editors_id}/-/Paper_Assignment'
-        invitation = self.client.post_invitation(openreview.Invitation(
+        invitation = self.client.post_invitation(Invitation(
             id=assign_ae_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 20)),
             invitees=[editor_in_chief_id],
@@ -738,7 +739,7 @@ class InvitationBuilder(object):
 
         conflict_reviewers_invitation_id=f'{paper_reviewers_id}/-/Conflict'
 
-        self.client.post_invitation(openreview.Invitation(
+        self.client.post_invitation(Invitation(
             id=conflict_reviewers_invitation_id,
             invitees=[venue_id],
             readers=[venue_id, paper_action_editors_id],
@@ -778,7 +779,7 @@ class InvitationBuilder(object):
             }))
 
         affinity_score_reviewers_invitation_id=f'{paper_reviewers_id}/-/Affinity_Score'
-        self.client.post_invitation(openreview.Invitation(
+        self.client.post_invitation(Invitation(
             id=affinity_score_reviewers_invitation_id,
             invitees=[venue_id],
             readers=[venue_id, paper_action_editors_id],
@@ -819,7 +820,7 @@ class InvitationBuilder(object):
 
         ## Assign Reviewers, use API v1
         assign_reviewers_invitation_id=f'{paper_reviewers_id}/-/Paper_Assignment'
-        invitation = self.client.post_invitation(openreview.Invitation(
+        invitation = self.client.post_invitation(Invitation(
             id=assign_reviewers_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
             invitees=[paper_action_editors_id],

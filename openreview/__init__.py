@@ -7,3 +7,4 @@ from .conference import *
 from .agora import *
 from .venue_request import *
 from .journal import *
+from .api import *
