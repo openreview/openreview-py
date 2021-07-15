@@ -1611,116 +1611,121 @@ class OpenReviewClient(object):
 #         """
 #         client.post_group(self)
 
-# class Edit(object):
-#     """
-#     :param id: Edit id
-#     :type id: str
-#     :param readers: List of readers in the Edit, each reader is a Group id
-#     :type readers: list[str], optional
-#     :param writers: List of writers in the Edit, each writer is a Group id
-#     :type writers: list[str], optional
-#     :param signatures: List of signatures in the Edit, each signature is a Group id
-#     :type signatures: list[str], optional
-#     :param note: Template of the Note that will be created
-#     :type note: dict, optional
-#     :param invitation: Template of the Invitation that will be created
-#     :type invitation: dict, optional
-#     :param nonreaders: List of nonreaders in the Edit, each nonreader is a Group id
-#     :type nonreaders: list[str], optional
-#     :param cdate: Creation date
-#     :type cdate: int, optional
-#     :param ddate: Deletion date
-#     :type ddate: int, optional
-#     :param tcdate: True creation date
-#     :type tcdate: int, optional
-#     :param tmdate: Modification date
-#     :type tmdate: int, optional
-#     """
-#     def __init__(self,
-#         id = None,
-#         readers = None,
-#         writers = None,
-#         signatures = None,
-#         note = None,
-#         invitation = None,
-#         nonreaders = None,
-#         cdate = None,
-#         ddate = None):
+class Edit(object):
+    """
+    :param id: Edit id
+    :type id: str
+    :param readers: List of readers in the Edit, each reader is a Group id
+    :type readers: list[str], optional
+    :param writers: List of writers in the Edit, each writer is a Group id
+    :type writers: list[str], optional
+    :param signatures: List of signatures in the Edit, each signature is a Group id
+    :type signatures: list[str], optional
+    :param note: Template of the Note that will be created
+    :type note: dict, optional
+    :param invitation: Template of the Invitation that will be created
+    :type invitation: dict, optional
+    :param nonreaders: List of nonreaders in the Edit, each nonreader is a Group id
+    :type nonreaders: list[str], optional
+    :param cdate: Creation date
+    :type cdate: int, optional
+    :param ddate: Deletion date
+    :type ddate: int, optional
+    :param tcdate: True creation date
+    :type tcdate: int, optional
+    :param tmdate: Modification date
+    :type tmdate: int, optional
+    """
+    def __init__(self,
+        id = None,
+        readers = None,
+        writers = None,
+        signatures = None,
+        note = None,
+        invitations = None,
+        nonreaders = None,
+        cdate = None,
+        ddate = None):
 
-#         if (id):
-#             self.id = id
-#         if (cdate):
-#             self.cdate = cdate
-#         if (ddate):
-#             self.ddate = ddate
-#         if (readers):
-#             self.readers = readers
-#         if (nonreaders):
-#             self.nonreaders = nonreaders
-#         if (writers):
-#             self.writers = writers
-#         if (signatures):
-#             self.signatures = signatures
-#         if (note):
-#             self.note = note
-#         if (invitation):
-#             self.invitation = invitation
+        if (id):
+            self.id = id
+        if (cdate):
+            self.cdate = cdate
+        if (ddate):
+            self.ddate = ddate
+        if (readers):
+            self.readers = readers
+        if (nonreaders):
+            self.nonreaders = nonreaders
+        if (writers):
+            self.writers = writers
+        if (signatures):
+            self.signatures = signatures
+        if (note):
+            self.note = note
+        if (invitations):
+            self.invitations = invitations
 
-#     def __repr__(self):
-#         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-#         return 'Edit(' + content + ')'
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Edit(' + content + ')'
 
-#     def __str__(self):
-#         pp = pprint.PrettyPrinter()
-#         return pp.pformat(vars(self))
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
 
-#     def to_json(self):
-#         """
-#         Converts Edit instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+    @property
+    def invitation(self):
+        return self.invitations[0] if self.invitations else None
 
-#         :return: Dictionary containing all the parameters of a Edit instance
-#         :rtype: dict
-#         """
+    def to_json(self):
+        """
+        Converts Edit instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
 
-#         if (self.id):
-#             body['id'] = self.id
-#         if (self.readers):
-#             body['readers'] = self.readers
-#         if (self.nonreaders):
-#             body['nonreaders'] = self.nonreaders
-#         if (self.writers):
-#             body['writers'] = self.writers
-#         if (self.signatures):
-#             body['signatures'] = self.signatures
-#         if (self.note):
-#             body['note'] = self.note
-#         if (self.invitation):
-#             body['invitation'] = self.invitation
+        :return: Dictionary containing all the parameters of a Edit instance
+        :rtype: dict
+        """
+        body = {}
 
-#         return body
+        if (self.id):
+            body['id'] = self.id
+        if (self.readers):
+            body['readers'] = self.readers
+        if (self.nonreaders):
+            body['nonreaders'] = self.nonreaders
+        if (self.writers):
+            body['writers'] = self.writers
+        if (self.signatures):
+            body['signatures'] = self.signatures
+        if (self.note):
+            body['note'] = self.note
+        if (self.invitations):
+            body['invitations'] = self.invitations
 
-#     @classmethod
-#     def from_json(Edit,e):
-#         """
-#         Creates an Edit object from a dictionary that contains keys values equivalent to the name of the instance variables of the Edit class
+        return body
 
-#         :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Edit class
-#         :type i: dict
+    @classmethod
+    def from_json(Edit,e):
+        """
+        Creates an Edit object from a dictionary that contains keys values equivalent to the name of the instance variables of the Edit class
 
-#         :return: Edit whose instance variables contain the values from the dictionary
-#         :rtype: Edit
-#         """
-#         edit = Edit(e['id'],
-#             cdate = e.get('cdate'),
-#             ddate = e.get('ddate'),
-#             readers = e.get('readers'),
-#             nonreaders = e.get('nonreaders'),
-#             writers = e.get('writers'),
-#             signatures = e.get('signatures'),
-#             note = Note.from_json(e['note']) if 'note' in e else None,
-#             invitation = e.get('invitation'),
-#             )
-#         return edit
+        :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Edit class
+        :type i: dict
+
+        :return: Edit whose instance variables contain the values from the dictionary
+        :rtype: Edit
+        """
+        edit = Edit(e['id'],
+            cdate = e.get('cdate'),
+            ddate = e.get('ddate'),
+            readers = e.get('readers'),
+            nonreaders = e.get('nonreaders'),
+            writers = e.get('writers'),
+            signatures = e.get('signatures'),
+            note = Note.from_json(e['note']) if 'note' in e else None,
+            invitations = e.get('invitations'),
+            )
+        return edit
 
 # class Invitation(object):
 #     """

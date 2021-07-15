@@ -49,7 +49,7 @@ def process(client, edit, invitation):
     review=client.get_note(note.replyto)
     paper_group_id=review.invitation.split('/-/')[0]
     reviews=client.get_notes(invitation=review.invitation)
-    ratings=client.get_notes(invitation=f'{paper_group_id}/Reviewers/.*/-/Rating')
+    ratings=client.get_notes(invitation=f'{paper_group_id}/Reviewer_.*/-/Rating')
     if len(reviews) == len(ratings):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
@@ -71,7 +71,7 @@ def process(client, edit, invitation):
 
     ## Create invitation to rate reviews
     signature=edit.signatures[0]
-    if signature.startswith(f'{paper_group_id}/Reviewers/'):
+    if signature.startswith(f'{paper_group_id}/Reviewer_'):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -163,7 +163,7 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'{paper_group.id}/Reviewers/.*|{paper_group.id}/AEs' },
+                'signatures': { 'values-regex': f'{paper_group.id}/Reviewer_.*|{paper_group.id}/AEs' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
                 'note': {
