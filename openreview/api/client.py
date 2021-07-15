@@ -823,64 +823,36 @@ class OpenReviewClient(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_reference(self, id):
+    def get_note_edit(self, id):
         """
-        Get a single reference by id if available
+        Get a single edit by id if available
 
-        :param id: id of the reference
+        :param id: id of the edit
         :type id: str
 
-        :return: reference matching the passed id
+        :return: edit matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.reference_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
-        n = response.json()['references'][0]
-        return Note.from_json(n)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
+    def get_note_edits(self, noteId = None):
         """
-        Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
+        Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
-        Refer to the section of Mental Models and then click on Blind Submissions for more information.
-
-        :param referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
-        :type referent: str, optional
-        :param invitation: An Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
-        :type invitation: str, optional
-        :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns references
-            whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
-        :type mintcdate: int, optional
-        :param bool original: If True then get_references will additionally return the references to the original note.
-        :type offset: int, optional
-        :type original: bool, optional
-
-        :return: List of revisions
-        :rtype: list[Note]
+        :return: List of edits
+        :rtype: list[Edit]
         """
         params = {}
-        if referent is not None:
-            params['referent'] = referent
-        if invitation is not None:
-            params['invitation'] = invitation
-        if mintcdate is not None:
-            params['mintcdate'] = mintcdate
-        if content is not None:
-            for k in content:
-                params['content.' + k] = content[k]
-        if limit is not None:
-            params['limit'] = limit
-        if offset is not None:
-            params['offset'] = offset
-        if original == True:
-            params['original'] = "true"
-        if trash:
-            params['trash'] = trash
+        if noteId:
+            params['note.id'] = noteId
 
-        response = requests.get(self.reference_url, params = params, headers = self.headers)
+        response = requests.get(self.note_edits_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Note.from_json(n) for n in response.json()['references']]
+        return [Edit.from_json(n) for n in response.json()['edits']]
 
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
         """
