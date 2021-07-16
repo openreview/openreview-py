@@ -18,7 +18,6 @@ class TestClient():
         assert 'openreview.net' in group_names
         assert 'active_venues' in group_names
         assert 'host' in group_names
-        assert 'test.org/2019/Conference/Reviewers/Declined' in group_names
 
     def test_create_client(self, client, test_client):
 
@@ -65,15 +64,11 @@ class TestClient():
         except openreview.OpenReviewException as e:
             assert ["Email is missing"] in e.args, "guest log in did not produce correct error"
 
-        try:
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Password is missing.*'):
             guest.login_user(username = "openreview.net")
-        except openreview.OpenReviewException as e:
-            assert ["Password is missing"] in e.args, "super user log in did not produce correct error"
 
-        try:
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
             guest.login_user(username = "openreview.net", password = "1111")
-        except openreview.OpenReviewException as e:
-            assert ["Invalid username or password"] in e.args, "super user log in did not produce correct error"
 
         response = guest.login_user(username = "openreview.net", password = "1234")
         assert response
