@@ -378,7 +378,7 @@ class TestJournal():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 2
         assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
         assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
@@ -409,7 +409,7 @@ class TestJournal():
         assert process_logs[0]['status'] == 'ok'
 
         ## All the reviewes should be public now
-        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review')
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 3
         assert reviews[0].readers == ['everyone']
         assert reviews[0].signatures == [david_anon_groups[0].id]
