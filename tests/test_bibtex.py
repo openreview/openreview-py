@@ -20,7 +20,7 @@ class TestBibtex():
             writers = [conference.id, '~Bibtex_User1', 'peter@mail.com', 'andrew@mail.com'],
             signatures = ['~Bibtex_User1'],
             content = {
-                'title': 'Paper title has an Ô',
+                'title': 'Paper title has GANs and an Ô',
                 'abstract': 'This is an abstract with #s galore',
                 'authorids': ['bibtex@mail.com', 'peter@mail.com', 'andrew@mail.com'],
                 'authors': ['Bibtex User', 'Peter Teët', 'Andrew McC']
@@ -34,13 +34,14 @@ class TestBibtex():
         bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=True, anonymous=False, baseurl=client.baseurl )
         valid_bibtex = '''@inproceedings{
 user2020paper,
-title={Paper title has an {\^O}},
+title={Paper title has {GAN}s and an \^O},
 author={Bibtex User and Peter Te{\\"e}t and Andrew McC},
 booktitle={NIPS.cc/2020/Workshop/MLITS},
 year={2020},
 url={'''
         valid_bibtex = valid_bibtex+client.baseurl+'/forum?id='+posted_note.forum+'''}
 }'''
+
         assert bibtex == valid_bibtex
 
         # test accepted False and names reversed
@@ -48,7 +49,7 @@ url={'''
 
         valid_bibtex = '''@misc{
 user2020paper,
-title={Paper title has an {\^O}},
+title={Paper title has {GAN}s and an \^O},
 author={User, Bibtex and Te{\\"e}t, Peter and McC, Andrew},
 year={2020},
 url={https://openreview.net/forum?id='''

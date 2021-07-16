@@ -18,10 +18,10 @@ def process(client, note, invitation):
 
     if invitation_type == 'Bid_Stage':
         ## TODO: run setup_matching inside of BidStage?
-        conference.setup_matching(build_conflicts=True)
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
         conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
         if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
-            conference.setup_matching(is_area_chair=True, build_conflicts=True)
+            conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
 
     elif invitation_type == 'Review_Stage':
@@ -93,5 +93,12 @@ def process(client, note, invitation):
             release_all_notes=forum_note.content.get('release_submissions', '') == 'Release all submissions to the public'
             release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted submission to the public'
         conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, decision_heading_map=forum_note.content.get('home_page_tab_names'))
+
+    submission_content = conference.submission_stage.get_content()
+    submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
+
+    remove_options = [key for key in submission_content]
+    submission_revision_invitation.reply['content']['submission_revision_remove_options']['values-dropdown'] = remove_options
+    client.post_invitation(submission_revision_invitation)
 
     print('Conference: ', conference.get_id())

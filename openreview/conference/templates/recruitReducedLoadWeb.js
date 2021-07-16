@@ -1,3 +1,6 @@
+// webfield_template
+// Remove line above if you don't want this page to be overwriten
+
 // Constants
 var CONFERENCE_ID = '';
 var HEADER = {};
@@ -31,8 +34,8 @@ function render() {
       $response.append('<div><strong>' + message + '</strong></div>');
       $response.append([
         '<div>',
-          '<p>If you do not already have an OpenReview account, please sign up <a href="/signup">here</a>.</p>',
-          '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile?mode=edit">profile page</a> and has been confirmed.</p>',
+          '<p>If you do not already have an OpenReview account, please sign up <a href="/signup" target="_blank" rel="nofollow">here</a>.</p>',
+          '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile?mode=edit" target="_blank" rel="nofollow">profile page</a> and has been confirmed.</p>',
         '</div>',
       ].join('\n'));
     } else if (declined) {

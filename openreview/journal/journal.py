@@ -16,8 +16,8 @@ class Journal(object):
         self.client=client
         self.venue_id=venue_id
         self.secret_key=secret_key
-        self.editors_in_chief_name = 'EIC'
-        self.action_editors_name = 'AEs'
+        self.editors_in_chief_name = 'Editors_In_Chief'
+        self.action_editors_name = 'Action_Editors'
         self.reviewers_name = 'Reviewers'
         self.authors_name = 'Authors'
         self.submission_group_name = 'Paper'
@@ -25,7 +25,7 @@ class Journal(object):
         self.header = {
             "title": "Transactions of Machine Learning Research",
             "short": "TMLR",
-            "subtitle": "To de defined",
+            "subtitle": "To be defined",
             "location": "Everywhere",
             "date": "Ongoing",
             "website": "https://openreview.net",

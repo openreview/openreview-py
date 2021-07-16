@@ -95,37 +95,47 @@ class TestClient():
         assert openreview.tools.get_profile(client, '~Super_User1')
         assert not openreview.tools.get_profile(client, 'mbok@sss.edu')
 
-    def test_get_profiles(self, client):
+    def test_search_profiles(self, client, helpers):
         guest = openreview.Client()
         guest.register_user(email = 'mbok@mail.com', first = 'Melisa', last = 'Bok', password = '1234')
         guest.register_user(email = 'andrew@mail.com', first = 'Andrew', last = 'McCallum', password = '1234')
 
-        profiles = client.get_profiles(['mbok@mail.com'])
+        profiles = client.search_profiles(confirmedEmails=['mbok@mail.com'])
         assert profiles, "Could not get the profile by email"
         assert isinstance(profiles, dict)
         assert isinstance(profiles['mbok@mail.com'], openreview.Profile)
         assert profiles['mbok@mail.com'].id == '~Melisa_Bok1'
 
-        profiles = client.get_profiles(['~Melisa_Bok1', '~Andrew_McCallum1'])
+        profiles = client.search_profiles(ids=['~Melisa_Bok1', '~Andrew_McCallum1'])
         assert profiles, "Could not get the profile by id"
         assert isinstance(profiles, list)
         assert len(profiles) == 2
         assert '~Melisa_Bok1' in profiles[1].id
         assert '~Andrew_McCallum1' in profiles[0].id
 
-        profiles = client.get_profiles([])
+        profiles = client.search_profiles(emails=[])
         assert len(profiles) == 0
 
-        profiles = client.get_profiles()
-        assert len(profiles) == 1
-        assert profiles[0].id == '~Super_User1'
+        assert client.profile
+        assert client.profile.id == '~Super_User1'
 
-        assert '~Melisa_Bok1' == client.get_profiles(id = '~Melisa_Bok1')[0].id
-        assert '~Melisa_Bok1' == client.get_profiles(email = 'mbok@mail.com')[0].id
-        assert '~Melisa_Bok1' == client.get_profiles(first = 'Melisa')[0].id
-        assert len(client.get_profiles(id = '~Melisa_Bok2')) == 0
-        assert len(client.get_profiles(email = 'mail@mail.com')) == 0
-        assert len(client.get_profiles(first = 'Anna')) == 0
+        assert '~Melisa_Bok1' == client.search_profiles(ids = ['~Melisa_Bok1'])[0].id
+        assert '~Melisa_Bok1' == client.search_profiles(confirmedEmails = ['mbok@mail.com'])['mbok@mail.com'].id
+        assert '~Melisa_Bok1' == client.search_profiles(first = 'Melisa')[0].id
+        assert len(client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
+        assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
+        assert len(client.search_profiles(first = 'Anna')) == 0
+
+        user_a = helpers.create_user('user_a@mail.com', 'User', 'A', alternates=['users@alternate.com'])
+        user_b = helpers.create_user('user_b@mail.com', 'User', 'B', alternates=['users@alternate.com'])
+        profiles = client.search_profiles(emails = ['users@alternate.com'])
+        assert profiles
+        assert 'users@alternate.com' in profiles
+        assert len(profiles['users@alternate.com']) == 2
+
+        profiles = client.search_profiles(confirmedEmails = ['users@alternate.com'])
+        assert not profiles
+
 
     def test_confirm_registration(self):
 
@@ -159,7 +169,7 @@ class TestClient():
         invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
         assert len(invitations) == 0
 
-    def test_get_notes_by_content(self, client):
+    def test_get_notes_by_content(self, client, test_client):
 
         now = datetime.datetime.utcnow()
         builder = openreview.conference.ConferenceBuilder(client)
@@ -171,10 +181,11 @@ class TestClient():
         conference = builder.get_result()
         assert conference, 'conference is None'
 
+        author_client = openreview.Client(username='mbok@mail.com', password='1234')
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['mbok@mail.com', 'andrew@mail.com'],
             writers = ['mbok@mail.com', 'andrew@mail.com'],
-            signatures = ['~Super_User1'],
+            signatures = ['~Melisa_Bok1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
@@ -183,7 +194,7 @@ class TestClient():
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
-        note = client.post_note(note)
+        note = author_client.post_note(note)
         assert note
 
         notes = client.get_notes(content = { 'title': 'Paper title'})

@@ -170,6 +170,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                     "required": True
                 }
             })
+        builder.set_reviewer_identity_readers([openreview.Conference.IdentityReaders.PROGRAM_CHAIRS, openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED])
 
         conference = builder.get_result()
         conference.set_program_chairs(['pc@iclr.cc'])
@@ -210,16 +211,15 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         'iclr2021_one_alternate@mail.com'])
 
         assert result
-        assert result.id == 'ICLR.cc/2021/Conference/Reviewers/Invited'
-        assert len(result.members) == 7
-        assert 'iclr2021_one@mail.com' in result.members
-        assert 'iclr2021_two@mail.com' in result.members
-        assert 'iclr2021_three@mail.com' in result.members
-        assert 'iclr2021_four@mail.com' in result.members
-        assert 'iclr2021_five@mail.com' in result.members
-        assert 'iclr2021_six@mail.com' in result.members
-        assert 'iclr2021_seven@mail.com' in result.members
-        assert 'iclr2021_one_alternate@mail.com' not in result.members
+        assert len(result['invited']) == 7
+        assert 'iclr2021_one@mail.com' in result['invited']
+        assert 'iclr2021_two@mail.com' in result['invited']
+        assert 'iclr2021_three@mail.com' in result['invited']
+        assert 'iclr2021_four@mail.com' in result['invited']
+        assert 'iclr2021_five@mail.com' in result['invited']
+        assert 'iclr2021_six@mail.com' in result['invited']
+        assert 'iclr2021_seven@mail.com' in result['invited']
+        assert 'iclr2021_one_alternate@mail.com' not in result['invited']
 
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
@@ -230,14 +230,14 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
 
         request_page(selenium, reject_url, alert=True)
-        time.sleep(2)
+        helpers.await_queue()
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 1
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
         assert len(accepted_group.members) == 0
 
         request_page(selenium, accept_url, alert=True)
-        time.sleep(2)
+        helpers.await_queue()
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 0
         accepted_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers')
@@ -500,10 +500,16 @@ Naila, Katja, Alice, and Ivan
             )
             note = test_client.post_note(note)
 
-        conference.setup_first_deadline_stage(force=True)
+        conference.setup_first_deadline_stage(force=True, submission_readers=['ICLR.cc/2021/Conference/Area_Chairs'])
 
         blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
         assert len(blinded_notes) == 5
+
+        assert blinded_notes[0].readers == [
+            'ICLR.cc/2021/Conference',
+            'ICLR.cc/2021/Conference/Area_Chairs',
+            'ICLR.cc/2021/Conference/Paper5/Authors'
+        ]
 
         invitations = test_client.get_invitations(replyForum=blinded_notes[0].id)
         assert len(invitations) == 1
@@ -515,9 +521,9 @@ Naila, Katja, Alice, and Ivan
 
         invitations = client.get_invitations(replyForum=blinded_notes[0].id)
         assert len(invitations) == 2
-        invitation_ids = sorted([invitation.id for invitation in invitations])
-        assert invitation_ids[0] == 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject'
-        assert invitation_ids[1] == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
+        invitation_ids = [invitation.id for invitation in invitations]
+        assert 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject' in invitation_ids
+        assert 'ICLR.cc/2021/Conference/Paper5/-/Withdraw' in invitation_ids
 
         # Add a revision
         pdf_url = test_client.put_attachment(

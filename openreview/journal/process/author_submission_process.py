@@ -18,7 +18,7 @@ def process(client, edit, invitation):
         members=note.content['authorids']['value']
     ))
 
-    action_editors_group_id=f'{paper_group.id}/AEs'
+    action_editors_group_id=f'{paper_group.id}/Action_Editors'
     action_editors_group=client.post_group(openreview.Group(id=action_editors_group_id,
         readers=[venue_id, action_editors_group_id],
         nonreaders=[authors_group_id],
@@ -56,7 +56,7 @@ def process(client, edit, invitation):
             signatures=[venue_id],
             invitation=openreview.Invitation(id=f'{paper_group_id}/-/Decision',
                 signatures=[venue_id],
-                invitees=[venue_id, f'{paper_group_id}/AEs']
+                invitees=[venue_id, f'{paper_group_id}/Action_Editors']
             )
         )
     \'''
@@ -77,21 +77,21 @@ def process(client, edit, invitation):
             signatures=[venue_id],
             invitation=openreview.Invitation(id=f'{signature}/-/Rating',
                 duedate=1613822400000, ## check duedate
-                invitees=[f'{paper_group_id}/AEs'],
-                readers=[venue_id, f'{paper_group_id}/AEs'],
+                invitees=[f'{paper_group_id}/Action_Editors'],
+                readers=[venue_id, f'{paper_group_id}/Action_Editors'],
                 writers=[venue_id],
                 signatures=[venue_id],
                 multiReply=False,
                 edit={
-                    'signatures': { 'values': [f'{paper_group_id}/AEs'] },
-                    'readers': { 'values': [ venue_id, f'{paper_group_id}/AEs'] },
-                    'writers': { 'values': [ venue_id, f'{paper_group_id}/AEs'] },
+                    'signatures': { 'values': [f'{paper_group_id}/Action_Editors'] },
+                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
+                    'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
                     'note': {
                         'forum': { 'value': note.forum },
                         'replyto': { 'value': note.id },
-                        'signatures': { 'values': [f'{paper_group_id}/AEs'] },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/AEs'] },
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/AEs'] },
+                        'signatures': { 'values': [f'{paper_group_id}/Action_Editors'] },
+                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
+                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
                         'content': {
                             'rating': {
                                 'value': {
@@ -124,7 +124,7 @@ def process(client, edit, invitation):
         #         signatures=[venue_id],
         #         edit={
         #             'signatures': { 'values': [ '${{note.id}.signatures}' ] },
-        #             'readers': { 'values': [venue_id, f'{paper_group_id}/AEs', '${{note.id}.signatures}'] },
+        #             'readers': { 'values': [venue_id, f'{paper_group_id}/Action_Editors', '${{note.id}.signatures}'] },
         #             'note': {
         #                 'readers': { 'values': ['everyone'] }
         #             }
@@ -143,7 +143,7 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 edit={
                     'signatures': { 'values': [venue_id ] },
-                    'readers': { 'values': [ venue_id, f'{paper_group_id}/AEs', '${{note.id}.signatures}' ] },
+                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${{note.id}.signatures}' ] },
                     'writers': { 'values': [ venue_id ] },
                     'note': {
                         'id': { 'value-invitation': edit.invitation },
@@ -163,15 +163,15 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'{paper_group.id}/Reviewer_.*|{paper_group.id}/AEs' },
-                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
-                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
+                'signatures': { 'values-regex': f'{paper_group.id}/Reviewer_.*|{paper_group.id}/Action_Editors' },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
                 'note': {
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
-                    'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}'] },
+                    'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
+                    'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
                     'content': {
                         'title': {
                             'value': {
@@ -232,7 +232,7 @@ def process(client, edit, invitation):
                                 'required': False
                             },
                             'readers': {
-                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
                             }
                         },
                         'certification_confidence': {
@@ -248,7 +248,7 @@ def process(client, edit, invitation):
                                 'required': False
                             },
                             'readers': {
-                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
                             }
                         }
                     }
@@ -269,7 +269,7 @@ def process(client, edit, invitation):
     #         reply={
     #             'referent': { 'value': note.id },
     #             'signatures': { 'values': [f'{paper_group.id}/Authors'] },
-    #             'readers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs', f'{paper_group.id}/Authors']},
+    #             'readers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Authors']},
     #             'writers': { 'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']},
     #             'note': {
     #                 'forum': { 'value': note.id },
@@ -338,7 +338,7 @@ def process(client, edit, invitation):
     #                             "required": False
     #                         },
     #                         'readers': {
-    #                             'values': [ venue_id, '${signatures}', f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers', f'{paper_group.id}/Authors' ]
+    #                             'values': [ venue_id, '${signatures}', f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers', f'{paper_group.id}/Authors' ]
     #                         }
     #                     }
     #                 }
@@ -355,14 +355,14 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'~.*|{venue_id}/EIC|{paper_group.id}/AEs|{paper_group.id}/Reviewers/.*|{paper_group.id}/Authors' },
-                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
-                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                'signatures': { 'values-regex': f'~.*|{venue_id}/Editors_In_Chief|{paper_group.id}/Action_Editors|{paper_group.id}/Reviewers/.*|{paper_group.id}/Authors' },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
                 'note': {
                     'forum': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ 'everyone']},
-                    'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                    'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
                     'content': {
                         'title': {
                             'value': {
@@ -390,18 +390,18 @@ def process(client, edit, invitation):
         writers=[venue_id],
         signatures=[venue_id],
         invitation=openreview.Invitation(id=official_comment_invitation_id,
-            invitees=[venue_id, f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers'],
+            invitees=[venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers'],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'{venue_id}/EIC|{paper_group.id}/AEs|{paper_group.id}/Reviewers/.*' },
-                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers']},
-                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']},
+                'signatures': { 'values-regex': f'{venue_id}/Editors_In_Chief|{paper_group.id}/Action_Editors|{paper_group.id}/Reviewers/.*' },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers']},
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
                 'note': {
                     'forum': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values-dropdown': [f'{venue_id}/EIC', f'{paper_group.id}/AEs', f'{paper_group.id}/Reviewers']},
+                    'readers': { 'values-dropdown': [f'{venue_id}/Editors_In_Chief', f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers']},
                     'writers': { 'values': ['${signatures}']},
                     'content': {
                         'title': {
@@ -430,14 +430,14 @@ def process(client, edit, invitation):
         writers=[venue_id],
         signatures=[venue_id],
         invitation=openreview.Invitation(id=moderate_invitation_id,
-            invitees=[venue_id, f'{paper_group.id}/AEs'],
-            readers=[venue_id, f'{paper_group.id}/AEs'],
+            invitees=[venue_id, f'{paper_group.id}/Action_Editors'],
+            readers=[venue_id, f'{paper_group.id}/Action_Editors'],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'{paper_group.id}/AEs|{venue_id}$' },
-                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
-                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs']},
+                'signatures': { 'values-regex': f'{paper_group.id}/Action_Editors|{venue_id}$' },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors']},
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors']},
                 'note': {
                     'id': { 'value-invitation': public_comment_invitation_id },
                     'forum': { 'value': note.id },
@@ -445,7 +445,7 @@ def process(client, edit, invitation):
                         'values': ['everyone']
                     },
                     'writers': {
-                        'values': [venue_id, f'{paper_group.id}/AEs']
+                        'values': [venue_id, f'{paper_group.id}/Action_Editors']
                     },
                     'signatures': { 'values-regex': '~.*' },
                     'content': {
@@ -457,7 +457,7 @@ def process(client, edit, invitation):
                                 'required': True
                             },
                             'readers': {
-                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
                             }
                         },
                         'comment': {
@@ -469,7 +469,7 @@ def process(client, edit, invitation):
                                 'markdown': True
                             },
                             'readers': {
-                                'values': [ venue_id, f'{paper_group.id}/AEs', '${signatures}']
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
                             }
                         }
                     }
@@ -488,15 +488,15 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [f'{paper_group.id}/AEs'] },
-                'readers': { 'values': [ venue_id, f'{paper_group.id}/AEs'] },
-                'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs'] },
+                'signatures': { 'values': [f'{paper_group.id}/Action_Editors'] },
+                'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors'] },
+                'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors'] },
                 'note': {
                     'forum': { 'value': note.forum },
                     'replyto': { 'value': note.forum },
-                    'signatures': { 'values': [f'{paper_group.id}/AEs'] },
+                    'signatures': { 'values': [f'{paper_group.id}/Action_Editors'] },
                     'readers': { 'values': [ 'everyone' ] },
-                    'writers': { 'values': [ venue_id, f'{paper_group.id}/AEs'] },
+                    'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors'] },
                     'content': {
                         'recommendation': {
                             'value': {
