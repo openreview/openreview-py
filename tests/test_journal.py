@@ -51,7 +51,7 @@ class TestJournal():
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         res=journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['user@mail.com', 'joelle@mail.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
-        assert res.id == '.TMLR/AEs/Invited'
+        assert res.id == '.TMLR/Action_Editors/Invited'
         assert res.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
@@ -65,18 +65,18 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
-        group = openreview_client.get_group('.TMLR/AEs')
+        group = openreview_client.get_group('.TMLR/Action_Editors')
         assert len(group.members) == 1
         assert '~Joelle_Pineau1' in group.members
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
-        res=journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        res=journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         assert res.id == '.TMLR/Reviewers/Invited'
-        assert res.members == ['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
+        assert res.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
-        assert len(messages) == 5
+        assert len(messages) == 6
 
         for message in messages:
             text = message['content']['text']
@@ -86,7 +86,7 @@ class TestJournal():
         helpers.await_queue(openreview_client)
 
         group = openreview_client.get_group('.TMLR/Reviewers')
-        assert len(group.members) == 5
+        assert len(group.members) == 6
         assert '~Javier_Burroni1' in group.members
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
@@ -137,12 +137,12 @@ class TestJournal():
         assert author_group
         assert author_group.members == ['~Test_User1', 'andrewmc@mail.com']
         assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
-        assert openreview_client.get_group(f"{venue_id}/Paper1/AEs")
+        assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
-        assert note.readers == ['.TMLR', '.TMLR/Paper1/AEs', '.TMLR/Paper1/Authors']
+        assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
@@ -181,7 +181,7 @@ class TestJournal():
         assert author_group
         assert author_group.members == ['~Test_User1', 'celeste@mail.com']
         assert openreview_client.get_group(f"{venue_id}/Paper2/Reviewers")
-        assert openreview_client.get_group(f"{venue_id}/Paper2/AEs")
+        assert openreview_client.get_group(f"{venue_id}/Paper2/Action_Editors")
 
         ## Post the submission 3
         submission_note_3 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
@@ -205,16 +205,16 @@ class TestJournal():
         assert author_group
         assert author_group.members == ['~Test_User1', 'andrewmc@mail.com']
         assert openreview_client.get_group(f"{venue_id}/Paper3/Reviewers")
-        assert openreview_client.get_group(f"{venue_id}/Paper3/AEs")
+        assert openreview_client.get_group(f"{venue_id}/Paper3/Action_Editors")
 
         # TODO: enable this when the API V2 is backward compatible
         #journal.setup_ae_assignment(number=1)
         #journal.setup_reviewer_assignment(number=1)
-        editor_in_chief_group_id = f"{venue_id}/EIC"
-        action_editors_id=f'{venue_id}/AEs'
+        editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
+        action_editors_id=f'{venue_id}/Action_Editors'
 
         ## Assign Action Editor
-        # paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/AEs/-/Paper_Assignment',
+        # paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Action_Editors/-/Paper_Assignment',
         #     readers=[venue_id, editor_in_chief_group_id],
         #     writers=[venue_id, editor_in_chief_group_id],
         #     signatures=[editor_in_chief_group_id],
@@ -229,13 +229,13 @@ class TestJournal():
         # assert process_logs[0]['status'] == 'ok'
 
         # TEMPORAL
-        raia_client.add_members_to_group(f'{venue_id}/Paper1/AEs', '~Joelle_Pineau1')
-        ae_group = raia_client.get_group(f'{venue_id}/Paper1/AEs')
+        raia_client.add_members_to_group(f'{venue_id}/Paper1/Action_Editors', '~Joelle_Pineau1')
+        ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
 
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/-/Under_Review',
-                                    signatures=[f'{venue_id}/Paper1/AEs'],
+                                    signatures=[f'{venue_id}/Paper1/Action_Editors'],
                                     note=openreview.Note(id=note_id_1, forum=note_id_1))
 
         note = joelle_client.get_note(note_id_1)
@@ -249,17 +249,17 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
 
         ## Assign Action editor to submission 2
-        raia_client.add_members_to_group(f'{venue_id}/Paper2/AEs', '~Joelle_Pineau1')
+        raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
 
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/-/Desk_Rejection',
-                                    signatures=[f'{venue_id}/Paper2/AEs'],
+                                    signatures=[f'{venue_id}/Paper2/Action_Editors'],
                                     note=openreview.Note(id=note_id_2, forum=note_id_2))
 
         note = joelle_client.get_note(note_id_2)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
-        assert note.readers == ['.TMLR', '.TMLR/Paper2/AEs', '.TMLR/Paper2/Authors']
+        assert note.readers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper2/Authors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'celeste@mail.com']
@@ -324,7 +324,7 @@ class TestJournal():
         assert note
         assert note.invitation == '.TMLR/Paper1/-/Public_Comment'
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/AEs', '~Peter_Snow1']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '~Peter_Snow1']
         assert note.signatures == ['~Peter_Snow1']
         assert note.content['title']['value'] == 'Comment title'
         assert note.content['comment']['value'] == 'This is an inapropiate comment'
@@ -332,7 +332,7 @@ class TestJournal():
 
         # Moderate a public comment
         moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderate',
-            signatures=[f"{venue_id}/Paper1/AEs"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=openreview.Note(
                 id=comment_note_id,
                 signatures=['~Peter_Snow1'],
@@ -347,7 +347,7 @@ class TestJournal():
         assert note
         assert note.invitation == '.TMLR/Paper1/-/Public_Comment'
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/AEs']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors']
         assert note.signatures == ['~Peter_Snow1']
         assert note.content.get('title') is None
         assert note.content.get('comment') is None
@@ -380,8 +380,8 @@ class TestJournal():
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 2
-        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
-        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
+        assert reviews[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
+        assert reviews[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
 
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
@@ -421,23 +421,23 @@ class TestJournal():
         ## Check permissions of the review revisions
         review_revisions=openreview_client.get_note_edits(noteId=reviews[0].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", david_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         review_revisions=openreview_client.get_note_edits(noteId=reviews[1].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", javier_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         review_revisions=openreview_client.get_note_edits(noteId=reviews[2].id)
         assert len(review_revisions) == 2
-        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
+        assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/AEs", carlos_anon_groups[0].id]
+        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         ## Check decision invitation, should be available only when all the reviews are rated
@@ -447,7 +447,7 @@ class TestJournal():
         for review in reviews:
             signature=review.signatures[0]
             rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
-                signatures=[f"{venue_id}/Paper1/AEs"],
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
                 note=openreview.Note(
                     content={
                         'rating': { 'value': 'Good' }
@@ -460,10 +460,10 @@ class TestJournal():
             assert process_logs[0]['status'] == 'ok'
 
         decision_invitation=openreview_client.get_invitation(f"{venue_id}/Paper1/-/Decision")
-        assert decision_invitation.invitees == [venue_id, f"{venue_id}/Paper1/AEs"]
+        assert decision_invitation.invitees == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
-            signatures=[f"{venue_id}/Paper1/AEs"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=openreview.Note(
                 content={
                     'recommendation': { 'value': 'Accept as is' },
@@ -512,7 +512,7 @@ class TestJournal():
         assert note.content['abstract']['value'] == 'Paper abstract'
 
         acceptance_note = raia_client.post_note_edit(invitation='.TMLR/-/Acceptance',
-                            signatures=['.TMLR/EIC'],
+                            signatures=['.TMLR/Editors_In_Chief'],
                             note=openreview.Note(id=note_id_1, forum=note_id_1))
 
         note = openreview_client.get_note(note_id_1)

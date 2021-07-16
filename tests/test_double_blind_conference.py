@@ -418,9 +418,11 @@ class TestDoubleBlindConference():
 
         result = conference.recruit_reviewers(['mbok@mail.com', 'Mohit@mail.com'])
         assert result
-        assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
-        assert 'mbok@mail.com' in result.members
-        assert 'mohit@mail.com' in result.members
+        assert len(result['invited']) == 2
+        assert len(result['reminded']) == 0
+        assert not result['already_invited']
+        assert 'mbok@mail.com' in result['invited']
+        assert 'mohit@mail.com' in result['invited']
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
@@ -438,10 +440,10 @@ class TestDoubleBlindConference():
 
         result = conference.recruit_reviewers(invitees = ['michael@mail.com'], invitee_names = ['Michael Spector'])
         assert result
-        assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
-        assert 'mbok@mail.com' in result.members
-        assert 'mohit@mail.com' in result.members
-        assert 'michael@mail.com' in result.members
+        assert len(result['invited']) == 1
+        assert len(result['reminded']) == 0
+        assert not result['already_invited']
+        assert 'michael@mail.com' in result['invited']
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
@@ -471,21 +473,39 @@ class TestDoubleBlindConference():
 
         # Test if the reminder mail has "Dear invitee" for unregistered users in case the name is not provided to recruit_reviewers
         result = conference.recruit_reviewers(remind = True, invitees = ['mbok@mail.com'])
+        assert result
+        assert len(result['invited']) == 0
+        assert len(result['reminded']) == 3
+        assert 'mbok@mail.com' in result['reminded']
+        assert 'mohit@mail.com' in result['reminded']
+        assert 'michael@mail.com' in result['reminded']
+        assert result.get('already_invited')
+        assert result['already_invited'].get('AKBC.ws/2019/Conference/Reviewers/Invited')
+        assert 'mbok@mail.com' in result['already_invited'].get('AKBC.ws/2019/Conference/Reviewers/Invited')
+
         messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: [AKBC 2019]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Test if the mail has "Dear <name>" for unregistered users in case the name is provided to recruit_reviewers
-        result = conference.recruit_reviewers(remind = True, invitees = ['mbok@mail.com'], invitee_names = ['Melisa Bok'])
-        messages = client.get_messages(to = 'mbok@mail.com', subject = 'Reminder: [AKBC 2019]: Invitation to serve as Reviewer')
-        text = messages[1]['content']['text']
+        result = conference.recruit_reviewers(remind = True, invitees = ['mbok2@mail.com'], invitee_names = ['Melisa Bok'])
+        assert result
+        assert len(result['invited']) == 1
+        assert len(result['reminded']) == 3
+        assert 'mbok2@mail.com' in result['invited']
+        messages = client.get_messages(to = 'mbok2@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
+        text = messages[0]['content']['text']
         assert 'Dear Melisa Bok,' in text
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # Accept invitation
+        messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
+        text = messages[0]['content']['text']
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue()
 
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
@@ -519,6 +539,8 @@ class TestDoubleBlindConference():
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, reject_url, alert=True)
 
+        helpers.await_queue()
+
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
         assert len(group.members) == 0
@@ -549,6 +571,8 @@ class TestDoubleBlindConference():
         encoded_url = accept_url.split('%40')[0] + '%2540' + accept_url.split('%40')[1]
         request_page(selenium, encoded_url, alert=True)
 
+        helpers.await_queue()
+
         group = client.get_group('AKBC.ws/2019/Conference/Reviewers')
         assert group
         assert len(group.members) == 1
@@ -571,11 +595,8 @@ class TestDoubleBlindConference():
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
         assert result
-        assert result.id == 'AKBC.ws/2019/Conference/Reviewers/Invited'
-        assert 'mbok@mail.com' in result.members
-        assert 'mohit@mail.com' in result.members
-        assert 'michael@mail.com' in result.members
-        assert 'other@mail.com' in result.members
+        assert len(result['invited']) == 1
+        assert 'other@mail.com' in result['invited']
 
         # Don't send the invitation twice
         messages = client.get_messages(to = 'michael@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
@@ -583,9 +604,15 @@ class TestDoubleBlindConference():
         assert len(messages) == 1
 
         # Remind reviewers
-        invited = conference.recruit_reviewers(invitees = ['another@mail.com'], invitee_names = ['Mister Another'], remind = True)
-        assert invited
-        assert len(invited.members) == 5
+        result = conference.recruit_reviewers(invitees = ['another@mail.com'], invitee_names = ['Mister Another'], remind = True)
+        assert result
+        assert len(result['invited']) == 1
+        assert len(result['reminded']) == 4
+        assert 'another@mail.com' in result['invited']
+        assert 'other@mail.com' in result['reminded']
+        assert 'michael@mail.com' in result['reminded']
+        assert 'mohit@mail.com' in result['reminded']
+        assert 'mbok2@mail.com' in result['reminded']
 
         messages = client.get_messages(to = 'another@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         assert messages
@@ -603,20 +630,24 @@ class TestDoubleBlindConference():
 
         messages = client.get_messages(subject = 'Reminder: [AKBC 2019]: Invitation to serve as Reviewer')
         assert messages
-        assert len(messages) == 9
+        assert len(messages) == 10
         tos = set([m['content']['to'] for m in messages])
-        assert len(tos) == 4
+        assert len(tos) == 5
         assert 'michael@mail.com' in tos
         assert 'mohit@mail.com' in tos
         assert 'other@mail.com' in tos
         assert 'mbok@mail.com' in tos
+        assert 'mbok2@mail.com' in tos
 
         # Recruit acs
-        result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'], reviewers_name = 'Area_Chairs')
+        result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com', 'ac@mail.com'], reviewers_name = 'Area_Chairs')
         assert result
-        assert result.id == 'AKBC.ws/2019/Conference/Area_Chairs/Invited'
-        assert 'mbok@mail.com' in result.members
-        assert 'other@mail.com' in result.members
+        assert len(result['invited']) == 1
+        assert 'ac@mail.com' in result['invited']
+        assert result.get('already_invited')
+        assert result['already_invited'].get('AKBC.ws/2019/Conference/Reviewers/Invited')
+        assert 'mbok@mail.com' in result['already_invited'].get('AKBC.ws/2019/Conference/Reviewers/Invited')
+        assert 'other@mail.com' in result['already_invited'].get('AKBC.ws/2019/Conference/Reviewers/Invited')
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
         assert group
@@ -626,20 +657,23 @@ class TestDoubleBlindConference():
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Invited')
         assert group
-        assert len(group.members) == 2
+        assert len(group.members) == 1
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Declined')
         assert group
         assert len(group.members) == 0
 
-        messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Area Chair')
+        messages = client.get_messages(to = 'ac@mail.com', subject = '[AKBC 2019]: Invitation to serve as Area Chair')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
-        # accept AC invitation while already having accepted reviewer invitation
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # accept invitation with invalid user/key keeps group same
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('ac%40mail.com', 'test%40mail.com')
         request_page(selenium, accept_url, alert=True)
+
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
         assert group
@@ -647,38 +681,10 @@ class TestDoubleBlindConference():
 
         group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Declined')
         assert group
-        assert len(group.members) == 1
-        assert 'mbok@mail.com' in group.members
-
-        messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Area Chair Invitation not accepted')
-        assert messages
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == 'It seems like you already accepted an invitation to serve as a Reviewer for AKBC 2019. If you would like to change your decision and serve as a Area Chair, please click the Decline link in the Reviewer invitation email and click the Accept link in the Area Chair invitation email.'
-
-        messages = client.get_messages(to = 'other@mail.com', subject = '[AKBC 2019]: Invitation to serve as Area Chair')
-        text = messages[0]['content']['text']
-        assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of AKBC 2019' in text
-
-        # accept invitation with invalid user keeps group same
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('other%40mail.com', 'secondother%40mail.com')
-        request_page(selenium, accept_url, alert=True)
-
-        helpers.await_queue()
-
-        logs = client.get_process_logs()
-        assert logs
-        assert logs[0]['status'] == 'error'
-        assert logs[0]['error'] == 'Error: openreview.openreview.OpenReviewException: Invalid key or user not in invited group'
-
-        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs')
-        assert group
         assert len(group.members) == 0
 
-        group = client.get_group('AKBC.ws/2019/Conference/Area_Chairs/Declined')
-        assert group
-        assert len(group.members) == 1
-        assert 'mbok@mail.com' in group.members
+        notes = client.get_notes(invitation='AKBC.ws/2019/Conference/-/Recruit_Reviewers', content = {'user' : 'test@mail.com'} )
+        assert not notes
 
     def test_set_program_chairs(self, client, selenium, request_page):
 
@@ -722,7 +728,7 @@ class TestDoubleBlindConference():
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Invited')
         assert group
-        assert len(group.members) == 5
+        assert len(group.members) == 6
 
         group = pc_client.get_group(id = 'AKBC.ws/2019/Conference/Reviewers/Declined')
         assert group
@@ -778,7 +784,7 @@ class TestDoubleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
-    def test_create_blind_submissions(self, client):
+    def test_create_blind_submissions(self, client, test_client):
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -838,9 +844,9 @@ class TestDoubleBlindConference():
                 ]
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -866,9 +872,9 @@ class TestDoubleBlindConference():
                 ]
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -1055,12 +1061,13 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, email_pcs = True)
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
-        submission = notes[2]
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='numbers:asc')
+        submission = notes[0]
 
         conference.set_assignment('ac@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer2@mail.com', submission.number)
@@ -1147,6 +1154,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
+        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
@@ -1218,6 +1226,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100))
+        builder.use_legacy_anonids(True)
         builder.get_result()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
@@ -1250,6 +1259,7 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'best paper' : {
@@ -1279,10 +1289,60 @@ class TestDoubleBlindConference():
         )
         with pytest.raises(openreview.OpenReviewException, match=r'Required Error|missing'):
             meta_review_note = ac_client.post_note(note)
-        note.content['best paper'] = 'Yes'
+
+    def test_open_meta_reviews_remove_fields(self, client, test_client, selenium, request_page, helpers):
+
+        now = datetime.datetime.utcnow()
+        ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='meta_additional@mail.com', password='1234')
+        assert ac_client is not None, "Client is none"
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+            'best paper' : {
+                'description' : 'Nominate as best paper?',
+                'value-radio' : ['Yes', 'No'],
+                'required' : True
+            }
+        }, remove_fields = ['confidence'])
+        conference = builder.get_result()
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        submission = notes[2]
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            content = {
+                'metareview': 'Excellent Paper!',
+                'recommendation': 'Accept (Oral)',
+                'confidence': '4: The area chair is confident but not absolutely certain',
+                'best paper': 'Yes'
+            }
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid Field'):
+            meta_review_note = ac_client.post_note(note)
+
+        note.content = {
+            'metareview': 'Excellent Paper!',
+            'recommendation': 'Accept (Oral)',
+            'best paper': 'Yes'
+        }
+
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
         assert meta_review_note.content['best paper'] == 'Yes', 'Additional field not initialized'
+        assert 'confidence' not in meta_review_note.content, 'Field not removed'
 
     def test_open_decisions(self, client, helpers):
 
@@ -1394,6 +1454,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.enable_reviewer_reassignment(True)#enable review reassignment so that the assign_Reviewer_Textbox is rendered on page
         builder.get_result()
 
@@ -1415,7 +1476,7 @@ class TestDoubleBlindConference():
         dropdown_Options_Present=EC.presence_of_element_located((By.XPATH,'//*[@id="1-add-reviewer"]/div/div'))
         WebDriverWait(selenium,5).until(dropdown_Options_Present)
         dropdown_Options=selenium.find_element_by_xpath('//*[@id="1-add-reviewer"]/div/div')
-        assert len(dropdown_Options.find_elements_by_xpath('//*[@id="1-add-reviewer"]/div/div/div'))==2
+        assert len(dropdown_Options.find_elements_by_xpath('//*[@id="1-add-reviewer"]/div/div/div'))==1
 
     def test_open_revise_submissions(self, client, test_client, helpers):
 
@@ -1683,6 +1744,7 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_conference_year(2019)
         builder.get_result()
 
@@ -1704,12 +1766,23 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
+        builder.use_legacy_anonids(True)
         builder.set_conference_year(2019)
         builder.set_meta_review_stage(public=True, additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
                 'required' : False
+            },
+            'confidence': {
+                'value-radio': [
+                    '5: The area chair is absolutely certain',
+                    '4: The area chair is confident but not absolutely certain',
+                    '3: The area chair is somewhat confident',
+                    '2: The area chair is not sure',
+                    '1: The area chair\'s evaluation is an educated guess'
+                ],
+                'required': False
             }
         })
         builder.get_result()
@@ -1781,7 +1854,7 @@ class TestDoubleBlindConference():
 
         valid_bibtex = r'''@inproceedings{
 user2019paper,
-title={Paper title {\{}REVISED{\}}},
+title={Paper title {REVISED}},
 author={Test User and Peter User and Andrew Mc},
 booktitle={Automated Knowledge Base Construction Conference},
 year={2019},
@@ -1879,7 +1952,7 @@ url={'''
 
         valid_bibtex = r'''@inproceedings{
 user2019paper,
-title={Paper title {\{}REVISED{\}} {\{}AGAIN{\}}},
+title={Paper title {REVISED} {AGAIN}},
 author={Test User and Peter User and Andrew Mc},
 booktitle={Automated Knowledge Base Construction Conference},
 year={2019},

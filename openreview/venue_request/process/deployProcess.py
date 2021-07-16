@@ -30,12 +30,14 @@ You can use the following links to access the venue:
 - Venue home page: {baseurl}/group?id={conference_id}
 - Venue Program Chairs console: {baseurl}/group?id={program_chairs_id}
 
-If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.  
+If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
 If you have any questions, please refer to our FAQ: https://openreview.net/faq
 
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
 
-Best,  
+Best,
+
+
 The OpenReview Team
             '''.format(baseurl = FRONTEND_URL, noteId = forum.id, conference_id = conference.get_id(), program_chairs_id = conference.get_program_chairs_id())
         }
@@ -62,6 +64,7 @@ The OpenReview Team
         signatures = ['~Super_User1']
     ))
 
+
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
     recruitment_email_body = '''Dear {name},
 
@@ -83,7 +86,7 @@ Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact info@openreview.net.
+If you have any questions, please contact {contact_info}.
 
 Cheers!
 
@@ -116,23 +119,30 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'required': True,
                     'order': 2
                 },
+                'invitee_reduced_load': {
+                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
+                    'values-regex': '[0-9]+',
+                    'default': ['1', '2', '3'],
+                    'required': False,
+                    'order': 3
+                },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
                     'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
                     'required': True,
-                    'order': 3
+                    'order': 4
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 4,
+                    'order': 5,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 5,
+                    'order': 6,
                     'required': True,
                     'default': recruitment_email_body
                 }
@@ -152,9 +162,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
             },
-            'writers': {
-                'values':[],
-            },
             'content': {
                 'title': {
                     'value': 'Remind Recruitment',
@@ -168,17 +175,24 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'required': True,
                     'order': 2
                 },
+                'invitee_reduced_load': {
+                    'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
+                    'values-regex': '[0-9]+',
+                    'default': ['1', '2', '3'],
+                    'required': False,
+                    'order': 3
+                },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 3,
+                    'order': 4,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 4,
+                    'order': 5,
                     'required': True,
                     'default': recruitment_email_body
                 }
@@ -187,9 +201,12 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
         recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
         remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
+        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
+            recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+            remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
 
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
@@ -210,75 +227,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             signatures = ['~Super_User1']
         ))
 
-    review_stage_content = None
-    if forum.content.get('Open Reviewing Policy', None) == 'Submissions and reviews should both be public.':
-        review_stage_content = {
-            'review_start_date': {
-                'description': 'When does reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 10
-            },
-            'review_deadline': {
-                'description': 'When does reviewing of submissions end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'required': True,
-                'order': 11
-            },
-            'make_reviews_public': {
-                'description': 'Should the reviews be made public immediately upon posting? Based on your earlier selections, default is "Yes, reviews should be revealed publicly when they are posted".',
-                'value-radio': [
-                    'Yes, reviews should be revealed publicly when they are posted',
-                    'No, reviews should NOT be revealed publicly when they are posted'
-                ],
-                'required': True,
-                'default': 'Yes, reviews should be revealed publicly when they are posted',
-                'order': 24
-            },
-            'release_reviews_to_authors': {
-                'description': 'Should the reviews be visible to paper\'s authors immediately upon posting? Based on your earlier selections, default is "Yes, reviews should be revealed publicly when they are posted".',
-                'value-radio': [
-                    'Yes, reviews should be revealed when they are posted to the paper\'s authors',
-                    'No, reviews should NOT be revealed when they are posted to the paper\'s authors'
-                ],
-                'required': True,
-                'default': 'Yes, reviews should be revealed publicly when they are posted',
-                'order': 25
-            },
-            'release_reviews_to_reviewers': {
-                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting? Based on your earlier selections, default is "Reviews should be immediately revealed to all reviewers".',
-                'value-radio': [
-                    'Reviews should be immediately revealed to all reviewers',
-                    'Reviews should be immediately revealed to the paper\'s reviewers',
-                    'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                    'Review should not be revealed to any reviewer, except to the author of the review'
-                ],
-                'required': True,
-                'default': 'Reviews should be immediately revealed to all reviewers',
-                'order': 26
-            },
-            'email_program_chairs_about_reviews': {
-                'description': 'Should Program Chairs be emailed when each review is received? Default is "No, do not email program chairs about received reviews".',
-                'value-radio': [
-                    'Yes, email program chairs for each review received',
-                    'No, do not email program chairs about received reviews'],
-                'required': True,
-                'default': 'No, do not email program chairs about received reviews',
-                'order': 27
-            },
-            'additional_review_form_options': {
-                'order' : 28,
-                'value-dict': {},
-                'required': False,
-                'description': 'Configure additional options in the review form. Valid JSON expected.'
-            },
-            'remove_review_form_options': {
-                'order': 29,
-                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
-                'required': False,
-                'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
-            }
-        }
-
     client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Review_Stage',
         super = SUPPORT_GROUP + '/-/Review_Stage',
@@ -289,13 +237,12 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            },
-            'content': review_stage_content
+            }
         },
         signatures = ['~Super_User1']
     ))
 
-    if (forum.content['Area Chairs (Metareviewers)'] == "Yes, our venue has Area Chairs") :
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
         client.post_invitation(openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Meta_Review_Stage',
             super = SUPPORT_GROUP + '/-/Meta_Review_Stage',
@@ -362,9 +309,14 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Post_Submission',
         super=SUPPORT_GROUP + '/-/Post_Submission',
+        invitees=readers,
         reply={
             'forum': forum.id,
-            'referent': forum.id
+            'referent': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            }
         },
         signatures=['~Super_User1']
     ))

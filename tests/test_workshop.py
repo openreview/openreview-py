@@ -33,6 +33,7 @@ class TestWorkshop():
         'location': 'Berkeley, CA, USA'
         })
         builder.has_area_chairs(False)
+        builder.use_legacy_anonids(True)
         builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
 
         conference = builder.get_result()
@@ -158,7 +159,7 @@ class TestWorkshop():
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
-    def test_create_blind_submissions(self, client, conference):
+    def test_create_blind_submissions(self, client, test_client, conference):
 
         group = client.get_group(id = conference.get_authors_id())
         assert group
@@ -184,9 +185,9 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -209,9 +210,9 @@ class TestWorkshop():
                 'authors': ['Test User', 'Peter User', 'Andrew Mc']
             }
         )
-        url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note.content['pdf'] = url
-        client.post_note(note)
+        test_client.post_note(note)
 
         conference.setup_post_submission_stage(force=True)
 
@@ -583,7 +584,7 @@ class TestWorkshop():
         assert accepted_authors
         assert accepted_authors.members == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors']
 
-        notes = conference.get_submissions(accepted=True)
+        notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 2
 
         test_client.post_note(openreview.Note(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Withdraw',
@@ -604,7 +605,7 @@ class TestWorkshop():
 
         helpers.await_queue()
 
-        notes = conference.get_submissions(accepted=True)
+        notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 1
 
         withdrawn_notes = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Withdrawn_Submission')

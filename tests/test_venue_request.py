@@ -8,7 +8,7 @@ from openreview import VenueRequest
 class TestVenueRequest():
 
     @pytest.fixture(scope='class')
-    def venue(self, client, support_client, test_client, helpers):
+    def venue(self, client, test_client, helpers):
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
@@ -23,7 +23,7 @@ class TestVenueRequest():
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
-        request_form_note = test_client.post_note(openreview.Note(
+        request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~Test_User1'],
             readers=[
@@ -52,8 +52,19 @@ class TestVenueRequest():
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
-            }))
+                'Expected Submissions': '100',
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'reviewer_identity': ['Program Chairs'],
+                'area_chair_identity': ['Program Chairs'],
+                'senior_area_chair_identity': ['Program Chairs']
+            })
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
+            request_form_note=test_client.post_note(request_form_note)
+
+        request_form_note.content['reviewer_identity'] = ['Program Chairs', 'Assigned Area Chair']
+        request_form_note=test_client.post_note(request_form_note)
+
         helpers.await_queue()
 
         # Post a deploy note
@@ -95,7 +106,7 @@ class TestVenueRequest():
         assert venue.recruitment_super_invitation
         assert venue.venue_revision_invitation
 
-    def test_venue_deployment(self, client, selenium, request_page, helpers, support_client):
+    def test_venue_deployment(self, client, selenium, request_page, helpers):
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
@@ -114,6 +125,7 @@ class TestVenueRequest():
 
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
+        abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=30)
 
         request_form_note = client.post_note(openreview.Note(
@@ -137,7 +149,8 @@ class TestVenueRequest():
                 'contact_email': 'new_test_user@mail.com',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'Paper Matching': [
                     'Reviewer Bid Scores',
@@ -145,10 +158,10 @@ class TestVenueRequest():
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
-                'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
+                'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
                 'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
                 'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.',
-                'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
+                'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
@@ -163,7 +176,7 @@ class TestVenueRequest():
         assert messages[0]['content']['text'] == 'Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum when the venue is deployed. You can access the request forum here: https://openreview.net/forum?id=' + request_form_note.forum
 
         messages = client.get_messages(
-            to='support_user@mail.com',
+            to='support@openreview.net',
             subject='A request for service has been submitted'
         )
         assert messages and len(messages) == 1
@@ -187,6 +200,11 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
+
+        conference = openreview.get_conference(client, request_form_id=request_form_note.forum)
+        submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
+        abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
+        assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, Abstract Registration: ' + abstract_due_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -220,10 +238,11 @@ class TestVenueRequest():
                 'Expected Submissions': '100',
                 'How did you hear about us?': 'ML conferences',
                 'Location': 'Virtual',
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
-                'remove_submission_options': ['pdf']
+                'remove_submission_options': ['pdf'],
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -231,7 +250,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert venue_revision_note
 
@@ -247,6 +266,10 @@ class TestVenueRequest():
         title_tag = header_div.find_element_by_tag_name('h1')
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
+        assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, End: ' + submission_due_date_str + ' UTC-0'
 
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -364,7 +387,7 @@ class TestVenueRequest():
             invitation='{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert bid_stage_note
 
@@ -401,6 +424,13 @@ class TestVenueRequest():
         ))
 
         assert submission
+        helpers.await_queue()
+
+        messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
+        assert messages and len(messages) == 2
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'tom@mail.com' in recipients
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
@@ -416,6 +446,7 @@ class TestVenueRequest():
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'remove_review_form_options': 'title',
@@ -427,7 +458,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert review_stage_note
         helpers.await_queue()
@@ -454,6 +485,27 @@ class TestVenueRequest():
         review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 1
         assert 'title' not in review_invitations[0].reply['content']
+
+        reviewer_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Reviewers$')
+        assert len(reviewer_groups) == 1
+        assert 'TEST.cc/2030/Conference' in reviewer_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' in reviewer_groups[0].readers
+
+        assert 'TEST.cc/2030/Conference' in reviewer_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
+
+        ac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Area_Chairs$')
+        assert len(ac_groups) == 1
+        assert 'TEST.cc/2030/Conference' in ac_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
+
+        assert 'TEST.cc/2030/Conference' in ac_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
+
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -514,7 +566,16 @@ class TestVenueRequest():
             content={
                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
-                'meta_review_deadline': due_date.strftime('%Y/%m/%d')
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'recommendation_options': 'Accept, Reject',
+                'additional_meta_review_form_options': {
+                    'suggestions' : {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
+                'remove_meta_review_form_options': 'confidence'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -522,7 +583,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert meta_review_stage_note
         helpers.await_queue()
@@ -547,6 +608,12 @@ class TestVenueRequest():
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
 
+        meta_review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Meta_Review$'.format(venue['venue_id']))
+        assert meta_review_invitations and len(meta_review_invitations) == 2
+        assert 'confidence' not in meta_review_invitations[0].reply['content']
+        assert 'suggestions' in meta_review_invitations[0].reply['content']
+        assert 'Accept' in meta_review_invitations[0].reply['content']['recommendation']['value-dropdown']
+
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
@@ -565,7 +632,7 @@ class TestVenueRequest():
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Public (non-anonymously)'],
+                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
 
             },
@@ -575,7 +642,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert comment_stage_note
         helpers.await_queue()
@@ -596,7 +663,7 @@ class TestVenueRequest():
                 conference.get_program_chairs_id(),
                 conference.get_area_chairs_id(number=1),
                 conference.get_id() + '/Paper1/Authors',
-                conference.get_id() + '/Paper1/AnonReviewer1'
+                conference.get_id() + '/Paper1/Reviewers'
             ],
             writers=[
                 conference.get_id() + '/Paper1/Authors',
@@ -616,30 +683,9 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        # Assert that public comment invitation is now available
+        # Assert that public comment invitation is not available
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
-        assert public_comment_invitation
-
-        # Assert that a non-anonymous public comment can be posted by a random logged in user
-        random_user = helpers.create_user(email='public_user1@mail.co', first='Public', last='User')
-        public_comment_note = random_user.post_note(openreview.Note(
-            invitation = conference.get_invitation_id('Public_Comment', number=1),
-            forum = forum_note.forum,
-            replyto = forum_note.forum,
-            readers = ['everyone'],
-            writers = ['~Public_User1'],
-            signatures = ['~Public_User1'],
-            content = {
-                'title': 'test public comment title',
-                'comment': 'test comment!'
-            }
-        ))
-        assert public_comment_note
-        helpers.await_queue()
-
-        process_logs = client.get_process_logs(id = public_comment_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        assert public_comment_invitation is None
 
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -670,7 +716,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert decision_stage_note
         helpers.await_queue()
@@ -748,7 +794,7 @@ class TestVenueRequest():
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_revision_remove_options': ['keywords', 'pdf']
+                'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -756,7 +802,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert revision_stage_note
 
@@ -853,7 +899,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert post_decision_stage_note
         helpers.await_queue()
@@ -862,7 +908,7 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Assert that submisions are not blind anymore
@@ -887,7 +933,7 @@ class TestVenueRequest():
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_revision_remove_options': ['keywords', 'pdf']
+                'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -895,7 +941,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             signatures=['~Test_User1'],
-            writers=['~Test_User1']
+            writers=[]
         ))
         assert revision_stage_note
 
@@ -904,7 +950,7 @@ class TestVenueRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Assert that submisions are still not blind
@@ -919,3 +965,129 @@ class TestVenueRequest():
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
+
+    def test_venue_public_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        assert blind_submissions and len(blind_submissions) == 3
+
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Public (non-anonymously)'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=[]
+        ))
+        assert comment_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=comment_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        # Assert that official comment invitation is now available
+        official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
+        assert official_comment_invitation
+
+        # Assert that public comment invitation is not available
+        public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
+        assert public_comment_invitation
+
+
+    def test_release_reviews(self, client, test_client, selenium, request_page, helpers, venue):
+
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to all reviewers',
+                'remove_review_form_options': 'title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=[]
+        ))
+        assert review_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = review_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+    def test_supplementary_material_revision(self, client, test_client, selenium, request_page, helpers, venue):
+
+        # Post another revision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=5)
+        revision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name':'Supplementary Material',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TL;DR'],
+                'submission_revision_additional_options': {
+                    'supplementary_material': {
+                        'description': 'Supplementary material (e.g. code or video). All supplementary material must be self-contained and zipped into a single file.',
+                        'order': 10,
+                        'value-file': {
+                            'fileTypes': [
+                                'zip'
+                            ],
+                            'size': 50
+                        },
+                        'required': False
+                    }
+                }
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~Test_User1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=revision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert blind_submissions and len(blind_submissions) == 3
+
+        revision_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Supplementary_Material$'.format(venue['venue_id']))
+        assert revision_invitations and len(revision_invitations) == 3
+        assert len(revision_invitations[0].reply['content'].keys())==1
+        assert 'supplementary_material' in revision_invitations[0].reply['content']
+        assert all(x not in revision_invitations[0].reply['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TL;DR'])
+        assert revision_invitations[0].duedate
+        assert revision_invitations[0].expdate

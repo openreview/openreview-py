@@ -7,7 +7,7 @@ var SHORT_PHRASE = 'TMLR';
 var HEADER = {};
 
 var SUBMISSION_NAME = 'Author_Submission';
-var ACTION_EDITOR_NAME = 'AEs';
+var ACTION_EDITOR_NAME = 'Action_Editors';
 var REVIEWER_NAME = 'Reviewers';
 var REVIEW_NAME = 'Review';
 var DECISION_NAME = 'Decision';

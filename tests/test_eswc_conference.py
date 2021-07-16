@@ -122,21 +122,22 @@ class TestESWCConference():
 
         conference.setup_first_deadline_stage(force=True, submission_readers=['eswc-conferences.org/ESWC/2021/Conference/Reviewers'])
 
-        notes = test_client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Submission')
+        notes = test_client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Submission', sort='number:asc')
         assert len(notes) == 5
         assert notes[0].readers == ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@umass.edu', '~Test_User1', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers']
 
         invitations = test_client.get_invitations(replyForum=notes[0].id)
         assert len(invitations) == 2
-        assert invitations[0].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw'
-        assert invitations[1].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision'
+        ids = [invitation.id for invitation in invitations]
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw' in ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision' in ids
 
         invitations = client.get_invitations(replyForum=notes[0].id)
         assert len(invitations) == 3
-        invitation_ids = sorted([invitation.id for invitation in invitations])
-        assert invitation_ids[0] == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Desk_Reject'
-        assert invitation_ids[1] == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision'
-        assert invitation_ids[2] == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw'
+        ids = [invitation.id for invitation in invitations]
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Desk_Reject' in ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw' in ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision' in ids
 
         ## Withdraw paper
         test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw',
@@ -268,7 +269,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         year = datetime.datetime.now().year
         conference.setup_final_deadline_stage(force=True)
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='number:desc')
         assert len(submissions) == 3
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']

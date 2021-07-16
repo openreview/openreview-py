@@ -42,15 +42,27 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         submission_start_date = None
 
     submission_due_date_str = 'TBD'
-    submission_due_date = note.content.get('Submission Deadline', '').strip()
-    if submission_due_date:
+    abstract_due_date_str = ''
+    submission_second_due_date = note.content.get('Submission Deadline', '').strip()
+    if submission_second_due_date:
         try:
-            submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
         except ValueError:
-            submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
-        submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
+        submission_due_date = note.content.get('abstract_registration_deadline', '').strip()
+        if submission_due_date:
+            try:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
+            abstract_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
+            submission_due_date_str = submission_second_due_date.strftime('%b %d %Y %I:%M%p')
+        else:
+            submission_due_date = submission_second_due_date
+            submission_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p')
+            submission_second_due_date = None
     else:
-        submission_due_date = None
+        submission_second_due_date = submission_due_date = None
 
     builder.set_conference_id(note.content.get('venue_id') if note.content.get('venue_id', None) else note.content.get('conference_id'))
     builder.set_conference_name(note.content.get('Official Venue Name', note.content.get('Official Conference Name')))
@@ -67,6 +79,10 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         'location': note.content.get('Location'),
         'contact': note.content.get('contact_email')
     }
+
+    if abstract_due_date_str:
+        homepage_header['deadline'] = 'Submission Start: ' + submission_start_date_str + ' UTC-0, Abstract Registration: ' + abstract_due_date_str +' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
+
     override_header = note.content.get('homepage_override', '')
     if override_header:
         for key in override_header.keys():
@@ -76,6 +92,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
         builder.has_area_chairs(True)
+
+    if note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs':
+        builder.has_senior_area_chairs(True)
 
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
@@ -95,20 +114,25 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     desk_rejected_submission_reveal_authors = 'Yes' in note.content.get('desk_rejected_submissions_author_anonymity', '')
 
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
-    create_review_invitation = (not double_blind) and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
+    submission_release=(note.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
+    create_groups=(not double_blind) and public and submission_release
+    create_review_invitation = create_groups and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
 
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
+
+    email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
 
     builder.set_submission_stage(
         double_blind=double_blind,
         public=public,
         start_date=submission_start_date,
         due_date=submission_due_date,
+        second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
-        email_pcs=False, ## Need to add this setting to the form
-        create_groups=(not double_blind),
+        email_pcs=email_pcs,
+        create_groups=create_groups,
         create_review_invitation=create_review_invitation,
         withdrawn_submission_public=withdrawn_submission_public,
         withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
@@ -128,6 +152,21 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     ## Contact Emails is deprecated
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
     builder.set_conference_program_chairs_ids(program_chair_ids)
+    builder.use_legacy_anonids(note.content.get('reviewer_identity') is None)
+
+    readers_map = {
+        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+    }
+
+    builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])
+    builder.set_area_chair_identity_readers([readers_map[r] for r in note.content.get('area_chair_identity', [])])
+    builder.set_senior_area_chair_identity_readers([readers_map[r] for r in note.content.get('senior_area_chair_identity', [])])
 
     return builder
 
@@ -220,18 +259,21 @@ def get_meta_review_stage(client, request_forum):
     else:
         meta_review_due_date = None
 
-    additional_fields = {}
+    meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
-        additional_fields = {'recommendation': {
+        meta_review_form_additional_options['recommendation'] = {
             'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
-            'required': True}}
+            'required': True}
+
+    meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
 
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
-        additional_fields = additional_fields
+        additional_fields = meta_review_form_additional_options,
+        remove_fields = meta_review_form_remove_options
     )
 
 def get_decision_stage(client, request_forum):
@@ -274,6 +316,11 @@ def get_decision_stage(client, request_forum):
             email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
 
 def get_submission_revision_stage(client, request_forum):
+    revision_name = request_forum.content.get('submission_revision_name', '').strip()
+    if revision_name:
+        revision_name = '_'.join(revision_name.title().split(' '))
+    else:
+        revision_name='Revision'
     submission_revision_start_date = request_forum.content.get('submission_revision_start_date', '').strip()
     if submission_revision_start_date:
         try:
@@ -283,7 +330,7 @@ def get_submission_revision_stage(client, request_forum):
     else:
         submission_revision_start_date = None
 
-    submission_revision_due_date = request_forum.content.get('submission_revision_due_date', '').strip()
+    submission_revision_due_date = request_forum.content.get('submission_revision_deadline', '').strip()
     if submission_revision_due_date:
         try:
             submission_revision_due_date = datetime.datetime.strptime(submission_revision_due_date, '%Y/%m/%d %H:%M')
@@ -303,6 +350,7 @@ def get_submission_revision_stage(client, request_forum):
         only_accepted = True
 
     return openreview.SubmissionRevisionStage(
+        name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
         additional_fields=submission_revision_additional_options,
@@ -346,5 +394,6 @@ def get_comment_stage(client, request_forum):
         unsubmitted_reviewers=unsubmitted_reviewers,
         reader_selection=True,
         email_pcs=email_pcs,
-        authors=authors_invited
+        authors=authors_invited,
+        check_mandatory_readers=True
     )

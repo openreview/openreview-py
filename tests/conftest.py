@@ -10,12 +10,12 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 
 class Helpers:
     @staticmethod
-    def create_user(email, first, last, alternates=[]):
+    def create_user(email, first, last, alternates=[], institution=None):
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
         assert res, "Res i none"
-        res = client.activate_user(email, {
+        profile_content={
             'names': [
                     {
                         'first': first,
@@ -25,7 +25,17 @@ class Helpers:
                 ],
             'emails': [email] + alternates,
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
-            })
+        }
+        if institution:
+            profile_content['history'] = [{
+                'position': 'PhD Student',
+                'start': 2017,
+                'end': None,
+                'institution': {
+                    'domain': institution
+                }
+            }]
+        res = client.activate_user(email, profile_content)
         assert res, "Res i none"
         return client
 
@@ -50,6 +60,24 @@ class Helpers:
 
             time.sleep(0.5)
 
+        assert not super_client.get_process_logs(status='error')
+
+
+    @staticmethod
+    def create_reviewer_edge(client, conference, name, note, reviewer, label=None, weight=None):
+        conference_id=conference.id
+        return client.post_edge(openreview.Edge(
+            invitation=f'{conference.id}/Reviewers/-/{name}',
+            readers = [conference_id, conference.get_senior_area_chairs_id(number=note.number), conference.get_area_chairs_id(number=note.number), reviewer],
+            nonreaders = [conference.get_authors_id(number=note.number)],
+            writers = [conference_id, conference.get_senior_area_chairs_id(number=note.number), conference.get_area_chairs_id(number=note.number)],
+            signatures = [conference_id],
+            head = note.id,
+            tail = reviewer,
+            label = label,
+            weight = weight
+        ))
+
 @pytest.fixture(scope="class")
 def helpers():
     return Helpers
@@ -72,11 +100,6 @@ def peter_client():
     client = Helpers.create_user('peter@mail.com', 'Peter', 'Test')
     yield client
 
-@pytest.fixture(scope="session")
-def support_client():
-    client = Helpers.create_user('support_user@mail.com', 'Support', 'User')
-    yield client
-
 @pytest.fixture
 def firefox_options(firefox_options):
     firefox_options.add_argument('--headless')
@@ -87,7 +110,7 @@ def request_page():
     def request(selenium, url, token = None, alert=False, wait_for_element='content'):
         if token:
             selenium.get('http://localhost:3030')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'lax'})
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)

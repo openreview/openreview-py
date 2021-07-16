@@ -162,7 +162,7 @@ submission = {
     'authorids': {
         'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
         'order': 3,
-        'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+        'values-regex': r'^~\S+$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
         'required':True
     },
     'keywords': {
@@ -217,5 +217,12 @@ recruitment = {
         'order': 4,
         'value-radio': ['Yes', 'No'],
         'required':True
+    },
+    'comment': {
+        'order': 5,
+        'value-regex': '[\\S\\s]{1,5000}',
+        'description': 'Add your comment',
+        'required': False,
+        'markdown': True
     }
 }
