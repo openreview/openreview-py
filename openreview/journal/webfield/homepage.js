@@ -98,7 +98,7 @@ function renderConferenceHeader() {
 }
 
 function renderSubmissionButton() {
-  Webfield.api.getSubmissionInvitation(SUBMISSION_ID)
+  Webfield.api.getSubmissionInvitationV2(SUBMISSION_ID)
     .then(function(invitation) {
       Webfield.ui.submissionButton(invitation, user, {
         onNoteCreated: function() {
