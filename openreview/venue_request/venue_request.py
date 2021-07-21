@@ -550,6 +550,7 @@ class VenueRequest():
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
+        self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -558,6 +559,7 @@ class VenueRequest():
         self.setup_venue_post_submission()
         self.setup_venue_recruitment()
         self.setup_venue_remind_recruitment()
+        self.setup_matching()
 
         # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
@@ -1134,5 +1136,55 @@ class VenueRequest():
                         'values-regex': '~.*|{}'.format(self.support_group.id)
                     },
                     'content': remind_recruitment_content
+                }
+            ))
+
+    def setup_matching(self):
+
+        matching_content = {
+            'title': {
+                'value': 'Matcher',
+                'required': True,
+                'order': 1
+            },
+            'matching_group': {
+                'description': 'Please select the group you want to set up matching for.',
+                'value-radio': ['reviewer'],
+                'default': 'reviewer',
+                'required': True,
+                'order': 2
+            },
+            'build_conflicts': {
+                'description': 'Please select whether you want to coompute conflicts of interest between the matching group and submissions. By default, coonflicts will be computed.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'Yes',
+                'required': True,
+                'order': 3
+            }
+        }
+
+        with open(self.matching_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+
+            self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Matching_Stage',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values':[],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': matching_content
                 }
             ))

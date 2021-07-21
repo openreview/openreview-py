@@ -835,6 +835,9 @@ class Matching(object):
         Build all the invitations and edges necessary to run a match
         '''
         score_spec = {}
+        matching_status = {
+            'no_profiles': []
+        }
 
         try:
             invitation = self.client.get_invitation(self.conference.get_bid_id(self.match_group.id))
@@ -863,7 +866,8 @@ class Matching(object):
 
         # The reviewers are all emails so convert to tilde ids
         self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
-        if not all(['~' in member for member in self.match_group.members]):
+        matching_status['no_profiles'] = [member for member in self.match_group.members if '~' not in member]
+        if matching_status['no_profiles']:
             print(
                 'WARNING: not all reviewers have been converted to profile IDs.',
                 'Members without profiles will not have metadata created.')
@@ -928,6 +932,7 @@ class Matching(object):
             self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info)
 
         self._build_config_invitation(score_spec)
+        return matching_status
 
     def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None):
 

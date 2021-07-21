@@ -320,3 +320,48 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         },
         signatures=['~Super_User1']
     ))
+
+    if (forum.content.get('Paper Matching', None)) :
+        matching_invitation = openreview.Invitation(
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Matching_Stage',
+            super = SUPPORT_GROUP + '/-/Matching_Stage',
+            invitees = readers,
+            reply = {
+                'forum': forum.id,
+                'replyto': forum.id,
+                'readers' : {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : readers
+                },
+                'writers': {
+                    'values':[],
+                },
+                'content': {
+                    'title': {
+                        'value': 'Matcher',
+                        'required': True,
+                        'order': 1
+                    },
+                    'matching_group': {
+                        'description': 'Please select the group you want to set up matching for.',
+                        'value-radio': ['reviewer'],
+                        'default': 'reviewer',
+                        'required': True,
+                        'order': 2
+                    },
+                    'build_conflicts': {
+                        'description': 'Please select whether you want to coompute conflicts of interest between the matching group and submissions. By default, coonflicts will be computed.',
+                        'value-radio': ['Yes', 'No'],
+                        'default': 'Yes',
+                        'required': True,
+                        'order': 3
+                    }
+                }
+            },
+            signatures = ['~Super_User1']
+        )
+
+        if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
+            matching_invitation.reply['content']['matching_group']['value-radio'] = ['reviewer', 'area chair']
+
+        client.post_invitation(matching_invitation)
