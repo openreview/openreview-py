@@ -51,12 +51,12 @@ Like comments and submissions, reviews are also usually represented as Notes. Co
 
 For example, the reviews in ICLR 2019 all have invitations with the following pattern::
 
-	ICLR.cc/2019/Conference/-/Paper.*/Official_Review
+	ICLR.cc/2019/Conference/Paper.*/-/Official_Review
 
 To retrieve the Official Reviews for a given ICLR 2019 paper, do the following::
 
 	paper123_reviews = client.get_notes(
-		invitation='ICLR.cc/2019/Conference/-/Paper123/Official_Review')
+		invitation='ICLR.cc/2019/Conference/Paper123/-/Official_Review')
 
 The specific structure of the review's ``content`` field is determined by the conference, but a typical review's content will include fields like ``title``, ``review``, ``rating``, and ``confidence``::
 
@@ -66,7 +66,7 @@ The specific structure of the review's ``content`` field is determined by the co
 
 Conferences as large as ICLR 2019 will often have a number of reviews that exceeds the default API limit. To retrieve all Official Reviews for all ICLR 2019 papers, create an iterator over reviews by doing the following::
 
-	review_iterator = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Paper.*/Official_Review')
+	review_iterator = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/Paper.*/-/Official_Review')
 	for review in review_iterator:
 	    #do something
 
@@ -159,7 +159,7 @@ The following example script can be used to retrieve all ICLR 2019 metadata and 
 
 	    # There should be 3 reviews per forum.
 	    reviews = openreview.tools.iterget_notes(
-	        client, invitation='ICLR.cc/2019/Conference/-/Paper.*/Official_Review')
+	        client, invitation='ICLR.cc/2019/Conference/Paper.*/-/Official_Review')
 	    reviews_by_forum = defaultdict(list)
 	    for review in reviews:
 	        reviews_by_forum[review.forum].append(review)
