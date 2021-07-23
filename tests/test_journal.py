@@ -7,6 +7,8 @@ import random
 import os
 import re
 from openreview.api import OpenReviewClient
+from openreview.api import Note
+from openreview.journal import Journal
 
 class TestJournal():
 
@@ -14,8 +16,8 @@ class TestJournal():
     @pytest.fixture(scope="class")
     def journal(self):
         venue_id = '.TMLR'
-        fabian_client=openreview.api.OpenReviewClient(username='fabian@mail.com', password='1234')
-        journal=openreview.journal.Journal(fabian_client, venue_id, '1234')
+        fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
+        journal=Journal(fabian_client, venue_id, '1234')
         return journal
 
     def test_setup(self, openreview_client, helpers):
@@ -46,7 +48,7 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
-        journal=openreview.journal.Journal(openreview_client, venue_id, '1234')
+        journal=Journal(openreview_client, venue_id, '1234')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
@@ -93,31 +95,31 @@ class TestJournal():
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
         venue_id = journal.venue_id
-        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password='1234')
-        raia_client = openreview.api.OpenReviewClient(username='raia@mail.com', password='1234')
-        joelle_client = openreview.api.OpenReviewClient(username='joelle@mail.com', password='1234')
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mail.com', password='1234')
 
 
         ## Reviewers
-        david_client=openreview.api.OpenReviewClient(username='david@mail.com', password='1234')
-        javier_client=openreview.api.OpenReviewClient(username='javier@mail.com', password='1234')
-        carlos_client=openreview.api.OpenReviewClient(username='carlos@mail.com', password='1234')
-        andrew_client=openreview.api.OpenReviewClient(username='andrewmc@mail.com', password='1234')
-        hugo_client=openreview.api.OpenReviewClient(username='hugo@mail.com', password='1234')
+        david_client=OpenReviewClient(username='david@mail.com', password='1234')
+        javier_client=OpenReviewClient(username='javier@mail.com', password='1234')
+        carlos_client=OpenReviewClient(username='carlos@mail.com', password='1234')
+        andrew_client=OpenReviewClient(username='andrewmc@mail.com', password='1234')
+        hugo_client=OpenReviewClient(username='hugo@mail.com', password='1234')
 
         peter_client=helpers.create_user('petersnow@mail.com', 'Peter', 'Snow')
-        peter_client=openreview.api.OpenReviewClient(username='petersnow@mail.com', password='1234')
+        peter_client=OpenReviewClient(username='petersnow@mail.com', password='1234')
         if os.environ.get("OPENREVIEW_USERNAME"):
             os.environ.pop("OPENREVIEW_USERNAME")
         if os.environ.get("OPENREVIEW_PASSWORD"):
             os.environ.pop("OPENREVIEW_PASSWORD")
-        guest_client=openreview.api.OpenReviewClient()
+        guest_client=OpenReviewClient()
         now = datetime.datetime.utcnow()
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
             signatures=['~Test_User1'],
-            note=openreview.api.Note(
+            note=Note(
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
@@ -163,7 +165,7 @@ class TestJournal():
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
                                     signatures=['~Test_User1'],
-                                    note=openreview.api.Note(
+                                    note=Note(
                                         content={
                                             'title': { 'value': 'Paper title 2' },
                                             'abstract': { 'value': 'Paper abstract 2' },
@@ -187,7 +189,7 @@ class TestJournal():
         ## Post the submission 3
         submission_note_3 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
                                     signatures=['~Test_User1'],
-                                    note=openreview.api.Note(
+                                    note=Note(
                                         content={
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
@@ -237,7 +239,7 @@ class TestJournal():
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/-/Under_Review',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
-                                    note=openreview.api.Note(id=note_id_1))
+                                    note=Note(id=note_id_1))
 
         note = joelle_client.get_note(note_id_1)
         assert note
@@ -255,7 +257,7 @@ class TestJournal():
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/-/Desk_Rejection',
                                     signatures=[f'{venue_id}/Paper2/Action_Editors'],
-                                    note=openreview.api.Note(id=note_id_2))
+                                    note=Note(id=note_id_2))
 
         note = joelle_client.get_note(note_id_2)
         assert note
@@ -289,7 +291,7 @@ class TestJournal():
         ## Post a review edit
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[david_anon_groups[0].id],
-            note=openreview.api.Note(
+            note=Note(
                 content={
                     'title': { 'value': 'Review title' },
                     'review': { 'value': 'This is the review' },
@@ -310,7 +312,7 @@ class TestJournal():
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
             signatures=['~Peter_Snow1'],
-            note=openreview.api.Note(
+            note=Note(
                 signatures=['~Peter_Snow1'],
                 forum=note_id_1,
                 replyto=note_id_1,
@@ -334,7 +336,7 @@ class TestJournal():
         # Moderate a public comment
         moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderate',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
-            note=openreview.api.Note(
+            note=Note(
                 id=comment_note_id,
                 signatures=['~Peter_Snow1'],
                 content={
@@ -360,7 +362,7 @@ class TestJournal():
         ## Post a review edit
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[javier_anon_groups[0].id],
-            note=openreview.api.Note(
+            note=Note(
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
@@ -390,7 +392,7 @@ class TestJournal():
         ## Post a review edit
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[carlos_anon_groups[0].id],
-            note=openreview.api.Note(
+            note=Note(
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
@@ -449,7 +451,7 @@ class TestJournal():
             signature=review.signatures[0]
             rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
-                note=openreview.api.Note(
+                note=Note(
                     content={
                         'rating': { 'value': 'Good' }
                     }
@@ -465,7 +467,7 @@ class TestJournal():
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
-            note=openreview.api.Note(
+            note=Note(
                 content={
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' }
@@ -483,7 +485,7 @@ class TestJournal():
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
-            note=openreview.api.Note(
+            note=Note(
                 id=note_id_1,
                 forum=note_id_1,
                 content={
@@ -514,7 +516,7 @@ class TestJournal():
 
         acceptance_note = raia_client.post_note_edit(invitation='.TMLR/-/Acceptance',
                             signatures=['.TMLR/Editors_In_Chief'],
-                            note=openreview.api.Note(id=note_id_1))
+                            note=Note(id=note_id_1))
 
         note = openreview_client.get_note(note_id_1)
         assert note
