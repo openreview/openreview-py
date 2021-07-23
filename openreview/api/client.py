@@ -14,7 +14,6 @@ import re
 from openreview import Profile
 from openreview import OpenReviewException
 from openreview import Group
-from openreview import Note
 from openreview import Invitation
 
 class OpenReviewClient(object):
@@ -1408,180 +1407,6 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-# class Group(object):
-#     """
-#     When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
-
-#     :param id: id of the Group
-#     :type id: str
-#     :param readers: List of readers in the Group, each reader is a Group id
-#     :type readers: list[str]
-#     :param writers: List of writers in the Group, each writer is a Group id
-#     :type writers: list[str]
-#     :param signatories: List of signatories in the Group, each writer is a Group id
-#     :type signatories: list[str]
-#     :param signatures: List of signatures in the Group, each signature is a Group id
-#     :type signatures: list[str]
-#     :param cdate: Creation date of the Group
-#     :type cdate: int, optional
-#     :param ddate: Deletion date of the Group
-#     :type ddate: int, optional
-#     :param tcdate: true creation date of the Group
-#     :type tcdate: int, optional
-#     :param tmdate: true modification date of the Group
-#     :type tmdate: int, optional
-#     :param members: List of members in the Group, each member is a Group id
-#     :type members: list[str], optional
-#     :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
-#     :type nonreaders: list[str], optional
-#     :param web: Path to a file that contains the webfield
-#     :type web: optional
-#     :param web_string: String containing the webfield for this Group
-#     :type web_string: str, optional
-#     :param details:
-#     :type details: optional
-#     """
-#     def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids=None, details = None):
-#         # post attributes
-#         self.id=id
-#         self.cdate = cdate
-#         self.ddate = ddate
-#         self.tcdate = tcdate
-#         self.tmdate = tmdate
-#         self.writers = writers
-#         self.members = [] if members is None else members
-#         self.readers = readers
-#         self.nonreaders = [] if nonreaders is None else nonreaders
-#         self.signatures = signatures
-#         self.signatories = signatories
-#         self.anonids = anonids
-#         self.web=None
-#         if web is not None:
-#             with open(web) as f:
-#                 self.web = f.read()
-
-#         if web_string:
-#             self.web = web_string
-
-#         self.details = details
-
-#     def __repr__(self):
-#         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-#         return 'Group(' + content + ')'
-
-#     def __str__(self):
-#         pp = pprint.PrettyPrinter()
-#         return pp.pformat(vars(self))
-
-
-#     def to_json(self):
-#         """
-#         Converts Group instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
-#         :return: Dictionary containing all the parameters of a Group instance
-#         :rtype: dict
-#         """
-#         body = {
-#             'id': self.id,
-#             'cdate': self.cdate,
-#             'ddate': self.ddate,
-#             'signatures': self.signatures,
-#             'writers': self.writers,
-#             'members': self.members,
-#             'readers': self.readers,
-#             'nonreaders': self.nonreaders,
-#             'signatories': self.signatories,
-#             'anonids': self.anonids,
-#             'web': self.web,
-#             'details': self.details
-#         }
-
-#         return body
-
-#     @classmethod
-#     def from_json(Group,g):
-#         """
-#         Creates a Group object from a dictionary that contains keys values equivalent to the name of the instance variables of the Group class
-
-#         :param g: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Group class
-#         :type g: dict
-
-#         :return: Group whose instance variables contain the values from the dictionary
-#         :rtype: Group
-#         """
-#         group = Group(g['id'],
-#             cdate = g.get('cdate'),
-#             ddate = g.get('ddate'),
-#             tcdate = g.get('tcdate'),
-#             tmdate = g.get('tmdate'),
-#             writers = g.get('writers'),
-#             members = g.get('members'),
-#             readers = g.get('readers'),
-#             nonreaders = g.get('nonreaders'),
-#             signatories = g.get('signatories'),
-#             signatures = g.get('signatures'),
-#             anonids = g.get('anonids'),
-#             details = g.get('details'))
-#         if 'web' in g:
-#             group.web = g['web']
-#         return group
-
-#     def add_member(self, member):
-#         """
-#         Adds a member to the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
-
-#         :param member: Member to add to the group
-#         :type member: str
-
-#         :return: Group with the new member added
-#         :rtype: Group
-#         """
-#         if type(member) is Group:
-#             self.members.append(member.id)
-#         else:
-#             self.members.append(str(member))
-#         return self
-
-#     def remove_member(self, member):
-#         """
-#         Removes a member from the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
-
-#         :param member: Member to remove from the group
-#         :type member: str
-
-#         :return: Group after the member was removed
-#         :rtype: Group
-#         """
-#         if type(member) is Group:
-#             try:
-#                 self.members.remove(member.id)
-#             except(ValueError):
-#                 pass
-#         else:
-#             try:
-#                 self.members.remove(str(member))
-#             except(ValueError):
-#                 pass
-#         return self
-
-#     def add_webfield(self, web):
-#         """
-#         Adds a webfield to the group
-
-#         :param web: Path to the file that contains the webfield
-#         :type web: str
-#         """
-#         with open(web) as f:
-#             self.web = f.read()
-
-#     def post(self, client):
-#         """
-#         Posts a group to OpenReview
-
-#         :param client: Client that will post the Group
-#         :type client: Client
-#         """
-#         client.post_group(self)
 
 class Edit(object):
     """
@@ -1699,642 +1524,118 @@ class Edit(object):
             )
         return edit
 
-# class Invitation(object):
-#     """
-#     :param id: Invitation id
-#     :type id: str
-#     :param readers: List of readers in the Invitation, each reader is a Group id
-#     :type readers: list[str], optional
-#     :param writers: List of writers in the Invitation, each writer is a Group id
-#     :type writers: list[str], optional
-#     :param invitees: List of invitees in the Invitation, each invitee is a Group id
-#     :type invitees: list[str], optional
-#     :param signatures: List of signatures in the Invitation, each signature is a Group id
-#     :type signatures: list[str], optional
-#     :param reply: Template of the Note that will be created
-#     :type reply: dict, optional
-#     :param super: Parent Invitation id
-#     :type super: str, optional
-#     :param noninvitees: List of noninvitees in the Invitation, each noninvitee is a Group id
-#     :type noninvitees: list[str], optional
-#     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-#     :type nonreaders: list[str], optional
-#     :param web: Path to a file containing a webfield
-#     :type web: str, optional
-#     :param web_string: String containing the webfield
-#     :type web_string: str, optional
-#     :param process: Path to a file containing the process function
-#     :type process: str, optional
-#     :param process_string: String containing the process function
-#     :type process_string: str, optional
-#     :param duedate: Due date
-#     :type duedate: int, optional
-#     :param expdate: Expiration date
-#     :type expdate: int, optional
-#     :param cdate: Creation date
-#     :type cdate: int, optional
-#     :param ddate: Deletion date
-#     :type ddate: int, optional
-#     :param tcdate: True creation date
-#     :type tcdate: int, optional
-#     :param tmdate: Modification date
-#     :type tmdate: int, optional
-#     :param multiReply: If true, allows for multiple Notes created from this Invitation (e.g. comments in a forum), otherwise, only one Note may be created (e.g. paper submission)
-#     :type multiReply: bool, optional
-#     :param taskCompletionCount: Keeps count of the number of times the Invitation has been used
-#     :type taskCompletionCount: int, optional
-#     :param transform: Path to a file that contains the transform function
-#     :type transform: str, optional
-#     :param details:
-#     :type details: dict, optional
-#     """
-#     def __init__(self,
-#         id = None,
-#         readers = None,
-#         writers = None,
-#         invitees = None,
-#         signatures = None,
-#         reply = None,
-#         edit = None,
-#         super = None,
-#         noninvitees = None,
-#         nonreaders = None,
-#         web = None,
-#         web_string = None,
-#         process = None,
-#         process_string = None,
-#         duedate = None,
-#         expdate = None,
-#         cdate = None,
-#         ddate = None,
-#         tcdate = None,
-#         tmdate = None,
-#         multiReply = None,
-#         taskCompletionCount = None,
-#         transform = None,
-#         bulk = None,
-#         details = None):
+class Note(object):
+    """
+    TODO: write docs
+    """
+    def __init__(self,
+        invitation=None,
+        readers=None,
+        writers=None,
+        signatures=None,
+        content=None,
+        id=None,
+        number=None,
+        cdate=None,
+        mdate=None,
+        tcdate=None,
+        tmdate=None,
+        ddate=None,
+        forum=None,
+        replyto=None,
+        nonreaders=None,
+        details = None):
 
-#         self.id = id
-#         self.super = super
-#         self.cdate = cdate
-#         self.ddate = ddate
-#         self.duedate = duedate
-#         self.expdate = expdate
-#         self.readers = readers
-#         self.nonreaders = nonreaders
-#         self.writers = writers
-#         self.invitees = invitees
-#         self.noninvitees = noninvitees
-#         self.signatures = signatures
-#         self.multiReply = multiReply
-#         self.taskCompletionCount = taskCompletionCount
-#         self.reply = reply
-#         self.edit = edit
-#         self.tcdate = tcdate
-#         self.tmdate = tmdate
-#         self.bulk = bulk
-#         self.details = details
-#         self.web = None
-#         self.process = None
-#         if web is not None:
-#             with open(web) as f:
-#                 self.web = f.read()
-#         if process is not None:
-#             with open(process) as f:
-#                 self.process = f.read()
-#         self.transform = None
-#         if transform is not None:
-#             with open(transform) as f:
-#                 self.transform = f.read()
-#         if process_string:
-#             self.process = process_string
-#         if web_string:
-#             self.web = web_string
+        self.id = id
+        self.number = number
+        self.cdate = cdate
+        self.mdate = mdate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.ddate = ddate
+        self.content = content
+        self.forum = forum
+        self.replyto = replyto
+        self.readers = readers
+        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.signatures = signatures
+        self.writers = writers
+        self.number = number
+        self.details = details
+        if invitation:
+            self.invitation = invitation
 
-#     def __repr__(self):
-#         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-#         return 'Invitation(' + content + ')'
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Note(' + content + ')'
 
-#     def __str__(self):
-#         pp = pprint.PrettyPrinter()
-#         return pp.pformat(vars(self))
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
 
-#     def to_json(self):
-#         """
-#         Converts Invitation instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+    def to_json(self):
+        """
+        Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
 
-#         :return: Dictionary containing all the parameters of a Invitation instance
-#         :rtype: dict
-#         """
-#         body = {
-#             'id': self.id,
-#             'super': self.super,
-#             'cdate': self.cdate,
-#             'ddate': self.ddate,
-#             'tcdate': self.tcdate,
-#             'tmdate': self.tmdate,
-#             'duedate': self.duedate,
-#             'expdate': self.expdate,
-#             'readers': self.readers,
-#             'nonreaders': self.nonreaders,
-#             'writers': self.writers,
-#             'invitees': self.invitees,
-#             'noninvitees': self.noninvitees,
-#             'signatures': self.signatures,
-#             'multiReply': self.multiReply,
-#             'taskCompletionCount': self.taskCompletionCount,
-#             'process': self.process,
-#             'web': self.web,
-#             'transform': self.transform,
-#             'details': self.details
-#         }
+        :return: Dictionary containing all the parameters of a Note instance
+        :rtype: dict
+        """
+        body = {
+        }
+        if self.id:
+            body['id'] = self.id
+        if self.forum:
+            body['forum'] = self.forum
+        if self.replyto:
+            body['replyto'] = self.replyto
+        if self.content:
+            body['content'] = self.content
+        if hasattr(self, 'invitation'):
+            body['invitation'] = self.invitation
+        if self.cdate:
+            body['cdate'] = self.cdate
+        if self.mdate:
+            body['mdate'] = self.mdate
+        if self.ddate:
+            body['ddate'] = self.ddate
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+        if self.signatures:
+            body['signatures'] = self.signatures
+        if self.writers:
+            body['writers'] = self.writers
+        if self.readers:
+            body['readers'] = self.readers
+        return body
 
-#         if hasattr(self,'web'):
-#             body['web']=self.web
-#         if hasattr(self,'process'):
-#             body['process']=self.process
-#         if hasattr(self,'edit'):
-#             body['edit']=self.edit
-#         if hasattr(self,'reply'):
-#             body['reply']=self.reply
-#         if hasattr(self,'bulk'):
-#             body['bulk']=self.bulk
-#         return body
+    @classmethod
+    def from_json(Note,n):
+        """
+        Creates a Note object from a dictionary that contains keys values equivalent to the name of the instance variables of the Note class
 
-#     @classmethod
-#     def from_json(Invitation,i):
-#         """
-#         Creates an Invitation object from a dictionary that contains keys values equivalent to the name of the instance variables of the Invitation class
+        :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Note class
+        :type n: dict
 
-#         :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Invitation class
-#         :type i: dict
-
-#         :return: Invitation whose instance variables contain the values from the dictionary
-#         :rtype: Invitation
-#         """
-#         invitation = Invitation(i['id'],
-#             super = i.get('super'),
-#             cdate = i.get('cdate'),
-#             ddate = i.get('ddate'),
-#             tcdate = i.get('tcdate'),
-#             tmdate = i.get('tmdate'),
-#             duedate = i.get('duedate'),
-#             expdate = i.get('expdate'),
-#             readers = i.get('readers'),
-#             nonreaders = i.get('nonreaders'),
-#             writers = i.get('writers'),
-#             invitees = i.get('invitees'),
-#             noninvitees = i.get('noninvitees'),
-#             signatures = i.get('signatures'),
-#             multiReply = i.get('multiReply'),
-#             taskCompletionCount = i.get('taskCompletionCount'),
-#             reply = i.get('reply'),
-#             details = i.get('details')
-#             )
-#         if 'web' in i:
-#             invitation.web = i['web']
-#         if 'process' in i:
-#             invitation.process = i['process']
-#         if 'transform' in i:
-#             invitation.transform = i['transform']
-#         return invitation
-
-# class Note(object):
-#     """
-#     :param invitation: Invitation id
-#     :type invitation: str
-#     :param readers: List of readers in the Invitation, each reader is a Group id
-#     :type readers: list[str]
-#     :param writers: List of writers in the Invitation, each writer is a Group id
-#     :type writers: list[str]
-#     :param signatures: List of signatures in the Invitation, each signature is a Group id
-#     :type signatures: list[str]
-#     :param content: Content of the Note
-#     :type content: dict
-#     :param id: Note id
-#     :type id: str, optional
-#     :param original: If this Note is a blind copy of a Note, then this contains the id of that Note
-#     :type original: str, optional
-#     :param number: Note number. E.g. when the Note is a paper submission, this value is the paper number
-#     :type number: int, optional
-#     :param cdate: Creation date
-#     :type cdate: int, optional
-#     :param tcdate: True creation date
-#     :type tcdate: int, optional
-#     :param tmdate: Modification date
-#     :type tmdate: int, optional
-#     :param ddate: Deletion date
-#     :type ddate: int, optional
-#     :param forum: Forum id
-#     :type forum: str, optional
-#     :param referent: If this Note is used as a ref, this field points to the Profile
-#     :type referent: str, optional
-#     :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID
-#     :type replyto: str, optional
-#     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-#     :type nonreaders: list[str], optional
-#     :param details:
-#     :type details: dict, optional
-#     :param tauthor: True author
-#     :type tauthor: str, optional
-#     """
-#     def __init__(self,
-#         invitation=None,
-#         readers=None,
-#         writers=None,
-#         signatures=None,
-#         content=None,
-#         id=None,
-#         original=None,
-#         number=None,
-#         cdate=None,
-#         tcdate=None,
-#         tmdate=None,
-#         ddate=None,
-#         forum=None,
-#         referent=None,
-#         replyto=None,
-#         nonreaders=None,
-#         details = None,
-#         tauthor=None):
-
-#         self.id = id
-#         self.original = original
-#         self.number = number
-#         self.cdate = cdate
-#         self.tcdate = tcdate
-#         self.tmdate = tmdate
-#         self.ddate = ddate
-#         self.content = content
-#         self.forum = forum
-#         self.replyto = replyto
-#         self.readers = readers
-#         self.nonreaders = [] if nonreaders is None else nonreaders
-#         self.signatures = signatures
-#         self.writers = writers
-#         self.number = number
-#         self.details = details
-#         if tauthor:
-#             self.tauthor = tauthor
-#         if referent:
-#             self.referent = referent
-#         if invitation:
-#             self.invitation = invitation
-
-#     def __repr__(self):
-#         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-#         return 'Note(' + content + ')'
-
-#     def __str__(self):
-#         pp = pprint.PrettyPrinter()
-#         return pp.pformat(vars(self))
-
-#     def to_json(self):
-#         """
-#         Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
-#         :return: Dictionary containing all the parameters of a Note instance
-#         :rtype: dict
-#         """
-#         body = {
-#             'id': self.id,
-#             'original': self.original,
-#             'cdate': self.cdate,
-#             'tcdate': self.tcdate,
-#             'tmdate': self.tmdate,
-#             'ddate': self.ddate,
-#             'number': self.number,
-#             'content': self.content,
-#             'forum': self.forum,
-#             'replyto': self.replyto,
-#             'readers': self.readers,
-#             'nonreaders': self.nonreaders,
-#             'signatures': self.signatures,
-#             'writers': self.writers,
-#             'number': self.number
-#         }
-#         if hasattr(self, 'tauthor'):
-#             body['tauthor'] = self.tauthor
-#         if hasattr(self, 'referent'):
-#             body['referent'] = self.referent
-#         if hasattr(self, 'invitation'):
-#             body['invitation'] = self.invitation
-#         return body
-
-#     @classmethod
-#     def from_json(Note,n):
-#         """
-#         Creates a Note object from a dictionary that contains keys values equivalent to the name of the instance variables of the Note class
-
-#         :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Note class
-#         :type n: dict
-
-#         :return: Note whose instance variables contain the values from the dictionary
-#         :rtype: Note
-#         """
-#         note = Note(
-#         id = n.get('id'),
-#         original = n.get('original'),
-#         number = n.get('number'),
-#         cdate = n.get('cdate'),
-#         tcdate = n.get('tcdate'),
-#         tmdate =n.get('tmdate'),
-#         ddate=n.get('ddate'),
-#         content=n.get('content'),
-#         forum=n.get('forum'),
-#         referent=n.get('referent'),
-#         invitation=n.get('invitation'),
-#         replyto=n.get('replyto'),
-#         readers=n.get('readers'),
-#         nonreaders=n.get('nonreaders'),
-#         signatures=n.get('signatures'),
-#         writers=n.get('writers'),
-#         details=n.get('details'),
-#         tauthor=n.get('tauthor')
-#         )
-#         return note
-
-# class Tag(object):
-#     """
-#     :param tag: Content of the tag
-#     :type tag: str
-#     :param invitation: Invitation id
-#     :type invitation: str
-#     :param readers: List of readers in the Invitation, each reader is a Group id
-#     :type readers: list[str]
-#     :param signatures: List of signatures in the Invitation, each signature is a Group id
-#     :type signatures: list[str]
-#     :param id: Tag id
-#     :type id: str, optional
-#     :param cdate: Creation date
-#     :type cdate: int, optional
-#     :param tcdate: True creation date
-#     :type tcdate: int, optional
-#     :param ddate: Deletion date
-#     :type ddate: int, optional
-#     :param forum: Forum id
-#     :type forum: str, optional
-#     :param replyto: Note id
-#     :type replyto: list[str], optional
-#     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-#     :type nonreaders: list[str], optional
-#     """
-#     def __init__(self, tag, invitation, readers, signatures, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
-#         self.id = id
-#         self.cdate = cdate
-#         self.tcdate = tcdate
-#         self.ddate = ddate
-#         self.tag = tag
-#         self.forum = forum
-#         self.invitation = invitation
-#         self.replyto = replyto
-#         self.readers = readers
-#         self.nonreaders = [] if nonreaders is None else nonreaders
-#         self.signatures = signatures
-
-#     def to_json(self):
-#         """
-#         Converts Tag instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
-#         :return: Dictionary containing all the parameters of a Tag instance
-#         :rtype: dict
-#         """
-#         return {
-#             'id': self.id,
-#             'cdate': self.cdate,
-#             'tcdate': self.tcdate,
-#             'ddate': self.ddate,
-#             'tag': self.tag,
-#             'forum': self.forum,
-#             'invitation': self.invitation,
-#             'replyto': self.replyto,
-#             'readers': self.readers,
-#             'nonreaders': self.nonreaders,
-#             'signatures': self.signatures
-#         }
-
-#     @classmethod
-#     def from_json(Tag, t):
-#         """
-#         Creates a Tag object from a dictionary that contains keys values equivalent to the name of the instance variables of the Tag class
-
-#         :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Tag class
-#         :type n: dict
-
-#         :return: Tag whose instance variables contain the values from the dictionary
-#         :rtype: Tag
-#         """
-#         tag = Tag(
-#             id = t.get('id'),
-#             cdate = t.get('cdate'),
-#             tcdate = t.get('tcdate'),
-#             ddate = t.get('ddate'),
-#             tag = t.get('tag'),
-#             forum = t.get('forum'),
-#             invitation = t.get('invitation'),
-#             replyto = t.get('replyto'),
-#             readers = t.get('readers'),
-#             nonreaders = t.get('nonreaders'),
-#             signatures = t.get('signatures'),
-#         )
-#         return tag
-
-#     def __repr__(self):
-#         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-#         return 'Tag(' + content + ')'
-
-#     def __str__(self):
-#         pp = pprint.PrettyPrinter()
-#         return pp.pformat(vars(self))
-
-# class Edge(object):
-#     def __init__(self, head, tail, invitation, readers, writers, signatures, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
-#         self.id = id
-#         self.invitation = invitation
-#         self.head = head
-#         self.tail = tail
-#         self.weight = weight
-#         self.label = label
-#         self.cdate = cdate
-#         self.ddate = ddate
-#         self.readers = readers
-#         self.nonreaders = nonreaders
-#         self.writers = writers
-#         self.signatures = signatures
-#         self.tcdate = tcdate
-#         self.tmdate = tmdate
-#         self.tddate = tddate
-#         self.tauthor = tauthor
-
-#     def to_json(self):
-#         '''
-#         Returns serialized json string for a given object
-#         '''
-#         return {
-#             'id': self.id,
-#             'cdate': self.cdate,
-#             'ddate': self.ddate,
-#             'invitation': self.invitation,
-#             'readers': self.readers,
-#             'nonreaders': self.nonreaders,
-#             'writers': self.writers,
-#             'signatures': self.signatures,
-#             'head': self.head,
-#             'tail': self.tail,
-#             'weight': self.weight,
-#             'label': self.label
-#         }
-
-#     @classmethod
-#     def from_json(Edge, e):
-#         '''
-#         Returns a deserialized object from a json string
-
-#         :arg t: The json string consisting of a serialized object of type "Edge"
-#         '''
-#         edge = Edge(
-#             id = e.get('id'),
-#             cdate = e.get('cdate'),
-#             tcdate = e.get('tcdate'),
-#             tmdate = e.get('tmdate'),
-#             ddate = e.get('ddate'),
-#             tddate = e.get('tddate'),
-#             invitation = e.get('invitation'),
-#             readers = e.get('readers'),
-#             nonreaders = e.get('nonreaders'),
-#             writers = e.get('writers'),
-#             signatures = e.get('signatures'),
-#             head = e.get('head'),
-#             tail = e.get('tail'),
-#             weight = e.get('weight'),
-#             label = e.get('label')
-#         )
-#         return edge
-
-#     def __repr__(self):
-#         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-#         return 'Edge(' + content + ')'
-
-#     def __str__(self):
-#         pp = pprint.PrettyPrinter()
-#         return pp.pformat(vars(self))
-
-# class Profile(object):
-#     """
-#     :param id: Profile id
-#     :type id: str, optional
-#     :param tcdate: True creation date
-#     :type tcdate: int, optional
-#     :param tmdate: Modification date
-#     :type tmdate: int, optional
-#     :param referent: If this is a ref, it contains the Profile id that it points to
-#     :type referent: str, optional
-#     :param packaging: Contains previous versions of this Profile
-#     :type packaging: dict, optional
-#     :param invitation: Invitation id
-#     :type invitation: str, optional
-#     :param readers: List of readers in the Invitation, each reader is a Group id
-#     :type readers: str, optional
-#     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-#     :type nonreaders: str, optional
-#     :param signatures: List of signatures in the Invitation, each signature is a Group id
-#     :type signatures: str, optional
-#     :param writers: List of writers in the Invitation, each writer is a Group id
-#     :type writers: str, optional
-#     :param content: Dictionary containing the information of the Profile
-#     :type content: dict, optional
-#     :param metaContent: Contains information of the entities that have changed the Profile
-#     :type metaContent: dict, optional
-#     :param active: If true, the Profile is active in OpenReview
-#     :type active: bool, optional
-#     :param password: If true, the Profile has a password, otherwise, it was automatically created and the person that it belongs to has not set a password yet
-#     :type password: bool, optional
-#     :param tauthor: True author
-#     :type tauthor: str, optional
-#     """
-#     def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
-#         self.id = id
-#         self.number = number
-#         self.tcdate = tcdate
-#         self.tmdate = tmdate
-#         self.referent = referent
-#         self.packaging = packaging
-#         self.invitation = invitation
-#         self.readers = readers
-#         self.nonreaders = nonreaders
-#         self.signatures = signatures
-#         self.writers = writers
-#         self.content = content
-#         self.metaContent = metaContent
-#         self.active = active
-#         self.password = password
-#         if tauthor:
-#             self.tauthor = tauthor
-
-#     def __repr__(self):
-#         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-#         return 'Profile(' + content + ')'
-
-#     def __str__(self):
-#         pp = pprint.PrettyPrinter()
-#         return pp.pformat(vars(self))
-
-#     def to_json(self):
-#         """
-#         Converts Profile instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
-#         :return: Dictionary containing all the parameters of a Profile instance
-#         :rtype: dict
-#         """
-#         body = {
-#             'id': self.id,
-#             'tcdate': self.tcdate,
-#             'tmdate': self.tmdate,
-#             'referent': self.referent,
-#             'packaging': self.packaging,
-#             'invitation': self.invitation,
-#             'readers': self.readers,
-#             'nonreaders': self.nonreaders,
-#             'signatures': self.signatures,
-#             'writers': self.writers,
-#             'content': self.content,
-#             'metaContent': self.metaContent,
-#             'active': self.active,
-#             'password': self.password
-#         }
-#         if hasattr(self, 'tauthor'):
-#             body['tauthor'] = self.tauthor
-#         return body
-
-#     @classmethod
-#     def from_json(Profile,n):
-#         """
-#         Creates a Profile object from a dictionary that contains keys values equivalent to the name of the instance variables of the Profile class
-
-#         :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Profile class
-#         :type i: dict
-
-#         :return: Profile whose instance variables contain the values from the dictionary
-#         :rtype: Profile
-#         """
-#         profile = Profile(
-#         id = n.get('id'),
-#         active = n.get('active'),
-#         password = n.get('password'),
-#         number = n.get('number'),
-#         tcdate = n.get('tcdate'),
-#         tmdate=n.get('tmdate'),
-#         referent=n.get('referent'),
-#         packaging=n.get('packaging'),
-#         invitation=n.get('invitation'),
-#         readers=n.get('readers'),
-#         nonreaders=n.get('nonreaders'),
-#         signatures=n.get('signatures'),
-#         writers=n.get('writers'),
-#         content=n.get('content'),
-#         metaContent=n.get('metaContent'),
-#         tauthor=n.get('tauthor')
-#         )
-#         return profile
+        :return: Note whose instance variables contain the values from the dictionary
+        :rtype: Note
+        """
+        note = Note(
+        id = n.get('id'),
+        number = n.get('number'),
+        cdate = n.get('cdate'),
+        mdate = n.get('mdate'),
+        tcdate = n.get('tcdate'),
+        tmdate =n.get('tmdate'),
+        ddate=n.get('ddate'),
+        content=n.get('content'),
+        forum=n.get('forum'),
+        invitation=n.get('invitation'),
+        replyto=n.get('replyto'),
+        readers=n.get('readers'),
+        nonreaders=n.get('nonreaders'),
+        signatures=n.get('signatures'),
+        writers=n.get('writers'),
+        details=n.get('details')
+        )
+        return note
 

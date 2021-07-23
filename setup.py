@@ -8,6 +8,10 @@ setup(
     author='OpenReview Team',
     author_email='info@openreview.net',
     license='MIT',
+    package_dir = {
+        'openreview': 'openreview',
+        'openreview.api': 'openreview/api'
+    },
     packages=[
         'openreview',
         'openreview/conference',
@@ -15,7 +19,7 @@ setup(
         'openreview/agora',
         'openreview/venue_request',
         'openreview/journal',
-        'openreview/api'
+        'openreview.api'
     ],
     install_requires=[
         'pycryptodome',

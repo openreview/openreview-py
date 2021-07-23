@@ -1834,11 +1834,11 @@ class Note(object):
     :type tauthor: str, optional
     """
     def __init__(self,
-        invitation=None,
-        readers=None,
-        writers=None,
-        signatures=None,
-        content=None,
+        invitation,
+        readers,
+        writers,
+        signatures,
+        content,
         id=None,
         original=None,
         number=None,
@@ -1864,6 +1864,8 @@ class Note(object):
         self.ddate = ddate
         self.content = content
         self.forum = forum
+        self.referent = referent
+        self.invitation = invitation
         self.replyto = replyto
         self.readers = readers
         self.nonreaders = [] if nonreaders is None else nonreaders
@@ -1873,10 +1875,6 @@ class Note(object):
         self.details = details
         if tauthor:
             self.tauthor = tauthor
-        if referent:
-            self.referent = referent
-        if invitation:
-            self.invitation = invitation
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1889,52 +1887,39 @@ class Note(object):
     def to_json(self):
         """
         Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
         :return: Dictionary containing all the parameters of a Note instance
         :rtype: dict
         """
         body = {
+            'id': self.id,
+            'original': self.original,
+            'cdate': self.cdate,
+            'mdate': self.mdate,
+            'tcdate': self.tcdate,
+            'tmdate': self.tmdate,
+            'ddate': self.ddate,
+            'number': self.number,
+            'content': self.content,
+            'forum': self.forum,
+            'referent': self.referent,
+            'invitation': self.invitation,
+            'replyto': self.replyto,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'signatures': self.signatures,
+            'writers': self.writers,
+            'number': self.number
         }
-        if self.id:
-            body['id'] = self.id
-        if self.forum:
-            body['forum'] = self.forum
-        if self.replyto:
-            body['replyto'] = self.replyto
-        if self.content:
-            body['content'] = self.content
-        if self.original:
-            body['original'] = self.original
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
-        if hasattr(self, 'referent'):
-            body['referent'] = self.referent
-        if hasattr(self, 'invitation'):
-            body['invitation'] = self.invitation
-        if self.cdate:
-            body['cdate'] = self.cdate
-        if self.mdate:
-            body['mdate'] = self.mdate
-        if self.ddate:
-            body['ddate'] = self.ddate
-        if self.nonreaders:
-            body['nonreaders'] = self.nonreaders
-        if self.signatures:
-            body['signatures'] = self.signatures
-        if self.writers:
-            body['writers'] = self.writers
-        if self.readers:
-            body['readers'] = self.readers
         return body
 
     @classmethod
     def from_json(Note,n):
         """
         Creates a Note object from a dictionary that contains keys values equivalent to the name of the instance variables of the Note class
-
         :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Note class
         :type n: dict
-
         :return: Note whose instance variables contain the values from the dictionary
         :rtype: Note
         """

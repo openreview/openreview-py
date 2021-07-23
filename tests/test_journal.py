@@ -6,6 +6,7 @@ import datetime
 import random
 import os
 import re
+from openreview.api import OpenReviewClient
 
 class TestJournal():
 
@@ -116,7 +117,7 @@ class TestJournal():
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
             signatures=['~Test_User1'],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
@@ -162,7 +163,7 @@ class TestJournal():
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
                                     signatures=['~Test_User1'],
-                                    note=openreview.Note(
+                                    note=openreview.api.Note(
                                         content={
                                             'title': { 'value': 'Paper title 2' },
                                             'abstract': { 'value': 'Paper abstract 2' },
@@ -186,7 +187,7 @@ class TestJournal():
         ## Post the submission 3
         submission_note_3 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
                                     signatures=['~Test_User1'],
-                                    note=openreview.Note(
+                                    note=openreview.api.Note(
                                         content={
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
@@ -236,7 +237,7 @@ class TestJournal():
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/-/Under_Review',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
-                                    note=openreview.Note(id=note_id_1))
+                                    note=openreview.api.Note(id=note_id_1))
 
         note = joelle_client.get_note(note_id_1)
         assert note
@@ -254,7 +255,7 @@ class TestJournal():
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/-/Desk_Rejection',
                                     signatures=[f'{venue_id}/Paper2/Action_Editors'],
-                                    note=openreview.Note(id=note_id_2))
+                                    note=openreview.api.Note(id=note_id_2))
 
         note = joelle_client.get_note(note_id_2)
         assert note
@@ -288,7 +289,7 @@ class TestJournal():
         ## Post a review edit
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[david_anon_groups[0].id],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 content={
                     'title': { 'value': 'Review title' },
                     'review': { 'value': 'This is the review' },
@@ -309,7 +310,7 @@ class TestJournal():
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
             signatures=['~Peter_Snow1'],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 signatures=['~Peter_Snow1'],
                 forum=note_id_1,
                 replyto=note_id_1,
@@ -333,7 +334,7 @@ class TestJournal():
         # Moderate a public comment
         moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderate',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 id=comment_note_id,
                 signatures=['~Peter_Snow1'],
                 content={
@@ -359,7 +360,7 @@ class TestJournal():
         ## Post a review edit
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[javier_anon_groups[0].id],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
@@ -389,7 +390,7 @@ class TestJournal():
         ## Post a review edit
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[carlos_anon_groups[0].id],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 content={
                     'title': { 'value': 'another Review title' },
                     'review': { 'value': 'This is another review' },
@@ -448,7 +449,7 @@ class TestJournal():
             signature=review.signatures[0]
             rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
-                note=openreview.Note(
+                note=openreview.api.Note(
                     content={
                         'rating': { 'value': 'Good' }
                     }
@@ -464,7 +465,7 @@ class TestJournal():
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 content={
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' }
@@ -482,7 +483,7 @@ class TestJournal():
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
-            note=openreview.Note(
+            note=openreview.api.Note(
                 id=note_id_1,
                 forum=note_id_1,
                 content={
@@ -513,7 +514,7 @@ class TestJournal():
 
         acceptance_note = raia_client.post_note_edit(invitation='.TMLR/-/Acceptance',
                             signatures=['.TMLR/Editors_In_Chief'],
-                            note=openreview.Note(id=note_id_1))
+                            note=openreview.api.Note(id=note_id_1))
 
         note = openreview_client.get_note(note_id_1)
         assert note
