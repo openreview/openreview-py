@@ -1,13 +1,16 @@
 def process(client, edit, invitation):
     venue_id='.TMLR'
-    note=edit.note
+    note=client.get_note(edit.note.id)
 
-    paper_group=client.post_group(openreview.Group(id=f'{venue_id}/Paper{note.number}',
-        readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        signatories=[venue_id]
-    ))
+    paper_group_id=f'{venue_id}/Paper{note.number}'
+    paper_group=openreview.tools.get_group(client, paper_group_id)
+    if not paper_group:
+        paper_group=client.post_group(openreview.Group(id=paper_group_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            signatories=[venue_id]
+        ))
 
     authors_group_id=f'{paper_group.id}/Authors'
     authors_group=client.post_group(openreview.Group(id=authors_group_id,
@@ -15,32 +18,40 @@ def process(client, edit, invitation):
         writers=[venue_id],
         signatures=[venue_id],
         signatories=[venue_id, authors_group_id],
-        members=note.content['authorids']['value']
+        members=note.content['authorids']['value'] ## always update authors
     ))
 
     action_editors_group_id=f'{paper_group.id}/Action_Editors'
-    action_editors_group=client.post_group(openreview.Group(id=action_editors_group_id,
-        readers=[venue_id, action_editors_group_id],
-        nonreaders=[authors_group_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        signatories=[venue_id, action_editors_group_id],
-        members=[]
-    ))
+    action_editors_group=openreview.tools.get_group(client, action_editors_group_id)
+    if not action_editors_group:
+        action_editors_group=client.post_group(openreview.Group(id=action_editors_group_id,
+            readers=[venue_id, action_editors_group_id],
+            nonreaders=[authors_group_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            signatories=[venue_id, action_editors_group_id],
+            members=[]
+        ))
 
     reviewers_group_id=f'{paper_group.id}/Reviewers'
-    reviewers_group=client.post_group(openreview.Group(id=reviewers_group_id,
-        readers=[venue_id, action_editors_group_id],
-        nonreaders=[authors_group_id],
-        writers=[venue_id, action_editors_group_id],
-        signatures=[venue_id],
-        signatories=[venue_id],
-        members=[],
-        anonids=True
-    ))
+    reviewers_group=openreview.tools.get_group(client, reviewers_group_id)
+    if not reviewers_group:
+        reviewers_group=client.post_group(openreview.Group(id=reviewers_group_id,
+            readers=[venue_id, action_editors_group_id],
+            nonreaders=[authors_group_id],
+            writers=[venue_id, action_editors_group_id],
+            signatures=[venue_id],
+            signatories=[venue_id],
+            members=[],
+            anonids=True
+        ))
 
     ## TODO: create this invitation using an invitation
     review_invitation_id=f'{paper_group.id}/-/Review'
+    review_invitation=openreview.tools.get_invitation(client, review_invitation_id)
+    if review_invitation:
+        ## invitations already exists, finish the process function
+        return
 
     rating_process_function='''\'''def process(client, edit, invitation):
     venue_id='.TMLR'

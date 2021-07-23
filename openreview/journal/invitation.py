@@ -193,6 +193,10 @@ class InvitationBuilder(object):
                     'readers': { 'values': [ venue_id, '${signatures}', action_editors_value, authors_value]},
                     'writers': { 'values': [ venue_id, '${signatures}', authors_value]},
                     'note': {
+                        'id': {
+                            'value-invitation': submission_invitation_id,
+                            'optional': True
+                        },
                         'signatures': { 'values': [authors_value] },
                         'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
@@ -298,6 +302,9 @@ class InvitationBuilder(object):
                         'readers': {
                             'values': ['everyone']
                         },
+                        'writers': {
+                            'values': [venue_id]
+                        },
                         'content': {
                             'venue': {
                                 'value': {
@@ -366,6 +373,7 @@ class InvitationBuilder(object):
                     'writers': { 'values': [ venue_id ]},
                     'note': {
                         'id': { 'value-invitation': under_review_invitation_id },
+                        'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'content': {
                             'venue': {
                                 'value': {

@@ -123,8 +123,8 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~Test_User1', 'andrewmc@mail.com']},
+                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authorids': { 'value': ['~Test_User1', 'melisa@mail.com']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'}
                 }
@@ -138,7 +138,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~Test_User1', 'andrewmc@mail.com']
+        assert author_group.members == ['~Test_User1', 'melisa@mail.com']
         assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
@@ -148,12 +148,13 @@ class TestJournal():
         assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
+        assert note.content['authorids']['value'] == ['~Test_User1', 'melisa@mail.com']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 7
+        assert len(invitations) == 8
+        assert f"{venue_id}/-/Author_Submission" in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -161,6 +162,35 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+
+        ## Update submission 1
+        updated_submission_note_1 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+            signatures=['~Test_User1'],
+            note=Note(
+                id=note_id_1,
+                content={
+                    'title': { 'value': 'Paper title UPDATED' },
+                    'authors': { 'value': ['Test User', 'Andrew McCallum']},
+                    'authorids': { 'value': ['~Test_User1', 'andrewmc@mail.com']},
+                    'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'}
+                }
+            ))
+        helpers.await_queue(openreview_client)
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.content['title']['value'] == 'Paper title UPDATED'
+        assert note.content['venue']['value'] == 'Submitted to TMLR'
+        assert note.content['venueid']['value'] == '.TMLR/Submitted'
+        assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
+
+        author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
+        assert author_group
+        assert author_group.members == ['~Test_User1', 'andrewmc@mail.com']
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
@@ -245,7 +275,7 @@ class TestJournal():
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'Under review for TMLR'
@@ -480,6 +510,23 @@ class TestJournal():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+
+        acceptance_note = raia_client.post_note_edit(invitation='.TMLR/-/Acceptance',
+                            signatures=['.TMLR/Editors_In_Chief'],
+                            note=Note(id=note_id_1))
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitation == '.TMLR/-/Author_Submission'
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
+        assert note.content['venue']['value'] == 'TMLR'
+        assert note.content['venueid']['value'] == '.TMLR'
+
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
 
         ## post a revision
@@ -509,25 +556,9 @@ class TestJournal():
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
-        assert note.content['venue']['value'] == 'Under review for TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Under_Review'
-        assert note.content['title']['value'] == 'Paper title VERSION 2'
-        assert note.content['abstract']['value'] == 'Paper abstract'
-
-        acceptance_note = raia_client.post_note_edit(invitation='.TMLR/-/Acceptance',
-                            signatures=['.TMLR/Editors_In_Chief'],
-                            note=Note(id=note_id_1))
-
-        note = openreview_client.get_note(note_id_1)
-        assert note
-        assert note.forum == note_id_1
-        assert note.replyto is None
-        assert note.invitation == '.TMLR/-/Author_Submission'
-        assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
-        assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'TMLR'
         assert note.content['venueid']['value'] == '.TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
+
+
