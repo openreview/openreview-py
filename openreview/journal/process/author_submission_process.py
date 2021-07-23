@@ -94,14 +94,13 @@ def process(client, edit, invitation):
                         'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
                         'content': {
                             'rating': {
+                                'order': 1,
                                 'value': {
-                                    'order': 1,
                                     'value-radio': [
                                         "Poor - not very helpful",
                                         "Good",
                                         "Outstanding"
-                                    ],
-                                    'required': True
+                                    ]
                                 }
                             }
                         }
@@ -174,78 +173,71 @@ def process(client, edit, invitation):
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
                     'content': {
                         'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your review.',
                             'value': {
-                                'order': 1,
-                                'value-regex': '.{0,500}',
-                                'description': 'Brief summary of your review.',
-                                'required': True
+                                'value-regex': '.{0,500}'
                             }
                         },
                         'review': {
+                            'order': 2,
+                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'order': 2,
                                 'value-regex': '[\\S\\s]{1,200000}',
-                                'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                'required': True,
                                 'markdown': True
                             }
                         },
                         'suggested_changes': {
+                            'order': 2,
+                            'description': 'List of suggested revisions to support acceptance (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'order': 2,
                                 'value-regex': '[\\S\\s]{1,200000}',
-                                'description': 'List of suggested revisions to support acceptance (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                'required': True,
                                 'markdown': True
                             }
                         },
                         'recommendation': {
+                            'order': 3,
                             'value': {
-                                'order': 3,
                                 'value-radio': [
                                     'Accept',
                                     'Reject'
-                                ],
-                                'required': True
+                                ]
                             }
                         },
                         'confidence': {
+                            'order': 4,
                             'value': {
-                                'order': 4,
                                 'value-radio': [
                                     '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature',
                                     '4: The reviewer is confident but not absolutely certain that the evaluation is correct',
                                     '3: The reviewer is fairly confident that the evaluation is correct',
                                     '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper',
                                     '1: The reviewer\'s evaluation is an educated guess'
-                                ],
-                                'required': True
+                                ]
                             }
                         },
                         'certification_recommendation': {
+                            'order': 5,
                             'value': {
-                                'order': 5,
                                 'value-radio': [
                                     'Featured article',
                                     'Outstanding article'
-                                ],
-                                'required': False
+                                ]
                             },
                             'readers': {
                                 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
                             }
                         },
                         'certification_confidence': {
+                            'order': 6,
                             'value': {
-                                'order': 6,
                                 'value-radio': [
                                     '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature',
                                     '4: The reviewer is confident but not absolutely certain that the evaluation is correct',
                                     '3: The reviewer is fairly confident that the evaluation is correct',
                                     '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper',
                                     '1: The reviewer\'s evaluation is an educated guess'
-                                ],
-                                'required': False
+                                ]
                             },
                             'readers': {
                                 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
@@ -279,7 +271,7 @@ def process(client, edit, invitation):
     #                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
     #                             'order': 1,
     #                             'value-regex': '.{1,250}',
-    #                             'required':False
+    #                             'optional':True
     #                         }
     #                     },
     #                     'abstract': {
@@ -287,7 +279,7 @@ def process(client, edit, invitation):
     #                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
     #                             'order': 4,
     #                             'value-regex': '[\\S\\s]{1,5000}',
-    #                             'required':False
+    #                             'optional':True
     #                         }
     #                     },
     #                     'authors': {
@@ -295,7 +287,7 @@ def process(client, edit, invitation):
     #                             'description': 'Comma separated list of author names.',
     #                             'order': 2,
     #                             'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-    #                             'required':False,
+    #                             'optional':True,
     #                             'hidden': True
     #                         },
     #                         'readers': {
@@ -307,7 +299,7 @@ def process(client, edit, invitation):
     #                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
     #                             'order': 3,
     #                             'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-    #                             'required':False
+    #                             'optional':True
     #                         },
     #                         'readers': {
     #                             'values': [ venue_id, '${signatures}', f'{paper_group.id}/Authors']
@@ -321,7 +313,7 @@ def process(client, edit, invitation):
     #                                 'fileTypes': ['pdf'],
     #                                 'size': 50
     #                             },
-    #                             'required':False
+    #                             'optional':True
     #                         }
     #                     },
     #                     "supplementary_material": {
@@ -335,7 +327,7 @@ def process(client, edit, invitation):
     #                                 ],
     #                                 "size": 100
     #                             },
-    #                             "required": False
+    #                             "optional": True
     #                         },
     #                         'readers': {
     #                             'values': [ venue_id, '${signatures}', f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers', f'{paper_group.id}/Authors' ]
@@ -365,19 +357,17 @@ def process(client, edit, invitation):
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
                     'content': {
                         'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
                             'value': {
-                                'order': 0,
-                                'value-regex': '.{1,500}',
-                                'description': 'Brief summary of your comment.',
-                                'required': True
+                                'value-regex': '.{1,500}'
                             }
                         },
                         'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'order': 1,
                                 'value-regex': '[\\S\\s]{1,5000}',
-                                'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                'required': True,
                                 'markdown': True
                             }
                         }
@@ -405,19 +395,17 @@ def process(client, edit, invitation):
                     'writers': { 'values': ['${signatures}']},
                     'content': {
                         'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
                             'value': {
-                                'order': 0,
-                                'value-regex': '.{1,500}',
-                                'description': 'Brief summary of your comment.',
-                                'required': True
+                                'value-regex': '.{1,500}'
                             }
                         },
                         'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'order': 1,
                                 'value-regex': '[\\S\\s]{1,5000}',
-                                'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                'required': True,
                                 'markdown': True
                             }
                         }
@@ -450,22 +438,20 @@ def process(client, edit, invitation):
                     'signatures': { 'values-regex': '~.*' },
                     'content': {
                         'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
                             'value': {
-                                'order': 0,
-                                'value-regex': '.{1,500}',
-                                'description': 'Brief summary of your comment.',
-                                'required': True
+                                'value-regex': '.{1,500}'
                             },
                             'readers': {
                                 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
                             }
                         },
                         'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'order': 1,
                                 'value-regex': '[\\S\\s]{1,5000}',
-                                'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                'required': True,
                                 'markdown': True
                             },
                             'readers': {
@@ -499,22 +485,20 @@ def process(client, edit, invitation):
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors'] },
                     'content': {
                         'recommendation': {
+                            'order': 1,
                             'value': {
-                                'order': 1,
                                 'value-radio': [
                                     'Accept as is',
                                     'Accept with revisions',
                                     'Reject'
-                                ],
-                                'required': True
+                                ]
                             }
                         },
                         'comment': {
+                            'order': 2,
+                            'description': 'TODO (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'order': 2,
                                 'value-regex': '[\\S\\s]{1,200000}',
-                                'description': 'TODO (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                'required': True,
                                 'markdown': True
                             }
                         }
@@ -550,53 +534,53 @@ def process(client, edit, invitation):
                     'forum': { 'value': note.forum },
                     'content': {
                         'title': {
+                            'order': 1,
+                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                             'value': {
-                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 1,
                                 'value-regex': '.{1,250}',
-                                'required':False
+                                'optional':True
                             }
                         },
                         'abstract': {
+                            'order': 4,
+                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                             'value': {
-                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 4,
                                 'value-regex': '[\\S\\s]{1,5000}',
-                                'required':False
+                                'optional':True
                             }
                         },
                         'authors': {
+                            'order': 2,
+                            'description': 'Comma separated list of author names.',
+                            'hidden': True,
                             'value': {
-                                'description': 'Comma separated list of author names.',
-                                'order': 2,
                                 'values-regex': '.*',
-                                'required':False,
-                                'hidden': True
+                                'optional':True
                             }
                         },
                         'authorids': {
+                            'order': 3,
+                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                             'value': {
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                'order': 3,
                                 'values-regex': r'~.*|.*',
-                                'required':False
+                                'optional':True
                             }
                         },
                         'pdf': {
+                            'order': 5,
+                            'description': 'Upload a PDF file that ends with .pdf',
                             'value': {
-                                'description': 'Upload a PDF file that ends with .pdf',
-                                'order': 5,
                                 'value-file': {
                                     'fileTypes': ['pdf'],
                                     'size': 50
                                 },
-                                'required':False
+                                'optional':True
                             }
                         },
                         "supplementary_material": {
+                            "order": 6,
+                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             'value': {
-                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                "order": 6,
                                 "value-file": {
                                     "fileTypes": [
                                         "zip",
@@ -604,20 +588,19 @@ def process(client, edit, invitation):
                                     ],
                                     "size": 100
                                 },
-                                "required": False
+                                "optional": True
                             }
                         },
                         "video": {
+                            "order": 6,
+                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             'value': {
-                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                "order": 6,
                                 "value-file": {
                                     "fileTypes": [
                                         "mp4"
                                     ],
                                     "size": 100
-                                },
-                                "required": True
+                                }
                             }
                         }
                     }

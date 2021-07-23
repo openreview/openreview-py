@@ -143,7 +143,7 @@ class TestJournal():
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
@@ -236,13 +236,13 @@ class TestJournal():
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/-/Under_Review',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
-                                    note=openreview.Note(id=note_id_1, forum=note_id_1))
+                                    note=openreview.Note(id=note_id_1))
 
         note = joelle_client.get_note(note_id_1)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'Under review for TMLR'
@@ -254,13 +254,13 @@ class TestJournal():
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/-/Desk_Rejection',
                                     signatures=[f'{venue_id}/Paper2/Action_Editors'],
-                                    note=openreview.Note(id=note_id_2, forum=note_id_2))
+                                    note=openreview.Note(id=note_id_2))
 
         note = joelle_client.get_note(note_id_2)
         assert note
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
-        assert note.writers == ['.TMLR', '.TMLR/Paper2/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'celeste@mail.com']
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
@@ -503,7 +503,7 @@ class TestJournal():
         assert note.replyto is None
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'Under review for TMLR'
@@ -513,7 +513,7 @@ class TestJournal():
 
         acceptance_note = raia_client.post_note_edit(invitation='.TMLR/-/Acceptance',
                             signatures=['.TMLR/Editors_In_Chief'],
-                            note=openreview.Note(id=note_id_1, forum=note_id_1))
+                            note=openreview.Note(id=note_id_1))
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -521,7 +521,7 @@ class TestJournal():
         assert note.replyto is None
         assert note.invitation == '.TMLR/-/Author_Submission'
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'TMLR'

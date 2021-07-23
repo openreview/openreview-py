@@ -44,13 +44,12 @@ class InvitationBuilder(object):
                             'signatures': { 'values-regex': '\\(anonymous\\)' },
                             #'readers': { 'values': [venue_id, '${note.content.user.value}'] }, remove the user for now
                             'readers': { 'values': [venue_id] },
-                            'writers': { 'values': []},
                             'note': {
                                 #'signatures': { 'values': ['${note.content.user.value}'] },
                                 'signatures': { 'values': ['${signatures}'] },
                                 # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
                                 'readers': { 'values': [venue_id] },
-                                'writers': { 'values': []},
+                                'writers': { 'values': [venue_id] },
                                 'content': {
                                     'title': {
                                         'order': 1,
@@ -62,24 +61,21 @@ class InvitationBuilder(object):
                                         'description': 'email address',
                                         'order': 2,
                                         'value': {
-                                            'value-regex': '.*',
-                                            'required':True
+                                            'value-regex': '.*'
                                         }
                                     },
                                     'key': {
                                         'description': 'Email key hash',
                                         'order': 3,
                                         'value': {
-                                            'value-regex': '.{0,100}',
-                                            'required':True
+                                            'value-regex': '.{0,100}'
                                         }
                                     },
                                     'response': {
                                         'description': 'Invitation response',
                                         'order': 4,
                                         'value': {
-                                            'value-radio': ['Yes', 'No'],
-                                            'required':True
+                                            'value-radio': ['Yes', 'No']
                                         }
                                     }
                                 }
@@ -124,13 +120,12 @@ class InvitationBuilder(object):
                             'signatures': { 'values-regex': '\\(anonymous\\)' },
                             #'readers': { 'values': [venue_id, '${note.content.user.value}'] }, remove the user for now
                             'readers': { 'values': [venue_id] },
-                            'writers': { 'values': []},
                             'note': {
                                 #'signatures': { 'values': ['${note.content.user.value}'] },
                                 'signatures': { 'values': ['${signatures}'] },
                                 # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
                                 'readers': { 'values': [venue_id] },
-                                'writers': { 'values': []},
+                                'writers': { 'values': [venue_id] },
                                 'content': {
                                     'title': {
                                         'order': 1,
@@ -142,24 +137,21 @@ class InvitationBuilder(object):
                                         'description': 'email address',
                                         'order': 2,
                                         'value': {
-                                            'value-regex': '.*',
-                                            'required':True
+                                            'value-regex': '.*'
                                         }
                                     },
                                     'key': {
                                         'description': 'Email key hash',
                                         'order': 3,
                                         'value': {
-                                            'value-regex': '.{0,100}',
-                                            'required':True
+                                            'value-regex': '.{0,100}'
                                         }
                                     },
                                     'response': {
                                         'description': 'Invitation response',
                                         'order': 4,
                                         'value': {
-                                            'value-radio': ['Yes', 'No'],
-                                            'required':True
+                                            'value-radio': ['Yes', 'No']
                                         }
                                     }
                                 }
@@ -203,28 +195,25 @@ class InvitationBuilder(object):
                     'note': {
                         'signatures': { 'values': [authors_value] },
                         'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                        'writers': { 'values': [ venue_id, authors_value]},
+                        'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'content': {
                             'title': {
                                 'value': {
-                                    'value-regex': '.{1,250}',
-                                    'required':True
+                                    'value-regex': '.{1,250}'
                                 },
                                 'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                                 'order': 1
                             },
                             'abstract': {
                                 'value': {
-                                    'value-regex': '[\\S\\s]{1,5000}',
-                                    'required':True
+                                    'value-regex': '[\\S\\s]{1,5000}'
                                 },
                                 'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                                 'order': 4,
                             },
                             'authors': {
                                 'value': {
-                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                    'required':True
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
                                 },
                                 'description': 'Comma separated list of author names.',
                                 'order': 2,
@@ -235,8 +224,7 @@ class InvitationBuilder(object):
                             },
                             'authorids': {
                                 'value': {
-                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                    'required':True
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                                 },
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                                 'order': 3,
@@ -250,7 +238,7 @@ class InvitationBuilder(object):
                                         'fileTypes': ['pdf'],
                                         'size': 50
                                     },
-                                    'required': False
+                                    'optional': True
                                 },
                                 'description': 'Upload a PDF file that ends with .pdf',
                                 'order': 5,
@@ -264,7 +252,7 @@ class InvitationBuilder(object):
                                         ],
                                         "size": 100
                                     },
-                                    "required": False
+                                    "optional": True
                                 },
                                 "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                                 "order": 6,
@@ -309,9 +297,6 @@ class InvitationBuilder(object):
                         'id': { 'value-invitation': submission_invitation_id },
                         'readers': {
                             'values': ['everyone']
-                        },
-                        'writers': {
-                            'values': [venue_id]
                         },
                         'content': {
                             'venue': {
@@ -394,8 +379,7 @@ class InvitationBuilder(object):
                             },
                             'authors': {
                                 'value': {
-                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                    'required':True
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
                                 },
                                 'description': 'Comma separated list of author names.',
                                 'order': 1,
@@ -406,8 +390,7 @@ class InvitationBuilder(object):
                             },
                             'authorids': {
                                 'value': {
-                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                    'required':True
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                                 },
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                                 'order': 2,
@@ -493,8 +476,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'weight': {
-                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*',
-                        'required': True
+                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*'
                     }
                 }
             }))
@@ -625,8 +607,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'weight': {
-                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                        'required': True
+                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
                     }
                 }
             }))
@@ -693,8 +674,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'weight': {
-                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*',
-                        'required': True
+                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*'
                     }
                 }
             }))
@@ -853,8 +833,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'weight': {
-                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*',
-                        'required': True
+                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*'
                     }
                 }
             }))

@@ -1717,7 +1717,6 @@ class Invitation(object):
         """
         body = {
             'id': self.id,
-            'super': self.super,
             'cdate': self.cdate,
             'ddate': self.ddate,
             'tcdate': self.tcdate,
@@ -1731,12 +1730,14 @@ class Invitation(object):
             'noninvitees': self.noninvitees,
             'signatures': self.signatures,
             'multiReply': self.multiReply,
-            'taskCompletionCount': self.taskCompletionCount,
             'transform': self.transform,
-            'details': self.details,
             'replyForumViews': self.reply_forum_views
         }
 
+        if self.super:
+            body['super']=self.super
+        if  self.taskCompletionCount:
+            body['taskCompletionCount']=self.taskCompletionCount
         if self.web:
             body['web']=self.web
         if  self.process:
@@ -1893,30 +1894,37 @@ class Note(object):
         :rtype: dict
         """
         body = {
-            'id': self.id,
-            'original': self.original,
-            'cdate': self.cdate,
-            'tcdate': self.tcdate,
-            'tmdate': self.tmdate,
-            'ddate': self.ddate,
-            'number': self.number,
-            'content': self.content,
-            'forum': self.forum,
-            'replyto': self.replyto,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'signatures': self.signatures,
-            'writers': self.writers,
-            'number': self.number
         }
+        if self.id:
+            body['id'] = self.id
+        if self.forum:
+            body['forum'] = self.forum
+        if self.replyto:
+            body['replyto'] = self.replyto
+        if self.content:
+            body['content'] = self.content
+        if self.original:
+            body['original'] = self.original
         if hasattr(self, 'tauthor'):
             body['tauthor'] = self.tauthor
         if hasattr(self, 'referent'):
             body['referent'] = self.referent
         if hasattr(self, 'invitation'):
             body['invitation'] = self.invitation
+        if self.cdate:
+            body['cdate'] = self.cdate
         if self.mdate:
             body['mdate'] = self.mdate
+        if self.ddate:
+            body['ddate'] = self.ddate
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+        if self.signatures:
+            body['signatures'] = self.signatures
+        if self.writers:
+            body['writers'] = self.writers
+        if self.readers:
+            body['readers'] = self.readers
         return body
 
     @classmethod
