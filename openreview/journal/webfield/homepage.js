@@ -51,28 +51,28 @@ function main() {
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
 
-  var submittedNotesP = Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+  var submittedNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
     'content.venueid': SUBMITTED_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var underReviewNotesP = Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+  var underReviewNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
     'content.venueid': UNDER_REVIEW_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var rejectedNotesP = Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+  var rejectedNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
     'content.venueid': DESK_REJECTED_ID + ',' + REJECTED_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var acceptedNotesP = Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+  var acceptedNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
     'content.venueid': CONFERENCE_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
@@ -81,7 +81,7 @@ function load() {
 
   var activityNotesP = $.Deferred().resolve([]);
   if (user && !_.startsWith(user.id, 'guest_')) {
-    activityNotesP = Webfield.api.getSubmissionsV2(WILDCARD_INVITATION, {
+    activityNotesP = Webfield2.api.getSubmissionsV2(WILDCARD_INVITATION, {
       pageSize: PAGE_SIZE,
       details: 'forumContent,writable'
     });
@@ -98,7 +98,7 @@ function renderConferenceHeader() {
 }
 
 function renderSubmissionButton() {
-  Webfield.api.getSubmissionInvitationV2(SUBMISSION_ID)
+  Webfield2.api.getSubmissionInvitationV2(SUBMISSION_ID)
     .then(function(invitation) {
       Webfield.ui.submissionButton(invitation, user, {
         onNoteCreated: function() {
@@ -156,7 +156,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       autoLoad: false
     });
 
-    Webfield.ui.submissionListV2(acceptedPapers, {
+    Webfield2.ui.submissionListV2(acceptedPapers, {
       heading: null,
       container: '#accepted-papers',
       search: {
@@ -176,7 +176,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: acceptedPapersCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
           'content.venueid': CONFERENCE_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -200,7 +200,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       autoLoad: false
     });
 
-    Webfield.ui.submissionListV2(underReviewSubmissions, {
+    Webfield2.ui.submissionListV2(underReviewSubmissions, {
       heading: null,
       container: '#under-review-submissions',
       search: {
@@ -220,7 +220,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: underReviewCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
           'content.venueid': UNDER_REVIEW_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -238,7 +238,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     $('#submissions').empty();
 
     var notes = submittedResponse.notes || [];
-    Webfield.ui.submissionListV2(notes, {
+    Webfield2.ui.submissionListV2(notes, {
       heading: null,
       container: '#submissions',
       search: {
@@ -249,7 +249,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: submissionNotesCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
           'content.venueid': SUBMITTED_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -267,7 +267,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     $('#rejected-submissions').empty();
 
     var rejectedNotesArray = rejectedResponse.notes || [];
-    Webfield.ui.submissionListV2(rejectedNotesArray, {
+    Webfield2.ui.submissionListV2(rejectedNotesArray, {
       heading: null,
       container: '#rejected-submissions',
       search: {
@@ -278,7 +278,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: rejectedNotesCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
           'content.venueid': REJECTED_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -301,7 +301,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
 
     $(displayOptions.container).empty();
 
-    Webfield.ui.activityListV2(activityNotes, displayOptions);
+    Webfield2.ui.activityListV2(activityNotes, displayOptions);
 
     $('.tabs-container a[href="#recent-activity"]').parent().show();
   } else {
