@@ -2,7 +2,7 @@ import os
 import json
 import datetime
 import openreview
-from openreview import Invitation
+from openreview.api import Invitation
 from tqdm import tqdm
 from .. import tools
 
@@ -221,7 +221,9 @@ class InvitationBuilder(object):
                                 },
                                 'description': 'Comma separated list of author names.',
                                 'order': 2,
-                                'hidden': True,
+                                'presentation': {
+                                    'hidden': True,
+                                },
                                 'readers': {
                                     'values': [ venue_id, '${signatures}', action_editors_value, authors_value]
                                 }
@@ -268,13 +270,17 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value': 'Submitted to TMLR',
                                 },
-                                'hidden': True
+                                'presentation': {
+                                    'hidden': True,
+                                }
                             },
                             'venueid': {
                                 'value': {
                                     'value': '.TMLR/Submitted',
                                 },
-                                'hidden': True
+                                'presentation': {
+                                    'hidden': True,
+                                }
                             }
                         }
                     }
@@ -391,7 +397,9 @@ class InvitationBuilder(object):
                                 },
                                 'description': 'Comma separated list of author names.',
                                 'order': 1,
-                                'hidden': True,
+                                'presentation': {
+                                    'hidden': True,
+                                },
                                 'readers': {
                                     'values': ['everyone']
                                 }

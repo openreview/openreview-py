@@ -1355,35 +1355,6 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, readers, writers, signatures, invitation):
-        """
-        """
-        edit_json = {
-            'readers': readers,
-            'writers': writers,
-            'signatures': signatures,
-            'invitation': invitation.to_json()
-        }
-
-        response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
-    def post_note_edit(self, invitation, signatures, note=None):
-        """
-        """
-        edit_json = {
-            'invitation': invitation,
-            'signatures': signatures,
-            'note': note.to_json() if note else {}
-        }
-
-        response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
     def get_jobs_status(self):
         """
         **Only for Super User**. Retrieves the jobs status of the queue

@@ -58,14 +58,15 @@ def process(client, edit, invitation):
     note=edit.note
     ## check all the ratings are done and enable the Decision invitation
     review=client.get_note(note.replyto)
-    paper_group_id=review.invitation.split('/-/')[0]
-    reviews=client.get_notes(invitation=review.invitation)
+    review_invitation=review.invitations[0]
+    paper_group_id=review_invitation.split('/-/')[0]
+    reviews=client.get_notes(invitation=review_invitation)
     ratings=client.get_notes(invitation=f'{paper_group_id}/Reviewer_.*/-/Rating')
     if len(reviews) == len(ratings):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=f'{paper_group_id}/-/Decision',
+            invitation=Invitation(id=f'{paper_group_id}/-/Decision',
                 signatures=[venue_id],
                 invitees=[venue_id, f'{paper_group_id}/Action_Editors']
             )
@@ -86,7 +87,7 @@ def process(client, edit, invitation):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=f'{signature}/-/Rating',
+            invitation=Invitation(id=f'{signature}/-/Rating',
                 duedate=1613822400000, ## check duedate
                 invitees=[f'{paper_group_id}/Action_Editors'],
                 readers=[venue_id, f'{paper_group_id}/Action_Editors'],
@@ -130,7 +131,7 @@ def process(client, edit, invitation):
         # invitation = client.post_invitation_edit(readers=[venue_id],
         #     writers=[venue_id],
         #     signatures=[venue_id],
-        #     invitation=openreview.Invitation(id=edit.invitation,
+        #     invitation=Invitation(id=edit.invitation,
         #         signatures=[venue_id],
         #         edit={
         #             'signatures': { 'values': [ '${{note.id}.signatures}' ] },
@@ -145,7 +146,7 @@ def process(client, edit, invitation):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.Invitation(id=f'{paper_group_id}/-/Release_Review',
+            invitation=Invitation(id=f'{paper_group_id}/-/Release_Review',
                 bulk=True,
                 invitees=[venue_id],
                 readers=['everyone'],
@@ -166,7 +167,7 @@ def process(client, edit, invitation):
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
-        invitation=openreview.Invitation(id=review_invitation_id,
+        invitation=Invitation(id=review_invitation_id,
             duedate=1613822400000,
             invitees=[venue_id, f"{paper_group.id}/Reviewers"],
             readers=['everyone'],
@@ -194,7 +195,9 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,200000}',
+                                'value-regex': '[\\S\\s]{1,200000}'
+                            },
+                            'presentation': {
                                 'markdown': True
                             }
                         },
@@ -202,7 +205,9 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'List of suggested revisions to support acceptance (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,200000}',
+                                'value-regex': '[\\S\\s]{1,200000}'
+                            },
+                            'presentation': {
                                 'markdown': True
                             }
                         },
@@ -264,7 +269,7 @@ def process(client, edit, invitation):
     # invitation = client.post_invitation_edit(readers=[venue_id],
     #     writers=[venue_id],
     #     signatures=[venue_id],
-    #     invitation=openreview.Invitation(id=revision_invitation_id,
+    #     invitation=Invitation(id=revision_invitation_id,
     #         invitees=[f"{paper_group.id}/Authors"],
     #         readers=['everyone'],
     #         writers=[venue_id],
@@ -352,7 +357,7 @@ def process(client, edit, invitation):
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
-        invitation=openreview.Invitation(id=public_comment_invitation_id,
+        invitation=Invitation(id=public_comment_invitation_id,
             invitees=['everyone'],
             readers=['everyone'],
             writers=[venue_id],
@@ -378,7 +383,9 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
+                                'value-regex': '[\\S\\s]{1,5000}'
+                            },
+                            'presentation': {
                                 'markdown': True
                             }
                         }
@@ -390,7 +397,7 @@ def process(client, edit, invitation):
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
-        invitation=openreview.Invitation(id=official_comment_invitation_id,
+        invitation=Invitation(id=official_comment_invitation_id,
             invitees=[venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers'],
             readers=['everyone'],
             writers=[venue_id],
@@ -416,7 +423,9 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
+                                'value-regex': '[\\S\\s]{1,5000}'
+                            },
+                            'presentation': {
                                 'markdown': True
                             }
                         }
@@ -428,7 +437,7 @@ def process(client, edit, invitation):
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
-        invitation=openreview.Invitation(id=moderate_invitation_id,
+        invitation=Invitation(id=moderate_invitation_id,
             invitees=[venue_id, f'{paper_group.id}/Action_Editors'],
             readers=[venue_id, f'{paper_group.id}/Action_Editors'],
             writers=[venue_id],
@@ -462,7 +471,9 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
+                                'value-regex': '[\\S\\s]{1,5000}'
+                            },
+                            'presentation': {
                                 'markdown': True
                             },
                             'readers': {
@@ -478,7 +489,7 @@ def process(client, edit, invitation):
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
-        invitation=openreview.Invitation(id=f'{paper_group.id}/-/Decision',
+        invitation=Invitation(id=f'{paper_group.id}/-/Decision',
             duedate=1613822400000,
             invitees=[], # no invitees, activate when all the ratings are complete
             readers=['everyone'],
@@ -509,7 +520,9 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'TODO (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,200000}',
+                                'value-regex': '[\\S\\s]{1,200000}'
+                            },
+                            'presentation': {
                                 'markdown': True
                             }
                         }
@@ -530,7 +543,7 @@ def process(client, edit, invitation):
     invitation = client.post_invitation_edit(readers=[venue_id],
         writers=[venue_id],
         signatures=[venue_id],
-        invitation=openreview.Invitation(id=revision_invitation_id,
+        invitation=Invitation(id=revision_invitation_id,
             invitees=[f"{paper_group_id}/Authors"],
             readers=['everyone'],
             writers=[venue_id],
@@ -563,7 +576,9 @@ def process(client, edit, invitation):
                         'authors': {
                             'order': 2,
                             'description': 'Comma separated list of author names.',
-                            'hidden': True,
+                            'presentation': {
+                                'hidden': True,
+                            },
                             'value': {
                                 'values-regex': '.*',
                                 'optional':True

@@ -14,7 +14,6 @@ import re
 from openreview import Profile
 from openreview import OpenReviewException
 from openreview import Group
-from openreview import Invitation
 
 class OpenReviewClient(object):
     """
@@ -1529,7 +1528,7 @@ class Note(object):
     TODO: write docs
     """
     def __init__(self,
-        invitation=None,
+        invitations=None,
         readers=None,
         writers=None,
         signatures=None,
@@ -1562,8 +1561,7 @@ class Note(object):
         self.writers = writers
         self.number = number
         self.details = details
-        if invitation:
-            self.invitation = invitation
+        self.invitations = invitations
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1590,8 +1588,8 @@ class Note(object):
             body['replyto'] = self.replyto
         if self.content:
             body['content'] = self.content
-        if hasattr(self, 'invitation'):
-            body['invitation'] = self.invitation
+        if self.invitations:
+            body['invitations'] = self.invitations
         if self.cdate:
             body['cdate'] = self.cdate
         if self.mdate:
@@ -1629,7 +1627,7 @@ class Note(object):
         ddate=n.get('ddate'),
         content=n.get('content'),
         forum=n.get('forum'),
-        invitation=n.get('invitation'),
+        invitations=n.get('invitations'),
         replyto=n.get('replyto'),
         readers=n.get('readers'),
         nonreaders=n.get('nonreaders'),
@@ -1638,4 +1636,161 @@ class Note(object):
         details=n.get('details')
         )
         return note
+
+class Invitation(object):
+    """
+    """
+    def __init__(self,
+        id = None,
+        readers = None,
+        writers = None,
+        invitees = None,
+        signatures = None,
+        edit = None,
+        noninvitees = None,
+        nonreaders = None,
+        web = None,
+        web_string = None,
+        process = None,
+        process_string = None,
+        preprocess = None,
+        duedate = None,
+        expdate = None,
+        cdate = None,
+        ddate = None,
+        tcdate = None,
+        tmdate = None,
+        multiReply = None,
+        taskCompletionCount = None,
+        transform = None,
+        bulk = None,
+        reply_forum_views = [],
+        details = None):
+
+        self.id = id
+        self.cdate = cdate
+        self.ddate = ddate
+        self.duedate = duedate
+        self.expdate = expdate
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.writers = writers
+        self.invitees = invitees
+        self.noninvitees = noninvitees
+        self.signatures = signatures
+        self.multiReply = multiReply
+        self.taskCompletionCount = taskCompletionCount
+        self.edit = edit
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.bulk = bulk
+        self.details = details
+        self.reply_forum_views = reply_forum_views
+        self.web = None
+        self.process = None
+        self.preprocess = None
+        if web is not None:
+            with open(web) as f:
+                self.web = f.read()
+        if process is not None:
+            with open(process) as f:
+                self.process = f.read()
+        self.transform = None
+        if transform is not None:
+            with open(transform) as f:
+                self.transform = f.read()
+        if process_string:
+            self.process = process_string
+        if web_string:
+            self.web = web_string
+        if preprocess is not None:
+            self.preprocess=preprocess
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Invitation(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+    def to_json(self):
+        """
+        Converts Invitation instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Invitation instance
+        :rtype: dict
+        """
+        body = {
+            'id': self.id,
+            'cdate': self.cdate,
+            'ddate': self.ddate,
+            'duedate': self.duedate,
+            'expdate': self.expdate,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'writers': self.writers,
+            'invitees': self.invitees,
+            'noninvitees': self.noninvitees,
+            'signatures': self.signatures,
+            'multiReply': self.multiReply,
+            'transform': self.transform,
+            'replyForumViews': self.reply_forum_views
+        }
+
+        if  self.taskCompletionCount:
+            body['taskCompletionCount']=self.taskCompletionCount
+        if self.web:
+            body['web']=self.web
+        if  self.process:
+            body['process']=self.process
+        if self.edit is not None:
+            body['edit']=self.edit
+        if self.bulk is not None:
+            body['bulk']=self.bulk
+        if hasattr(self,'preprocess'):
+            body['preprocess']=self.preprocess
+        return body
+
+    @classmethod
+    def from_json(Invitation,i):
+        """
+        Creates an Invitation object from a dictionary that contains keys values equivalent to the name of the instance variables of the Invitation class
+
+        :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Invitation class
+        :type i: dict
+
+        :return: Invitation whose instance variables contain the values from the dictionary
+        :rtype: Invitation
+        """
+        invitation = Invitation(i['id'],
+            cdate = i.get('cdate'),
+            ddate = i.get('ddate'),
+            tcdate = i.get('tcdate'),
+            tmdate = i.get('tmdate'),
+            duedate = i.get('duedate'),
+            expdate = i.get('expdate'),
+            readers = i.get('readers'),
+            nonreaders = i.get('nonreaders'),
+            writers = i.get('writers'),
+            invitees = i.get('invitees'),
+            noninvitees = i.get('noninvitees'),
+            signatures = i.get('signatures'),
+            multiReply = i.get('multiReply'),
+            taskCompletionCount = i.get('taskCompletionCount'),
+            edit = i.get('edit'),
+            details = i.get('details'),
+            reply_forum_views = i.get('replyForumViews'),
+            bulk = i.get('bulk')
+            )
+        if 'web' in i:
+            invitation.web = i['web']
+        if 'process' in i:
+            invitation.process = i['process']
+        if 'transform' in i:
+            invitation.transform = i['transform']
+        if 'preprocess' in i:
+            invitation.preprocess = i['preprocess']
+        return invitation
+
 
