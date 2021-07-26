@@ -154,7 +154,7 @@ class TestJournal():
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 8
-        assert f"{venue_id}/-/Author_Submission" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Author_Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -162,10 +162,11 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
 
         ## Update submission 1
-        updated_submission_note_1 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
-            signatures=['~Test_User1'],
+        updated_submission_note_1 = test_client.post_note_edit(invitation='.TMLR/Paper1/-/Revision',
+            signatures=['.TMLR/Paper1/Authors'],
             note=Note(
                 id=note_id_1,
                 content={
@@ -179,7 +180,7 @@ class TestJournal():
 
         note = openreview_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision']
         assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
@@ -187,6 +188,8 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
+        assert note.content['authorids']['value'] == ['~Test_User1', 'andrewmc@mail.com']
+        assert note.content['authorids']['readers'] == ['.TMLR', '~Test_User1', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
@@ -273,7 +276,7 @@ class TestJournal():
 
         note = joelle_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
@@ -519,7 +522,7 @@ class TestJournal():
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Acceptance']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/-/Acceptance']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
@@ -551,7 +554,7 @@ class TestJournal():
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Acceptance', '.TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/-/Acceptance', '.TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']

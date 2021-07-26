@@ -193,10 +193,6 @@ class InvitationBuilder(object):
                     'readers': { 'values': [ venue_id, '${signatures}', action_editors_value, authors_value]},
                     'writers': { 'values': [ venue_id, '${signatures}', authors_value]},
                     'note': {
-                        'id': {
-                            'value-invitation': submission_invitation_id,
-                            'optional': True
-                        },
                         'signatures': { 'values': [authors_value] },
                         'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
