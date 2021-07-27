@@ -621,7 +621,7 @@ var postReviewerEmails = function(postData) {
 
 var buildSPCTableRow = function(areaChair, papers) {
 
-  var acTableeferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#areachair-status)');
+  var acTableeferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairs#areachair-status)');
 
   var summary = {
     id: areaChair.id,
@@ -883,7 +883,7 @@ var displayAreaChairsStatusTable = function() {
 
 var buildPaperTableRow = function(note) {
 
-  var paperTableReferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#paper-status)');
+  var paperTableReferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairs#paper-status)');
 
   var reviewerIds = note.details.reviewers;
   var areachairIds = note.details.areaChairs;
