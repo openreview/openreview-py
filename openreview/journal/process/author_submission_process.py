@@ -178,8 +178,16 @@ def process(client, edit, invitation):
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
                 'note': {
-                    'forum': { 'value': note.id },
+                    'id': {
+                        'value-invitation': review_invitation_id,
+                        'optional': True
+                    },                    'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
@@ -371,7 +379,16 @@ def process(client, edit, invitation):
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
                 'note': {
+                    'id': {
+                        'value-invitation': public_comment_invitation_id,
+                        'optional': True
+                    },
                     'forum': { 'value': note.id },
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
@@ -411,7 +428,16 @@ def process(client, edit, invitation):
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers']},
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']},
                 'note': {
+                    'id': {
+                        'value-invitation': public_comment_invitation_id,
+                        'optional': True
+                    },
                     'forum': { 'value': note.id },
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values-dropdown': [f'{venue_id}/Editors_In_Chief', f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers']},
                     'writers': { 'values': ['${signatures}']},
@@ -504,8 +530,17 @@ def process(client, edit, invitation):
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors'] },
                 'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors'] },
                 'note': {
+                    'id': {
+                        'value-invitation': f'{paper_group.id}/-/Decision',
+                        'optional': True
+                    },
                     'forum': { 'value': note.forum },
                     'replyto': { 'value': note.forum },
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'signatures': { 'values': [f'{paper_group.id}/Action_Editors'] },
                     'readers': { 'values': [ 'everyone' ] },
                     'writers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors'] },

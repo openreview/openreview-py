@@ -389,7 +389,8 @@ class InvitationBuilder(object):
                             },
                             'authors': {
                                 'value': {
-                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'optional': True
                                 },
                                 'description': 'Comma separated list of author names.',
                                 'order': 1,
@@ -402,7 +403,8 @@ class InvitationBuilder(object):
                             },
                             'authorids': {
                                 'value': {
-                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                    'optional': True
                                 },
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                                 'order': 2,
