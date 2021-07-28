@@ -355,6 +355,15 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                         'default': 'Yes',
                         'required': True,
                         'order': 3
+                    },
+                    'affinity_scores': {
+                        'description': 'Upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+                        'order': 4,
+                        'value-file': {
+                            'fileTypes': ['csv'],
+                            'size': 50
+                        },
+                        'required': False
                     }
                 }
             },

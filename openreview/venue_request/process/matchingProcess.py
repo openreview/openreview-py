@@ -1,4 +1,5 @@
 def process(client, note, invitation):
+
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     request_form = client.get_note(note.forum)
@@ -12,8 +13,16 @@ def process(client, note, invitation):
     }
 
     matching_group = conference.get_id() + '/' + roles[note.content['matching_group'].strip()]
+    scores = note.content.get('affinity_scores', None)
+    file_name=None
 
-    matching_status = conference.setup_matching(committee_id=matching_group, build_conflicts=build_conflicts)
+    if scores:
+        scores_attachment = client.get_attachment(id=note.id, field_name='affinity_scores')
+        with open('affinity_scores.csv','wb') as file:
+            file.write(scores_attachment)
+        file_name = 'affinity_scores.csv'
+
+    matching_status = conference.setup_matching(committee_id=matching_group, build_conflicts=build_conflicts, affinity_score_file=file_name)
     role_name=roles[note.content['matching_group'].strip()]
 
     comment_note = openreview.Note(
