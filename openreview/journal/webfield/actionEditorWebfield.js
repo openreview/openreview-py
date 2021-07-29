@@ -44,6 +44,8 @@ var loadData = function(assignedGroups) {
 }
 
 var formatData = function(assignedGroups, reviewersByNumber, invitations, submissions) {
+  var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
+
   var submissionsByNumber = _.keyBy(submissions, 'number');
 
   //build the rows
@@ -55,6 +57,9 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
 
       var reviews = submission.details.directReplies.filter(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Review') >= 0;
+      });
+      var decision = submission.details.directReplies.find(function(reply) {
+        return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Decision') >= 0;
       });
       var reviewers = reviewersByNumber[number];
       var reviewerStatus = {};
@@ -102,7 +107,10 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
           reviewers: reviewerStatus,
           stats: stats
         },
-        metaReviewData: {}
+        actionEditorData: {
+          recommendation: decision && decision.content.recommendation.value,
+          editUrl: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
+        }
       })
     }
   })
@@ -178,7 +186,7 @@ var renderTableAndTasks = function(venueStatusData) {
         Average_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.avg === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.avg; },
         Max_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.max === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.max; },
         Min_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.min === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.min; },
-        Meta_Review_Recommendation: function(row) { return row.metaReviewData.recommendation; }
+        Recommendation: function(row) { return row.actionEditorData.recommendation; }
       },
       searchProperties: {
         number: ['number.number'],
@@ -192,7 +200,7 @@ var renderTableAndTasks = function(venueStatusData) {
         confidenceAvg: ['reviewProgressData.stats.Confidence.avg'],
         confidenceMax: ['reviewProgressData.stats.Confidence.max'],
         confidenceMin: ['reviewProgressData.stats.Confidence.min'],
-        recommendation: ['metaReviewData.recommendation']
+        recommendation: ['actionEditorData.recommendation']
       }
   })
 
