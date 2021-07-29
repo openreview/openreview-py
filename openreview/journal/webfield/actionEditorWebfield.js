@@ -58,9 +58,21 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
       });
       var reviewers = reviewersByNumber[number];
       var reviewerStatus = {};
+      var confidences = []
 
       reviewers.forEach(function(reviewer) {
-        var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); })
+        var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+        var status = {};
+        if (completedReview) {
+          var confidenceString = completedReview.content.confidence.value;
+          var confidence = parseInt(confidenceString.substring(0, confidenceString.indexOf(':')));
+          confidences.push(confidence);
+          status = {
+            Recommendation: completedReview.content.recommendation.value,
+            Confidence: confidence,
+            'Review length': completedReview.content.review.value.length
+          }
+        }
         reviewerStatus[reviewer.anonId] = {
           id: reviewer.id,
           name: view.prettyId(reviewer.id),
@@ -68,30 +80,36 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
           completedReview: completedReview && true,
           forum: submission.id,
           note: completedReview && completedReview.id,
-          status: {
-            Recommendation: completedReview && completedReview.content.recommendation.value,
-            Confidence: completedReview && completedReview.content.confidence.value,
-            'Review length': completedReview && completedReview.content.review.value.length
-          }
+          status: status
         }
       })
 
-      rows.push([
-        { selected: false, noteId: submission.id },
-        { number: number},
-        { forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
-        { numSubmittedReviews: reviews.length, numReviewers: reviewers.length, reviewers: reviewerStatus },
-        {}
-      ])
+      var stats = {
+        Confidence: {
+          min: confidences.length ? _.min(confidences) : 'N/A',
+          max: confidences.length ? _.max(confidences) : 'N/A',
+          avg: confidences.length ? _.round(_.sum(confidences) / confidences.length, 2) : 'N/A'
+        }
+      };
+
+      rows.push({
+        checked: { selected: false, noteId: submission.id },
+        number: { number: number},
+        note: { forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
+        reviewProgressData: {
+          numSubmittedReviews: reviews.length,
+          numReviewers: reviewers.length,
+          reviewers: reviewerStatus,
+          stats: stats
+        },
+        metaReviewData: {}
+      })
     }
   })
 
 
   return venueStatusData = {
-    assignedGroups: assignedGroups,
-    reviewersByNumber: reviewersByNumber,
     invitations: invitations,
-    submissions: submissions,
     rows: rows
   };
 }
@@ -151,7 +169,32 @@ var renderTableAndTasks = function(venueStatusData) {
     Handlebars.templates.noteSummary,
     Handlebars.templates.noteReviewers,
     Handlebars.templates.noteMetaReviewStatus
-  ], venueStatusData.rows)
+  ], venueStatusData.rows, {
+      sortOptions: {
+        Paper_Number: function(row) { return row.number.number; },
+        Paper_Title: function(row) { return _.toLower(_.trim(row.note.content.title)); },
+        Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
+        Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+        Average_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.avg === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.avg; },
+        Max_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.max === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.max; },
+        Min_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.min === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.min; },
+        Meta_Review_Recommendation: function(row) { return row.metaReviewData.recommendation; }
+      },
+      searchProperties: {
+        number: ['number.number'],
+        id: ['note.id'],
+        title: ['note.content.title'],
+        author: ['note.content.authors','note.content.authorids'], // multi props
+        keywords: ['note.content.keywords'],
+        reviewer: ['reviewProgressData.reviewers'],
+        numReviewersAssigned: ['reviewProgressData.numReviewers'],
+        numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
+        confidenceAvg: ['reviewProgressData.stats.Confidence.avg'],
+        confidenceMax: ['reviewProgressData.stats.Confidence.max'],
+        confidenceMin: ['reviewProgressData.stats.Confidence.min'],
+        recommendation: ['metaReviewData.recommendation']
+      }
+  })
 
   registerEventHandlers();
 
