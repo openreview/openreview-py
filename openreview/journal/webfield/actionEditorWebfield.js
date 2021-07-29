@@ -146,23 +146,9 @@ var renderHeader = function() {
   Webfield.ui.tabPanel(tabsList);
 };
 
-
-var renderTasks = function(invitations) {
-  //  My Tasks tab
-  var tasksOptions = {
-    container: '#action-editor-tasks',
-    emptyMessage: 'No outstanding tasks for this venue',
-    referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')
-  }
-  $(tasksOptions.container).empty();
-
-  Webfield.ui.newTaskList(invitations, [], tasksOptions);
-  $('.tabs-container a[href="#action-editor-tasks"]').parent().show();
-}
-
 var renderTableAndTasks = function(venueStatusData) {
 
-  renderTasks(venueStatusData.invitations);
+  Webfield2.ui.renderTasks('#action-editor-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')});
 
   Webfield2.ui.renderTable('#assigned-papers', ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
   'Review Progress', 'Decision Status'], [
