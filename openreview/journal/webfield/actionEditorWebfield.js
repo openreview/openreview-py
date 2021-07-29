@@ -98,9 +98,9 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
       };
 
       rows.push({
-        checked: { selected: false, noteId: submission.id },
-        number: { number: number},
-        note: { forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
+        checkbox: { selected: false, noteId: submission.id },
+        submissionNumber: { number: number},
+        submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
         reviewProgressData: {
           numSubmittedReviews: reviews.length,
           numReviewers: reviewers.length,
@@ -151,7 +151,7 @@ var renderTasks = function(invitations) {
   //  My Tasks tab
   var tasksOptions = {
     container: '#action-editor-tasks',
-    emptyMessage: 'No outstanding tasks for this conference',
+    emptyMessage: 'No outstanding tasks for this venue',
     referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')
   }
   $(tasksOptions.container).empty();
@@ -179,8 +179,8 @@ var renderTableAndTasks = function(venueStatusData) {
     Handlebars.templates.noteMetaReviewStatus
   ], venueStatusData.rows, {
       sortOptions: {
-        Paper_Number: function(row) { return row.number.number; },
-        Paper_Title: function(row) { return _.toLower(_.trim(row.note.content.title)); },
+        Paper_Number: function(row) { return row.submissionNumber.number; },
+        Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
         Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
         Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
         Average_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.avg === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.avg; },
@@ -189,11 +189,11 @@ var renderTableAndTasks = function(venueStatusData) {
         Recommendation: function(row) { return row.actionEditorData.recommendation; }
       },
       searchProperties: {
-        number: ['number.number'],
-        id: ['note.id'],
-        title: ['note.content.title'],
-        author: ['note.content.authors','note.content.authorids'], // multi props
-        keywords: ['note.content.keywords'],
+        number: ['submissionNumber.number'],
+        id: ['submission.id'],
+        title: ['submission.content.title'],
+        author: ['submission.content.authors','note.content.authorids'], // multi props
+        keywords: ['submission.content.keywords'],
         reviewer: ['reviewProgressData.reviewers'],
         numReviewersAssigned: ['reviewProgressData.numReviewers'],
         numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
@@ -201,7 +201,8 @@ var renderTableAndTasks = function(venueStatusData) {
         confidenceMax: ['reviewProgressData.stats.Confidence.max'],
         confidenceMin: ['reviewProgressData.stats.Confidence.min'],
         recommendation: ['actionEditorData.recommendation']
-      }
+      },
+      defaultSearchProperties: ['submissionNumber.number', 'submission.content.title']
   })
 
   registerEventHandlers();
