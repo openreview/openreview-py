@@ -49,6 +49,18 @@ def process_update(client, note, invitation, existing_note):
     )
     client.post_group(reviewers_group)
 
+    reviewers_suggested_group_id = '{}/Suggested'.format(reviewers_group.id)
+    reviewers_group = openreview.Group(
+        id=reviewers_suggested_group_id,
+        readers=['everyone'],
+        writers=[support],
+        signatures=[support],
+        signatories=[],
+        members=[],
+    )
+    client.post_group(reviewers_group)
+
+
     ## Create invitations
     revision_invitation = openreview.Invitation(
         id = '{}/-/Revision'.format(article_group.id),

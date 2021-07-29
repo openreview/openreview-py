@@ -4,11 +4,18 @@ def process_update(client, note, invitation, existing_note):
     support = 'OpenReview.net/Support'
     article_group_id = invitation.id.split('/-/')[0]
     editors_group_id = '{}/Editors'.format(article_group_id)
+    reviewers_suggested_group_id = '{}/Reviewers/Suggested'.format(article_group_id)
+
     submission = client.get_note(note.forum)
 
     action = 'posted'
     if existing_note:
         action = 'deleted' if note.ddate else 'updated'
+
+    if action == 'deleted':
+        client.remove_members_from_group(reviewers_suggested_group_id, note.content['suggested_reviewers'])
+    else:
+        client.add_members_to_group(reviewers_suggested_group_id, note.content['suggested_reviewers'])
 
     client.post_message(subject='[Agora/COVID-19] Your suggestion has been {action} on the article titled "{title}"'.format(action=action, title=submission.content['title']),
         recipients=note.signatures,
