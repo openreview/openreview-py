@@ -23,7 +23,7 @@ var main = function() {
 
   renderHeader();
 
-  Webfield2.utils.getPaperGroups(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
+  Webfield2.utils.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
   .then(loadData)
   .then(formatData)
   .then(renderTableAndTasks)
@@ -35,31 +35,21 @@ var main = function() {
 
 var loadData = function(assignedGroups) {
 
-  var assignedPaperNumbers = Webfield2.utils.getPaperNumbersfromGroups(assignedGroups.paperGroups);
   return $.when(
-    assignedPaperNumbers,
     assignedGroups,
-    Webfield2.utils.getPaperGroups(VENUE_ID, REVIEWERS_NAME),
+    Webfield2.utils.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
     Webfield2.utils.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.utils.getSubmissions(SUBMISSION_ID, { numbers: assignedPaperNumbers})
+    Webfield2.utils.getSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)})
   );
 }
 
-var formatData = function(assignedPaperNumbers, actionEditorGroups, reviewersGroups, invitations, submissions) {
-  console.log(assignedPaperNumbers, actionEditorGroups, reviewersGroups, invitations, submissions);
-
+var formatData = function(assignedGroups, reviewersByNumber, invitations, submissions) {
   var submissionsByNumber = _.keyBy(submissions, 'number');
-  var reviewersByNumber = {};
-
-  reviewersGroups.paperGroups.forEach(function(group) {
-    var number = Webfield2.utils.getNumberfromGroup(group.id, 'Paper');
-    reviewersByNumber[number] = group.members;
-  })
 
   //build the rows
   var rows = [];
 
-  assignedPaperNumbers.forEach(function(number) {
+  Object.keys(assignedGroups).forEach(function(number) {
     var submission = submissionsByNumber[number];
     if (submission) {
 
@@ -67,12 +57,30 @@ var formatData = function(assignedPaperNumbers, actionEditorGroups, reviewersGro
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Review') >= 0;
       });
       var reviewers = reviewersByNumber[number];
+      var reviewerStatus = {};
+
+      reviewers.forEach(function(reviewer) {
+        var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); })
+        reviewerStatus[reviewer.anonId] = {
+          id: reviewer.id,
+          name: view.prettyId(reviewer.id),
+          email: reviewer.id,
+          completedReview: completedReview && true,
+          forum: submission.id,
+          note: completedReview && completedReview.id,
+          status: {
+            Recommendation: completedReview && completedReview.content.recommendation.value,
+            Confidence: completedReview && completedReview.content.confidence.value,
+            'Review length': completedReview && completedReview.content.review.value.length
+          }
+        }
+      })
 
       rows.push([
         { selected: false, noteId: submission.id },
         { number: number},
         { forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
-        { numSubmittedReviews: reviews.length, numReviewers: reviewers.length, reviewers: {} },
+        { numSubmittedReviews: reviews.length, numReviewers: reviewers.length, reviewers: reviewerStatus },
         {}
       ])
     }
@@ -80,9 +88,8 @@ var formatData = function(assignedPaperNumbers, actionEditorGroups, reviewersGro
 
 
   return venueStatusData = {
-    assignedPaperNumbers: assignedPaperNumbers,
-    actionEditorGroups: actionEditorGroups,
-    reviewersGroups: reviewersGroups,
+    assignedGroups: assignedGroups,
+    reviewersByNumber: reviewersByNumber,
     invitations: invitations,
     submissions: submissions,
     rows: rows
