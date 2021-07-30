@@ -104,6 +104,10 @@ class Journal(object):
                         signatories=[editor_in_chief_id, venue_id],
                         members=editors
                         ))
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
+            content = f.read()
+            editor_in_chief_group.web = content
+            self.client.post_group(editor_in_chief_group)
 
         editors=""
         for m in editor_in_chief_group.members:
