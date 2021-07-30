@@ -134,27 +134,29 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
 var renderHeader = function() {
   Webfield.ui.setup('#group-container', VENUE_ID);
   Webfield.ui.header(HEADER.title, HEADER.instructions);
-  Webfield2.ui.renderTabPanel('#notes', ['Assigned Papers', 'Action Editor Tasks']);
+  Webfield2.ui.renderTabPanel('#notes', ['Assigned Papers', 'Action Editor Tasks', 'test table']);
 };
 
 var renderTableAndTasks = function(venueStatusData) {
 
   Webfield2.ui.renderTasks('#action-editor-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')});
 
-  Webfield2.ui.renderTable('#assigned-papers', ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
-  'Review Progress', 'Decision Status'], [
-    function(data) {
-      var checked = data.selected ? 'checked="checked"' : '';
-      return '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
-        data.noteId + '" ' + checked + '></label>';
-    },
-    function(data) {
-      return '<strong class="note-number">' + data.number + '</strong>';
-    },
-    Handlebars.templates.noteSummary,
-    Handlebars.templates.noteReviewers,
-    Handlebars.templates.noteMetaReviewStatus
-  ], venueStatusData.rows, {
+  Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
+      headings: ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
+      'Review Progress', 'Decision Status'],
+      renders: [
+        function(data) {
+          var checked = data.selected ? 'checked="checked"' : '';
+          return '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
+            data.noteId + '" ' + checked + '></label>';
+        },
+        function(data) {
+          return '<strong class="note-number">' + data.number + '</strong>';
+        },
+        Handlebars.templates.noteSummary,
+        Handlebars.templates.noteReviewers,
+        Handlebars.templates.noteMetaReviewStatus
+      ],
       sortOptions: {
         Paper_Number: function(row) { return row.submissionNumber.number; },
         Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
@@ -187,6 +189,20 @@ var renderTableAndTasks = function(venueStatusData) {
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor'
       }
   })
+
+  var options = {
+    sortOptions: {
+      a: function(row) { return row.a.col1; }
+    },
+    searchProperties: {
+      a: ['a.col1']
+    }
+  }
+
+  Webfield2.ui.renderTable('#test-table', [
+    { a: { col1: 'This is col 1'}, b: { c: 'this is col 2', d: 'this is col 2'}},
+    { a: { col1: 'This is another col 1'}, b: { c: 'this is another col 2', d: 'this is another col 2'}}
+  ], options);
 
   registerEventHandlers();
 
