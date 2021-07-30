@@ -15,32 +15,34 @@ var HEADER = {
 
 // Main function is the entry point to the webfield code
 var main = function() {
-  if (args && args.referrer) {
-    OpenBanner.referrerLink(args.referrer);
-  } else {
-    OpenBanner.venueHomepageLink(VENUE_ID);
-  }
 
-  renderHeader();
+  Webfield2.ui.setup('#group-container', VENUE_ID, {
+    title: HEADER.title,
+    instructions: HEADER.instructions,
+    tabs: ['Assigned Papers', 'Action Editor Tasks', 'test table'],
+    referrer: args && args.referrer
+  })
 
-  Webfield2.utils.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
-  .then(loadData)
+  loadData()
   .then(formatData)
-  .then(renderTableAndTasks)
-  .fail(function() {
-    Webfield.ui.errorMessage();
-  });
+  .then(renderData)
+  .then(Webfield2.ui.done)
+  .fail(Webfield2.ui.errorMessage);
 };
 
 
-var loadData = function(assignedGroups) {
+var loadData = function() {
 
-  return $.when(
-    assignedGroups,
-    Webfield2.utils.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
-    Webfield2.utils.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.utils.getSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)})
-  );
+  return Webfield2.utils.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
+  .then(function(assignedGroups) {
+    return $.when(
+      assignedGroups,
+      Webfield2.utils.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+      Webfield2.utils.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
+      Webfield2.utils.getSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)})
+    );
+  })
+
 }
 
 var formatData = function(assignedGroups, reviewersByNumber, invitations, submissions) {
@@ -131,13 +133,7 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
 }
 
 // Render functions
-var renderHeader = function() {
-  Webfield.ui.setup('#group-container', VENUE_ID);
-  Webfield.ui.header(HEADER.title, HEADER.instructions);
-  Webfield2.ui.renderTabPanel('#notes', ['Assigned Papers', 'Action Editor Tasks', 'test table']);
-};
-
-var renderTableAndTasks = function(venueStatusData) {
+var renderData = function(venueStatusData) {
 
   Webfield2.ui.renderTasks('#action-editor-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')});
 
@@ -204,17 +200,6 @@ var renderTableAndTasks = function(venueStatusData) {
     { a: { col1: 'This is another col 1'}, b: { c: 'this is another col 2', d: 'this is another col 2'}}
   ], options);
 
-  registerEventHandlers();
-
-  Webfield.ui.done();
 }
-
-// Event Handlers
-var registerEventHandlers = function() {
-
-}
-
-
-
 
 main();
