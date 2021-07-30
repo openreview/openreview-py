@@ -134,24 +134,7 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
 var renderHeader = function() {
   Webfield.ui.setup('#group-container', VENUE_ID);
   Webfield.ui.header(HEADER.title, HEADER.instructions);
-
-  var loadingMessage = '<p class="empty-message">Loading...</p>';
-  var tabsList = [
-    {
-      heading: 'Assigned Papers',
-      id: 'assigned-papers',
-      content: loadingMessage,
-      extraClasses: 'horizontal-scroll',
-      active: true
-    },
-    {
-      heading: 'Action Editor Tasks',
-      id: 'action-editor-tasks',
-      content: loadingMessage
-    }
-  ];
-
-  Webfield.ui.tabPanel(tabsList);
+  Webfield2.ui.renderTabPanel('#notes', ['Assigned Papers', 'Action Editor Tasks']);
 };
 
 var renderTableAndTasks = function(venueStatusData) {
