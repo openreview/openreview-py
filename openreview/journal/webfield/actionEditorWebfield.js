@@ -85,7 +85,12 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
           completedReview: completedReview && true,
           forum: submission.id,
           note: completedReview && completedReview.id,
-          status: status
+          status: status,
+          forumUrl: 'https://openreview.net/forum?' + $.param({
+            id: submission.id,
+            noteId: submission.id,
+            invitationId: VENUE_ID + '/Paper' + number + '/-/Review'
+          })
         }
       })
 
@@ -102,10 +107,13 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
         submissionNumber: { number: number},
         submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
         reviewProgressData: {
+          noteId: submission.id,
+          paperNumber: number,
           numSubmittedReviews: reviews.length,
           numReviewers: reviewers.length,
           reviewers: reviewerStatus,
-          stats: stats
+          stats: stats,
+          sendReminder: true,
         },
         actionEditorData: {
           recommendation: decision && decision.content.recommendation.value,
@@ -188,7 +196,13 @@ var renderTableAndTasks = function(venueStatusData) {
         confidenceMin: ['reviewProgressData.stats.Confidence.min'],
         recommendation: ['actionEditorData.recommendation']
       },
-      defaultSearchProperties: ['submissionNumber.number', 'submission.content.title']
+      reminderOptions: {
+        container: 'a.send-reminder-link',
+        defaultSubject: SHORT_PHRASE + ' Reminder',
+        defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
+        'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor'
+      }
   })
 
   registerEventHandlers();
@@ -198,6 +212,7 @@ var renderTableAndTasks = function(venueStatusData) {
 
 // Event Handlers
 var registerEventHandlers = function() {
+
 }
 
 
