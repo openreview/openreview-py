@@ -1,3 +1,6 @@
+from openreview import tools
+from datetime import datetime
+
 def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
@@ -321,11 +324,17 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures=['~Super_User1']
     ))
 
-    if (forum.content.get('Paper Matching', None)) :
+    if (forum.content.get('Submission Deadline', None) and forum.content.get('Paper Matching', None)):
+        activation_date = forum.content.get('Submission Deadline').strip()
+        try:
+            activation_date = datetime.strptime(activation_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            activation_date = datetime.strptime(activation_date, '%Y/%m/%d')
         matching_invitation = openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Matching_Stage',
             super = SUPPORT_GROUP + '/-/Matching_Stage',
             invitees = readers,
+            cdate = tools.datetime_millis(activation_date),
             reply = {
                 'forum': forum.id,
                 'replyto': forum.id,
